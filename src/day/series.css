@@ -122,7 +122,7 @@
 /* The list in the dialog, of my series and of a group alike, a breath of room below its last line, so it stands
    apart from the buttons */
 #series .series-list {
-    margin-bottom: 1.25rem;
+    margin-bottom: 2rem;
 }
 
 .series-boxes {
