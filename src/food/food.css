@@ -126,7 +126,10 @@ body:has(> .food) {
     padding: 0.125rem 0;
 }
 
+/* The grams grey, with more room before the kcal than between the other columns, so they stand well left of the kcal
+   of the meal and of the entry above them, even of `9.999 kcal` */
 .food-bracket {
+    margin-right: 1.25rem;
     color: var(--text-muted);
 }
 
