@@ -1862,7 +1862,8 @@ export function groupMine(change: MineChange): Planned[] {
  * Picks one session of a group for its week, as the menu of the groups sends it, see the top of this file: a box
  * I skipped that week is open again, one a change may change, see {@link changeable}; then the open box of the week,
  * the one that follows the pin before one of my own choice, see {@link chosenIs}, goes to the session, its day,
- * its time, its length, its room, its tutor and its group, its number kept, and no other week. A week without box
+ * its time, its length, its room, its tutor and its group, its number kept, and no other week; when I hold that
+ * session already, by an extra, the box goes instead, so the week keeps the one. A week without box
  * gets one, and with no box of the type after that week the sessions of the group from that week on become my series,
  * one per week, so later weeks follow it; then the boxes of the type are numbered anew, see {@link numbersOf}.
  * A week done, or whose box may not change, see {@link changeable}, stays as it is.
@@ -1876,9 +1877,11 @@ export function groupMine(change: MineChange): Planned[] {
  * - `weekOfSession`: Gives the Monday of the week of a session.
  * - `typedRead`: Reads the boxes of the type of the semester.
  * - `typed`: The boxes of the type of the semester.
+ * - `at`: Whether a box stands at the session.
  * - `skipped`: The box of the week I skipped, `undefined` for none.
  * - `open`: The open boxes of the week a change may change.
  * - `box`: The one that goes to the session, `undefined` for none.
+ * - `held`: My box at the session already, `undefined` for none.
  * - `later`: Whether a box of the type falls after the week.
  * - `firsts`: Without later box the first session of the group of every later week, else none.
  * - `targets`: The dates: the session, then those of the later weeks.
@@ -1904,9 +1907,10 @@ export function weekPick(change: PickChange): void {
     const typedRead: () => Box[] = (): Box[] => courseBoxesRead(codeOf(change.module), semester)
         .filter((one: Box): boolean => one.type === change.type);
     let typed: Box[] = typedRead();
+    const at: (one: Box) => boolean = (one: Box): boolean => (one.time || one.day) === session.start
+        || one.time !== "" && Date.parse(one.time) === Date.parse(session.start);
     if (change.extra === true) {
-        if (typed.some((one: Box): boolean => (one.time || one.day) === session.start
-            || one.time !== "" && Date.parse(one.time) === Date.parse(session.start)))
+        if (typed.some(at))
             throw new Error(`A box of ${change.type} of ${change.module} is there already at ${change.start}`);
         const drafts: Draft[] = [...typed.map(draftOf), madeDraftOf(targetOf(group, session))];
         numbersOf(drafts, tutorialWeeksOf(groups, change.type));
@@ -1929,6 +1933,11 @@ export function weekPick(change: PickChange): void {
         && one.state === "open");
     const box: Box | undefined = open.find((one: Box): boolean => !chosenIs(one, pinnedOf(groups, change.type)))
         ?? open[0];
+    const held: Box | undefined = typed.find(at);
+    if (box !== undefined && held !== undefined && held.id !== box.id) {
+        draftsWrite(change.module, change.type, semester, [{ ...draftOf(box), removed: true }]);
+        return;
+    }
     if (box !== undefined) {
         draftsWrite(change.module, change.type, semester, [draftSet(draftOf(box), targetOf(group, session))]);
         return;
