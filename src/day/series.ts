@@ -2097,13 +2097,13 @@ function seriesRowOf(form: Form): HTMLElement {
     else
         value.append(pairOf(elementOf("span", "", breakableOf(module)), choicesOf({
             search: searchOf(types.map(choiceOf)), picked: form.type === "" ? [] : [form.type], many: false,
-            adding: false, noun: "type", plus: true, empty: "Pick a type", below: [link],
+            adding: false, noun: "type", plus: true, empty: "Pick a type",
             pick: (values: string[]): void => {
                 form.type = values[0] ?? "";
                 grouped = null;
                 formFill();
             },
-        })));
+        })), link);
     const row: HTMLElement = rowOf("Summary", value);
     row.classList.add("panel-fixed");
     return row;

@@ -182,14 +182,17 @@ let picks: SkillPicks = {
 };
 
 /**
- * Beginning of the name of the folder of the material of each type in a module, whose files the Documents list offers
- * for an entry of that type: a lecture's slides in `VO_UniversityLectureLessons`, the sheet of an exercise
+ * Name of the folder of the material of each type in a module, as the reader names it, see `materialFolders`
+ * in `reader/notes.ts`, whose files the Documents list offers for an entry of that type, a folder starting
+ * with its type, like `TU_`: a lecture's slides in `VO_UniversityLectureLessons`, the sheet of an exercise
  * in `UE_UniversityModuleExercises`, of a central exercise in `ZU_UniversityCentralExercises`, of a tutorial
  * in `TU_UniversityTutorExercises`, a homework's in `HU_UniversityHomeExercises`, an exam's
- * in `FA_UniversityModuleExaminations`, a practical course's in a folder starting with `PR_`.
+ * in `FA_UniversityModuleExaminations`, a practical course's in `PR_UniversityPracticalExercises`.
  */
 const materialFolders: { [type: string]: string } = {
-    VO: "VO_", UE: "UE_", ZU: "ZU_", TU: "TU_", HU: "HU_", FA: "FA_", PR: "PR_",
+    VO: "VO_UniversityLectureLessons", UE: "UE_UniversityModuleExercises", ZU: "ZU_UniversityCentralExercises",
+    TU: "TU_UniversityTutorExercises", HU: "HU_UniversityHomeExercises", FA: "FA_UniversityModuleExaminations",
+    PR: "PR_UniversityPracticalExercises",
 };
 
 /**
@@ -290,8 +293,9 @@ function documentPathsOf(links: Link[]): string[] {
  * Gives the folders of the material of the entry below the folder of its module, which its link goes on into,
  * as the reader writes it, see `skillLinkOf` in `reader/documents.ts`: for a type the folder of its material,
  * also while the module has none yet, see `ModuleContents`, and in it the folder of the semester of the entry
- * while it is there, also empty, else as far as the module holds files there, like `VO_UniversityLectureLessons`
- * and `TUM_2026W`, or `VO_UniversityLectureLessons` alone; none for my own learning and for a project.
+ * while it is there, also empty, else as far as the module holds files there, else the folder of the semester it will
+ * have, like `VO_UniversityLectureLessons` and `TUM_2026W`, so the line below the summary always names the semester;
+ * none for my own learning and for a project.
  * - `folder`: The folder of that semester there, like `VO_UniversityLectureLessons/TUM_2026W`, `undefined` for none.
  * - `material`: The folder of the material of the type, `undefined` for none.
  * - `semester`: Semester of the entry, like `2026W`.
@@ -310,7 +314,7 @@ function materialOf(): string[] {
         .map((path: string): string[] => path.split("/"))
         .find((parts: string[]): boolean => parts.length > 2 && parts[0] === material
             && /\d{4}[WS]/.exec(parts[1])?.[0] === semester);
-    return material === undefined ? [] : [material, ...(inSemester?.slice(1, 2) ?? [])];
+    return material === undefined ? [] : [material, inSemester?.[1] ?? `TUM_${semester}`];
 }
 
 /**
@@ -576,7 +580,7 @@ function chapterOfDocument(path: string): string {
  * @returns Paths like `VO_UniversityLectureLessons/TUM_2026W/04_LogisticPoissonRegression.pdf`
  */
 function documentsOfferedOf(chapter: string): string[] {
-    const folder: string = materialFolders[picks.type] ?? "";
+    const folder: string = picks.type in materialFolders ? `${picks.type}_` : "";
     const semester: string = skillSemesterOf(semesterDay);
     return contents.documents
         .filter((path: string): boolean => folder === "" ? chapterOfDocument(path) === chapter
@@ -996,8 +1000,8 @@ export async function skillPairOf(picked: ModuleType, pick: (picked: ModuleType)
 /**
  * Gives what a skill and a type are as the reader writes them, see `skillTitleOf` and `skillLinkOf`
  * in `reader/documents.ts`: the title they give, like `IN2028_BusinessAnalyticsMachineLearning (VO)`, the folder they
- * link, the folder of the skill and of the material of the type, like
- * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_`, and the plan their boxes go into, like
+ * link, the folder of the skill and of the material of the type in the semester, like
+ * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`, and the plan their boxes go into, like
  * `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
  * - `path`: The folder of the skill, empty for none.
  * - `name`: Its last part, the skill by its name without folder.
@@ -1012,8 +1016,8 @@ export function skillNamesOf(picked: ModuleType): { title: string; link: string;
         return { title: "", link: "", file: "" };
     return {
         title: picked.type === "" ? name : `${name} (${picked.type})`,
-        link: [path, ...picked.type === "" ? [] : [materialFolders[picked.type] ?? ""]]
-            .filter((part: string): boolean => part !== "").join("/"),
+        link: [path, ...picked.type === "" ? [] : [materialFolders[picked.type] ?? "",
+            `TUM_${skillSemesterOf(semesterDay || calendarTodayOf())}`]].filter((part: string): boolean => part !== "").join("/"),
         file: `NomManageplannings/NomManagecalendar/${/^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
     };
 }
