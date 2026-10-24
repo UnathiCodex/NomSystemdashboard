@@ -2188,7 +2188,10 @@ export function courseSeriesRemove(gone: Omit<GroupGone, "group">): number {
 }
 
 /**
- * Removes a group from the plan of a module, see {@link groupsTake}.
+ * Removes a group from the plan of a module, see {@link groupsTake}, and with it my open boxes from today on that go
+ * to it, as unpinning takes them, see {@link groupMine}, since no session of it is left for them; my boxes of days
+ * over, done, skipped or open, stay as they are; the boxes of the type then numbered anew, see {@link numbersOf}.
+ * - `kept`: The boxes of the type, those going removed.
  *
  * @param gone - The group, as sent
  * @throws {Error} - When there is no such module folder or group
@@ -2197,4 +2200,11 @@ export function groupRemove(gone: GroupGone): void {
     folderCheck(gone.module);
     if (groupsTake(gone) === 0)
         throw new Error(`No group ${gone.type} ${gone.group} of ${gone.semester} in ${gone.module}`);
+    const kept: Draft[] = courseBoxesRead(codeOf(gone.module), gone.semester)
+        .filter((box: Box): boolean => box.type === gone.type)
+        .map((box: Box): Draft => ({
+            ...draftOf(box), removed: box.group === gone.group && ahead(box) && changeable(box),
+        }));
+    numbersOf(kept, tutorialWeeksOf(groupsRead(gone.module, gone.semester), gone.type));
+    draftsWrite(gone.module, gone.type, gone.semester, kept);
 }
