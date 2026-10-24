@@ -85,11 +85,11 @@
  * - `./times.ts`: Starts the fields of times and days, reads and writes times, days and lengths, and makes the switch
  *   between times and a length.
  * - `./places.ts`: Gives the name, the address and the parts of a place, its choice in a list, changes a place
- *   everywhere and adds a platform.
+ *   everywhere.
  * - `./entries.ts`: Adds an exam as a box and a new box repeated once per date of its days, logs a box of the list,
  *   takes it back, skips it and cancels it.
- * - `./categories.ts`: Makes the row `With`, the same as in the dialog of an entry; opens a box of the list
- *   in the dialog of an entry, and gives the calendar it writes with.
+ * - `./categories.ts`: Makes the rows `Online` and `With`, the same as in the dialog of an entry; opens a box of
+ *   the list in the dialog of an entry, and gives the calendar it writes with.
  * - `./actions.ts`: Makes the actions of an open box of the list, as in the plan.
  * - `./boxes.ts`: Loads the boxes of the days of the list.
  * - `./groups.ts`: Makes the group of a box of the list with the menu of the groups of its week.
@@ -109,20 +109,21 @@
  */
 
 import {
-    breakableOf, choiceOf, choicesOf, fileShow, pairOf, partFieldOf, partOf, rowOf, searchOf,
+    breakableOf, choiceOf, choicesOf, fileShow, pairOf, partFieldOf, rowOf, searchOf,
 } from "./choices.ts";
 import {
     boxTimesOf, dateFieldStart, dateParse, lengthSwapOf, lengthTextOf, minutesOf, rangeDash, timeFieldRead,
     timeFieldStart, weekdayDateTextOf,
 } from "./times.ts";
 import {
-    addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, platformSend, renameSend,
-    standardFirst,
+    addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, renameSend, standardFirst,
 } from "./places.ts";
 import {
     boxAdd, boxDrop, boxLog, boxRepeat, boxSubmit, boxUndo, boxUniversity,
 } from "./entries.ts";
-import { boxOpenEdit, dayCalendarOf, entryBoxOf, entryOpenFromBox, livingFileOf, withRowOf } from "./categories.ts";
+import {
+    boxOpenEdit, dayCalendarOf, entryBoxOf, entryOpenFromBox, livingFileOf, onlineRowOf, withRowOf,
+} from "./categories.ts";
 import { boxActionsOf } from "./actions.ts";
 import { boxesFetch } from "./boxes.ts";
 import { boxGroupOf, pinnedMenuOf } from "./groups.ts";
@@ -145,7 +146,7 @@ import type { Box, BoxState, PlanDay } from "./boxes.ts";
 import type { Category, Field } from "./categories.ts";
 import type { Choice } from "./choices.ts";
 import type { Attendee, BoxFields, Online } from "./entries.ts";
-import type { Place, Platform } from "./places.ts";
+import type { Place } from "./places.ts";
 import type { Person, PersonEdit } from "../persons.ts";
 import type { ModuleType } from "./skill.ts";
 import type { IconNode } from "lucide";
@@ -517,8 +518,8 @@ let placeEdit: Place | null = null;
 let placeOpen: boolean = false;
 
 /**
- * Whether what the series does online shows its parts below it, its passcode and its link, opened and closed by its
- * pencil as in the dialog of an entry, see {@link onlineRowOf}.
+ * Whether what the series does online shows its parts below it, its label, provider, passcode and link, opened and
+ * closed by its pencil as in the dialog of an entry, see {@link onlineRowsOf}.
  */
 let onlineOpen: boolean = false;
 
@@ -2201,77 +2202,28 @@ function placeRowOf(form: Form): HTMLElement {
 }
 
 /**
- * Makes the row of what the series does online in the form, as `Online` of the dialog, see `onlineRowOf`
- * in `./categories.ts`: its platform, my platforms the most used first, a platform typed added to `Online.md`,
- * see `platformSend` in `./places.ts`; below it, while one is picked, the link of its meetings, the link of its
- * web app of its row in it, as the dialog has it, until I type the link of the meetings in its place, which alone is
- * kept, and their passcode, the link last, shown only while its pencil opened them, as in the dialog of an entry.
- * Another platform picked empties both.
+ * Makes the row of what the series does online in the form, the row `Online` of the dialog of an entry,
+ * see `onlineRowOf` in `./categories.ts`, its field that of `Skill`: its platform, below it grey its provider and
+ * passcode, its pencil opening `Label`, `Provider`, `Passcode` and `Link`; what I pick and type goes into the form,
+ * so into its boxes.
  * - `field`: The field `Online` of `Skill`, `undefined` while the categories are not loaded.
- * - `link`, `pass`: Fields of the link and the passcode.
- * - `parts`: The parts, shown while a platform is picked and its pencil opened them, see {@link onlineOpen}.
- * - `pencil`: The pencil, `✎`, while a platform is picked.
- * - `show`: Shows the parts for the platform picked.
  *
  * @param form - The form
- * @returns The row
+ * @returns The row, none while the categories are not loaded
  */
-function onlineRowOf(form: Form): HTMLElement {
+function onlineRowsOf(form: Form): HTMLElement[] {
     const field: Field | undefined = skillFieldOf("online");
-    const link: HTMLInputElement = partFieldOf("url", form.onlineLink, "Link online");
-    const pass: HTMLInputElement = partFieldOf("text", form.passcode, "Passcode online");
-    const parts: HTMLElement = elementOf("div", "field-parts", "");
-    const pencil: HTMLButtonElement = document.createElement("button");
-    const show: () => void = (): void => {
-        if (link !== document.activeElement)
-            link.value = form.onlineLink !== "" ? form.onlineLink : field?.platforms[form.online]?.link ?? "";
-        parts.hidden = !onlineOpen || form.online === "";
-        pencil.hidden = form.online === "";
-    };
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
-    iconPut(pencil, Pencil, "Change online");
-    pencil.addEventListener("click", (): void => {
-        onlineOpen = !onlineOpen;
-        show();
-        if (onlineOpen)
-            parts.querySelector("input")?.focus();
-    });
-    parts.append(partOf("Passcode", pass), partOf("Link", link));
-    link.addEventListener("input", (): void => {
-        form.onlineLink = link.value.trim() === (field?.platforms[form.online]?.link ?? "") ? ""
-            : link.value.trim();
-        formChanged();
-    });
-    pass.addEventListener("input", (): void => {
-        form.passcode = pass.value.trim();
-        formChanged();
-    });
-    show();
-    return rowOf("Online", choicesOf({
-        search: searchOf((field?.values ?? []).map(choiceOf)), picked: form.online === "" ? [] : [form.online],
-        many: false, adding: true, noun: "platform", aside: [pencil], below: [parts],
-        add: async (name: string): Promise<string | null> => {
-            if (name.trim() === "")
-                return null;
-            const platform: Platform = await platformSend({ name: name, provider: "", link: "" }, "");
-            field?.values.push(platform.name);
-            if (field !== undefined)
-                field.platforms[platform.name] = platform;
-            return platform.name;
+    return field === undefined ? [] : [onlineRowOf({
+        field: field, categories: categories,
+        online: { online: form.online, onlineLink: form.onlineLink, passcode: form.passcode }, open: onlineOpen,
+        opened: (open: boolean): void => {
+            onlineOpen = open;
         },
-        pick: (values: string[]): void => {
-            const platform: string = values[0] ?? "";
-            if (platform !== form.online) {
-                form.onlineLink = "";
-                form.passcode = "";
-                pass.value = "";
-            }
-            form.online = platform;
-            show();
+        pick: (online: Online): void => {
+            Object.assign(form, online);
             formChanged();
         },
-    }));
+    })];
 }
 
 /**
@@ -2572,7 +2524,7 @@ function formFill(): void {
     const rows: HTMLElement[] = picking ? [] : plain !== null ? plainRowsOf(plain, form)
         : form.type === examType ? [seriesRowOf(form), semesterRowOf(courseSemesterOf()), boxesRowOf()]
         : [seriesRowOf(form), semesterRowOf(courseSemesterOf()), ...lockedOf(follows, [placeRowOf(form),
-            onlineRowOf(form), ...courseTimeRowsOf(form), datesRowOf(form, formChanged)]),
+            ...onlineRowsOf(form), ...courseTimeRowsOf(form), datesRowOf(form, formChanged)]),
             boxesRowOf(), ...lockedOf(follows, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
     if (grouped !== null)
@@ -3123,7 +3075,7 @@ function plainTimeRowsOf(form: Form): HTMLElement[] {
 function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
     return [rowOf("Summary", plainSummaryOf(series)),
         ...series.category === skillName ? [semesterRowOf(series.semester || semesterOf(form.first))] : [],
-        placeRowOf(form), onlineRowOf(form),
+        placeRowOf(form), ...onlineRowsOf(form),
         ...plainTimeRowsOf(form), datesRowOf(form, formChanged), boxesRowOf(),
         ...withAsked() ? peopleRowsOf(form) : []];
 }

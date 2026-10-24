@@ -141,7 +141,7 @@ import type { Calendar, EventApi } from "fullcalendar";
 import type { Box } from "./boxes.ts";
 import type { Choice, ChoicesSetup } from "./choices.ts";
 import type { Place, Platform } from "./places.ts";
-import type { Attendee, BoxFields, EntryFields } from "./entries.ts";
+import type { Attendee, BoxFields, EntryFields, Online } from "./entries.ts";
 import type { ModuleType, SkillLinks, SkillValues } from "./skill.ts";
 import type { Person, PersonEdit } from "../persons.ts";
 import type { Course } from "./series.ts";
@@ -1143,7 +1143,19 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             },
         })];
     if (field.key === "online")
-        return [onlineRowOf(field)];
+        return [onlineRowOf({
+            field: field, categories: categories,
+            online: { online: values.online, onlineLink: onlineLink, passcode: passcode }, open: onlineOpen,
+            opened: (open: boolean): void => {
+                onlineOpen = open;
+            },
+            pick: (online: Online): void => {
+                values.online = online.online;
+                onlineLink = online.onlineLink;
+                passcode = online.passcode;
+                saveAllow();
+            },
+        })];
     if (field.key === "title" && meal !== null)
         return meal;
     if (field.key === "title" && field.many === true && !asPlanned())
@@ -1424,8 +1436,30 @@ export function withRowOf(setup: WithSetup): HTMLElement {
 }
 
 /**
+ * How a row `Online` is built, see {@link onlineRowOf}, the same in this dialog and in that of a series,
+ * see `./series.ts`; only what it saves differs.
+ *
+ * - `field`: The field `Online`, my platforms of `Online.md`, the most used first, with the row of each.
+ * - `categories`: The categories whose fields `Online` take a platform as the reader wrote it, see {@link platformTake}.
+ * - `online`: The platform picked, the link of its meeting or video and its passcode.
+ * - `open`: Whether its parts show below it.
+ * - `opened`: Takes whether its parts show, as its pencil opens or closes them, or a new platform opens them.
+ * - `pick`: Takes the platform, the link and the passcode, after each platform picked, added or renamed and each link
+ *   and passcode typed.
+ */
+export type OnlineSetup = {
+    field: Field;
+    categories: Category[];
+    online: Online;
+    open: boolean;
+    opened: (open: boolean) => void;
+    pick: (online: Online) => void;
+};
+
+/**
  * Builds the row of `Online`, what the entry did online, a sibling of its place that works like it, since a place is
- * only where I physically am, see {@link fieldRowsOf}: one line showing its platform, like `YouTube`, whose list offers
+ * only where I physically am, see {@link fieldRowsOf}, the one maker of this dialog and of that of a series,
+ * see {@link OnlineSetup}: one line showing its platform, like `YouTube`, whose list offers
  * my platforms of `Online.md`, the most used first, searched as I type, and adds a typed name as a new platform,
  * see `platformSend` in `places.ts`, its parts then open; beside it the pencil while a platform is picked, which shows
  * and hides its parts; below it, as a place shows its address, small and grey, its parts that have a value: who offers
@@ -1433,56 +1467,68 @@ export function withRowOf(setup: WithSetup): HTMLElement {
  * the web app of its row, never the link itself as text, `Link` while nothing else shows. Its parts, indented as those
  * of a place, see {@link partOf}, the link last, as in every field, since a click on what shows opens it: `Label`,
  * its name, which renames it, and `Provider`, which change its row of `Online.md` as I leave them, a new name
- * showing the rows anew, see {@link placesShow}; then the passcode and the link of the entry's own meeting, the link
+ * showing the row anew; then the passcode and the link of the entry's own meeting, the link
  * holding the web app of its row, as the link of a place holds its own, until I type the entry's own in its place,
- * which alone is kept; both go along when the entry is saved, see {@link textsRead}. Another platform picked empties
+ * which alone is kept; both go along when the entry is saved. Another platform picked empties
  * both, as a new meeting.
+ * - `online`, `open`: What is picked and whether its parts show.
  * - `pencil`: The pencil, `✎`.
  * - `line`: The parts with a value below the platform.
  * - `label`, `provider`, `link`, `pass`: Fields of the name, the provider, the link and the passcode.
  * - `hint`: Line saying that the reader did not take the name or the provider.
- * - `write`: Sends the name and the provider as typed and takes the platform as written.
  * - `parts`: The parts to type, shown while the pencil opened them.
  * - `show`: Shows the pencil, the line and the parts for the platform picked.
+ * - `take`: Takes what is picked and typed, shows it and saves it into the setup.
+ * - `write`: Sends the name and the provider as typed and takes the platform as written.
+ * - `row`: The row.
  *
- * @param field - The field `Online`
+ * @param setup - What it shows and what it saves into
  * @returns Its row
  */
-function onlineRowOf(field: Field): HTMLElement {
+export function onlineRowOf(setup: OnlineSetup): HTMLElement {
+    const field: Field = setup.field;
+    let online: Online = setup.online;
+    let open: boolean = setup.open;
     const pencil: HTMLButtonElement = document.createElement("button");
     const line: HTMLAnchorElement = document.createElement("a");
-    const label: HTMLInputElement = partFieldOf("text", values.online, "Label of the platform");
+    const label: HTMLInputElement = partFieldOf("text", online.online, "Label of the platform");
     const provider: HTMLInputElement = partFieldOf("text", "", "Provider of the platform");
-    const link: HTMLInputElement = partFieldOf("url", onlineLink, "Link online");
-    const pass: HTMLInputElement = partFieldOf("text", passcode, "Passcode online");
+    const link: HTMLInputElement = partFieldOf("url", online.onlineLink, "Link online");
+    const pass: HTMLInputElement = partFieldOf("text", online.passcode, "Passcode online");
     const hint: HTMLParagraphElement = document.createElement("p");
     const parts: HTMLElement = document.createElement("div");
     const show: () => void = (): void => {
-        const row: Platform | undefined = field.platforms[values.online];
-        const target: string = onlineLink !== "" ? onlineLink : row?.link ?? "";
-        line.textContent = [row?.provider ?? "", passcode === "" ? "" : `Passcode ${passcode}`]
+        const platform: Platform | undefined = field.platforms[online.online];
+        const target: string = online.onlineLink !== "" ? online.onlineLink : platform?.link ?? "";
+        line.textContent = [platform?.provider ?? "", online.passcode === "" ? "" : `Passcode ${online.passcode}`]
             .filter((part: string): boolean => part !== "").join(", ") || (target === "" ? "" : "Link");
         if (target !== "")
             line.href = target;
         else
             line.removeAttribute("href");
-        line.hidden = values.online === "" || line.textContent === "";
-        pencil.hidden = values.online === "";
-        parts.hidden = !onlineOpen || values.online === "";
+        line.hidden = online.online === "" || line.textContent === "";
+        pencil.hidden = online.online === "";
+        parts.hidden = !open || online.online === "";
         if (label !== document.activeElement)
-            label.value = values.online;
+            label.value = online.online;
         if (provider !== document.activeElement)
-            provider.value = row?.provider ?? "";
+            provider.value = platform?.provider ?? "";
         if (link !== document.activeElement)
-            link.value = onlineLink !== "" ? onlineLink : row?.link ?? "";
+            link.value = target;
+    };
+    const take: (next: Online) => void = (next: Online): void => {
+        online = next;
+        show();
+        setup.pick(online);
     };
     pencil.type = "button";
     pencil.className = "entry-pencil";
     iconPut(pencil, Pencil, "Change online");
     pencil.addEventListener("click", (): void => {
-        onlineOpen = !onlineOpen;
+        open = !open;
+        setup.opened(open);
         show();
-        if (onlineOpen)
+        if (open)
             parts.querySelector("input")?.focus();
     });
     line.className = "entry-address";
@@ -1496,15 +1542,14 @@ function onlineRowOf(field: Field): HTMLElement {
     parts.append(partOf("Label", label), partOf("Provider", provider), partOf("Passcode", pass), partOf("Link", link),
         hint);
     const write: () => void = (): void => {
-        const old: string = values.online;
+        const old: string = online.online;
         platformSend({ name: label.value, provider: provider.value, link: field.platforms[old]?.link ?? "" }, old)
             .then((platform: Platform): void => {
-                platformTake(platform, old);
+                platformTake(setup.categories, platform, old);
                 hint.hidden = true;
+                take({ ...online, online: platform.name });
                 if (platform.name !== old)
-                    placesShow();
-                else
-                    show();
+                    row.replaceWith(onlineRowOf({ ...setup, online: online, open: open }));
             }).catch((error: unknown): void => {
                 console.error(error);
                 hint.hidden = false;
@@ -1513,50 +1558,46 @@ function onlineRowOf(field: Field): HTMLElement {
     label.addEventListener("change", write);
     provider.addEventListener("change", write);
     link.addEventListener("input", (): void => {
-        onlineLink = link.value.trim() === (field.platforms[values.online]?.link ?? "") ? "" : link.value.trim();
-        show();
+        take({ ...online, onlineLink: link.value.trim() === (field.platforms[online.online]?.link ?? "") ? ""
+            : link.value.trim() });
     });
     pass.addEventListener("input", (): void => {
-        passcode = pass.value.trim();
-        show();
+        take({ ...online, passcode: pass.value.trim() });
     });
     show();
-    return rowOf(field.name, choicesOf({
-        search: searchOf(field.values.map(choiceOf)), picked: values.online === "" ? [] : [values.online],
+    const row: HTMLElement = rowOf(field.name, choicesOf({
+        search: searchOf(field.values.map(choiceOf)), picked: online.online === "" ? [] : [online.online],
         many: false, adding: true, noun: "platform", aside: [pencil], below: [line, parts],
         add: async (name: string): Promise<string | null> => {
             if (name.trim() === "")
                 return null;
             const platform: Platform = await platformSend({ name: name, provider: "", link: "" }, "");
-            platformTake(platform, "");
-            onlineOpen = true;
+            platformTake(setup.categories, platform, "");
+            if (!field.values.includes(platform.name))
+                field.values.push(platform.name);
+            open = true;
+            setup.opened(open);
             return platform.name;
         },
         pick: (picked: string[]): void => {
             const platform: string = picked[0] ?? "";
-            if (platform !== values.online) {
-                onlineLink = "";
-                passcode = "";
+            if (platform !== online.online)
                 pass.value = "";
-            }
-            values.online = platform;
-            if (platform !== "")
-                valueAdd(field, platform);
-            show();
-            saveAllow();
+            take(platform === online.online ? online : { online: platform, onlineLink: "", passcode: "" });
         },
     }));
+    return row;
 }
 
 /**
  * Takes a platform as the reader wrote it into the field `Online` of every category, since the platforms are one list:
- * each offers its new name in place of its old one, with its row, and the entry picked with it takes the new name;
- * entries written before keep what they have.
+ * each offers its new name in place of its old one, with its row; entries written before keep what they have.
  *
+ * @param categories - The categories of the dialog of an entry or of a series
  * @param platform - The platform as written
  * @param old - Its name as it was, empty for a new one
  */
-function platformTake(platform: Platform, old: string): void {
+function platformTake(categories: Category[], platform: Platform, old: string): void {
     categories.flatMap((category: Category): Field[] => category.fields)
         .filter((field: Field): boolean => field.key === "online")
         .forEach((field: Field): void => {
@@ -1564,8 +1605,6 @@ function platformTake(platform: Platform, old: string): void {
             delete field.platforms[old];
             field.platforms[platform.name] = platform;
         });
-    if (old !== "" && values.online === old)
-        values.online = platform.name;
 }
 
 /**
