@@ -221,7 +221,8 @@ async function fileStream(response: ServerResponse, file: NotesStream, name: str
  * - `POST /api/day/moved`: Moves the entry named in the body to the start and end in the body, every other field
  *   as its file holds it.
  * - `DELETE /api/day/log?id=…`: Removes entry of the identifier.
- * - `POST /api/day/boxes`: Adds box of the body and sends its identifier.
+ * - `POST /api/day/boxes`: Adds the box of the body, numbers the boxes of its type anew, a tutorial by its week,
+ *   see `numbersRenew` in `course.ts`, and sends its identifier.
  * - `PATCH /api/day/boxes`: Changes box of the body.
  * - `DELETE /api/day/boxes?id=…`: Removes box of the identifier, of one day of a series that day alone.
  * - `DELETE /api/day/plain?id=…`: Removes the plain series of the `UID` whole, every part of it, see `plainRemove`
@@ -434,7 +435,11 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
         responseSend(response, 200, null);
 
     } else if (request.method === "POST" && url.pathname === "/api/day/boxes") {
-        responseSend(response, 200, boxAdd(await json(request) as BoxNew));
+        const id: string = boxAdd(await json(request) as BoxNew);
+        const box: Box = boxFind(id)[2];
+        if (box.module !== "" && box.type !== "")
+            numbersRenew(box.module, box.type, box.semester || semesterOf(box.day));
+        responseSend(response, 200, id);
 
     } else if (request.method === "PATCH" && url.pathname === "/api/day/boxes") {
         boxEdit(await json(request) as BoxChange);
