@@ -297,7 +297,7 @@
 }
 
 /* The grey line of a row, its times, place and first person, see `metaOf` and `listRowOf` in `rows.ts`, small,
-   on one line, ending in `…` where it is too long, its whole text as its tooltip; a person a link in the grey of its
+   on one line, ending in `…` where it is too long, then its text as its tooltip; a person a link in the grey of its
    line, never underlined, as a place with its link, see `.place-link` in `log.css`, lighter under the pointer,
    softly as every hover */
 .series-meta {

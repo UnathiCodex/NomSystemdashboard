@@ -99,8 +99,8 @@ export function numberOf(text: string, open: (() => void) | null, title: string)
 
 /**
  * Makes the grey line of a row right of its day, its times and place, apart by a middle dot, always on one line,
- * its first person cut by `…` where the line has no more room, see `.series-parts` in `series.css`; the whole line
- * as its tooltip.
+ * its first person cut by `…` where the line has no more room, see `.series-parts` in `series.css`; only then
+ * the line as its tooltip, its visible text alone, never what a menu in it holds.
  * - `kept`: Its parts, none left out.
  * - `meta`: The line.
  * - `shown`: Its parts side by side.
@@ -119,9 +119,12 @@ export function metaOf(parts: (string | Node)[][]): HTMLElement {
         shown.append(span);
     });
     meta.append(shown);
-    meta.title = kept.map((part: (string | Node)[]): string => part
-        .map((piece: string | Node): string => typeof piece === "string" ? piece : piece.textContent ?? "").join(""))
-        .join(" · ");
+    meta.addEventListener("pointerenter", (): void => {
+        const parts: HTMLElement[] = [...shown.children] as HTMLElement[];
+        meta.title = meta.scrollWidth > meta.clientWidth
+            || parts.some((part: HTMLElement): boolean => part.scrollWidth > part.clientWidth)
+            ? parts.map((part: HTMLElement): string => part.innerText).join(" · ") : "";
+    });
     return meta;
 }
 
