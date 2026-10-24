@@ -11,7 +11,7 @@
  *   at the right, and below it its sections without a grey box around them, as the rows of the course, each a row,
  *   in the order of the notes, grey, as a note of the tree, see `.tree-file` in `../notes/notes.css`, white under
  *   the pointer: the name of the section as the tree names it, like `01_01_SampleMeanEstimator`, and its round,
- *   like `2`, the one its view shows, see `./round.ts`, `Ready` once its Task has its runs spaced, `New` while I never
+ *   like `2`, the one its view shows, see `./round.ts`, `Ready` once its Task has its runs spaced, `0` while I never
  *   learned it; a tap on a row opens the section.
  * Nothing more, until I want more: every further piece only after Claude recommends it and I say yes.
  * Everything is computed from the log by the reader, see `reader/skill.ts`; nothing is kept here.
@@ -42,13 +42,13 @@ import type { SkillModule, SkillSection, SkillTask, Skilling } from "../skill/at
  *
  * @param module - Its module with its tasks
  * @param section - The section
- * @returns Its round, like `2`, `Ready` or `New`
+ * @returns Its round, like `2`, `0` while I never learned it, or `Ready`
  */
 function roundOf(module: SkillModule, section: SkillSection): string {
     const ready: boolean = module.tasks.some((task: SkillTask): boolean => task.id === section.cold && task.ready);
     if (ready)
         return "Ready";
-    return section.days.length === 0 ? "New" : String(section.round);
+    return String(section.round);
 }
 
 /**
