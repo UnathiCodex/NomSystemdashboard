@@ -19,8 +19,8 @@
    icons one icon size big, notes with lines a bit higher than my Obsidian's;
    the tree of the scripts and of my new system in the text of the page, `--tree-text`, 0.9rem, a little smaller
    than the 1rem of controls and two steps bigger than Obsidian's 13 px file explorer, so it reads easily while
-   learning, the tree as wide as a module of 40 characters needs on its picker, the most a folder name of mine has,
-   at the densest of my names, `IN2028_BusinessAnalyticsMachineLearning` with 10.1 px a character, 404 px,
+   learning, the tree just as wide as the widest of my modules needs on its line, 40 characters the most a folder
+   name of mine has, `IN2028_BusinessAnalyticsMachineLearning` in bold, with its room on both sides, 22rem,
    `--tree-width`, with the same 0.75rem from the rail and from its line around it, as the sidebar of the Claude app, so every module, chapter
    and note fits on its line and the tree takes no more of the page;
    what is picked or shown a calm lighter grey with a soft line, never glaring white;
@@ -94,7 +94,7 @@
     --radius: 0.75rem;
     --chip-radius: 0.5rem;
     --note-width: 18rem;
-    --tree-width: 23.75rem;
+    --tree-width: 22rem;
     --reading-width: 45.5rem;
     color-scheme: dark;
 }
