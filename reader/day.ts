@@ -356,9 +356,10 @@ function cookedCheck(category: string, start: Date, cooked: string, kept: string
 
 /**
  * Carries a cooking into the meals that draw from it, whatever their time, so each eats its part of the pot by itself
- * and follows every change of the cooking: every food of the pot in a meal gets the grams of the pot divided by how
- * many meals draw, halves for two, thirds for three, to one decimal, like 250 of 500 g, a `~` of grams guessed kept,
- * in the meal of the pot; a food without grams in the pot keeps the grams the meal gave it. A food the cooking took
+ * and follows every change of the cooking: a food of the pot new to a meal, or whose grams in the pot changed, gets
+ * the grams of the pot divided by how many meals draw, halves for two, thirds for three, to one decimal, like 250 of
+ * 500 g, a `~` of grams guessed kept, in the meal of the pot; every other food keeps the grams the meal gave it, like
+ * 25 g of pesto typed over the 50 of the pot, since I type what I ate. A food the cooking took
  * in since a meal drew comes into the meal, also under a meal it renamed, one it took out leaves it, and one I took
  * out of a meal stays out. Foods a meal ate beside the pot keep their lines, after the foods of the pot of the same
  * meal of mine, unless the pot now holds the same food in the same meal; the lines ordered as those of every entry,
@@ -368,6 +369,7 @@ function cookedCheck(category: string, start: Date, cooked: string, kept: string
  * - `found`: The cooking with its file, `undefined` when it is gone.
  * - `keyOf`: Key of a line by its food and meal, in small letters.
  * - `drawn`: Keys of the lines of the pot as it was when the meals drew.
+ * - `drawnGrams`: Grams of each line of the pot as it was when the meals drew, by its key.
  * - `potKeys`: Keys of the lines of the pot as it is.
  * - `eaters`: The meals drawing from it.
  * - `had`: The lines of a meal that came from the pot as it was, by their keys.
@@ -386,6 +388,8 @@ function cookedShare(cooked: string, before?: string[]): void {
         return [parts[0], parts[1] ?? "", parts[2] ?? "", parts[4] ?? ""].join(";").toLowerCase();
     };
     const drawn: Set<string> = new Set((before ?? found[1].foods).map(keyOf));
+    const drawnGrams: Map<string, string> = new Map((before ?? found[1].foods)
+        .map((line: string): [string, string] => [keyOf(line), line.split(";")[3] ?? ""]));
     const potKeys: Set<string> = new Set(found[1].foods.map(keyOf));
     const eaters: Entry[] = entriesRead(day.log, "1970-01-01T00:00:00Z", "9999-12-31T00:00:00Z")
         .filter((entry: Entry): boolean => entry.category === foodName && entry.cooked === cooked);
@@ -397,7 +401,7 @@ function cookedShare(cooked: string, before?: string[]): void {
                 .map((line: string): string => {
                     const parts: string[] = line.split(";");
                     const grams: RegExpExecArray | null = /^(~?)\s*(\d+(?:\.\d+)?)$/.exec((parts[3] ?? "").trim());
-                    if (grams === null)
+                    if (grams === null || (had.has(keyOf(line)) && drawnGrams.get(keyOf(line)) === parts[3]))
                         return had.get(keyOf(line)) ?? line;
                     parts[3] = `${grams[1]}${Math.round(Number(grams[2]) / eaters.length * 10) / 10}`;
                     return parts.join(";");
