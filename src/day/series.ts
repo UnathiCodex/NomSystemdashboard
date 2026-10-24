@@ -2406,8 +2406,8 @@ function groupFrom(form: Form, group: string): void {
     groupBack = form;
     groupStart(form.type, group);
     const rem: number = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    const lift: number = series.getBoundingClientRect().top - 1.5 * rem - under.offsetTop;
-    under.style.translate = `-1.5rem ${lift}px`;
+    const lift: number = series.getBoundingClientRect().top - 2.5 * rem - under.offsetTop;
+    under.style.translate = `-2.5rem ${lift}px`;
 }
 
 /**
@@ -2574,7 +2574,7 @@ function formFill(): void {
             boxesRowOf(), ...lockedOf(follows, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
     if (grouped !== null)
-        fields.append(elementOf("h2", "series-heading", `Series: Group ${grouped.group}`.trim()));
+        fields.append(elementOf("h2", "series-heading", `Series: Group ${grouped.was}`.trim()));
     fields.append(...fresh === null ? rows
         : [...freshRowsOf(), ...fresh.category === skillName ? rows.slice(1) : rows]);
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");
