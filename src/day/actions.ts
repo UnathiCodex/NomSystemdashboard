@@ -9,7 +9,7 @@
  * deadline, a move by mistake set right by moving it again in its dialog, see `reader/boxes.ts`; `Cancel` for a lecture,
  * an exercise, a tutorial or a sheet, see `numberedTypes` in `series.ts`,
  * which marks it cancelled by the university; and last `Skip`, which cancels it; packed together at the right, the same
- * gap between them, however many a box has. A box whose day is over, missed, has no `Move`, since what I set right
+ * gap between them, however many a box has. A box whose day is over has no `Move`, since what I set right
  * moves by its dialog. The series of a box opens from the pencil after its
  * times in its dialog, see `seriesShow` in `categories.ts`. Each its icon, its word as tooltip, in the one look of an
  * icon button, see `.icon-button` in `../base.css` and `.box-actions` in `boxes.css`; a click on one never opens
@@ -25,7 +25,7 @@
  * - `../icons.ts`: Puts the icons into the buttons, their words as tooltip.
  * - `../menu.ts`: Puts the actions behind one button `⋯` on a phone.
  * - `../phone.ts`: Tells a phone.
- * - `../today.ts`: Gives today's calendar date, which tells a box missed.
+ * - `../today.ts`: Gives today's calendar date, which tells a box whose day is over.
  * - `lucide`: The icons check, arrow, calendar crossed out and cross.
  */
 
@@ -67,7 +67,7 @@ function actionOf(icon: IconNode, words: string, click: () => void, listed: bool
 /**
  * Makes the actions of an open box, see the top of this file.
  * - `send`: Makes the click of an action that sends a change of the box.
- * - `missed`: Whether its day is over, without deadline, so it moves only by its dialog.
+ * - `over`: Whether its day is over, without deadline, so it moves only by its dialog.
  * - `buttons`: The actions in their order.
  * - `actions`: The actions in their row, on a phone the button `⋯` with its menu, but in a list.
  *
@@ -82,12 +82,12 @@ export function boxActionsOf(box: Box, log: () => void, act: (send: () => Promis
                              listed: boolean = false): HTMLElement {
     const send: (change: () => Promise<void>) => () => void = (change: () => Promise<void>): () => void =>
         (): void => act(change);
-    const missed: boolean = box.deadline === "" && box.day < calendarTodayOf();
+    const over: boolean = box.deadline === "" && box.day < calendarTodayOf();
     const buttons: HTMLButtonElement[] = [box.deadline === "" ? actionOf(Check, "Log", log, listed)
         : actionOf(Check, "Submit", send((): Promise<void> => boxSubmit(box.id, true)), listed)];
     if (box.editable)
         buttons.push(
-            ...(box.deadline !== "" || missed ? []
+            ...(box.deadline !== "" || over ? []
                 : [actionOf(ArrowRight, "Move", send((): Promise<void> => boxPush(box.id)), listed)]),
             ...(box.category === skillName && numberedTypes.includes(box.type)
                 ? [actionOf(CalendarOff, "Cancel", send((): Promise<void> => boxUniversity(box.id, true)), listed)] : []),

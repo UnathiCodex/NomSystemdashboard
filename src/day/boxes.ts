@@ -56,7 +56,7 @@
  * A box neither done nor cancelled is carried along once its day is over, as if I pushed it to the next day at the end
  * of each day, see `carriedOf` in `reader/boxes.ts`: it stands among the boxes of today, greyed on each day it left,
  * and shows, counts and moves as a box I pushed by hand; one I no longer mean to do I skip, and one I move to a day
- * that is over stays there, open and missed. A box with a deadline, which is never pushed, is carried along on today
+ * that is over stays there, open, and counts as skipped. A box with a deadline, which is never pushed, is carried along on today
  * as it is: in its
  * section after the open boxes of today, without a heading of its own, since its deadline says so, the earliest first,
  * see `boxesCarried` in `reader/boxes.ts`, until I tick it submitted or cancel it with `Skip`; a click on it changes it.
@@ -103,7 +103,7 @@ import { calendarTodayOf } from "../today.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
 import { phone } from "../phone.ts";
 import { readerAsk } from "../reader.ts";
-import { ArrowLeft, ArrowRight, CalendarOff, Check, CircleDashed, Gift, Repeat, X } from "lucide";
+import { ArrowLeft, ArrowRight, CalendarOff, Check, Gift, Repeat, X } from "lucide";
 
 import type { Calendar, EventApi, EventReceiveInfo } from "fullcalendar";
 import type { IconNode } from "lucide";
@@ -613,8 +613,9 @@ function stateOf(calendar: Calendar, box: Box): HTMLElement {
         return box.deadline === ""
             ? stateMarkOf(calendar, Check, "Logged", (): Promise<void> => boxUndo(calendar, box.id))
             : stateMarkOf(calendar, Check, "Submitted", (): Promise<void> => boxSubmit(box.id, false));
-    if (box.state === "dropped")
-        return stateMarkOf(calendar, X, "Skipped", box.editable ? (): Promise<void> => boxDrop(box.id, false) : null);
+    if (box.state === "dropped" || box.state === "open")
+        return stateMarkOf(calendar, X, "Skipped",
+            box.editable && box.state === "dropped" ? (): Promise<void> => boxDrop(box.id, false) : null);
     if (box.state === "university")
         return stateMarkOf(calendar, CalendarOff, "Cancelled",
             box.editable ? (): Promise<void> => boxUniversity(box.id, false) : null);
@@ -693,19 +694,18 @@ function tutorialIs(box: Box): boolean {
  * Makes a box of the list: its lines, see {@link boxContentOf}, which change it when clicked, see {@link boxClick},
  * and at their right its actions while open, see
  * {@link actionsOf}, else its state, see {@link stateOf}; in the list carried along with its own day and without how
- * near its deadline is, since its deadline line names it. An open box without deadline whose day is over, missed,
- * not carried along, greyed as `box-missed`, its actions without `Move`, see `../day/actions.ts`, before them the calm
- * dashed circle `Missed` the list of a module shows for it, see `missedOf` in `../editor/course.ts`; moving it by its
- * dialog to today or later carries it along again, see `carriedPut` in `reader/boxes.ts`.
+ * near its deadline is, since its deadline line names it. An open box without deadline whose day is over counts as
+ * skipped, as in the list of a module, see `overIs` in `../editor/course.ts`: not carried along, greyed as
+ * `box-over`, the cross of a skipped box in place of its actions, nothing written, its dialog still logging it;
+ * moving it by its dialog to today or later carries it along again, see `carriedPut` in `reader/boxes.ts`.
  * An open box has the class `box-draggable`, so it can be dragged into the log, see {@link boxesStart},
  * and keeps its identifier, which names it when it is dropped, see {@link boxReceive}, its category, its title
  * and its minutes in the log as data of its element, and how many lines it has as `--box-lines`, so its actions
  * or its state stand in the middle of all of them, see `.box-actions` in `boxes.css`.
  * - `element`: The box.
- * - `missed`: Whether it is open, without deadline, and its day over.
+ * - `over`: Whether it is open, without deadline, and its day over, so skipped.
  * - `body`: Its lines.
  * - `end`: Its actions or its state at its right.
- * - `mark`: The mark of a missed box.
  *
  * @param calendar - Calendar of the day
  * @param box - The box
@@ -714,8 +714,8 @@ function tutorialIs(box: Box): boolean {
  */
 function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTMLElement {
     const element: HTMLElement = entryPartOf("div", `box box-${box.state}`, []);
-    const missed: boolean = box.state === "open" && box.deadline === "" && box.day < calendarTodayOf();
-    element.classList.toggle("box-missed", missed);
+    const over: boolean = box.state === "open" && box.deadline === "" && box.day < calendarTodayOf();
+    element.classList.toggle("box-over", over);
     const body: HTMLElement = entryPartOf("div", "box-body", boxContentOf(box, shown.day, !carriedShown));
     element.classList.toggle("box-draggable", box.state === "open");
     element.dataset.id = box.id;
@@ -727,12 +727,7 @@ function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTML
         if (event.target === element || body.contains(event.target as Node))
             boxClick(calendar, box).catch((error: unknown): void => console.error(error));
     });
-    const end: HTMLElement = box.state === "open" ? actionsOf(calendar, box) : stateOf(calendar, box);
-    if (missed) {
-        const mark: HTMLElement = entryPartOf("span", "box-state", []);
-        iconPut(mark, CircleDashed, "Missed");
-        end.prepend(mark);
-    }
+    const end: HTMLElement = box.state === "open" && !over ? actionsOf(calendar, box) : stateOf(calendar, box);
     element.append(body, end);
     return element;
 }

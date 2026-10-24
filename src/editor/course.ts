@@ -23,15 +23,15 @@
  * whole onto a next line, and right below all the people I am with, each a link to its row in `Persons.md`, see
  * `../persons.ts`, cut by `…` where it is too long, on a phone going on over the next line; and at its right edge,
  * beside both lines, the actions of an open box as small icon buttons in one row, on a phone below the row,
- * the same as in the plan, see `../day/actions.ts`, but of an open box whose day is over the calm mark of one
- * missed, which waits for its box to log or skip it, see {@link missedOf};
- * a box no longer open shows in that place the icon of its state, as in the plan, which takes it back with one click:
+ * the same as in the plan, see `../day/actions.ts`; an open box whose day is over counts as skipped, its box still
+ * logging it;
+ * a box no longer open, or skipped so, shows in that place the icon of its state, as in the plan, which takes it back with one click:
  * the check of a box logged, the cross of one I skipped, the calendar crossed out of one the university cancelled.
  * A box no longer open is greyed as in the plan, and so is a box not done whose day is over, which stays
  * in sight; an exam never, since every exam matters. Above the rows one calm line counts the boxes by icons, as
  * the dialog of a series, each also at none, like the calendar and `12`, the check and `0`, the cross and `0`,
  * the arrow and `1`: all of them, those done, those skipped or cancelled, and those pushed; one rule folds every card
- * alike, the exams and `Learning` too: of the days over only the open ones show, missed, and from today on the next open
+ * alike, the exams and `Learning` too: of the days over only the open exams show, and from today on the next open
  * box and two more, the rest folding. While some rows fold, a small chevron follows
  * the counts, down while folded, up while open, and a click on the counts opens and closes all of them, the rest
  * going on in place, so what stands above what I click never moves. A tap on the number of a row opens its box as
@@ -100,7 +100,7 @@ import { modulesFolder } from "../skill/links.ts";
 import { skillName } from "../skill/attempts.ts";
 import { changesFollow } from "../changes.ts";
 import { readerAsk } from "../reader.ts";
-import { ArrowRight, Calendar, CalendarOff, Check, ChevronDown, ChevronUp, CircleDashed, Pencil, X } from "lucide";
+import { ArrowRight, Calendar, CalendarOff, Check, ChevronDown, ChevronUp, Pencil, X } from "lucide";
 import "../day/boxes.css";
 import "../day/log.css";
 import "../day/day.css";
@@ -283,8 +283,8 @@ function stateOf(box: Box): HTMLElement {
     if (box.state === "done")
         state = box.deadline === "" ? [Check, "Logged", undo]
             : [Check, "Submitted", (): Promise<void> => boxSubmit(box.id, false)];
-    else if (box.state === "dropped")
-        state = [X, "Skipped", box.editable ? (): Promise<void> => boxDrop(box.id, false) : null];
+    else if (box.state === "dropped" || box.state === "open")
+        state = [X, "Skipped", box.editable && box.state === "dropped" ? (): Promise<void> => boxDrop(box.id, false) : null];
     const [icon, word, back]: [IconNode, string, (() => Promise<void>) | null] = state;
     const button: HTMLElement = document.createElement(back === null ? "span" : "button");
     if (button instanceof HTMLButtonElement)
@@ -300,18 +300,14 @@ function stateOf(box: Box): HTMLElement {
 }
 
 /**
- * Makes the mark of an open box whose day is over, missed, in the place of its actions: a calm dashed circle, `Missed`
- * as its tooltip, no button, since such a box waits for its own dialog, opened by its number, to log or skip it; never
- * counted as skipped, as it is still open.
- * - `mark`: The mark.
+ * Tells whether an open box counts as skipped: its day over, but an exam's, which stays open, as every exam matters;
+ * nothing written, its box still logging it.
  *
- * @returns The mark
+ * @param box - The box
+ * @returns Whether it counts as skipped
  */
-function missedOf(): HTMLElement {
-    const mark: HTMLElement = document.createElement("span");
-    mark.className = "box-state";
-    iconPut(mark, CircleDashed, "Missed");
-    return mark;
+function overIs(box: Box): boolean {
+    return box.state === "open" && box.type !== "FA" && box.day < calendarTodayOf();
 }
 
 /**
@@ -336,10 +332,11 @@ function groupPick(change: () => void, send: () => Promise<unknown>): void {
  * where it may still go to another, see `boxGroupOf` in `../day/groups.ts`, a pick shown at once, see
  * {@link groupPick}; its times, without times its length, its place short, see {@link roomOf}, its platform in its
  * place while it does something online, its chapters, and what more there is to say, like `in 77 days`, right below
- * them its people; then its actions while open, see {@link actionsOf}, but the mark of a missed one while its day is
- * over, see {@link missedOf}, else its state; greyed while not open, and so is a box not done whose day is over, but
+ * them its people; then its actions while open and its day not over, see {@link actionsOf}, else its state, see
+ * {@link stateOf}, an open one whose day is over skipped; greyed while not open, and so is a box not done whose day
+ * is over, but
  * an exam, which stays light; of an exam without kind `–` where the kind stands.
- * - `missed`: Whether it is open and its day over, but an exam's.
+ * - `over`: Whether it is open and its day over, so skipped, see {@link overIs}.
  *
  * @param box - The box
  * @param mark - What stands at its right, like `in 77 days` of an exam, empty for nothing
@@ -349,7 +346,7 @@ function groupPick(change: () => void, send: () => Promise<unknown>): void {
  */
 function boxRowOf(box: Box, mark: string,
                   number: string = box.number.replace("NONE", "–") || (box.type === "FA" ? "–" : "")): HTMLElement {
-    const missed: boolean = box.state === "open" && box.type !== "FA" && box.day < calendarTodayOf();
+    const over: boolean = overIs(box);
     return listRowOf({
         number: numberOf(number, (): void => {
             boxOpen(box).catch((error: unknown): void => console.error(error));
@@ -359,7 +356,7 @@ function boxRowOf(box: Box, mark: string,
             whereLinkedOf(box.category, box.from, roomOf(box.location), box.locationLink, box.online, box.onlineLink),
             [box.chapters.join(", ")]],
         people: box.attendees, persons: persons, mark: mark,
-        end: missed ? missedOf() : box.state === "open" ? actionsOf(box) : stateOf(box),
+        end: box.state === "open" && !over ? actionsOf(box) : stateOf(box),
         faded: box.type !== "FA" && (box.state !== "open" || box.day < calendarTodayOf()),
     });
 }
@@ -411,8 +408,8 @@ function countsOf(type: string, boxes: Box[], folds: boolean, learned: number = 
     const counts: HTMLElement = folds ? foldOf(type) : elementOf("span", "series-summary course-still", "");
     const states: [number, IconNode, string][] = [
         [boxes.filter((box: Box): boolean => box.state === "done").length + learned, Check, "done"],
-        [boxes.filter((box: Box): boolean => box.state === "dropped" || box.state === "university").length, X,
-            "skipped or cancelled"],
+        [boxes.filter((box: Box): boolean => box.state === "dropped" || box.state === "university" || overIs(box))
+            .length, X, "skipped or cancelled"],
         [boxes.filter((box: Box): boolean => box.pushed.length > 0).length, ArrowRight, "pushed"],
     ];
     counts.append(tallyOf(boxes.length + learned, Calendar, boxes.length + learned === 1 ? "entry" : "entries"),
@@ -430,7 +427,7 @@ function countsOf(type: string, boxes: Box[], folds: boolean, learned: number = 
 /**
  * Makes the line of counts of a card and the list of its boxes, see the top of this file: the line, see
  * {@link countsOf}; the list one row per box, see {@link boxRowOf}, each month beside its rows, see {@link monthsOf},
- * folded by the one rule of every card: of the days over the open boxes, missed, the others only while
+ * folded by the one rule of every card: of the days over the open exams, the others only while
  * opened; then from today on the next open box and the rows up to two after it, the rest only while opened, going on
  * in place, so nothing above what I click moves; an exam to come saying how near it is, like `in 77 days`.
  * - `today`: Today's calendar date.
@@ -451,7 +448,8 @@ function listOf(type: string, boxes: Box[]): [HTMLElement, HTMLElement] {
     const coming: Box[] = boxes.filter((box: Box): boolean => box.day >= today);
     const next: Box | undefined = coming.find((box: Box): boolean => box.state === "open");
     const cut: number = next === undefined ? shownAhead : coming.indexOf(next) + shownAhead;
-    const folded: Box[] = [...past.filter((box: Box): boolean => box.state === "open"), ...coming.slice(0, cut)];
+    const folded: Box[] = [...past.filter((box: Box): boolean => box.state === "open" && box.type === "FA"),
+        ...coming.slice(0, cut)];
     const markOf: (box: Box) => string = (box: Box): string =>
         type === "FA" && box.state === "open" && box.day >= today ? nearOf(box.day, today) : "";
     const list: HTMLElement = elementOf("div", type === "FA" ? "course-list series-kinds" : "course-list", "");
@@ -530,7 +528,7 @@ function learnedRowOf(learned: Learned, number: number): HTMLElement {
  * Makes the line of counts and the list of the card `Learning`, see the top of this file: my own learning of the module
  * in the semester, its boxes without type, planned or done, and the sessions logged without a box, see `learned`
  * of `Course` in `../day/series.ts`, together by date, numbered by date from 1 on, as many as there are, like `142`;
- * folded by the one rule of every card, see {@link listOf}: of the days over the open boxes, missed, then from today on
+ * folded by the one rule of every card, see {@link listOf}: of the days over none, then from today on
  * the next open box and two more, the rest only while opened.
  * - `boxes`: Its boxes without type.
  * - `learned`: The sessions logged without a box.
@@ -560,8 +558,7 @@ function learningListOf(): [HTMLElement, HTMLElement] {
         open && moment.slice(0, 10) >= today);
     const shownTo: number = next !== -1 ? next + shownAhead : coming === -1 ? items.length : coming + shownAhead;
     const folded: number[] = items.map((_: [string, boolean, (number: number) => HTMLElement], index: number): number =>
-        index).filter((index: number): boolean => items[index][0].slice(0, 10) < today ? items[index][1]
-        : index < shownTo);
+        index).filter((index: number): boolean => items[index][0].slice(0, 10) >= today && index < shownTo);
     const list: HTMLElement = elementOf("div", "course-list", "");
     list.append(...monthsOf((opened.has("") ? items.map((_: [string, boolean, (number: number) => HTMLElement],
         index: number): number => index) : folded).map((index: number): [string, HTMLElement] =>

@@ -182,23 +182,19 @@
     height: 1.0625rem;
 }
 
-/* Missed box, open while its day is over, see `boxElementOf` in `boxes.ts`: greyed as a box no longer open, its actions
-   still there, but `Move`, after the calm dashed circle `Missed` the list of a module shows too */
-.box-missed {
-    opacity: 0.55;
-}
-
 /* Done box: its lines as when it was open, only greyed, its what grey too */
 .box-done .box-what {
     color: var(--text-muted);
 }
 
 /* Cancelled box, skipped by me or cancelled by the university, like a lecture that does not take place,
-   and a box on a day it was pushed from: only faded, never struck through, all three alike;
+   and a box on a day it was pushed from, and an open one whose day is over, which counts as skipped, see
+   `boxElementOf` in `boxes.ts`: only faded, never struck through, all alike;
    its icon says which, see `.box-state` */
 .box-dropped,
 .box-university,
-.box-pushed {
+.box-pushed,
+.box-over {
     opacity: 0.55;
 }
 
