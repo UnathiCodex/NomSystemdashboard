@@ -54,7 +54,7 @@
 
 /* Status line above the text, quiet, a gap above and below it, its middle level with the save button and the first
    area of the rail: for a section its round, like `Round 1`, in a small grey box as the type word of a block, see
-   `.block-kind` in `../base.css`, as big as in the tree, see `.tree-round .block-kind` in `../notes/notes.css`;
+   `.block-kind` in `../base.css`, as big as the type word on the heading of a block, see `.editor-title .block-kind`;
    then the name of the file, like `Foods.md`, its whole path from `NomWorkspace` on as its title, as the dialogs
    show the file of an entry, see `fileShow` in `../day/choices.ts`; then the session the round writes into, like
    `· 17.10.2026 (Sat) · 21:40 – 22:40`, see `sessionShow` in `round.ts`, after a middle dot as a part of an entry
@@ -93,8 +93,10 @@
     overflow-wrap: anywhere;
 }
 
+/* The round as big as the type word of a block on its heading, see `.editor-text h2 .block-kind` below: 0.55 of
+   a heading of 1.4 of the text, see `.markdown h2` in `../notes/notes.css`, so both boxes have one size and room */
 .editor-title .block-kind {
-    font-size: 0.8em;
+    font-size: calc(0.55 * 1.4rem);
 }
 
 .editor-title > :empty {
