@@ -6,11 +6,10 @@
    the line at the left of indented parts, like the foods of a meal, 2 px and a little lighter than other
    lines, `--guide`, so it shows;
    notes in the greys of my Obsidian's dark theme with my accent #969696, a page of one width on every computer,
-   `--reading-width`, as wide as my laptop holds beside the tree, with at its left just the room of the `####` of a
-   heading, which the line of the cursor shows left of its text, and at its right that of the save button, see
-   `editor/editor.css`, so I write on the same page on the laptop and on the 4K monitor, in the middle where the
-   screen has room, the titles
-   of callouts and the fold arrows of headings in Obsidian's grey of callout titles, `--reading-callout`;
+   `--reading-width`, as wide as my laptop holds beside the tree, with the same room at its left and its right, that of
+   the save button, see `--edge-room` in `editor/editor.css`, so I write on the same page on the laptop and on the 4K
+   monitor, in the middle where the screen has room, the titles of callouts and the fold arrows of headings in
+   Obsidian's grey of callout titles, `--reading-callout`;
    controls and lines sized for my 4K monitor: buttons and fields one control high,
    chips, small buttons and the rows of the menu one chip high, all with the text of controls and the space beside it,
    a small square button, like the − and + of the water or the arrows of the month, a little less round,
@@ -95,7 +94,7 @@
     --chip-radius: 0.5rem;
     --note-width: 18rem;
     --tree-width: 22.5rem;
-    --reading-width: 45.5rem;
+    --reading-width: 48rem;
     color-scheme: dark;
 }
 

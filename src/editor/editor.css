@@ -8,26 +8,18 @@
     min-height: 0;
 }
 
-/* The file: the page of it in the middle, scrolls alone, with at least `--side-room` left of the page, as far as
-   content from the rail in every view, so the text never touches the tree, and at its right at least the room
-   of the head, `--head-room`, the save button, half a gap from the right edge of the screen and a gap from the text,
-   so the button never covers the text; where the screen has room, as on my PC, the page stays in the middle;
-   the room of the scrollbar kept also for a file too short to scroll, so the page stands at the same place in every
-   file; page and head in one cell, the head at its right */
+/* The file: the page of it in the middle, scrolls alone, the same room at its left and at its right on every page,
+   a note, a file of my new system, an `.ics` file and the page of a module alike, `--edge-room`, just the room of
+   the save button at its right, see `.editor-head`, and of the dashes of an `.ics` file at its left, see
+   `.ics-overview`, so neither ever covers the text; where the screen has room, as on my PC, the page stays in the
+   middle; the room of the scrollbar kept also for a file too short to scroll, so the page stands at the same place
+   in every file; page and head in one cell, the head at its right */
 .editor-file {
-    --head-room: calc(var(--control-height) - 0.5rem + var(--top-room) + var(--gap));
+    --edge-room: 3rem;
     display: grid;
-    grid-template-columns: minmax(var(--side-room), 1fr) minmax(0, var(--reading-width)) minmax(var(--head-room), 1fr);
+    grid-template-columns: minmax(var(--edge-room), 1fr) minmax(0, var(--reading-width)) minmax(var(--edge-room), 1fr);
     overflow-y: auto;
     scrollbar-gutter: stable;
-}
-
-/* Over the page of a module or of a chapter and over a folder of my modules no head, so the page has `--side-room`
-   at its right as at its left, and the page as wide as the dialog of a series at most, see `.entry-panel` in
-   `../day/day.css`, so its rows have the room of the list of a series */
-.editor-on-overview .editor-file {
-    --head-room: var(--side-room);
-    --reading-width: 60rem;
 }
 
 /* Page of every file exactly my reading width, in the middle, where the screen has room, so the lines of a note
@@ -44,8 +36,9 @@
 }
 
 /* Head beside the page, at the right edge of the screen: the save button, below it for a section the round check,
-   level with the areas of the rail and as close below each other, half a gap from the right edge; stays in the
-   corner while the page scrolls */
+   level with the areas of the rail and as close below each other, a quarter rem from the right edge, so it fits
+   the room beside the page, `--edge-room`, with a little room left to the text; stays in the corner while the page
+   scrolls */
 .editor-head {
     grid-area: 1 / 3;
     position: sticky;
@@ -56,7 +49,7 @@
     gap: 0.25rem;
     align-self: start;
     justify-self: end;
-    margin-right: var(--top-room);
+    margin-right: 0.25rem;
 }
 
 /* Status line above the text, quiet, a gap above and below it, its middle level with the save button and the first
@@ -523,15 +516,15 @@
     padding-top: 1lh;
 }
 
-/* The readable form of the value of a line of an `.ics` file, see below, stands right of the text, half as far from
-   the right edge of the file as the save button, which is `--ics-overhang` from the text, see `overhangKeep`
-   in `ics.ts`, in a column `--ics-column` wide;
+/* The readable form of the value of a line of an `.ics` file, see below, stands right of the text, ending where the
+   save button ends, which is `--ics-overhang` from the text, see `overhangKeep` in `ics.ts`, in a column
+   `--ics-column` wide;
    every line breaks a little before that column at the latest, as far as the room beside the page cannot hold it,
    else at the width of the page, as a note does, like a long `SUMMARY` with its `ALTREP` */
 .editor-text .cm-editor .cm-line.ics-line {
     --ics-column: 11rem;
     position: relative;
-    padding-right: max(0px, calc(var(--ics-column) + 1rem - var(--ics-overhang, 0px) - var(--top-room) / 2));
+    padding-right: max(0px, calc(var(--ics-column) + 1rem - var(--ics-overhang, 0px)));
 }
 
 /* Name of each property of an `.ics` file with its colon, like `DTSTART:` of `DTSTART;TZID=Europe/Berlin:` or
@@ -552,7 +545,7 @@
     content: attr(data-readable);
     position: absolute;
     top: 0.15lh;
-    right: calc(-1 * var(--ics-overhang, 0px) - var(--top-room) / 2);
+    right: calc(-1 * var(--ics-overhang, 0px));
     padding: 0 0.625em;
     white-space: nowrap;
     text-indent: 0;
@@ -566,9 +559,9 @@
 
 /* Overview of an `.ics` file in the room left of the page, see `overviewKeep` in `ics.ts`: a short dash per entry
    in the grey of a line of the page, the one of the entry at the top of the view white, one under the pointer
-   lighter; a dash its own row, higher than it, so the pointer meets it; at the left edge of the file, a gap from it;
-   staying in place while the file scrolls, a third down the screen, at most
-   a third of it high, scrolled by the file, never by hand */
+   lighter; a dash its own row, higher than it, so the pointer meets it; at the left edge of the file, in the room
+   beside the page, `--edge-room`, a gap from the text; staying in place while the file scrolls, a third down the
+   screen, at most a quarter of it high, scrolled by the file, never by hand */
 .ics-overview {
     grid-area: 1 / 1;
     position: sticky;
@@ -577,14 +570,14 @@
     justify-self: start;
     display: flex;
     flex-direction: column;
-    max-height: 33vh;
+    max-height: 25vh;
     overflow: hidden;
-    margin-left: var(--gap);
+    margin-left: 0.75rem;
 }
 
 .ics-dash {
     flex: none;
-    width: 1rem;
+    width: 1.25rem;
     height: 0.5rem;
     padding: 0;
     border: 0;
