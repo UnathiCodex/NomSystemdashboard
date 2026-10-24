@@ -2386,8 +2386,8 @@ function groupWaits(form: Form): boolean {
  * {@link groupPickOf}: my series kept as I left it to go back to, see {@link groupBack}, and a still copy of it left
  * below, dimmed with the page, so the form of the group reads as a dialog of its own over my series, as a box opened
  * from the list stands over it, see {@link boxShow}; the group there or a new one without name. The form of the group
- * stands in the middle, my series behind it a little higher and further left, see `#series-under` in `series.css`,
- * so it shows above and left of it, however long either is.
+ * a little lower and further right, my series behind it a little higher and further left, see `#series-under`
+ * in `series.css`, so it shows above and left of it, however long either is, the two together in the middle.
  * - `series`, `under`: The dialog, and that of the copy.
  * - `copy`: The form of my series copied, without the identifiers of its parts.
  * - `rem`, `lift`: The size of a `rem`, and how far my series moves up or down to stand so.
@@ -2406,8 +2406,9 @@ function groupFrom(form: Form, group: string): void {
     groupBack = form;
     groupStart(form.type, group);
     const rem: number = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    const lift: number = series.getBoundingClientRect().top - 2.5 * rem - under.offsetTop;
-    under.style.translate = `-2.5rem ${lift}px`;
+    series.style.translate = "1.5rem 1.5rem";
+    const lift: number = series.getBoundingClientRect().top - 3 * rem - under.offsetTop;
+    under.style.translate = `-1.5rem ${lift}px`;
 }
 
 /**
@@ -2420,6 +2421,7 @@ function underClose(): void {
     under.close();
     under.replaceChildren();
     under.style.translate = "";
+    (document.getElementById("series") as HTMLDialogElement).style.translate = "";
 }
 
 /**
