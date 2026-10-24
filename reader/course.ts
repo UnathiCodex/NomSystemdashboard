@@ -21,7 +21,7 @@
  * place is a box the university cancelled, `X-NUMBER:NONE`, see `boxUniversity` in `boxes.ts`, never a day without
  * box.
  * The boxes of my tutorials that go to a group, by their `X-GROUP`, follow the rule of my group: my group is the one
- * I pinned, a choice of mine, never read from my boxes, `X-PINNED:TRUE` on the to-dos of that group, see
+ * I pinned, a choice of mine, never read from my boxes, `X-GROUP;X-PINNED=TRUE` on the to-dos of that group, see
  * {@link pinnedOf} and {@link pinPut}, and a box of another group is a week I go to that group instead, which never
  * moves the pin; taking my group back removes my open boxes from today on and the pin, see {@link groupMine}.
  * A box of my tutorials is numbered by its week of the semester, the n-th week its type's groups meet in, see
@@ -92,7 +92,7 @@ import { basename, dirname } from "node:path";
 import { boxDelete, boxDrop, boxesAdd, boxFind, groupIs, numberedTypes, skillBoxesRead } from "./boxes.ts";
 import {
     berlinDateOf, berlinDayStartOf, berlinInstantOf, berlinTimeOf, dayAdd, entriesRead, entryRemove,
-    fileEntriesRead, icsTextOf, propertiesPut, skillName, todoAppend, todoChange,
+    fileEntriesRead, groupPropertyOf, icsTextOf, propertiesPut, skillName, todoAppend, todoChange,
 } from "./calendar.ts";
 import { attendeesAllow, semesterOf, skillTypes } from "./categories.ts";
 import { skillLinkOf, titleOf } from "./documents.ts";
@@ -862,7 +862,7 @@ function datesOf(rule: Rule): RuleDate[] {
 }
 
 /**
- * Gives my group of a type, see the top of this file: the group I pinned, its `X-PINNED:TRUE`, see {@link pinPut};
+ * Gives my group of a type, see the top of this file: the group I pinned, its `X-PINNED=TRUE`, see {@link pinPut};
  * empty while none is.
  *
  * @param groups - The groups of the course
@@ -874,8 +874,8 @@ function pinnedOf(groups: Group[], type: string): string {
 }
 
 /**
- * Pins a group of a type, see the top of this file: `X-PINNED:TRUE` on each to-do of it, none on those of every other
- * group of the type and semester; no group named pins none. Writes only a to-do that changes.
+ * Pins a group of a type, see the top of this file: `X-PINNED=TRUE` on the `X-GROUP` of each to-do of it, none on
+ * those of every other group of the type and semester; no group named pins none. Writes only a to-do that changes.
  * - `file`: The plan of the module.
  *
  * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
@@ -889,7 +889,7 @@ function pinPut(module: string, type: string, semester: string, group: string): 
     groupsRead(module, semester).filter((one: Group): boolean => one.rule.type === type
         && one.pinned !== (one.rule.group === group))
         .forEach((one: Group): void => one.ids.forEach((id: string): void =>
-            propertiesPut(file, id, [["x-pinned", one.rule.group === group ? ["TRUE"] : []]])));
+            propertiesPut(file, id, [["x-group", [groupPropertyOf(one.rule.group, one.rule.group === group)]]])));
 }
 
 /**
@@ -2081,7 +2081,7 @@ function groupRename(module: string, type: string, semester: string, was: string
     const plan: string = skillFileOf(module, planEnding);
     groupsRead(module, semester).filter((one: Group): boolean => one.rule.type === type && one.rule.group === was)
         .forEach((one: Group): void => one.ids.forEach((id: string): void =>
-            propertiesPut(plan, id, [["x-group", [group]]])));
+            propertiesPut(plan, id, [["x-group", [groupPropertyOf(group, one.pinned)]]])));
     const files: string[] = [planEnding, logEnding].map((ending: string): string => skillFileOf(module, ending))
         .filter((file: string): boolean => existsSync(file));
     const taken: (entry: Entry) => boolean = (entry: Entry): boolean => entry.type === type && entry.group === was

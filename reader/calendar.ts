@@ -121,7 +121,8 @@ import type { CalendarSource } from "./sources.ts";
  * - `group`: Group of a tutorial, its `X-GROUP`, like `03`, as TUMonline names it: of a group of the course
  *   of a module, and of the box of a tutorial, which goes to the session of that group, see `course.ts`;
  *   empty for none.
- * - `pinned`: Whether a group of the course is the one I pinned, the group my tutorials go to, its `X-PINNED:TRUE`,
+ * - `pinned`: Whether a group of the course is the one I pinned, the group my tutorials go to, its
+ *   `X-GROUP;X-PINNED=TRUE`,
  *   see `pinPut` in `course.ts`; false for any other entry.
  * - `written`: When the entry was written, its `DTSTAMP`, as ISO instant, which the reader sets once as it adds an entry;
  *   empty when the event has none.
@@ -399,7 +400,7 @@ const zone: ICAL.Timezone = new ICAL.Timezone(zoneComponent);
  * `X-FROM`, and online, `X-ONLINE`; with whom, `ATTENDEE`; more about it, `DESCRIPTION`, `ATTACH`, `RELATED-TO`,
  * the box of the plan a log entry did, `X-PLANNED`, the pushes of a box, `X-PUSHED`, whether it is carried along,
  * `X-CARRIED`, and the series a part of a plain series belongs to, `X-SERIES`; then the lines of each kind of entry:
- * a box of a course, `X-NUMBER` and `X-GROUP`, the group I pinned `X-PINNED`; a meal, `X-FOOD` and `X-COOKED`;
+ * a box of a course, `X-NUMBER` and `X-GROUP`, of the group I pinned with `X-PINNED=TRUE`; a meal, `X-FOOD` and `X-COOKED`;
  * sport, `X-WORKOUT`, `X-EXERCISE`, `X-VIDEO` and `X-PAIN`; a skill entry, `X-TUTOR`, `X-SEMESTER`, `X-CHAPTER`,
  * `X-ATTEMPT` and `X-ROUND`. Every other line comes after them, in the order it had, and the lines of a property that
  * repeats, like `X-FOOD`, `ATTENDEE` or `EXDATE`, stay together in the order they had.
@@ -410,7 +411,7 @@ const lineOrder: string[] = [
     "CATEGORIES", "SUMMARY", "STATUS",
     "LOCATION", "X-FROM", "X-ONLINE", "ATTENDEE",
     "DESCRIPTION", "ATTACH", "RELATED-TO", "X-PLANNED", "X-PUSHED", "X-CARRIED", "X-SERIES",
-    "X-NUMBER", "X-GROUP", "X-PINNED",
+    "X-NUMBER", "X-GROUP",
     "X-FOOD", "X-COOKED",
     "X-WORKOUT", "X-EXERCISE", "X-VIDEO", "X-PAIN",
     "X-TUTOR", "X-SEMESTER", "X-CHAPTER", "X-ATTEMPT", "X-ROUND",
@@ -812,7 +813,8 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
         carried: String(event.component.getFirstPropertyValue("x-carried") ?? "").toUpperCase() !== "FALSE",
         number: String(event.component.getFirstPropertyValue("x-number") ?? ""),
         group: String(event.component.getFirstPropertyValue("x-group") ?? ""),
-        pinned: String(event.component.getFirstPropertyValue("x-pinned") ?? "").toUpperCase() === "TRUE",
+        pinned: String(event.component.getFirstProperty("x-group")?.getParameter("x-pinned") ?? "").toUpperCase()
+            === "TRUE",
         written: stamp instanceof ICAL.Time ? stamp.toJSDate().toISOString() : "",
         version: createHash("sha256").update(event.component.toString()).digest("hex"),
         editable: writeAllowed(file) && (todo || !start.isDate),
@@ -2151,6 +2153,23 @@ export function todoChange(file: string, entry: Entry, fields: TodoFields, targe
 }
 
 /**
+ * Makes the `X-GROUP` of a group of a course, its name, with the parameter `X-PINNED=TRUE` while it is the group
+ * I pinned, like `X-GROUP;X-PINNED=TRUE:06`, none while not, see `pinPut` in `course.ts`.
+ * - `property`: The property.
+ *
+ * @param group - The group, like `06`
+ * @param pinned - Whether it is the group I pinned
+ * @returns The property
+ */
+export function groupPropertyOf(group: string, pinned: boolean): ICAL.Property {
+    const property: ICAL.Property = new ICAL.Property("x-group");
+    property.setValue(group);
+    if (pinned)
+        property.setParameter("x-pinned", "TRUE");
+    return property;
+}
+
+/**
  * Puts new values into properties of the event or to-do with an identifier, replacing all old lines of each,
  * like the end, the `X-CHAPTER`s and the `X-ATTEMPT`s of a skill entry that gets one more attempt;
  * a date goes in Berlin time, a link as `ATTACH`, see {@link Link}. Every other line of the file stays as it is,
@@ -2158,16 +2177,18 @@ export function todoChange(file: string, entry: Entry, fields: TodoFields, targe
  *
  * @param file - Path of the `.ics` file
  * @param id - Identifier of the event or to-do
- * @param properties - Properties, each its name with its new values, like `["x-attempt", ["IN2028/…;right", …]]`
+ * @param properties - Properties, each its name with its new values, like `["x-attempt", ["IN2028/…;right", …]]`,
+ *   a property built already, like an `X-GROUP` with its parameter, see {@link groupPropertyOf}, as it is
  * @throws {Error} - When the file lies outside the new system or does not hold the event once
  */
-export function propertiesPut(file: string, id: string, properties: [string, (string | Date | Link)[]][]): void {
+export function propertiesPut(file: string, id: string,
+                              properties: [string, (string | Date | Link | ICAL.Property)[]][]): void {
     writeCheck(file);
     const text: FileLines = linesRead(file);
     const place: [number, number] = componentFind(text.lines, id);
     const event: string[] = text.lines.slice(...place);
-    properties.forEach(([name, values]: [string, (string | Date | Link)[]]): void => propertyPut(event, name,
-        values.map((value: string | Date | Link): string | ICAL.Time | Link =>
+    properties.forEach(([name, values]: [string, (string | Date | Link | ICAL.Property)[]]): void => propertyPut(event,
+        name, values.map((value: string | Date | Link | ICAL.Property): string | ICAL.Time | Link | ICAL.Property =>
             value instanceof Date ? writtenOf(value) : value)));
     componentWrite(file, text, place, event, file);
 }
