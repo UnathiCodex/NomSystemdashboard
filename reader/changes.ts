@@ -38,6 +38,12 @@ const quiet: number = 100;
 let waiting: NodeJS.Timeout | undefined = undefined;
 
 /**
+ * How many changes of the new system the reader has seen, counted the moment each happens, see {@link changesWatch},
+ * so what is worked out of its files may be kept until the next change, like the boxes `suggestions.ts` writes.
+ */
+let version: number = 0;
+
+/**
  * Keeps the answer to a page open as a stream of server-sent events, one per change, until the page goes,
  * see the top of this file; its head goes out at once, so the page knows it hears the reader.
  *
@@ -61,10 +67,20 @@ export function changesWatch(): void {
         watch(root, { recursive: true }, (_event: WatchEventType, name: string | null): void => {
             if (name !== null && join(root, name) === devicesFile)
                 return;
+            version += 1;
             clearTimeout(waiting);
             waiting = setTimeout((): void => pages.forEach((page: ServerResponse): void => {
                 page.write("data: changed\n\n");
             }), quiet);
         });
     });
+}
+
+/**
+ * Tells how many changes of the new system the reader has seen, see {@link version}.
+ *
+ * @returns The count, like `12`
+ */
+export function changesVersion(): number {
+    return version;
 }

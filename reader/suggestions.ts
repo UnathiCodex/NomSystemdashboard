@@ -18,10 +18,13 @@
  * there too, see `carriedOf` in `boxes.ts`, like the box of 18.10 done by my session of 19.10. A box of the chapter with a time or a deadline, like a lecture or a homework sheet, keeps none out.
  * Learning does the box: the session the learning view opens and the attempts of a session are logged from it,
  * see `studyBoxOf` in `boxes.ts`. Written before the plan of today or the learning view is read, see `reader.ts`,
- * so the box stands there before I begin; nothing written is taken out again.
+ * so the box stands there before I begin; nothing written is taken out again. Worked out once per day, change of
+ * the new system and five minutes, see {@link written}, since every request of the plan asks for it, and working it
+ * out reads every note of my modules, about 0.2 s.
  *
  * - `./boxes.ts`: Reads the boxes of today, those carried along among them, and adds a box.
  * - `./calendar.ts`: Gives today in Berlin time and adds a day to a day.
+ * - `./changes.ts`: Counts the changes of the new system.
  * - `./categories.ts`: Names the category of skill entries.
  * - `./skill.ts`: Reads what of each section is due today.
  * - `./trackers.ts`: Holds the minutes of a Task and of the theory of a new section.
@@ -29,6 +32,7 @@
 
 import { boxAdd, boxesRead } from "./boxes.ts";
 import { berlinDateOf, dayAdd } from "./calendar.ts";
+import { changesVersion } from "./changes.ts";
 import { skillName } from "./categories.ts";
 import { skillingRead } from "./skill.ts";
 import { settings } from "./trackers.ts";
@@ -38,8 +42,17 @@ import type { SkillModule, SkillSection } from "./skill.ts";
 
 
 /**
- * Writes the boxes of the chapters due today into the plan of today, see the top of this file.
+ * When the boxes were last worked out: today, the count of changes of the new system and the five minutes then,
+ * see `changesVersion` in `changes.ts`, like `2026-10-24 12 5847`; empty before the first time. The five minutes
+ * catch a note of my modules changed outside the new system, which tells no change.
+ */
+let written: string = "";
+
+/**
+ * Writes the boxes of the chapters due today into the plan of today, see the top of this file, but while nothing
+ * changed since the last time, see {@link written}.
  * - `today`: Today in Berlin time.
+ * - `key`: When it is worked out now, in the form of {@link written}.
  * - `boxes`: Study boxes of today, skill boxes without time and deadline, in any state, those of a day before done
  *   today and those carried along to it among them.
  * - `due`: Sections of a module with something due today, in their order.
@@ -50,6 +63,9 @@ import type { SkillModule, SkillSection } from "./skill.ts";
  */
 export function suggestionsWrite(): void {
     const today: string = berlinDateOf(new Date());
+    const key: string = `${today} ${changesVersion()} ${Math.floor(Date.now() / (5 * 60 * 1000))}`;
+    if (key === written)
+        return;
     const boxes: Box[] = boxesRead(today, dayAdd(today, 1))[0].boxes
         .filter((box: Box): boolean => box.category === skillName && box.time === "" && box.deadline === "");
     skillingRead().modules.forEach((module: SkillModule): void => {
@@ -71,4 +87,5 @@ export function suggestionsWrite(): void {
                 });
             });
     });
+    written = key;
 }

@@ -268,6 +268,11 @@ const groupedType: string = "TU";
  */
 let seen: string = "";
 
+/**
+ * How many loads of the list began, so only the answer of the last one shows, see {@link boxesLoad}.
+ */
+let loads: number = 0;
+
 
 /**
  * Makes an element of an entry or a box, a line or a part of one, from texts and elements, like the category in bold;
@@ -795,7 +800,9 @@ function boxesShow(calendar: Calendar): void {
 
 /**
  * Loads the plan of the shown day and, on today, the boxes carried along to it, and shows them, unless another day
- * is shown meanwhile, without the hint of a box not logged, see {@link logFailShow}.
+ * is shown meanwhile or a later load began, whose answer is newer, so a change saved never shows the list as it was
+ * before, without the hint of a box not logged, see {@link logFailShow}.
+ * - `load`: Which load this is, see {@link loads}.
  * - `day`: The shown day.
  * - `plans`: Its plan, the one day of the range.
  * - `carriedNow`: The boxes carried along to it, none for any day but today.
@@ -804,12 +811,14 @@ function boxesShow(calendar: Calendar): void {
  * @throws {Error} - When the reader cannot answer
  */
 async function boxesLoad(calendar: Calendar): Promise<void> {
+    loads += 1;
+    const load: number = loads;
     const day: string = dayOf(calendar.view.currentStart);
     const [plans, carriedNow]: [PlanDay[], Box[]] = await Promise.all([
         boxesFetch(day, dayOf(calendar.view.currentEnd)),
         day === calendarTodayOf() ? carriedFetch(day) : Promise.resolve([]),
     ]);
-    if (day !== dayOf(calendar.view.currentStart))
+    if (load !== loads || day !== dayOf(calendar.view.currentStart))
         return;
     shown = plans[0];
     carried = carriedNow;
