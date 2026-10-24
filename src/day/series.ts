@@ -2616,20 +2616,14 @@ async function placeRename(form: Form, dry: boolean): Promise<void> {
  * so one click on Save takes it, a place and the people renamed checked before and renamed after,
  * see {@link placeRename} and `personsRename` in `../persons.ts`, and closes the dialog, with the dialog of the box it opened over, see {@link done}, the day and the page
  * of the module loading anew as their files change; when the reader does not take it, the hint above the buttons
- * says so and the dialog stays open. A new group saved while no group of its type is mine becomes mine, my boxes
- * to come made from it, and the form shows my series anew; a group saved from my series goes back to it, see
- * {@link groupReturn}.
+ * says so and the dialog stays open. A group saved, new or not, never becomes mine by itself, since pinning is
+ * a choice of mine in the menu of the groups; a group saved from my series goes back to it, see {@link groupReturn}.
  * - `exams`: Whether the form is that of the exams.
- * - `pinning`: The new group to make mine as it is saved, empty for none.
- * - `type`: The type of the form.
  */
 async function formSave(): Promise<void> {
     if (typing === null)
         return;
     const exams: boolean = typing.type === examType;
-    const type: string = typing.type;
-    const pinning: string = grouped?.made === true && !(course?.series ?? []).some((series: Series): boolean =>
-        series.rule.type === type && series.rule.group !== "") ? grouped.group : "";
     if (extraJoin(typing, exams ? typing.kinds : undefined))
         formFill();
     if (!formReady(typing))
@@ -2640,15 +2634,9 @@ async function formSave(): Promise<void> {
         await formSend(typing, false);
         await placeRename(typing, false);
         await personsRename(personEdits, persons, false);
-        if (pinning !== "" && course !== null)
-            await courseSend<Planned[]>("/api/course/mine", { module: course.module, type: type, group: pinning });
     } catch (error: unknown) {
         console.error(error);
         formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
-        return;
-    }
-    if (pinning !== "" && course !== null && groupBack !== null) {
-        await seriesOpen(course.module, type, course.semester, done);
         return;
     }
     if (await groupReturn(true))

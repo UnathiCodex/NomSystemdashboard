@@ -89,7 +89,7 @@
 
 import { existsSync } from "node:fs";
 import { basename, dirname } from "node:path";
-import { boxDelete, boxDrop, boxesAdd, boxFind, groupIs, numberedTypes, skillBoxesRead } from "./boxes.ts";
+import { boxDelete, boxDrop, boxesAdd, boxFind, boxUniversity, groupIs, numberedTypes, skillBoxesRead } from "./boxes.ts";
 import {
     berlinDateOf, berlinDayStartOf, berlinInstantOf, berlinTimeOf, dayAdd, entriesRead, entryRemove,
     fileEntriesRead, groupPropertyOf, icsTextOf, propertiesPut, skillName, todoAppend, todoChange,
@@ -2037,7 +2037,9 @@ export function groupPut(change: GroupNew): string {
  * of {@link GroupChange}, and, of a group there already, the dates of its weeks it did not meet on, as its `EXDATE`s
  * said, while not marked open again. Written, it takes the place of the group of its type, group and semester, one
  * to-do per slot, see {@link groupWrite}, pinned still while it was, see {@link pinPut}, and my boxes that go to it
- * take its sessions anew, see {@link groupBoxesMove}.
+ * take its sessions anew, see {@link groupBoxesMove}, an open one on a session I marked cancelled cancelled by the
+ * university too, see `boxUniversity` in `boxes.ts`.
+ * - `off`: The days of the sessions cancelled.
  * - `rule`: The rule as sent, without extras and times of their own.
  * - `old`: The group there already, `undefined` for none.
  * - `met`: The days it met on.
@@ -2122,6 +2124,11 @@ export function groupApply(change: GroupChange): Planned[] {
     if (old?.pinned === true)
         pinPut(change.module, rule.type, rule.semester, rule.group);
     groupBoxesMove(change.module, rule.type, rule.group, rule.semester);
+    const off: string[] = dates.filter(cancelled).map((date: RuleDate): string => date.day);
+    courseBoxesRead(codeOf(change.module), rule.semester)
+        .filter((box: Box): boolean => box.type === rule.type && box.group === rule.group && box.state === "open"
+            && changeable(box) && off.includes(box.day))
+        .forEach((box: Box): void => boxUniversity(box.id, true));
     return planned;
 }
 
