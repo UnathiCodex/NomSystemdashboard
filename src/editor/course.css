@@ -97,6 +97,11 @@ a.course-folder:hover {
     margin-top: 0;
 }
 
+/* Folded, the months of a card right below one another, without the room between them that its whole list has */
+.course-list:not(.course-open) > .series-list {
+    row-gap: 0;
+}
+
 /* The one line of a card whose rows all fold, see `foldedOf` in `course.ts`, like `⌄ 1 done`: small and grey as
    the counts, its chevron before its words */
 .course-folded {

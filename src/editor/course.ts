@@ -446,6 +446,7 @@ function listOf(type: string, boxes: Box[]): [HTMLElement, HTMLElement] {
     const folded: Box[] = [...past.filter((box: Box): boolean => box.state === "open" && box.type === "FA"),
         ...coming.slice(0, cut)];
     const list: HTMLElement = elementOf("div", type === "FA" ? "course-list series-kinds" : "course-list", "");
+    list.classList.toggle("course-open", opened.has(type));
     list.append(monthListOf((opened.has(type) ? boxes : folded).map((box: Box): [string, HTMLElement] =>
         [box.time || box.day, boxRowOf(box)])));
     if (!opened.has(type) && folded.length === 0 && boxes.length > 0)
@@ -529,6 +530,7 @@ function learningListOf(): [HTMLElement, HTMLElement] {
     const folded: number[] = items.map((_: [string, boolean, (number: number) => HTMLElement], index: number): number =>
         index).filter((index: number): boolean => items[index][0].slice(0, 10) >= today && index < shownTo);
     const list: HTMLElement = elementOf("div", "course-list", "");
+    list.classList.toggle("course-open", opened.has(""));
     list.append(monthListOf((opened.has("") ? items.map((_: [string, boolean, (number: number) => HTMLElement],
         index: number): number => index) : folded).map((index: number): [string, HTMLElement] =>
         [items[index][0], items[index][2](index + 1)])));

@@ -23,9 +23,11 @@
 }
 
 /* Over the page of a module or of a chapter and over a folder of my modules no head, so the page has `--side-room`
-   at its right as at its left */
+   at its right as at its left, and the page as wide as the dialog of a series at most, see `.entry-panel` in
+   `../day/day.css`, so its rows have the room of the list of a series */
 .editor-on-overview .editor-file {
     --head-room: var(--side-room);
+    --reading-width: 60rem;
 }
 
 /* Page of every file exactly my reading width, in the middle, where the screen has room, so the lines of a note
