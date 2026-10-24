@@ -30,7 +30,8 @@
  * The timer of the day reads the entry running now, see {@link entryNowRead}.
  *
  * A meal of the log lists its foods as lines `X-FOOD`, like `X-FOOD:Skyr natur;K-Classic;Kaufland;150`: appended
- * with the entry, and replaced as a whole when the entry changes; the reader counts what each meal gives, see `food.ts`.
+ * with the entry, and replaced as a whole when the entry changes, each meal of mine by its grams, the most first,
+ * see `foodsRanked` in `food.ts`; the reader counts what each meal gives, see `food.ts`.
  * A cooking, `Cook`, lists what went into the pot the same way, like `X-FOOD:Hackfleisch;Gut & Günstig;Edeka;500`,
  * which counts nothing; a meal drawn from it holds `X-COOKED:<UID of the Cook entry>` and the foods it ate with their
  * grams, so each keeps its foods in its own lines, which follow every change of the cooking, see {@link cookedShare};
@@ -57,7 +58,7 @@ import {
 } from "./calendar.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
 import { calendarFileOf, chaptersOf, documentLinksOf, titleOf } from "./documents.ts";
-import { foodLineAllows, foodName, mealsOf, mealTitleOf } from "./food.ts";
+import { foodLineAllows, foodName, foodsRanked, mealsOf, mealTitleOf } from "./food.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
 import { sportPartsAllow } from "./sport.ts";
 import { day, logEnding } from "./sources.ts";
@@ -360,20 +361,18 @@ function cookedCheck(category: string, start: Date, cooked: string, kept: string
  * in the meal of the pot; a food without grams in the pot keeps the grams the meal gave it. A food the cooking took
  * in since a meal drew comes into the meal, also under a meal it renamed, one it took out leaves it, and one I took
  * out of a meal stays out. Foods a meal ate beside the pot keep their lines, after the foods of the pot of the same
- * meal of mine, unless the pot now holds the same food in the same meal; the lines stay grouped by meal, the foods
- * beside the meals last, as the dialog writes them, and a meal whose lines change gets its summary anew, see
+ * meal of mine, unless the pot now holds the same food in the same meal; the lines ordered as those of every entry,
+ * see `foodsRanked` in `food.ts`, and a meal whose lines change gets its summary anew, see
  * `mealTitleOf` in `food.ts`. Called after a meal drawing from it is added, changed or removed, and after the cooking
  * itself changes, its foods, grams or time, so every meal stays right.
  * - `found`: The cooking with its file, `undefined` when it is gone.
  * - `keyOf`: Key of a line by its food and meal, in small letters.
- * - `mealOf`: The meal of a line, empty for none.
  * - `drawn`: Keys of the lines of the pot as it was when the meals drew.
  * - `potKeys`: Keys of the lines of the pot as it is.
  * - `eaters`: The meals drawing from it.
  * - `had`: The lines of a meal that came from the pot as it was, by their keys.
  * - `lines`: Its lines from the pot as it is, then those it ate beside.
- * - `meals`: The meals of mine among its lines, in their order.
- * - `foods`: Its lines grouped by meal, the foods beside the meals last.
+ * - `foods`: Its lines in their order.
  *
  * @param cooked - Identifier of the cooking, empty for none
  * @param before - Lines `X-FOOD` of the cooking before it changed, `undefined` while it is as the meals drew it
@@ -386,7 +385,6 @@ function cookedShare(cooked: string, before?: string[]): void {
         const parts: string[] = line.split(";");
         return [parts[0], parts[1] ?? "", parts[2] ?? "", parts[4] ?? ""].join(";").toLowerCase();
     };
-    const mealOf: (line: string) => string = (line: string): string => line.split(";")[4]?.trim() ?? "";
     const drawn: Set<string> = new Set((before ?? found[1].foods).map(keyOf));
     const potKeys: Set<string> = new Set(found[1].foods.map(keyOf));
     const eaters: Entry[] = entriesRead(day.log, "1970-01-01T00:00:00Z", "9999-12-31T00:00:00Z")
@@ -406,11 +404,7 @@ function cookedShare(cooked: string, before?: string[]): void {
                 }),
             ...entry.foods.filter((line: string): boolean => !drawn.has(keyOf(line)) && !potKeys.has(keyOf(line))),
         ];
-        const meals: string[] = [...new Set(lines.map(mealOf).filter((meal: string): boolean => meal !== ""))];
-        const foods: string[] = [
-            ...meals.flatMap((meal: string): string[] => lines.filter((line: string): boolean => mealOf(line) === meal)),
-            ...lines.filter((line: string): boolean => mealOf(line) === ""),
-        ];
+        const foods: string[] = foodsRanked(lines);
         const file: string | undefined = entryLookup(day.log, entry.id)?.[0];
         if (file !== undefined && foods.join("\n") !== entry.foods.join("\n"))
             propertiesPut(file, entry.id, [["x-food", foods], ["summary", [mealTitleOf(foods)]]]);
@@ -475,7 +469,8 @@ export function entryAdd(entry: EntryNew, id?: string): string {
     const exercises: string[] = entry.exercises ?? [];
     const videos: string[] = entry.videos ?? [];
     sportCheck(fields.category, workout, exercises, videos);
-    const own: [string, string | Link][] = entry.foods.map((food: string): [string, string] => ["x-food", food]);
+    const own: [string, string | Link][] = foodsRanked(entry.foods)
+        .map((food: string): [string, string] => ["x-food", food]);
     if (entry.planned !== "")
         own.push(["related-to", entry.planned]);
     if ((plan?.group ?? "") !== "")
@@ -599,8 +594,9 @@ function entryWrite(file: string, entry: Entry, change: EntryNew): void {
     const exercises: string[] = change.exercises ?? entry.exercises ?? [];
     const videos: string[] = change.videos ?? entry.videos ?? [];
     sportCheck(fields.category, workout, exercises, videos);
-    if (change.foods.join("\n") !== entry.foods.join("\n"))
-        propertiesPut(file, entry.id, [["x-food", change.foods]]);
+    const foods: string[] = foodsRanked(change.foods);
+    if (foods.join("\n") !== entry.foods.join("\n"))
+        propertiesPut(file, entry.id, [["x-food", foods]]);
     if (change.pain !== undefined && change.pain !== entry.pain)
         propertiesPut(file, entry.id, [["x-pain", change.pain === "" ? [] : [change.pain]]]);
     if (change.cooked !== undefined && change.cooked !== entry.cooked)

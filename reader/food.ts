@@ -1357,6 +1357,24 @@ export function mealTitleOf(lines: string[]): string {
 }
 
 /**
+ * Orders the lines `X-FOOD` of an entry as it is written: the foods of each meal of mine together, the meals
+ * in the order they first stand, then the foods beside them, each group by its grams, the most first, as `Meals.md`
+ * orders a meal, see {@link rankOf}, so the foods that matter most stand first, whatever grams I change.
+ * - `mealOf`: The meal of a line, empty for none.
+ * - `ranked`: The lines of one meal, ordered by their grams.
+ *
+ * @param lines - Lines `X-FOOD`, like `Hackfleisch;Gut & Günstig;Edeka;250;Chili con Carne`
+ * @returns The lines in that order
+ */
+export function foodsRanked(lines: string[]): string[] {
+    const mealOf: (line: string) => string = (line: string): string => lineOf(line).meal;
+    const ranked: (meal: string) => string[] = (meal: string): string[] => lines
+        .filter((line: string): boolean => mealOf(line) === meal)
+        .sort((first: string, second: string): number => rankOf(lineOf(second).grams) - rankOf(lineOf(first).grams));
+    return [...new Set([...lines.map(mealOf).filter((meal: string): boolean => meal !== ""), ""])].flatMap(ranked);
+}
+
+/**
  * Tells whether a line `X-FOOD` sent to be written is well formed: one of today, see {@link partsOf}, a name,
  * brand and store without `|`, like `Skyr natur;K-Classic;Kaufland;150`, grams above 0 or none, and maybe the meal
  * it belongs to; or an older one,
