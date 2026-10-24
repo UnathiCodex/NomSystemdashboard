@@ -2385,9 +2385,12 @@ function groupWaits(form: Form): boolean {
  * Opens a group in the form from my series, by its series icon or `+ Group` in the menu of the groups, see
  * {@link groupPickOf}: my series kept as I left it to go back to, see {@link groupBack}, and a still copy of it left
  * below, dimmed with the page, so the form of the group reads as a dialog of its own over my series, as a box opened
- * from the list stands over it, see {@link boxShow}; the group there or a new one without name.
+ * from the list stands over it, see {@link boxShow}; the group there or a new one without name. The form of the group
+ * as wide as my series, so its rows stand as they do there, but a step lower, so the top of my series shows above it,
+ * as a card on a stack.
  * - `series`, `under`: The dialog, and that of the copy.
  * - `copy`: The form of my series copied, without the identifiers of its parts.
+ * - `top`: Where the form of the group starts, a step below the top of my series.
  *
  * @param form - The form of my series
  * @param group - The group, like `05`, empty for a new one
@@ -2400,17 +2403,23 @@ function groupFrom(form: Form, group: string): void {
     under.replaceChildren(copy);
     under.show();
     under.scrollTop = series.scrollTop;
+    const top: number = under.getBoundingClientRect().top + 2.5 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    series.style.margin = `${top}px auto auto`;
+    series.style.maxHeight = `calc(100dvh - ${top}px - var(--gap))`;
     groupBack = form;
     groupStart(form.type, group);
 }
 
 /**
  * Takes away the still copy of my series below the form of a group, see {@link groupFrom}, once that form goes back
- * to my series or the dialog closes.
+ * to my series or the dialog closes, the dialog back where it stands.
  * - `under`: The dialog of the copy.
  */
 function underClose(): void {
     const under: HTMLDialogElement = document.getElementById("series-under") as HTMLDialogElement;
+    const series: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
+    series.style.margin = "";
+    series.style.maxHeight = "";
     under.close();
     under.replaceChildren();
 }
@@ -2566,6 +2575,8 @@ function formFill(): void {
             onlineRowOf(form), ...courseTimeRowsOf(form), datesRowOf(form, formChanged)]),
             boxesRowOf(), ...lockedOf(follows, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
+    if (grouped !== null)
+        fields.append(elementOf("h2", "series-heading", "Notice board"));
     fields.append(...fresh === null ? rows
         : [...freshRowsOf(), ...fresh.category === skillName ? rows.slice(1) : rows]);
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");

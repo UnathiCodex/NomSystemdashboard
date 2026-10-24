@@ -513,3 +513,13 @@
     margin: auto;
     overflow: hidden;
 }
+
+/* The heading of the form of a group, see `formFill` in `series.ts`, so it reads as the notice board of the uni,
+   not as my series below it: bold as the type of a card, see `.course-title` in `../editor/course.css`, in line
+   with the names of the rows */
+.series-heading {
+    margin: 0 0 0.5rem;
+    padding-inline: var(--row-padding);
+    font-size: 1rem;
+    font-weight: 600;
+}
