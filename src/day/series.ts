@@ -2386,11 +2386,11 @@ function groupWaits(form: Form): boolean {
  * {@link groupPickOf}: my series kept as I left it to go back to, see {@link groupBack}, and a still copy of it left
  * below, dimmed with the page, so the form of the group reads as a dialog of its own over my series, as a box opened
  * from the list stands over it, see {@link boxShow}; the group there or a new one without name. The form of the group
- * stands in the middle, fading in as my series steps back behind it, see `#series-under` in `series.css`, its top
- * a little above the top of the form of the group, so it shows there, however long either is.
+ * stands in the middle, my series behind it a little higher and further left, see `#series-under` in `series.css`,
+ * so it shows above and left of it, however long either is.
  * - `series`, `under`: The dialog, and that of the copy.
  * - `copy`: The form of my series copied, without the identifiers of its parts.
- * - `rem`, `lift`: The size of a `rem`, and how far my series moves up or down to stand so, its smaller size taken in.
+ * - `rem`, `lift`: The size of a `rem`, and how far my series moves up or down to stand so.
  *
  * @param form - The form of my series
  * @param group - The group, like `05`, empty for a new one
@@ -2403,12 +2403,11 @@ function groupFrom(form: Form, group: string): void {
     under.replaceChildren(copy);
     under.show();
     under.scrollTop = series.scrollTop;
-    series.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250, easing: "ease-out" });
     groupBack = form;
     groupStart(form.type, group);
     const rem: number = parseFloat(getComputedStyle(document.documentElement).fontSize);
-    const lift: number = series.getBoundingClientRect().top - 1.5 * rem - under.offsetTop - 0.03 * under.offsetHeight;
-    under.style.translate = `0 ${lift}px`;
+    const lift: number = series.getBoundingClientRect().top - 1.5 * rem - under.offsetTop;
+    under.style.translate = `-1.5rem ${lift}px`;
 }
 
 /**
@@ -2575,7 +2574,7 @@ function formFill(): void {
             boxesRowOf(), ...lockedOf(follows, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
     if (grouped !== null)
-        fields.append(elementOf("h2", "series-heading", "Notice board"));
+        fields.append(elementOf("h2", "series-heading", `Series: Group ${grouped.group}`.trim()));
     fields.append(...fresh === null ? rows
         : [...freshRowsOf(), ...fresh.category === skillName ? rows.slice(1) : rows]);
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");
