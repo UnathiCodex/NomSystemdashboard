@@ -1823,7 +1823,8 @@ export function groupMine(change: MineChange): Planned[] {
  * so later weeks follow it; then the boxes of the type are numbered anew, see {@link numbersOf}.
  * A week done, or whose box may not change, see {@link changeable}, stays as it is.
  * As an extra, see `extra` of {@link PickChange}, the session becomes a box of its own instead, besides the box of its
- * week, which stays, as a second tutorial in one week; then the boxes are numbered anew, once per session.
+ * week, which stays, as a second tutorial in one week; then the boxes are numbered anew, once per session; one of a
+ * day over stays on its day, never carried along to today, `X-CARRIED:FALSE`, so I log it there.
  * - `semester`: The semester of the session.
  * - `groups`: The groups of the semester.
  * - `group`, `session`: The group and its session, `undefined` for none.
@@ -1836,7 +1837,8 @@ export function groupMine(change: MineChange): Planned[] {
  * - `later`: Whether a box of the type falls after the week.
  * - `firsts`: Without later box the first session of the group of every later week, else none.
  * - `targets`: The dates: the session, then those of the later weeks.
- * - `drafts`: The boxes of the type as planned.
+ * - `drafts`: The boxes of the type as planned; one of a day over stays on
+ * its day, never carried along to today, `X-CARRIED:FALSE`, so I log it there.
  *
  * @param change - The session, as the page sends it
  * @throws {Error} - When there is no such module folder, group or session, the week is done or its box may not change,
@@ -1864,6 +1866,12 @@ export function weekPick(change: PickChange): void {
         const drafts: Draft[] = [...typed.map(draftOf), madeDraftOf(targetOf(group, session))];
         numbersOf(drafts, tutorialWeeksOf(groups, change.type));
         draftsWrite(change.module, change.type, semester, drafts);
+        if (dayOfStart(session.start) < berlinDateOf(new Date())) {
+            const plan: string = skillFileOf(change.module, planEnding);
+            fileEntriesRead(plan).filter((entry: Entry): boolean => entry.type === change.type
+                && Date.parse(entry.start) === Date.parse(session.start))
+                .forEach((entry: Entry): void => propertiesPut(plan, entry.id, [["x-carried", ["FALSE"]]]));
+        }
         return;
     }
     const skipped: Box | undefined = typed.find((one: Box): boolean => weekOf(one) === week && one.state === "dropped"
