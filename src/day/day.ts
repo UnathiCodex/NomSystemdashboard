@@ -402,7 +402,8 @@ function shownMinutesOf(info: EventDisplayInfo): number {
  * and less the space above its first line and below its last, see {@link spaceMinutes}, so no line is cut at the
  * bottom; its lines always start at the top, never centred, and fill it downwards: half an hour one,
  * (30 - 2.93 - 12.29) / 14.86 = 0.99, 45 minutes two, (45 - 2.93 - 12.29) / 14.86 = 2.004, its place beside its
- * time, like `16:00 – 16:45 · Home Munich`, an hour three, (60 - 2.93 - 12.29) / 14.86 = 3.01, and 75 minutes four,
+ * time, like `16:00 – 16:45 · Home Munich`, an hour three, (60 - 2.93 - 12.29) / 14.86 = 3.01, its place on the third,
+ * and 75 minutes four,
  * (75 - 2.93 - 12.29) / 14.86 = 4.02;
  * its shown part counts, see {@link shownMinutesOf}.
  * A short entry, see `eventShortHeight` in {@link dayStart}, has room for one line, its space above and below left out.
@@ -450,10 +451,11 @@ function selectionIs(info: EventDisplayInfo): boolean {
  *   like `Skill: IN0004_EinfuehrungRechnerarchitektur (VO) · 16:00 – 16:30 · 8120.01.101`;
  *   where an entry is narrower than what and its time, as on a phone, what stays whole and its time moves
  *   onto a next line, which the entry hides, and only what wider than the whole entry ends with an ellipsis.
- * - An entry with room for two lines or more, from 45 minutes, shows what on its first line and start and end on its
+ * - An entry with room for two lines, of 45 minutes, shows what on its first line and start and end on its
  *   second with its place after a dot, like `16:00 – 16:45 · 8120.01.101`, as a box of the plan writes them; with room
- *   for more below them its note, as many lines of it as are left, cut with an ellipsis; no note when it has none
- *   or no whole line is left.
+ *   for three or more, from an hour, its place on a third line of its own, below start and end, going on over the
+ *   next line where it is wider than the entry, see `.entry-place` in `log.css`; below them its note, as many lines
+ *   of it as are left, cut with an ellipsis; no note when it has none or no whole line is left.
  * Its lines start at its top, never centred, on a phone as on the computer.
  * - `category`: Category of the entry, empty for an entry without one.
  * - `shownWhat`: What the entry was, a skill entry as its file writes it, like
@@ -480,6 +482,7 @@ function selectionIs(info: EventDisplayInfo): boolean {
  * - `shown`: The lines of the entry, which `.entry-lines` holds to the lines it has room for.
  * - `line`: The one line of an entry with room for one: what, its time and its place, in parts beside each other,
  *   see `.entry-line` in `log.css`.
+ * - `placeBelow`: Whether the place stands on a line of its own, of an entry with room for three lines or more.
  * - `timeLine`: The line with the time, alone or with its place beside it, of an entry with room for two lines or more.
  * - `below`: The note below the lines shown, grey, its line clamp the lines left, see `.entry-note` in `log.css`.
  * - `content`: All lines, as high as the lines the entry has room for, so a line never shows cut in half
@@ -525,8 +528,12 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
         line.append(...tail);
         shown = [line];
     } else {
-        const timeLine: HTMLElement = entryPartOf("div", "entry-line", [entryPartOf("span", "entry-time", [time]), ...tail]);
-        shown = [entryPartOf("div", "entry-whole", whole), timeLine];
+        const placeBelow: boolean = lines > 2 && tail.length > 0;
+        const timeLine: HTMLElement = entryPartOf("div", "entry-line",
+            [entryPartOf("span", "entry-time", [time]), ...placeBelow ? [] : tail]);
+        shown = [entryPartOf("div", "entry-whole", whole), timeLine, ...placeBelow ? [entryPartOf("div", "entry-place",
+            [...where, ...group === "" ? [] : place === "" ? [group] : [entryPartOf("span", "entry-parted", [group])]])]
+            : []];
         if (note !== "" && lines > shown.length) {
             const below: HTMLElement = entryPartOf("div", "entry-note", [note]);
             below.style.webkitLineClamp = String(lines - shown.length);
