@@ -72,10 +72,10 @@ export type AttendeesRename = (old: string, name: string, mail: string, dry: boo
 const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];
 
 /**
- * Roles a line of a list names a person by, like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`,
- * see `peopleRoles` in `src/persons.ts`.
+ * Roles a line of a list names a person by, like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`
+ * or `- Rector: Sieber, Volker`, see `peopleRoles` in `src/persons.ts`.
  */
-const peopleRoles: string[] = ["Dean", "Vice Dean", "Head", "Vice Head"];
+const peopleRoles: string[] = ["Dean", "Vice Dean", "Rector", "Prorector", "Head", "Vice Head"];
 
 /**
  * A link typed for a person, a web address without spaces, like `https://campus.tum.de/…`.
