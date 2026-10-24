@@ -95,7 +95,7 @@ import { giftOpen } from "./gifts.ts";
 import { middleCutPut } from "./choices.ts";
 import { whereLinkedOf, whereOf } from "./places.ts";
 import { linkNameOf, modulesFolder } from "../skill/links.ts";
-import { boxMinutes, boxTimesOf, lengthOf, nearOf, timeOf } from "./times.ts";
+import { boxMinutes, boxTimesOf, lengthOf, nearOf, rangeDash, timeOf } from "./times.ts";
 import { boxActionsOf } from "./actions.ts";
 import { roomOf, seriesNew } from "./series.ts";
 import { dayOf, dayTextOf, skillName } from "../skill/attempts.ts";
@@ -373,7 +373,7 @@ function timePartsOf(box: Box, day: string): string[] {
     const start: Date | null = box.time === "" ? null : new Date(box.time);
     let when: string = start === null ? "" : timeOf(start);
     if (start !== null && box.minutes !== null)
-        when = `${timeOf(start)} – ${timeOf(new Date(start.getTime() + box.minutes * 60 * 1000))}`;
+        when = `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + box.minutes * 60 * 1000))}`;
     const length: string = box.minutes === null || start !== null ? "" : lengthOf(box.minutes);
     return [over, when, length].filter((part: string): boolean => part !== "");
 }

@@ -24,7 +24,7 @@
  */
 
 import { entryPartOf, shownWhatOf, whatOf } from "./day/boxes.ts";
-import { lengthOf, timeOf } from "./day/times.ts";
+import { lengthOf, rangeDash, timeOf } from "./day/times.ts";
 import { readerAsk } from "./reader.ts";
 
 
@@ -88,7 +88,7 @@ async function timerShow(): Promise<void> {
     const what: HTMLElement = entryPartOf("span", "session-what", whatOf(running.category,
         shownWhatOf(running.category, running.title, running.module, running.type)));
     timer.replaceChildren(what, entryPartOf("span", "session-left", [lengthOf(left)]));
-    timer.title = `${what.textContent ?? ""}\n${timeOf(new Date(running.start))} – ${timeOf(new Date(running.end))}`;
+    timer.title = `${what.textContent ?? ""}\n${timeOf(new Date(running.start))}${rangeDash}${timeOf(new Date(running.end))}`;
 }
 
 /**

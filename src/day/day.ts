@@ -75,7 +75,7 @@ import { swipeStart } from "./swipe.ts";
 import { whereLinkedOf, whereOf } from "./places.ts";
 import { roomOf } from "./series.ts";
 import { trackersSee } from "./trackers.ts";
-import { timeOf, timesStart } from "./times.ts";
+import { rangeDash, timeOf, timesStart } from "./times.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
@@ -514,7 +514,7 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const start: Date = info.event.start as Date;
     const end: Date = info.event.end ?? start;
 
-    const time: string = `${timeOf(start)} – ${timeOf(end)}`;
+    const time: string = `${timeOf(start)}${rangeDash}${timeOf(end)}`;
     const lines: number = linesOf(info);
     const whole: (string | Node)[] = whatOf(category, what);
     let shown: HTMLElement[];

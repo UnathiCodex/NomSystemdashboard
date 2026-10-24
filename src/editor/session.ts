@@ -22,7 +22,7 @@
  */
 
 import { dialogOf } from "./dialog.ts";
-import { nowOn, timeOf } from "../day/times.ts";
+import { nowOn, rangeDash, timeOf } from "../day/times.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { readerAsk } from "../reader.ts";
 
@@ -71,7 +71,7 @@ export async function sessionOf(module: string): Promise<Session | null> {
  */
 export function sessionTextOf(session: Session): string {
     const start: Date = new Date(session.start);
-    return `${dayTextOf(dayOf(start), true)} · ${timeOf(start)} – ${timeOf(new Date(session.end))}`;
+    return `${dayTextOf(dayOf(start), true)} · ${timeOf(start)}${rangeDash}${timeOf(new Date(session.end))}`;
 }
 
 /**

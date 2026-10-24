@@ -84,8 +84,8 @@ export const personsKept: () => Promise<Person[]> = changesKept((): Promise<Pers
 
 /**
  * Puts several people on one line, each name apart by a middle dot, like `Durmann, Julius · Ewert, Markus`, never
- * a comma or `; `, since a name holds a comma; the dot with more room on both sides than a dot between other parts
- * of a line, see `.people-dot` in `./day/day.css`, the line going on after it where it is too long.
+ * a comma or `; `, since a name holds a comma; an en space on each side of the dot, as far as every dot that parts
+ * a line, see `.entry-parted` in `./day/day.css`, the line going on after it where it is too long.
  * - `dot`: The dot between two names.
  *
  * @param names - The names, each its text or its link
@@ -97,7 +97,7 @@ export function peopleOf(names: (string | Node)[]): (string | Node)[] {
             return [name];
         const dot: HTMLSpanElement = document.createElement("span");
         dot.className = "people-dot";
-        dot.textContent = " · ";
+        dot.textContent = "\u2002·\u2002";
         return [dot, name];
     });
 }

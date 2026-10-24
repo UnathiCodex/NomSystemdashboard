@@ -44,7 +44,7 @@ import { codeFolding, foldedRanges, foldService } from "@codemirror/language";
 import { FoldWidget } from "./preview.ts";
 import { foldedAt } from "./steps.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
-import { lengthOf, timeOf } from "../day/times.ts";
+import { lengthOf, rangeDash, timeOf } from "../day/times.ts";
 import { entryPartOf, whatOf } from "../day/boxes.ts";
 import { roomOf } from "../day/series.ts";
 import "../day/boxes.css";
@@ -414,7 +414,7 @@ function boxOf(block: Block): HTMLElement {
             ? dayTextOf(`${date[1]}-${date[2]}-${date[3]}`, true) : dayTextOf(dayOf(start), true)}`);
     if (start !== null)
         parts.push(length === null ? timeOf(start)
-            : `${timeOf(start)} – ${timeOf(new Date(start.getTime() + length * 60000))}`);
+            : `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + length * 60000))}`);
     else if (length !== null)
         parts.push(lengthOf(length));
     const place: string = values.get("X-ONLINE") || roomOf(values.get("LOCATION") ?? "");

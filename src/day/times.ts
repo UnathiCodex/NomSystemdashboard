@@ -36,6 +36,14 @@ import type { Box } from "./boxes.ts";
  */
 export const boxMinutes: number = 30;
 
+/**
+ * The dash between the start and the end of a range written as text, like `14:00 – 16:00`, with an en space,
+ * half an em, on each side, clearly more than a space between words, so a range of days like
+ * `29.10.2026 (Thu) – 04.02.2027 (Thu)` reads as two ends, and as far as the dash between two fields stands from them,
+ * see `--range-gap` in `../variants.css`; the one dash of every range of the page.
+ */
+export const rangeDash: string = "\u2002–\u2002";
+
 
 /**
  * Writes the time of a date as `HH:MM`, the value of a time field.

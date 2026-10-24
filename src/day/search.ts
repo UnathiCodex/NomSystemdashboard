@@ -28,7 +28,7 @@ import { entryOpenEdit } from "./categories.ts";
 import { entryPartOf, shownWhatOf, whatOf } from "./boxes.ts";
 import { whereLinkedOf } from "./places.ts";
 import { roomOf } from "./series.ts";
-import { dateTextOf, timeOf } from "./times.ts";
+import { dateTextOf, rangeDash, timeOf } from "./times.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { iconPut, searchFieldOf } from "../icons.ts";
@@ -133,7 +133,7 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
         .filter((part: (string | Node)[]): boolean => part.length > 0);
     const meta: HTMLElement = entryPartOf("span", "search-meta", [entryPartOf("span", "search-when",
         [dayTextOf(day, true),
-            entryPartOf("span", "entry-parted", [`${timeOf(start)} – ${timeOf(end)}`])])]);
+            entryPartOf("span", "entry-parted", [`${timeOf(start)}${rangeDash}${timeOf(end)}`])])]);
     if (where.length > 0)
         meta.append(entryPartOf("span", "entry-parted", [...where[0],
             ...where.slice(1).map((part: (string | Node)[]): HTMLElement =>

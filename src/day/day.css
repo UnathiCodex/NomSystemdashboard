@@ -416,13 +416,14 @@ fieldset.entry-times {
 }
 
 /* Start and end in one row, the range dash between them as in the boxes, like `14.10.2026 (Wed) 10:15 – 10:45`
-   or `18:00 – 19:30`, one space on each side of the dash, as every range of times writes it, the dash going with
-   the end; where the row is too narrow, like on a phone, the end with its dash goes on below */
+   or `18:00 – 19:30`, `--range-gap` on each side of the dash, half an em, as every range written as text has it,
+   see `rangeDash` in `times.ts`, the dash going with the end; where the row is too narrow, like on a phone, the end
+   with its dash goes on below */
 .entry-range {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    column-gap: 0.3em;
+    column-gap: var(--range-gap);
     row-gap: 0.25rem;
 }
 
@@ -455,9 +456,9 @@ fieldset.entry-times {
     display: none;
 }
 
-/* The dash before the end, as far from it as from the start, one space, like `14:00 – 16:00` */
+/* The dash before the end, as far from it as from the start, like `14:00 – 16:00` */
 .entry-dash {
-    margin-right: 0.3em;
+    margin-right: var(--range-gap);
 }
 
 /* The icon of the series of a box right after its times, as far from them as the pencil from a summary or a place,
@@ -597,9 +598,11 @@ fieldset.entry-times {
 }
 
 /* Middle dot between two people on one line, like `Durmann, Julius · Ewert, Markus`, see `peopleOf`
-   in `../persons.ts`: its spaces and only a touch more room on both sides than the dot of `.entry-parted` */
-.people-dot {
-    margin-inline: 0.125em;
+   in `../persons.ts`: an en space on each side, as far as the dot of `.entry-parted` and the dash of a range; after
+   the pencil of a person, see `withRowOf` in `categories.ts`, as far from the pencil drawn as from the next name,
+   so the room the pencil keeps right of its line, its padding and the white of its icon, taken back */
+:has(> .entry-pencil:last-child) + .people-dot {
+    margin-left: -0.37em;
 }
 
 /* Time field as wide as what it holds, a time like 14:00 or, while empty, its grey `hh:mm`, see the rule above,

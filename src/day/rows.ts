@@ -22,7 +22,7 @@
  */
 
 import { personLinkOf, personOf } from "../persons.ts";
-import { lengthOf, timeOf, weekdayDateTextOf } from "./times.ts";
+import { lengthOf, rangeDash, timeOf, weekdayDateTextOf } from "./times.ts";
 import { elementOf } from "../food/foods.ts";
 
 import type { Attendee } from "./entries.ts";
@@ -73,7 +73,7 @@ export function rowTimesOf(time: string, minutes: number | null): string {
     if (start === null)
         return minutes === null ? "" : lengthOf(minutes);
     return minutes === null ? timeOf(start)
-        : `${timeOf(start)} – ${timeOf(new Date(start.getTime() + minutes * 60 * 1000))}`;
+        : `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + minutes * 60 * 1000))}`;
 }
 
 /**
