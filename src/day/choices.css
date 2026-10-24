@@ -159,6 +159,16 @@
 }
 
 /* Detail of a value grey beside it, like the address of a place */
+/* The star after a value starred in a list, like my default place, see `valueButtonOf` in `choices.ts`: as small and
+   filled as the star of the place itself, see `.place-star`, a little apart from its text */
+.picker-star svg.lucide {
+    width: 0.9375rem;
+    height: 0.9375rem;
+    margin-left: 0.375rem;
+    vertical-align: -0.125em;
+    fill: currentColor;
+}
+
 .picker-detail {
     margin-left: 0.75rem;
     font-size: 0.8125rem;

@@ -460,15 +460,31 @@
     align-items: center;
 }
 
-/* The semester and the group beside it as close as the skill and its type, the semester only as wide as its value,
-   see `semesterRowOf` in `series.ts` */
+/* The semester and the group beside it, the semester only as wide as its value, a middle dot between them as between
+   the parts of a line, see `.entry-parted` in `day.css`, like `2026W · 📌 Group 01 ⌄`, see `semesterRowOf`
+   in `series.ts`; no dot before the plus alone of a type without groups, which stays as close as the type beside
+   a skill; the field of the name of a group with its grey line below it */
 .panel-pair.series-semester > .picker:first-child .picker-head {
     min-width: 0;
 }
 
-.panel-pair.series-semester > .series-group-pick,
-.panel-pair.series-semester > span:last-child {
+.panel-pair.series-semester > .series-group-pick:not(:has(.group-name)) {
     margin-inline-start: 0.375rem;
+}
+
+.panel-pair.series-semester > :is(.series-group-pick:has(.group-name), .series-group-part)::before {
+    content: "·";
+    margin-inline: 0.5em;
+}
+
+.series-group-part {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+.series-group-part > .entry-none {
+    flex-basis: 100%;
 }
 
 .series-group-pick > .plus-quiet {

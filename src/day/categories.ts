@@ -118,8 +118,8 @@ import { boxAdd, boxChange, boxDelete, entryAdd, entryChange, entryDelete, stand
 import { cookName, foodName, mealCooked, mealFoods, mealOf, mealTitle } from "./meal.ts";
 import { sportName, sportOpen, sportRead, sportRowsOf } from "./sport.ts";
 import {
-    addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, placeSend, platformSend,
-    renameSend,
+    addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, placeSend, platformSend, renameSend,
+    standardFirst,
 } from "./places.ts";
 import {
     skillDaySet, skillFieldsShow, skillFolderNameOf, skillLinksRead, skillModuleType, skillPathShow,
@@ -765,7 +765,8 @@ function fixedTextOf(field: Field, text: string): string {
  */
 function fieldChoiceOf(field: Field, value: string): Choice {
     const name: string = labelOf(value) === labelOf(values[field.key]) ? edits[field.key]?.name ?? "" : "";
-    return field.key === "title" ? choiceOf(value) : placeChoiceOf(value, name !== "" ? name : labelOf(value));
+    return field.key === "title" ? choiceOf(value)
+        : placeChoiceOf(value, name !== "" ? name : labelOf(value), field.places);
 }
 
 /**
@@ -1085,8 +1086,9 @@ async function placeAdd(field: Field, name: string): Promise<string | null> {
 }
 
 /**
- * Builds the search of the list of a field of a place: while nothing is typed my places, the most used first,
- * and the place picked when it is none of them, like a room or an older place by its name alone, so its line
+ * Builds the search of the list of a field of a place: my default place always first, with its star, see
+ * `standardFirst` in `places.ts`; while nothing is typed my places, the most used first, and the place picked when
+ * it is none of them, like a room or an older place by its name alone, so its line
  * shows it by its label; as I type my places, then the rooms of the university, like `Audimax` or `0509` finding
  * `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)`, each with its address beside it, see {@link fieldChoiceOf}.
  * - `line`: The place picked, empty for none.
@@ -1100,7 +1102,8 @@ function placeSearchOf(field: Field): (text: string) => Promise<Choice[]> {
         const line: string = values[field.key];
         const shown: string[] = text.trim() !== "" ? [...new Set([...field.values, ...field.rooms])]
             : [...new Set([...field.values, ...line === "" ? [] : [mineOf(field) ?? line]])];
-        return await searchOf(shown.map((value: string): Choice => fieldChoiceOf(field, value)))(text);
+        return await searchOf(standardFirst(shown, field.places)
+            .map((value: string): Choice => fieldChoiceOf(field, value)))(text);
     };
 }
 

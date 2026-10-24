@@ -35,7 +35,8 @@
  * - `../persons.ts`: Puts the people of a line apart by a middle dot.
  */
 
-import { crossPut, plusPut, plusTake, plusTypedPut, searchFieldOf } from "../icons.ts";
+import { Star } from "lucide";
+import { crossPut, iconOf, plusPut, plusTake, plusTypedPut, searchFieldOf } from "../icons.ts";
 import { matchesAll, searchTextOf, wordsOf } from "../search.ts";
 import { peopleOf } from "../persons.ts";
 
@@ -126,12 +127,14 @@ export function middleCutPut(line: HTMLElement, name: string): void {
  * - `text`: Text shown and searched, like `Airline Revenue Interval · due 12.10.2026 (Mon)`.
  * - `group`: Name of its group, like `Due today`, empty for none.
  * - `detail`: Grey detail beside the text in the list, like the address of a place; left out for none.
+ * - `starred`: Whether a small filled star follows its text in the list, like my default place; none when left out.
  */
 export type Choice = {
     value: string;
     text: string;
     group: string;
     detail?: string;
+    starred?: boolean;
 };
 
 /**
@@ -319,7 +322,9 @@ function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonE
 }
 
 /**
- * Makes the button of a value in a list: its text, and its detail grey beside it, like the address of a place.
+ * Makes the button of a value in a list: its text, its star while it is starred, like my default place, and its
+ * detail grey beside it, like the address of a place.
+ * - `star`: The star.
  * - `detail`: The grey detail.
  *
  * @param choice - The value
@@ -330,6 +335,12 @@ function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonE
 function valueButtonOf(choice: Choice, chosen: boolean, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf(choice.text, chosen, click);
     button.dataset.value = choice.value;
+    if (choice.starred === true) {
+        const star: HTMLSpanElement = document.createElement("span");
+        star.className = "picker-star";
+        star.append(iconOf(Star));
+        button.append(star);
+    }
     if ((choice.detail ?? "") !== "") {
         const detail: HTMLSpanElement = document.createElement("span");
         detail.className = "picker-detail";

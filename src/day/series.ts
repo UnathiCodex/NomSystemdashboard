@@ -115,6 +115,7 @@ import {
 } from "./times.ts";
 import {
     addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, platformSend, renameSend,
+    standardFirst,
 } from "./places.ts";
 import {
     boxAdd, boxDrop, boxLog, boxRepeat, boxSubmit, boxUndo, boxUniversity,
@@ -561,9 +562,11 @@ let plainTimed: boolean = true;
 
 /**
  * The group of the tutorials of its type the form makes or changes, see {@link groupPartOf} and {@link groupStart}:
- * its group, like `05`, and whether it is new; `null` while the form is that of my own series.
+ * its group as typed, like `05`, whether it is new, and its name there before, like `Mo-0800-1`, which saving renames
+ * everywhere when I typed another, see `groupRename` in `reader/course.ts`, empty for a new one; `null` while the
+ * form is that of my own series.
  */
-let grouped: { group: string; made: boolean } | null = null;
+let grouped: { group: string; made: boolean; was: string } | null = null;
 
 /**
  * My series of the type the form of a group was opened from, by the menu of the groups beside its semester, see
@@ -1298,7 +1301,7 @@ function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void):
  * cancelled, none for one the change removes, a button that opens its box there already, see {@link boxShow},
  * of an exam its kind to pick, see {@link kindMenuOf}; its day, of a box without number, like a day of my sleep,
  * the button that opens it instead; of my tutorials its group with the menu of the groups
- * of its week, see `boxGroupOf` in `./groups.ts`, an empty place in a list of groups for a row without one; grey its
+ * of its week, see `boxGroupOf` in `./groups.ts`; grey its
  * times after the change, see `rowTimesOf` in `./rows.ts`, and its place, of a box there already its own, else that
  * of the form, its platform while it does something online, and right below them who I am with, of a box not written
  * yet those of the series, which its dialog changes once it is; what the change does to it, like `new`, but while every box is new, `extra` after
@@ -1315,10 +1318,9 @@ function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void):
  * @param box - The box
  * @param had - Whether the series had boxes before, so a new one says so
  * @param preview - How the boxes show
- * @param grouping - Whether the rows of the list name their groups
  * @returns The row
  */
-function boxRowOf(box: Planned, had: boolean, preview: Preview, grouping: boolean): HTMLElement {
+function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
     const kinds: Kinds | undefined = preview.kinds;
     const known: Box | undefined = box.change === "removed" ? undefined : boxesKnown.get(box.id);
     let word: string = box.change === "renumbered" || (box.change === "new" && !had) ? "" : box.change;
@@ -1347,7 +1349,7 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview, grouping: boolea
         number: number, day: box.day, open: opening,
         group: known !== undefined && known.group !== "" && course !== null
             ? boxGroupOf(course, known, (_: () => void, send: () => Promise<unknown>): void => seriesAct(send))
-            : grouping ? elementOf("span", "", "") : null,
+            : null,
         meta: [[rowTimesOf(box.time, box.minutes)], place],
         people: known?.attendees ?? (box.attendees.length > 0 ? box.attendees : typing?.attendees ?? []),
         persons: persons, mark: word,
@@ -1492,9 +1494,12 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
  * Makes the list of the boxes of a series, see the top of this file: the boxes by their days, by month,
  * see {@link monthListOf}; below them `+`, see {@link addRowOf}, or the extra being typed, see {@link draftRowOf},
  * but for a group, whose sessions are the university's; of a plain series an extra is one of its single dates,
- * its `RDATE`, see `extras` of `Plain` in `reader/rules.ts`.
+ * its `RDATE`, see `extras` of `Plain` in `reader/rules.ts`. The sessions of a group numbered by date from 1 on, as
+ * my boxes are, one the university cancelled keeping its place in the count but showing `–`, one the change removes
+ * none.
  * - `had`: Whether the series had boxes before.
- * - `grouping`: Whether some rows name their groups, so all keep the place of a group.
+ * - `count`: How many sessions of a group are numbered so far.
+ * - `numbered`: The boxes, the sessions of a group with their numbers.
  * - `items`: Each box with its place in time and its row.
  * - `list`: The list.
  *
@@ -1505,10 +1510,15 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
  */
 function boxListOf(planned: Planned[], preview: Preview, redraw: () => void): HTMLElement {
     const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
-    const grouping: boolean = course !== null
-        && planned.some((box: Planned): boolean => (boxesKnown.get(box.id)?.group ?? "") !== "");
-    const items: [string, HTMLElement][] = planned.map((box: Planned): [string, HTMLElement] =>
-        [box.time || box.day, boxRowOf(box, had, preview, grouping)]);
+    let count: number = 0;
+    const numbered: Planned[] = grouped === null ? planned : planned.map((box: Planned): Planned => {
+        if (box.change === "removed")
+            return box;
+        count += 1;
+        return { ...box, number: box.state === "university" ? "NONE" : String(count) };
+    });
+    const items: [string, HTMLElement][] = numbered.map((box: Planned): [string, HTMLElement] =>
+        [box.time || box.day, boxRowOf(box, had, preview)]);
     const list: HTMLElement = monthListOf(items);
     if (grouped === null)
         list.append(extraTyped === null ? addRowOf(preview, redraw) : draftRowOf(extraTyped, preview, redraw));
@@ -1615,8 +1625,8 @@ function skillFieldOf(key: string): Field | undefined {
 }
 
 /**
- * Gives my default place, `★` in `Places.md`, like `Home Munich`, which a new series starts with, as a new box does,
- * see `wayEndFill` in `./categories.ts`.
+ * Gives my default place, `★` in `Places.md`, like `Home Munich`, which every new series starts with, a new group
+ * and my learning too, as a new box does, see `wayEndFill` in `./categories.ts`.
  * - `standard`: My default place, `undefined` for none.
  *
  * @returns Its line, like `Home Munich, Burg-Eltz-Weg, 81375, München, Deutschland`, empty for none
@@ -1660,13 +1670,14 @@ function withAsked(): boolean {
 }
 
 /**
- * Tells whether the form makes a new group whose name its type has already, see {@link groupPartOf}.
+ * Tells whether the form names its group, new or renamed, as another group of its type is named already,
+ * see {@link groupPartOf}.
  *
  * @param form - The form
- * @returns Whether the group typed is there already
+ * @returns Whether the name typed is taken
  */
 function groupTaken(form: Form): boolean {
-    return grouped?.made === true
+    return grouped !== null && grouped.group !== grouped.was
         && groupsOf(form.type).some((group: Group): boolean => group.rule.group === grouped?.group);
 }
 
@@ -1797,7 +1808,7 @@ async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
         return plainSend(plain, form, dry);
     if (grouped !== null)
         return courseSend<Planned[]>("/api/course/groups", {
-            module: course?.module ?? "", made: grouped.made, states: form.states, dry: dry,
+            module: course?.module ?? "", made: grouped.made, was: grouped.was, states: form.states, dry: dry,
             rule: {
                 type: form.type, slots: form.slots, extras: [], location: form.location,
                 locationLink: form.locationLink, online: form.online, onlineLink: form.onlineLink,
@@ -1947,7 +1958,7 @@ function seriesRowOf(form: Form): HTMLElement {
 
 /**
  * Makes the row of the place of the form, picked as in the dialog, see `placeSearchOf` in `./categories.ts`:
- * my places, the most used first, and as I type the rooms of the university too, each with its address
+ * my default place first, with its star, then my places, the most used first, and as I type the rooms of the university too, each with its address
  * grey beside it, see `placeChoiceOf` in `./places.ts`, the place of the series among them; below it its address,
  * a link. A place picked takes the link of my place or room.
  * Right after the place, while one is picked, its pencil shows and hides its parts below it, the columns of its row,
@@ -1986,8 +1997,9 @@ function placeRowOf(form: Form): HTMLElement {
             const values: string[] = text.trim() === ""
                 ? [...field?.values ?? [], ...(form.location === "" ? [] : [form.location])]
                 : [...field?.values ?? [], ...field?.rooms ?? []];
-            return await searchOf([...new Set(values)].map((value: string): Choice =>
-                placeChoiceOf(value, nameShown(value))))(text);
+            const places: { [line: string]: Place } = field?.places ?? {};
+            return await searchOf(standardFirst([...new Set(values)], places).map((value: string): Choice =>
+                placeChoiceOf(value, nameShown(value), places)))(text);
         },
         picked: form.location === "" ? [] : [form.location], many: false, adding: false, noun: "place",
         textOf: nameShown,
@@ -2128,10 +2140,11 @@ function groupTypedOf(text: string): string | null {
 }
 
 /**
- * Makes the group of the form of a group of the tutorials, beside its semester, see {@link semesterRowOf}: a group
- * there by its name as plain text, like `Group 05`, never to type; a new one a field I type its name into, grey `nn`
- * while empty, as a time says `hh:mm`, like `5` for `Group 05`, see {@link groupTypedOf}, with a grey line below it while the type has a group of that name already,
- * from which the form opens that group instead, or while no group is named so.
+ * Makes the group of the form of a group of the tutorials, beside its semester, see {@link semesterRowOf}: a field
+ * I type its name into, a group there with its name to rename it, saving renaming it everywhere, a new one grey `nn`
+ * while empty, as a time says `hh:mm`, like `5` for `Group 05`, see {@link groupTypedOf}, with a grey line below it
+ * while another group of the type has that name already, from which the form opens that group instead, or while no
+ * group is named so.
  * - `input`: The field.
  * - `hint`: The grey line.
  * - `open`: Opens the group of that name there already.
@@ -2140,12 +2153,10 @@ function groupTypedOf(text: string): string | null {
  * @returns The group
  */
 function groupPartOf(): HTMLElement {
-    if (grouped?.made === false)
-        return elementOf("span", "", `Group ${grouped.group}`);
     const input: HTMLInputElement = partFieldOf("text", grouped?.group ?? "", "Group");
     const hint: HTMLElement = elementOf("p", "entry-none", "");
     const open: HTMLButtonElement = document.createElement("button");
-    const value: HTMLElement = elementOf("div", "", "");
+    const value: HTMLElement = elementOf("div", "series-group-part", "");
     input.placeholder = "nn";
     open.type = "button";
     open.className = "series-group-open";
@@ -2153,7 +2164,7 @@ function groupPartOf(): HTMLElement {
     input.addEventListener("input", (): void => {
         const name: string | null = groupTypedOf(input.value);
         const type: string = typing?.type ?? "";
-        grouped = { group: name ?? "", made: true };
+        grouped = { group: name ?? "", made: grouped?.made ?? true, was: grouped?.was ?? "" };
         hint.hidden = name !== null && (typing === null || !groupTaken(typing));
         if (name === null)
             hint.replaceChildren("No group is named so");
@@ -2240,7 +2251,7 @@ function groupStart(type: string, group: string): void {
     const rule: Rule | undefined = found?.rule;
     const weeks: Rule | undefined = (course?.series.find((series: Series): boolean => series.rule.type === type)
         ?? course?.series[0])?.rule;
-    grouped = { group: group, made: found === undefined };
+    grouped = { group: group, made: found === undefined, was: found === undefined ? "" : group };
     repeated = null;
     removeAsked = false;
     previewForget();
@@ -2253,7 +2264,9 @@ function groupStart(type: string, group: string): void {
         type: type, old: rule ?? null,
         slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [{ weekday: 0, start: "", end: "" }],
         before: rule?.slots.map((slot: Slot): number => slot.weekday) ?? [0], extras: [],
-        location: rule?.location ?? "", locationLink: rule?.locationLink ?? "", online: rule?.online ?? "",
+        location: rule?.location ?? standardLineOf(),
+        locationLink: rule?.locationLink ?? skillFieldOf("location")?.places[standardLineOf()]?.link ?? "",
+        online: rule?.online ?? "",
         onlineLink: rule?.onlineLink ?? "", passcode: rule?.passcode ?? "", attendees: rule?.attendees ?? [],
         first: rule?.first ?? weeks?.first ?? "", last: rule?.last ?? weeks?.last ?? "", times: {}, states: {},
         kinds: {},
@@ -2295,7 +2308,8 @@ function seriesBinOf(form: Form): HTMLButtonElement {
     const ask: string = grouped === null && plain === null ? "Really remove? Its boxes done stay" : "Really remove?";
     const address: string = grouped !== null
         ? `/api/course/groups?${new URLSearchParams({
-            module: course?.module ?? "", type: form.type, group: grouped.group, semester: course?.semester ?? "",
+            module: course?.module ?? "", type: form.type, group: grouped.was || grouped.group,
+            semester: course?.semester ?? "",
         })}`
         : plain !== null ? `/api/day/plain?${new URLSearchParams({ id: plain.id })}`
         : `/api/course/series?${new URLSearchParams({
@@ -3000,7 +3014,8 @@ export async function learningOpen(module: string, semester: string, id: string)
     }
     const today: string = dayOf(new Date());
     await plainStart({
-        id: "", category: skillName, title: "", module: module, type: "", semester: semester, location: "", online: "",
+        id: "", category: skillName, title: "", module: module, type: "", semester: semester, location: standardLineOf(),
+        online: "",
         onlineLink: "", passcode: "", attendees: [], weekdays: [weekdayOf(today)], start: "", end: "", minutes: null,
         first: today, last: "", extras: [], file: "",
     }, (): void => {});
@@ -3209,7 +3224,8 @@ export async function seriesNew(day: string, saved: () => void): Promise<void> {
     withOpen = [];
     typing = {
         type: "", old: null, slots: [{ weekday: weekdayOf(day), start: "", end: "" }], before: [0], extras: [],
-        location: "", locationLink: "", online: "", onlineLink: "", passcode: "", attendees: [], first: day, last: "",
+        location: standardLineOf(), locationLink: skillFieldOf("location")?.places[standardLineOf()]?.link ?? "",
+        online: "", onlineLink: "", passcode: "", attendees: [], first: day, last: "",
         times: {}, states: {}, kinds: {},
     };
     formFill();

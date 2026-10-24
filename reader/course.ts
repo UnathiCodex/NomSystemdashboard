@@ -83,17 +83,18 @@
  *   holidays.
  */
 
+import { existsSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import { boxDelete, boxDrop, boxesAdd, boxFind, groupIs, numberedTypes, skillBoxesRead } from "./boxes.ts";
 import {
     berlinDateOf, berlinDayStartOf, berlinInstantOf, berlinTimeOf, dayAdd, entriesRead, entryRemove,
-    icsTextOf, propertiesPut, skillName, todoAppend, todoChange,
+    fileEntriesRead, icsTextOf, propertiesPut, skillName, todoAppend, todoChange,
 } from "./calendar.ts";
 import { attendeesAllow, semesterOf, skillTypes } from "./categories.ts";
 import { skillLinkOf, titleOf } from "./documents.ts";
 import { codeOf, moduleFolderOf, moduleFoldersRead, semesterFoldersRead } from "./notes.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
-import { holidays, planEnding, skillFileOf, skillLog, vaultPathOf } from "./sources.ts";
+import { holidays, logEnding, planEnding, skillFileOf, skillLog, vaultPathOf } from "./sources.ts";
 
 import type { Box, BoxNew, BoxState } from "./boxes.ts";
 import type { Attendee, Entry, Online, Push, TodoFields } from "./calendar.ts";
@@ -330,6 +331,8 @@ export type GroupNew = {
  *   weekly.
  * - `made`: Whether it is a new group, so none of its type, group and semester may be there yet; else it changes
  *   the one there.
+ * - `was`: The name of the group there before I renamed it, like `Mo-0800-1`, its name everywhere taking that of the
+ *   rule, see {@link groupRename}; left out, or the same, for a group not renamed.
  * - `states`: The dates of its slots I marked cancelled, `university`, or open again, `open`, by their days, like
  *   `2026-11-10`; left out for none.
  * - `dry`: Whether only to tell what it would make, for the preview of the form, writing nothing.
@@ -338,6 +341,7 @@ export type GroupChange = {
     module: string;
     rule: Rule;
     made: boolean;
+    was?: string;
     states?: { [day: string]: BoxState };
     dry: boolean;
 };
@@ -1873,10 +1877,14 @@ export function groupApply(change: GroupChange): Planned[] {
     folderCheck(change.module);
     const rule: Rule = { ...change.rule, extras: [], times: {} };
     ruleCheck(rule);
-    const old: Group | undefined = groupsRead(change.module, rule.semester)
-        .find((group: Group): boolean => group.rule.type === rule.type && group.rule.group === rule.group);
+    const was: string = change.was || rule.group;
+    const groups: Group[] = groupsRead(change.module, rule.semester)
+        .filter((group: Group): boolean => group.rule.type === rule.type);
+    const old: Group | undefined = groups.find((group: Group): boolean => group.rule.group === was);
     if (rule.group === "" || change.made !== (old === undefined))
-        throw new Error(`${change.made ? "A group there already" : "No group"}: ${rule.type} ${rule.group}`);
+        throw new Error(`${change.made ? "A group there already" : "No group"}: ${rule.type} ${was}`);
+    if (was !== rule.group && groups.some((group: Group): boolean => group.rule.group === rule.group))
+        throw new Error(`A group there already: ${rule.type} ${rule.group}`);
     const met: Set<string> = new Set((old?.sessions ?? [])
         .map((session: Session): string => berlinDateOf(new Date(session.start))));
     const skipped: Set<string> = new Set(old === undefined ? [] : datesOf(old.rule)
@@ -1916,6 +1924,8 @@ export function groupApply(change: GroupChange): Planned[] {
         return planned;
     if (dates.every(cancelled))
         throw new Error(`No session of group ${rule.type} ${rule.group} of ${change.module}`);
+    if (was !== rule.group)
+        groupRename(change.module, rule.type, rule.semester, was, rule.group);
     groupsTake({ module: change.module, type: rule.type, group: rule.group, semester: rule.semester });
     rule.slots.forEach((slot: Slot, index: number): void => {
         const days: string[] = dates.filter((date: RuleDate): boolean => date.slot === index && !cancelled(date))
@@ -1925,6 +1935,37 @@ export function groupApply(change: GroupChange): Planned[] {
     });
     groupBoxesMove(change.module, rule.type, rule.group, rule.semester);
     return planned;
+}
+
+/**
+ * Renames a group everywhere, as the form of a group sends a new name for it, see {@link groupApply}: the `X-GROUP`
+ * of its to-dos, which repeat, so they are read as groups, see {@link groupsRead}, of my boxes that go to it, done
+ * ones too, so the group pinned, the group of my series, keeps its new name, and of every entry of the log of the
+ * module I went to it in; of its type and semester only, an entry without semester by its day.
+ * - `plan`: The plan of the module.
+ * - `files`: The plan and the log of the module, those there.
+ * - `taken`: Whether an entry goes to the group.
+ *
+ * @param module - Name of the folder of the module, like `IN0004_EinfuehrungRechnerarchitektur`
+ * @param type - Type of the group, like `TU`
+ * @param semester - Its semester, like `2026W`
+ * @param was - Its name before, like `Mo-0800-1`
+ * @param group - Its new name, like `01`
+ * @throws {Error} - When a file cannot be written
+ */
+function groupRename(module: string, type: string, semester: string, was: string, group: string): void {
+    const plan: string = skillFileOf(module, planEnding);
+    groupsRead(module, semester).filter((one: Group): boolean => one.rule.type === type && one.rule.group === was)
+        .forEach((one: Group): void => one.ids.forEach((id: string): void =>
+            propertiesPut(plan, id, [["x-group", [group]]])));
+    const files: string[] = [planEnding, logEnding].map((ending: string): string => skillFileOf(module, ending))
+        .filter((file: string): boolean => existsSync(file));
+    const taken: (entry: Entry) => boolean = (entry: Entry): boolean => entry.type === type && entry.group === was
+        && (entry.semester !== "" ? entry.semester : semesterOf(berlinDateOf(new Date(entry.start)))) === semester;
+    files.forEach((file: string): void => {
+        [...new Set(fileEntriesRead(file).filter(taken).map((entry: Entry): string => entry.id))]
+            .forEach((id: string): void => propertiesPut(file, id, [["x-group", [group]]]));
+    });
 }
 
 /**

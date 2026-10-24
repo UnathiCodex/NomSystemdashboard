@@ -267,14 +267,37 @@ function standardStarOf(place: Place): HTMLButtonElement {
 /**
  * Makes the choice of a place in the list of a field of a place, in the dialog and in the form of a series,
  * see `../editor/course.ts`: by its name, see {@link labelOf}, or by the new name typed for it by its pencil,
- * see {@link renameSend}, its address grey beside it.
+ * see {@link renameSend}, my default place with its star after it, see {@link standardFirst}, its address grey
+ * beside it.
  *
  * @param line - Place as an entry writes it, like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`
- * @param name - Name it shows, like `TUM Stammgelände` typed for it; its name when left out
+ * @param name - Name it shows, like `TUM Stammgelände` typed for it
+ * @param places - My places by their lines, which tell my default place
  * @returns Choice, like one showing `TUM Innenstadt`
  */
-export function placeChoiceOf(line: string, name: string = labelOf(line)): Choice {
-    return { value: line, text: name, group: "", detail: addressOf(line) };
+export function placeChoiceOf(line: string, name: string, places: { [line: string]: Place }): Choice {
+    const standard: Place | undefined = Object.values(places).find((place: Place): boolean => place.standard);
+    return {
+        value: line, text: name, group: "", detail: addressOf(line),
+        starred: standard !== undefined && labelOf(line) === standard.name,
+    };
+}
+
+/**
+ * Puts my default place, `★` in `Places.md`, first among the places of a list, in the dialog and in the form of
+ * a series, so it always stands on top, see {@link placeChoiceOf}: by its line, once, an older line of the same name
+ * left out; the list as it is without default place.
+ * - `standard`: My default place, `undefined` for none.
+ *
+ * @param lines - The places of the list, like `Home Munich, Burg-Eltz-Weg, 81375, München, Deutschland`
+ * @param places - My places by their lines
+ * @returns The places, my default place first
+ */
+export function standardFirst(lines: string[], places: { [line: string]: Place }): string[] {
+    const standard: Place | undefined = Object.values(places).find((place: Place): boolean => place.standard);
+    if (standard === undefined)
+        return lines;
+    return [lineOf(standard), ...lines.filter((line: string): boolean => labelOf(line) !== standard.name)];
 }
 
 /**
