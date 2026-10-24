@@ -58,11 +58,11 @@ a.course-folder:hover {
 
 /* The list of a card, the rows of the list of the boxes in the dialog of a series, see `.series-row`
    in `../day/series.css`, built by the same code, see `listRowOf` in `../day/rows.ts`: each month at the left beside
-   its rows, as wide as the names of a dialog, its rows one below the other, every row on the same columns, folded
-   or not */
+   its rows, its month over its year to save room, like `Oct` over `2026`, its rows one below the other, every row
+   on the same columns, folded or not */
 .course-list {
     display: grid;
-    grid-template-columns: var(--name-width) minmax(0, 1fr);
+    grid-template-columns: min-content minmax(0, 1fr);
     column-gap: var(--control-gap);
     align-items: baseline;
     font-variant-numeric: tabular-nums;

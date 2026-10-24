@@ -165,6 +165,7 @@
    `Hackfleisch gemischt zum Braten (GUT&GÜNSTIG, Edeka)`, on the PC as on the laptop; the entry by category
    and the dialog of a series wider, see `.entry-panel`; the month smaller, see `.month-panel` */
 .panel {
+    --name-width: 4.8rem;
     --row-padding: 0.75rem;
     --value-start: calc(var(--row-padding) + 1px + var(--name-width) + var(--control-gap));
     width: min(52rem, calc(100vw - 2 * var(--gap)));

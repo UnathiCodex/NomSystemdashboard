@@ -125,19 +125,25 @@
 /* A row of a box, see `rows.ts`, the same in the list of a series and in a card of the course, see
    `../editor/course.css`: on its first line its number, or of an exam its kind, in a column as wide in every row
    as `Endterm`, so numbers and kinds take one width, its day with its weekday, as wide in every row as
-   `30.12.2026 (Wed)`, its group, a column every row has, empty without group, grey its times and place and what more
-   there is to say, and at its right edge, beside both lines, its actions or its state, packed at the right of a column
-   as wide in every row as four actions; right below its times its people, grey below grey,
+   `30.12.2026 (Wed)`, its group, a column every row of a list has while one of them has a group, grey its times and
+   place and what more there is to say, and at its right edge, beside both lines, its actions or its state, packed at
+   the right of a column as wide in every row as four actions; right below its times its people, grey below grey,
    a breath below them, so both read as one, cut at one place in every row; room below it, so two rows stand apart.
-   Every row of every list on the same columns, whatever its rows hold, a card or a dialog, by month or not */
+   Every row of every list on the same columns, whatever its rows hold, a card or a dialog, by month or not, but
+   the group's */
 .series-row {
     --series-number: 4rem;
     display: grid;
-    grid-template-columns: var(--series-number) 8.25rem 6rem minmax(0, 1fr) 7rem;
+    grid-template-columns: var(--series-number) 8.25rem var(--series-group, 6rem) minmax(0, 1fr) 7rem;
     column-gap: 0.625rem;
     align-items: baseline;
     padding-bottom: 1.125rem;
     line-height: 1.5;
+}
+
+/* A list none of whose rows has a group, like the boxes of my sleep: no room for one, its times right after its days */
+:is(.series-list, .course-list):not(:has(.series-grouped)) {
+    --series-group: 0;
 }
 
 /* The date being typed, see `draftRowOf` in `series.ts`: its kind or nothing where the numbers stand, its day where
