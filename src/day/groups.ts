@@ -382,14 +382,14 @@ function seriesIconOf(group: string, open: () => void): HTMLElement {
 }
 
 /**
- * Makes the group of a box as plain text, small and grey, like `Group 03`, without menu, as a box of the plan names
+ * Makes the group of a box as plain text, small and grey, like `03`, without menu, as a box of the plan names
  * it, see the top of this file, where only its dialog and its row on the page of its module pick it.
  *
  * @param box - The box
  * @returns Its group, `null` for a box without group
  */
 export function groupNameOf(box: Box): HTMLElement | null {
-    return box.group === "" ? null : elementOf("span", "group-name", `Group ${box.group}`);
+    return box.group === "" ? null : elementOf("span", "group-name", box.group);
 }
 
 /**
@@ -416,7 +416,7 @@ export function boxGroupOf(course: Course | null, box: Box, show: PickShow): HTM
     if (course === null || meetings.length === 0 || !pickable(box))
         return groupNameOf(box);
     const pinned: string = pinnedOf(course, box.type);
-    return groupMenuOf([box.group === "" ? "No group" : `Group ${box.group}`],
+    return groupMenuOf([box.group === "" ? "No group" : box.group],
         meetings.map(([group, session]: [Group, Session]): Item => {
             const start: Date = new Date(session.start);
             return {

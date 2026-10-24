@@ -6,9 +6,8 @@
  * on the page of a module, see `../editor/course.ts`, without months. A row is the same unit as a box of the plan:
  * its number in a small grey box, like `2`, `–` for one the university cancelled, of an exam its kind, like `Endterm`,
  * the one button that opens its box while it has one, see {@link numberOf}, of a box without number, like a day
- * of my sleep, its day instead; its day with its weekday after it, like `29.10.2026 (Thu)`, as wide in every row, then grey its group while it has one, like `Group 05`, a column of its own
- * that every row has, empty without group, so every column stands at the same place in every row of every list;
- * right of them grey its times and its place, then what more there is to say, like `in 77 days` of an exam or `new`
+ * of my sleep, its day instead; its day with its weekday after it, like `29.10.2026 (Thu)`, as wide in every row;
+ * right of them grey its group while it has one, like `05 ⌄`, its times and its place, then what more there is to say, like `in 77 days` of an exam or `new`
  * of a box a change of its series makes, after its place the first of the people I am with, a link to its row in
  * `Persons.md`, all of them in its box, like `10:00 – 12:00 · 5610.01.011 · Zimmer, Philip`, see {@link metaOf}, one
  * line; and at its right edge, in a column as wide in every row, its actions while open, else the icon of its state,
@@ -37,7 +36,7 @@ import type { Person } from "../persons.ts";
  * - `day`: Its day, like `2026-10-29`.
  * - `open`: Opens its box from its day, of a box without number, like a day of my sleep, so it opens there instead;
  *   `null` for none, its number opening it.
- * - `group`: Its group, the menu of the groups of its week or its name, `null` for none.
+ * - `group`: Its group, the menu of the groups of its week or its name, first on its grey line, `null` for none.
  * - `meta`: The parts of its first grey line, each its texts and its link, like its times and its place,
  *   see {@link metaOf}; a part without anything left out.
  * - `people`: Who I am with, the first shown as a link to its row in `Persons.md` while it has one.
@@ -165,12 +164,8 @@ export function listRowOf(parts: RowParts): HTMLElement {
         day.title = "Open";
         day.addEventListener("click", parts.open);
     }
-    const group: HTMLElement = elementOf("span", "series-group", "");
-    if (parts.group !== null)
-        group.append(parts.group);
-    row.classList.toggle("series-grouped", parts.group !== null);
     row.classList.toggle("series-row-faded", parts.faded);
-    row.append(parts.number, day, group, metaOf([...parts.meta, firstPersonOf(parts.people, parts.persons), [parts.mark]]),
-        parts.end);
+    row.append(parts.number, day, metaOf([parts.group === null ? [] : [parts.group], ...parts.meta,
+        firstPersonOf(parts.people, parts.persons), [parts.mark]]), parts.end);
     return row;
 }

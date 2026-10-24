@@ -77,8 +77,8 @@
  * a box of a series of my course that series, see {@link seriesFromBox}, a box of a plain series, one to-do that repeats
  * by its rule, see `reader/rules.ts`, that series whole, see `plainOpen` in `series.ts`; a box alone has none.
  * A box of a series of my course shows after its times its group
- * while it has one, like `14:00 – 16:00    Group 05`, where it may still go to another group the menu of the groups
- * for this one date, the only place to pick the group of one week, like `Group 05 ⌄`, and the pencil, which opens its
+ * while it has one, like `14:00 – 16:00    05`, where it may still go to another group the menu of the groups
+ * for this one date, the only place to pick the group of one week, like `05 ⌄`, and the pencil, which opens its
  * series. The dialog of a series opens over this one, which stands as it was once it closes,
  * one level back, and closes with it once it saves, see {@link seriesFromBox}.
  * The dialog opens for the log from `+` below the time grid, from a range selected in the time grid,
@@ -2221,8 +2221,8 @@ function lengthShow(): void {
  * the same as the new series beside `Plan +`, see `boxes.ts`, since the pencil always changes one property and ⟳ always
  * means the series, as far from the times as the pencil from a summary; for a box of a series of my course, see
  * `seriesHas` in `series.ts`, after it its group while it
- * has one, like `Group 05`, where it may still go to another group as the menu of the groups for this one date,
- * `Group 05 ⌄`, see `boxGroupOf` in `groups.ts`, a pick closing the dialog, see {@link groupPick}, ⟳ opening that
+ * has one, like `05`, where it may still go to another group as the menu of the groups for this one date,
+ * `05 ⌄`, see `boxGroupOf` in `groups.ts`, a pick closing the dialog, see {@link groupPick}, ⟳ opening that
  * series, see {@link seriesFromBox}; for a box of a plain series, one to-do that repeats, like my sleep of every night,
  * ⟳ opening that series whole, see `plainOpen` in `series.ts`; saving the series closes this dialog too; nothing
  * for a new box, a box alone or an entry of the log.

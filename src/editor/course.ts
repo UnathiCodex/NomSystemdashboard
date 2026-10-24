@@ -10,12 +10,12 @@
  * line, and below it my own learning, the chapters.
  *
  * A card is the numbered list of its boxes, the rows of the list `Entries` of the dialog of a series, built by the same
- * code, see `listRowOf` in `../day/rows.ts`, its months small and grey above their rows,
- * see {@link monthsOf}: the rows one below the other, every row on the same columns, folded or not, each row the same
- * unit as a box of the plan, see `../day/boxes.ts`: its number in a small grey box, like `2`, `–` for one the
+ * code, see `listRowOf` in `../day/rows.ts`, by month as there, each month at the left beside its first row,
+ * see `monthListOf` in `../day/series.ts`: the rows one below the other, every row on the same columns, folded or
+ * not, each row the same unit as a box of the plan, see `../day/boxes.ts`: its number in a small grey box, like `2`, `–` for one the
  * university cancelled, of an exam its kind in its place, its `X-NUMBER` too,
  * like `Endterm`, the one button that opens the box; its weekday and date, which name its month and year,
- * like `29.10.2026 (Thu)`, then grey its group while it has one, like `Group 05`, the menu of the groups of its date
+ * like `29.10.2026 (Thu)`, then grey its group while it has one, like `05`, first on its grey line, the menu of the groups of its date
  * while it may still go to another, as in the dialog of the box, see `boxGroupOf` in `../day/groups.ts`; right of them
  * grey two lines, one below the other: its times, like `10:00 – 12:00`, without times its length, like `01h 00m`,
  * its place, like `5610.01.011`, which opens its link, its chapters, like `01_RegressionAnalysis`, and of an exam
@@ -50,7 +50,7 @@
  * The card of the tutorials of a module with groups names the group pinned at the right of its heading, the pin
  * before it, like `Group 06`, `No group yet` while none is, a button of the menu of the groups, see
  * `../day/groups.ts`, which holds every group of the type, a pick pinning the group for the weeks to come; each box
- * names its group grey after its day, like `Group 01`, the menu of the groups of its week where it may still go to
+ * names its group grey after its day, like `01`, the menu of the groups of its week where it may still go to
  * another, a pick moving only that week's box, as in the dialog of the box.
  * A pick shows at once and the reader confirms it, see {@link groupPick}. Logging a tutorial moves no other week.
  *
@@ -89,7 +89,7 @@ import { boxActionsOf } from "../day/actions.ts";
 import { whereLinkedOf } from "../day/places.ts";
 import { personsKept } from "../persons.ts";
 import { listRowOf, numberOf, rowTimesOf } from "../day/rows.ts";
-import { learningOpen, numberedTypes, roomOf, seriesOpen, tallyOf } from "../day/series.ts";
+import { learningOpen, monthListOf, numberedTypes, roomOf, seriesOpen, tallyOf } from "../day/series.ts";
 import { boxGroupOf, pinnedMenuOf } from "../day/groups.ts";
 import { boxTimesOf, nearOf } from "../day/times.ts";
 import { calendarTodayOf } from "../today.ts";
@@ -426,7 +426,7 @@ function countsOf(type: string, boxes: Box[], folds: boolean, learned: number = 
 
 /**
  * Makes the line of counts of a card and the list of its boxes, see the top of this file: the line, see
- * {@link countsOf}; the list one row per box, see {@link boxRowOf}, each month above its rows, see {@link monthsOf},
+ * {@link countsOf}; the list one row per box, see {@link boxRowOf}, by month, see `monthListOf` in `../day/series.ts`,
  * folded by the one rule of every card: of the days over the open exams, the others only while
  * opened; then from today on the next open box and the rows up to two after it, the rest only while opened, going on
  * in place, so nothing above what I click moves; an exam to come saying how near it is, like `in 77 days`.
@@ -453,7 +453,7 @@ function listOf(type: string, boxes: Box[]): [HTMLElement, HTMLElement] {
     const markOf: (box: Box) => string = (box: Box): string =>
         type === "FA" && box.state === "open" && box.day >= today ? nearOf(box.day, today) : "";
     const list: HTMLElement = elementOf("div", type === "FA" ? "course-list series-kinds" : "course-list", "");
-    list.append(...monthsOf((opened.has(type) ? boxes : folded).map((box: Box): [string, HTMLElement] =>
+    list.append(monthListOf((opened.has(type) ? boxes : folded).map((box: Box): [string, HTMLElement] =>
         [box.time || box.day, boxRowOf(box, markOf(box))])));
     if (!opened.has(type) && folded.length === 0 && boxes.length > 0)
         list.append(foldedOf(type, boxes.length, boxes.every((box: Box): boolean => box.state === "done")));
@@ -476,30 +476,6 @@ function foldedOf(type: string, count: number, done: boolean): HTMLButtonElement
     line.classList.add("course-folded");
     line.append(iconOf(ChevronDown), `${count} ${done ? "done" : "folded"}`);
     return line;
-}
-
-/**
- * Puts the month above the rows of a card where a new month begins, small and grey, like `Oct 2026`, as the list
- * of a series names its months, see `monthListOf` in `../day/series.ts`, so both lists read alike; a folded list
- * names the months of the rows it shows.
- * - `shown`: The rows with their months.
- * - `month`: The month of the row before, empty before the first.
- *
- * @param rows - Each row with its place in time, like `2026-10-16T13:00:00Z` or `2026-10-16`, the earliest first
- * @returns The rows, each month's name before its first
- */
-function monthsOf(rows: [string, HTMLElement][]): HTMLElement[] {
-    const shown: HTMLElement[] = [];
-    let month: string = "";
-    rows.forEach(([moment, row]: [string, HTMLElement]): void => {
-        const name: string = new Date(`${moment.slice(0, 10)}T12:00:00`)
-            .toLocaleDateString("en-GB", { month: "short", year: "numeric" });
-        if (name !== month)
-            shown.push(elementOf("div", "course-month", name));
-        month = name;
-        shown.push(row);
-    });
-    return shown;
 }
 
 /**
@@ -560,7 +536,7 @@ function learningListOf(): [HTMLElement, HTMLElement] {
     const folded: number[] = items.map((_: [string, boolean, (number: number) => HTMLElement], index: number): number =>
         index).filter((index: number): boolean => items[index][0].slice(0, 10) >= today && index < shownTo);
     const list: HTMLElement = elementOf("div", "course-list", "");
-    list.append(...monthsOf((opened.has("") ? items.map((_: [string, boolean, (number: number) => HTMLElement],
+    list.append(monthListOf((opened.has("") ? items.map((_: [string, boolean, (number: number) => HTMLElement],
         index: number): number => index) : folded).map((index: number): [string, HTMLElement] =>
         [items[index][0], items[index][2](index + 1)])));
     if (!opened.has("") && folded.length === 0 && items.length > 0)

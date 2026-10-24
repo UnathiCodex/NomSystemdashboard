@@ -84,6 +84,7 @@
     --tree-text: var(--text-size);
     --control-padding: 1rem;
     --control-gap: 0.625rem;
+    --name-width: 4.8rem;
     --icon-size: 1.125rem;
     --reading-line-height: 2.2;
     --gap: 1rem;
