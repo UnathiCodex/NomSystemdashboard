@@ -9,19 +9,20 @@
  * of my sleep, its day instead; its day with its weekday after it, like `29.10.2026 (Thu)`, as wide in every row, then grey its group while it has one, like `Group 05`, a column of its own
  * that every row has, empty without group, so every column stands at the same place in every row of every list;
  * right of them grey its times and its place, then what more there is to say, like `in 77 days` of an exam or `new`
- * of a box a change of its series makes, like `10:00 – 12:00 · 5610.01.011 · in 77 days`, see {@link metaOf}, and
- * right below them all the people I am with, each a link to its row in `Persons.md`; and at its right edge, beside both
- * lines, in a column as wide in every row, its actions while open, else the icon of its state, as in the plan.
+ * of a box a change of its series makes, after its place the first of the people I am with, a link to its row in
+ * `Persons.md`, all of them in its box, like `10:00 – 12:00 · 5610.01.011 · Zimmer, Philip`, see {@link metaOf}, one
+ * line; and at its right edge, in a column as wide in every row, its actions while open, else the icon of its state,
+ * as in the plan.
  * Greyed while not open, as a box of the plan no longer open.
  * Every row has the same columns, see `.series-row` in `./series.css`, so the rows of a list stand alike.
  *
- * - `../persons.ts`: Finds the person of a name, makes its link and puts people on one line.
+ * - `../persons.ts`: Finds the person of a name and makes its link.
  * - `./times.ts`: Writes times and a length.
  * - `./entries.ts`: The type of who I am with.
  * - `../food/foods.ts`: Makes elements.
  */
 
-import { peopleOf, personLinkOf, personOf } from "../persons.ts";
+import { personLinkOf, personOf } from "../persons.ts";
 import { lengthOf, timeOf, weekdayDateTextOf } from "./times.ts";
 import { elementOf } from "../food/foods.ts";
 
@@ -39,7 +40,7 @@ import type { Person } from "../persons.ts";
  * - `group`: Its group, the menu of the groups of its week or its name, `null` for none.
  * - `meta`: The parts of its first grey line, each its texts and its link, like its times and its place,
  *   see {@link metaOf}; a part without anything left out.
- * - `people`: Who I am with, each shown as a link to its row in `Persons.md` while it has one.
+ * - `people`: Who I am with, the first shown as a link to its row in `Persons.md` while it has one.
  * - `persons`: The people of `Persons.md`, which the names are found among.
  * - `mark`: What more there is to say, last on its first line, like `in 77 days` or `new`, empty for nothing.
  * - `end`: Its actions or the icon of its state, at its right edge.
@@ -127,27 +128,22 @@ export function metaOf(parts: (string | Node)[][]): HTMLElement {
 }
 
 /**
- * Makes the line of the people of a row: each a link to its row in `Persons.md`, see `personLinkOf`
- * in `../persons.ts`, a name of nobody there, like a group, its text, apart by middle dots, see `peopleOf` there,
- * the whole line as its tooltip; `null` for nobody.
- * - `line`: The line.
- * - `shownOf`: Gives a name as it shows.
+ * Shows the first of the people of a row, the one its line names, see {@link listRowOf}: a link to its row in
+ * `Persons.md`, see `personLinkOf` in `../persons.ts`, a name of nobody there, like a group, its text; all of them
+ * the box shows.
+ * - `first`: The first of them, `undefined` for nobody.
+ * - `person`: Its person in `Persons.md`, `undefined` for nobody there.
  *
  * @param people - Who I am with
  * @param persons - The people of `Persons.md`
- * @returns The line, `null` for nobody
+ * @returns The first of them, nothing for nobody
  */
-function peopleLineOf(people: Attendee[], persons: Person[]): HTMLElement | null {
-    if (people.length === 0)
-        return null;
-    const shownOf: (name: string) => string | Node = (name: string): string | Node => {
-        const person: Person | undefined = personOf(persons, name);
-        return person === undefined ? name : personLinkOf(person, name);
-    };
-    const line: HTMLElement = elementOf("div", "series-people", "");
-    line.append(...peopleOf(people.map((person: Attendee): string | Node => shownOf(person.name))));
-    line.title = people.map((person: Attendee): string => person.name).join(" · ");
-    return line;
+function firstPersonOf(people: Attendee[], persons: Person[]): (string | Node)[] {
+    const first: Attendee | undefined = people[0];
+    if (first === undefined)
+        return [];
+    const person: Person | undefined = personOf(persons, first.name);
+    return [person === undefined ? first.name : personLinkOf(person, first.name)];
 }
 
 /**
@@ -162,7 +158,6 @@ function peopleLineOf(people: Attendee[], persons: Person[]): HTMLElement | null
  */
 export function listRowOf(parts: RowParts): HTMLElement {
     const row: HTMLElement = elementOf("div", "series-row", "");
-    const people: HTMLElement | null = peopleLineOf(parts.people, parts.persons);
     const day: HTMLElement = elementOf(parts.open === null ? "span" : "button",
         parts.open === null ? "series-day" : "series-day series-day-open", weekdayDateTextOf(parts.day));
     if (day instanceof HTMLButtonElement && parts.open !== null) {
@@ -175,7 +170,7 @@ export function listRowOf(parts: RowParts): HTMLElement {
         group.append(parts.group);
     row.classList.toggle("series-grouped", parts.group !== null);
     row.classList.toggle("series-row-faded", parts.faded);
-    row.append(parts.number, day, group, metaOf([...parts.meta, [parts.mark]]), parts.end,
-        ...(people === null ? [] : [people]));
+    row.append(parts.number, day, group, metaOf([...parts.meta, firstPersonOf(parts.people, parts.persons), [parts.mark]]),
+        parts.end);
     return row;
 }
