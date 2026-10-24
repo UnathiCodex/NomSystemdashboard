@@ -16,8 +16,8 @@
  * which picks the series of that semester, see {@link semesterRowOf}; then its place, picked as in the dialog, the rooms
  * of the university among them as I type, its parts changed by its pencil, see {@link placeRowOf}; what it does
  * online, its platform with the link and the passcode of its meetings; then when it meets: its days,
- * each a weekday with its times, `+` beside them for one more, like a lecture on Mondays 14:00 – 16:00 and on Thursdays
- * 10:00 – 12:00, numbered across both; its first and last day; of a numbered type its group, empty for my own series;
+ * its weekdays picked on one line, each with its times below, see {@link slotRowsOf}, like a lecture on Mondays
+ * 14:00 – 16:00 and on Thursdays 10:00 – 12:00, numbered across both; its first and last day; of a numbered type its group, empty for my own series;
  * then its boxes, see below, which also add an extra,
  * a single date besides its weeks with its times; and who I am with. At the bottom the plan it writes into, small
  * and grey, Cancel and Save.
@@ -69,9 +69,9 @@
  * Every other series is a plain one, one to-do that repeats by its rule, see `reader/rules.ts`, like my sleep
  * of every night: the same dialog without numbers, types and groups, see {@link plainOpen}: its category, its summary,
  * picked as in the dialog of a box, see {@link plainSummaryOf}, which every box of it takes, its place, what it does
- * online, its weekdays picked on one line with the one time of them all,
- * or, by the switch beside them, only how long they last, like `08:00` for my sleep, see {@link plainTimeRowsOf},
- * since a rule has one time; its first day and its last, empty for a series without end, who I am with, and its boxes
+ * online, its weekdays picked as every series picks them, each with its times, see {@link slotRowsOf}, a series
+ * written per time, or, by the switch beside them, only how long they last, like `08:00` for my sleep,
+ * see {@link plainTimeRowsOf}, since a rule has one time; its first day and its last, empty for a series without end, who I am with, and its boxes
  * of the next weeks as the reader would write them. Saved, the past of a series never changes, see `plainApply`
  * in `reader/rules.ts`: one lying wholly ahead is written whole, also every day of it changed alone; one that began
  * before today ends yesterday and goes on with a new one from today; a summary changed alone renames it whole,
@@ -515,6 +515,13 @@ let placeOpen: boolean = false;
 let onlineOpen: boolean = false;
 
 /**
+ * The slots of the form taken back by the toggles of its weekdays since it opened, each its weekday and the weekday of
+ * the slot read back whose boxes it had, see `before` of {@link Days}, so the next weekday picked takes those boxes,
+ * as a day moved, see {@link slotToggle}; none as a form opens.
+ */
+let slotsFreed: [number, number][] = [];
+
+/**
  * The people of `With` of the form whose parts show below its names, each opened and closed by its own pencil,
  * see `withRowOf` in `./categories.ts`.
  */
@@ -795,7 +802,7 @@ function timesRangeOf(times: Pick<Slot, "start" | "end">, changed: () => void): 
  * Makes the button `×` that takes a day or an extra of a series back.
  * - `remove`: The button.
  *
- * @param words - What it takes back, its tooltip, like `Remove the day`
+ * @param words - What it takes back, its tooltip, like `Take the date back`
  * @param click - Takes it back
  * @returns The button
  */
@@ -811,7 +818,7 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
  * Makes the plus beside the name of a row that adds one more, like a day of a series.
  * - `plus`: The button.
  *
- * @param words - What it adds, its tooltip, like `Add a day`
+ * @param words - What it adds, its tooltip, like `Add a group`
  * @param click - Adds it
  * @returns The button
  */
@@ -824,58 +831,92 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the row `Day` of the days of a series, all of them in its one frame, as the boxes stand in the row `Entries`,
- * each day one line: its weekday, picked from a list, grey `ddd` while none is picked, as a time says `hh:mm`,
- * and its times, with its `×` while there are several; `+` beside the name `Day` adds one more line, with the times
- * of the last; a weekday picked anew moves the days of the series with it, see {@link daysMove}; a click beside
- * the fields of a line opens the list of its own weekday.
- * - `weekdays`: The weekdays to pick from.
- * - `plus`: The plus.
- * - `lines`: The days, one line each.
+ * Makes the row `Day` of the days of a series, the one way every series takes its days, a plain one, the series of
+ * a type of a module and a group alike: on top its weekdays as seven toggles, `Mon Tue Wed Thu Fri Sat Sun`, the picked
+ * ones light on the calm grey of what is picked, a click picking one or taking it back, but the last one; below them
+ * each day picked one line, its weekday and its times, like `Thu 18:00 – 19:30`, a day picked anew taking the times
+ * of the first, so a lecture on Monday and Thursday at different times and a group meeting twice a week are typed
+ * as my sleep of every night is; of a plain series by its length the one length of all its days in place of the lines,
+ * see {@link plainTimeRowsOf}. A weekday picked after one taken back takes its boxes, as a day moved, and moves
+ * the days of the series with it, see {@link daysMove} and {@link slotsFreed}, so a lecture moved from Monday
+ * to Tuesday keeps its boxes; a slot without weekday yet, as a new series starts, takes the first weekday picked.
+ * - `toggles`: The seven weekdays.
+ * - `lines`: The days picked, one line each, or the length.
  * - `row`: The row.
  *
  * @param days - The days of the series
  * @param changed - Tells the form that the series changed
- * @param filled - Builds the rows of the form anew from what it holds, once a day is added, taken back or moved
+ * @param filled - Builds the rows of the form anew from what it holds, once a day is picked or taken back
+ * @param aside - What stands after the name `Day`, like the switch of a plain series between times and a length;
+ *   nothing when left out
+ * @param length - The one length of all the days, in place of their lines, `null` for the lines
  * @returns The row, alone, as the rows of the form are given
  */
-export function slotRowsOf(days: Days, changed: () => void, filled: () => void): HTMLElement[] {
-    const weekdays: Choice[] = [1, 2, 3, 4, 5, 6, 7].map((weekday: number): Choice =>
-        ({ value: String(weekday), text: weekdayNameOf(weekday, false), group: "" }));
-    const plus: HTMLButtonElement = plusOf("Add a day", (): void => {
-        const last: Slot = days.slots[days.slots.length - 1];
-        days.slots.push({ weekday: 0, start: last.start, end: last.end });
-        days.before.push(0);
-        filled();
-    });
-    const lines: HTMLElement = elementOf("div", "series-slots", "");
-    lines.append(...days.slots.map((slot: Slot, index: number): HTMLElement => {
-        const value: HTMLElement = elementOf("div", "series-slot", "");
-        value.append(choicesOf({
-            search: searchOf(weekdays), picked: slot.weekday === 0 ? [] : [String(slot.weekday)], many: false,
-            adding: false, noun: "day", empty: "ddd",
-            pick: (values: string[]): void => {
-                const weekday: number = Number(values[0] ?? slot.weekday);
-                daysMove(days, slot.weekday, weekday);
-                slot.weekday = weekday;
-                filled();
-            },
-        }), timesRangeOf(slot, changed), ...(days.slots.length > 1 ? [removeOf("Remove the day", (): void => {
-            days.slots.splice(index, 1);
-            days.before.splice(index, 1);
+export function slotRowsOf(days: Days, changed: () => void, filled: () => void, aside: HTMLElement[] = [],
+                           length: HTMLElement | null = null): HTMLElement[] {
+    const toggles: HTMLElement = elementOf("span", "series-weekdays", "");
+    toggles.append(...[1, 2, 3, 4, 5, 6, 7].map((weekday: number): HTMLButtonElement => {
+        const index: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
+        const toggle: HTMLButtonElement = elementOf("button", "series-weekday", weekdayNameOf(weekday, false)) as
+            HTMLButtonElement;
+        toggle.type = "button";
+        toggle.setAttribute("aria-pressed", String(index !== -1));
+        toggle.addEventListener("click", (): void => {
+            slotToggle(days, weekday);
             filled();
-        })] : []));
-        value.addEventListener("click", (event: MouseEvent): void => {
-            if ((event.target as HTMLElement).closest("button, input, a, label, .picker-box") !== null)
-                return;
-            event.stopPropagation();
-            value.querySelector<HTMLButtonElement>(".picker-line")?.click();
         });
-        return value;
+        return toggle;
     }));
+    const lines: HTMLElement = elementOf("div", "series-slots", "");
+    lines.append(toggles, ...length !== null ? [length] : days.slots
+        .filter((slot: Slot): boolean => slot.weekday > 0)
+        .map((slot: Slot): HTMLElement => {
+            const line: HTMLElement = elementOf("div", "series-slot", "");
+            line.append(elementOf("span", "series-slot-day", weekdayNameOf(slot.weekday, false)),
+                timesRangeOf(slot, changed));
+            return line;
+        }));
     const row: HTMLElement = rowOf("Day", lines);
-    row.querySelector(".entry-name")?.append(plus);
+    row.querySelector(".entry-name")?.append(...aside);
     return [row];
+}
+
+/**
+ * Picks a weekday of a series or takes it back, see {@link slotRowsOf}: picked, a slot without weekday yet takes it,
+ * else a new slot with the times of the first, which takes the boxes of a slot taken back before, see
+ * {@link slotsFreed}, moving the days of the series with it, see {@link daysMove}; taken back, but the last one,
+ * its slot goes, its boxes kept for the next weekday picked. The slots stay in the order of their weekdays, each
+ * with its `before`.
+ * - `index`: The slot of the weekday, -1 for none.
+ * - `empty`: The slot without weekday, -1 for none.
+ * - `freed`: The slot taken back whose boxes the new one takes, `undefined` for none.
+ * - `pairs`: Each slot with its `before`, in the order of their weekdays.
+ *
+ * @param days - The days of the series
+ * @param weekday - The weekday, from 1 for Monday to 7 for Sunday
+ */
+function slotToggle(days: Days, weekday: number): void {
+    const index: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
+    const empty: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === 0);
+    if (index === -1 && empty !== -1)
+        days.slots[empty].weekday = weekday;
+    else if (index === -1) {
+        const freed: [number, number] | undefined = slotsFreed.shift();
+        if (freed !== undefined)
+            daysMove(days, freed[0], weekday);
+        days.slots.push({ weekday: weekday, start: days.slots[0]?.start ?? "", end: days.slots[0]?.end ?? "" });
+        days.before.push(freed?.[1] ?? 0);
+    } else if (days.slots.length > 1) {
+        if ((days.before[index] ?? 0) !== 0)
+            slotsFreed.push([weekday, days.before[index]]);
+        days.slots.splice(index, 1);
+        days.before.splice(index, 1);
+    }
+    const pairs: [Slot, number][] = days.slots.map((slot: Slot, at: number): [Slot, number] =>
+        [slot, days.before[at] ?? 0]).sort((first: [Slot, number], second: [Slot, number]): number =>
+        first[0].weekday - second[0].weekday);
+    days.slots = pairs.map(([slot]: [Slot, number]): Slot => slot);
+    days.before = pairs.map(([, before]: [Slot, number]): number => before);
 }
 
 /**
@@ -2127,52 +2168,43 @@ function peopleRowsOf(form: Form): HTMLElement[] {
 }
 
 /**
- * Gives the group typed in the row `Group` as a group is named, see {@link groupPartOf}: digits filled up to two,
- * like `05` of `5`, any other name as typed, of letters, digits, `_` and `-`.
- * - `name`: The text typed, without spaces at its ends.
+ * Gives the group typed in the row `Group` as a group is named, see {@link groupPartOf}: a leading `Group ` left out,
+ * as the menus write it, digits filled up to two, like `05` of `5` or `Group 5`, any other name as typed, of letters,
+ * digits, `_` and `-`.
+ * - `name`: The text typed, without spaces at its ends and without `Group `.
  *
- * @param text - The text typed, like `5`
- * @returns The group, like `05`, empty for nothing typed, `null` for a text no group is named so
+ * @param text - The text typed, like `5` or `Group 99`
+ * @returns The group, like `05`, empty for nothing typed, `null` for a text a group may not be named
  */
 function groupTypedOf(text: string): string | null {
-    const name: string = /^\d+$/.test(text.trim()) ? text.trim().padStart(2, "0") : text.trim();
+    const typed: string = text.trim().replace(/^group\s+/i, "");
+    const name: string = /^\d+$/.test(typed) ? typed.padStart(2, "0") : typed;
     return name === "" || /^[\w-]+$/.test(name) ? name : null;
 }
 
 /**
  * Makes the group of the form of a group of the tutorials, beside its semester, see {@link semesterRowOf}: a field
- * I type its name into, a group there with its name to rename it, saving renaming it everywhere, a new one grey `nn`
- * while empty, as a time says `hh:mm`, like `5` for `Group 05`, see {@link groupTypedOf}, with a grey line below it
- * while another group of the type has that name already, from which the form opens that group instead, or while no
- * group is named so.
+ * I type its name into, a group there with its name to rename it, saving renaming it everywhere, a new one grey
+ * `Group name` while empty, like `5` or `Group 5` for `Group 05`, see {@link groupTypedOf}, with a grey hint right
+ * beside it on its line, `Group is there already` while another group of the type has that name, or
+ * `Invalid group name` while the name holds what a name may not, like a space.
  * - `input`: The field.
- * - `hint`: The grey line.
- * - `open`: Opens the group of that name there already.
- * - `value`: The field with the line below it.
+ * - `hint`: The grey hint.
+ * - `value`: The field with the hint beside it.
  *
  * @returns The group
  */
 function groupPartOf(): HTMLElement {
     const input: HTMLInputElement = partFieldOf("text", grouped?.group ?? "", "Group");
-    const hint: HTMLElement = elementOf("p", "entry-none", "");
-    const open: HTMLButtonElement = document.createElement("button");
+    const hint: HTMLElement = elementOf("span", "entry-none", "");
     const value: HTMLElement = elementOf("div", "series-group-part", "");
-    input.placeholder = "nn";
-    open.type = "button";
-    open.className = "series-group-open";
+    input.placeholder = "Group name";
     hint.hidden = true;
     input.addEventListener("input", (): void => {
         const name: string | null = groupTypedOf(input.value);
-        const type: string = typing?.type ?? "";
         grouped = { group: name ?? "", made: grouped?.made ?? true, was: grouped?.was ?? "" };
         hint.hidden = name !== null && (typing === null || !groupTaken(typing));
-        if (name === null)
-            hint.replaceChildren("No group is named so");
-        else {
-            open.textContent = `Open Group ${name}`;
-            hint.replaceChildren(`Group ${name} is there already · `, open);
-            open.onclick = (): void => groupStart(type, name);
-        }
+        hint.textContent = name === null ? "Invalid group name" : "Group is there already";
         formChanged();
     });
     value.append(input, hint);
@@ -2260,6 +2292,7 @@ function groupStart(type: string, group: string): void {
     placeOpen = false;
     onlineOpen = false;
     withOpen = [];
+    slotsFreed = [];
     typing = {
         type: type, old: rule ?? null,
         slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [{ weekday: 0, start: "", end: "" }],
@@ -2575,6 +2608,7 @@ export async function seriesOpen(module: string, type: string, semester: string,
     placeOpen = false;
     onlineOpen = false;
     withOpen = [];
+    slotsFreed = [];
     typing = {
         type: rule?.type ?? type, old: rule, slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot }))
             ?? [{ weekday: 0, start: "", end: "" }],
@@ -2667,6 +2701,7 @@ async function seriesRepeat(from: Repeated, days: Days, saved: () => void): Prom
     placeOpen = false;
     onlineOpen = false;
     withOpen = [];
+    slotsFreed = [];
     typing = {
         ...days, type: from.box.type, old: null, location: from.box.location,
         locationLink: skillFieldOf("location")?.places[from.box.location]?.link ?? "", online: from.box.online ?? "",
@@ -2808,56 +2843,21 @@ function plainSwapOf(series: Plain, form: Form): HTMLButtonElement {
 }
 
 /**
- * Makes the row `Day` of a plain series, one line: its weekdays as seven toggles, `Mon Tue Wed Thu Fri Sat Sun`,
- * the picked ones light on the calm grey of what is picked, then the one time of them all, like `10:00 – 12:00`,
- * or, by the switch beside the name `Day`, see {@link plainSwapOf}, only how long they last, like `08:00` for my sleep,
- * since a rule has one time for all its weekdays; a click on a weekday picks it or takes it back, but the last one.
- * The days of the form, see {@link Form}, hold one slot per weekday picked, all with that time.
- * - `times`: The time of all its days, as typed, from its first day.
- * - `typed`: Gives every day the time as typed, and tells the form.
- * - `toggles`: The seven weekdays.
- * - `row`: The row.
+ * Makes the row `Day` of a plain series, as every series has it, see {@link slotRowsOf}, with the switch beside
+ * the name `Day` between times of each day and only how long they last, like `08:00` for my sleep,
+ * see {@link plainSwapOf}, since a rule without times has one length for all its weekdays: then that one length
+ * in place of the lines of the days.
  *
  * @param series - The plain series, which takes its length
  * @param form - The form, which holds its days
  * @returns The row, alone, as the rows of the form are given
  */
 function plainTimeRowsOf(series: Plain, form: Form): HTMLElement[] {
-    const times: Pick<Slot, "start" | "end"> = { start: form.slots[0]?.start ?? "", end: form.slots[0]?.end ?? "" };
-    const typed: () => void = (): void => {
-        form.slots.forEach((slot: Slot): void => {
-            slot.start = times.start;
-            slot.end = times.end;
-        });
-        formChanged();
-    };
-    const toggles: HTMLElement = elementOf("span", "series-weekdays", "");
-    toggles.append(...[1, 2, 3, 4, 5, 6, 7].map((weekday: number): HTMLButtonElement => {
-        const index: number = form.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
-        const toggle: HTMLButtonElement = elementOf("button", "series-weekday", weekdayNameOf(weekday, false)) as
-            HTMLButtonElement;
-        toggle.type = "button";
-        toggle.setAttribute("aria-pressed", String(index !== -1));
-        toggle.addEventListener("click", (): void => {
-            if (index === -1)
-                form.slots.push({ weekday: weekday, start: times.start, end: times.end });
-            else if (form.slots.length > 1)
-                form.slots.splice(index, 1);
-            form.slots.sort((first: Slot, second: Slot): number => first.weekday - second.weekday);
-            form.before = form.slots.map((): number => 0);
-            formFill();
-        });
-        return toggle;
-    }));
-    const value: HTMLElement = elementOf("div", "series-slot", "");
-    value.append(toggles, plainTimed ? timesRangeOf(times, typed)
+    return slotRowsOf(form, formChanged, formFill, [plainSwapOf(series, form)], plainTimed ? null
         : fieldOf("time-field", series.minutes === null ? "" : lengthTextOf(series.minutes), "How long",
             (time: string): void => {
                 series.minutes = time === "" ? null : minutesOf(time);
             }, formChanged));
-    const row: HTMLElement = rowOf("Day", value);
-    row.querySelector(".entry-name")?.append(plainSwapOf(series, form));
-    return [row];
 }
 
 /**
@@ -2966,6 +2966,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     placeOpen = false;
     onlineOpen = false;
     withOpen = [];
+    slotsFreed = [];
     const slots: Slot[] = series.weekdays.map((weekday: number): Slot =>
         ({ weekday: weekday, start: series.start, end: series.end }));
     typing = {
@@ -3222,6 +3223,7 @@ export async function seriesNew(day: string, saved: () => void): Promise<void> {
     placeOpen = false;
     onlineOpen = false;
     withOpen = [];
+    slotsFreed = [];
     typing = {
         type: "", old: null, slots: [{ weekday: weekdayOf(day), start: "", end: "" }], before: [0], extras: [],
         location: standardLineOf(), locationLink: skillFieldOf("location")?.places[standardLineOf()]?.link ?? "",

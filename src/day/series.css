@@ -1,9 +1,9 @@
 /* Rows of a weekly series in the dialog of a series, the same from the day, from the page of a module and for a new box
    repeated, see `series.ts`: its days and its boxes, with its extras */
-/* A day of a series, like `Thu 18:00 – 19:30 ×`: its weekday short, as the heading of a card writes it, as wide as
-   the widest, `Mon` or `Wed`, so the times of several days stand one below the other; then its times and its `×`,
-   about two spaces apart, as a day and its time, see `.entry-moment` in `day.css` */
-/* The days of a series in the one row `Day`, one line each, as close as the lines of a list */
+/* The days of a series in the one row `Day`, see `slotRowsOf` in `series.ts`: its weekdays on top, then each day
+   picked one line, like `Thu 18:00 – 19:30`, its weekday short, as wide as the widest, `Mon` or `Wed`, so the times
+   of several days stand one below the other, about two spaces before its times, as a day and its time, see
+   `.entry-moment` in `day.css`; as close as the lines of a list */
 .series-slots {
     display: flex;
     flex-direction: column;
@@ -17,11 +17,11 @@
     column-gap: 0.6em;
 }
 
-.series-slot > .picker {
-    flex: none;
+.series-slot-day {
+    min-width: 2.25em;
 }
 
-/* The weekdays of a plain series, see `plainTimeRowsOf` in `series.ts`: seven small toggles on one line, grey, a picked
+/* The weekdays of a series, see `slotRowsOf` in `series.ts`: seven small toggles on one line, grey, a picked
    one light on the calm grey of what is picked, lighter under the pointer, as far apart as the parts of a time */
 .series-weekdays {
     display: inline-flex;
@@ -48,12 +48,6 @@
 .series-weekday[aria-pressed="true"] {
     background: var(--chosen);
     color: var(--text-main);
-}
-
-/* The `×` of a day in the middle of its line, not with its foot on the line
-   of the text, which set it higher than the text */
-.series-slot > .cross-quiet {
-    align-self: center;
 }
 
 /* The boxes a series makes, one calm line, see `previewSoon` in `series.ts`, without a fold arrow, since a tap on it
@@ -462,7 +456,8 @@
 
 /* The semester and the group beside it, the semester only as wide as its value, a middle dot between them as between
    the parts of a line, see `.entry-parted` in `day.css`, like `2026W · 📌 Group 01 ⌄`, see `semesterRowOf`
-   in `series.ts`; no dot before the plus alone of a type without groups, which stays as close as the type beside
+   in `series.ts`, as much room left of the dot as right of it, the gap of the pair, 0.3em, before its own 0.2em;
+   no dot before the plus alone of a type without groups, which stays as close as the type beside
    a skill; the field of the name of a group with its grey line below it */
 .panel-pair.series-semester > .picker:first-child .picker-head {
     min-width: 0;
@@ -474,7 +469,7 @@
 
 .panel-pair.series-semester > :is(.series-group-pick:has(.group-name), .series-group-part)::before {
     content: "·";
-    margin-inline: 0.5em;
+    margin-inline: 0.2em 0.5em;
 }
 
 .series-group-part {
@@ -484,7 +479,7 @@
 }
 
 .series-group-part > .entry-none {
-    flex-basis: 100%;
+    margin-inline-start: 0.6em;
 }
 
 .series-group-pick > .plus-quiet {
