@@ -514,10 +514,10 @@ let placeOpen: boolean = false;
 let onlineOpen: boolean = false;
 
 /**
- * Whether `With` of the form shows the parts of its people below its names, opened and closed by its pencil,
+ * The people of `With` of the form whose parts show below its names, each opened and closed by its own pencil,
  * see `withRowOf` in `./categories.ts`.
  */
-let withOpen: boolean = false;
+let withOpen: string[] = [];
 
 /**
  * Each person of `With` I changed by its parts, by its name as picked, see `withRowOf` in `./categories.ts`, which
@@ -2104,7 +2104,7 @@ function peopleRowsOf(form: Form): HTMLElement[] {
     const field: Field | undefined = skillFieldOf("with");
     return field === undefined ? [] : [withRowOf({
         field: field, persons: persons, people: form.attendees, open: withOpen, edits: personEdits,
-        opened: (open: boolean): void => {
+        opened: (open: string[]): void => {
             withOpen = open;
         },
         pick: (people: Attendee[]): void => {
@@ -2248,7 +2248,7 @@ function groupStart(type: string, group: string): void {
     placeEdit = null;
     placeOpen = false;
     onlineOpen = false;
-    withOpen = false;
+    withOpen = [];
     typing = {
         type: type, old: rule ?? null,
         slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [{ weekday: 0, start: "", end: "" }],
@@ -2560,7 +2560,7 @@ export async function seriesOpen(module: string, type: string, semester: string,
     placeEdit = null;
     placeOpen = false;
     onlineOpen = false;
-    withOpen = false;
+    withOpen = [];
     typing = {
         type: rule?.type ?? type, old: rule, slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot }))
             ?? [{ weekday: 0, start: "", end: "" }],
@@ -2652,7 +2652,7 @@ async function seriesRepeat(from: Repeated, days: Days, saved: () => void): Prom
     placeEdit = null;
     placeOpen = false;
     onlineOpen = false;
-    withOpen = false;
+    withOpen = [];
     typing = {
         ...days, type: from.box.type, old: null, location: from.box.location,
         locationLink: skillFieldOf("location")?.places[from.box.location]?.link ?? "", online: from.box.online ?? "",
@@ -2951,7 +2951,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     placeEdit = null;
     placeOpen = false;
     onlineOpen = false;
-    withOpen = false;
+    withOpen = [];
     const slots: Slot[] = series.weekdays.map((weekday: number): Slot =>
         ({ weekday: weekday, start: series.start, end: series.end }));
     typing = {
@@ -3206,7 +3206,7 @@ export async function seriesNew(day: string, saved: () => void): Promise<void> {
     placeEdit = null;
     placeOpen = false;
     onlineOpen = false;
-    withOpen = false;
+    withOpen = [];
     typing = {
         type: "", old: null, slots: [{ weekday: weekdayOf(day), start: "", end: "" }], before: [0], extras: [],
         location: "", locationLink: "", online: "", onlineLink: "", passcode: "", attendees: [], first: day, last: "",

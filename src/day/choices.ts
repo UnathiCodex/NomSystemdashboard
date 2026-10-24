@@ -169,6 +169,8 @@ export type Choice = {
  *   by a middle dot, like `Bichler, Martin · Willi`, see `peopleOf` in `../persons.ts`; parted by `, ` when left out.
  * - `linkOf`: Address a value picked opens from the line, like the row of a person in `Persons.md`, empty for a value
  *   that opens nothing, see {@link lineValueOf}; every value plain text when left out.
+ * - `afterOf`: An element right after a value picked in the line, like the pencil of a person of `With`, whose click
+ *   opens no list; nothing when left out.
  */
 export type ChoicesSetup = {
     search: (text: string) => Promise<Choice[]>;
@@ -189,6 +191,7 @@ export type ChoicesSetup = {
     textOf?: (value: string) => string;
     people?: boolean;
     linkOf?: (value: string) => string;
+    afterOf?: (value: string) => HTMLElement;
 };
 
 /**
@@ -505,8 +508,14 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         linePlace(false);
         plusTake(line);
         line.textContent = text === "" ? setup.empty ?? "" : breakableOf(text);
-        const values: (string | Node)[] = chosen.map((value: string, index: number): string | Node =>
-            lineValueOf(shown[index], setup.linkOf?.(value) ?? ""));
+        const values: (string | Node)[] = chosen.map((value: string, index: number): string | Node => {
+            const shownValue: string | Node = lineValueOf(shown[index], setup.linkOf?.(value) ?? "");
+            if (setup.afterOf === undefined)
+                return shownValue;
+            const both: HTMLSpanElement = document.createElement("span");
+            both.append(shownValue, setup.afterOf(value));
+            return both;
+        });
         if (text !== "" && setup.people === true)
             line.replaceChildren(...peopleOf(values));
         else if (text !== "" && setup.linkOf !== undefined)

@@ -412,10 +412,10 @@ let endDayTyped: boolean = false;
 let addresses: { [name: string]: string } = {};
 
 /**
- * Whether the names of `With` show their parts below them to type, opened and closed by its pencil,
+ * The names of `With` that show their parts below them to type, each opened and closed by its own pencil,
  * see {@link withRowOf}.
  */
-let withOpen: boolean = false;
+let withOpen: string[] = [];
 
 /**
  * Each person of `With` I changed by its parts, by its name as picked, with the address it had in the entry,
@@ -1129,7 +1129,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
     if (field.key === "with")
         return [withRowOf({
             field: field, persons: persons, people: peopleRead(), open: withOpen, edits: personEdits,
-            opened: (open: boolean): void => {
+            opened: (open: string[]): void => {
                 withOpen = open;
             },
             pick: (people: Attendee[]): void => {
@@ -1253,25 +1253,25 @@ function personAddressOf(field: Field, name: string): string {
  * - `field`: The field `With`, the names my entries wrote, the most used first, with the address of each.
  * - `persons`: The people of `Persons.md`, which it offers, each a link to its row there.
  * - `people`: Who is picked, each with its address.
- * - `open`: Whether the parts of the people show below the names.
+ * - `open`: The people whose parts show below the names.
  * - `edits`: Each person I changed by its parts, which the row fills as I type, see {@link withPartsOf}, and its
  *   dialog sends once it saves, see `personsRename` in `../persons.ts`.
- * - `opened`: Takes whether they show, as its pencil opens or closes them.
+ * - `opened`: Takes whose parts show, as the pencil of a person opens or closes its parts.
  * - `pick`: Takes who is picked, each with its address, after each name picked or taken back and each mail typed.
  */
 export type WithSetup = {
     field: Field;
     persons: Person[];
     people: Attendee[];
-    open: boolean;
+    open: string[];
     edits: { [old: string]: PersonEdit & { address: string } };
-    opened: (open: boolean) => void;
+    opened: (open: string[]) => void;
     pick: (people: Attendee[]) => void;
 };
 
 /**
  * Builds the parts below the names of `With`, see {@link withRowOf}, as the parts of a place stand, see {@link partOf}:
- * for each person picked a block of its own, indented with its thin grey line, so several people never crowd
+ * for each person picked whose pencil opened them a block of its own, indented with its thin grey line, so several people never crowd
  * one another, like the two lecturers of Financial Accounting: its `Name`, its `Mail` and its `Link`, its page
  * in TUMonline, as `Persons.md` holds them, or as I changed them, see `personEditOf` in `../persons.ts`. What I type
  * goes into the edits of the dialog, which writes the person everywhere once it saves, its row in `Persons.md`,
@@ -1364,48 +1364,53 @@ export function withChoicesOf(field: Field, persons: Person[]): Omit<ChoicesSetu
  * Its list offers the names my earlier entries wrote, the most used first, and as I type every person of
  * `Persons.md`, see {@link withSearchOf}, takes a name or takes it back by a click and stays open for the next,
  * and adds a typed name, `Search or add a person`, a person as `Persons.md` names it, like `Bichler, Martin` for
- * a typed `Martin Bichler`, but none with `;`, which parts names; beside the line the pencil, while a name is picked,
- * which shows below it the parts of each person to change, its name, its mail and its link, see {@link withPartsOf}. A name picked anew takes
+ * a typed `Martin Bichler`, but none with `;`, which parts names; right after each name its own pencil, which shows
+ * below the line the parts of that person to change, its name, its mail and its link, see {@link withPartsOf}, or
+ * hides them again. A name picked anew takes
  * the address it had, else that of its last entry, else its standard one, see `standardAddressOf` in `./entries.ts`.
  * - `people`: Who is picked, in their order, each with its address.
- * - `open`: Whether the parts of the people show.
- * - `pencil`: The pencil, `✎`.
- * - `parts`: The parts of the people below the names, shown while the pencil opened them.
- * - `show`: Shows the pencil and the parts for who is picked.
+ * - `open`: The people whose parts show.
+ * - `parts`: The parts of the people below the names, of each whose pencil opened them.
+ * - `show`: Shows the parts of who is picked and opened.
+ * - `pencilOf`: Makes the pencil of a person, `✎`, which opens or closes its parts.
  *
  * @param setup - What it shows and what it saves into
  * @returns Its row
  */
 export function withRowOf(setup: WithSetup): HTMLElement {
     let people: Attendee[] = setup.people;
-    let open: boolean = setup.open;
-    const pencil: HTMLButtonElement = document.createElement("button");
+    let open: string[] = setup.open;
     const parts: HTMLElement = document.createElement("div");
     const show: () => void = (): void => {
-        pencil.hidden = people.length === 0;
-        parts.hidden = !open || people.length === 0;
-        parts.replaceChildren(...withPartsOf(setup, people, (name: string, address: string): void => {
+        const shown: Attendee[] = people.filter((person: Attendee): boolean => open.includes(person.name));
+        parts.hidden = shown.length === 0;
+        parts.replaceChildren(...withPartsOf(setup, shown, (name: string, address: string): void => {
             people = people.map((other: Attendee): Attendee =>
                 other.name === name ? { name: name, address: address } : other);
             setup.pick(people);
         }));
     };
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
-    iconPut(pencil, Pencil, "Change the people");
-    pencil.addEventListener("click", (): void => {
-        open = !open;
-        setup.opened(open);
-        show();
-        if (open)
-            parts.querySelector("input")?.focus();
-    });
+    const pencilOf: (name: string) => HTMLElement = (name: string): HTMLElement => {
+        const pencil: HTMLButtonElement = document.createElement("button");
+        pencil.type = "button";
+        pencil.className = "entry-pencil";
+        iconPut(pencil, Pencil, `Change ${name}`);
+        pencil.addEventListener("click", (event: MouseEvent): void => {
+            event.stopPropagation();
+            open = open.includes(name) ? open.filter((other: string): boolean => other !== name) : [...open, name];
+            setup.opened(open);
+            show();
+            if (open.includes(name))
+                parts.querySelector<HTMLInputElement>(`input[aria-label="Name of ${CSS.escape(name)}"]`)?.focus();
+        });
+        return pencil;
+    };
     parts.className = "people-parts";
     parts.dataset.field = setup.field.key;
     show();
     return rowOf(setup.field.name, choicesOf({
         ...withChoicesOf(setup.field, setup.persons), picked: people.map((person: Attendee): string => person.name),
-        aside: [pencil], below: [parts],
+        afterOf: pencilOf, below: [parts],
         pick: (names: string[]): void => {
             people = names.map((name: string): Attendee => people.find((person: Attendee): boolean =>
                 person.name === name) ?? { name: name, address: setup.field.links[name] ?? standardAddressOf(name) });
@@ -2327,7 +2332,7 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     partsOpen = null;
     edits = { title: null, from: null, location: null, online: null, with: null };
     addresses = { ...opening.addresses };
-    withOpen = false;
+    withOpen = [];
     personEdits = {};
     addedLine = "";
     placeFilled = "";
