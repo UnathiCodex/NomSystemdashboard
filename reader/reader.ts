@@ -207,8 +207,8 @@ async function fileStream(response: ServerResponse, file: NotesStream, name: str
  *   as texts, empty ones for a day without note.
  * - `GET /api/day/categories?now=…`: Sends the categories with the values of their fields.
  * - `GET /api/day/way-end?before=…`: Sends where the last way before the instant ended.
- * - `GET /api/day/plain?id=…`: Sends the plain series of the `UID`, its rule, times and texts, see `plainRead`
- *   in `rules.ts`.
+ * - `GET /api/day/plain?id=…`: Sends the plain series of the `UID` of one of its parts, its rule, times and texts,
+ *   with every part of it going on, see `plainRead` in `rules.ts`.
  * - `GET /api/day/trackers?date=…`: Sends my sleep, my glasses of water, my neck sessions and what my meals gave
  *   on the date, with my goals.
  * - `GET /api/day/real?category=…&title=…&module=…&type=…`: Sends the minutes the last entries like a box
@@ -224,14 +224,15 @@ async function fileStream(response: ServerResponse, file: NotesStream, name: str
  * - `POST /api/day/boxes`: Adds box of the body and sends its identifier.
  * - `PATCH /api/day/boxes`: Changes box of the body.
  * - `DELETE /api/day/boxes?id=…`: Removes box of the identifier, of one day of a series that day alone.
- * - `DELETE /api/day/plain?id=…`: Removes the plain series of the `UID` whole, see `plainRemove` in `rules.ts`.
+ * - `DELETE /api/day/plain?id=…`: Removes the plain series of the `UID` whole, every part of it, see `plainRemove`
+ *   in `rules.ts`.
  * - `POST /api/day/repeat`: Adds box of the body once per date of its weekly days, as the dialog of a series gives them
  *   for a box repeated by the row `Repeat` of its dialog, and sends the boxes it makes, see `repeatApply`
  *   in `course.ts`; refused with 409 for a series of a type that has a box in its semester already; when the body says
  *   `dry: true` only sends what it would make, writing nothing, for the preview of the dialog.
- * - `POST /api/day/plain`: Writes the plain series of the body, new, whole, or from today on when the body says
- *   `ahead: true`, and sends the boxes it makes, see `plainApply` in `rules.ts`; when the body says `dry: true` only
- *   sends them, writing nothing, for the preview of the dialog.
+ * - `POST /api/day/plain`: Writes a part of a plain series as the body has it, new, whole, or from today on, or ends it
+ *   when the body says `gone: true`, and sends the boxes it makes, see `plainApply` in `rules.ts`; when the body says
+ *   `dry: true` only sends them, writing nothing, for the preview of the dialog.
  * - `POST /api/day/logged`: Logs the box named in the body at the start and end in the body,
  *   and sends the identifier of the log entry.
  * - `POST /api/day/undone`: Takes the done box named in the body back to open, removing the log entry from it
@@ -272,7 +273,7 @@ async function fileStream(response: ServerResponse, file: NotesStream, name: str
  *   to it, or with no group takes my group back, my open boxes of its type from today on going, and sends the boxes
  *   of the series after it; when the body says `dry: true` only sends what that would make.
  * - `POST /api/course/pick`: Picks the session of the body, its module, type, group and start, for its week, the box
- *   of that week going to it, see `weekPick` in `course.ts`.
+ *   of that week going to it, or with `extra: true` as a box of its own besides it, see `weekPick` in `course.ts`.
  * - `POST /api/course/exam`: Gives the exam of the body the kind and the times of the body, see `examSet`
  *   in `course.ts`.
  * - `PUT /api/course/groups`: Writes the group of the body into the plan of its module, in place of one

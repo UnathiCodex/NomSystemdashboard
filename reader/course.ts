@@ -303,12 +303,15 @@ export type MineChange = {
  * - `type`: Type of the group, like `TU`.
  * - `group`: The group, like `03`.
  * - `start`: The start of the session as ISO instant, like `2026-11-05T15:00:00.000Z`.
+ * - `extra`: Whether the session becomes a box of its own besides the box of its week, as a second tutorial
+ *   in one week, from the list of the sessions of its group; false when left out.
  */
 export type PickChange = {
     module: string;
     type: string;
     group: string;
     start: string;
+    extra?: boolean;
 };
 
 /**
@@ -1178,6 +1181,21 @@ function draftOf(box: Box): Draft {
 }
 
 /**
+ * Makes the draft of a new box of a date, with all of it, see {@link draftsOf} and {@link weekPick}.
+ *
+ * @param target - The date
+ * @returns The draft, of no box yet
+ */
+function madeDraftOf(target: Target): Draft {
+    return {
+        box: null, day: target.day, time: target.start === "" ? "" : instantOf(target.day, target.start).toISOString(),
+        minutes: target.minutes, location: target.location, locationLink: target.locationLink, online: target.online,
+        onlineLink: target.onlineLink, passcode: target.passcode, attendees: target.attendees, group: target.group,
+        number: "", removed: false,
+    };
+}
+
+/**
  * Gives the date a session of a group sets the box of its week to, see {@link draftSet}: all of it, its day, its time,
  * its length, the room, what it does online, the tutor and the group.
  * - `day`: The day of the session.
@@ -1270,13 +1288,7 @@ function draftsOf(series: Box[], targets: Target[], weeks: [string, string], tou
         dates.forEach((target: Target, index: number): void => {
             const box: Box | undefined = taken[index];
             if (box === undefined && target.made)
-                drafts.push({
-                    box: null, day: target.day, time: target.start === "" ? ""
-                        : instantOf(target.day, target.start).toISOString(), minutes: target.minutes,
-                    location: target.location, locationLink: target.locationLink, online: target.online,
-                    onlineLink: target.onlineLink, passcode: target.passcode, attendees: target.attendees,
-                    group: target.group, number: "", removed: false,
-                });
+                drafts.push(madeDraftOf(target));
             else if (box !== undefined && touched(box))
                 drafts.push(draftSet(draftOf(box), target));
             else if (box !== undefined && target.retimed && retimable(box))
@@ -1692,6 +1704,8 @@ export function groupMine(change: MineChange): Planned[] {
  * no box of the type after that week the sessions of the group from that week on become my series, one per week,
  * so later weeks follow it; then the boxes of the type are numbered anew, see {@link numbersOf}.
  * A week done, or whose box may not change, see {@link changeable}, stays as it is.
+ * As an extra, see `extra` of {@link PickChange}, the session becomes a box of its own instead, besides the box of its
+ * week, which stays, as a second tutorial in one week; then the boxes are numbered anew, once per session.
  * - `semester`: The semester of the session.
  * - `group`, `session`: The group and its session, `undefined` for none.
  * - `week`: Monday of the week of the session.
@@ -1723,6 +1737,14 @@ export function weekPick(change: PickChange): void {
     const typedRead: () => Box[] = (): Box[] => courseBoxesRead(codeOf(change.module), semester)
         .filter((one: Box): boolean => one.type === change.type);
     let typed: Box[] = typedRead();
+    if (change.extra === true) {
+        if (typed.some((one: Box): boolean => one.time !== "" && Date.parse(one.time) === Date.parse(session.start)))
+            throw new Error(`A box of ${change.type} of ${change.module} is there already at ${change.start}`);
+        const drafts: Draft[] = [...typed.map(draftOf), madeDraftOf(targetOf(group, session))];
+        numbersOf(drafts);
+        draftsWrite(change.module, change.type, semester, drafts);
+        return;
+    }
     const skipped: Box | undefined = typed.find((one: Box): boolean => weekOf(one) === week && one.state === "dropped"
         && changeable({ ...one, state: "open" }));
     if (skipped !== undefined) {

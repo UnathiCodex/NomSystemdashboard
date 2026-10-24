@@ -40,7 +40,7 @@
  */
 
 import { courseSend, groupOpen, mondayOf, roomOf, weekdayNameOf } from "./series.ts";
-import { timeOf, weekdayDateTextOf } from "./times.ts";
+import { rangeDash, timeOf, weekdayDateTextOf } from "./times.ts";
 import { dayOf } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
 import { elementOf } from "../food/foods.ts";
@@ -350,7 +350,7 @@ export function pinnedMenuOf(course: Course, type: string, show: PickShow,
             const slot: Slot | undefined = group.rule.slots[0];
             return {
                 group: group, day: slot === undefined ? "" : weekdayNameOf(slot.weekday, false),
-                times: slot === undefined ? "" : `${slot.start} – ${slot.end}`, checked: false,
+                times: slot === undefined ? "" : `${slot.start}${rangeDash}${slot.end}`, checked: false,
                 pick: (): void => {
                     if (group.rule.group !== pinned)
                         pinPick(course, group, show);
@@ -437,9 +437,12 @@ export function groupNameOf(box: Box): HTMLElement | null {
  * @param course - Its course, `null` for none
  * @param box - The box
  * @param show - Shows a pick, see {@link PickShow}
+ * @param open - Opens a group to change it, like from my series, which it goes back to; in the form of a series
+ *   of its own when left out, see {@link groupOpenOf}
  * @returns The menu, its group, `null` for a box without group and menu
  */
-export function boxGroupOf(course: Course | null, box: Box, show: PickShow): HTMLElement | null {
+export function boxGroupOf(course: Course | null, box: Box, show: PickShow,
+                           open?: (group: string) => void): HTMLElement | null {
     const groups: Group[] = (course?.groups ?? []).filter((group: Group): boolean => group.rule.type === box.type);
     const meetings: [Group, Session][] = meetingsOf(groups, mondayOf(box.day))
         .filter(([, session]: [Group, Session]): boolean => !overOf(session));
@@ -451,8 +454,8 @@ export function boxGroupOf(course: Course | null, box: Box, show: PickShow): HTM
             const start: Date = new Date(session.start);
             return {
                 group: group, day: weekdayDateTextOf(dayOf(start)),
-                times: `${timeOf(start)} – ${timeOf(new Date(start.getTime() + session.minutes * 60 * 1000))}`,
+                times: `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + session.minutes * 60 * 1000))}`,
                 checked: group.rule.group === box.group, pick: (): void => weekPick(course, box, group, session, show),
             };
-        }), pinned, groupOpenOf(course, box.type));
+        }), pinned, open ?? groupOpenOf(course, box.type));
 }
