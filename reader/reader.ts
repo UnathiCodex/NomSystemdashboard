@@ -68,12 +68,12 @@ import {
     boxAdd, boxDelete, boxDrop, boxEdit, boxesCarried, boxesRead, boxFind, boxPush, boxSubmit, boxUniversity,
 } from "./boxes.ts";
 import {
-    courseRead, courseSeriesRemove, examSet, groupApply, groupMine, groupPut, groupRemove, repeatApply, seriesApply,
-    weekPick,
+    courseRead, courseSeriesRemove, examSet, groupApply, groupMine, groupPut, groupRemove, numbersRenew, repeatApply,
+    seriesApply, weekPick,
 } from "./course.ts";
 import { giftWrite } from "./gifts.ts";
 import { noteRead, notesStart, sectionsRead, sectionWrite } from "./note.ts";
-import { categoriesRead, wayEndRead } from "./categories.ts";
+import { categoriesRead, semesterOf, wayEndRead } from "./categories.ts";
 import { placeAdd, placeChange, placeRename, placeStandardSet, platformAdd, platformChange } from "./places.ts";
 import { plainApply, plainRead, plainRemove } from "./rules.ts";
 import { personRename, personsRead } from "./persons.ts";
@@ -105,7 +105,7 @@ import { pageCreate } from "./page.ts";
 import type { IncomingMessage, ServerResponse, Server } from "node:http";
 import type { ViteDevServer } from "vite";
 import type { BoxLogged, EntryChange, EntryMoved, EntryNew } from "./day.ts";
-import type { BoxChange, BoxNew } from "./boxes.ts";
+import type { Box, BoxChange, BoxNew } from "./boxes.ts";
 import type { Attendee } from "./calendar.ts";
 import type { PersonRenamed } from "./persons.ts";
 import type {
@@ -476,6 +476,9 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
     } else if (request.method === "POST" && url.pathname === "/api/day/university") {
         const marked: { box: string; cancelled: boolean } = await json(request) as { box: string; cancelled: boolean };
         boxUniversity(marked.box, marked.cancelled);
+        const box: Box = boxFind(marked.box)[2];
+        if (box.group !== "")
+            numbersRenew(box.module, box.type, box.semester || semesterOf(box.day));
         responseSend(response, 200, null);
 
     } else if (request.method === "POST" && url.pathname === "/api/day/submitted") {

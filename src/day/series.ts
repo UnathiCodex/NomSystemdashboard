@@ -34,7 +34,9 @@
  * group pinned, a pick making a group mine, see {@link groupPickOf}, each group with its ⟳, which opens it in this
  * same form, and right after the menu a plus, which opens a new group, its name typed there, like `5` for `Group 05`,
  * see {@link groupPartOf}; closing, saving or removing the group goes back to my series, see {@link groupReturn}.
- * While no group is mine, my series shows only its summary and its semester, see {@link groupWaits}; the first group
+ * While no group is mine, my series shows the same rows, in the same places, empty and locked, since its place, days
+ * and people come from the group, its dates as far as known, and my boxes of the days over, which no pin changes,
+ * see {@link groupWaits} and {@link pastOf}; the first group
  * made while none is mine becomes mine as it is saved. So I make the groups of my tutorials by hand as the university lists them, with the same rows: what
  * it is, its place, what it does online, its days, each a weekday with its times, its weeks, its sessions, of which
  * `⋯` cancels one, and its tutors in `With`; saved, the reader writes it as one weekly to-do per weekday, and my boxes
@@ -110,8 +112,8 @@ import {
     breakableOf, choiceOf, choicesOf, fileShow, pairOf, partFieldOf, partOf, rowOf, searchOf,
 } from "./choices.ts";
 import {
-    boxTimesOf, dateFieldStart, dateParse, lengthSwapOf, lengthTextOf, minutesOf, timeFieldRead, timeFieldStart,
-    weekdayDateTextOf,
+    boxTimesOf, dateFieldStart, dateParse, lengthSwapOf, lengthTextOf, minutesOf, rangeDash, timeFieldRead,
+    timeFieldStart, weekdayDateTextOf,
 } from "./times.ts";
 import {
     addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, platformSend, renameSend,
@@ -404,7 +406,8 @@ export type Repeated = {
  * its weekdays from 1 for Monday to 7 for Sunday, its times in Berlin time, both empty without time, how long it lasts
  * without time in minutes, `null` for no length, its first day, its last, empty for none, its single dates besides
  * its weekdays, its extras, each with its times, without time its day alone, and its plan from `NomWorkspace` on,
- * empty for a new one.
+ * empty for a new one; the `X-SERIES` its parts share, empty for a series of one time, and its parts going on, itself
+ * among them, each a plain series of one time, see `plainRead` in `reader/rules.ts`.
  */
 export type Plain = Online & {
     id: string;
@@ -423,6 +426,8 @@ export type Plain = Online & {
     last: string;
     extras: Extra[];
     file: string;
+    series: string;
+    parts: Plain[];
 };
 
 /**
@@ -568,6 +573,13 @@ let plain: Plain | null = null;
 let plainTimed: boolean = true;
 
 /**
+ * How long each day of the plain series of the form lasts while it has no times, by its weekday from 1 for Monday
+ * to 7 for Sunday, like 480 for my sleep of 8 hours, `null` for none yet, see {@link plainTimeRowsOf}; a weekday picked
+ * anew takes the length of the first.
+ */
+let plainLengths: Map<number, number | null> = new Map();
+
+/**
  * The group of the tutorials of its type the form makes or changes, see {@link groupPartOf} and {@link groupStart}:
  * its group as typed, like `05`, whether it is new, and its name there before, like `Mo-0800-1`, which saving renames
  * everywhere when I typed another, see `groupRename` in `reader/course.ts`, empty for a new one; `null` while the
@@ -660,7 +672,7 @@ export function weekdayNameOf(weekday: number, whole: boolean): string {
  * @returns Text like `Mon 14:00 – 16:00`
  */
 export function slotTextOf(slot: Slot): string {
-    return `${weekdayNameOf(slot.weekday, false)} ${slot.start} – ${slot.end}`;
+    return `${weekdayNameOf(slot.weekday, false)} ${slot.start}${rangeDash}${slot.end}`;
 }
 
 /**
@@ -836,7 +848,7 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
  * ones light on the calm grey of what is picked, a click picking one or taking it back, but the last one; below them
  * each day picked one line, its weekday and its times, like `Thu 18:00 – 19:30`, a day picked anew taking the times
  * of the first, so a lecture on Monday and Thursday at different times and a group meeting twice a week are typed
- * as my sleep of every night is; of a plain series by its length the one length of all its days in place of the lines,
+ * as my sleep of every night is; of a plain series by its length each day its length in place of its times,
  * see {@link plainTimeRowsOf}. A weekday picked after one taken back takes its boxes, as a day moved, and moves
  * the days of the series with it, see {@link daysMove} and {@link slotsFreed}, so a lecture moved from Monday
  * to Tuesday keeps its boxes; a slot without weekday yet, as a new series starts, takes the first weekday picked.
@@ -849,11 +861,11 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
  * @param filled - Builds the rows of the form anew from what it holds, once a day is picked or taken back
  * @param aside - What stands after the name `Day`, like the switch of a plain series between times and a length;
  *   nothing when left out
- * @param length - The one length of all the days, in place of their lines, `null` for the lines
+ * @param lengthOf - Makes the length of a day in place of its times, `null` for the times
  * @returns The row, alone, as the rows of the form are given
  */
 export function slotRowsOf(days: Days, changed: () => void, filled: () => void, aside: HTMLElement[] = [],
-                           length: HTMLElement | null = null): HTMLElement[] {
+                           lengthOf: ((slot: Slot) => HTMLElement) | null = null): HTMLElement[] {
     const toggles: HTMLElement = elementOf("span", "series-weekdays", "");
     toggles.append(...[1, 2, 3, 4, 5, 6, 7].map((weekday: number): HTMLButtonElement => {
         const index: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
@@ -868,12 +880,12 @@ export function slotRowsOf(days: Days, changed: () => void, filled: () => void, 
         return toggle;
     }));
     const lines: HTMLElement = elementOf("div", "series-slots", "");
-    lines.append(toggles, ...length !== null ? [length] : days.slots
+    lines.append(toggles, ...days.slots
         .filter((slot: Slot): boolean => slot.weekday > 0)
         .map((slot: Slot): HTMLElement => {
             const line: HTMLElement = elementOf("div", "series-slot", "");
             line.append(elementOf("span", "series-slot-day", weekdayNameOf(slot.weekday, false)),
-                timesRangeOf(slot, changed));
+                lengthOf === null ? timesRangeOf(slot, changed) : lengthOf(slot));
             return line;
         }));
     const row: HTMLElement = rowOf("Day", lines);
@@ -1235,7 +1247,8 @@ function knownEndOf(box: Box): HTMLElement {
  * Makes what stands at the right edge of the row of a box not written yet, or of one only shown: of a new one its
  * actions as the form keeps them until I save, see {@link States}, `Cancel` for one numbered in its series and for
  * a session of a group, which the reader makes cancelled, see `seriesApply` and `groupApply` in `reader/course.ts`,
- * `Remove` for an extra from today on, which takes it back; a state given so its icon, which takes it back; of a day
+ * `Remove` for an extra from today on, which takes it back, and of a session of a group there already from today
+ * on `+`, which makes it a box of mine besides the box of its week, see {@link extraAdd}; a state given so its icon, which takes it back; of a day
  * of another series of the chain of a plain series, see `chained` of {@link Planned}, and of one the change removes
  * only the icon of its state, or nothing.
  * - `today`: Today's date.
@@ -1274,12 +1287,40 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
                 days.extras.splice(days.extras.indexOf(extra), 1);
                 preview.filled();
             })] : [],
+        ...grouped !== null && !grouped.made && box.time !== "" && box.day >= today
+            ? [pendingActionOf(Plus, "Add as a box of mine", (): void => {
+                extraAdd(box.time).catch((error: unknown): void => console.error(error));
+            })] : [],
     ];
     if (box.pushed && buttons.length === 0)
         return markOf(ArrowRight, "Pushed", null);
     const actions: HTMLElement = elementOf("div", buttons.length === 0 ? "series-end" : "box-actions", "");
     actions.append(...buttons);
     return actions;
+}
+
+/**
+ * Makes a session of the group of the form a box of mine of its own, besides the box of its week, as a second
+ * tutorial in one week, see `weekPick` in `reader/course.ts`, and goes back to my series it was opened from, see
+ * {@link groupReturn}, else closes the dialog; the group as saved, not as typed since.
+ *
+ * @param start - The start of the session as ISO instant, like `2026-11-05T15:00:00.000Z`
+ * @throws {Error} - When the reader cannot answer
+ */
+async function extraAdd(start: string): Promise<void> {
+    if (course === null || typing === null || grouped === null)
+        return;
+    try {
+        await courseSend<null>("/api/course/pick",
+            { module: course.module, type: typing.type, group: grouped.was, start: start, extra: true });
+    } catch (error: unknown) {
+        console.error(error);
+        formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
+        return;
+    }
+    if (await groupReturn(true))
+        return;
+    (document.getElementById("series") as HTMLDialogElement).close();
 }
 
 /**
@@ -1355,6 +1396,8 @@ function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void):
  * - `number`: Its number, or of an exam its kind, given until I save, see {@link examSend}.
  * - `place`: Its place, or what it does online, with its link.
  * - `opening`: Opens its box from its day, of a box there already without number, `null` for any other.
+ * - `mine`: My series, whose groups a menu of its row opens so that closing them goes back to it, `null` in the form
+ *   of a group.
  *
  * @param box - The box
  * @param had - Whether the series had boxes before, so a new one says so
@@ -1386,10 +1429,12 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
         : (): void => {
             boxShow(known).catch((error: unknown): void => console.error(error));
         };
+    const mine: Form | null = grouped === null ? typing : null;
     return listRowOf({
         number: number, day: box.day, open: opening,
         group: known !== undefined && known.group !== "" && course !== null
-            ? boxGroupOf(course, known, (_: () => void, send: () => Promise<unknown>): void => seriesAct(send))
+            ? boxGroupOf(course, known, (_: () => void, send: () => Promise<unknown>): void => seriesAct(send),
+                mine === null ? undefined : (group: string): void => groupFrom(mine, group))
             : null,
         meta: [[rowTimesOf(box.time, box.minutes)], place],
         people: known?.attendees ?? (box.attendees.length > 0 ? box.attendees : typing?.attendees ?? []),
@@ -1561,7 +1606,7 @@ function boxListOf(planned: Planned[], preview: Preview, redraw: () => void): HT
     const items: [string, HTMLElement][] = numbered.map((box: Planned): [string, HTMLElement] =>
         [box.time || box.day, boxRowOf(box, had, preview)]);
     const list: HTMLElement = monthListOf(items);
-    if (grouped === null)
+    if (grouped === null && (typing === null || !groupWaits(typing)))
         list.append(extraTyped === null ? addRowOf(preview, redraw) : draftRowOf(extraTyped, preview, redraw));
     return list;
 }
@@ -1904,9 +1949,66 @@ function formElementOf(): HTMLFormElement {
 }
 
 /**
+ * Locks rows of my series that waits for my group, see {@link groupWaits}: its place, what it does online, its days,
+ * its dates and who I am with come from the group I pin, so while none is pinned they show, empty, but take no
+ * input; any other form as it is.
+ *
+ * @param locked - Whether to lock them
+ * @param rows - The rows
+ * @returns The rows
+ */
+function lockedOf(locked: boolean, rows: HTMLElement[]): HTMLElement[] {
+    rows.forEach((row: HTMLElement): void => {
+        row.inert = locked;
+    });
+    return rows;
+}
+
+/**
+ * Fills my series that waits for my group, see {@link groupWaits}: what comes from a group empty, its place, what it
+ * does online, its days and who I am with, even where a group of before left them; its dates as far as they are
+ * known: from the earliest of its own first day, the first days of the groups of its type in the semester and my
+ * boxes of the days over, to the latest of its own last day and the last days of those groups; nothing is saved, since such a form saves nothing.
+ * - `rules`: The rules of the groups of its type.
+ * - `firsts`, `lasts`: Their first and last days, and the days of my boxes of the days over.
+ *
+ * @param form - The form of my series
+ */
+function waitingFill(form: Form): void {
+    Object.assign(form, { location: "", locationLink: "", online: "", onlineLink: "", passcode: "", attendees: [],
+        slots: [] });
+    const rules: Rule[] = groupsOf(form.type).map((group: Group): Rule => group.rule);
+    const firsts: string[] = [form.first, ...rules.map((rule: Rule): string => rule.first),
+        ...pastOf(form).map((box: Planned): string => box.day)].filter((day: string): boolean => day !== "").sort();
+    const lasts: string[] = [form.last, ...rules.map((rule: Rule): string => rule.last)]
+        .filter((day: string): boolean => day !== "").sort();
+    form.first = firsts[0] ?? "";
+    form.last = lasts[lasts.length - 1] ?? "";
+}
+
+/**
+ * Gives my boxes of the type of my series that waits for my group, see {@link groupWaits}, whose day is over: they
+ * stay, whatever group is pinned, so its list shows them while no group is mine, as they are, none to change there;
+ * my boxes to come follow only a group pinned.
+ *
+ * @param form - The form of my series
+ * @returns The boxes of the days over, the earliest first
+ */
+function pastOf(form: Form): Planned[] {
+    const today: string = dayOf(new Date());
+    return (course?.boxes ?? []).filter((box: Box): boolean => box.type === form.type && box.day < today)
+        .map((box: Box): Planned => ({
+            id: box.id, day: box.day, time: box.time, minutes: box.minutes, number: box.number, state: box.state,
+            pushed: box.pushed.length > 0, editable: false, retimable: false, change: "", attendees: box.attendees,
+        }));
+}
+
+/**
  * Takes a change of the form of a series: allows saving while it is ready, see {@link formReady}, and shows anew
  * the boxes it makes as the reader would write them, see {@link formSend} and {@link previewSoon}, its extras among
- * them, of the exams each with its kind to pick.
+ * them, of the exams each with its kind to pick; of my series waiting for my group my boxes of the days over,
+ * see {@link pastOf}.
+ * - `past`: Those boxes, none for any other form.
  * - `save`: Its button Save.
  * - `form`: The form.
  */
@@ -1915,9 +2017,11 @@ function formChanged(): void {
     if (typing === null || save === null)
         return;
     const form: Form = typing;
+    const past: Planned[] = groupWaits(form) ? pastOf(form) : [];
     save.disabled = !formReady(form);
     previewSoon(formElementOf(), {
-        ask: formReady(form) ? (): Promise<Planned[]> => formSend(form, true) : null,
+        ask: formReady(form) ? (): Promise<Planned[]> => formSend(form, true)
+            : past.length > 0 ? async (): Promise<Planned[]> => past : null,
         days: form, states: form.states,
         kinds: form.type === examType ? form.kinds : undefined, filled: formFill,
     });
@@ -1957,7 +2061,8 @@ function placeOriginOf(form: Form): Place {
  * Makes the row `Summary`, what the series is, as its boxes are written and as the dialog of one of them names it,
  * see `summaryPartsOf` in `./categories.ts`: the title of the series, never changed here, since it follows from
  * elsewhere: of my course the folder of its module and its type in brackets, like
- * `IN2028_BusinessAnalyticsMachineLearning (VO)`, a series that is there and a group as plain text,
+ * `IN2028_BusinessAnalyticsMachineLearning (VO)`, a series that is there, one waiting for my group, see
+ * {@link groupWaits}, and a group as plain text,
  * a new one with only its type to pick, its plus right after the module, from the numbered types without series,
  * its list open as the dialog opens, see {@link seriesOpen}; of a new box repeated its summary as plain text,
  * which the pencil of the summary of the box changes, see {@link Repeated}. Below it, small and grey, the folder
@@ -1980,7 +2085,7 @@ function seriesRowOf(form: Form): HTMLElement {
     const link: HTMLAnchorElement = elementOf("a", "entry-address", "") as HTMLAnchorElement;
     folderLinkShow(link, repeated?.link ?? course?.links[form.type] ?? "");
     const value: HTMLElement = elementOf("div", "", "");
-    if (form.old !== null || repeated !== null || grouped !== null)
+    if (form.old !== null || repeated !== null || grouped !== null || groupWaits(form))
         value.append(elementOf("span", "", breakableOf(repeated?.summary ?? `${module} (${form.type})`)), link);
     else
         value.append(pairOf(elementOf("span", "", breakableOf(module)), choicesOf({
@@ -2240,8 +2345,10 @@ function groupPickOf(form: Form): HTMLElement {
 }
 
 /**
- * Tells whether the form of my series of a type with groups waits for my group: while none is mine, it shows only
- * its summary and its semester with the menu of the groups, see {@link groupPickOf}, since my boxes follow my group.
+ * Tells whether the form of my series of a type with groups waits for my group: while none is mine, its rows from
+ * the group show empty and locked, see {@link lockedOf}, since my boxes to come follow my group, with the menu of the
+ * groups beside its semester, see {@link groupPickOf}, and my boxes of the days over, which stay whatever group is
+ * pinned, see {@link pastOf}.
  *
  * @param form - The form
  * @returns Whether it waits
@@ -2392,6 +2499,8 @@ function seriesBinOf(form: Form): HTMLButtonElement {
  * - `cancel`, `save`: Cancel and Save.
  * - `hint`: The hint when the reader does not take it.
  * - `picking`: Whether only the rows on top of a new series show, its category or skill still to pick.
+ * - `waits`: Whether my series waits for my group, see {@link groupWaits}: its rows then the same as with a group,
+ *   in the same places, so pinning one never makes rows appear, but empty and locked, see {@link lockedOf}.
  */
 function formFill(): void {
     if (typing === null)
@@ -2402,12 +2511,14 @@ function formFill(): void {
     const picking: boolean = fresh !== null && (fresh.category === ""
         || (fresh.category === skillName && fresh.picked.module === "")) || (plain === null && repeated === null
         && course === null);
+    const waits: boolean = groupWaits(form);
+    if (waits)
+        waitingFill(form);
     const rows: HTMLElement[] = picking ? [] : plain !== null ? plainRowsOf(plain, form)
         : form.type === examType ? [seriesRowOf(form), semesterRowOf(courseSemesterOf()), boxesRowOf()]
-        : groupWaits(form) ? [seriesRowOf(form), semesterRowOf(courseSemesterOf())]
-        : [seriesRowOf(form), semesterRowOf(courseSemesterOf()), placeRowOf(form), onlineRowOf(form),
-            ...slotRowsOf(form, formChanged, formFill), datesRowOf(form, formChanged), boxesRowOf(),
-            ...grouped !== null || withAsked() ? peopleRowsOf(form) : []];
+        : [seriesRowOf(form), semesterRowOf(courseSemesterOf()), ...lockedOf(waits, [placeRowOf(form),
+            onlineRowOf(form), ...slotRowsOf(form, formChanged, formFill), datesRowOf(form, formChanged)]),
+            boxesRowOf(), ...lockedOf(waits, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
     fields.append(...fresh === null ? rows
         : [...freshRowsOf(), ...fresh.category === skillName ? rows.slice(1) : rows]);
@@ -2716,9 +2827,9 @@ async function seriesRepeat(from: Repeated, days: Days, saved: () => void): Prom
 }
 
 /**
- * Tells whether the form of a plain series is typed enough to make boxes, see {@link plainTimeRowsOf}: with times its days,
- * each a weekday, each once, with a start before its end; without times its days, each a weekday, each once,
- * and a length of more than nothing;
+ * Tells whether the form of a plain series is typed enough to make boxes, see {@link plainTimeRowsOf}: with times its
+ * days, each a weekday, each once, with a start before its end; without times its days, each a weekday, each once,
+ * each with a length of more than nothing;
  * and its first day on or before its last, or no last day.
  *
  * @param series - The plain series
@@ -2731,57 +2842,91 @@ function plainReady(series: Plain, form: Form): boolean {
             && new Set(form.slots.map((slot: Slot): number => slot.weekday)).size === form.slots.length
         : form.slots.length > 0 && form.slots.every((slot: Slot): boolean => slot.weekday > 0)
             && new Set(form.slots.map((slot: Slot): number => slot.weekday)).size === form.slots.length
-            && (series.minutes ?? 0) > 0;
+            && form.slots.every((slot: Slot): boolean => (plainLengths.get(slot.weekday) ?? 0) > 0);
     const named: boolean = series.category === skillName ? series.module !== "" : series.title.trim() !== "";
     return named && days && form.first !== "" && (form.last === "" || form.first <= form.last);
 }
 
 /**
  * Gives the parts a plain series is written as, one per time, since a rule has one time for all its weekdays,
- * see `reader/rules.ts`: with times the days of the form grouped by their times, like Gym on Monday at 18:00
- * and on Thursday at 07:00 two series, the series being changed the group of the times it had, so its days of those
- * times stay as they are, else the first group; without times one with the weekdays of its days and its length.
- * Its extras, its single dates, go with the series being changed, else with the first part.
+ * see `reader/rules.ts`: the days of the form grouped by their times, or without times by their lengths, like Gym on
+ * Monday at 18:00 and on Thursday at 07:00, or my sleep of 8 hours from Sunday to Thursday and of 9 hours on Friday
+ * and Saturday, two parts. A part of the series as it was keeps its `UID` where its time stays, so its days of that time
+ * stay as they are; a time new takes a part whose time went, the series being changed first, so a series whose one
+ * time changes stays that series; a part left over goes, see `plainGone` in `reader/rules.ts`. The parts of a series
+ * of several times share its `X-SERIES`, the one it had, else one made from the series or anew; a series of one time
+ * has none. Its extras, its single dates, go with the part of the series being changed, else with the first part.
  * - `texts`: What every part takes from the form.
- * - `groups`: The weekdays of each time, by its start and end, in the order of the days.
- * - `kept`: The times of the group that stays the series being changed.
+ * - `was`: The parts of the series as it was, the series being changed first.
+ * - `keyOf`: Gives a time, its start and end, or its length.
+ * - `groups`: The weekdays of each time, in the order of the days.
+ * - `owners`: The part of the series as it was that each time keeps, by its time.
+ * - `free`: The parts of the series as it was whose time went.
+ * - `key`: The `X-SERIES` of the parts.
+ * - `earliest`: The first day of the series as it was, the earliest of its parts, which each part keeps as its own
+ *   first day while the form keeps it.
+ * - `kept`: The time whose part keeps the extras.
+ * - `parts`: The parts to write.
  *
  * @param series - The plain series
  * @param form - The form, ready, see {@link plainReady}
- * @returns The parts, each a plain series of its own
+ * @returns The parts to write, each a plain series of its own, and the `UID`s of the parts that go
  */
-function plainPartsOf(series: Plain, form: Form): Plain[] {
+function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
     const texts: Plain = {
         ...series, location: form.location, online: form.online, onlineLink: form.onlineLink,
-        passcode: form.passcode, attendees: form.attendees, first: form.first, last: form.last, extras: [],
+        passcode: form.passcode, attendees: form.attendees, first: form.first, last: form.last, extras: [], parts: [],
     };
-    if (!plainTimed)
-        return [{ ...texts, start: "", end: "",
-            weekdays: form.slots.map((slot: Slot): number => slot.weekday)
-                .sort((first: number, second: number): number => first - second),
-            extras: form.extras.map((extra: Extra): Extra => ({ day: extra.day, start: "", end: "" })) }];
+    const was: Plain[] = series.id === "" ? [] : (series.parts.length > 0 ? series.parts : [series])
+        .sort((first: Plain, second: Plain): number =>
+            Number(second.id === series.id) - Number(first.id === series.id));
+    const keyOf: (start: string, end: string, minutes: number | null) => string =
+        (start: string, end: string, minutes: number | null): string =>
+            plainTimed ? `${start}-${end}` : String(minutes);
     const groups: Map<string, number[]> = new Map();
     form.slots.forEach((slot: Slot): void => {
-        groups.set(`${slot.start}-${slot.end}`, [...groups.get(`${slot.start}-${slot.end}`) ?? [], slot.weekday]);
+        const time: string = keyOf(slot.start, slot.end, plainLengths.get(slot.weekday) ?? null);
+        groups.set(time, [...groups.get(time) ?? [], slot.weekday]);
     });
-    const kept: string = groups.has(`${series.start}-${series.end}`) ? `${series.start}-${series.end}`
-        : [...groups.keys()][0];
-    return [...groups.entries()].map(([times, weekdays]: [string, number[]]): Plain => ({
-        ...texts, id: times === kept ? series.id : "", start: times.split("-")[0], end: times.split("-")[1],
-        minutes: null, weekdays: weekdays.sort((first: number, second: number): number => first - second),
-        extras: times === kept ? form.extras : [],
+    const owners: Map<string, Plain> = new Map();
+    was.filter((part: Plain): boolean => part.start !== "" === plainTimed
+        && groups.has(keyOf(part.start, part.end, part.minutes)))
+        .forEach((part: Plain): void => {
+            owners.set(keyOf(part.start, part.end, part.minutes), part);
+        });
+    const free: Plain[] = was.filter((part: Plain): boolean => ![...owners.values()].includes(part));
+    [...groups.keys()].filter((time: string): boolean => !owners.has(time)).forEach((time: string): void => {
+        const part: Plain | undefined = free.shift();
+        if (part !== undefined)
+            owners.set(time, part);
+    });
+    const key: string = groups.size < 2 ? ""
+        : series.series || series.id || `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+    const earliest: string = was.map((part: Plain): string => part.first).sort()[0] ?? "";
+    const kept: string = [...owners.entries()].find(([, part]: [string, Plain]): boolean => part.id === series.id)?.[0]
+        ?? [...groups.keys()][0];
+    const parts: Plain[] = [...groups.entries()].map(([time, weekdays]: [string, number[]]): Plain => ({
+        ...texts, id: owners.get(time)?.id ?? "", start: plainTimed ? time.split("-")[0] : "",
+        first: owners.get(time) !== undefined && form.first === earliest ? owners.get(time)?.first ?? form.first
+            : form.first,
+        end: plainTimed ? time.split("-")[1] : "", minutes: plainTimed ? null : Number(time),
+        weekdays: weekdays.sort((first: number, second: number): number => first - second), series: key,
+        extras: time !== kept ? [] : plainTimed ? form.extras
+            : form.extras.map((extra: Extra): Extra => ({ day: extra.day, start: "", end: "" })),
     }));
+    return [parts, free.map((part: Plain): string => part.id)];
 }
 
 /**
  * Sends a plain series to the reader, see `plainApply` in `reader/rules.ts`, each of its parts, see
- * {@link plainPartsOf}, one after another: the first as the series being changed, or new, every further one new;
+ * {@link plainPartsOf}, one after another, each as the part it keeps, or new, then each part that goes;
  * of a series that has begun, whose past never changes, see `plainApply` in `reader/rules.ts`, every further one
  * from today on at the earliest, pointing back to the series being changed as its sibling; a day of the chain each part
  * names, see `chained` of {@link Planned}, once. A day one part takes from another counts once, as what really happens
  * to it: a day the series being changed loses, `removed`, that a new part makes, `new`, is that new day, `changed`
  * for other times, else as it was.
  * - `planned`: The boxes of the parts sent so far.
+ * - `parts`, `gone`: The parts to write and the `UID`s of those that go.
  * - `today`: Today.
  * - `begun`: Whether the series being changed has begun.
  * - `removed`: The days a part loses.
@@ -2797,11 +2942,14 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
     const planned: Planned[] = [];
     const today: string = dayOf(new Date());
     const begun: boolean = series.id !== "" && series.first < today;
-    for (const part of plainPartsOf(series, form))
+    const [parts, gone]: [Plain[], string[]] = plainPartsOf(series, form);
+    for (const part of parts)
         planned.push(...await courseSend<Planned[]>("/api/day/plain", {
             ...part, first: begun && part.id === "" && part.first < today ? today : part.first, dry: dry,
             sibling: begun && part.id === "" ? series.id : "",
         }));
+    for (const id of gone)
+        planned.push(...await courseSend<Planned[]>("/api/day/plain", { id: id, gone: true, dry: dry }));
     const removed: Planned[] = planned.filter((box: Planned): boolean => box.change === "removed");
     const moved: (box: Planned) => Planned | undefined = (box: Planned): Planned | undefined =>
         box.change === "new" ? removed.find((gone: Planned): boolean => gone.day === box.day) : undefined;
@@ -2823,19 +2971,17 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
 
 /**
  * Makes the switch of a plain series between times and a length, see {@link plainTimed} and `lengthSwapOf`
- * in `./times.ts`: either way it keeps its days, their weekdays; from times to a length it takes the length of their
- * first times, from a length to times their times stay to type, see {@link plainTimeRowsOf}.
+ * in `./times.ts`: either way it keeps its days, their weekdays; from times to a length each day takes the length
+ * of its times, see {@link plainLengths}, from a length to times their times stay to type, see {@link plainTimeRowsOf}.
  *
- * @param series - The plain series
  * @param form - The form, which holds its days
  * @returns The switch
  */
-function plainSwapOf(series: Plain, form: Form): HTMLButtonElement {
+function plainSwapOf(form: Form): HTMLButtonElement {
     return lengthSwapOf(plainTimed, (): void => {
-        if (plainTimed) {
-            const first: Slot | undefined = form.slots.find(timesReady);
-            series.minutes = first === undefined ? series.minutes : minutesOf(first.end) - minutesOf(first.start);
-        }
+        if (plainTimed)
+            plainLengths = new Map(form.slots.map((slot: Slot): [number, number | null] => [slot.weekday, timesReady(slot)
+                ? minutesOf(slot.end) - minutesOf(slot.start) : plainLengths.get(slot.weekday) ?? null]));
         form.slots = form.slots.map((slot: Slot): Slot => ({ weekday: slot.weekday, start: "", end: "" }));
         plainTimed = !plainTimed;
         formFill();
@@ -2844,20 +2990,26 @@ function plainSwapOf(series: Plain, form: Form): HTMLButtonElement {
 
 /**
  * Makes the row `Day` of a plain series, as every series has it, see {@link slotRowsOf}, with the switch beside
- * the name `Day` between times of each day and only how long they last, like `08:00` for my sleep,
- * see {@link plainSwapOf}, since a rule without times has one length for all its weekdays: then that one length
- * in place of the lines of the days.
+ * the name `Day` between times of each day and only how long each day lasts, like `08:00` for my sleep,
+ * see {@link plainSwapOf}: then each day its length in place of its times, a day picked anew the length of the first,
+ * see {@link plainLengths}.
+ * - `lengthOf`: Makes the field of the length of a day.
+ * - `minutes`: The length of a day, that of the first day while it has none yet.
  *
- * @param series - The plain series, which takes its length
  * @param form - The form, which holds its days
  * @returns The row, alone, as the rows of the form are given
  */
-function plainTimeRowsOf(series: Plain, form: Form): HTMLElement[] {
-    return slotRowsOf(form, formChanged, formFill, [plainSwapOf(series, form)], plainTimed ? null
-        : fieldOf("time-field", series.minutes === null ? "" : lengthTextOf(series.minutes), "How long",
-            (time: string): void => {
-                series.minutes = time === "" ? null : minutesOf(time);
-            }, formChanged));
+function plainTimeRowsOf(form: Form): HTMLElement[] {
+    const lengthOf: (slot: Slot) => HTMLElement = (slot: Slot): HTMLElement => {
+        const minutes: number | null =
+            plainLengths.get(slot.weekday) ?? plainLengths.get(form.slots[0]?.weekday ?? 0) ?? null;
+        plainLengths.set(slot.weekday, minutes);
+        return fieldOf("time-field", minutes === null ? "" : lengthTextOf(minutes),
+            `How long on ${weekdayNameOf(slot.weekday, false)}`, (time: string): void => {
+                plainLengths.set(slot.weekday, time === "" ? null : minutesOf(time));
+            }, formChanged);
+    };
+    return slotRowsOf(form, formChanged, formFill, [plainSwapOf(form)], plainTimed ? null : lengthOf);
 }
 
 /**
@@ -2873,7 +3025,7 @@ function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
     return [rowOf("Summary", plainSummaryOf(series)),
         ...series.category === skillName ? [semesterRowOf(series.semester || semesterOf(form.first))] : [],
         placeRowOf(form), onlineRowOf(form),
-        ...plainTimeRowsOf(series, form), datesRowOf(form, formChanged), boxesRowOf(),
+        ...plainTimeRowsOf(form), datesRowOf(form, formChanged), boxesRowOf(),
         ...withAsked() ? peopleRowsOf(form) : []];
 }
 
@@ -2937,8 +3089,10 @@ function plainSummaryOf(series: Plain): HTMLElement {
  * Opens the dialog for a plain series, over the dialog of a box when that opens it: the categories, for its places,
  * platforms and people, and the people of `Persons.md` loaded, its form filled from the series, with times while
  * it has them, each weekday a day with them, see {@link plainTimeRowsOf}, else with its length.
+ * - `parts`: Its parts going on, see `plainRead` in `reader/rules.ts`, or itself alone, the earliest first day of
+ *   them its first day.
  * - `loaded`: The categories and the people.
- * - `slots`: Its weekdays with its times.
+ * - `slots`: Its weekdays with their times, of all its parts.
  * - `dialog`: The dialog.
  *
  * @param series - The plain series, new or as the reader sends it
@@ -2946,6 +3100,7 @@ function plainSummaryOf(series: Plain): HTMLElement {
  * @throws {Error} - When the reader cannot answer
  */
 async function plainStart(series: Plain, saved: () => void): Promise<void> {
+    const parts: Plain[] = series.parts.length > 0 ? series.parts : [series];
     const loaded: [Category[], Person[]] = await Promise.all([
         readerAsk<Category[]>(`/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`),
         personsKept(),
@@ -2959,6 +3114,8 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     groupBack = null;
     removeAsked = false;
     plainTimed = series.start !== "";
+    plainLengths = new Map(parts.flatMap((part: Plain): [number, number | null][] =>
+        part.weekdays.map((weekday: number): [number, number | null] => [weekday, part.minutes])));
     done = saved;
     previewForget();
     listOpened = false;
@@ -2967,13 +3124,17 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     onlineOpen = false;
     withOpen = [];
     slotsFreed = [];
-    const slots: Slot[] = series.weekdays.map((weekday: number): Slot =>
-        ({ weekday: weekday, start: series.start, end: series.end }));
+    const slots: Slot[] = parts.flatMap((part: Plain): Slot[] => part.weekdays.map((weekday: number): Slot =>
+        ({ weekday: weekday, start: part.start, end: part.end })))
+        .sort((first: Slot, second: Slot): number => first.weekday - second.weekday);
     typing = {
         type: "", old: null, slots: slots, before: slots.map((): number => 0),
-        extras: series.extras.map((extra: Extra): Extra => ({ ...extra })), location: series.location,
+        extras: parts.flatMap((part: Plain): Extra[] => part.extras.map((extra: Extra): Extra => ({ ...extra })))
+            .sort((first: Extra, second: Extra): number => first.day.localeCompare(second.day)),
+        location: series.location,
         locationLink: skillFieldOf("location")?.places[series.location]?.link ?? "", online: series.online,
-        onlineLink: series.onlineLink, passcode: series.passcode, attendees: series.attendees, first: series.first,
+        onlineLink: series.onlineLink, passcode: series.passcode, attendees: series.attendees,
+        first: parts.map((part: Plain): string => part.first).sort()[0],
         last: series.last, times: {}, states: {}, kinds: {},
     };
     formFill();
@@ -3018,7 +3179,7 @@ export async function learningOpen(module: string, semester: string, id: string)
         id: "", category: skillName, title: "", module: module, type: "", semester: semester, location: standardLineOf(),
         online: "",
         onlineLink: "", passcode: "", attendees: [], weekdays: [weekdayOf(today)], start: "", end: "", minutes: null,
-        first: today, last: "", extras: [], file: "",
+        first: today, last: "", extras: [], file: "", series: "", parts: [],
     }, (): void => {});
 }
 
@@ -3186,7 +3347,7 @@ async function freshFollow(): Promise<void> {
         id: "", category: fresh.category, title: "", module: skill ? picked.module : "", type: skill ? picked.type : "",
         semester: skill ? fresh.semester : "",
         location: standardLineOf(), online: "", onlineLink: "", passcode: "", attendees: [], weekdays: [weekdayOf(day)], start: "",
-        end: "", minutes: null, first: day, last: "", extras: [], file: "",
+        end: "", minutes: null, first: day, last: "", extras: [], file: "", series: "", parts: [],
     }, done);
 }
 

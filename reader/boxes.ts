@@ -936,6 +936,8 @@ export function boxesAdd(boxes: BoxNew[], dry: boolean): string[] {
  * moves up one, `5` becoming `4`, once, here; taken back, it gets the number after the last one before it, or
  * the first number after it, or `1`, and every later box with a number moves down one again, so the numbers are
  * as before. Boxes I cancelled myself keep their numbers. One occurrence of a series changes alone, see {@link boxOwn}.
+ * A box of my tutorials that goes to a group, numbered by its week, see `numbersRenew` in `course.ts`, moves no other
+ * box: taken back, it gets `1` here and its week's number there, as the reader asks next, see `reader.ts`.
  * - `file`, `entry`, `box`: The box with its file.
  * - `series`: The boxes of its series, see {@link seriesOf}.
  * - `before`: The numbers of the boxes of its series before it, `NONE` left out.
@@ -963,7 +965,9 @@ export function boxUniversity(id: string, cancelled: boolean): void {
         number = before.length > 0 ? String(Math.max(...before) + 1) : after[0]?.number ?? "1";
     const step: number = cancelled ? -1 : 1;
     boxOwn(file, entry);
-    propertiesPut(file, id, [["x-number", [number]]]);
+    propertiesPut(file, id, [["x-number", [entry.group !== "" && !cancelled ? "1" : number]]]);
+    if (entry.group !== "")
+        return;
     after.forEach((other: Entry): void => {
         const [otherFile, otherEntry]: [string, Entry] = planEntryFind(entryIdOf(other));
         boxOwn(otherFile, otherEntry);

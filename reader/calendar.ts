@@ -121,6 +121,8 @@ import type { CalendarSource } from "./sources.ts";
  * - `group`: Group of a tutorial, its `X-GROUP`, like `03`, as TUMonline names it: of a group of the course
  *   of a module, and of the box of a tutorial, which goes to the session of that group, see `course.ts`;
  *   empty for none.
+ * - `pinned`: Whether a group of the course is the one I pinned, the group my tutorials go to, its `X-PINNED:TRUE`,
+ *   see `pinPut` in `course.ts`; false for any other entry.
  * - `written`: When the entry was written, its `DTSTAMP`, as ISO instant, which the reader sets once as it adds an entry;
  *   empty when the event has none.
  * - `version`: Fingerprint of the entry as its file holds it, the SHA-256 of its lines as read, in hexadecimal digits,
@@ -178,6 +180,7 @@ export type Entry = {
     carried: boolean;
     number: string;
     group: string;
+    pinned: boolean;
     written: string;
     version: string;
     editable: boolean;
@@ -394,19 +397,20 @@ const zone: ICAL.Timezone = new ICAL.Timezone(zoneComponent);
  * `DURATION` and `ESTIMATED-DURATION` after them, then `RRULE`, `RDATE`, `EXDATE` and `RECURRENCE-ID`;
  * what, `CATEGORIES`, `SUMMARY`, `STATUS`; where, `LOCATION`, where a way started,
  * `X-FROM`, and online, `X-ONLINE`; with whom, `ATTENDEE`; more about it, `DESCRIPTION`, `ATTACH`, `RELATED-TO`,
- * the box of the plan a log entry did, `X-PLANNED`, the pushes of a box, `X-PUSHED`, and whether it is carried along,
- * `X-CARRIED`; then the lines of each kind of entry: a box of a course, `X-NUMBER` and `X-GROUP`;
- * a meal, `X-FOOD` and `X-COOKED`; sport, `X-WORKOUT`, `X-EXERCISE`, `X-VIDEO` and `X-PAIN`; a skill entry, `X-TUTOR`,
- * `X-SEMESTER`, `X-CHAPTER`, `X-ATTEMPT` and `X-ROUND`. Every other line comes after them, in the order it had, and the lines of a property
- * that repeats, like `X-FOOD`, `ATTENDEE` or `EXDATE`, stay together in the order they had.
+ * the box of the plan a log entry did, `X-PLANNED`, the pushes of a box, `X-PUSHED`, whether it is carried along,
+ * `X-CARRIED`, and the series a part of a plain series belongs to, `X-SERIES`; then the lines of each kind of entry:
+ * a box of a course, `X-NUMBER` and `X-GROUP`, the group I pinned `X-PINNED`; a meal, `X-FOOD` and `X-COOKED`;
+ * sport, `X-WORKOUT`, `X-EXERCISE`, `X-VIDEO` and `X-PAIN`; a skill entry, `X-TUTOR`, `X-SEMESTER`, `X-CHAPTER`,
+ * `X-ATTEMPT` and `X-ROUND`. Every other line comes after them, in the order it had, and the lines of a property that
+ * repeats, like `X-FOOD`, `ATTENDEE` or `EXDATE`, stay together in the order they had.
  */
 const lineOrder: string[] = [
     "UID", "DTSTAMP",
     "DTSTART", "DTEND", "DUE", "DURATION", "ESTIMATED-DURATION", "RRULE", "RDATE", "EXDATE", "RECURRENCE-ID",
     "CATEGORIES", "SUMMARY", "STATUS",
     "LOCATION", "X-FROM", "X-ONLINE", "ATTENDEE",
-    "DESCRIPTION", "ATTACH", "RELATED-TO", "X-PLANNED", "X-PUSHED", "X-CARRIED",
-    "X-NUMBER", "X-GROUP",
+    "DESCRIPTION", "ATTACH", "RELATED-TO", "X-PLANNED", "X-PUSHED", "X-CARRIED", "X-SERIES",
+    "X-NUMBER", "X-GROUP", "X-PINNED",
     "X-FOOD", "X-COOKED",
     "X-WORKOUT", "X-EXERCISE", "X-VIDEO", "X-PAIN",
     "X-TUTOR", "X-SEMESTER", "X-CHAPTER", "X-ATTEMPT", "X-ROUND",
@@ -433,7 +437,7 @@ ICAL.design.icalendar.param.altrep = { multiValue: ",", multiValueSeparateDQuote
 const ownTexts: string[] = [
     "x-from", "x-semester", "x-chapter", "x-attempt", "x-round", "x-tutor", "x-food", "x-cooked", "x-pain",
     "x-workout", "x-exercise", "x-video", "x-number", "x-group", "x-planned", "x-online",
-    "x-carried",
+    "x-carried", "x-series",
 ];
 ownTexts.forEach((name: string): void => {
     ICAL.design.icalendar.property[name] = { defaultType: "text" };
@@ -808,6 +812,7 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
         carried: String(event.component.getFirstPropertyValue("x-carried") ?? "").toUpperCase() !== "FALSE",
         number: String(event.component.getFirstPropertyValue("x-number") ?? ""),
         group: String(event.component.getFirstPropertyValue("x-group") ?? ""),
+        pinned: String(event.component.getFirstPropertyValue("x-pinned") ?? "").toUpperCase() === "TRUE",
         written: stamp instanceof ICAL.Time ? stamp.toJSDate().toISOString() : "",
         version: createHash("sha256").update(event.component.toString()).digest("hex"),
         editable: writeAllowed(file) && (todo || !start.isDate),
@@ -2535,6 +2540,31 @@ export function seriesSiblingPut(file: string, uid: string, sibling: string): vo
     const link: ICAL.Property = propertyOf("related-to", sibling);
     link.setParameter("reltype", "SIBLING");
     seriesPut(file, uid, link);
+}
+
+/**
+ * Finds the parts of a plain series, see `plainRead` in `rules.ts`: a series whose weekdays have other times or lengths
+ * is one to-do per time, all of them with the same `X-SERIES`, like `X-SERIES:5f0c…`, since a rule has one time for
+ * all its days; a series of one time has no `X-SERIES` and is its one part.
+ * - `masters`: Every series of the sources.
+ * - `own`: The series of the `UID`, `undefined` for none.
+ * - `key`: Its `X-SERIES`, empty for none.
+ *
+ * @param sources - Calendars, each the files of a folder with a name ending
+ * @param uid - The `UID` of one of its parts
+ * @returns Its `X-SERIES`, empty for none, and the `UID`s of its parts, the one of the `UID` among them, none for
+ *   no such series
+ */
+export function seriesPartsOf(sources: CalendarSource[], uid: string): [string, string[]] {
+    const masters: ICAL.Event[] = filesOf(sources).flatMap((file: string): ICAL.Event[] => calendarOf(file).series);
+    const own: ICAL.Event | undefined = masters.find((series: ICAL.Event): boolean => series.uid === uid);
+    const key: string = String(own?.component.getFirstPropertyValue("x-series") ?? "");
+    if (own === undefined)
+        return ["", []];
+    return [key, key === "" ? [uid] : masters
+        .filter((series: ICAL.Event): boolean =>
+            String(series.component.getFirstPropertyValue("x-series") ?? "") === key)
+        .map((series: ICAL.Event): string => series.uid)];
 }
 
 /**

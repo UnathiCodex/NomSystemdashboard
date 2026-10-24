@@ -5,8 +5,12 @@
  * of every night, `DTSTART;VALUE=DATE:20261013`, `ESTIMATED-DURATION:PT8H` and `RRULE:FREQ=DAILY`, unlike a series
  * of my course, whose boxes stand one by one with their numbers, see `course.ts`. Every series I make from a box
  * by its dialog is a plain one, but that of a skill box of a numbered type, see `numberedTypes` in `boxes.ts`.
- * A plain series has its weekdays and one time for all of them, like `14:00 – 16:00`, or no time, only how long
- * it lasts, like 8 hours, see {@link Plain}; its first day, and its last day or none, for a series without end.
+ * A plain series has its weekdays, each with its time, like `14:00 – 16:00`, or no time, only how long it lasts,
+ * like 8 hours, see {@link Plain}; its first day, and its last day or none, for a series without end. Since a rule has
+ * one time for all its days, each time is a part of its own, one to-do, the parts of a series of several times sharing
+ * one `X-SERIES`, see `seriesPartsOf` in `calendar.ts`, like my sleep of 8 hours from Sunday to Thursday and of
+ * 9 hours on Friday and Saturday; the dialog reads and writes them together, see {@link plainRead}, and a part whose
+ * time goes ends as a series does, see {@link plainGone}.
  * All seven weekdays write `FREQ=DAILY`, fewer `FREQ=WEEKLY;BYDAY=MO,TH`, a last day `UNTIL`, see {@link ruleOf};
  * its `DTSTART` is its first occurrence, the first of its weekdays from its first day on, see {@link firstOf}.
  * Its past never changes, see {@link plainApply}: its dialog writes one lying wholly ahead whole, its rule, its times
@@ -35,7 +39,7 @@ import { boxAdd, boxesRead, boxFind, numberedTypes } from "./boxes.ts";
 import {
     berlinDateOf, berlinInstantOf, berlinTimeOf, dayAdd, entryIdOf, entryRemove, fileEntriesRead, fileOfId,
     occurrenceLookup, occurrenceMove, occurrenceOwn, propertiesPut, seriesChainOf, seriesDatesOf, seriesDatesPut,
-    seriesEnd, seriesLookup, seriesRemove, seriesSiblingPut, seriesTitlePut, seriesWrite,
+    seriesEnd, seriesLookup, seriesPartsOf, seriesRemove, seriesSiblingPut, seriesTitlePut, seriesWrite,
 } from "./calendar.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
 import { titleOf } from "./documents.ts";
@@ -69,6 +73,9 @@ import type { Extra, Planned } from "./course.ts";
  *   length than the series is one of its days changed alone, its own `ESTIMATED-DURATION` with the start as
  *   `RECURRENCE-ID`, since `ical.js` gives no occurrence of an `RDATE` of a period, `VALUE=PERIOD`.
  * - `file`: Its plan from `NomWorkspace` on, like `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`.
+ * - `series`: The `X-SERIES` its parts share, empty for a series of one time, see the top of this file.
+ * - `parts`: Its parts going on, itself among them, each a part as this one, without parts of its own; of a part over
+ *   only itself.
  */
 export type Plain = Online & {
     id: string;
@@ -87,6 +94,8 @@ export type Plain = Online & {
     last: string;
     extras: Extra[];
     file: string;
+    series: string;
+    parts: Plain[];
 };
 
 /**
@@ -95,10 +104,12 @@ export type Plain = Online & {
  * - `dry`: Whether only to tell what it would make, writing nothing, for the preview of the dialog.
  * - `sibling`: Of a new series, the `UID` of the series it goes on from, like another time of one changed after it
  *   began, see `plainPartsOf` in `src/day/series.ts`; empty when left out.
+ * - `gone`: Whether the part goes, its time no longer one of the series, see {@link plainGone}; false when left out.
  */
 export type PlainChange = Plain & {
     dry: boolean;
     sibling?: string;
+    gone?: boolean;
 };
 
 /**
@@ -215,7 +226,7 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
 }
 
 /**
- * Reads a plain series of the plan by its `UID`, see {@link Plain}: its weekdays from its rule, every day
+ * Reads a part of a plain series of the plan by its `UID`, see {@link Plain}: its weekdays from its rule, every day
  * for `FREQ=DAILY`, its `BYDAY` for `FREQ=WEEKLY`, else the weekday of its start; its times and its length
  * from its first occurrence, see `seriesLookup` in `calendar.ts`; its last day from its `UNTIL`, or of a series that
  * ends after a count of occurrences the day of its last one, see {@link countLastOf}, which saving writes as `UNTIL`;
@@ -230,11 +241,12 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
  * - `extras`: Its single dates, see `extras` of {@link Plain}.
  *
  * @param id - Its `UID`
- * @returns The series
+ * @param key - The `X-SERIES` of its series, empty for none
+ * @returns The part, without parts of its own
  * @throws {Error} - When the plan holds no series of the `UID`, or one whose rule is no plain one, like every
  *   second week
  */
-export function plainRead(id: string): Plain {
+function partRead(id: string, key: string): Plain {
     const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(day.plan, id);
     if (found === undefined)
         throw new Error(`No series ${id} in the plan`);
@@ -268,7 +280,32 @@ export function plainRead(id: string): Plain {
         last: rule.count !== null ? countLastOf(start, weekdays, rule.count)
             : rule.until === null ? "" : rule.until.isDate ? rule.until.toString().slice(0, 10)
                 : berlinDateOf(rule.until.toJSDate()),
-        extras: extras, file: vaultPathOf(file),
+        extras: extras, file: vaultPathOf(file), series: key, parts: [],
+    };
+}
+
+/**
+ * Reads a plain series of the plan by the `UID` of one of its parts, see the top of this file: that part, see
+ * {@link partRead}, with every part of its series still going on, its last day today or later or none, see
+ * `seriesPartsOf` in `calendar.ts`, so the dialog shows every weekday with its time; of a part over only itself,
+ * as it was.
+ * - `key`, `uids`: The `X-SERIES` of the series and the `UID`s of its parts.
+ * - `own`: The part of the `UID`.
+ * - `today`: Today in Berlin time.
+ * - `going`: Tells whether a part goes on, its last day today or later or none.
+ *
+ * @param id - The `UID` of one of its parts
+ * @returns The part with the parts of its series
+ * @throws {Error} - When the plan holds no series of the `UID`, or one whose rule is no plain one
+ */
+export function plainRead(id: string): Plain {
+    const [key, uids]: [string, string[]] = seriesPartsOf(day.plan, id);
+    const own: Plain = partRead(id, key);
+    const today: string = berlinDateOf(new Date());
+    const going: (part: Plain) => boolean = (part: Plain): boolean => part.last === "" || part.last >= today;
+    return {
+        ...own, parts: !going(own) ? [own]
+            : uids.map((uid: string): Plain => uid === id ? own : partRead(uid, key)).filter(going),
     };
 }
 
@@ -418,7 +455,7 @@ function plannedOf(plain: Plain, old: Plain | null): Planned[] {
         .filter(([, uid]: [string, string]): boolean => uid !== old.id)
         .flatMap(([, uid]: [string, string]): Plain[] => {
             try {
-                return [plainRead(uid)];
+                return [partRead(uid, "")];
             } catch {
                 return [];
             }
@@ -601,7 +638,8 @@ function plainAdd(plain: Plain, sibling: string): string {
  * done, which stays as its extras before today; one over only renamed. Its extras, see {@link extrasWrite}, are single
  * dates: added or taken out from today on, they change no rule, so the series goes on whole. A summary changed is a new name, never a change of when: it renames
  * every series of the chain, past days too, see `seriesChainOf` and `seriesTitlePut` in `calendar.ts`.
- * Checked before anything is written, see {@link plainCheck}.
+ * The part written takes the `X-SERIES` of its series, see {@link seriesKeyPut}; a part whose time goes ends,
+ * see {@link plainGone}. Checked before anything is written, see {@link plainCheck}.
  * - `old`: The series as it stands, `null` for a new one.
  * - `today`: Today in Berlin time.
  * - `file`, `written`: Its file and its first occurrence as written, of a series there already.
@@ -615,6 +653,7 @@ function plainAdd(plain: Plain, sibling: string): string {
  * - `next`: The series from today on, of one that has begun, with the extras from today on.
  * - `own`: Its days from today on changed alone and not done, which go as it ends.
  * - `id`, `target`: The `UID` and the file of the series going on from today.
+ * - `part`: The `UID` of the part written, which takes the `X-SERIES`.
  *
  * @param change - The series as the dialog sends it
  * @returns The boxes it makes
@@ -622,12 +661,14 @@ function plainAdd(plain: Plain, sibling: string): string {
  *   change when or where it was
  */
 export function plainApply(change: PlainChange): Planned[] {
+    if (change.gone === true)
+        return plainGone(change.id, change.dry);
     plainCheck(change);
-    const old: Plain | null = change.id === "" ? null : plainRead(change.id);
+    const old: Plain | null = change.id === "" ? null : partRead(change.id, "");
     const today: string = berlinDateOf(new Date());
     if (old === null) {
         if (!change.dry)
-            plainAdd(change, change.sibling ?? "");
+            seriesKeyPut(plainAdd(change, change.sibling ?? ""), change.series);
         return plannedOf(change, null);
     }
     const [file, written]: [string, Entry, ICAL.Recur] =
@@ -653,6 +694,7 @@ export function plainApply(change: PlainChange): Planned[] {
     const next: Plain = { ...change, id: "", first: change.first < today ? today : change.first, extras: ahead };
     if (change.dry)
         return plannedOf(begun && moved ? next : whole, old);
+    let part: string = change.id;
     if (!begun) {
         seriesWrite(file, change.id, fieldsOf(change, written), ruleOf(change));
         extrasWrite(file, change.id, change, old);
@@ -661,6 +703,7 @@ export function plainApply(change: PlainChange): Planned[] {
         const own: string[] = aheadOwnOf(change.id, today);
         const id: string = plainAdd({ ...next, extras: [] }, change.id);
         const target: string = fileOfId(day.plan, id) ?? file;
+        part = id;
         old.extras.filter((extra: Extra): boolean => ahead.some((one: Extra): boolean => one.day === extra.day))
             .map((extra: Extra): string => extraStartOf(old, extra))
             .filter((start: string): boolean => fileEntriesRead(file).some((entry: Entry): boolean =>
@@ -674,6 +717,7 @@ export function plainApply(change: PlainChange): Planned[] {
     }
     else
         extrasWrite(file, change.id, whole, old);
+    seriesKeyPut(part, change.series);
     if (renamed)
         seriesChainOf(day.plan, change.id).forEach(([chained, uid]: [string, string]): void =>
             seriesTitlePut(chained, uid, fieldsOf(change, written)));
@@ -682,18 +726,81 @@ export function plainApply(change: PlainChange): Planned[] {
 
 
 /**
- * Removes a plain series whole, as the bin of its dialog asks: every component of its `UID`, see `seriesRemove`
- * in `calendar.ts`; a plan it leaves without any event or to-do goes into my trash, see `trashPut` in `trash.ts`.
- * A log entry I logged from one of its days stays as it is, since it holds what happened.
- * - `found`: The file of the series, its first day and its rule, `undefined` for none.
+ * Puts the `X-SERIES` of its series into a part, see the top of this file, or takes it out for a series of one time,
+ * written only where it changes.
+ * - `now`: Its `X-SERIES` as written.
  *
- * @param id - Its `UID`, like `43ed5d3e-98a1-43a9-a15c-2cfce3dc5be0@nomsystem`
+ * @param uid - The `UID` of the part
+ * @param key - The `X-SERIES`, empty for none
+ * @throws {Error} - When its file lies outside the new system
+ */
+function seriesKeyPut(uid: string, key: string): void {
+    const [now]: [string, string[]] = seriesPartsOf(day.plan, uid);
+    if (now !== key)
+        propertiesPut(fileOfId(day.plan, uid) ?? "", uid, [["x-series", key === "" ? [] : [key]]]);
+}
+
+/**
+ * Ends a part of a plain series whose time is no longer one of its series, or only tells what that would make, for
+ * the preview of the dialog, see {@link plannedOf}: its past never changes, so one that has begun ends yesterday,
+ * as a series ends once it changes from today, see {@link plainApply}, its extras from today on and its days from
+ * today on changed alone going with it but those done, see {@link aheadOwnOf}; one lying wholly ahead goes whole,
+ * see `seriesRemove` in `calendar.ts`; one over stays as it was.
+ * - `old`: The part as it stands.
+ * - `today`, `yesterday`: Today and the day before in Berlin time.
+ * - `file`: Its file.
+ * - `kept`: Its extras before today and those done.
+ * - `own`: Its days from today on changed alone and not done.
+ * - `planned`: Its boxes after it ends, those from today on `removed`.
+ *
+ * @param id - The `UID` of the part
+ * @param dry - Whether only to tell what it would make
+ * @returns Its boxes, the earliest first
+ * @throws {Error} - When the plan holds no such series, or its file lies outside the new system
+ */
+function plainGone(id: string, dry: boolean): Planned[] {
+    const old: Plain = partRead(id, "");
+    const today: string = berlinDateOf(new Date());
+    const yesterday: string = dayAdd(today, -1);
+    if (old.last !== "" && old.last < today)
+        return [];
+    const file: string = fileOfId(day.plan, id) ?? "";
+    const planned: Planned[] = plannedOf({ ...old, last: yesterday }, old);
+    if (dry)
+        return planned;
+    if (firstOf(old) >= today) {
+        if (seriesRemove(file, id))
+            trashPut(file);
+        return planned;
+    }
+    const kept: Extra[] = old.extras.filter((extra: Extra): boolean => extra.day < today
+        || boxFind(`${id}#${extraStartOf(old, extra)}`)[2].state === "done");
+    const own: string[] = aheadOwnOf(id, today);
+    seriesEnd(file, id, ruleOf({ ...old, last: yesterday }));
+    extrasWrite(file, id, { ...old, extras: kept }, old);
+    own.filter((one: string): boolean => fileEntriesRead(file).some((entry: Entry): boolean =>
+        entryIdOf(entry) === one)).forEach((one: string): void => entryRemove(file, one));
+    return planned;
+}
+
+/**
+ * Removes a plain series whole, as the bin of its dialog asks: every part of it, see the top of this file, each
+ * with every component of its `UID`, see `seriesRemove` in `calendar.ts`; a plan it leaves without any event or to-do
+ * goes into my trash, see `trashPut` in `trash.ts`. A log entry I logged from one of its days stays as it is, since it
+ * holds what happened.
+ * - `uids`: The `UID`s of its parts.
+ * - `found`: The file of a part, its first day and its rule, `undefined` for none.
+ *
+ * @param id - The `UID` of one of its parts, like `43ed5d3e-98a1-43a9-a15c-2cfce3dc5be0@nomsystem`
  * @throws {Error} - When the plan holds no such series, or its file lies outside the new system
  */
 export function plainRemove(id: string): void {
-    const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(day.plan, id);
-    if (found === undefined)
+    const [, uids]: [string, string[]] = seriesPartsOf(day.plan, id);
+    if (uids.length === 0)
         throw new Error(`No series ${id} in the plan`);
-    if (seriesRemove(found[0], id))
-        trashPut(found[0]);
+    uids.forEach((uid: string): void => {
+        const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(day.plan, uid);
+        if (found !== undefined && seriesRemove(found[0], uid))
+            trashPut(found[0]);
+    });
 }

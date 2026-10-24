@@ -119,6 +119,12 @@
     grid-column: -2;
 }
 
+/* `+` or the date being typed last in the list, below it as much room as below a row, see `.series-row`, so the frame
+   of `Entries` closes as far below its last line as the rows stand apart */
+.series-list > :is(.series-add, .series-draft):last-child {
+    margin-bottom: 0.5rem;
+}
+
 .series-boxes {
     display: flex;
     flex-direction: column;
@@ -338,6 +344,12 @@
     display: inline-block;
     width: 1.3em;
     text-align: center;
+}
+
+/* The dot after the menu of a group, like `05 ⌄ · 14:00 – 16:00`, as far from its chevron drawn as from the times,
+   the white right of the chevron in its icon taken back */
+.series-part:has(button.group-name) + .series-part {
+    margin-left: -0.26em;
 }
 
 .series-meta .person-link {

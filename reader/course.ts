@@ -20,9 +20,13 @@
  * break, which has no box and shows nowhere; every other day of its slots has its box, and one that does not take
  * place is a box the university cancelled, `X-NUMBER:NONE`, see `boxUniversity` in `boxes.ts`, never a day without
  * box.
- * The boxes of my tutorials that go to a group, by their `X-GROUP`, follow the rule of my group: my group is stored
- * nowhere, it is the group most of my boxes from today on go to, see {@link mineOf}, and a box of another group is
- * a week I go to that group instead; taking my group back removes my open boxes from today on, see {@link groupMine}.
+ * The boxes of my tutorials that go to a group, by their `X-GROUP`, follow the rule of my group: my group is the one
+ * I pinned, a choice of mine, never read from my boxes, `X-PINNED:TRUE` on the to-dos of that group, see
+ * {@link pinnedOf} and {@link pinPut}, and a box of another group is a week I go to that group instead, which never
+ * moves the pin; taking my group back removes my open boxes from today on and the pin, see {@link groupMine}.
+ * A box of my tutorials is numbered by its week of the semester, the n-th week its type's groups meet in, see
+ * {@link tutorialWeeksOf}, so a second tutorial in a week takes the number of that week too, and a week the university
+ * cancelled keeps its place.
  *
  * The groups of the tutorials of a module lie in its plan, `Modules/<module folder>_Plan.ics`, beside my boxes,
  * one weekly to-do per group as TUMonline lists it, see {@link groupPut}, since a plan holds only to-dos:
@@ -153,7 +157,7 @@ export type Times = { [day: string]: Pick<Slot, "start" | "end"> };
  * - `last`: The last day of its weeks, like `2027-02-01`, on or after its first; an extra may lie after it.
  * - `times`: The dates of its slots with times of their own, see {@link Times}; none for none, and left out
  *   as a group is written.
- * - `group`: The group its boxes go to, like `03`: of a group its own, of my tutorials my group, see {@link mineOf};
+ * - `group`: The group its boxes go to, like `03`: of a group its own, of my tutorials my group, see {@link pinnedOf};
  *   empty for none.
  * - `semester`: Its semester, like `2026W`.
  */
@@ -200,11 +204,13 @@ export type Session = {
  * - `rule`: Its rule, read back from its sessions, see {@link ruleOf}: its type, its slots, mostly one, its room,
  *   its tutor, its first and last day, its group, like `03`, and its semester.
  * - `sessions`: Its sessions, the earliest first.
+ * - `pinned`: Whether it is the group I pinned, see {@link pinnedOf}.
  */
 export type Group = {
     ids: string[];
     rule: Rule;
     sessions: Session[];
+    pinned: boolean;
 };
 
 /**
@@ -856,37 +862,61 @@ function datesOf(rule: Rule): RuleDate[] {
 }
 
 /**
- * Gives my group of a type, see the top of this file: the group most of my boxes of it from today on go to, see
- * {@link ahead}, the open ones first, the earliest of those equally many; with none from today on, none while a group
- * of the type still meets, as after I took my group back, see {@link groupMine}, else the one most of them went to,
- * like after the last tutorial of a semester; empty while none goes to a group.
- * - `grouped`: The boxes that go to a group.
- * - `coming`: Those of them from today on.
- * - `open`: Those of them still open.
- *
- * @param boxes - The boxes of a type of a semester, the earliest first
- * @param meets - Whether a group of the type has a session to come
- * @returns The group, like `03`, empty for none
- */
-function mineOf(boxes: Box[], meets: boolean): string {
-    const grouped: Box[] = boxes.filter((box: Box): boolean => box.group !== "");
-    const coming: Box[] = grouped.filter(ahead);
-    const open: Box[] = coming.filter((box: Box): boolean => box.state === "open");
-    const counted: Box[] = open.length > 0 ? open : coming.length > 0 ? coming : meets ? [] : grouped;
-    return modeOf(counted, (box: Box): string => box.group)?.group ?? "";
-}
-
-/**
- * Tells whether a group of a type has a session to come, see {@link mineOf}.
+ * Gives my group of a type, see the top of this file: the group I pinned, its `X-PINNED:TRUE`, see {@link pinPut};
+ * empty while none is.
  *
  * @param groups - The groups of the course
  * @param type - The type, like `TU`
- * @returns Whether one has
+ * @returns The group, like `03`, empty for none
  */
-function meetsOf(groups: Group[], type: string): boolean {
-    const now: number = Date.now();
-    return groups.some((group: Group): boolean => group.rule.type === type && group.sessions
-        .some((session: Session): boolean => Date.parse(session.start) + session.minutes * 60 * 1000 > now));
+function pinnedOf(groups: Group[], type: string): string {
+    return groups.find((group: Group): boolean => group.rule.type === type && group.pinned)?.rule.group ?? "";
+}
+
+/**
+ * Pins a group of a type, see the top of this file: `X-PINNED:TRUE` on each to-do of it, none on those of every other
+ * group of the type and semester; no group named pins none. Writes only a to-do that changes.
+ * - `file`: The plan of the module.
+ *
+ * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param type - The type, like `TU`
+ * @param semester - The semester, like `2026W`
+ * @param group - The group, like `06`, empty for none
+ * @throws {Error} - When the plan cannot be written
+ */
+function pinPut(module: string, type: string, semester: string, group: string): void {
+    const file: string = skillFileOf(module, planEnding);
+    groupsRead(module, semester).filter((one: Group): boolean => one.rule.type === type
+        && one.pinned !== (one.rule.group === group))
+        .forEach((one: Group): void => one.ids.forEach((id: string): void =>
+            propertiesPut(file, id, [["x-pinned", one.rule.group === group ? ["TRUE"] : []]])));
+}
+
+/**
+ * Gives the weeks of a type with groups, see the top of this file, by their Mondays: every week from the first session
+ * of its groups to the last that is not wholly free of lectures, see {@link lectureFreeOf}, so a week the university
+ * cancelled one session of keeps its place; none for a type without groups.
+ * - `starts`: The days of the sessions of its groups, the earliest first.
+ * - `free`: The days the university does not teach between them.
+ * - `weeks`: The weeks.
+ *
+ * @param groups - The groups of the course
+ * @param type - The type, like `TU`
+ * @returns The Mondays of its weeks, the earliest first
+ */
+function tutorialWeeksOf(groups: Group[], type: string): string[] {
+    const starts: string[] = groups.filter((group: Group): boolean => group.rule.type === type)
+        .flatMap((group: Group): string[] => group.sessions
+            .map((session: Session): string => berlinDateOf(new Date(session.start)))).sort();
+    if (starts.length === 0)
+        return [];
+    const last: string = mondayOf(starts[starts.length - 1]);
+    const free: Set<string> = lectureFreeOf(mondayOf(starts[0]), dayAdd(last, 4));
+    const weeks: string[] = [];
+    for (let week: string = mondayOf(starts[0]); week <= last; week = dayAdd(week, 7))
+        if ([0, 1, 2, 3, 4].some((day: number): boolean => !free.has(dayAdd(week, day))))
+            weeks.push(week);
+    return weeks;
 }
 
 /**
@@ -979,6 +1009,7 @@ function groupsRead(module: string, semester: string): Group[] {
             ids: [...new Set(own.map((entry: Entry): string => entry.id))],
             rule: ruleOf(own[0].type, dated, dated, own[0].group, semester),
             sessions: dated.map((item: Dated): Session => ({ start: item.time, minutes: item.minutes ?? 0 })),
+            pinned: own.some((entry: Entry): boolean => entry.pinned),
         };
     }).sort((first: Group, second: Group): number => first.rule.type.localeCompare(second.rule.type)
         || first.rule.group.localeCompare(second.rule.group, undefined, { numeric: true }));
@@ -987,7 +1018,7 @@ function groupsRead(module: string, semester: string): Group[] {
 /**
  * Reads back the series of a module from its boxes of a semester, see the top of this file: one per numbered type
  * with boxes, see `numberedTypes` in `boxes.ts`, its rule read back from all its boxes, or from those of my group
- * while they go to groups, see {@link mineOf}; each with how many boxes it has.
+ * while they go to groups, see {@link pinnedOf}; each with how many boxes it has.
  * - `typed`: The boxes of a type.
  * - `mine`: My group of the type, empty for none.
  * - `own`: The boxes the rule follows.
@@ -1000,7 +1031,7 @@ function groupsRead(module: string, semester: string): Group[] {
 function seriesListOf(boxes: Box[], semester: string, groups: Group[]): Series[] {
     return numberedTypes.flatMap((type: string): Series[] => {
         const typed: Box[] = boxes.filter((box: Box): boolean => box.type === type);
-        const mine: string = mineOf(typed, meetsOf(groups, type));
+        const mine: string = pinnedOf(groups, type);
         const own: Box[] = typed.filter((box: Box): boolean => mine === "" || box.group === mine);
         return typed.length === 0 ? []
             : [{ rule: ruleOf(type, own.map(datedOf), typed.map(datedOf), mine, semester), count: typed.length }];
@@ -1308,13 +1339,16 @@ function draftsOf(series: Box[], targets: Target[], weeks: [string, string], tou
  * before a Monday I skipped; only its number changes, never its state, day or time; one the university cancelled keeps
  * `NONE` and counts not; one of another app or one date of a series of a file, which the dashboard does not number,
  * keeps its number, the next going on from it.
+ * Of a type with groups each box takes the number of its week instead, see {@link tutorialWeeksOf}, a second box
+ * of a week the same, one of a week before them all `1`, one after them all the number after the last week.
  * - `placeOf`: Gives the place of a draft in the series: where its box stood before its first push, else its time,
  *   or its day for a box without time, after the change.
  * - `last`: The number of the box before.
  *
  * @param drafts - The drafts of every box of the type, see {@link draftsOf}, numbered in place
+ * @param weeks - The weeks of the type with groups, see {@link tutorialWeeksOf}; none for a type without
  */
-function numbersOf(drafts: Draft[]): void {
+function numbersOf(drafts: Draft[], weeks: string[]): void {
     const placeOf: (draft: Draft) => string = (draft: Draft): string => {
         const left: Push | undefined = draft.box?.pushed[0];
         return left === undefined ? draft.time || draft.day : left.time || left.day;
@@ -1329,9 +1363,32 @@ function numbersOf(drafts: Draft[]): void {
                 last = /^\d+$/.test(draft.number) ? Number(draft.number) : last;
                 return;
             }
-            last += 1;
+            const place: string = placeOf(draft);
+            const week: string = mondayOf(place.length > 10 ? berlinDateOf(new Date(place)) : place);
+            last = weeks.length === 0 ? last + 1
+                : Math.max(1, weeks.filter((one: string): boolean => one <= week).length);
             draft.number = String(last);
         });
+}
+
+/**
+ * Numbers the boxes of a type of a module of a semester anew, see {@link numbersOf}, as after the university cancelled
+ * one of them or took that back, see `boxUniversity` in `boxes.ts`, writing only the numbers that change.
+ * - `typed`: The boxes of the type.
+ * - `drafts`: Them as they stand.
+ *
+ * @param module - The module, its folder or its code, like `IN2028`
+ * @param type - The type, like `TU`
+ * @param semester - The semester, like `2026W`
+ * @throws {Error} - When there is no such module folder, or a box cannot be written
+ */
+export function numbersRenew(module: string, type: string, semester: string): void {
+    const folder: string = moduleFolderOf(codeOf(module)) ?? module;
+    folderCheck(folder);
+    const typed: Box[] = courseBoxesRead(codeOf(folder), semester).filter((box: Box): boolean => box.type === type);
+    const drafts: Draft[] = typed.map(draftOf);
+    numbersOf(drafts, tutorialWeeksOf(groupsRead(folder, semester), type));
+    draftsWrite(folder, type, semester, drafts);
 }
 
 /**
@@ -1480,7 +1537,8 @@ function slotFieldsOf(before: Slot | Extra | undefined, date: Slot | Extra, shar
  * - `rule`, `old`: The rule as typed and as read back.
  * - `today`: Today in Berlin time.
  * - `typed`: The boxes of its type of its semester, each with the state I gave it.
- * - `mine`: My group of the type, see {@link mineOf}, empty for none.
+ * - `groups`: The groups of its semester.
+ * - `mine`: My group of the type, see {@link pinnedOf}, empty for none.
  * - `link`: The link of the place of the rule.
  * - `online`: What the rule does online, as written.
  * - `changed`: Each field of the whole rule, its place, what it does online and its people, with whether it changed.
@@ -1513,7 +1571,8 @@ export function seriesApply(change: SeriesChange): Planned[] {
     const typed: Box[] = courseBoxesRead(codeOf(change.module), rule.semester)
         .filter((box: Box): boolean => box.type === rule.type)
         .map((box: Box): Box => stateSet(box, change.states?.[box.id]));
-    const mine: string = mineOf(typed, meetsOf(groupsRead(change.module, rule.semester), rule.type));
+    const groups: Group[] = groupsRead(change.module, rule.semester);
+    const mine: string = pinnedOf(groups, rule.type);
     const link: string = placeLinkOf(rule.location, old);
     const online: Online = onlineFor(rule, null);
     const changed: [Field, boolean][] = old === null ? [] : [
@@ -1528,7 +1587,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
         date.slot === -1 ? old?.extras.find((extra: Extra): boolean => extra.day === date.day)
             : old?.slots.find((slot: Slot): boolean =>
                 slot.weekday === (change.before?.[date.slot] ?? rule.slots[date.slot].weekday));
-    const own: Group[] = mine === "" ? [] : groupsRead(change.module, rule.semester)
+    const own: Group[] = mine === "" ? [] : groups
         .filter((group: Group): boolean => group.rule.type === rule.type && group.rule.group === mine);
     const met: Set<string> | null = own.length === 0 ? null : new Set(own.flatMap((group: Group): string[] =>
         group.sessions.map((session: Session): string => berlinDateOf(new Date(session.start)))));
@@ -1558,7 +1617,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
         .forEach((draft: Draft): void => {
             draft.number = "NONE";
         });
-    numbersOf(drafts);
+    numbersOf(drafts, tutorialWeeksOf(groups, rule.type));
     if (!change.dry)
         draftsWrite(change.module, rule.type, rule.semester, drafts);
     return plannedOf(drafts);
@@ -1645,11 +1704,13 @@ export function examSet(change: ExamChange): void {
  * may not change staying, see {@link changeable}, every coming open week alike, also one picked for another group;
  * a week before stays as it is, like this week's box at another group
  * while the group meets only from next week on. With no series yet, its sessions to come become one. Then the boxes
- * of the type are numbered anew, see {@link numbersOf}, from 1 for a new series.
+ * of the type are numbered anew, see {@link numbersOf}, from 1 for a new series, and the group is pinned, see
+ * {@link pinPut}.
  * No group named takes my group back, `No group yet` again: every box of the type from today on that a change may
  * change goes, see {@link ahead} and {@link changeable}, every box done, skipped, pushed or of a day over staying;
- * then the boxes left are numbered anew.
+ * then the boxes left are numbered anew and no group is pinned.
  * - `semester`: The semester of today.
+ * - `groups`: The groups of the semester.
  * - `group`: The group, `undefined` for none.
  * - `now`: Now in milliseconds.
  * - `coming`: Its sessions not over.
@@ -1670,12 +1731,15 @@ export function groupMine(change: MineChange): Planned[] {
         const kept: Draft[] = courseBoxesRead(codeOf(change.module), semester)
             .filter((box: Box): boolean => box.type === change.type)
             .map((box: Box): Draft => ({ ...draftOf(box), removed: ahead(box) && changeable(box) }));
-        numbersOf(kept);
-        if (change.dry !== true)
+        numbersOf(kept, tutorialWeeksOf(groupsRead(change.module, semester), change.type));
+        if (change.dry !== true) {
             draftsWrite(change.module, change.type, semester, kept);
+            pinPut(change.module, change.type, semester, "");
+        }
         return plannedOf(kept);
     }
-    const group: Group | undefined = groupsRead(change.module, semester)
+    const groups: Group[] = groupsRead(change.module, semester);
+    const group: Group | undefined = groups
         .find((one: Group): boolean => one.rule.type === change.type && one.rule.group === change.group);
     const now: number = Date.now();
     const coming: Session[] = (group?.sessions ?? [])
@@ -1690,9 +1754,11 @@ export function groupMine(change: MineChange): Planned[] {
         .filter((week: string): boolean => week >= from).sort();
     const drafts: Draft[] = draftsOf(typed, targets, [from, weeks[weeks.length - 1]],
         (box: Box): boolean => changeable(box));
-    numbersOf(drafts);
-    if (change.dry !== true)
+    numbersOf(drafts, tutorialWeeksOf(groups, change.type));
+    if (change.dry !== true) {
         draftsWrite(change.module, change.type, semester, drafts);
+        pinPut(change.module, change.type, semester, change.group);
+    }
     return plannedOf(drafts);
 }
 
@@ -1707,6 +1773,7 @@ export function groupMine(change: MineChange): Planned[] {
  * As an extra, see `extra` of {@link PickChange}, the session becomes a box of its own instead, besides the box of its
  * week, which stays, as a second tutorial in one week; then the boxes are numbered anew, once per session.
  * - `semester`: The semester of the session.
+ * - `groups`: The groups of the semester.
  * - `group`, `session`: The group and its session, `undefined` for none.
  * - `week`: Monday of the week of the session.
  * - `weekOfSession`: Gives the Monday of the week of a session.
@@ -1726,7 +1793,8 @@ export function groupMine(change: MineChange): Planned[] {
 export function weekPick(change: PickChange): void {
     folderCheck(change.module);
     const semester: string = semesterOf(berlinDateOf(new Date(change.start)));
-    const group: Group | undefined = groupsRead(change.module, semester)
+    const groups: Group[] = groupsRead(change.module, semester);
+    const group: Group | undefined = groups
         .find((one: Group): boolean => one.rule.type === change.type && one.rule.group === change.group);
     const session: Session | undefined = group?.sessions
         .find((one: Session): boolean => Date.parse(one.start) === Date.parse(change.start));
@@ -1741,7 +1809,7 @@ export function weekPick(change: PickChange): void {
         if (typed.some((one: Box): boolean => one.time !== "" && Date.parse(one.time) === Date.parse(session.start)))
             throw new Error(`A box of ${change.type} of ${change.module} is there already at ${change.start}`);
         const drafts: Draft[] = [...typed.map(draftOf), madeDraftOf(targetOf(group, session))];
-        numbersOf(drafts);
+        numbersOf(drafts, tutorialWeeksOf(groups, change.type));
         draftsWrite(change.module, change.type, semester, drafts);
         return;
     }
@@ -1767,7 +1835,7 @@ export function weekPick(change: PickChange): void {
         ...firsts.map((one: Session): Target => targetOf(group, one))];
     const drafts: Draft[] = draftsOf(typed, targets,
         [week, mondayOf(targets[targets.length - 1].day)], (): boolean => false);
-    numbersOf(drafts);
+    numbersOf(drafts, tutorialWeeksOf(groups, change.type));
     draftsWrite(change.module, change.type, semester, drafts);
 }
 
@@ -1906,8 +1974,8 @@ export function groupPut(change: GroupNew): string {
  * the university does not teach left out, each a session but those I marked cancelled, see `states`
  * of {@link GroupChange}, and, of a group there already, the dates of its weeks it did not meet on, as its `EXDATE`s
  * said, while not marked open again. Written, it takes the place of the group of its type, group and semester, one
- * to-do per slot, see {@link groupWrite}, and my boxes that go to it take its sessions anew,
- * see {@link groupBoxesMove}.
+ * to-do per slot, see {@link groupWrite}, pinned still while it was, see {@link pinPut}, and my boxes that go to it
+ * take its sessions anew, see {@link groupBoxesMove}.
  * - `rule`: The rule as sent, without extras and times of their own.
  * - `old`: The group there already, `undefined` for none.
  * - `met`: The days it met on.
@@ -1987,6 +2055,8 @@ export function groupApply(change: GroupChange): Planned[] {
         if (days.length > 0)
             groupWrite(change.module, { ...rule, slots: [slot] }, days);
     });
+    if (old?.pinned === true)
+        pinPut(change.module, rule.type, rule.semester, rule.group);
     groupBoxesMove(change.module, rule.type, rule.group, rule.semester);
     return planned;
 }
