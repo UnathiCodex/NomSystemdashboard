@@ -63,6 +63,12 @@ const personsPath: string = "NomMetainformations/Persons.md";
 const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];
 
 /**
+ * Roles a line of a list names a person by, like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`, its
+ * name a link to its row, see `responsibleOf` in `./editor/preview.ts`.
+ */
+export const peopleRoles: string[] = ["Dean", "Vice Dean", "Head", "Vice Head"];
+
+/**
  * What parts names in a text besides a line break `<br>`: `; ` with the spaces around it, as `With` parts them.
  */
 const namesParting: RegExp = /(\s*;\s*)/;

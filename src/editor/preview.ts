@@ -94,7 +94,7 @@ import { iconPut } from "../icons.ts";
 import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
-import { peopleLink, personOf, personRowAddressOf, personsKept } from "../persons.ts";
+import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
 import { columnsOf, spacerRule, textIndentationOf } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
 import { foldedAt, workedIs } from "./steps.ts";
@@ -200,6 +200,12 @@ const responsiblesHeading: string = "## Modulverantwortliche";
 const responsibleRule: RegExp = /^- (\S.*?)[ \t]*$/;
 
 /**
+ * Item of a list that names a person by its role, see `peopleRoles` in `../persons.ts`, like
+ * `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`: its role and the name.
+ */
+const roleRule: RegExp = new RegExp(`^- (${peopleRoles.join("|")}): (\\S.*?)[ \\t]*$`);
+
+/**
  * Heading of a solution, like `#### Solution` or `#### Solution (own, unchecked)`, as the scripts view folds it.
  */
 const solutionRule: RegExp = /^####[ \t]+Solution\b/;
@@ -270,8 +276,9 @@ const followable: Decoration = Decoration.mark({ class: "cm-follow" });
 const external: Decoration = Decoration.mark({ class: "cm-follow cm-external" });
 
 /**
- * Name of a person under the heading `## Modulverantwortliche` of a module file, which a click follows to its row
- * in `Persons.md`, see {@link responsiblesLook} and {@link personClicked}.
+ * Name of a person under the heading `## Modulverantwortliche` of a module file or after its role in a list, like
+ * `- Dean: Bungartz, Hans-Joachim`, which a click follows to its row in `Persons.md`, see {@link responsiblesLook}
+ * and {@link personClicked}.
  */
 const personMark: Decoration = Decoration.mark({ class: "cm-follow cm-person" });
 
@@ -1829,31 +1836,44 @@ function invisiblesLook(look: Look): void {
 }
 
 /**
- * Finds the person a line names as an item under {@link responsiblesHeading}: the heading above the line is that one,
- * and the text of the item a name of `Persons.md`, see `personOf` in `../persons.ts`.
+ * Finds the person a line names as an item after its role, see {@link roleRule}, or as an item under
+ * {@link responsiblesHeading}: the heading above the line is that one; the name a name of `Persons.md`, see `personOf`
+ * in `../persons.ts`.
+ * - `role`: The line as an item with a role, `null` for none.
+ * - `person`: The person of such an item, `undefined` for nobody there.
  * - `above`: The number of a line above it, going up to the heading of its section.
  * - `item`: The line as an item, `null` for none.
+ * - `named`: The person of an item under the heading, `undefined` for none.
  *
  * @param state - Text of the note and the people of `Persons.md`
  * @param line - The line
- * @returns The person, `undefined` for a line of no such item or a name of nobody of `Persons.md`
+ * @returns The person and where its name begins in the line, `undefined` for a line of no such item or a name of
+ *   nobody of `Persons.md`
  */
-function responsibleOf(state: EditorState, line: Line): Person | undefined {
+function responsibleOf(state: EditorState, line: Line): [Person, number] | undefined {
+    const role: RegExpExecArray | null = roleRule.exec(line.text);
+    if (role !== null) {
+        const person: Person | undefined = personOf(state.field(personsLoaded), role[2]);
+        return person === undefined ? undefined : [person, role[1].length + 4];
+    }
     const item: RegExpExecArray | null = responsibleRule.exec(line.text);
     if (item === null)
         return undefined;
     let above: number = line.number - 1;
     while (above >= 1 && !state.doc.line(above).text.startsWith("#"))
         above--;
-    return above >= 1 && state.doc.line(above).text.trim() === responsiblesHeading
+    const named: Person | undefined = above >= 1 && state.doc.line(above).text.trim() === responsiblesHeading
         ? personOf(state.field(personsLoaded), item[1]) : undefined;
+    return named === undefined ? undefined : [named, 2];
 }
 
 /**
- * Names of people under `## Modulverantwortliche` of a module file: each a link to its row in `Persons.md`, like a name
- * in the column `Lecturers`, see `../persons.ts`, while the cursor is not on its line; a name of nobody there plain
- * text, see {@link responsibleOf}.
+ * Names of people under `## Modulverantwortliche` of a module file and after their role in a list, like
+ * `- Dean: Bungartz, Hans-Joachim`: each a link to its row in `Persons.md`, like a name in the column `Lecturers`,
+ * see `../persons.ts`, while the cursor is not on its line; a name of nobody there plain text,
+ * see {@link responsibleOf}.
  * - `under`: Whether the lines so far stand under {@link responsiblesHeading}.
+ * - `named`: The person of a line and where its name begins, `undefined` for none.
  *
  * @param look - Look being built
  */
@@ -1863,8 +1883,11 @@ function responsiblesLook(look: Look): void {
         const line: Line = look.state.doc.line(number);
         if (line.text.startsWith("#"))
             under = line.text.trim() === responsiblesHeading;
-        else if (under && !touched(look, line.from, line.to) && responsibleOf(look.state, line) !== undefined)
-            look.decorations.push(personMark.range(line.from + 2, line.from + 2 + line.text.slice(2).trimEnd().length));
+        else if ((under || roleRule.test(line.text)) && !touched(look, line.from, line.to)) {
+            const named: [Person, number] | undefined = responsibleOf(look.state, line);
+            if (named !== undefined)
+                look.decorations.push(personMark.range(line.from + named[1], line.from + line.text.trimEnd().length));
+        }
     }
 }
 
@@ -2136,7 +2159,8 @@ function personClicked(event: MouseEvent, view: EditorView): boolean {
         return false;
 
     const pos: number | null = view.posAtCoords({ x: event.clientX, y: event.clientY });
-    const person: Person | undefined = pos === null ? undefined : responsibleOf(view.state, view.state.doc.lineAt(pos));
+    const person: Person | undefined = pos === null ? undefined
+        : responsibleOf(view.state, view.state.doc.lineAt(pos))?.[0];
     if (person === undefined)
         return false;
     event.preventDefault();

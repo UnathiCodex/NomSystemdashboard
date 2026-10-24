@@ -7,11 +7,12 @@
  * and its mail, like `m.bichler@tum.de`, both kept, never shown; the rows ordered by name, small and capital letters
  * alike, as the table came.
  * A name is the key of its person, as the name of a food of `Foods.md` is in `Meals.md`: the columns `Lecturers`
- * of the courses of a module and `Tutor` of its groups, `Head` of a school or chair and `With` of an entry name
- * a person by its name alone, never with a link, and the page finds the person by it, see `src/persons.ts`; an entry
+ * of the courses of a module and `Tutor` of its groups, `Head` of a school or chair, the lines of `Schools.md` that
+ * name a person by its role, like `- Dean: Bungartz, Hans-Joachim`, and `With` of an entry name a person by its name
+ * alone, never with a link, and the page finds the person by it, see `src/persons.ts`; an entry
  * written with a person of a mail names that mail as its address, see {@link mailOf}.
  * The pencil beside the people of `With` changes a person everywhere once its dialog saves, see {@link personRename}:
- * its name, its mail and its link, in its row, in those columns and in every entry of my calendars.
+ * its name, its mail and its link, in its row, in those columns and lines and in every entry of my calendars.
  *
  * - `node:fs`: Reads and writes `Persons.md` and the tables that name people.
  * - `node:path`: Joins the folder and the name of a file.
@@ -69,6 +70,12 @@ export type AttendeesRename = (old: string, name: string, mail: string, dry: boo
  * Yutong`, see `peopleHeads` in `src/persons.ts`.
  */
 const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];
+
+/**
+ * Roles a line of a list names a person by, like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`,
+ * see `peopleRoles` in `src/persons.ts`.
+ */
+const peopleRoles: string[] = ["Dean", "Vice Dean", "Head", "Vice Head"];
 
 /**
  * A link typed for a person, a web address without spaces, like `https://campus.tum.de/…`.
@@ -224,9 +231,12 @@ function personsTextOf(sent: PersonRenamed): [string, Person] {
 }
 
 /**
- * Works out a Markdown file with a person renamed in its columns that name people, see {@link peopleHeads}:
+ * Works out a Markdown file with a person renamed in its columns that name people, see {@link peopleHeads}, and in
+ * the lines of a list that name a person by its role, see {@link peopleRoles}, like `- Dean: Bungartz, Hans-Joachim`:
  * in each table of such a column, every name of the old name in its cells takes the new one, a cell holding several
- * names parted by `<br>`, a name it then holds twice once, every other cell and line staying as it is.
+ * names parted by `<br>`, a name it then holds twice once, and so does such a line of the old name, every other cell
+ * and line staying as it is.
+ * - `role`: The role a line names the old name by, `undefined` for none.
  * - `lines`: Lines of the file.
  * - `named`: Indexes of the columns that name people in the table being read, none outside a table.
  * - `cells`: Cells of a row.
@@ -243,6 +253,10 @@ function peopleTextOf(file: string, old: string, name: string): string {
     lines.forEach((line: string, index: number): void => {
         if (!line.startsWith("|")) {
             named = [];
+            const role: string | undefined = peopleRoles.find((one: string): boolean =>
+                line.trimEnd() === `- ${one}: ${old}`);
+            if (role !== undefined)
+                lines[index] = `- ${role}: ${name}`;
             return;
         }
         const cells: string[] = line.split("|");
