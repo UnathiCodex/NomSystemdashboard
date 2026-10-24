@@ -157,11 +157,14 @@ import type { Calendar as DayCalendar } from "fullcalendar";
  *
  * - `weekday`: Its weekday, from 1 for Monday to 7 for Sunday, 0 while none is picked.
  * - `start`, `end`: Its times in Berlin time, like `14:00` and `16:00`, empty for none.
+ * - `minutes`: Of a slot of a course or a group by its length, without times, how long it lasts, like 120, 0 while
+ *   not typed; none for a slot with times, see {@link courseSwapOf}.
  */
 export type Slot = {
     weekday: number;
     start: string;
     end: string;
+    minutes?: number;
 };
 
 /**
@@ -711,13 +714,14 @@ function timesReady(times: Pick<Slot, "start" | "end">): boolean {
 
 /**
  * Tells whether the days of a series are typed enough to make boxes: each a weekday, each once, with a start before
- * its end, each extra a day with a start before its end, and a first day on or before its last.
+ * its end or by its length a length, each extra a day with a start before its end, and a first day on or before its last.
  *
  * @param days - The days of the series
  * @returns Whether they are
  */
 export function daysReady(days: Days): boolean {
-    return days.slots.every((slot: Slot): boolean => slot.weekday > 0 && timesReady(slot))
+    return days.slots.every((slot: Slot): boolean => slot.weekday > 0
+            && (slot.minutes === undefined ? timesReady(slot) : slot.minutes > 0))
         && new Set(days.slots.map((slot: Slot): number => slot.weekday)).size === days.slots.length
         && days.extras.every((extra: Extra): boolean => extra.day !== "" && timesReady(extra))
         && days.first !== "" && days.last !== "" && days.first <= days.last;
@@ -848,8 +852,8 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
  * ones light on the calm grey of what is picked, a click picking one or taking it back, but the last one; below them
  * each day picked one line, its weekday and its times, like `Thu 18:00 – 19:30`, a day picked anew taking the times
  * of the first, so a lecture on Monday and Thursday at different times and a group meeting twice a week are typed
- * as my sleep of every night is; of a plain series by its length each day its length in place of its times,
- * see {@link plainTimeRowsOf}. A weekday picked after one taken back takes its boxes, as a day moved, and moves
+ * as my sleep of every night is; of a series by its length each day its length in place of its times, the switch
+ * between them beside the name, see {@link plainTimeRowsOf} and {@link courseTimeRowsOf}. A weekday picked after one taken back takes its boxes, as a day moved, and moves
  * the days of the series with it, see {@link daysMove} and {@link slotsFreed}, so a lecture moved from Monday
  * to Tuesday keeps its boxes; a slot without weekday yet, as a new series starts, takes the first weekday picked.
  * - `toggles`: The seven weekdays.
@@ -916,7 +920,8 @@ function slotToggle(days: Days, weekday: number): void {
         const freed: [number, number] | undefined = slotsFreed.shift();
         if (freed !== undefined)
             daysMove(days, freed[0], weekday);
-        days.slots.push({ weekday: weekday, start: days.slots[0]?.start ?? "", end: days.slots[0]?.end ?? "" });
+        days.slots.push({ weekday: weekday, start: days.slots[0]?.start ?? "", end: days.slots[0]?.end ?? "",
+            ...days.slots[0]?.minutes === undefined ? {} : { minutes: days.slots[0].minutes } });
         days.before.push(freed?.[1] ?? 0);
     } else if (days.slots.length > 1) {
         if ((days.before[index] ?? 0) !== 0)
@@ -2524,7 +2529,7 @@ function formFill(): void {
     const rows: HTMLElement[] = picking ? [] : plain !== null ? plainRowsOf(plain, form)
         : form.type === examType ? [seriesRowOf(form), semesterRowOf(courseSemesterOf()), boxesRowOf()]
         : [seriesRowOf(form), semesterRowOf(courseSemesterOf()), ...lockedOf(waits, [placeRowOf(form),
-            onlineRowOf(form), ...slotRowsOf(form, formChanged, formFill), datesRowOf(form, formChanged)]),
+            onlineRowOf(form), ...courseTimeRowsOf(form), datesRowOf(form, formChanged)]),
             boxesRowOf(), ...lockedOf(waits, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
     fields.append(...fresh === null ? rows
@@ -2974,6 +2979,46 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
         })
         .sort((first: Planned, second: Planned): number =>
             (first.time || first.day).localeCompare(second.time || second.day));
+}
+
+/**
+ * Makes the switch of a series of my course or of a group between times and a length, as a plain series has it,
+ * see {@link plainSwapOf}: by its length each day only how long it lasts, its `minutes`, see {@link Slot}, its boxes
+ * days without time, as my sleep; from times to a length each day takes the length of its times, else none yet,
+ * from a length to times its times stay to type.
+ *
+ * @param form - The form, which holds its days
+ * @returns The switch
+ */
+function courseSwapOf(form: Form): HTMLButtonElement {
+    const timed: boolean = form.slots.every((slot: Slot): boolean => slot.minutes === undefined);
+    return lengthSwapOf(timed, (): void => {
+        form.slots = form.slots.map((slot: Slot): Slot => timed
+            ? { weekday: slot.weekday, start: "", end: "",
+                minutes: timesReady(slot) ? minutesOf(slot.end) - minutesOf(slot.start) : 0 }
+            : { weekday: slot.weekday, start: "", end: "" });
+        formChanged();
+        formFill();
+    });
+}
+
+/**
+ * Makes the row `Day` of a series of my course or of a group, as every series has it, see {@link slotRowsOf}, with
+ * the switch beside the name `Day` between times of each day and only how long each day lasts, see
+ * {@link courseSwapOf}: then each day its length in place of its times, a day picked anew the length of the first.
+ * - `lengthOf`: Makes the field of the length of a day.
+ *
+ * @param form - The form, which holds its days
+ * @returns The row, alone, as the rows of the form are given
+ */
+function courseTimeRowsOf(form: Form): HTMLElement[] {
+    const lengthOf: (slot: Slot) => HTMLElement = (slot: Slot): HTMLElement =>
+        fieldOf("time-field", (slot.minutes ?? 0) > 0 ? lengthTextOf(slot.minutes ?? 0) : "",
+            `How long on ${weekdayNameOf(slot.weekday, false)}`, (time: string): void => {
+                slot.minutes = time === "" ? 0 : minutesOf(time);
+            }, formChanged);
+    return slotRowsOf(form, formChanged, formFill, [courseSwapOf(form)],
+        form.slots.every((slot: Slot): boolean => slot.minutes === undefined) ? null : lengthOf);
 }
 
 /**
