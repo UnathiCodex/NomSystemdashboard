@@ -93,8 +93,8 @@
 
 /* The list of the boxes below their line, across the whole row on the columns of the dialog, by month: each month
    short where the names of the rows stand, small and grey as they, beside its first box, a little room above each
-   month after the first; on a phone above its boxes, as a name above its value. The line and the list stand in the
-   row itself, so the list can take its columns */
+   month after the first, and as much room above the first month as above every other; on a phone above its boxes,
+   as a name above its value. The line and the list stand in the row itself, so the list can take its columns */
 .series-preview {
     display: contents;
 }
@@ -105,7 +105,7 @@
     grid-template-columns: subgrid;
     row-gap: 0.5rem;
     align-items: baseline;
-    margin-top: 0.75rem;
+    margin-top: 1.75rem;
     font-variant-numeric: tabular-nums;
 }
 
