@@ -22,8 +22,10 @@
  * box.
  * The boxes of my tutorials that go to a group, by their `X-GROUP`, follow the rule of my group: my group is the one
  * I pinned, a choice of mine, never read from my boxes, `X-GROUP;X-PINNED=TRUE` on the to-dos of that group, see
- * {@link pinnedOf} and {@link pinPut}, and a box of another group is a week I go to that group instead, which never
- * moves the pin; taking my group back removes my open boxes from today on and the pin, see {@link groupMine}.
+ * {@link pinnedOf} and {@link pinPut}, and a box of another group is my own choice, see {@link chosenIs}, a session
+ * I took from that group by hand besides the box of its week or a week I go to that group instead, which never moves
+ * the pin and which no pin moves; taking my group back removes my open boxes of it from today on and the pin,
+ * see {@link groupMine}.
  * A box of my tutorials is numbered by its week of the semester, the n-th week its type's groups meet in, see
  * {@link tutorialWeeksOf}, so a second tutorial in a week takes the number of that week too, and a week the university
  * cancelled keeps its place.
@@ -53,15 +55,15 @@
  *   for its day, which every box takes but one pushed, see {@link retimable}, a box done keeping its log entry as it
  *   is; in the same form I skip a box or mark it cancelled by the university, a new one too, or take that back,
  *   see {@link stateSet}, all of it written as I save;
- * - a group made mine, see {@link groupMine}: from the week of its next session on, my boxes go to its sessions,
- *   also a week I went to another group, so the series follows the group from then on, every week alike;
+ * - a group made mine, see {@link groupMine}: from the week of its next session on, my boxes of the group before go
+ *   to its sessions, my own choices staying, those of the group now its boxes of their weeks;
  *   with no series yet, its sessions to come become one;
  * - one session of a group picked for its week in the menu of the groups, in the card of its type or in a box
  *   of the plan, see {@link weekPick}: the box of its week goes to it, its day, its time, its length, its place,
  *   its tutor and its group, its number kept, a week without box gets one, and with no series from that week on yet
  *   the sessions of the group from then on become one.
- * Logging a tutorial moves no other week. A week picked for another group carries no mark of it: a group made mine
- * moves it along with every other coming week.
+ * Logging a tutorial moves no other week. A box of my own choice carries no mark but its group: once its group is
+ * pinned, it follows the pin as every box of that group.
  * The reader offers each as a route, see `reader.ts`, so Claude fills series and groups through the same code;
  * none of them shares anything with anyone, see `shared.ts`.
  *
@@ -883,6 +885,19 @@ function pinnedOf(groups: Group[], type: string): string {
 }
 
 /**
+ * Tells whether a box of my tutorials is my own choice, see the top of this file: a session I took from a group by hand
+ * as a box of its own, or a week I picked for a group, by its `X-GROUP` other than the group pinned; a box of the group
+ * pinned, or without group, follows the pin.
+ *
+ * @param box - The box
+ * @param pinned - The group pinned of its type, see {@link pinnedOf}, empty for none
+ * @returns Whether it is
+ */
+function chosenIs(box: Box, pinned: string): boolean {
+    return box.group !== "" && box.group !== pinned;
+}
+
+/**
  * Pins a group of a type, see the top of this file: `X-PINNED=TRUE` on the `X-GROUP` of each to-do of it, none on
  * those of every other group of the type and semester; no group named pins none. Writes only a to-do that changes.
  * - `file`: The plan of the module.
@@ -1583,8 +1598,8 @@ function slotFieldsOf(before: Slot | Extra | undefined, date: Slot | Extra, shar
  * for a series that has boxes only from today on, a date I cancelled by its day one cancelled by the university,
  * its number `NONE`;
  * a box no date takes goes, but only an open one from today on, see {@link ahead}, every other box staying, see
- * {@link changeable}, and so does that of a week I go to another group, each taking only the times I typed for its day,
- * see `retimed` of {@link Target}; then the boxes of the type are numbered anew, see {@link numbersOf}.
+ * {@link changeable}, and so does one of my own choice, see {@link chosenIs}, each taking only the times I typed for
+ * its day, see `retimed` of {@link Target}; then the boxes of the type are numbered anew, see {@link numbersOf}.
  * A new box goes to my group while my tutorials go to groups, and takes the place of the rule with its link,
  * see `placeLinkOf` in `places.ts`, and what the rule does online, see `onlineFor` there.
  * - `rule`, `old`: The rule as typed and as read back.
@@ -1665,7 +1680,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
     const weeks: string[] = [mondayOf(rule.first), mondayOf(rule.last), ...targets.map((target: Target): string =>
         mondayOf(target.day)), ...typed.map(weekOf)].sort();
     const drafts: Draft[] = draftsOf(typed, targets, [weeks[0], weeks[weeks.length - 1]],
-        (box: Box): boolean => changeable(box) && ahead(box) && (box.group === "" || box.group === mine));
+        (box: Box): boolean => changeable(box) && ahead(box) && !chosenIs(box, mine));
     drafts.filter((draft: Draft): boolean => draft.box === null && change.states?.[draft.day] === "university")
         .forEach((draft: Draft): void => {
             draft.number = "NONE";
@@ -1750,25 +1765,34 @@ export function examSet(change: ExamChange): void {
 
 /**
  * Makes a group mine, see the top of this file, or only tells what that would make, for the preview of the form:
- * from the week of its next session that is not over on, the boxes of its type go to its sessions, its day, time,
- * length, room, tutor and group, also the box of a week I went to another group, so the series follows the group
- * from then on, a session without box getting one, a box of a week it does not meet going, but every box a change
- * may not change staying, see {@link changeable}, every coming open week alike, also one picked for another group;
- * a week before stays as it is, like this week's box at another group
- * while the group meets only from next week on. With no series yet, its sessions to come become one. Then the boxes
- * of the type are numbered anew, see {@link numbersOf}, from 1 for a new series, and the group is pinned, see
- * {@link pinPut}.
- * No group named takes my group back, `No group yet` again: every box of the type from today on that a change may
- * change goes, see {@link ahead} and {@link changeable}, every box done, skipped, pushed or of a day over staying;
- * then the boxes left are numbered anew and no group is pinned.
+ * from the week of its next session that is not over on, the boxes that follow the pin, those of my group before
+ * and those without group, go to its sessions, its day, time, length, room, tutor and group, a session without box
+ * getting one, a box of a week it does not meet going, but every box a change may not change staying,
+ * see {@link changeable}; a week before stays as it is, like this week's box at another group while the group meets
+ * only from next week on. My own choices stay as they are, see {@link chosenIs}: those of another group besides,
+ * a week I picked for one, where my group before met but holds no box of it, getting no box of the group either,
+ * and those of the group, each its box of its week from then on, its session in that week getting no second box.
+ * With no series yet, its sessions to come become one. Then the boxes of the type are numbered anew,
+ * see {@link numbersOf}, from 1 for a new series, and the group is pinned, see {@link pinPut}.
+ * No group named takes my group back, `No group yet` again: every box of my group from today on that a change may
+ * change goes, see {@link ahead} and {@link changeable}, every box done, skipped, pushed, of a day over or of my own
+ * choice staying; then the boxes left are numbered anew and no group is pinned.
  * - `semester`: The semester of today.
  * - `groups`: The groups of the semester.
+ * - `pinned`: My group before, empty for none.
+ * - `typed`: The boxes of its type of the semester.
  * - `group`: The group, `undefined` for none.
  * - `now`: Now in milliseconds.
  * - `coming`: Its sessions not over.
- * - `typed`: The boxes of its type of the semester.
  * - `from`: Monday of the week of its next session.
- * - `targets`: Its sessions not over, as the dates of the series.
+ * - `own`: My boxes of the group already, my own choices so far.
+ * - `chosen`: My own choices of other groups.
+ * - `regular`: The boxes that follow the pin.
+ * - `before`: The sessions of my group before, none for none.
+ * - `picked`: The weeks I picked for another group: each holds a box of my own choice, and my group before met in it,
+ *   but no box that follows the pin stands there.
+ * - `targets`: Its sessions not over, as the dates of the series, but those of a week picked or of a box of `own`.
+ * - `week`, `taken`: The sessions of the week of such a box, and the one it stands for: on its day, else the first.
  * - `weeks`: The weeks of the group and of the boxes from that week on.
  * - `drafts`: The boxes of the type as planned, one the university cancelled for my old group open again once it
  *   goes to the new one, whose session that week meets.
@@ -1780,18 +1804,21 @@ export function examSet(change: ExamChange): void {
 export function groupMine(change: MineChange): Planned[] {
     folderCheck(change.module);
     const semester: string = semesterOf(berlinDateOf(new Date()));
+    const groups: Group[] = groupsRead(change.module, semester);
+    const pinned: string = pinnedOf(groups, change.type);
+    const typed: Box[] = courseBoxesRead(codeOf(change.module), semester)
+        .filter((box: Box): boolean => box.type === change.type);
     if (change.group === "") {
-        const kept: Draft[] = courseBoxesRead(codeOf(change.module), semester)
-            .filter((box: Box): boolean => box.type === change.type)
-            .map((box: Box): Draft => ({ ...draftOf(box), removed: ahead(box) && changeable(box) }));
-        numbersOf(kept, tutorialWeeksOf(groupsRead(change.module, semester), change.type));
+        const kept: Draft[] = typed.map((box: Box): Draft => ({
+            ...draftOf(box), removed: ahead(box) && changeable(box) && !chosenIs(box, pinned),
+        }));
+        numbersOf(kept, tutorialWeeksOf(groups, change.type));
         if (change.dry !== true) {
             draftsWrite(change.module, change.type, semester, kept);
             pinPut(change.module, change.type, semester, "");
         }
         return plannedOf(kept);
     }
-    const groups: Group[] = groupsRead(change.module, semester);
     const group: Group | undefined = groups
         .find((one: Group): boolean => one.rule.type === change.type && one.rule.group === change.group);
     const now: number = Date.now();
@@ -1799,14 +1826,26 @@ export function groupMine(change: MineChange): Planned[] {
         .filter((session: Session): boolean => Date.parse(session.start) + session.minutes * 60 * 1000 > now);
     if (group === undefined || coming.length === 0)
         throw new Error(`No group ${change.type} ${change.group} with sessions to come in ${change.module}`);
-    const typed: Box[] = courseBoxesRead(codeOf(change.module), semester)
-        .filter((box: Box): boolean => box.type === change.type);
     const from: string = mondayOf(berlinDateOf(new Date(coming[0].start)));
-    const targets: Target[] = coming.map((session: Session): Target => targetOf(group, session));
-    const weeks: string[] = [...targets.map((target: Target): string => mondayOf(target.day)), ...typed.map(weekOf)]
-        .filter((week: string): boolean => week >= from).sort();
-    const drafts: Draft[] = draftsOf(typed, targets, [from, weeks[weeks.length - 1]],
-        (box: Box): boolean => changeable(box));
+    const own: Box[] = typed.filter((box: Box): boolean => box.group === change.group);
+    const chosen: Box[] = typed.filter((box: Box): boolean => box.group !== change.group && chosenIs(box, pinned));
+    const regular: Box[] = typed.filter((box: Box): boolean => !own.includes(box) && !chosen.includes(box));
+    const before: Session[] = groups.find((one: Group): boolean => one.rule.type === change.type
+        && one.rule.group === pinned)?.sessions ?? [];
+    const picked: Set<string> = new Set(chosen.map(weekOf).filter((week: string): boolean =>
+        !regular.some((box: Box): boolean => weekOf(box) === week)
+        && before.some((session: Session): boolean => mondayOf(dayOfStart(session.start)) === week)));
+    let targets: Target[] = coming.map((session: Session): Target => targetOf(group, session))
+        .filter((target: Target): boolean => !picked.has(mondayOf(target.day)));
+    own.forEach((box: Box): void => {
+        const week: Target[] = targets.filter((target: Target): boolean => mondayOf(target.day) === weekOf(box));
+        const taken: Target | undefined = week.find((target: Target): boolean => target.day === box.day) ?? week[0];
+        targets = targets.filter((target: Target): boolean => target !== taken);
+    });
+    const weeks: string[] = [from, ...targets.map((target: Target): string => mondayOf(target.day)),
+        ...regular.map(weekOf)].filter((week: string): boolean => week >= from).sort();
+    const drafts: Draft[] = [...draftsOf(regular, targets, [from, weeks[weeks.length - 1]],
+        (box: Box): boolean => changeable(box)), ...[...own, ...chosen].map(draftOf)];
     drafts.filter((draft: Draft): boolean => draft.number === "NONE" && draft.box !== null
         && draft.group !== draft.box.group).forEach((draft: Draft): void => {
         draft.number = "";
@@ -1821,11 +1860,11 @@ export function groupMine(change: MineChange): Planned[] {
 
 /**
  * Picks one session of a group for its week, as the menu of the groups sends it, see the top of this file: a box
- * I skipped that week is open again, one a change may change, see {@link changeable}; then the open box of the week
- * goes to the session, its day, its time, its length, its room,
- * its tutor and its group, its number kept, and no other week. A week without box gets one, and with
- * no box of the type after that week the sessions of the group from that week on become my series, one per week,
- * so later weeks follow it; then the boxes of the type are numbered anew, see {@link numbersOf}.
+ * I skipped that week is open again, one a change may change, see {@link changeable}; then the open box of the week,
+ * the one that follows the pin before one of my own choice, see {@link chosenIs}, goes to the session, its day,
+ * its time, its length, its room, its tutor and its group, its number kept, and no other week. A week without box
+ * gets one, and with no box of the type after that week the sessions of the group from that week on become my series,
+ * one per week, so later weeks follow it; then the boxes of the type are numbered anew, see {@link numbersOf}.
  * A week done, or whose box may not change, see {@link changeable}, stays as it is.
  * As an extra, see `extra` of {@link PickChange}, the session becomes a box of its own instead, besides the box of its
  * week, which stays, as a second tutorial in one week; then the boxes are numbered anew, once per session; one of a
@@ -1838,7 +1877,8 @@ export function groupMine(change: MineChange): Planned[] {
  * - `typedRead`: Reads the boxes of the type of the semester.
  * - `typed`: The boxes of the type of the semester.
  * - `skipped`: The box of the week I skipped, `undefined` for none.
- * - `box`: The open box of the week a change may change, `undefined` for none.
+ * - `open`: The open boxes of the week a change may change.
+ * - `box`: The one that goes to the session, `undefined` for none.
  * - `later`: Whether a box of the type falls after the week.
  * - `firsts`: Without later box the first session of the group of every later week, else none.
  * - `targets`: The dates: the session, then those of the later weeks.
@@ -1885,8 +1925,10 @@ export function weekPick(change: PickChange): void {
         boxDrop(skipped.id, false);
         typed = typedRead();
     }
-    const box: Box | undefined = typed.find((one: Box): boolean => weekOf(one) === week && changeable(one)
+    const open: Box[] = typed.filter((one: Box): boolean => weekOf(one) === week && changeable(one)
         && one.state === "open");
+    const box: Box | undefined = open.find((one: Box): boolean => !chosenIs(one, pinnedOf(groups, change.type)))
+        ?? open[0];
     if (box !== undefined) {
         draftsWrite(change.module, change.type, semester, [draftSet(draftOf(box), targetOf(group, session))]);
         return;

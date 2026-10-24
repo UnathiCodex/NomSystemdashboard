@@ -173,9 +173,11 @@ function boxMove(box: Box, group: Group, session: Session): void {
 
 /**
  * Pins a group, see the top of this file: at once the series of its type goes to the group, a new one while it has
- * none, and every open box of its type to come goes to the session of the group in its week, where it meets one not
- * over yet, also a week picked for another group; then the reader, see `groupMine` in `reader/course.ts`, moves every
- * box it may change from the group's next session on, and with no series yet makes its sessions to come my series.
+ * none, and every open box of its type to come of the group pinned before, or without group, goes to the session
+ * of the group in its week, where it meets one not over yet, a box of another group staying as my own choice;
+ * then the reader, see `groupMine` in `reader/course.ts`, moves every such box it may change from the group's next
+ * session on, and with no series yet makes its sessions to come my series.
+ * - `pinned`: The group pinned before, empty for none.
  * - `series`: The series of the type, `undefined` for none yet.
  * - `session`: The session of the group in the week of a box, `undefined` for none.
  *
@@ -185,13 +187,15 @@ function boxMove(box: Box, group: Group, session: Session): void {
  */
 function pinPick(course: Course, group: Group, show: PickShow): void {
     show((): void => {
+        const pinned: string = pinnedOf(course, group.rule.type);
         const series: Series | undefined = course.series
             .find((one: Series): boolean => one.rule.type === group.rule.type);
         if (series === undefined)
             course.series.push({ rule: { ...group.rule }, count: 0 });
         else
             series.rule.group = group.rule.group;
-        course.boxes.filter((box: Box): boolean => box.type === group.rule.type && pickable(box))
+        course.boxes.filter((box: Box): boolean => box.type === group.rule.type && pickable(box)
+            && (box.group === "" || box.group === pinned))
             .forEach((box: Box): void => {
                 const session: Session | undefined = group.sessions.find((one: Session): boolean => !overOf(one)
                     && mondayOf(dayOf(new Date(one.start))) === mondayOf(box.day));
@@ -204,9 +208,10 @@ function pinPick(course: Course, group: Group, show: PickShow): void {
 
 /**
  * Takes the group pinned back, see the top of this file: at once the series of its type has no group and its open
- * boxes from today on go; then the reader, see `groupMine` in `reader/course.ts`, removes them, every box done,
- * skipped, pushed or of a day over staying.
+ * boxes of the group from today on go; then the reader, see `groupMine` in `reader/course.ts`, removes them, every box
+ * done, skipped, pushed, of a day over or of another group, my own choice, staying.
  * - `today`: Today's calendar date.
+ * - `pinned`: The group pinned.
  *
  * @param course - The course
  * @param type - The type, like `TU`
@@ -215,12 +220,13 @@ function pinPick(course: Course, group: Group, show: PickShow): void {
 function unpinPick(course: Course, type: string, show: PickShow): void {
     show((): void => {
         const today: string = calendarTodayOf();
+        const pinned: string = pinnedOf(course, type);
         course.series.filter((series: Series): boolean => series.rule.type === type)
             .forEach((series: Series): void => {
                 series.rule.group = "";
             });
         course.boxes = course.boxes.filter((box: Box): boolean =>
-            box.type !== type || box.state !== "open" || box.day < today);
+            box.type !== type || box.state !== "open" || box.day < today || box.group !== "" && box.group !== pinned);
     }, (): Promise<Planned[]> => courseSend<Planned[]>("/api/course/mine",
         { module: course.module, type: type, group: "" }));
 }

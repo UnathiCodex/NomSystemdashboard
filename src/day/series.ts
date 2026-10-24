@@ -35,8 +35,8 @@
  * same form, and right after the menu a plus, which opens a new group, its name typed there, like `5` for `Group 05`,
  * see {@link groupPartOf}; closing, saving or removing the group goes back to my series, see {@link groupReturn}.
  * While no group is mine, my series shows the same rows, in the same places, empty and locked, since its place, days
- * and people come from the group, its dates as far as known, and my boxes of the days over, which no pin changes,
- * see {@link groupWaits} and {@link pastOf}; the first group
+ * and people come from the group, its dates as far as known, and my boxes there, which no pin changes,
+ * see {@link groupWaits} and {@link keptOf}; the first group
  * made while none is mine becomes mine as it is saved. So I make the groups of my tutorials by hand as the university lists them, with the same rows: what
  * it is, its place, what it does online, its days, each a weekday with its times, its weeks, its sessions, of which
  * `⋯` cancels one, and its tutors in `With`; saved, the reader writes it as one weekly to-do per weekday, and my boxes
@@ -1318,8 +1318,8 @@ function mineAt(time: string): boolean {
 
 /**
  * Makes a session of the group of the form a box of mine of its own, besides the box of its week, as a second
- * tutorial in one week, see `weekPick` in `reader/course.ts`, and goes back to my series it was opened from, see
- * {@link groupReturn}, else closes the dialog; the group as saved, not as typed since.
+ * tutorial in one week, see `weekPick` in `reader/course.ts`, the group as saved, not as typed since; the form stays,
+ * its list shown anew, see {@link seriesRefresh}, the session now without `+`, so I take one session after another.
  *
  * @param start - The start of the session as ISO instant, like `2026-11-05T15:00:00.000Z`
  * @throws {Error} - When the reader cannot answer
@@ -1335,9 +1335,7 @@ async function extraAdd(start: string): Promise<void> {
         formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
         return;
     }
-    if (await groupReturn(true))
-        return;
-    (document.getElementById("series") as HTMLDialogElement).close();
+    await seriesRefresh();
 }
 
 /**
@@ -1985,9 +1983,9 @@ function lockedOf(locked: boolean, rows: HTMLElement[]): HTMLElement[] {
  * Fills my series that waits for my group, see {@link groupWaits}: what comes from a group empty, its place, what it
  * does online, its days and who I am with, even where a group of before left them; its dates as far as they are
  * known: from the earliest of its own first day, the first days of the groups of its type in the semester and my
- * boxes of the days over, to the latest of its own last day and the last days of those groups; nothing is saved, since such a form saves nothing.
+ * boxes there, to the latest of its own last day and the last days of those groups; nothing is saved, since such a form saves nothing.
  * - `rules`: The rules of the groups of its type.
- * - `firsts`, `lasts`: Their first and last days, and the days of my boxes of the days over.
+ * - `firsts`, `lasts`: Their first and last days, and the days of my boxes there.
  *
  * @param form - The form of my series
  */
@@ -1996,7 +1994,7 @@ function waitingFill(form: Form): void {
         slots: [] });
     const rules: Rule[] = groupsOf(form.type).map((group: Group): Rule => group.rule);
     const firsts: string[] = [form.first, ...rules.map((rule: Rule): string => rule.first),
-        ...pastOf(form).map((box: Planned): string => box.day)].filter((day: string): boolean => day !== "").sort();
+        ...keptOf(form).map((box: Planned): string => box.day)].filter((day: string): boolean => day !== "").sort();
     const lasts: string[] = [form.last, ...rules.map((rule: Rule): string => rule.last)]
         .filter((day: string): boolean => day !== "").sort();
     form.first = firsts[0] ?? "";
@@ -2004,16 +2002,15 @@ function waitingFill(form: Form): void {
 }
 
 /**
- * Gives my boxes of the type of my series that waits for my group, see {@link groupWaits}, whose day is over: they
- * stay, whatever group is pinned, so its list shows them while no group is mine, as they are, none to change there;
- * my boxes to come follow only a group pinned.
+ * Gives my boxes of the type of my series that waits for my group, see {@link groupWaits}: those of the days over and
+ * those I took from a group by hand, of days to come too, see `chosenIs` in `reader/course.ts`, which stay whatever
+ * group is pinned, so its list shows them while no group is mine, as they are, none to change there.
  *
  * @param form - The form of my series
- * @returns The boxes of the days over, the earliest first
+ * @returns The boxes, the earliest first
  */
-function pastOf(form: Form): Planned[] {
-    const today: string = dayOf(new Date());
-    return (course?.boxes ?? []).filter((box: Box): boolean => box.type === form.type && box.day < today)
+function keptOf(form: Form): Planned[] {
+    return (course?.boxes ?? []).filter((box: Box): boolean => box.type === form.type)
         .map((box: Box): Planned => ({
             id: box.id, day: box.day, time: box.time, minutes: box.minutes, number: box.number, state: box.state,
             pushed: box.pushed.length > 0, editable: false, retimable: false, change: "", attendees: box.attendees,
@@ -2023,9 +2020,9 @@ function pastOf(form: Form): Planned[] {
 /**
  * Takes a change of the form of a series: allows saving while it is ready, see {@link formReady}, and shows anew
  * the boxes it makes as the reader would write them, see {@link formSend} and {@link previewSoon}, its extras among
- * them, of the exams each with its kind to pick; of my series waiting for my group my boxes of the days over,
- * see {@link pastOf}.
- * - `past`: Those boxes, none for any other form.
+ * them, of the exams each with its kind to pick; of my series waiting for my group my boxes there,
+ * see {@link keptOf}.
+ * - `kept`: Those boxes, none for any other form.
  * - `save`: Its button Save.
  * - `form`: The form.
  */
@@ -2034,11 +2031,11 @@ function formChanged(): void {
     if (typing === null || save === null)
         return;
     const form: Form = typing;
-    const past: Planned[] = groupWaits(form) ? pastOf(form) : [];
+    const kept: Planned[] = groupWaits(form) ? keptOf(form) : [];
     save.disabled = !formReady(form);
     previewSoon(formElementOf(), {
         ask: formReady(form) ? (): Promise<Planned[]> => formSend(form, true)
-            : past.length > 0 ? async (): Promise<Planned[]> => past : null,
+            : kept.length > 0 ? async (): Promise<Planned[]> => kept : null,
         days: form, states: form.states,
         kinds: form.type === examType ? form.kinds : undefined, filled: formFill,
     });
@@ -2370,8 +2367,8 @@ function groupPickOf(form: Form): HTMLElement {
 /**
  * Tells whether the form of my series of a type with groups waits for my group: while none is mine, its rows from
  * the group show empty and locked, see {@link lockedOf}, since my boxes to come follow my group, with the menu of the
- * groups beside its semester, see {@link groupPickOf}, and my boxes of the days over, which stay whatever group is
- * pinned, see {@link pastOf}.
+ * groups beside its semester, see {@link groupPickOf}, and my boxes there, which stay whatever group is
+ * pinned, see {@link keptOf}.
  *
  * @param form - The form
  * @returns Whether it waits
