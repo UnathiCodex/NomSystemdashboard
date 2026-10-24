@@ -134,7 +134,7 @@ import { elementOf } from "../food/foods.ts";
 import { crossPut, iconOf, iconPut, iconWordsOf, plusPut, QuestionMark } from "../icons.ts";
 import { menuAnchor, menuItemOf } from "../menu.ts";
 import { readerAsk } from "../reader.ts";
-import { folderLinkShow } from "../skill/links.ts";
+import { folderLinkShow, modulesFolder } from "../skill/links.ts";
 import { personsKept, personsRename } from "../persons.ts";
 import {
     ArrowRight, Calendar, CalendarMinus, CalendarOff, Check, ChevronDown, Pencil, Plus, Trash, X,
@@ -2066,8 +2066,9 @@ function placeOriginOf(form: Form): Place {
  * a new one with only its type to pick, its plus right after the module, from the numbered types without series,
  * its list open as the dialog opens, see {@link seriesOpen}; of a new box repeated its summary as plain text,
  * which the pencil of the summary of the box changes, see {@link Repeated}. Below it, small and grey, the folder
- * its boxes link, as the dialog of a box shows it, see `folderLinkShow` in `../skill/links.ts`: that of its type
- * as the reader writes it now, of a new box repeated that of the box, none while it has none. No frame under
+ * of the material of its type in the semester, like `…/TU_UniversityTutorExercises/TUM_2026W`, see
+ * `folderLinkShow` in `../skill/links.ts`, one not there yet looking the same but no link, nothing under the
+ * pointer, `Not there yet` as its tooltip, until its first box makes it; of a new box repeated the folder of the box, none while it has none. No frame under
  * the pointer, as every row written by itself, see `.panel-fixed` in `./day.css`.
  * - `module`: The folder of the module.
  * - `types`: The numbered types without series, and that of the form.
@@ -2083,7 +2084,13 @@ function seriesRowOf(form: Form): HTMLElement {
     const types: string[] = numberedTypes.filter((type: string): boolean =>
         type === form.type || !(course?.series ?? []).some((series: Series): boolean => series.rule.type === type));
     const link: HTMLAnchorElement = elementOf("a", "entry-address", "") as HTMLAnchorElement;
-    folderLinkShow(link, repeated?.link ?? course?.links[form.type] ?? "");
+    const folder: MaterialFolder | undefined = repeated === null ? course?.folders[form.type] : undefined;
+    folderLinkShow(link, folder === undefined ? repeated?.link ?? course?.links[form.type] ?? ""
+        : `${modulesFolder}/${module}/${folder.path}`);
+    if (folder !== undefined && !folder.exists) {
+        link.removeAttribute("href");
+        link.title = "Not there yet";
+    }
     const value: HTMLElement = elementOf("div", "", "");
     if (form.old !== null || repeated !== null || grouped !== null || groupWaits(form))
         value.append(elementOf("span", "", breakableOf(repeated?.summary ?? `${module} (${form.type})`)), link);

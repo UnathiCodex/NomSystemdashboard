@@ -471,7 +471,7 @@
    the menu as that plus from the skill, see `.panel-pair .picker-line.plus-quiet` in `day.css` */
 .series-group-pick {
     display: inline-flex;
-    align-items: center;
+    align-items: baseline;
 }
 
 /* The semester and the group beside it, the semester only as wide as its value, a middle dot between them as between
@@ -505,4 +505,5 @@
 .series-group-pick > .plus-quiet {
     margin-inline-start: 0.375rem;
     padding-inline: 0.25rem;
+    translate: 0 0.15em;
 }
