@@ -1621,7 +1621,10 @@ function slotFieldsOf(before: Slot | Extra | undefined, date: Slot | Extra, shar
  * - `met`: Of a type with groups, the days my group meets, its real sessions, cancelled ones left out, so a week it does
  *   not meet and that holds no box of mine is no new date; `null` without groups or group of mine.
  * - `held`: The weeks that hold a box of the type.
- * - `targets`: The dates of the rule, but those of a week my group does not meet and that holds no box of mine.
+ * - `picked`: Of a type with groups, the weeks I gave to another group, see {@link weekPick}: they hold boxes of my own
+ *   choice only, see {@link chosenIs}.
+ * - `targets`: The dates of the rule, but those of a week my group does not meet and that holds no box of mine, and
+ *   those of a week I picked.
  * - `weeks`: The weeks the change reaches, from the first of the rule or the series to the last of either.
  * - `drafts`: The boxes of the type as planned, the new ones I cancelled with `NONE`.
  *
@@ -1660,8 +1663,11 @@ export function seriesApply(change: SeriesChange): Planned[] {
     const met: Set<string> | null = own.length === 0 ? null : new Set(own.flatMap((group: Group): string[] =>
         group.sessions.map((session: Session): string => dayOfStart(session.start))));
     const held: Set<string> = new Set(typed.map(weekOf));
+    const picked: Set<string> = new Set(mine === "" ? [] : [...held].filter((week: string): boolean =>
+        typed.every((box: Box): boolean => weekOf(box) !== week || chosenIs(box, mine))));
     const targets: Target[] = datesOf(rule).filter((date: RuleDate): boolean =>
-        met === null || met.has(date.day) || held.has(mondayOf(date.day))).map((date: RuleDate): Target => {
+        (met === null || met.has(date.day) || held.has(mondayOf(date.day))) && !picked.has(mondayOf(date.day)))
+        .map((date: RuleDate): Target => {
         const was: Slot | Extra | undefined = wasOf(date);
         const wasDay: string = was !== undefined && "weekday" in was
             ? dayAdd(date.day, was.weekday - weekdayOf(date.day)) : date.day;
