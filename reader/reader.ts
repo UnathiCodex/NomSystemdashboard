@@ -269,7 +269,8 @@ async function fileStream(response: ServerResponse, file: NotesStream, name: str
  *   typed them, and sends its boxes after the change; when the body says `dry: true` only sends what the change would
  *   make, writing nothing, for the preview of the form.
  * - `POST /api/course/mine`: Makes the group of the body mine, my boxes of its type from its next session on going
- *   to it, and sends the boxes of the series after it; when the body says `dry: true` only sends what that would make.
+ *   to it, or with no group takes my group back, my open boxes of its type from today on going, and sends the boxes
+ *   of the series after it; when the body says `dry: true` only sends what that would make.
  * - `POST /api/course/pick`: Picks the session of the body, its module, type, group and start, for its week, the box
  *   of that week going to it, see `weekPick` in `course.ts`.
  * - `POST /api/course/exam`: Gives the exam of the body the kind and the times of the body, see `examSet`

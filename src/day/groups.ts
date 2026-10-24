@@ -15,7 +15,7 @@
  * and nothing in the menu opens the box of its row or a person.
  * The menu of the heading, see {@link pinnedMenuOf}, names the group pinned with the pin before it, like `Group 06`,
  * `No group yet` while none is, and holds every group of the type, the one pinned checked: a pick pins the group, see
- * {@link pinPick}. The dialog of a box and its row name its group, see {@link boxGroupOf}: one that may still go
+ * {@link pinPick}; while one is pinned, `Unpin` below them takes it back, see {@link unpinPick}. The dialog of a box and its row name its group, see {@link boxGroupOf}: one that may still go
  * to another group, see {@link pickable}, in the menu of the session of each group in its week not over yet, the group
  * of the box checked, a pick moving only that week's box, see {@link weekPick}; any other box its group grey,
  * like `Group 03`, without menu. At the right end of every group the series icon ⟳, the same as after the times
@@ -35,7 +35,7 @@
  * - `../icons.ts`: Makes the chevron of the button, the check and the pins.
  * - `../menu.ts`: Opens the menu below its button in the place and look of the menu `⋯`, and makes its items.
  * - `../persons.ts`: Puts the tutors of a group apart by a middle dot.
- * - `lucide`: The icons chevron, check, pin and the series.
+ * - `lucide`: The icons chevron, check, pin, unpin and the series.
  * - `./groups.css`: Look of the button and its menu.
  */
 
@@ -47,7 +47,7 @@ import { elementOf } from "../food/foods.ts";
 import { iconOf } from "../icons.ts";
 import { menuAnchor, menuItemOf } from "../menu.ts";
 import { peopleOf } from "../persons.ts";
-import { Check, ChevronDown, Pin, Repeat } from "lucide";
+import { Check, ChevronDown, Pin, PinOff, Repeat } from "lucide";
 import "./groups.css";
 
 import type { Box } from "./boxes.ts";
@@ -179,6 +179,29 @@ function pinPick(course: Course, group: Group, show: PickShow): void {
 }
 
 /**
+ * Takes the group pinned back, see the top of this file: at once the series of its type has no group and its open
+ * boxes from today on go; then the reader, see `groupMine` in `reader/course.ts`, removes them, every box done,
+ * skipped, pushed or of a day over staying.
+ * - `today`: Today's calendar date.
+ *
+ * @param course - The course
+ * @param type - The type, like `TU`
+ * @param show - Shows the pick, see {@link PickShow}
+ */
+function unpinPick(course: Course, type: string, show: PickShow): void {
+    show((): void => {
+        const today: string = calendarTodayOf();
+        course.series.filter((series: Series): boolean => series.rule.type === type)
+            .forEach((series: Series): void => {
+                series.rule.group = "";
+            });
+        course.boxes = course.boxes.filter((box: Box): boolean =>
+            box.type !== type || box.state !== "open" || box.day < today);
+    }, (): Promise<Planned[]> => courseSend<Planned[]>("/api/course/mine",
+        { module: course.module, type: type, group: "" }));
+}
+
+/**
  * Moves one week's box to the session of a group, see the top of this file, that week alone: at once, then by the
  * reader, see `weekPick` in `reader/course.ts`.
  *
@@ -237,7 +260,8 @@ function groupPartsOf(group: Group, times: string): [string, HTMLElement, HTMLEl
  * the checked one by a check, the others without, the one pinned by a small pin right before its group, in a column
  * of its own, so the groups stand one below the other; a click on a group closes the menu and picks it, but for the
  * one checked; at the right end of each group its series icon, which opens the group to change it, see
- * {@link seriesIconOf}; nothing in it opens the box of its row.
+ * {@link seriesIconOf}; nothing in it opens the box of its row; while it has a way to take the group pinned back,
+ * `Unpin` with the pin crossed out below the groups.
  * - `place`: The button with its menu.
  * - `button`: The button.
  * - `menu`: The menu.
@@ -249,10 +273,11 @@ function groupPartsOf(group: Group, times: string): [string, HTMLElement, HTMLEl
  * @param items - The groups, by day and time
  * @param pinned - The group pinned, like `06`, empty for none
  * @param open - Opens a group in the form of a series, see {@link seriesIconOf}
+ * @param unpin - Takes the group pinned back, see {@link unpinPick}; none when left out
  * @returns The button with its menu
  */
 function groupMenuOf(words: (string | Node)[], items: Item[], pinned: string,
-                     open: (group: string) => void): HTMLElement {
+                     open: (group: string) => void, unpin?: () => void): HTMLElement {
     const place: HTMLElement = elementOf("span", "group-place", "");
     const button: HTMLButtonElement = document.createElement("button");
     const menu: HTMLElement = elementOf("div", "group-menu", "");
@@ -284,6 +309,11 @@ function groupMenuOf(words: (string | Node)[], items: Item[], pinned: string,
         day = item.day;
         menu.append(line);
     });
+    if (unpin !== undefined)
+        menu.append(menuItemOf(PinOff, "Unpin", (): void => {
+            menu.hidePopover();
+            unpin();
+        }));
     place.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
     place.append(button, menu);
     return place;
@@ -294,7 +324,7 @@ function groupMenuOf(words: (string | Node)[], items: Item[], pinned: string,
  * the group pinned with the pin before it, like `Group 06`, `No group yet` while none is, its items every group
  * of the type by the weekday and times of its first slot, below its weekday, like `Tue` and `10:00 – 12:00`, the one
  * pinned marked by its pin alone, no check, since a series is no one week, a pick of another pinning it,
- * see {@link pinPick}; each with its series icon, which opens it to change
+ * see {@link pinPick}, and while one is pinned `Unpin` below them, see {@link unpinPick}; each with its series icon, which opens it to change
  * it, see {@link groupOpenOf}, or as the form of a series asks, see `groupPickOf` in `./series.ts`.
  * - `pinned`: The group pinned, empty for none.
  * - `keyOf`: Gives the weekday and start of a group, which order the groups, like `2 10:00`, `8` for one without slot.
@@ -326,7 +356,7 @@ export function pinnedMenuOf(course: Course, type: string, show: PickShow,
                         pinPick(course, group, show);
                 },
             };
-        }), pinned, open);
+        }), pinned, open, pinned === "" ? undefined : (): void => unpinPick(course, type, show));
 }
 
 /**

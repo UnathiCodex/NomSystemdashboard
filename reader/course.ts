@@ -21,8 +21,8 @@
  * place is a box the university cancelled, `X-NUMBER:NONE`, see `boxUniversity` in `boxes.ts`, never a day without
  * box.
  * The boxes of my tutorials that go to a group, by their `X-GROUP`, follow the rule of my group: my group is stored
- * nowhere, it is the group most of my open boxes go to, see {@link mineOf}, and a box of another group is a week I go
- * to that group instead.
+ * nowhere, it is the group most of my boxes from today on go to, see {@link mineOf}, and a box of another group is
+ * a week I go to that group instead; taking my group back removes my open boxes from today on, see {@link groupMine}.
  *
  * The groups of the tutorials of a module lie in its plan, `Modules/<module folder>_Plan.ics`, beside my boxes,
  * one weekly to-do per group as TUMonline lists it, see {@link groupPut}, since a plan holds only to-dos:
@@ -285,7 +285,7 @@ export type SeriesChange = {
  *
  * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `type`: Type of the group, like `TU`.
- * - `group`: The group, like `03`.
+ * - `group`: The group, like `03`, empty to have none.
  * - `dry`: Whether only to tell what that would make, for the preview of the form, writing nothing; false when left
  *   out.
  */
@@ -853,19 +853,37 @@ function datesOf(rule: Rule): RuleDate[] {
 }
 
 /**
- * Gives my group of a type, see the top of this file: the group most of my open boxes of it go to, the earliest
- * of those equally many, else the one most of them went to, like after the last tutorial of a semester; empty
- * while none goes to a group.
+ * Gives my group of a type, see the top of this file: the group most of my boxes of it from today on go to, see
+ * {@link ahead}, the open ones first, the earliest of those equally many; with none from today on, none while a group
+ * of the type still meets, as after I took my group back, see {@link groupMine}, else the one most of them went to,
+ * like after the last tutorial of a semester; empty while none goes to a group.
  * - `grouped`: The boxes that go to a group.
+ * - `coming`: Those of them from today on.
  * - `open`: Those of them still open.
  *
  * @param boxes - The boxes of a type of a semester, the earliest first
+ * @param meets - Whether a group of the type has a session to come
  * @returns The group, like `03`, empty for none
  */
-function mineOf(boxes: Box[]): string {
+function mineOf(boxes: Box[], meets: boolean): string {
     const grouped: Box[] = boxes.filter((box: Box): boolean => box.group !== "");
-    const open: Box[] = grouped.filter((box: Box): boolean => box.state === "open");
-    return modeOf(open.length > 0 ? open : grouped, (box: Box): string => box.group)?.group ?? "";
+    const coming: Box[] = grouped.filter(ahead);
+    const open: Box[] = coming.filter((box: Box): boolean => box.state === "open");
+    const counted: Box[] = open.length > 0 ? open : coming.length > 0 ? coming : meets ? [] : grouped;
+    return modeOf(counted, (box: Box): string => box.group)?.group ?? "";
+}
+
+/**
+ * Tells whether a group of a type has a session to come, see {@link mineOf}.
+ *
+ * @param groups - The groups of the course
+ * @param type - The type, like `TU`
+ * @returns Whether one has
+ */
+function meetsOf(groups: Group[], type: string): boolean {
+    const now: number = Date.now();
+    return groups.some((group: Group): boolean => group.rule.type === type && group.sessions
+        .some((session: Session): boolean => Date.parse(session.start) + session.minutes * 60 * 1000 > now));
 }
 
 /**
@@ -973,12 +991,13 @@ function groupsRead(module: string, semester: string): Group[] {
  *
  * @param boxes - Its boxes of the semester, the earliest first
  * @param semester - Semester, like `2026W`
+ * @param groups - Its groups of the semester
  * @returns Its series, in the order of the types
  */
-function seriesListOf(boxes: Box[], semester: string): Series[] {
+function seriesListOf(boxes: Box[], semester: string, groups: Group[]): Series[] {
     return numberedTypes.flatMap((type: string): Series[] => {
         const typed: Box[] = boxes.filter((box: Box): boolean => box.type === type);
-        const mine: string = mineOf(typed);
+        const mine: string = mineOf(typed, meetsOf(groups, type));
         const own: Box[] = typed.filter((box: Box): boolean => mine === "" || box.group === mine);
         return typed.length === 0 ? []
             : [{ rule: ruleOf(type, own.map(datedOf), typed.map(datedOf), mine, semester), count: typed.length }];
@@ -1006,13 +1025,14 @@ export function courseRead(module: string, named: string): Course {
     if (!/^\d{4}[WS]$/.test(semester))
         throw new Error(`No semester ${semester}`);
     const boxes: Box[] = courseBoxesRead(codeOf(folder), semester);
+    const groups: Group[] = groupsRead(folder, semester);
     return {
         module: folder,
         semester: semester,
         boxes: boxes,
         learned: learnedRead(codeOf(folder), semester),
-        series: seriesListOf(boxes, semester),
-        groups: groupsRead(folder, semester),
+        series: seriesListOf(boxes, semester, groups),
+        groups: groups,
         folders: semesterFoldersRead(folder, semester),
         links: Object.fromEntries(skillTypes.map((type: string): [string, string] =>
             [type, skillLinkOf(codeOf(folder), type, semester)])),
@@ -1481,7 +1501,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
     const typed: Box[] = courseBoxesRead(codeOf(change.module), rule.semester)
         .filter((box: Box): boolean => box.type === rule.type)
         .map((box: Box): Box => stateSet(box, change.states?.[box.id]));
-    const mine: string = mineOf(typed);
+    const mine: string = mineOf(typed, meetsOf(groupsRead(change.module, rule.semester), rule.type));
     const link: string = placeLinkOf(rule.location, old);
     const online: Online = onlineFor(rule, null);
     const changed: [Field, boolean][] = old === null ? [] : [
@@ -1614,6 +1634,9 @@ export function examSet(change: ExamChange): void {
  * a week before stays as it is, like this week's box at another group
  * while the group meets only from next week on. With no series yet, its sessions to come become one. Then the boxes
  * of the type are numbered anew, see {@link numbersOf}, from 1 for a new series.
+ * No group named takes my group back, `No group yet` again: every box of the type from today on that a change may
+ * change goes, see {@link ahead} and {@link changeable}, every box done, skipped, pushed or of a day over staying;
+ * then the boxes left are numbered anew.
  * - `semester`: The semester of today.
  * - `group`: The group, `undefined` for none.
  * - `now`: Now in milliseconds.
@@ -1631,6 +1654,15 @@ export function examSet(change: ExamChange): void {
 export function groupMine(change: MineChange): Planned[] {
     folderCheck(change.module);
     const semester: string = semesterOf(berlinDateOf(new Date()));
+    if (change.group === "") {
+        const kept: Draft[] = courseBoxesRead(codeOf(change.module), semester)
+            .filter((box: Box): boolean => box.type === change.type)
+            .map((box: Box): Draft => ({ ...draftOf(box), removed: ahead(box) && changeable(box) }));
+        numbersOf(kept);
+        if (change.dry !== true)
+            draftsWrite(change.module, change.type, semester, kept);
+        return plannedOf(kept);
+    }
     const group: Group | undefined = groupsRead(change.module, semester)
         .find((one: Group): boolean => one.rule.type === change.type && one.rule.group === change.group);
     const now: number = Date.now();

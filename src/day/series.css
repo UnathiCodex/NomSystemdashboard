@@ -1,13 +1,17 @@
 /* Rows of a weekly series in the dialog of a series, the same from the day, from the page of a module and for a new box
    repeated, see `series.ts`: its days and its boxes, with its extras */
-/* The days of a series in the one row `Day`, see `slotRowsOf` in `series.ts`: its weekdays on top, then each day
-   picked one line, like `Thu 18:00 – 19:30`, its weekday short, as wide as the widest, `Mon` or `Wed`, so the times
-   of several days stand one below the other, about two spaces before its times, as a day and its time, see
-   `.entry-moment` in `day.css`; as close as the lines of a list */
+/* The days of a series in the one row `Day`, see `slotRowsOf` in `series.ts`: its weekdays on top, only to pick,
+   then, clearly below them, each day picked one line of plain text, like `Thu 18:00 – 19:30`, its weekday short,
+   as wide as the widest, `Mon` or `Wed`, so the times of several days stand one below the other, about two spaces
+   before its times, as a day and its time, see `.entry-moment` in `day.css`; as close as the lines of a list */
 .series-slots {
     display: flex;
     flex-direction: column;
     row-gap: 0.25rem;
+}
+
+.series-weekdays + * {
+    margin-top: 0.5rem;
 }
 
 .series-slot {
@@ -21,18 +25,22 @@
     min-width: 2.25em;
 }
 
-/* The weekdays of a series, see `slotRowsOf` in `series.ts`: seven small toggles on one line, grey, a picked
-   one light on the calm grey of what is picked, lighter under the pointer, as far apart as the parts of a time */
+/* The weekdays of a series, see `slotRowsOf` in `series.ts`: seven quiet toggles on one line, plain grey text,
+   a picked one light on the calm grey of what is picked, in the round corners of a chip, lighter under the pointer,
+   each as wide as the widest, so the bar stands as even as a row of chips */
 .series-weekdays {
     display: inline-flex;
     flex-wrap: wrap;
+    align-self: flex-start;
     gap: 0.25rem;
+    margin-left: -0.5rem;
 }
 
 .series-weekday {
-    padding: 0.0625rem 0.375rem;
+    min-width: 2.75rem;
+    padding: 0.125rem 0.5rem;
     border: 0;
-    border-radius: var(--radius);
+    border-radius: var(--chip-radius);
     background: none;
     color: var(--text-muted);
     font: inherit;
