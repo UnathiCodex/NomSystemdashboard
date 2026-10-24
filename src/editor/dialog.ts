@@ -9,7 +9,8 @@
  * The dialog, its HTML from `../day/day.html`, its code and its look come into the page only the first time it opens,
  * so the scripts load no calendar before.
  *
- * - `../day/day.html?raw`: Html of the day as text, of which the dialogs `#entry` and `#series`.
+ * - `../day/day.html?raw`: Html of the day as text, of which the dialogs `#entry`, `#series` and the still copy
+ *   below a group, `#series-under`.
  * - `../day/categories.ts`: Starts the dialog and opens it.
  * - `../day/times.ts`: Starts the fields of the times of the dialog, as the day view starts them.
  * - `../reader.ts`: Asks the reader for an entry of the log.
@@ -68,7 +69,8 @@ async function dialogStart(): Promise<Dialog> {
     const calendar: FullCalendar.Calendar = new full.Calendar(document.createElement("div"),
         { plugins: [timeGrid.default], initialView: "timeGridDay" });
     const day: Document = new DOMParser().parseFromString(html, "text/html");
-    document.body.append(day.getElementById("entry") as HTMLElement, day.getElementById("series") as HTMLElement);
+    document.body.append(...["entry", "series", "series-under"]
+        .map((id: string): HTMLElement => day.getElementById(id) as HTMLElement));
     categories.categoriesStart(calendar);
     timesStart();
     return { categories: categories, calendar: calendar };

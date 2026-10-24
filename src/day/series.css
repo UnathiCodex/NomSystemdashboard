@@ -470,8 +470,7 @@
    that makes a new one side by side, as the type and its plus beside the skill of a summary, the plus as far from
    the menu as that plus from the skill, see `.panel-pair .picker-line.plus-quiet` in `day.css` */
 .series-group-pick {
-    display: inline-flex;
-    align-items: baseline;
+    display: contents;
 }
 
 /* The semester and the group beside it, the semester only as wide as its value, a middle dot between them as between
@@ -481,10 +480,6 @@
    a skill; the field of the name of a group with its grey line below it */
 .panel-pair.series-semester > .picker:first-child .picker-head {
     min-width: 0;
-}
-
-.panel-pair.series-semester > .series-group-pick:not(:has(.group-name)) {
-    margin-inline-start: 0.375rem;
 }
 
 .panel-pair.series-semester > :is(.series-group-pick:has(.group-name), .series-group-part)::before {
@@ -503,7 +498,18 @@
 }
 
 .series-group-pick > .plus-quiet {
+    align-self: center;
     margin-inline-start: 0.375rem;
-    padding-inline: 0.25rem;
-    translate: 0 0.15em;
+    padding: 0 0.25rem;
+    font: inherit;
+}
+
+/* My series below the form of one of its groups, a still copy, see `groupFrom` in `series.ts`: where the dialog
+   stands, as large, dimmed with the page by the dialog of the group over it, which shows on top */
+#series-under {
+    position: fixed;
+    inset: 0;
+    max-height: calc(100dvh - 2 * var(--gap));
+    margin: auto;
+    overflow: hidden;
 }
