@@ -13,13 +13,15 @@
  * The standard address of a name of `With` is made here, beside who I was with, see {@link standardAddressOf}.
  *
  * - `../search.ts`: Writes a name without accents for its standard address in `With`.
- * - `./series.ts`: The days of a series and the boxes it makes, for the type checker only.
+ * - `../persons.ts`: Gives a name of `Persons.md` in the order it is spoken, for its standard address in `With`.
+ * - `./series.ts`: The days of a series, the states of its boxes and the boxes it makes, for the type checker only.
  * - `fullcalendar`: Calendar that shows the log.
  */
 
 import { searchTextOf } from "../search.ts";
+import { spokenOf } from "../persons.ts";
 
-import type { Days, Planned } from "./series.ts";
+import type { Days, Planned, States } from "./series.ts";
 import type { Calendar } from "fullcalendar";
 
 
@@ -27,7 +29,8 @@ import type { Calendar } from "fullcalendar";
  * A person or a group I was with, one `ATTENDEE` of an entry or a box,
  * like `ATTENDEE;CN=Sophale:mailto:sophale@invalid`.
  *
- * - `name`: Its name, like `Sophale` or `Socials`, without comma.
+ * - `name`: Its name, like `Sophale` or `Socials`, a person of `Persons.md` as it names it, like `Bichler, Martin`,
+ *   without `;`.
  * - `address`: Its address without `mailto:`, like `sophale@invalid`, which reaches nobody, or a real one I typed.
  */
 export type Attendee = {
@@ -130,19 +133,21 @@ export type BoxFields = Partial<Online> & {
 
 
 /**
- * Gives the standard address of a name of `With`: the name in small letters, ä, ö, ü and ß as ae, oe, ue and ss,
+ * Gives the standard address of a name of `With`: the name in the order it is spoken, a person of `Persons.md`
+ * `Vorname Nachname`, see `spokenOf` in `../persons.ts`, so a person has one address in either order of its name,
+ * in small letters, ä, ö, ü and ß as ae, oe, ue and ss,
  * every other letter with an accent plainly, like é as e, see `searchTextOf` in `../search.ts`, every other character
  * but a–z and 0–9 a dot, like a space, never two in a row and none at either end, then `@invalid`, the ending
- * reserved for addresses that never work, so nothing reaches anybody, like `herr.mueller@invalid` of `Herr Müller`
- * and `jose.garcia@invalid` of `José García`.
+ * reserved for addresses that never work, so nothing reaches anybody, like `herr.mueller@invalid` of `Herr Müller`,
+ * `jose.garcia@invalid` of `José García` and `philip.zimmer@invalid` of `Zimmer, Philip`.
  * - `local`: The part before `@`.
  *
  * @param name - Name, like `Herr Müller`
  * @returns Address, like `herr.mueller@invalid`
  */
 export function standardAddressOf(name: string): string {
-    const local: string = searchTextOf(name.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue")
-        .replace(/ß/g, "ss")).replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
+    const local: string = searchTextOf(spokenOf(name).toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe")
+        .replace(/ü/g, "ue").replace(/ß/g, "ss")).replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
     return `${local}@invalid`;
 }
 
@@ -306,23 +311,26 @@ export async function boxAdd(fields: BoxFields): Promise<string> {
 }
 
 /**
- * Adds a new box to the plan once per date of its weekly days, as the row `Repeat` of its dialog gives them,
- * see `repeatApply` in `reader/course.ts`, or only tells what that would make, for the preview of the dialog;
+ * Adds a new box to the plan once per date of its weekly days, as the dialog of a series gives them for a box repeated
+ * by its row `Series`, see `seriesRepeat` in `series.ts` and `repeatApply` in `reader/course.ts`, or only tells what
+ * that would make, for the preview of the dialog;
  * the reader refuses it with 409 for a series of a type that has a box in its semester already.
  * - `response`: Answer of the reader.
  *
  * @param fields - Fields of the box, as of one made once; each date sets its own day, time and length
- * @param days - Its days with their times, its extras, its first and last day and the days it leaves out between them
+ * @param days - Its days with their times, its extras, its first and last day and the dates with times of their own
+ * @param states - The states I gave its boxes, by their days, like a lecture cancelled, see `States` in `series.ts`
  * @param dry - Whether only to tell what it would make, writing nothing
  * @returns The boxes it makes, by their days, `null` when the reader refuses it since its series is there already
  * @throws {Error} - When the reader does not take it for another reason
  */
-export async function boxRepeat(fields: BoxFields, days: Days, dry: boolean): Promise<Planned[] | null> {
+export async function boxRepeat(fields: BoxFields, days: Days, states: States,
+                                dry: boolean): Promise<Planned[] | null> {
     const response: Response = await fetch("/api/day/repeat", {
         method: "POST",
         body: JSON.stringify({
             box: boxBodyOf(fields), slots: days.slots, extras: days.extras, first: days.first, last: days.last,
-            excepts: days.excepts, dry: dry,
+            times: days.times, states: states, dry: dry,
         }),
     });
     if (response.status === 409)
@@ -354,14 +362,13 @@ export async function boxDelete(id: string): Promise<void> {
 }
 
 /**
- * Pushes an open box to the next day, or takes its last push back, putting it back where it stood before.
+ * Pushes an open box to the next day, one whose day is over to tomorrow.
  *
  * @param id - Identifier of the box
- * @param pushed - Whether to push it, else to take its last push back
  * @throws {Error} - When the reader does not take it
  */
-export async function boxPush(id: string, pushed: boolean): Promise<void> {
-    await requestSend("POST", "/api/day/pushed", { box: id, pushed: pushed });
+export async function boxPush(id: string): Promise<void> {
+    await requestSend("POST", "/api/day/pushed", { box: id });
 }
 
 /**

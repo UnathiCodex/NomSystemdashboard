@@ -1,12 +1,13 @@
-/* Month to pick a day from: its days, the shown day in the calm grey of what is picked and today in bold, and above
+/* Month to pick a day from: its days, the shown day in the calm grey of what is picked and today framed, and above
    them its month and year at the left and its arrows at the right; on a phone its days a finger high */
-/* Days of the month with their number in the middle in the size of the page, a grey under the pointer,
-   those of the months before and after grey; the shown day in the calm grey of what is picked, today in bold;
-   below the number the places of entries, which the month has none of, take no room, against the theme,
-   so the number stands in the middle from top to bottom too */
+/* Days of the month with their number in the middle in the size of the page, a grey under the pointer, softly as
+   every hover, see `--hover-in` in `../variants.css`, those of the months before and after grey; the shown day in the
+   calm grey of what is picked, today framed by a calm line and in bold; below the number the places of entries, which the month has none of,
+   take no room, against the theme, so the number stands in the middle from top to bottom too */
 .month-day {
     justify-content: center;
     cursor: pointer;
+    transition: background-color var(--hover-out);
 }
 
 .month-day > :not(.month-top) {
@@ -15,6 +16,7 @@
 
 .month-day:hover {
     background: var(--fill);
+    transition: background-color var(--hover-in);
 }
 
 .month-other {
@@ -33,7 +35,14 @@
     font-size: var(--text-size);
 }
 
+/* Today: a calm line around its whole cell, as large as the shown day's grey, its number in bold, without the small
+   grey square the theme puts behind the number of today */
+.month-day[aria-current="date"] {
+    box-shadow: inset 0 0 0 1px var(--text-muted);
+}
+
 .month-day[aria-current="date"] .month-number {
+    background: none;
     font-weight: 700;
 }
 

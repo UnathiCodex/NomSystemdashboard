@@ -1,15 +1,18 @@
-/* Boxes of the plan: each its lines and at their right its buttons behind one `⋯`, or its state once no longer open,
-   on a card filled in soft grey, above them the birthdays and holidays of the day, among them those carried along
-   to today */
+/* Boxes of the plan: each its lines and at their right its actions as small icon buttons, or its state once no longer
+   open, on a card filled in soft grey, above them the birthdays and holidays of the day, among them those carried
+   along to today */
 /* Boxes of the plan one below the other, a little apart, so the plan looks airy, filling the height above its +
    and scrolling alone when they are many; their scrollbar in the middle of the gap to the log, not against them,
    half the gap and half the 6 px of the bar further out, see `base.css`, its room always kept, so they keep
-   the whole width of the plan, as wide as my gratitude below them, with the bar or without */
+   the whole width of the plan, as wide as my gratitude below them, with the bar or without; one space between
+   its boxes, between the lines of a box and around the line of a section, `--plan-space`, so those never differ;
+   only the air around the lines inside a box is larger */
 .plan-boxes {
+    --plan-space: 0.5rem;
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--plan-space);
     min-height: 0;
     margin-right: calc(var(--gap) / -2 - 3px);
     padding-right: calc(var(--gap) / 2 - 3px);
@@ -27,7 +30,8 @@
    an appointment: its name white and bold as what a box is, and beside it, after the middle dot, my gift idea
    in the grey of a time, ending in `…` where the line is too narrow, see `occasionsOf` in `boxes.ts`;
    a click anywhere on it opens its gift idea, and one without an idea shows the gift after its name under
-   the pointer, as high as a letter, its middle on the middle of the letters, like the arrow of a route */
+   the pointer, softly as every hover, see `--hover-in` in `../variants.css`, as high as a letter, its middle on the
+   middle of the letters, like the arrow of a route */
 .occasion {
     cursor: pointer;
 }
@@ -38,7 +42,8 @@
 
 .occasion-hint {
     margin-left: 0.375em;
-    visibility: hidden;
+    opacity: 0;
+    transition: opacity var(--hover-out);
 }
 
 .occasion-hint svg.lucide {
@@ -48,24 +53,25 @@
 }
 
 .occasion:hover .occasion-hint {
-    visibility: visible;
+    opacity: 1;
+    transition: opacity var(--hover-in);
 }
 
-/* A box in one grid, on the computer as on a phone: what it is on its first line and at the right of it its `⋯` or its
-   state, on the same line, so the button takes no row of its own, and its other lines below over the whole width,
-   under the button too; a card filled in the soft grey of a card without a frame, with round corners, like the cards
+/* A box in one grid, on the computer as on a phone: what it is on its first line, its other lines below, and at their
+   right its actions or its state in a column of their own beside its first two lines, so the buttons take no row of
+   their own, every line ending before that column; a card filled in the soft grey of a card without a frame, with round corners, like the cards
    of the phone, with the same air on all four sides of its lines, so the plan looks as real as the log, and its lines
    in its middle, see `.box-what`; an open box as bright on a day that is over as on today; an open box is grabbed
-   to drag it into the log; all its lines in the one size of an entry of the log, `--day-text` */
+   to drag it into the log; all its lines in one size, as large as an entry of the log */
 .box {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.625rem 0.75rem;
+    grid-template-columns: minmax(0, 1fr) 7rem;
+    gap: var(--plan-space) 0.75rem;
     padding: 0.9375rem;
     border: 1px solid transparent;
     border-radius: var(--radius);
     background: var(--fill);
-    font-size: var(--day-text);
+    font-size: 0.8125rem;
     cursor: pointer;
     line-height: 1.45;
 }
@@ -74,24 +80,25 @@
     cursor: grab;
 }
 
-/* Under a pointer that hovers, a box turns one grey lighter, fading in over 150 ms after 100 ms and back over 150 ms
-   as soon as the pointer leaves, as an entry of the log, so the plan answers the pointer as the log does; its state
-   and its button `⋯` have no ground of their own, so they lie on it, see `.box-state` and `.menu-more` in `menu.css` */
+/* Under a pointer that hovers, a box turns one grey lighter, softly as every hover, see `--hover-in`
+   in `../variants.css`, as an entry of the log, so the plan answers the pointer as the log does; its state
+   and its actions have no ground of their own, so they lie on it, see `.box-state` and `.box-actions` */
 @media (hover: hover) {
     .box {
-        transition: background-color 150ms;
+        transition: background-color var(--hover-out);
     }
 
     .box:hover {
         background: var(--fill-over);
-        transition: background-color 150ms 100ms;
+        transition: background-color var(--hover-in);
     }
 }
 
 /* Lines of a box: what it is on one white line, then grey its time and length, its place, its chapters
    and its documents; every line, and every part of one, ending in `…` where it is too long, like
-   `Skill: IN2028_BusinessAnalyticsMach…`, never on a second line, so a box keeps its few lines; its lines stand
-   in the grid themselves, a click on them, or anywhere on the box but its `⋯` or its state, changing the box */
+   `Skill: IN2028_BusinessAnalyticsMach…`, a document cut in its middle instead, see `middleCutPut` in `choices.ts`,
+   each whole as its tooltip, see `boxes.ts`, never on a second line, so a box keeps its few lines; its lines stand
+   in the grid themselves, a click on them, or anywhere on the box but its actions or its state, changing the box */
 .box-body {
     display: contents;
     cursor: pointer;
@@ -116,13 +123,13 @@
 
 .box-meta,
 .box-topics {
-    grid-column: 1 / -1;
+    grid-column: 1 / -2;
 }
 
 /* Grey line of a box, its time and after it its place, apart by the middle dot, on one line as in the log: the place
    giving way first, the time only where it alone is too long; both in the one grey of the page;
-   the chapters of a skill box below it alike, `.box-chapters`; on a phone each part on a line of its own, see the end
-   of this file */
+   the chapters of a skill box below it alike, `.box-chapters`; on a phone the same line, a part that does not fit
+   going whole onto the next, see the end of this file */
 .box-meta {
     display: flex;
     color: var(--text-muted);
@@ -156,23 +163,29 @@
     margin-top: 0.625rem;
 }
 
-/* State of a box no longer open, at its right in the place of `⋯`, see `stateOf` in `boxes.ts`: one small grey icon,
-   like the cross of a skipped box, as large as `⋯` and in its place, centred on the line of what the box is
-   like it, see `.box-actions` and `.menu-more` in `menu.css`; without frame or ground, so it lies on its box;
-   where a click takes it back, an icon button like `⋯`, see `.icon-button` in `../base.css` */
+/* State of a box no longer open, at its right in the place of its actions, see `stateOf` in `boxes.ts`: one small grey
+   icon, like the cross of a skipped box, where the last action stands, centred on the line of what the box is like
+   them, see `.box-actions`; without frame or ground, so it lies on its box; where a click takes it back, an icon
+   button like an action, see `.icon-button` in `../base.css` */
 .box-state {
     display: inline-flex;
     flex: none;
     align-items: center;
     justify-content: center;
-    width: 2.125rem;
+    width: 1.5625rem;
     height: 2rem;
     color: var(--text-muted);
 }
 
 .box-state svg.lucide {
-    width: 0.875rem;
-    height: 0.875rem;
+    width: 1.0625rem;
+    height: 1.0625rem;
+}
+
+/* Missed box, open while its day is over, see `boxElementOf` in `boxes.ts`: greyed as a box no longer open, its actions
+   still there, but `Move`, after the calm dashed circle `Missed` the list of a module shows too */
+.box-missed {
+    opacity: 0.55;
 }
 
 /* Done box: its lines as when it was open, only greyed, its what grey too */
@@ -189,11 +202,11 @@
     opacity: 0.55;
 }
 
-/* Name of a section of the plan above its boxes, like `University`: small and grey like the heads of plan and log,
+/* Name of a section of the plan above its boxes, like `Modules`: small and grey like the heads of plan and log,
    on a thin grey line over the whole width, the boxes of the section close below it, see `sectionOf` in `boxes.ts` */
 .plan-section {
-    margin: 0.25rem 0 0;
-    padding-top: 0.375rem;
+    margin: 0;
+    padding-top: var(--plan-space);
     border-top: 1px solid var(--line);
     font-size: var(--day-text);
     font-weight: 400;
@@ -204,33 +217,65 @@
     margin-top: 0;
 }
 
-/* Buttons of a box behind one plain button `⋯` at its right, see `menu.css`, on the computer as on a phone,
-   centred on the line of what the box is, as its state is: log, move, cancel and skip */
+/* Actions of an open box, see `actions.ts`, small icon buttons at its right in one row: log, move, cancel and
+   skip, packed together at the right, the same gap between them however many a box has; the last column of every
+   box as wide as four of them, so its lines are cut at one place in every box and every row of a list; compact,
+   a quarter rem apart; each an icon button, see `.icon-button` in `../base.css`, its icon as large as that of its
+   state and as wide, so the last one stands where the state stands, the same on the page of a module; on a phone one
+   button `⋯` in their place, as large as the state, see `menu.css` */
 .box-actions {
     display: flex;
+    justify-content: flex-end;
+    gap: 0.25rem;
 }
 
-/* `⋯` and the state of a box with their middle on the middle of the capitals of what the box is, taking no height,
-   half of their 2rem above and below, so its first line keeps the height of its capitals; as far out as their icon
-   is drawn, so the dots stand as far from the right edge of the box as its lines from its left edge: the 0.625rem
-   beside the icon in its button and the little room inside the icon beyond its dots, 0.75rem in all */
+.box-action {
+    width: 1.5625rem;
+    height: 1.5rem;
+}
+
+.box-action svg.lucide {
+    width: 1.0625rem;
+    height: 1.0625rem;
+}
+
+/* The actions and the state of a box in its last column, beside all its lines, as many as `--box-lines` says,
+   see `boxElementOf` in `boxes.ts`, with their middle on the middle of the box, also of one with three lines or more,
+   like a skill box with its chapters, taking no more height than they, reaching into the air above and below them,
+   so its lines keep the height of their capitals; so far out that the last icon stands about as far from the right
+   edge of the box as its lines from its left edge, the quarter rem beside the icon in its button reaching into the air
+   at the right */
 .box-actions,
 .box-state {
-    grid-row: 1;
-    grid-column: 2;
+    grid-row: 1 / span var(--box-lines, 1);
+    grid-column: -2;
     align-self: center;
-    margin-block: -1rem;
-    margin-right: -0.75rem;
+    justify-self: end;
+    margin-block: -0.625rem;
+    margin-right: -0.25rem;
 }
 
-/* Phone: a box as on the computer, its button `⋯` and its state a finger's width to hit, and its place
-   on a line of its own */
+.box-state {
+    margin-block: -1rem;
+}
+
+/* Phone: a box as on the computer, but its actions behind one button `⋯`, see `actions.ts`, it and its state
+   a finger's width to hit, and its place on a line of its own */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     /* The boxes on a phone over the whole width of the screen, without room for a scrollbar, which lies over them */
     .plan-boxes {
         margin-right: 0;
         padding-right: 0;
         scrollbar-gutter: auto;
+    }
+
+    /* Its last column on a phone only as wide as `⋯` or its state, since its actions stand in a menu there */
+    .box {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .box-actions {
+        display: flex;
     }
 
     /* The state of a box on a phone as it looks, but a finger's width to hit, as `⋯`: its own width and 0.5rem
@@ -249,14 +294,15 @@
         inset: -0.5rem 0;
     }
 
-    /* The place and the chapters of a box on a phone each on a line of its own below its time, without the dot,
-       ending in `…` like every line, as far apart as the lines of a box */
+    /* The grey line of a box on a phone as on the computer, its time, its place and its group on one line apart
+       by the middle dot, like `11:30 – 13:00 · 0509.EG.980 · Group 05`; a part that does not fit goes whole
+       onto the next line, never cut */
     .box-meta {
-        flex-direction: column;
-        gap: 0.625rem;
+        flex-wrap: wrap;
+        row-gap: 0.25rem;
     }
 
-    .box-meta > .entry-parted::before {
-        content: none;
+    .box-part.entry-parted {
+        flex: none;
     }
 }

@@ -26,6 +26,7 @@
     "fullcalendar": "^7.1.1",
     "fullcalendar-scheduler": "^7.1.1",
     "ical.js": "^2.2.1",
+    "jspreadsheet-ce": "^5.0.4",
     "lucide": "^1.55.0",
     "marked": "^18.1.0",
     "mathjax": "^4.1.3",

@@ -13,22 +13,27 @@
  * ### Modules
  * - `node:http`: Builds the server that answers the browser page
  * - `node:stream/consumers`: Reads a whole request body into one value
+ * - `node:stream/promises`: Hands a file on to the browser piece by piece as it is read
  * - `node:zlib`: Packs an answer as `gzip`, many times smaller
  * - `./day.ts`: Reads the log of a day and every entry of the log, adds, changes, moves and removes its entries, adds
  *   the meal of a cooking, logs a box of the plan at its real time and takes it back, and reads how long entries like
  *   a box really lasted
- * - `./boxes.ts`: Reads the plan of days as boxes with their birthdays and holidays, and the boxes carried along
- *   to a day, adds, changes and removes boxes, pushes them to the next day and drops them
+ * - `./boxes.ts`: Reads the plan of days as boxes with their birthdays and holidays, the boxes carried along
+ *   to a day and one box, adds, changes and removes boxes, pushes them to the next day and drops them
  * - `./course.ts`: Reads the course of a module, its boxes, its series and the groups of its tutorials, changes
- *   a series by its rule, makes a group mine, moves one week's tutorial to another group, picks one session of a group
- *   for its week, writes and removes groups, and adds a new box once per date of its weekly days
+ *   a series by its rule, makes a group mine, picks one session of a group for its week, writes and removes groups,
+ *   adds a new box once per date of its weekly days, and gives an exam its kind and its times
+ * - `./rules.ts`: Reads a plain series of the plan by its rule, like my sleep of every night, and writes it new
+ *   or whole
  * - `./gifts.ts`: Writes my gift idea for a birthday or holiday as its `DESCRIPTION` into `Birthdays.ics`
  *   or `Holidays.ics`
  * - `./note.ts`: Reads the daily notes, and writes my gratitude and my points about the day into them
  * - `./categories.ts`: Offers the categories with the values of their fields, and my places
- * - `./places.ts`: Adds a place with its address to `Places.md`, and changes one
- * - `./notes.ts`: Reads the modules of the semester, the notes and files of my modules and the links that lead nowhere,
- *   read only
+ * - `./places.ts`: Adds a place with its address to `Places.md`, changes its row, and changes one everywhere
+ * - `./persons.ts`: Reads the people I name from `Persons.md`, read only
+ * - `./notes.ts`: Reads every module for the menu of the scripts view, the notes, files and folders of my modules
+ *   and the links that lead nowhere, read only, streams a file of them, and makes a folder of a module on a click
+ *   on it
  * - `./edit.ts`: Writes a note of my modules as I edited it, at its place in `NomSkillingmodules`,
  *   and keeps the change as a diff
  * - `./files.ts`: Lists the files of my new system for the editor, reads one and writes a Markdown file back
@@ -53,22 +58,30 @@
 
 import { createServer } from "node:http";
 import { json } from "node:stream/consumers";
+import { pipeline } from "node:stream/promises";
 import { gzipSync } from "node:zlib";
 import {
     boxLog, boxUndo, dayEntriesRead, entryAdd, entryDelete, entryEdit, entryMove, entryNowRead, logAllRead,
     realMinutesRead,
 } from "./day.ts";
 import {
-    boxAdd, boxDelete, boxDrop, boxEdit, boxesCarried, boxesRead, boxPush, boxSubmit, boxUniversity, boxUnpush,
+    boxAdd, boxDelete, boxDrop, boxEdit, boxesCarried, boxesRead, boxFind, boxPush, boxSubmit, boxUniversity,
 } from "./boxes.ts";
 import {
-    courseRead, groupMine, groupPut, groupRemove, repeatApply, seriesApply, weekMove, weekPick,
+    courseRead, courseSeriesRemove, examSet, groupApply, groupMine, groupPut, groupRemove, repeatApply, seriesApply,
+    weekPick,
 } from "./course.ts";
 import { giftWrite } from "./gifts.ts";
 import { noteRead, notesStart, sectionsRead, sectionWrite } from "./note.ts";
 import { categoriesRead, wayEndRead } from "./categories.ts";
-import { placeAdd, placeChange, platformAdd, platformChange } from "./places.ts";
-import { brokenLinksRead, fileRead, linkedNoteRead, modulesRead } from "./notes.ts";
+import { placeAdd, placeChange, placeRename, placeStandardSet, platformAdd, platformChange } from "./places.ts";
+import { plainApply, plainRead, plainRemove } from "./rules.ts";
+import { personRename, personsRead } from "./persons.ts";
+import { attendeesRename } from "./calendar.ts";
+import { calendarRoot } from "./sources.ts";
+import {
+    brokenLinksRead, fileOpen, fileRead, folderMake, folderRead, linkedNoteRead, menuRead, moduleMake,
+} from "./notes.ts";
 import { noteWrite } from "./edit.ts";
 import { systemFileRead, systemFileWrite, treeRead } from "./files.ts";
 import {
@@ -94,12 +107,16 @@ import type { ViteDevServer } from "vite";
 import type { BoxLogged, EntryChange, EntryMoved, EntryNew } from "./day.ts";
 import type { BoxChange, BoxNew } from "./boxes.ts";
 import type { Attendee } from "./calendar.ts";
-import type { GroupNew, MineChange, PickChange, Planned, RepeatChange, SeriesChange, WeekChange } from "./course.ts";
+import type { PersonRenamed } from "./persons.ts";
+import type {
+    ExamChange, GroupChange, GroupNew, MineChange, PickChange, Planned, RepeatChange, SeriesChange,
+} from "./course.ts";
 import type { Gift } from "./gifts.ts";
+import type { PlainChange } from "./rules.ts";
 import type { SectionNew } from "./note.ts";
-import type { Place, PlaceChanged, Platform, PlatformChanged } from "./places.ts";
+import type { Place, PlaceChanged, PlaceRenamed, Platform, PlatformChanged } from "./places.ts";
 import type { DeviceReport } from "./devices.ts";
-import type { NotesFile } from "./notes.ts";
+import type { NotesFile, NotesStream } from "./notes.ts";
 import type { NoteChange } from "./edit.ts";
 import type { AttemptNew, RoundNew, SkillEntryChange, SkillEntryNew } from "./skill.ts";
 import type { Dish, Food, FoodChanged } from "./food.ts";
@@ -148,6 +165,30 @@ function fileSend(response: ServerResponse, file: NotesFile, name: string): void
 }
 
 /**
+ * Streams a file of my modules as it lies on the disk, like a PDF of a folder, with the headers of {@link fileSend}:
+ * sends it piece by piece as it is read, so a large file, like a book as PDF, never lies in the reader's memory whole.
+ * - {@link pipeline}: Hands each piece on to the browser as it is read, and closes the file once it is sent or the
+ *   browser went away, like from a tab closed before its PDF loaded, which is no error.
+ *
+ * @param response - Answer to the browser
+ * @param file - File with its content type, opened to be read
+ * @param name - Name of the file, the last part of its path
+ * @throws {Error} - When the file cannot be read to its end
+ */
+async function fileStream(response: ServerResponse, file: NotesStream, name: string): Promise<void> {
+    response.setHeader("Content-Type", file.type);
+    response.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(name)}`);
+    response.setHeader("Cache-Control", "no-store");
+    response.setHeader("Content-Security-Policy", "script-src 'none'");
+    try {
+        await pipeline(file.content, response);
+    } catch (error: unknown) {
+        if ((error as NodeJS.ErrnoException).code !== "ERR_STREAM_PREMATURE_CLOSE")
+            throw error;
+    }
+}
+
+/**
  * Handles a request by its method and its address.
  * The range of the log comes as FullCalendar sends it, `start` and `end` with offset; the range of the plan as days.
  * - `GET /api/day/log?start=…&end=…`: Sends log entries of the range.
@@ -157,12 +198,17 @@ function fileSend(response: ServerResponse, file: NotesFile, name: string): void
  *   like `start=2026-10-13&end=2026-10-14` for one day: its birthdays and holidays with my gift ideas, and its boxes;
  *   first writes the chapters due today into the plan of today, see `suggestions.ts`, as `/api/day/carried`
  *   and `/api/skill/tasks` do too.
- * - `GET /api/day/carried?date=…`: Sends the boxes of the days before the date that are neither done nor cancelled.
+ * - `GET /api/day/carried?date=…`: Sends the boxes whose deadline lies on a day before the date and that are open,
+ *   see `boxesCarried` in `boxes.ts`.
+ * - `GET /api/day/box?id=…`: Sends the box of the identifier with its state, like the box a log entry was logged
+ *   from, whose series the pencil of its summary opens, see `src/day/categories.ts`.
  * - `GET /api/day/note?date=…`: Sends the daily note of the date, or `null` for a day without note.
  * - `GET /api/day/sections?date=…`: Sends my gratitude and my points about the day of the daily note of the date
  *   as texts, empty ones for a day without note.
  * - `GET /api/day/categories?now=…`: Sends the categories with the values of their fields.
  * - `GET /api/day/way-end?before=…`: Sends where the last way before the instant ended.
+ * - `GET /api/day/plain?id=…`: Sends the plain series of the `UID`, its rule, times and texts, see `plainRead`
+ *   in `rules.ts`.
  * - `GET /api/day/trackers?date=…`: Sends my sleep, my glasses of water, my neck sessions and what my meals gave
  *   on the date, with my goals.
  * - `GET /api/day/real?category=…&title=…&module=…&type=…`: Sends the minutes the last entries like a box
@@ -177,17 +223,20 @@ function fileSend(response: ServerResponse, file: NotesFile, name: string): void
  * - `DELETE /api/day/log?id=…`: Removes entry of the identifier.
  * - `POST /api/day/boxes`: Adds box of the body and sends its identifier.
  * - `PATCH /api/day/boxes`: Changes box of the body.
- * - `DELETE /api/day/boxes?id=…`: Removes box of the identifier.
- * - `POST /api/day/repeat`: Adds box of the body once per date of its weekly days, as the row `Repeat` of its dialog
- *   gives them, and sends the boxes it makes, see `repeatApply` in `course.ts`; refused with 409 for a series of a type
- *   that has a box in its semester already; when the body says `dry: true` only sends what it would make, writing
- *   nothing, for the preview of the dialog.
+ * - `DELETE /api/day/boxes?id=…`: Removes box of the identifier, of one day of a series that day alone.
+ * - `DELETE /api/day/plain?id=…`: Removes the plain series of the `UID` whole, see `plainRemove` in `rules.ts`.
+ * - `POST /api/day/repeat`: Adds box of the body once per date of its weekly days, as the dialog of a series gives them
+ *   for a box repeated by the row `Repeat` of its dialog, and sends the boxes it makes, see `repeatApply`
+ *   in `course.ts`; refused with 409 for a series of a type that has a box in its semester already; when the body says
+ *   `dry: true` only sends what it would make, writing nothing, for the preview of the dialog.
+ * - `POST /api/day/plain`: Writes the plain series of the body, new, whole, or from today on when the body says
+ *   `ahead: true`, and sends the boxes it makes, see `plainApply` in `rules.ts`; when the body says `dry: true` only
+ *   sends them, writing nothing, for the preview of the dialog.
  * - `POST /api/day/logged`: Logs the box named in the body at the start and end in the body,
  *   and sends the identifier of the log entry.
  * - `POST /api/day/undone`: Takes the done box named in the body back to open, removing the log entry from it
  *   unless it holds what I added since.
- * - `POST /api/day/pushed`: Pushes the box named in the body to the next day, or takes its last push back
- *   when the body says `pushed: false`.
+ * - `POST /api/day/pushed`: Pushes the box named in the body to the next day.
  * - `POST /api/day/dropped`: Drops the box named in the body, or takes it back when the body says `dropped: false`.
  * - `POST /api/day/university`: Marks the box named in the body cancelled by the university, renumbering its series,
  *   or takes it back when the body says `cancelled: false`.
@@ -200,9 +249,18 @@ function fileSend(response: ServerResponse, file: NotesFile, name: string): void
  *   and sends it as written.
  * - `PATCH /api/day/places`: Changes the place of the old name of the body in `Places.md`, or the room in `Rooms.md`,
  *   and nothing else, and sends it as written.
+ * - `POST /api/day/renamed`: Changes the place of the old name of the body everywhere to the name, address and link
+ *   of the body, its row in `Places.md` or `Rooms.md` and every line of my calendars that names it, see `placeRename`
+ *   in `places.ts`; when the body says `dry: true` only checks it, writing nothing.
+ * - `POST /api/day/standard`: Makes the place named in the body my default place, `★` in `Places.md` or `Rooms.md`,
+ *   none for an empty name, see `placeStandardSet` in `places.ts`.
  * - `POST /api/day/online`: Adds the platform named in the body to `Online.md` and sends it as written.
  * - `PATCH /api/day/online`: Changes the name and the provider of the platform of the old name of the body
  *   in `Online.md`, and sends it as written.
+ * - `GET /api/persons`: Sends the people of `Persons.md`, each with its name, its link and its title.
+ * - `POST /api/persons/renamed`: Changes the person of the old name of the body everywhere to the name, mail and link
+ *   of the body, its row in `Persons.md`, the columns that name people and every person of my calendars,
+ *   see `personRename` in `persons.ts`; when the body says `dry: true` only checks it, writing nothing.
  * - `GET /api/course/module?module=…&semester=…`: Sends the course of the module of the folder, like
  *   `IN2028_BusinessAnalyticsMachineLearning`, or of the code, like `IN2028`, in the semester, like `2026W`, that
  *   of today while none is named: its boxes, its series, the groups of its tutorials, the folders of its material
@@ -212,16 +270,29 @@ function fileSend(response: ServerResponse, file: NotesFile, name: string): void
  *   make, writing nothing, for the preview of the form.
  * - `POST /api/course/mine`: Makes the group of the body mine, my boxes of its type from its next session on going
  *   to it, and sends the boxes of the series after it; when the body says `dry: true` only sends what that would make.
- * - `POST /api/course/week`: Moves the box of the body to the session of the group of the body in its week.
  * - `POST /api/course/pick`: Picks the session of the body, its module, type, group and start, for its week, the box
  *   of that week going to it, see `weekPick` in `course.ts`.
- * - `PUT /api/course/groups`: Writes the group of the body into the file of the groups of its module, in place of one
+ * - `POST /api/course/exam`: Gives the exam of the body the kind and the times of the body, see `examSet`
+ *   in `course.ts`.
+ * - `PUT /api/course/groups`: Writes the group of the body into the plan of its module, in place of one
  *   of the same type, group and semester, and sends its identifier.
- * - `DELETE /api/course/groups?module=…&type=…&group=…&semester=…`: Removes the group from the file of the groups
- *   of the module.
- * - `GET /api/notes/modules`: Sends the modules of the semester with their chapters and notes.
+ * - `POST /api/course/groups`: Makes or changes the group of the body as the form of a series typed it, its slots,
+ *   place, tutors, weeks and the dates I cancelled, and sends its sessions after it, see `groupApply` in `course.ts`;
+ *   when the body says `dry: true` only sends what it would make, writing nothing, for the preview of the form.
+ * - `DELETE /api/course/groups?module=…&type=…&group=…&semester=…`: Removes the group from the plan of the module.
+ * - `DELETE /api/course/series?module=…&type=…&semester=…`: Removes my series of the type from the plan of the module,
+ *   but its boxes done, and sends how many of them stay, see `courseSeriesRemove` in `course.ts`.
+ * - `GET /api/notes/modules`: Sends every module with its chapters and notes and the semester it stands under,
+ *   in the order of the menu of the scripts view, those of the semester first.
  * - `GET /api/notes/note?path=…`: Sends a note with the files its links lead to.
  * - `GET /api/notes/file?path=…`: Sends a file of my modules, like an image of a note.
+ * - `GET /api/notes/stream?path=…`: Streams a file of my modules, like a PDF of a folder, piece by piece as it is
+ *   read, read only, see `fileOpen` in `notes.ts`.
+ * - `GET /api/notes/folder?path=…`: Sends the folders and files of a folder of my modules, for its view.
+ * - `POST /api/notes/folder`: Makes the folder of the body in the folder of its module, with the folders on the way
+ *   to it that are missing, see `folderMake` in `notes.ts`; nothing for one that is there.
+ * - `POST /api/notes/module`: Makes the empty folder of the new module named in the body in `NomSkillingmodules`,
+ *   see `moduleMake` in `notes.ts`.
  * - `GET /api/notes/broken`: Sends the links that lead nowhere in the notes of the semester, each with its note.
  * - `PUT /api/edit/note`: Writes note of my modules of the body, its change kept as a diff,
  *   refused with 409 when its file changed since the editor read it.
@@ -314,6 +385,9 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
         suggestionsWrite();
         responseSend(response, 200, boxesCarried(date));
 
+    } else if (request.method === "GET" && url.pathname === "/api/day/box") {
+        responseSend(response, 200, boxFind(url.searchParams.get("id") ?? "")[2]);
+
     } else if (request.method === "GET" && url.pathname === "/api/day/note") {
         responseSend(response, 200, noteRead(date));
 
@@ -325,6 +399,9 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
 
     } else if (request.method === "GET" && url.pathname === "/api/day/way-end") {
         responseSend(response, 200, wayEndRead(url.searchParams.get("before") ?? ""));
+
+    } else if (request.method === "GET" && url.pathname === "/api/day/plain") {
+        responseSend(response, 200, plainRead(url.searchParams.get("id") ?? ""));
 
     } else if (request.method === "GET" && url.pathname === "/api/day/trackers") {
         responseSend(response, 200, trackersRead(date));
@@ -369,6 +446,13 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
         const planned: Planned[] | null = repeatApply(await json(request) as RepeatChange);
         responseSend(response, planned === null ? 409 : 200, planned);
 
+    } else if (request.method === "POST" && url.pathname === "/api/day/plain") {
+        responseSend(response, 200, plainApply(await json(request) as PlainChange));
+
+    } else if (request.method === "DELETE" && url.pathname === "/api/day/plain") {
+        plainRemove(url.searchParams.get("id") ?? "");
+        responseSend(response, 200, null);
+
     } else if (request.method === "POST" && url.pathname === "/api/day/logged") {
         const id: string = boxLog(await json(request) as BoxLogged);
         entryShare(id);
@@ -379,11 +463,7 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
         responseSend(response, 200, null);
 
     } else if (request.method === "POST" && url.pathname === "/api/day/pushed") {
-        const pushed: { box: string; pushed?: boolean } = await json(request) as { box: string; pushed?: boolean };
-        if (pushed.pushed === false)
-            boxUnpush(pushed.box);
-        else
-            boxPush(pushed.box);
+        boxPush((await json(request) as { box: string }).box);
         responseSend(response, 200, null);
 
     } else if (request.method === "POST" && url.pathname === "/api/day/dropped") {
@@ -420,6 +500,16 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
         listShare({ call: "placeChange", with: sent });
         responseSend(response, 200, place);
 
+    } else if (request.method === "POST" && url.pathname === "/api/day/renamed") {
+        const changed: PlaceChanged | null = placeRename(await json(request) as PlaceRenamed);
+        if (changed !== null)
+            listShare({ call: "placeChange", with: changed });
+        responseSend(response, 200, null);
+
+    } else if (request.method === "POST" && url.pathname === "/api/day/standard") {
+        placeStandardSet(String((await json(request) as { name?: string }).name ?? ""));
+        responseSend(response, 200, null);
+
     } else if (request.method === "POST" && url.pathname === "/api/day/online") {
         const platform: Platform = platformAdd(await json(request) as Platform);
         listShare({ call: "platformAdd", with: platform });
@@ -431,6 +521,15 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
         listShare({ call: "platformChange", with: sent });
         responseSend(response, 200, platform);
 
+    } else if (request.method === "GET" && url.pathname === "/api/persons") {
+        responseSend(response, 200, personsRead());
+
+    } else if (request.method === "POST" && url.pathname === "/api/persons/renamed") {
+        personRename(await json(request) as PersonRenamed, (old: string, name: string, mail: string,
+                                                             dry: boolean): number =>
+            attendeesRename([{ folder: calendarRoot, ending: ".ics" }], old, name, mail, dry));
+        responseSend(response, 200, null);
+
     } else if (request.method === "GET" && url.pathname === "/api/course/module") {
         responseSend(response, 200, courseRead(url.searchParams.get("module") ?? "",
             url.searchParams.get("semester") ?? ""));
@@ -441,16 +540,19 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
     } else if (request.method === "POST" && url.pathname === "/api/course/mine") {
         responseSend(response, 200, groupMine(await json(request) as MineChange));
 
-    } else if (request.method === "POST" && url.pathname === "/api/course/week") {
-        weekMove(await json(request) as WeekChange);
-        responseSend(response, 200, null);
-
     } else if (request.method === "POST" && url.pathname === "/api/course/pick") {
         weekPick(await json(request) as PickChange);
         responseSend(response, 200, null);
 
+    } else if (request.method === "POST" && url.pathname === "/api/course/exam") {
+        examSet(await json(request) as ExamChange);
+        responseSend(response, 200, null);
+
     } else if (request.method === "PUT" && url.pathname === "/api/course/groups") {
         responseSend(response, 200, groupPut(await json(request) as GroupNew));
+
+    } else if (request.method === "POST" && url.pathname === "/api/course/groups") {
+        responseSend(response, 200, groupApply(await json(request) as GroupChange));
 
     } else if (request.method === "DELETE" && url.pathname === "/api/course/groups") {
         groupRemove({
@@ -458,6 +560,12 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
             group: url.searchParams.get("group") ?? "", semester: url.searchParams.get("semester") ?? "",
         });
         responseSend(response, 200, null);
+
+    } else if (request.method === "DELETE" && url.pathname === "/api/course/series") {
+        responseSend(response, 200, courseSeriesRemove({
+            module: url.searchParams.get("module") ?? "", type: url.searchParams.get("type") ?? "",
+            semester: url.searchParams.get("semester") ?? "",
+        }));
 
     } else if (request.method === "POST" && url.pathname === "/api/devices") {
         await deviceReport(await json(request) as DeviceReport, String(request.headers["x-forwarded-for"] ?? ""));
@@ -467,13 +575,27 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
         changesSend(response);
 
     } else if (request.method === "GET" && url.pathname === "/api/notes/modules") {
-        responseSend(response, 200, modulesRead());
+        responseSend(response, 200, menuRead());
 
     } else if (request.method === "GET" && url.pathname === "/api/notes/note") {
         responseSend(response, 200, linkedNoteRead(path));
 
     } else if (request.method === "GET" && url.pathname === "/api/notes/file") {
         fileSend(response, fileRead(path), path.split("/").at(-1) ?? path);
+
+    } else if (request.method === "GET" && url.pathname === "/api/notes/stream") {
+        await fileStream(response, fileOpen(path), path.split("/").at(-1) ?? path);
+
+    } else if (request.method === "GET" && url.pathname === "/api/notes/folder") {
+        responseSend(response, 200, folderRead(path));
+
+    } else if (request.method === "POST" && url.pathname === "/api/notes/folder") {
+        folderMake((await json(request) as { path: string }).path);
+        responseSend(response, 200, null);
+
+    } else if (request.method === "POST" && url.pathname === "/api/notes/module") {
+        moduleMake((await json(request) as { folder: string }).folder);
+        responseSend(response, 200, null);
 
     } else if (request.method === "GET" && url.pathname === "/api/notes/broken") {
         responseSend(response, 200, brokenLinksRead());

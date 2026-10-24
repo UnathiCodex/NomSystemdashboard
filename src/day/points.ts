@@ -51,7 +51,7 @@ const extensions: Extension[] = [
     keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
     EditorView.lineWrapping,
     EditorView.darkTheme.of(true),
-    livePreview({}),
+    livePreview({}, ""),
 ];
 
 

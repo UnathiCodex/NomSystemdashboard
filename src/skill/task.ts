@@ -45,7 +45,7 @@ import type { IconNode } from "lucide";
  *
  * @param task - Task
  * @param today - Today like `2026-10-10`
- * @returns Text like `Due today`, also for a task due earlier, `Due Mon, 12.10.2026`, `New`, `Ready`, `Done`
+ * @returns Text like `Due today`, also for a task due earlier, `Due 12.10.2026 (Mon)`, `New`, `Ready`, `Done`
  *   or `Skipped: too easy`
  */
 export function stateTextOf(task: SkillTask, today: string): string {

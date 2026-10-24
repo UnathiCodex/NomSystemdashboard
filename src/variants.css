@@ -6,8 +6,10 @@
    the line at the left of indented parts, like the foods of a meal, 2 px and a little lighter than other
    lines, `--guide`, so it shows;
    notes in the greys of my Obsidian's dark theme with my accent #969696, a page of one width on every computer,
-   `--reading-width`, as wide as my laptop holds with clear room left and right of it, so I write on the same page
-   on the laptop and on the 4K monitor, in the middle with the same room on both sides, the titles
+   `--reading-width`, as wide as my laptop holds beside the tree, with at its left just the room of the `####` of a
+   heading, which the line of the cursor shows left of its text, and at its right that of the save button, see
+   `editor/editor.css`, so I write on the same page on the laptop and on the 4K monitor, in the middle where the
+   screen has room, the titles
    of callouts and the fold arrows of headings in Obsidian's grey of callout titles, `--reading-callout`;
    controls and lines sized for my 4K monitor: buttons and fields one control high,
    chips, small buttons and the rows of the menu one chip high, all with the text of controls and the space beside it,
@@ -32,13 +34,17 @@
    like behind the `⋯` of a box;
    a row of the tree under the pointer a grey below a card, `--row-over`, so it never looks like the note shown, which
    has the grey of a card;
+   hover soft everywhere, as on the entries of the log: what lights up under the pointer, its text, its ground or its
+   line, fades in over 150 ms after 100 ms, `--hover-in`, so passing over a list stays calm, and back over 150 ms
+   as soon as the pointer leaves, `--hover-out`, see `base.css`; on a screen without a pointer at once,
+   see below;
    the rail a bar of its own at the left edge of the screen, as VS Code's bar of activities, and everything of an
    area, framed controls like the arrows of a date and content without a frame like the plan of the day, the meals
    of a day or the cards of the tree, one step from it, `--side-room`, a gap and a half, as far as from the right
    edge of the screen, so a control and its content start in one line; the same in every view;
    plan and log in their own text, `--day-text`, three quarters of the root, so the one line of a short entry
-   of the log fills a quarter hour, whose label keeps `--slot-margin` above and below it, 0.4rem, so half an hour
-   is 1.8rem high and an hour holds two lines of an entry, on a phone as on the computer;
+   of the log fills a quarter hour, whose label keeps `--slot-margin` above and below it, 0.525rem, so half an hour
+   is 2.05rem high, holding one line of an entry in its middle, and every quarter hour more one line more, on a phone as on the computer;
    everything of an area half a gap from the top of the screen, `--top-room`, and the day as far from its bottom,
    so the plan keeps the room.
    Every size is in rem, the root font size, so that one size scales the whole page, also the time grid and the
@@ -58,6 +64,8 @@
     --fill-over: #303030;
     --row-over: #272727;
     --icon-over: color-mix(in srgb, var(--text-main) 8%, transparent);
+    --hover-in: 150ms 100ms;
+    --hover-out: 150ms;
     --chosen: #454545;
     --chosen-line: #5e5e5e;
     --log: #cfcfcf;
@@ -81,12 +89,12 @@
     --gap: 1rem;
     --side-room: calc(1.5 * var(--gap));
     --top-room: calc(var(--gap) / 2);
-    --slot-margin: 0.4rem;
+    --slot-margin: 0.525rem;
     --radius: 0.75rem;
     --chip-radius: 0.5rem;
     --note-width: 18rem;
     --tree-width: 23.75rem;
-    --reading-width: 45rem;
+    --reading-width: 45.5rem;
     color-scheme: dark;
 }
 
@@ -100,5 +108,13 @@
         font-size: 112.5%;
         --radius: 1rem;
         --chip-radius: 0.625rem;
+    }
+}
+
+/* A screen without a pointer, like a phone, shows what lights up at once, since a tap leaves its hover behind */
+@media (hover: none) {
+    :root {
+        --hover-in: 0s;
+        --hover-out: 0s;
     }
 }

@@ -24,11 +24,10 @@
  *   `gramsRead` in `reader/food.ts`, white like every fact, which I type over; the first time ever, they start empty,
  *   and I type my amount, like that of my chili; the cursor goes into the grams of what was picked, the first empty
  *   one first. An empty field counts nothing and is saved without grams; every amount is rounded and an estimate
- *   anyway, so none is marked as one. Enter in its grams opens the list again. A meal drawing from a cooking starts
+ *   anyway, so none is marked as one. Enter in its grams only confirms them, as in every field of the dialog,
+ *   see `enterTake` in `categories.ts`. A meal drawing from a cooking starts
  *   at the grams of the pot instead, see {@link drawnShow}.
- * A meal block has its own plus right after its name, which adds a food to it, from the same search without my meals;
- * Enter in the grams of one of its foods opens that search again, as Enter in those of a food beside the meals opens
- * the list of the row `Foods`.
+ * A meal block has its own plus right after its name, which adds a food to it, from the same search without my meals.
  * The dialog writes each food as a line `X-FOOD`: its name, brand and store, then its grams, empty for none,
  * and for a food of one of my meals the meal after them, like `Hackfleisch;Gut & Günstig;Edeka;125;Chili con Carne`
  * or `Weißbrot;Harry;Rewe;50`, so the log keeps what the meal held that day, whatever I change in `Meals.md` later;
@@ -47,8 +46,8 @@
  * the dialog itself takes no photo.
  *
  * - `./choices.ts`: Rows of the dialog, the lists that open as menus over it, and the picker of a cooking.
- * - `./times.ts`: Writes the day and time of a cooking.
- * - `../skill/attempts.ts`: Gives the day of an instant.
+ * - `./times.ts`: Writes the time of a cooking.
+ * - `../skill/attempts.ts`: Gives the day of an instant, and writes a day with its weekday.
  * - `../food/foods.ts`: Finds my foods, loads my meals and the grams I logged each food with last, sends a meal,
  *   writes amounts and the key of a food, and makes elements and buttons.
  * - `../food/meals.ts`: Finds my meals for a search, writes the name of a meal as the reader does, and kcal as the
@@ -60,9 +59,9 @@
  * - `lucide`: The icons of the plus and the pencil.
  */
 
-import { choicesOf, listOf, listOpen, rowOf, searchOf } from "./choices.ts";
-import { dateTextOf, timeOf } from "./times.ts";
-import { dayOf } from "../skill/attempts.ts";
+import { choicesOf, listOf, rowOf, searchOf } from "./choices.ts";
+import { timeOf } from "./times.ts";
+import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import {
     buttonOf, dishDelete, dishesLoad, dishSend, elementOf, foodsFind, gramsLoad, keyOf, portionGramsOf, summaryOf,
     unitOf,
@@ -169,9 +168,9 @@ export const foodName: string = "Food";
 export const cookName: string = "Cook";
 
 /**
- * Days before a meal whose cookings it may draw from, five, so no cooking I still eat from is ever left out.
+ * Days before a meal whose cookings it may draw from, three, since I eat nothing I cooked longer ago.
  */
-const cookingDays: number = 5;
+const cookingDays: number = 3;
 
 /**
  * The one grey line of a search of the dialog that finds nothing, like a barcode Open Food Facts does not know;
@@ -233,19 +232,9 @@ let picks: FoodPick[] = [];
 let summaryLine: HTMLElement = document.createElement("span");
 
 /**
- * The plus beside the name `Foods`, which opens the list.
- */
-let foodsLine: HTMLButtonElement = document.createElement("button");
-
-/**
  * Place of the blocks of the meals picked, then of the rows of the foods picked beside them.
  */
 let foodsRows: HTMLElement = document.createElement("div");
-
-/**
- * The search in the list of the row `Foods`, emptied as the list opens.
- */
-let foodsSearch: HTMLElement = document.createElement("div");
 
 /**
  * Closes the list of the row `Foods`.
@@ -412,10 +401,10 @@ function portionsOf(text: string, portion: number | null): string {
  * @param portion - Grams of the portion of the food, `null` for none kept
  * @param unit - Unit after the field, `g` or `ml`
  * @param typed - Takes the text typed
- * @returns The field with its unit, the text field itself, and what turns its portions into grams
+ * @returns The field with its unit, and the text field itself
  */
 function gramsFieldOf(value: string, name: string, portion: number | null, unit: string,
-                      typed: (text: string) => void): [HTMLElement, HTMLInputElement, () => void] {
+                      typed: (text: string) => void): [HTMLElement, HTMLInputElement] {
     const label: HTMLElement = elementOf("label", "meal-grams", "");
     const input: HTMLInputElement = document.createElement("input");
     const portions: () => void = (): void => {
@@ -439,18 +428,7 @@ function gramsFieldOf(value: string, name: string, portion: number | null, unit:
     });
     input.addEventListener("change", portions);
     label.append(input, ` ${unit}`);
-    return [label, input, portions];
-}
-
-/**
- * Tells whether the list of the row `Foods` is closed, see `listOpen` in `choices.ts`.
- * - `box`: The list, the menu holding the search.
- *
- * @returns Whether it is closed
- */
-function foodsClosed(): boolean {
-    const box: HTMLElement | null = foodsSearch.closest(".picker-box");
-    return box === null || !listOpen(box);
+    return [label, input];
 }
 
 /**
@@ -499,19 +477,17 @@ function foodTake(old: Food, written: Food): void {
  * @param pick - Food picked, changed as its grams are typed
  * @param typed - Comes once its grams are typed, after its kcal show anew
  * @param removed - Takes it out of the meal, on its `×`
- * @param again - Opens the search it came from again, on Enter in its grams
  * @param renewed - Shows the rows anew after a change of the food
  * @returns Row, and the food opened below it while open
  */
-function foodRowOf(pick: FoodPick, typed: () => void, removed: () => void, again: () => void,
-                   renewed: () => void): HTMLElement[] {
+function foodRowOf(pick: FoodPick, typed: () => void, removed: () => void, renewed: () => void): HTMLElement[] {
     const row: HTMLElement = elementOf("div", "meal-row", "");
     const food: Food | undefined = foodOf(pick);
     const name: HTMLElement = elementOf("span", "meal-name", pick.name);
     const kcalTextFor: () => string = (): string =>
         food === undefined || pick.grams.trim() === "" ? "" : kcalTextOf(kcalOf(pick));
     const kcal: HTMLElement = elementOf("span", "meal-kcal", kcalTextFor());
-    const [grams, input, portions]: [HTMLElement, HTMLInputElement, () => void] = gramsFieldOf(pick.grams,
+    const [grams, input]: [HTMLElement, HTMLInputElement] = gramsFieldOf(pick.grams,
         `Grams of ${pick.name}`, food?.portion ?? null, unitOf(food?.kind ?? "Eat"), (text: string): void => {
             pick.grams = text;
             kcal.textContent = kcalTextFor();
@@ -548,13 +524,6 @@ function foodRowOf(pick: FoodPick, typed: () => void, removed: () => void, again
         iconPut(pencil, Pencil, `Change ${pick.name}`);
         name.append(pencil);
     }
-    input.addEventListener("keydown", (event: KeyboardEvent): void => {
-        if (event.key !== "Enter")
-            return;
-        event.preventDefault();
-        portions();
-        again();
-    });
     gramsFields.set(pick, input);
     crossPut(remove, `Remove ${pick.name}`);
     row.append(name, grams, kcal, remove);
@@ -648,9 +617,6 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
         rowsShow(changed);
         changed();
     }, (): void => {
-        if (!listOpen(box))
-            plus.click();
-    }, (): void => {
         rowsShow(changed);
         changed();
     })), box);
@@ -688,9 +654,6 @@ function rowsShow(changed: () => void): void {
             picks = picks.filter((other: FoodPick): boolean => other !== pick);
             rowsShow(changed);
             changed();
-        }, (): void => {
-            if (foodsClosed())
-                foodsLine.click();
         }, (): void => {
             rowsShow(changed);
             changed();
@@ -857,7 +820,7 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
 
 /**
  * Writes a cooking as the list of the cookings offers it: what it was and when it started,
- * like `Hackfleisch, Kidneybohnen, Tomaten · Sun, 13.10.2026 16:00`.
+ * like `Hackfleisch, Kidneybohnen, Tomaten · 13.10.2026 (Tue) 16:00`.
  * - `start`: Its start.
  *
  * @param cooking - Cooking
@@ -865,8 +828,7 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
  */
 function cookingTextOf(cooking: Cooking): string {
     const start: Date = new Date(cooking.start);
-    return `${cooking.title} · ${start.toLocaleDateString("en-GB", { weekday: "short" })}, ${dateTextOf(dayOf(start))} `
-        + timeOf(start);
+    return `${cooking.title} · ${dayTextOf(dayOf(start), true)} ${timeOf(start)}`;
 }
 
 /**
@@ -994,6 +956,8 @@ function foodsRowOf(line: HTMLButtonElement, rows: HTMLElement, box: HTMLElement
  * - `drawnLines`: The lines of the cooking the meal draws from, none for none.
  * - `brought`: Keys of the foods of that cooking beside its meals, whose lines came with it.
  * - `broughtMeals`: Names of the meals of that cooking, which came with it.
+ * - `foodsLine`: The plus beside the name `Foods`, which opens the list.
+ * - `foodsSearch`: The search in the list of the row `Foods`, emptied as the list opens.
  * - `foodsBox`: The list of the row `Foods`, with its search.
  * - `foodsRow`: The row `Foods`.
  *
@@ -1050,10 +1014,10 @@ export async function mealOf(lines: string[], title: string, changed: () => void
     summaryLine = elementOf("span", "", "");
     gramsFields = new WeakMap();
     blockPluses = new WeakMap();
-    foodsLine = document.createElement("button");
+    const foodsLine: HTMLButtonElement = document.createElement("button");
     plusPut(foodsLine, "Add a meal or a food");
     foodsRows = elementOf("div", "meal-rows", "");
-    foodsSearch = foodSearchOf({
+    const foodsSearch: HTMLElement = foodSearchOf({
         pick: (food: Food): void => foodPick(food, changed),
         meals: (query: string): HTMLElement[] => dishLinesOf(query, changed),
         products: true,

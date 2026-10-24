@@ -6,29 +6,33 @@
  * in its summary, its category, its place, its people or its day,
  * as every search of the page compares, see `../search.ts`, like `Talk Sophale` or `Talk 10.2026`, never in its note. The results stand newest first,
  * each what it was, like `Talk: Artificial Intelligence`, and below it small and grey its day, its time, its place
- * and who I was with, like `Friday, 16.10.2026 · 13:45 – 14:15 · Mensa Leopoldstraße · Kicktipp`. A click on a result
+ * and who I was with, like `16.10.2026 (Fri) · 13:45 – 14:15 · Mensa Leopoldstraße · Kicktipp`. A click on a result
  * shows its day and opens its dialog there; closing that dialog, saved or not, brings the search back with what I
  * typed, read anew, so I go from one result to the next. The search brings its dialog itself, `search.html`.
  *
  * - `./search.html?raw`: Html of the dialog of the search as text, packed into the built code by Vite.
  * - `./categories.ts`: Opens the dialog of an entry.
  * - `./boxes.ts`: Writes what an entry was as the log shows it, and builds the parts of a result.
- * - `./places.ts`: Gives the place of an entry by its label.
+ * - `./places.ts`: Gives the place of an entry by its label, a route with its arrow drawn.
+ * - `./series.ts`: Writes a room by its code, without what stands in brackets.
  * - `./times.ts`: Writes the times and the date of an entry.
- * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader.
+ * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader, and a day with its weekday.
  * - `../search.ts`: Compares a typed text with an entry, alike everywhere.
  * - `../icons.ts`: Puts the icon of the search into its button, and makes its search field.
+ * - `../persons.ts`: Puts who I was with apart by a middle dot.
  * - `lucide`: The icon of the search.
  */
 
 import searchHtml from "./search.html?raw";
 import { entryOpenEdit } from "./categories.ts";
 import { entryPartOf, shownWhatOf, whatOf } from "./boxes.ts";
-import { whereOf } from "./places.ts";
+import { whereLinkedOf } from "./places.ts";
+import { roomOf } from "./series.ts";
 import { dateTextOf, timeOf } from "./times.ts";
-import { dayOf } from "../skill/attempts.ts";
+import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { iconPut, searchFieldOf } from "../icons.ts";
+import { peopleOf } from "../persons.ts";
 import { Search } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
@@ -102,14 +106,15 @@ function searchedOf(entry: LogEntry): string {
 
 /**
  * Builds a result: what the entry was in the bold of the log, like `Talk: Artificial Intelligence`, see `whatOf`
- * in `boxes.ts`, and below it, small and grey, its day with its weekday written out, its time, its place by its label,
- * or its platform online instead, and who I was with, parted by middle dots,
- * like `Friday, 16.10.2026 · 13:45 – 14:15 · Mensa Leopoldstraße · Kicktipp`; no place or nobody leaves its part out.
+ * in `boxes.ts`, and below it, small and grey, its day with its weekday short after it, its time, its place by its label
+ * as the plan and the log show it, a room by its code, a route with its arrow drawn, see `whereLinkedOf` in `places.ts`,
+ * or its platform online instead, never as a link, since the result is a button, and who I was with, parted by middle dots,
+ * like `16.10.2026 (Fri) · 13:45 – 14:15 · Mensa Leopoldstraße · Kicktipp`; no place or nobody leaves its part out.
  * - `start`, `end`: Start and end of the entry.
  * - `day`: Day of its start, like `2026-10-16`.
- * - `weekday`: Its weekday, like `Friday`.
- * - `place`: Its place by its label, see `whereOf` in `places.ts`, empty for none.
- * - `people`: The names of who I was with, like `Sophale, Willi`, empty for nobody.
+ * - `place`: Its place as shown, see `whereLinkedOf` in `places.ts`, none for none.
+ * - `people`: The names of who I was with, apart by a middle dot, like `Sophale, Willi · Socials`, see `peopleOf`
+ *   in `../persons.ts`, none for nobody.
  * - `where`: Its place and who I was with, those it has.
  * - `meta`: The grey line below what it was, its day and time, then where.
  * - `button`: The result, which opens the entry.
@@ -122,16 +127,17 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
     const start: Date = new Date(entry.start);
     const end: Date = new Date(entry.end);
     const day: string = dayOf(start);
-    const weekday: string = start.toLocaleDateString("en-GB", { weekday: "long" });
-    const place: string = whereOf(entry.category, entry.from, entry.location, entry.online);
-    const people: string = entry.attendees.map((person: Attendee): string => person.name).join(", ");
-    const where: string[] = [place, people].filter((part: string): boolean => part !== "");
+    const place: (string | Node)[] = whereLinkedOf(entry.category, entry.from, roomOf(entry.location), "", entry.online, "");
+    const people: (string | Node)[] = peopleOf(entry.attendees.map((person: Attendee): string => person.name));
+    const where: (string | Node)[][] = [place, people]
+        .filter((part: (string | Node)[]): boolean => part.length > 0);
     const meta: HTMLElement = entryPartOf("span", "search-meta", [entryPartOf("span", "search-when",
-        [`${weekday}, ${dateTextOf(day)}`,
+        [dayTextOf(day, true),
             entryPartOf("span", "entry-parted", [`${timeOf(start)} – ${timeOf(end)}`])])]);
     if (where.length > 0)
-        meta.append(entryPartOf("span", "entry-parted", [where[0],
-            ...where.slice(1).map((part: string): HTMLElement => entryPartOf("span", "entry-parted", [part]))]));
+        meta.append(entryPartOf("span", "entry-parted", [...where[0],
+            ...where.slice(1).map((part: (string | Node)[]): HTMLElement =>
+                entryPartOf("span", "entry-parted", part))]));
     const button: HTMLButtonElement = document.createElement("button");
     button.type = "button";
     button.className = "search-result";

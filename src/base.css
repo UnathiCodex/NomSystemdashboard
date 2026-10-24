@@ -194,7 +194,7 @@ body {
 
 @media (hover: hover) {
     .icon-button::before {
-        transition: background-color 150ms;
+        transition: background-color var(--hover-out);
     }
 
     .icon-button:not(:disabled):hover {
@@ -203,7 +203,7 @@ body {
 
     .icon-button:not(:disabled):hover::before {
         background: var(--icon-over);
-        transition: background-color 150ms 100ms;
+        transition: background-color var(--hover-in);
     }
 }
 
@@ -278,17 +278,17 @@ textarea {
     --fold-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
 }
 
-/* Hover is soft everywhere, as on the entries of the log: what turns lighter under the pointer fades in over 150 ms
-   after 100 ms, so passing over a list stays calm, and back over 150 ms as soon as the pointer leaves;
-   `:where` keeps this below every rule of its own, like that of the entries */
-@media (hover: hover) {
-    :where(a, button, summary) {
-        transition: background-color 150ms, color 150ms;
-    }
+/* Hover is soft everywhere, with the one timing of `variants.css`: what lights up under the pointer, the text, ground
+   or line of a link, a button or a fold, fades in after a moment, `--hover-in`, and back as soon as the pointer leaves,
+   `--hover-out`; anything else that lights up, like a day of the month, a part of a row or the arrow before a name,
+   takes the same two in the rule of its own; `:where` keeps this below every rule of its own, like that of the
+   entries */
+:where(a, button, summary) {
+    transition: color var(--hover-out), background-color var(--hover-out), border-color var(--hover-out);
+}
 
-    :where(a, button, summary):hover {
-        transition: background-color 150ms 100ms, color 150ms 100ms;
-    }
+:where(a, button, summary):hover {
+    transition: color var(--hover-in), background-color var(--hover-in), border-color var(--hover-in);
 }
 
 /* The one plus that adds one more and the one cross that takes a value back, wherever they stand, like for a meal,
@@ -340,6 +340,24 @@ textarea {
 .picker-new svg.lucide {
     width: 0.9375rem;
     height: 0.9375rem;
+}
+
+/* Type word of a block of a section, like `Definition`, a small grey box before its name, in the tree and on the line
+   of its heading in the note, see `blockNameOf` in `notes/tree.ts` and `headingLook` in `editor/preview.ts`, and
+   the number of a box of a series in its list, see `day/series.ts`, so both look alike: filled in the soft grey
+   of a card, its word in the grey of quiet text and the text's weight, a little room above and below it and more
+   left and right of it, and as far apart from the name */
+.block-kind {
+    display: inline-block;
+    margin-right: 0.75em;
+    padding: 0.125em 0.75em;
+    border-radius: 0.375rem;
+    background: var(--fill);
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.6;
+    vertical-align: middle;
 }
 
 /* The one search field of the page, see `searchFieldOf` in `icons.ts`, the same in the food view, in the sport view,

@@ -5,10 +5,12 @@
  * a field where a few letters or a barcode find my foods first, the most eaten first, and below them, where asked,
  * the products of Open Food Facts, a page of them at a time, `More` loading the next page, beside it how many it shows
  * of how many the search matches, like `8 of 54`; in an entry my meals above my foods, see {@link SearchSetup}.
- * Its sections stand apart at a glance, a thin grey line between them, each its name small and grey above it,
- * `My meals`, `My foods` and `Open Food Facts`, with the unit of its numbers at the right, `kcal / meal` or
- * `kcal / 100 g`, see {@link listHeadOf}.
- * It searches once the typing pauses, so a word asks only once; an empty field lists all my foods in the food view,
+ * Its sections stand apart at a glance, a thin grey line between them: `Meals`, `Foods` and `Open Food Facts` each
+ * its name small and grey above it, with the unit of its numbers at the right, `kcal / meal` or `kcal / 100 g`,
+ * see {@link listHeadOf}, so every list reads alike.
+ * My foods it finds at once as I type, Open Food Facts only once the typing pauses, so a word asks it only once,
+ * its products following below mine as they come, a calm grey `Searching…` in their place meanwhile, so nothing above
+ * them moves, see {@link resultsLoad}; an empty field lists all my foods in the food view,
  * and nothing where a food is picked, like the search of an entry or the plus of a meal, whose list would grow long:
  * there a list shows only once I search. That nothing
  * is found it says in one grey line, only for the text as it stands, once its answer is in, never for a text typed
@@ -17,9 +19,9 @@
  * a brand or a shop only ranks them, it filters nothing, so the brand and store of a product stand beside its name.
  * Every list of meals or foods looks alike, wherever it stands: one flat line per meal or food, nothing in it
  * but its name, a food's brand and store in brackets after it, like `Gouda (Milbona, Lidl)`, so the same name of two
- * shops never mixes up, and its kcal as a bare number, a meal's whole, a food's per 100 g, the head of its section
- * naming the unit once, see {@link listLineOf}; a product of Open Food Facts also its pack small and grey below
- * its name, like `Pack 265 g`, which tells products apart.
+ * shops never mixes up, and its kcal as a bare number, a meal's whole, a food's per 100 g, the head of a section
+ * naming the unit once where it has one, see {@link listLineOf}; a product of Open Food Facts also its pack small
+ * and grey below its name, like `Pack 265 g`, which tells products apart.
  * A click on a product adds it to my foods as Open Food Facts gives it, no form in between, see `foodSend`
  * in `foods.ts`, and takes it like one of mine. Where a food is wanted, like in an entry, a click on one of my foods
  * picks it; in the food view, which wants none, it opens the food below its line: its protein, carbs and fat per 100 g,
@@ -70,10 +72,15 @@ export type SearchSetup = {
  *
  * - `input`: Field of the search.
  * - `results`: Place of the results, below the field.
+ * - `tail`: End of the results, below my meals and foods, where the products of Open Food Facts stand, shown anew
+ *   by themselves as they come, so nothing above them moves, see {@link productsShow}.
  * - `setup`: What it does, see {@link SearchSetup}.
  * - `page`: Last page of products shown, 1 for the first.
- * - `found`: What the search found, with the products of every page shown; `null` before its first answer.
+ * - `found`: What the search found, my foods for the text shown and the products of every page shown; `null` before
+ *   its first answer.
  * - `asked`: Number of the last search asked, so a late answer never covers a newer one.
+ * - `loading`: Whether the products for the text shown are still to come, waiting for the typing to pause or asked.
+ * - `waiting`: Timer of the products waiting for the typing to pause, see {@link pause}, 0 for none.
  * - `open`: Key of my food open below its line, see {@link keyOf}, empty for none.
  * - `shown`: The text the results shown were found for.
  * - `enter`: Whether Enter waits for the results of the text typed, to take the first, see {@link firstPick}.
@@ -87,10 +94,13 @@ export type SearchSetup = {
 type Search = {
     input: HTMLInputElement;
     results: HTMLElement;
+    tail: HTMLElement;
     setup: SearchSetup;
     page: number;
     found: FoodsFound | null;
     asked: number;
+    loading: boolean;
+    waiting: number;
     open: string;
     shown: string;
     enter: boolean;
@@ -101,9 +111,22 @@ type Search = {
 };
 
 /**
- * Milliseconds the typing has to pause before the field searches, so a word asks Open Food Facts once, not per letter.
+ * Milliseconds the typing has to pause before the field asks Open Food Facts, so a word asks it once, not per letter;
+ * my foods it finds at once.
  */
 const pause: number = 300;
+
+/**
+ * Fewest characters a search needs to ask Open Food Facts, as the reader, see `searchLength` in `reader/food.ts`,
+ * so a shorter one shows no products to come.
+ */
+const searchLength: number = 3;
+
+/**
+ * Milliseconds a search waits before it asks the reader once more when it could not answer, about twice as long as
+ * the reader takes to start anew after a change of its code, see {@link foodsFindTwice}.
+ */
+const restartTime: number = 1000;
 
 /**
  * Gives the fields of the form of a food by hand: the name shown, the value of the food it fills and its unit after it,
@@ -128,11 +151,12 @@ const searches: WeakMap<HTMLElement, Search> = new WeakMap();
 
 /**
  * Makes the head of a list or a section of meals or foods, small and grey, in the columns of its lines, see
- * {@link listLineOf}: its name, like `My foods`, and the unit of every number below, named once, like `kcal / 100 g`.
+ * {@link listLineOf}: its name, like `Open Food Facts`, and the unit of every number below, named once,
+ * like `kcal / 100 g`.
  * - `line`: The line of the head.
  * - `head`: The head itself, in the columns of a row.
  *
- * @param name - Name of the list or section, like `My meals`
+ * @param name - Name of the list or section, like `Meals`
  * @param unit - Unit of its numbers, like `kcal`
  * @returns The line of the head
  */
@@ -412,7 +436,7 @@ function mineLinesOf(search: Search, food: Food): HTMLElement[] {
             return;
         }
         search.asking = "";
-        foodDelete(food).then((): void => resultsLoad(search, 1))
+        foodDelete(food).then((): void => resultsLoad(search, 0))
             .catch((error: unknown): void => console.error(error));
     });
     if (remove !== null)
@@ -433,7 +457,7 @@ function mineLinesOf(search: Search, food: Food): HTMLElement[] {
     return open ? [line, foodDetailOf(food, (written: Food): void => {
         search.added = search.added.map((key: string): string => key === keyOf(food) ? keyOf(written) : key);
         search.open = keyOf(written);
-        resultsLoad(search, 1);
+        resultsLoad(search, 0);
     })] : [line];
 }
 
@@ -492,21 +516,19 @@ function productLineOf(search: Search, product: Product): HTMLElement {
 const shownFoods: number = 10;
 
 /**
- * Shows what the search found in its sections, each its head, see {@link listHeadOf}, a thin grey line between them,
- * those that found nothing left out: my meals, where the search shows them, see {@link SearchSetup}; while nothing
- * is typed the foods I just added, the last first, see {@link addedOf}; my foods, while nothing is typed only the most
- * eaten but those just added, see {@link shownFoods}, and the one open, a search listing all it finds;
- * then, for a search of some letters, the products of Open Food Facts of every page loaded, how many of how many,
- * like `8 of 54`, and `More` while a next page holds more, or that Open Food Facts cannot be reached;
- * one grey line when nothing is found at all.
+ * Shows what the search found in its sections, a thin grey line between them, those that found nothing left out:
+ * my meals under their head, see {@link listHeadOf}, where the search shows them, see {@link SearchSetup}; while
+ * nothing is typed the foods I just added under theirs, the last first, see {@link addedOf}; my foods under theirs,
+ * `Foods`, while nothing is typed only the most eaten but those just added, see {@link shownFoods},
+ * and the one open, a search listing all it finds; then the products of Open Food Facts below them,
+ * see {@link productsShow}.
  * - `found`: What the search found.
  * - `query`: The search as typed.
  * - `meals`: Lines of my meals found.
  * - `fresh`: The foods just added, while nothing is typed.
  * - `rest`: My foods but those just added.
  * - `listed`: My foods listed.
- * - `products`: Products shown.
- * - `sections`: The sections that found something, each its head and its lines.
+ * - `sections`: The sections that found something, each its lines, below the head of those that have one.
  *
  * @param search - The search
  */
@@ -525,30 +547,20 @@ function resultsShow(search: Search): void {
     const rest: Food[] = found.foods.filter((food: Food): boolean => !fresh.includes(food));
     const listed: Food[] = query !== "" ? rest : rest.filter((food: Food, index: number): boolean =>
         index < shownFoods || keyOf(food) === search.open);
-    const products: Product[] = query === "" ? [] : found.products ?? [];
     const sections: HTMLElement[][] = [];
 
     if (meals.length > 0)
-        sections.push([listHeadOf("My meals", "kcal / meal"), ...meals]);
+        sections.push([listHeadOf("Meals", "kcal / meal"), ...meals]);
     const plus: HTMLElement[] = newFoodOf(search, query, found.foods);
     if (fresh.length > 0)
         sections.push([listHeadOf("Just added", "kcal / 100 g"),
             ...fresh.flatMap((food: Food): HTMLElement[] => mineLinesOf(search, food))]);
     if (listed.length > 0 || plus.length > 0)
-        sections.push([listHeadOf("My foods", "kcal / 100 g"),
+        sections.push([listHeadOf("Foods", "kcal / 100 g"),
             ...listed.flatMap((food: Food): HTMLElement[] => mineLinesOf(search, food)), ...plus]);
-    if (products.length > 0)
-        sections.push([listHeadOf("Open Food Facts", "kcal / 100 g"),
-            ...products.map((product: Product): HTMLElement => productLineOf(search, product)),
-            moreOf(search, products.length, found)]);
-    else if (query !== "" && found.products === null)
-        sections.push([listHeadOf("Open Food Facts", ""),
-            elementOf("p", "food-none food-nothing", "Open Food Facts cannot be reached")]);
-    search.results.replaceChildren(...sections.length === 0
-        ? [elementOf("p", "food-none food-nothing", query !== "" ? search.setup.nothing
-            : search.setup.meals === null ? "No foods yet" : "No meals or foods yet")]
-        : sections.flatMap((section: HTMLElement[], index: number): HTMLElement[] =>
-            index === 0 ? section : [elementOf("hr", "food-divider", ""), ...section]));
+    search.results.replaceChildren(...sections.flatMap((section: HTMLElement[], index: number): HTMLElement[] =>
+        index === 0 ? section : [elementOf("hr", "food-divider", ""), ...section]), search.tail);
+    productsShow(search);
     search.shown = query;
     if (search.reveal) {
         search.reveal = false;
@@ -558,6 +570,42 @@ function resultsShow(search: Search): void {
         search.enter = false;
         firstPick(search);
     }
+}
+
+/**
+ * Shows the products of Open Food Facts at the end of the results, by themselves, so nothing above them moves, see
+ * `tail` of {@link Search}: under a thin grey line where my meals or foods stand above them, their head, see
+ * {@link listHeadOf}, then a calm grey `Searching…` while they are still to come, see {@link resultsLoad}, once in,
+ * those of every page loaded, how many of how many, like `8 of 54`, and `More` while a next page holds more,
+ * or that Open Food Facts cannot be reached; nothing for a search that does not ask it or where it finds nothing;
+ * one grey line when nothing is found at all.
+ * - `found`: What the search found.
+ * - `query`: The search as typed.
+ * - `products`: Products shown.
+ * - `above`: Whether something stands above them, like my foods.
+ * - `line`: The thin grey line above them, none at the top of the results.
+ *
+ * @param search - The search
+ */
+function productsShow(search: Search): void {
+    const found: FoodsFound = search.found ?? { foods: [], products: [], total: 0, exact: true, more: false };
+    const query: string = search.input.value.trim();
+    const products: Product[] = query === "" ? [] : found.products ?? [];
+    const above: boolean = search.tail.previousElementSibling !== null;
+    const line: HTMLElement[] = above ? [elementOf("hr", "food-divider", "")] : [];
+    if (search.loading)
+        search.tail.replaceChildren(...line, listHeadOf("Open Food Facts", ""),
+            elementOf("p", "food-none", "Searching…"));
+    else if (products.length > 0)
+        search.tail.replaceChildren(...line, listHeadOf("Open Food Facts", "kcal / 100 g"),
+            ...products.map((product: Product): HTMLElement => productLineOf(search, product)),
+            moreOf(search, products.length, found));
+    else if (query !== "" && found.products === null)
+        search.tail.replaceChildren(...line, listHeadOf("Open Food Facts", ""),
+            elementOf("p", "food-none food-nothing", "Open Food Facts cannot be reached"));
+    else
+        search.tail.replaceChildren(...above ? [] : [elementOf("p", "food-none food-nothing", query !== ""
+            ? search.setup.nothing : search.setup.meals === null ? "No foods yet" : "No meals or foods yet")]);
 }
 
 /**
@@ -611,7 +659,7 @@ function addedOf(search: Search): (food: Food) => void {
         search.open = search.setup.pick === null ? keyOf(food) : "";
         if (search.setup.pick === null)
             search.added = [keyOf(food), ...search.added.filter((key: string): boolean => key !== keyOf(food))];
-        resultsLoad(search, 1);
+        resultsLoad(search, 0);
         search.setup.pick?.(food);
     };
 }
@@ -753,7 +801,7 @@ function moreOf(search: Search, shown: number, found: FoodsFound): HTMLElement {
     if (found.more) {
         const more: HTMLButtonElement = buttonOf("food-more-button", "More", (): void => {
             more.disabled = true;
-            resultsLoad(search, search.page + 1);
+            productsLoad(search, search.page + 1);
         });
         line.append(more);
     }
@@ -761,36 +809,98 @@ function moreOf(search: Search, shown: number, found: FoodsFound): HTMLElement {
 }
 
 /**
- * Searches for the text of the field and shows what it finds, unless another search was asked meanwhile or the text
- * changed since, so a late answer never covers a newer one, and an answer that found nothing never stands below
- * a text it was not given for, see {@link nothingHide}: the first page in place of what was shown,
- * a later page after the products shown, which stay when Open Food Facts cannot be reached for it; a text put in by
- * a click on a food of a meal finds only my foods, see {@link foodShow}.
+ * Finds foods as `foodsFind` in `foods.ts` does, asking the reader once more after {@link restartTime} when it could
+ * not answer, like while it starts anew after a change of its code, so a search fails only when the reader stays away.
+ *
+ * @param query - Search as typed
+ * @param page - Page of the products, 1 for the first
+ * @param products - Whether Open Food Facts is asked too
+ * @returns Foods found
+ * @throws {Error} - When the reader cannot answer the second time either
+ */
+async function foodsFindTwice(query: string, page: number, products: boolean): Promise<FoodsFound> {
+    try {
+        return await foodsFind(query, page, products);
+    } catch (error: unknown) {
+        console.error(error);
+        await new Promise<void>((resolve: () => void): void => {
+            window.setTimeout(resolve, restartTime);
+        });
+        return await foodsFind(query, page, products);
+    }
+}
+
+/**
+ * Searches my foods for the text of the field and shows them at once, see {@link resultsShow}, unless another search
+ * was asked meanwhile or the text changed since, so a late answer never covers a newer one, and an answer that found
+ * nothing never stands below a text it was not given for, see {@link nothingHide}; then, where the search finds
+ * products too, see `products` of {@link SearchSetup}, for a text of {@link searchLength} characters or more, asks
+ * Open Food Facts for their first page, once a pause of the typing is over, see {@link productsLoad}, while
+ * `Searching…` stands in their place; a text put in by a click on a food of a meal finds only my foods,
+ * see {@link foodShow}. A search the reader cannot answer twice, see {@link foodsFindTwice}, leaves what is shown
+ * as it is, products no longer to come; only a search that has shown nothing yet says that the foods cannot be read.
  * - `asked`: Number of this search.
  * - `text`: The text searched for.
- * - `before`: What the search had found before.
+ *
+ * @param search - The search
+ * @param wait - Milliseconds before Open Food Facts is asked, {@link pause} while I type, else 0
+ */
+function resultsLoad(search: Search, wait: number): void {
+    const asked: number = ++search.asked;
+    const text: string = search.input.value.trim();
+    clearTimeout(search.waiting);
+    foodsFindTwice(text, 1, false).then((found: FoodsFound): void => {
+        if (asked !== search.asked || search.input.value.trim() !== text)
+            return;
+        search.page = 1;
+        search.found = found;
+        search.loading = search.setup.products && !search.linked && text.length >= searchLength;
+        resultsShow(search);
+        if (search.loading)
+            search.waiting = window.setTimeout((): void => productsLoad(search, 1), wait);
+    }).catch((error: unknown): void => {
+        console.error(error);
+        if (asked !== search.asked)
+            return;
+        search.loading = false;
+        if (search.found === null)
+            search.results.replaceChildren(elementOf("p", "food-none", "The foods cannot be read"));
+        else
+            productsShow(search);
+    });
+}
+
+/**
+ * Asks Open Food Facts for a page of the products of the text of the field and shows them below my foods, by
+ * themselves, see {@link productsShow}, unless another search was asked meanwhile or the text changed since:
+ * the first page in place of `Searching…`, a later page after the products shown, which stay when Open Food Facts
+ * cannot be reached for it, as when the reader cannot answer twice, see {@link foodsFindTwice}.
+ * - `asked`: Number of the search they are for.
+ * - `text`: The text searched for.
+ * - `take`: Takes the answer and shows it.
  *
  * @param search - The search
  * @param page - Page of the products, 1 for the first
  */
-function resultsLoad(search: Search, page: number): void {
-    const asked: number = ++search.asked;
+function productsLoad(search: Search, page: number): void {
+    const asked: number = search.asked;
     const text: string = search.input.value.trim();
-    const before: FoodsFound | null = search.found;
-    foodsFind(text, page, search.setup.products && !search.linked).then((found: FoodsFound): void => {
-        if (asked !== search.asked || search.input.value.trim() !== text)
+    const take: (found: FoodsFound) => void = (found: FoodsFound): void => {
+        if (asked !== search.asked || search.input.value.trim() !== text || search.found === null)
             return;
         search.page = page;
-        search.found = page === 1 || before === null ? found : {
+        search.loading = false;
+        search.found = page === 1 ? { ...found, foods: search.found.foods } : {
             ...found,
-            foods: before.foods,
-            products: [...(before.products ?? []), ...(found.products ?? [])],
+            foods: search.found.foods,
+            products: [...(search.found.products ?? []), ...(found.products ?? [])],
             more: found.products !== null && found.more,
         };
-        resultsShow(search);
-    }).catch((error: unknown): void => {
+        productsShow(search);
+    };
+    foodsFindTwice(text, page, true).then(take).catch((error: unknown): void => {
         console.error(error);
-        search.results.replaceChildren(elementOf("p", "food-none", "The foods cannot be read"));
+        take({ foods: [], products: null, total: 0, exact: true, more: false });
     });
 }
 
@@ -807,11 +917,11 @@ function nothingHide(search: Search): void {
 
 /**
  * Builds the food search, see the top of this file, showing all my foods at first.
- * Typing searches from the first page once it pauses for {@link pause}, the lines that found nothing for the text
- * before gone at once, see {@link nothingHide}; Enter searches at once, without sending a form around it.
+ * Typing finds my foods at once and asks Open Food Facts once it pauses for {@link pause}, see {@link resultsLoad},
+ * the lines that found nothing for the text before gone at once, see {@link nothingHide}; Enter searches at once,
+ * without sending a form around it.
  * - `element`: Field and results.
  * - `search`: The search with what it shows.
- * - `waiting`: Timer of the search waiting for the pause, 0 for none.
  *
  * @param setup - What the search does where it stands, see {@link SearchSetup}
  * @returns The search, to put into the page
@@ -821,10 +931,13 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
     const search: Search = {
         input: document.createElement("input"),
         results: elementOf("div", "food-results", ""),
+        tail: elementOf("div", "", ""),
         setup: setup,
         page: 1,
         found: null,
         asked: 0,
+        loading: false,
+        waiting: 0,
         open: "",
         shown: "",
         enter: false,
@@ -833,31 +946,28 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
         linked: false,
         added: [],
     };
-    let waiting: number = 0;
 
     search.input.addEventListener("input", (): void => {
-        clearTimeout(waiting);
         search.linked = false;
         nothingHide(search);
-        waiting = window.setTimeout((): void => resultsLoad(search, 1), pause);
+        resultsLoad(search, pause);
     });
     search.input.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (event.key !== "Enter")
             return;
         event.preventDefault();
-        clearTimeout(waiting);
         if (search.found !== null && search.shown === search.input.value.trim()) {
             firstPick(search);
             return;
         }
         search.enter = true;
-        resultsLoad(search, 1);
+        resultsLoad(search, 0);
     });
     bracketsWatch(search.results);
     element.append(searchFieldOf(search.input, setup.meals === null ? "Search foods or a barcode"
         : "Search meals, foods or a barcode"), search.results);
     searches.set(element, search);
-    resultsLoad(search, 1);
+    resultsLoad(search, 0);
     return element;
 }
 
@@ -878,7 +988,7 @@ export function foodShow(element: HTMLElement, food: { name: string; brand: stri
     search.open = keyOf(food);
     search.linked = true;
     search.reveal = true;
-    resultsLoad(search, 1);
+    resultsLoad(search, 0);
 }
 
 /**
@@ -894,5 +1004,5 @@ export function foodSearchClear(element: HTMLElement): void {
     search.input.value = "";
     search.open = "";
     search.linked = false;
-    resultsLoad(search, 1);
+    resultsLoad(search, 0);
 }

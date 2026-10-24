@@ -21,16 +21,16 @@
 }
 
 /* Under a pointer that hovers, an entry turns only a little lighter, in place of the theme's bright grey,
-   fading in over 150 ms after 100 ms, so passing over entries stays calm, and back over 150 ms as soon as
-   the pointer leaves; `.entry:hover` wins over the theme's rule, being as exact and coming after it */
+   softly as every hover, see `--hover-in` in `../variants.css`, so passing over entries stays calm;
+   `.entry:hover` wins over the theme's rule, being as exact and coming after it */
 @media (hover: hover) {
     .entry {
-        transition: background-color 150ms;
+        transition: background-color var(--hover-out);
     }
 
     .entry:hover {
         background-color: color-mix(in oklab, var(--fill-over) 94%, var(--text-main));
-        transition: background-color 150ms 100ms;
+        transition: background-color var(--hover-in);
     }
 }
 
@@ -68,20 +68,22 @@
     margin-inline-start: -12px;
 }
 
-/* Inside of an entry: all its lines in one size, as in Google Calendar, its text `--day-text` as a box of the plan, 0.75rem left of its lines
-   and 0.5rem right of them; its lines cut at the edge of the entry, so text never sticks out, by `clip`,
-   which scrolls nothing, so its lines can stay in sight, see `.entry-lines`.
-   A taller entry, like an hour of sleep, keeps 0.4rem above its first line and 0.05rem below its last, its lines
-   filling it downwards, never centred, so an hour holds what and its time with its place beside it on two lines,
-   each 1.0125rem high at a line height of 1.35, 16.875 minutes of the time grid, see `lineMinutes` in `day.ts`;
-   a short one keeps no space above and below its one line, 0.9rem high at a line height of 1.2, so a quarter hour,
-   0.9rem high, holds it */
+/* Inside of an entry: all its lines in one size, as in Google Calendar, its text 0.8125rem as a box of the plan,
+   see `.box` in `boxes.css`, 0.75rem left of its lines and 0.5rem right of them; its lines cut at the edge
+   of the entry, so text never sticks out, by `clip`, which scrolls nothing, so its lines can stay in sight,
+   see `.entry-lines`.
+   A taller entry, like an hour of sleep, keeps 0.42rem above its first line and as much below its last, so the one
+   line of half an hour sits in its middle and the last line of a longer one, also scrolled, keeps room below it,
+   its lines filling it downwards, never centred, so 45 minutes hold what and its time with its place beside it
+   on two lines, each 1.015625rem high at a line height of 1.25, 14.86 minutes of the time grid, see `lineMinutes`
+   in `day.ts`; a short one keeps no space above and below its one line, 0.975rem high at a line height of 1.2,
+   so a quarter hour, 1.025rem high less the 1px below it, holds it */
 .entry-inner {
     overflow: clip;
-    padding-block: 0.4rem 0.05rem;
+    padding-block: 0.42rem;
     padding-inline: 0.75rem 0.5rem;
-    font-size: var(--day-text);
-    line-height: 1.35;
+    font-size: 0.8125rem;
+    line-height: 1.25;
 }
 
 .entry-inner-short {
@@ -91,12 +93,12 @@
 
 /* All lines of an entry, as high as the lines it has room for, which `day.ts` sets in units of a line, so a line
    it has no room for hides as a whole, never cut in half at the bottom.
-   An entry scrolled partly out of sight at the top keeps its lines in sight, 0.4rem below the top of the grid,
+   An entry scrolled partly out of sight at the top keeps its lines in sight, 0.42rem below the top of the grid,
    as far as the entry reaches, so a night from 01:45, scrolled to 06:00, still says `Sleep: Night`; those its rest
    has no more room for hide as a whole from the bottom, see `linesFit` in `day.ts`, so none is ever cut at the top */
 .entry-lines {
     position: sticky;
-    top: 0.4rem;
+    top: 0.42rem;
     overflow: hidden;
 }
 
@@ -204,4 +206,18 @@ svg.route-arrow {
     .entry-inner {
         padding-inline: 0.5rem 0.375rem;
     }
+}
+
+/* A route beside the time, like `· Mensa Garching → TUM Innenstadt`: where it starts gives way first, cut with
+   an ellipsis, `Mensa Gar… → TUM Innenstadt`, its arrow and its goal always whole, see `entryContentOf` in `day.ts` */
+.entry-beside:has(> .route-start) {
+    display: inline-flex;
+    align-items: baseline;
+    text-overflow: clip;
+}
+
+.route-start {
+    min-width: 1em;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

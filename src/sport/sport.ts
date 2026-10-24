@@ -3,8 +3,7 @@
  *
  * Shows my sessions of sport on a day, and my workouts and exercises, in the scheme of the food view,
  * whose look it takes, see `../food/food.css`.
- * The bar of the day, as the day has it: its weekday written out, small and grey above its date, like `Saturday`
- * over `17.10.2026`, between the arrows to the day before and after, a small icon beside it back to today, faded
+ * The bar of the day, as the day has it: its date with its weekday short after it, like `17.10.2026 (Sat)`, between the arrows to the day before and after, a small icon beside it back to today, faded
  * and off on today.
  * The day: the number of its sessions, their time together and the kcal they burned above rest, an estimate, see
  * `reader/sport.ts`, written whole without `~`, since every kcal of the page is rounded anyway, without goals, so the
@@ -27,8 +26,8 @@
  * - `./mine.ts`: Loads the sessions of a day with what they took, and sends my weight of a day.
  * - `./lists.ts`: The sections of my workouts, exercises and videos, loaded anew after my weight changed.
  * - `../food/foods.ts`: Writes amounts and makes elements.
- * - `../day/times.ts`: Writes a length of time, like `01h 10m`, and a day as its date, like `17.10.2026`.
- * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader.
+ * - `../day/times.ts`: Writes a length of time, like `01h 10m`.
+ * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader, and a day with its weekday for the bar.
  * - `../today.ts`: Gives today's calendar date and the day a link asks for, and moves the sport view on to the new day
  *   while it shows today.
  * - `../changes.ts`: Loads the day anew the moment a file of my new system changes.
@@ -42,8 +41,8 @@
 import { sportDayLoad, weightSend } from "./mine.ts";
 import { listsOf, mineReload } from "./lists.ts";
 import { amountOf, buttonOf, elementOf } from "../food/foods.ts";
-import { dateTextOf, lengthOf } from "../day/times.ts";
-import { dayOf } from "../skill/attempts.ts";
+import { lengthOf } from "../day/times.ts";
+import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { iconOf, iconPut } from "../icons.ts";
@@ -109,7 +108,8 @@ function totalsShow(day: SportDay): void {
 
 /**
  * Makes the total of my weight on the shown day: its name small above, then the kilograms with one decimal and the
- * small grey pencil, only the pencil while I have none; a click on it turns it into a field, see {@link weightEdit}.
+ * small grey pencil right after them, while I have none a grey `– kg` before it, so the pencil always follows a value;
+ * a click on it turns it into a field, see {@link weightEdit}.
  * - `tile`: The total.
  * - `amount`: Its kilograms with the pencil, a button.
  *
@@ -118,8 +118,9 @@ function totalsShow(day: SportDay): void {
  */
 function weightOf(kg: number | null): HTMLElement {
     const tile: HTMLElement = elementOf("div", "food-total sport-weight", "");
-    const amount: HTMLButtonElement = buttonOf("food-amount sport-weight-amount", kg === null ? "" : `${amountOf(kg, 1)} kg`,
-        (): void => weightEdit(tile, kg));
+    const amount: HTMLButtonElement = buttonOf("food-amount sport-weight-amount",
+        kg === null ? "– kg" : `${amountOf(kg, 1)} kg`, (): void => weightEdit(tile, kg));
+    amount.classList.toggle("sport-weight-none", kg === null);
     amount.append(iconOf(Pencil));
     amount.title = "Change my weight";
     tile.append(elementOf("span", "food-label", "Weight"), amount);
@@ -259,9 +260,7 @@ function sessionLinesOf(session: Session): HTMLElement[] {
  */
 async function dayShow(date: string): Promise<void> {
     shown = date;
-    (document.getElementById("sport-weekday") as HTMLElement).textContent =
-        new Date(`${date}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" });
-    (document.getElementById("sport-date") as HTMLElement).textContent = dateTextOf(date);
+    (document.getElementById("sport-date") as HTMLElement).textContent = dayTextOf(date, true);
     (document.getElementById("sport-today") as HTMLButtonElement).disabled = date === calendarTodayOf();
 
     const day: SportDay = await sportDayLoad(date);

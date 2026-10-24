@@ -18,7 +18,8 @@
  *
  * An entry: each of us in its `With` gets a copy as I add it or log a box, and one who comes into its `With`
  * as I change it, see {@link entryShare}: the same `UID`, its times, category, what, the link of what when it is a web address,
- * its place with the link of the place, where a way starts, the semester of a skill entry, the foods of a meal
+ * that of a skill entry, which names its skill and type, its place with the link of the place, where a way starts,
+ * the semester of a skill entry, the foods of a meal
  * or a cooking and the cooking a meal draws from, with me in `With` in place of the person, the others staying;
  * not my note, my attempts, my rounds, my chapters, the links to my files, my pain, what a session of sport did,
  * nor the box it was logged from, which are mine alone. After that each copy is its owner's: a change goes to nobody,
@@ -41,10 +42,12 @@
  * - `node:crypto`: Names a change of a list at random.
  * - `node:fs`: Creates the boxes, lists and watches mine, writes and reads what is shared.
  * - `node:path`: Builds the paths of the boxes.
- * - `./calendar.ts`: Reads the entries of my log and of a shared file, and writes the copy of an entry.
+ * - `./calendar.ts`: Reads the entries of my log and of a shared file, writes the copy of an entry, and names
+ *   the category of skill entries.
  * - `./day.ts`: Adds an entry that came to my log, as the dialog adds one.
  * - `./food.ts`: Reads, adds, changes and removes my foods and meals.
  * - `./places.ts`: Reads, adds and changes my places and rooms, and tells a link I typed, a web address.
+ * - `./persons.ts`: Names a person as `Persons.md` names it, so its names compare alike.
  * - `./sources.ts`: Names my log, my name, the people I share with and their boxes.
  * - `./trash.ts`: Puts what is done into my trash.
  */
@@ -53,7 +56,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { entryAppend, entryLookup, fileEntriesRead } from "./calendar.ts";
+import { entryAppend, entryLookup, fileEntriesRead, skillName } from "./calendar.ts";
 import { entryAdd } from "./day.ts";
 import {
     compositionsRead, dishAdd, dishRemove, dishRename, foodAdd, foodChange, foodRemove, foodsRead,
@@ -61,6 +64,7 @@ import {
 import {
     linkForm, placeAdd, placeChange, placesRead, platformAdd, platformChange, platformsRead, roomsRead,
 } from "./places.ts";
+import { personNameOf } from "./persons.ts";
 import { dashboardBoxOf, day, myName, partners, writeAllowed } from "./sources.ts";
 import { trashPut } from "./trash.ts";
 
@@ -173,14 +177,15 @@ function keyOf(id: string): string {
 }
 
 /**
- * Tells whether two names of `With` name the same person, small and capital letters alike.
+ * Tells whether two names of `With` name the same person, small and capital letters alike, each as `Persons.md`
+ * names its person, see `personNameOf` in `persons.ts`, so `Family, Sopha` names the person I share with as `Sopha`.
  *
- * @param first - A name, like `Vu`
- * @param second - Another, like `vu`
+ * @param first - A name, like `Sopha`
+ * @param second - Another, like `Family, Sopha`
  * @returns Whether they are the same
  */
 function sameName(first: string, second: string): boolean {
-    return first.toLowerCase() === second.toLowerCase();
+    return personNameOf(first).toLowerCase() === personNameOf(second).toLowerCase();
 }
 
 /**
@@ -314,7 +319,8 @@ function outboxWrite(partner: string, name: string, content: string): void {
  */
 function copyWrite(entry: Entry, partner: string): void {
     const fields: EntryFields = {
-        category: entry.category, title: entry.title, titleLink: linkForm.test(entry.titleLink) ? entry.titleLink : "",
+        category: entry.category, title: entry.title,
+        titleLink: entry.category === skillName || linkForm.test(entry.titleLink) ? entry.titleLink : "",
         location: entry.location, locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink,
         passcode: entry.passcode, from: entry.from,
         attendees: [
@@ -448,8 +454,8 @@ function listApply(change: ListChange): void {
 
 /**
  * Turns an entry that came into a new entry of my log, as the dialog sends one, see `EntryNew` in `day.ts`:
- * its fields as it brought them, a skill entry its link anew, to the folder of its skill in my modules,
- * see `titleOf` in `documents.ts`, and the cooking a meal draws from only when it is an entry `Cook` of my log
+ * its fields as it brought them, its skill and type by the folder it links, a skill entry its link anew,
+ * to the folder of its skill in my modules, see `titleOf` in `documents.ts`, and the cooking a meal draws from only when it is an entry `Cook` of my log
  * before the meal, as I have it once it came with us both in its `With`.
  * - `cooking`: The entry of that cooking in my log, `undefined` for none.
  *

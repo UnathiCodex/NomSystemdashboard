@@ -12,11 +12,11 @@
         <div class="day-bar day-nav">
             <button class="day-arrow" id="day-back" type="button"></button>
             <h2 class="day-title"><button class="day-title-button" id="day-title" type="button" title="Pick a day"><span
-                class="day-weekday" id="day-weekday"></span> <span class="day-date" id="day-date"></span></button></h2>
+                class="day-date" id="day-date"></span></button></h2>
             <button class="day-today" id="day-today" type="button" disabled></button>
             <button class="day-arrow" id="day-next" type="button"></button>
 
-            <!-- Timer of a session of mine running now, in the middle, None while none runs; filled by timer.ts -->
+            <!-- Timer of a session of mine running now, in the middle, its name Session while none runs; filled by timer.ts -->
             <span class="session-timer" id="session-timer"></span>
 
             <!-- Trackers of the shown day: the night's sleep, glasses of water and food; filled by trackers.ts -->
@@ -24,11 +24,13 @@
         </div>
 
         <!-- Plan: the boxes of the day, dragged into the log at the real time or logged as expected from their menu,
-             filled by boxes.ts; its + beside its name opens the entry by category for a new box -->
+             filled by boxes.ts; its + beside its name opens the entry by category for a new box, its ⟳ beside that the dialog
+             of a new series -->
         <section class="day-column" id="day-plan">
             <div class="column-head">
                 <h2>Plan</h2>
                 <button id="plan-new" type="button"></button>
+                <button id="plan-series" type="button"></button>
             </div>
             <!-- Hint when the reader does not log a box dropped into the log or tapped, until the plan loads again -->
             <p class="panel-error" id="plan-error" hidden>Logging failed</p>
@@ -68,27 +70,39 @@
         </div>
 
         <!-- Only on a phone, which shows plan or log, one at a time, filling the screen: at the bottom the buttons
-             that switch between them, the shown one picked, and + for a new box or entry of the shown one -->
+             that switch between them, the shown one picked, + for a new box or entry of the shown one, and while
+             the plan shows the repeat for a new series, see #plan-series -->
         <div class="day-switch" id="day-switch">
             <div class="day-views">
                 <button id="day-show-plan" type="button" aria-pressed="true">Plan</button>
                 <button id="day-show-log" type="button" aria-pressed="false">Log</button>
             </div>
             <button class="chip-button" id="day-new" type="button"></button>
+            <button class="chip-button" id="day-series" type="button"></button>
         </div>
     </div>
 </div>
 
 <!-- Entry by category for the log and the boxes of the plan, shown over the page, without a title, all its room
      for the fields: one column of rows in the order of the file, each its name grey at the left, all names equally
-     wide, and its value at the right, an empty field empty, without dash or placeholder, but every time, which says
-     grey what it takes, hh:mm, see timeFieldStart in times.ts, and the day of a deadline, dd.mm.yyyy: start and end
-     fixed at the top, then the category, below it the fields of the category one after another, the note always
-     at the bottom, and the buttons. A click on a row opens its list right under it, see choices.ts.
+     wide, and its value at the right, an empty field empty, without dash or placeholder, but every time and day,
+     which say grey what they take, hh:mm and dd.mm.yyyy, see timeFieldStart and dateFieldStart in times.ts:
+     the category at the top, then what it is, where it is, its times, then the other fields of the category one after
+     another, the note always at the bottom, and the buttons. A click on a row opens its list right under it, see choices.ts.
      Enter in a field confirms only that field; the check or Ctrl+Enter saves, see categories.ts.
      Esc or a click beside the dialog closes it without saving -->
 <dialog class="panel entry-panel" id="entry" closedby="any">
     <form class="panel-form entry-form" id="entry-form">
+        <!-- The category, one line; for a box only the categories I plan -->
+        <div id="entry-category"></div>
+
+        <!-- Fields of the category: what, or the skill and its type side by side -->
+        <div class="panel-form" id="entry-fields"></div>
+
+        <!-- Where it is: where a way starts and its place, below the place Online, its platform with the link
+             and the passcode of its meeting -->
+        <div class="panel-form" id="entry-place"></div>
+
         <!-- Start and end in one row Time, each its day and its time, the range dash of the boxes between them,
              both days always shown, like 14.10.2026 10:15 – 14.10.2026 10:45, the same for the log
              and the plan: the day of the start like 13.10.2026, filled with the date of the entry or the box,
@@ -97,50 +111,51 @@
              at or before the start time, like 12.10.2026 23:30 to 13.10.2026 07:30, until I type over it.
              The times of a box of the plan may stay empty, a box of its day, but for an imported lecture, which keeps
              both; only a box of the plan has a deadline, its day and its time, which turns start and end off,
-             since the box then lies on its deadline. What the fields show is exactly what is saved -->
+             since the box then lies on its deadline. A box of the plan may instead last only so long, its day and its
+             length, like 08:00 for my sleep, the switch after the times going from one to the other, see lengthShow
+             in categories.ts. What the fields show is exactly what is saved -->
         <fieldset class="panel-form entry-times" id="entry-times">
-            <label class="panel-field"><span class="entry-name">Time</span>
+            <!-- Of a box of the plan the switch between from and to and only how long right beside the name Time,
+                 see lengthShow in categories.ts; the label names the day of the start by for, so a click on the row
+                 never presses the switch, which would else be its first control -->
+            <label class="panel-field" for="entry-start-day"><span class="entry-name">Time<span id="entry-swap"></span></span>
                 <span class="entry-range">
                     <span class="entry-moment">
                         <input class="date-field" id="entry-start-day" type="text" inputmode="decimal"
                                autocomplete="off" required aria-label="Day of the start">
                         <input class="time-field" id="entry-start" type="text" inputmode="numeric" autocomplete="off"
                                aria-label="Time of the start">
-                        <span class="entry-dash" aria-hidden="true">–</span></span>
+                        <input class="time-field" id="entry-length" type="text" inputmode="numeric" autocomplete="off"
+                               aria-label="How long"></span>
+                    <!-- The end with the dash before it, one unit, so a narrow row, like on a phone, breaks before the
+                         dash; its day hidden while it is that of the start, see endDayShow in categories.ts; in the same
+                         unit, of a box of a series the icon that opens its series, of a box of a series of my course
+                         after it its group, like Group 05, the menu of the groups for this one date where it may still
+                         go to another group, see seriesShow in categories.ts, so `12:00 ⟳ Group 05` never breaks -->
                     <span class="entry-moment">
+                        <span class="entry-dash" aria-hidden="true">–</span>
                         <input class="date-field" id="entry-end-day" type="text" inputmode="decimal"
                                autocomplete="off" required aria-label="Day of the end">
                         <input class="time-field" id="entry-end" type="text" inputmode="numeric" autocomplete="off"
-                               aria-label="Time of the end"></span></span></label>
+                               aria-label="Time of the end">
+                        <span class="entry-of-series" id="entry-of-series" hidden></span></span></span></label>
             <label class="panel-field" id="entry-deadline"><span class="entry-name">Deadline</span>
                 <span class="entry-moment">
                     <input class="date-field" id="entry-deadline-day" type="text" inputmode="decimal"
-                           autocomplete="off" placeholder="dd.mm.yyyy" aria-label="Day of the deadline">
+                           autocomplete="off" aria-label="Day of the deadline">
                     <input class="time-field" id="entry-deadline-time" type="text" inputmode="numeric"
                            autocomplete="off" aria-label="Time of the deadline"></span></label>
         </fieldset>
 
-        <!-- Repeat, only for a new box: closed its name with a plus beside it; open the rows of a weekly series
-             in place of start, end and deadline, its days, its dates, the days it leaves out and the boxes it makes,
-             one box per date, see repeatShow in categories.ts -->
-        <div class="panel-form" id="entry-repeat"></div>
-
-        <!-- The category, one line; for a box only the categories I plan -->
-        <div id="entry-category"></div>
-
-        <!-- Fields of the category: what, or the skill and its type side by side -->
-        <div class="panel-form" id="entry-fields"></div>
-
-        <!-- More fields of the category: where a way starts and its place; for Skill its place, below the place
-             Online the link, ID and passcode of its meeting, then semester, chapters, documents and attempts;
-             for Food its foods -->
+        <!-- More fields of the category: who I was with; for Skill its semester, chapters, documents and attempts;
+             for Body my neck pain; for Sport in the log its workout, exercises and videos -->
         <div class="panel-form" id="entry-more"></div>
 
         <!-- Free note, my diary of the unit, how it felt and what I learned, growing with its text -->
         <label class="panel-field"><span class="entry-name">Note</span>
             <textarea id="entry-note" rows="3" aria-label="Note"></textarea></label>
 
-        <!-- The box a log entry comes from, or the series of a box of my course, small and grey, with its pencil -->
+        <!-- The box a log entry comes from, small and grey, with its pencil -->
         <p class="entry-from-plan" id="entry-plan" hidden><span id="entry-plan-title"></span><button class="entry-pencil" id="entry-plan-edit" type="button" hidden></button></p>
 
         <!-- Hint when the reader does not take the entry -->
@@ -149,11 +164,13 @@
         <!-- Hint when the entry changed in its file since the dialog opened, so the reader refused it, see entrySave -->
         <p class="panel-error" id="entry-changed" hidden>Not saved: it changed on the disk, close and open it again</p>
 
-        <!-- The copy at the left duplicates the entry or the box being changed, a new one filled in alike;
-             the bin removes it, asking once more with a question mark; cancel closes the dialog, save sends the entry
-             once its fields are picked; the pencil beside the box a log entry comes from, above, changes that box;
-             no button logs a box here, since its menu in the plan does that -->
+        <!-- The file of the entry or the box at the left, small and grey, a link that opens it, see fileShow
+             in choices.ts; at the right the copy duplicates the entry or the box being changed, a new one filled in
+             alike; the bin removes it, asking once more with a question mark; cancel closes the dialog, save sends
+             the entry once its fields are picked; the pencil beside the box a log entry comes from, above, changes
+             that box; no button logs a box here, since its menu in the plan does that -->
         <div class="panel-buttons">
+            <a class="panel-file" id="entry-file" hidden></a>
             <button class="panel-duplicate" id="entry-duplicate" type="button" hidden></button>
             <button class="panel-remove" id="entry-remove" type="button" hidden></button>
             <button id="entry-cancel" type="button"></button>
@@ -180,8 +197,10 @@
         <!-- Hint when the reader does not take the idea -->
         <p class="panel-error" id="gift-error" hidden>Saving failed</p>
 
-        <!-- Remove takes the idea out, cancel closes the dialog, save sends the idea -->
+        <!-- The file of the birthday or holiday at the left, small and grey, a link that opens it, see fileShow
+             in choices.ts; at the right remove takes the idea out, cancel closes the dialog, save sends the idea -->
         <div class="panel-buttons">
+            <a class="panel-file" id="gift-file"></a>
             <button class="panel-remove" id="gift-remove" type="button" hidden></button>
             <button id="gift-cancel" type="button"></button>
             <button class="panel-main" id="gift-save" type="submit"></button>

@@ -11,48 +11,55 @@
  * Every box has the same lines, open or done: its category in bold with a colon and what,
  * like `Skill: IN0004_EinfuehrungRechnerarchitektur (VO)`, as an entry of the log does, on one line, ending in `…`
  * where it is too long; then grey its expected time, its length only where no end shows it, with its place after them,
- * by its label alone, like `11:30 – 13:00 · Audimax im Galileo` or `01h 00m · Home Munich`, the place opening its link
- * on a click when it has one; then its deadline, when it has one, see below; then its chapters, each opening
+ * a room by its code alone, like `11:30 – 13:00 · 8120.01.101`, as the rows of the page of its module, any other place
+ * by its label, like `01h 00m · Home Munich`, the place opening its link on a click when it has one, its whole name
+ * as its tooltip; then its deadline, when it has one, see below; then its chapters, each opening
  * the overview of its module in the scripts view, like `01_RegressionAnalysis`; then the documents it will use, each on a line of its own with a bullet, by the last
  * part of its path, like `04_LogisticPoissonRegression.pdf`, none for a lecture, whose slides are not known before,
  * and none for a note, like those a box of the chapters due today links, see `reader/suggestions.ts`;
  * a line without anything to say is left out. Every line stays one line, ending in `…` where it is too long,
- * like a long place, so a box keeps its few lines.
+ * like a long place, a document cut in its middle instead, so its ending stays, each line whole as its tooltip,
+ * so a box keeps its few lines.
  * No line counts the pushes or asks about them: a box goes on as often as I push it, and one I no longer want
  * I skip myself.
  * A box with a deadline shows from four days before it, see `reader/boxes.ts`, until it is done,
  * and on the day of its deadline always, done or not, and looks like every other box, its deadline on a line of its own
- * below its length and place, with how near it is, like `Deadline: Fri, 23.10.2026 · 12:00 · in 3 days`, its day
+ * below its length and place, with how near it is, like `Deadline: 23.10.2026 (Fri) · 12:00 · in 3 days`, its day
  * left out on that day itself, like `Deadline: 12:00 · today`, see {@link deadlinePartsOf}; it has no `Move`, since it
  * stays on the day of its deadline. Its sessions are dragged into the log, as many as it needs, and leave it open;
- * `Submit` in its menu ticks it submitted, which alone makes it done, see `reader/boxes.ts`.
+ * `Submit` among its actions ticks it submitted, which alone makes it done, see `reader/boxes.ts`.
  * An open box is dragged into the log at the real time: the reader writes a log entry like it, pointing to it,
  * as long as its expected duration, else half an hour, and I resize the entry when it lasted otherwise.
- * An open box shows `⋯` at its right, not only under the pointer, whose menu holds all it can do: first
- * `Log`, which logs it as expected with one tap, from its expected time, else ending now, see `times.ts`, then like skip,
- * see below; nothing stands at its left, so its lines start at the edge of the card, as those of every box do;
- * when the reader does not log a box dropped or tapped, a hint says so above the list until it loads again.
- * A box no longer open shows in that place one small grey icon for its state, the one of what made it in the menu,
+ * An open box shows all it can do at its right as small icon buttons, not only under the pointer, see `actions.ts`:
+ * first `Log`, which logs it as expected with one tap, from its expected time, else ending now, see `times.ts`, then
+ * like skip, see below; nothing stands at its left, so its lines start at the edge of the card, as those of every box
+ * do; when the reader does not log a box dropped or tapped, a hint says so above the list until it loads again.
+ * A box no longer open shows in that place one small grey icon for its state, the one of the action that made it,
  * like the cross for `Skip`, see {@link stateOf}, and a click on it takes that back, so everything undoes with
  * one click: a logged box goes back to open, its log entry removed unless that holds what I added since,
  * see `boxUndo` in `entries.ts`.
  * A done box keeps exactly the lines it had open, only greyed with its check; its real time and length
  * the log shows. An open box is as bright on a day that is over as on today, so a day before looks like today.
  * An open box that can be changed is skipped, cancelled, with `Skip`, or pushed to the next day,
- * one whose day is over to tomorrow, with `Move`, both in the menu of its `⋯`; a skipped box stays in its file,
+ * one whose day is over to tomorrow, with `Move`, both among its actions, or moved to any other day, later
+ * or earlier, by its day in its dialog, which counts as a push too, so a move by mistake is set right by moving it
+ * again; a skipped box stays in its file,
  * see `reader/boxes.ts`, and shows greyed, never struck through, at the end of the list, where its cross
  * takes it back.
+ * A tutorial of a module names its group at the end of the line of its time and place, after a dot, like
+ * `10:00 – 12:00 · 5610.01.011 · Group 05`, see {@link boxContentOf}; only its dialog picks another group,
+ * see `groups.ts`.
  * A pushed box stays greyed on each day it left, once per push, with the start and the length it had there,
- * see `leftBoxesOf` in `reader/boxes.ts`; a click on its lines leads to the day it stands on now, and the arrow
- * of the last of them takes that push back. Skipped, cancelled by the university and pushed look and work alike,
- * greyed with their icon, and none of them is carried along.
- * A box neither done nor cancelled stays on its day once that is over and is carried
- * along on today: in its section after the open boxes of today, without a heading of its own, since its day,
- * like `Mon, 12.10.2026 · 00h 45m`, says so,
- * the earliest first, see `boxesCarried` in `reader/boxes.ts`, until I do it, dragged into the log or as expected,
- * cancel it with `Skip`, or push it with `Move`, there and on its own day alike, which takes it to tomorrow,
- * the day after today, not the day after its own, see `boxPush` in `reader/boxes.ts`; a click on it changes it,
- * like its day. It never moves into the next days by itself.
+ * see `leftBoxesOf` in `reader/boxes.ts`, its arrow pointing where it went, `→` to a later day, `←` to an earlier one;
+ * a click on it leads to the day it stands on now. Skipped, cancelled by the university
+ * and pushed look and work alike, greyed with their icon, and none of them is carried along.
+ * A box neither done nor cancelled is carried along once its day is over, as if I pushed it to the next day at the end
+ * of each day, see `carriedOf` in `reader/boxes.ts`: it stands among the boxes of today, greyed on each day it left,
+ * and shows, counts and moves as a box I pushed by hand; one I no longer mean to do I skip, and one I move to a day
+ * that is over stays there, open and missed. A box with a deadline, which is never pushed, is carried along on today
+ * as it is: in its
+ * section after the open boxes of today, without a heading of its own, since its deadline says so, the earliest first,
+ * see `boxesCarried` in `reader/boxes.ts`, until I tick it submitted or cancel it with `Skip`; a click on it changes it.
  * `+` beside the name of the plan opens the entry by category for a new box of the shown day; a click on a box changes it,
  * see `categories.ts`. A box without category, like a to-do another app wrote into the plan, opens the entry
  * by category of the log instead of being logged at once, when it is dropped or logged as expected, since the log needs
@@ -63,19 +70,21 @@
  *
  * - `fullcalendar/interaction`: Drags the boxes into the log.
  * - `./entries.ts`: Sends logged, taken back, pushed and cancelled boxes to the reader, and names who I will be with.
- * - `./series.ts`: Names the numbered types, tells a box of a series of my course and opens the dialog of its series.
+ * - `./actions.ts`: Makes the actions of an open box.
  * - `./categories.ts`: Opens the entry by category for a new box, a box to change, and a box to log through it.
  * - `./gifts.ts`: Opens the dialog of the gift idea for a birthday or holiday.
+ * - `./choices.ts`: Cuts the name of a document in its middle.
  * - `./places.ts`: Gives the name of the place of a box, a link when it has one.
+ * - `./series.ts`: Writes a room by its code, and opens the dialog of a new series.
  * - `./times.ts`: Gives the times a box is logged at with one tap, writes times of day and how near a deadline is.
  * - `../skill/attempts.ts`: Names the category of skill entries, writes a date as a day,
  *   and gives the day of a date.
  * - `../today.ts`: Gives today's calendar date, which tells whether the day of a box is over.
  * - `../icons.ts`: Puts icons into the buttons, their words as tooltip.
- * - `../menu.ts`: Puts the buttons of a box behind one button `⋯`.
  * - `../phone.ts`: Tells a phone, which shows a skill by its code alone.
  * - `../reader.ts`: Asks the reader.
- * - `lucide`: The icons plus, check, arrow, cross, calendar crossed out, repeat and gift.
+ * - `lucide`: The icons of the states of a box, check, arrow, cross and calendar crossed out, the gift, and the arrows
+ *   of a new series.
  * - `fullcalendar`: Calendar of the log the boxes are dropped into.
  */
 
@@ -83,18 +92,18 @@ import { Draggable } from "fullcalendar/interaction";
 import { boxDrop, boxLog, boxPush, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
 import { boxOpenEdit, boxOpenNew, entryOpenFromBox } from "./categories.ts";
 import { giftOpen } from "./gifts.ts";
-import { breakableOf } from "./choices.ts";
+import { middleCutPut } from "./choices.ts";
 import { whereLinkedOf, whereOf } from "./places.ts";
 import { linkNameOf, modulesFolder } from "../skill/links.ts";
 import { boxMinutes, boxTimesOf, lengthOf, nearOf, timeOf } from "./times.ts";
-import { numberedTypes, seriesHas, seriesOpen } from "./series.ts";
-import { dayOf, dayTextOf, semesterOf, skillName } from "../skill/attempts.ts";
+import { boxActionsOf } from "./actions.ts";
+import { roomOf, seriesNew } from "./series.ts";
+import { dayOf, dayTextOf, skillName } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
-import { menuItemOf, menuOf } from "../menu.ts";
 import { phone } from "../phone.ts";
 import { readerAsk } from "../reader.ts";
-import { ArrowRight, CalendarOff, Check, Gift, Repeat, X } from "lucide";
+import { ArrowLeft, ArrowRight, CalendarOff, Check, CircleDashed, Gift, Repeat, X } from "lucide";
 
 import type { Calendar, EventApi, EventReceiveInfo } from "fullcalendar";
 import type { IconNode } from "lucide";
@@ -138,17 +147,17 @@ export type BoxState = "open" | "done" | "dropped" | "university" | "pushed";
  *   as ISO instants, `null` for none.
  * - `editable`: Whether it can be changed, pushed and dropped: a to-do or an event with times,
  *   also one occurrence of a series, alone, like the lecture `IN2028 VO` on 26.10.2026.
- * - `series`: Whether it is one occurrence of a series, which cannot be removed.
+ * - `series`: Whether it is one occurrence of a series, whose bin takes that day alone out of it.
  * - `todo`: Whether it is a to-do; an event, like a lecture imported from TUMonline, keeps its time and duration.
  * - `links`: Its links, like the slides a lecture of my plan links, which a log entry from it gets too.
  * - `chapters`: Chapters of my system a skill box belongs to, like `02_LogisticPoissonRegression`, which a log entry
  *   from it gets too; none for none.
  * - `number`: Its number in its series, like `3`, `NONE` for one the university cancelled, empty for none.
- * - `group`: The group of a tutorial whose session it goes to, like `03`, see `../editor/course.ts`; empty for none.
- * - `picked`: Whether I picked its group by hand for its week, see `../editor/course.ts`, so the later weeks that follow
- *   the group I was at last leave it as it is.
+ * - `group`: The group of a tutorial whose session it goes to, like `03`, see `./groups.ts`; empty for none.
  * - `moved`: For a box shown greyed on a day it was pushed from, where it went, see {@link Moved};
  *   `null` for any other.
+ * - `file`: Its `.ics` file from `NomWorkspace` on, which its dialog shows, see `fileShow` in `choices.ts`,
+ *   like `NomManageplannings/NomManagecalendar/Modules/WI1059_FinancialAccounting_Plan.ics`.
  */
 export type Box = {
     id: string;
@@ -180,8 +189,8 @@ export type Box = {
     chapters: string[];
     number: string;
     group: string;
-    picked: boolean;
     moved: Moved | null;
+    file: string;
 };
 
 /**
@@ -201,11 +210,11 @@ export type Push = {
  * Where a box went that shows greyed on a day it was pushed from, as the reader sends it.
  *
  * - `day`: The day it stands on now, like `2026-10-17`, where a click on its lines leads.
- * - `last`: Whether it is its last push and the box is still open, so its arrow takes the push back.
+ * - `went`: The day it went to from the day it shows on, later or earlier, which its arrow points to.
  */
 export type Moved = {
     day: string;
-    last: boolean;
+    went: string;
 };
 
 /**
@@ -215,12 +224,14 @@ export type Moved = {
  * - `category`: Its category, like `Birthday` or `Holiday`, empty for none.
  * - `title`: Its name as its file writes it, like `Karlbauer Florian` or `Ostermontag (AT, DE)`.
  * - `gift`: My gift idea for it, its `DESCRIPTION`, empty for none.
+ * - `file`: Its file from `NomWorkspace` on, like `NomManageplannings/NomManagecalendar/Meta/Birthdays.ics`.
  */
 export type Occasion = {
     id: string;
     category: string;
     title: string;
     gift: string;
+    file: string;
 };
 
 /**
@@ -242,10 +253,15 @@ export type PlanDay = {
 let shown: PlanDay = { day: "", occasions: [], boxes: [] };
 
 /**
- * The boxes carried along to the shown day, as loaded last: those of the days before it, neither done nor cancelled,
+ * The boxes with a deadline carried along to the shown day, as loaded last: those whose deadline is over, not done,
  * the earliest first; none for any day but today.
  */
 let carried: Box[] = [];
+
+/**
+ * Type of the boxes that go to a group, my tutorials, see `reader/course.ts`.
+ */
+const groupedType: string = "TU";
 
 /**
  * What the list was loaded for last: the day and the log entries of it, so it loads again only when they change.
@@ -288,16 +304,10 @@ export function whatOf(category: string, what: string): (string | Node)[] {
 }
 
 /**
- * Gives what an entry or a box shows as its what, see {@link whatOf}: a skill entry or box by its what as its file
- * writes it, the name of the folder of its skill and its type in brackets, like
- * `IN0004_EinfuehrungRechnerarchitektur (VO)`, so it reads as the file and the folder in the file manager do;
- * an entry written while a summary named its module in words, like `IN0004 Einfuehrung Rechnerarchitektur (VO)`,
- * by the folder its words were made of, its code and `_` before them and their spaces taken out, the same
- * `IN0004_EinfuehrungRechnerarchitektur (VO)`; on a phone by its code alone with its type, like `IN0004 (VO)`, so it
- * stays short there, and so does an older entry like `IN0004 VO`; a project by its name, like `WokFlow`; one without
- * skill and type, like an older entry, and any other entry or box by its what as written.
- * - `name`: Its what without its type in brackets, like `IN0004 Einfuehrung Rechnerarchitektur`.
- * - `folder`: The folder of its skill made of the words of that name, like `IN0004_EinfuehrungRechnerarchitektur`.
+ * Gives what an entry or a box shows as its what, see {@link whatOf}: its what as written, its `SUMMARY`, also the free
+ * title of a skill entry or box, like `IN2028 Lecture 3 recap`; on a phone the title its skill and type give it,
+ * the name of the folder of its skill and its type in brackets, like `IN0004_EinfuehrungRechnerarchitektur (VO)`,
+ * by its code alone with its type, like `IN0004 (VO)`, so it stays short there.
  *
  * @param category - Its category, like `Skill`
  * @param title - Its what as written, its `SUMMARY`, like `IN0004_EinfuehrungRechnerarchitektur (VO)`
@@ -306,13 +316,9 @@ export function whatOf(category: string, what: string): (string | Node)[] {
  * @returns What it shows, like `IN0004_EinfuehrungRechnerarchitektur (VO)`
  */
 export function shownWhatOf(category: string, title: string, module: string, type: string): string {
-    const name: string = title.replace(/ \(\w+\)$/, "");
-    if (category !== skillName || (module === "" && type === "") || (!phone && title.startsWith(`${module}_`)))
+    if (category !== skillName || !phone || module === "" || !title.startsWith(`${module}_`))
         return title;
-    if (phone || !name.startsWith(`${module} `) || name === `${module} ${type}`)
-        return type === "" ? module : `${module} (${type})`;
-    const folder: string = `${module}_${name.slice(module.length + 1).replaceAll(" ", "")}`;
-    return type === "" ? folder : `${folder} (${type})`;
+    return type === "" ? module : `${module} (${type})`;
 }
 
 /**
@@ -328,7 +334,7 @@ export async function boxesFetch(start: string, end: string): Promise<PlanDay[]>
 }
 
 /**
- * Loads the boxes carried along to a day from the reader: those of the days before it, neither done nor cancelled,
+ * Loads the boxes with a deadline carried along to a day from the reader: those whose deadline is over, not done,
  * see `boxesCarried` in `reader/boxes.ts`.
  *
  * @param day - The day, like `2026-10-13`, today
@@ -342,20 +348,23 @@ async function carriedFetch(day: string): Promise<Box[]> {
 /**
  * Writes the parts of the line of the time and length of a box, the second of its lines, see {@link boxContentOf},
  * which a middle dot parts, the same whether it is open or done, since the log shows its real time: its own day
- * when it is carried along to a later day, like `Mon, 12.10.2026`, its expected start and end, else its expected
- * duration, like `01h 15m`, see `lengthOf` in `times.ts`, never how often it was pushed; that a box was cancelled
- * or pushed away shows its icon at its right, see {@link stateOf}.
- * - `over`: Its own day, for an open box without deadline carried along to a later day, else empty.
+ * while it is open and stands on a later day, carried along or pushed, the day before its first push, like
+ * `23.10.2026 (Fri)`; its expected start and end, else its expected duration, like `01h 15m`, see `lengthOf`
+ * in `times.ts`, never how often it was pushed; that a box was cancelled or pushed away shows its icon at its right,
+ * see {@link stateOf}.
+ * - `first`: Its own day, before its first push.
+ * - `over`: Its own day, for an open box without deadline that stands on a later day, else empty.
  * - `start`: Its expected start, `null` for none.
  * - `when`: Its expected start and end, or its start alone without duration, empty for neither.
  * - `length`: Its expected duration, empty for none and where its start shows its time.
  *
  * @param box - The box
- * @param day - Day the box shows on, like `2026-10-20`
+ * @param day - Day the box shows on, like `2026-10-24`
  * @returns The parts of the line, in order, none when there is nothing to write
  */
 function timePartsOf(box: Box, day: string): string[] {
-    const over: string = box.state === "open" && box.deadline === "" && box.day < day ? dayTextOf(box.day, true) : "";
+    const first: string = box.pushed[0]?.day ?? box.day;
+    const over: string = box.state === "open" && box.deadline === "" && first < day ? dayTextOf(first, true) : "";
     const start: Date | null = box.time === "" ? null : new Date(box.time);
     let when: string = start === null ? "" : timeOf(start);
     if (start !== null && box.minutes !== null)
@@ -368,7 +377,7 @@ function timePartsOf(box: Box, day: string): string[] {
  * Writes the parts of the line of the deadline of a box, below the line of its time, see {@link boxContentOf},
  * which a middle dot parts: the day of its deadline, its time, none for a deadline without time, and how near it is
  * while it is open, see `nearOf` in `times.ts`, not for a box carried along; its day left out on that day itself,
- * unless nothing else is left to write, like `Fri, 23.10.2026 · 12:00 · in 3 days` and `12:00 · today`.
+ * unless nothing else is left to write, like `23.10.2026 (Fri) · 12:00 · in 3 days` and `12:00 · today`.
  * - `time`: Its time, empty for a deadline without time.
  * - `near`: How near it is, empty for a box not open, or one carried along.
  * - `rest`: Its time and how near it is, as far as there is something to write.
@@ -388,16 +397,33 @@ function deadlinePartsOf(box: Box, day: string, nearShown: boolean): string[] {
 }
 
 /**
- * Makes the parts of a line of times, the first plain, each further one after its dot, see `.entry-parted`
- * in `day.css`, in one part of the line, so they stay together on a phone too.
+ * Gives a line of a box, or a part of one, its whole text as its tooltip, since it ends in `…` where it is too long,
+ * see `.box-what` in `boxes.css`: its own text, or the text given where the page draws more than that, like the dots
+ * between the parts of a time or the arrow of a route.
  *
- * @param parts - The parts, like `Wed, 14.10.2026` and `13:15 – 14:45`
+ * @param element - The line or the part
+ * @param text - Its whole text, like `14.10.2026 (Wed) · 13:15 – 14:45`; its own text when left out
+ * @returns The same line or part
+ */
+function titledOf(element: HTMLElement, text?: string): HTMLElement {
+    element.title = text ?? element.textContent ?? "";
+    return element;
+}
+
+/**
+ * Makes the parts of a line of times, the first plain, each further one after its dot, see `.entry-parted`
+ * in `day.css`, in one part of the line, so they stay together on a phone too, the whole line as its tooltip.
+ *
+ * @param parts - The parts, like `14.10.2026 (Wed)` and `13:15 – 14:45`
  * @param start - What stands before the first, like `Deadline: `, empty for nothing
  * @returns The part of the line, `null` for no parts
  */
 function timesOf(parts: string[], start: string): HTMLElement | null {
-    return parts.length === 0 ? null : entryPartOf("span", "box-part box-time", parts.map((part: string,
-        index: number): string | Node => index === 0 ? `${start}${part}` : entryPartOf("span", "entry-parted", [part])));
+    if (parts.length === 0)
+        return null;
+    return titledOf(entryPartOf("span", "box-part box-time", parts.map((part: string, index: number): string | Node =>
+        index === 0 ? `${start}${part}` : entryPartOf("span", "entry-parted", [part]))),
+        `${start}${parts.join(" · ")}`);
 }
 
 /**
@@ -405,19 +431,25 @@ function timesOf(parts: string[], start: string): HTMLElement | null {
  * of this file, as an entry of the log has them: what it is in bold, see {@link whatOf},
  * like **`Skill: IN0004_EinfuehrungRechnerarchitektur (VO)`**, see {@link shownWhatOf}, on one line, see `.box-what`
  * in `boxes.css`; then its time in the light grey of a time, its parts apart by a middle dot
- * with room on both sides, see {@link timePartsOf}, and after it its place in the darker grey, by its label alone,
- * its address hidden, like `16:00 – 17:30 · Audimax im Galileo`, a way its route, like `Home Munich → TUM Garching`,
- * see `whereLinkedOf` in `places.ts`, a place with a link opening it on a click instead of the box; then its deadline
+ * with room on both sides, see {@link timePartsOf}, and after it its place in the darker grey, a room by its code,
+ * see `roomOf` in `series.ts`, any other place by its label alone, its address hidden,
+ * like `16:00 – 17:30 · 8120.01.101`, a way its route, like `Home Munich → TUM Garching`, see `whereLinkedOf`
+ * in `places.ts`, a place with a link opening it on a click instead of the box, of a tutorial with a group its group
+ * last, like `10:00 – 12:00 · 5610.01.011 · Group 05`, see {@link tutorialIs}; then its deadline
  * on a line of its own in the grey of a time, see {@link deadlinePartsOf}; then its chapters on a line of their own
  * in the same grey, apart by a middle dot, see {@link chaptersOf}; then its documents, one per line with a bullet,
- * see {@link topicsOf}; a line without anything to say is left out.
+ * see {@link topicsOf}, each cut in its middle where it is too long, so its ending stays, like `.pdf`, see
+ * `middleCutPut` in `choices.ts`; a line without anything to say is left out. Every line and part is whole as its
+ * tooltip, see {@link titledOf}.
  * - `what`: What it is as shown.
  * - `times`: Its time, see {@link timesOf}, `null` for none.
- * - `place`: The label of its place or the route of a way, empty for none.
- * - `meta`: Its time and its place, as far as it has them, the place after a dot when a time stands before it.
+ * - `place`: The label of its place or the route of a way, empty for none, its tooltip.
+ * - `meta`: Its time, its place and the group of a tutorial, as far as it has them, each after a dot but the first.
+ * - `group`: The group of a tutorial, empty for none.
  * - `deadline`: Its deadline after `Deadline: `, `null` for none.
  * - `chapters`: Its chapters, each after a dot but the first.
  * - `topics`: Its documents.
+ * - `item`: The line of a document.
  *
  * @param box - The box
  * @param day - Day the box shows on, like `2026-10-20`
@@ -428,28 +460,35 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
     const what: string = shownWhatOf(box.category, box.title, box.module, box.type);
     const times: HTMLElement | null = timesOf(timePartsOf(box, day), "");
     const place: string = whereOf(box.category, box.from, box.location, box.online);
+    const group: string = tutorialIs(box) && box.group !== "" ? `Group ${box.group}` : "";
     const meta: HTMLElement[] = [
         ...(times === null ? [] : [times]),
-        ...(place === "" ? [] : [entryPartOf("span", times === null ? "box-part" : "box-part entry-parted",
-            whereLinkedOf(box.category, box.from, box.location, box.locationLink, box.online, box.onlineLink))]),
+        ...(place === "" ? [] : [titledOf(entryPartOf("span", times === null ? "box-part" : "box-part entry-parted",
+            whereLinkedOf(box.category, box.from, roomOf(box.location), box.locationLink, box.online, box.onlineLink)),
+            place.replace("->", "→"))]),
     ];
+    if (group !== "")
+        meta.push(titledOf(entryPartOf("span", meta.length === 0 ? "box-part" : "box-part entry-parted", [group])));
     const deadline: HTMLElement | null = timesOf(deadlinePartsOf(box, day, nearShown), "Deadline: ");
     const chapters: HTMLElement[] = chaptersOf(box).map((chapter: Node, index: number): HTMLElement =>
-        entryPartOf("span", index === 0 ? "box-part" : "box-part entry-parted", [chapter]));
+        titledOf(entryPartOf("span", index === 0 ? "box-part" : "box-part entry-parted", [chapter])));
     const topics: string[] = topicsOf(box);
     return [
-        entryPartOf("div", "box-what", whatOf(box.category, what === box.category ? "" : what)),
+        titledOf(entryPartOf("div", "box-what", whatOf(box.category, what === box.category ? "" : what))),
         ...(meta.length === 0 ? [] : [entryPartOf("div", "box-meta", meta)]),
         ...(deadline === null ? [] : [entryPartOf("div", "box-meta", [deadline])]),
         ...(chapters.length === 0 ? [] : [entryPartOf("div", "box-meta box-chapters", chapters)]),
-        ...(topics.length === 0 ? [] : [entryPartOf("ul", "box-topics", topics.map((topic: string): HTMLElement =>
-            entryPartOf("li", "", [breakableOf(topic)])))]),
+        ...(topics.length === 0 ? [] : [entryPartOf("ul", "box-topics", topics.map((topic: string): HTMLElement => {
+            const item: HTMLElement = entryPartOf("li", "", []);
+            middleCutPut(item, topic);
+            return item;
+        }))]),
     ];
 }
 
 /**
  * Gives the chapters of a skill box by the names of their folders, like `01_RegressionAnalysis`, each a link that
- * opens the overview of its module in the scripts view in this window, the chapter picked in the tree, never a second
+ * opens the page of the chapter in the scripts view in this window, the chapter picked in the tree, never a second
  * one, like `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`,
  * instead of the box, as the place opens its link; plain on a phone, which has no scripts view, and for a box whose summary links
  * no module folder.
@@ -492,7 +531,10 @@ function topicsOf(box: Box): string[] {
  * **`Birthday:`**` Karlbauer Florian`, see {@link whatOf}, and beside it, after a middle dot, my gift idea for it,
  * when I have one, like `· Concert tickets`, ending in `…` where the line is too narrow, as what a box is does,
  * and no buttons, since it is never logged. A click on it opens the dialog of its gift idea, see `gifts.ts`,
- * and one without an idea shows the gift at its right under the pointer.
+ * and one without an idea shows the gift at its right under the pointer. Its tooltip is its line whole, then what
+ * a click does, `Gift idea` or `Change gift idea`.
+ * - `what`: Its category and name in bold.
+ * - `text`: The same as text.
  * - `after`: My gift idea after its dot, else the gift under the pointer.
  * - `element`: A birthday or holiday with its idea.
  *
@@ -502,11 +544,14 @@ function topicsOf(box: Box): string[] {
  */
 function occasionsOf(occasions: Occasion[], open: (occasion: Occasion) => void): HTMLElement[] {
     return occasions.map((occasion: Occasion): HTMLElement => {
+        const what: (string | Node)[] = whatOf(occasion.category, occasion.title);
+        const text: string = what.map((part: string | Node): string => typeof part === "string" ? part
+            : part.textContent ?? "").join("");
         const after: HTMLElement = occasion.gift === "" ? entryPartOf("span", "occasion-hint", [iconOf(Gift)])
             : entryPartOf("span", "entry-parted occasion-gift", [occasion.gift]);
         const element: HTMLElement = entryPartOf("div", "box occasion", [entryPartOf("div", "box-body", [
-            entryPartOf("div", "box-what", [...whatOf(occasion.category, occasion.title), after])])]);
-        element.title = occasion.gift === "" ? "Gift idea" : "Change gift idea";
+            entryPartOf("div", "box-what", [...what, after])])]);
+        element.title = occasion.gift === "" ? `${text}\nGift idea` : `${text} · ${occasion.gift}\nChange gift idea`;
         element.addEventListener("click", (): void => open(occasion));
         return element;
     });
@@ -549,15 +594,15 @@ async function boxClick(calendar: Calendar, box: Box): Promise<void> {
 }
 
 /**
- * Makes the state of a box no longer open, at its right in the place of the menu `⋯` of an open box,
- * see {@link actionsOf}: one small grey icon, the one of what made it in the menu, its word as tooltip,
+ * Makes the state of a box no longer open, at its right in the place of the actions of an open box,
+ * see {@link actionsOf}: one small grey icon, the one of the action that made it, its word as tooltip,
  * see {@link stateMarkOf}: the check for a done box, `Logged`, and for a done box with a deadline, `Submitted`,
  * the cross for one I skipped, `Skipped`, the calendar crossed out for one the university cancelled, `Cancelled`,
- * the arrow for one greyed on a day it was pushed from, `Moved`; a click on it takes that back, as the menu did it:
- * a done box back to open, see `boxUndo` in `entries.ts`, a box with a deadline its tick, see `boxSubmit`, a skipped
- * or cancelled box back to open, and a box greyed on the day of its last push that push; only the icon, without
- * button, for a box greyed on the day of an earlier push, since only the last push can be taken back, and for a box
- * that cannot be changed, but for a done one.
+ * the arrow for one greyed on a day it was pushed from, pointing where it went, `→` to a later day and `←` to an earlier
+ * one, `Moved`, its icon alone, since a move is set right by moving the box again; a click on the others takes that
+ * back, as the action did it: a done box back to open, see `boxUndo` in `entries.ts`, a box with a deadline its tick,
+ * see `boxSubmit`, a skipped or cancelled box back to open; only the icon, without button, for a box that cannot be
+ * changed, but for a done one.
  *
  * @param calendar - Calendar of the day
  * @param box - The box, no longer open
@@ -573,14 +618,13 @@ function stateOf(calendar: Calendar, box: Box): HTMLElement {
     if (box.state === "university")
         return stateMarkOf(calendar, CalendarOff, "Cancelled",
             box.editable ? (): Promise<void> => boxUniversity(box.id, false) : null);
-    return stateMarkOf(calendar, ArrowRight, "Moved",
-        box.editable && box.moved?.last === true ? (): Promise<void> => boxPush(box.id, false) : null);
+    return stateMarkOf(calendar, (box.moved?.went ?? "") < box.day ? ArrowLeft : ArrowRight, "Moved", null);
 }
 
 /**
- * Makes the icon of the state of a box, see {@link stateOf}, as large and in the same place as `⋯`,
+ * Makes the icon of the state of a box, see {@link stateOf}, as large as an action and where the last one stands,
  * see `.box-state` in `boxes.css`: a button where the state can be taken back, which a click does and then loads
- * the list again, lighter under the pointer like `⋯`; else the icon alone.
+ * the list again, lighter under the pointer like an action; else the icon alone.
  * - `mark`: The icon alone.
  * - `button`: The icon as button.
  *
@@ -619,85 +663,49 @@ function logFailShow(error: unknown): void {
 }
 
 /**
- * Makes one button of the menu of a box, its icon and then its words, like `Move`, which sends a change
- * of the box and then loads the list again, see `menuItemOf` in `../menu.ts`.
+ * Makes the actions of an open box at its right, see `boxActionsOf` in `actions.ts`: `Log` logs it with one tap,
+ * see {@link boxTap}, a hint above the list saying when the reader does not log it, see {@link logFailShow};
+ * every other action sends its change and then loads the list again. One occurrence of a series has them too and changes alone, the series staying.
  *
  * @param calendar - Calendar of the day
- * @param icon - Icon, like `ArrowRight`
- * @param words - What it does, like `Move`
- * @param send - Sends the change to the reader
- * @returns The button
+ * @param box - The box, open
+ * @returns Its actions
  */
-function actionOf(calendar: Calendar, icon: IconNode, words: string, send: () => Promise<void>): HTMLButtonElement {
-    return menuItemOf(icon, words, (): void => {
+function actionsOf(calendar: Calendar, box: Box): HTMLElement {
+    return boxActionsOf(box, (): void => {
+        boxTap(calendar, box).catch(logFailShow);
+    }, (send: () => Promise<void>): void => {
         send().then((): Promise<void> => boxesLoad(calendar)).catch((error: unknown): void => console.error(error));
     });
 }
 
 /**
- * Puts the buttons of a box behind one button `⋯` at its right, see `../menu.ts`
- * and `.box-actions` in `boxes.css`, so the line of what the box is keeps its room.
- * - `place`: The button `⋯` with its menu.
+ * Tells whether a box is a tutorial of a module, see {@link groupedType}, which names its group, see {@link boxContentOf}.
  *
- * @param buttons - The buttons, like the arrow and the cross
- * @returns The button `⋯` with its menu
+ * @param box - The box
+ * @returns Whether it is
  */
-function actionsRowOf(buttons: HTMLButtonElement[]): HTMLElement {
-    const place: HTMLElement = menuOf(buttons);
-    place.classList.add("box-actions");
-    return place;
-}
-
-/**
- * Makes the menu of an open box, behind its button `⋯`, see {@link actionsRowOf}: first `Log`, the one button
- * that logs it with one tap, see {@link boxTap}, a hint above the list saying when the reader does not log it,
- * see {@link logFailShow}, for a box with a deadline `Submit` instead, which ticks it submitted, its sessions staying
- * in the log, see `boxSubmit` in `entries.ts`, both also for a box that cannot be changed, like a lecture of a file
- * outside the new system, whose menu holds nothing else; then `Move`, which pushes it to the next day, one whose day
- * is over to tomorrow, also one carried along, see `boxPush` in `reader/boxes.ts`, but for a box with a deadline,
- * which stays on the day of its deadline; then for a lecture, an exercise, a tutorial or a sheet,
- * see `numberedTypes` in `series.ts`, `Cancel`, which marks it cancelled by the university, see `boxUniversity`
- * in `entries.ts`; then `Skip`, which cancels it; last, for a box of a series of my course, `Series`, which opens
- * the dialog of its series, see `seriesOpen` in `series.ts`. A box no longer open shows its state in that place
- * instead, see {@link stateOf}. One occurrence of a series has them too and changes alone, the series staying.
- * - `first`: `Log`, or `Submit` for a box with a deadline.
- *
- * @param calendar - Calendar of the day
- * @param box - The box, open
- * @returns The button `⋯` with its menu
- */
-function actionsOf(calendar: Calendar, box: Box): HTMLElement {
-    const first: HTMLButtonElement = box.deadline === ""
-        ? menuItemOf(Check, "Log", (): void => {
-            boxTap(calendar, box).catch(logFailShow);
-        })
-        : actionOf(calendar, Check, "Submit", (): Promise<void> => boxSubmit(box.id, true));
-    if (!box.editable)
-        return actionsRowOf([first]);
-    return actionsRowOf([
-        first,
-        ...(box.deadline !== "" ? []
-            : [actionOf(calendar, ArrowRight, "Move", (): Promise<void> => boxPush(box.id, true))]),
-        ...(box.category === skillName && numberedTypes.includes(box.type)
-            ? [actionOf(calendar, CalendarOff, "Cancel", (): Promise<void> =>
-                boxUniversity(box.id, true))] : []),
-        actionOf(calendar, X, "Skip", (): Promise<void> => boxDrop(box.id, true)),
-        ...seriesHas(box) ? [menuItemOf(Repeat, "Series", (): void => {
-            seriesOpen(box.module, box.type, box.semester || semesterOf(box.day))
-                .catch((error: unknown): void => console.error(error));
-        })] : [],
-    ]);
+function tutorialIs(box: Box): boolean {
+    return box.category === skillName && box.type === groupedType && box.module !== "";
 }
 
 /**
  * Makes a box of the list: its lines, see {@link boxContentOf}, which change it when clicked, see {@link boxClick},
- * and at their right its menu `⋯` while open, see {@link actionsOf}, else its state, see {@link stateOf};
- * in the list carried along with its own day and without how near its deadline is, since its deadline line names it.
+ * and at their right its actions while open, see
+ * {@link actionsOf}, else its state, see {@link stateOf}; in the list carried along with its own day and without how
+ * near its deadline is, since its deadline line names it. An open box without deadline whose day is over, missed,
+ * not carried along, greyed as `box-missed`, its actions without `Move`, see `../day/actions.ts`, before them the calm
+ * dashed circle `Missed` the list of a module shows for it, see `missedOf` in `../editor/course.ts`; moving it by its
+ * dialog to today or later carries it along again, see `carriedPut` in `reader/boxes.ts`.
  * An open box has the class `box-draggable`, so it can be dragged into the log, see {@link boxesStart},
  * and keeps its identifier, which names it when it is dropped, see {@link boxReceive}, its category, its title
- * and its minutes in the log as data of its element.
+ * and its minutes in the log as data of its element, and how many lines it has as `--box-lines`, so its actions
+ * or its state stand in the middle of all of them, see `.box-actions` in `boxes.css`.
  * - `element`: The box.
+ * - `missed`: Whether it is open, without deadline, and its day over.
  * - `body`: Its lines.
+ * - `end`: Its actions or its state at its right.
+ * - `mark`: The mark of a missed box.
  *
  * @param calendar - Calendar of the day
  * @param box - The box
@@ -706,23 +714,32 @@ function actionsOf(calendar: Calendar, box: Box): HTMLElement {
  */
 function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTMLElement {
     const element: HTMLElement = entryPartOf("div", `box box-${box.state}`, []);
+    const missed: boolean = box.state === "open" && box.deadline === "" && box.day < calendarTodayOf();
+    element.classList.toggle("box-missed", missed);
     const body: HTMLElement = entryPartOf("div", "box-body", boxContentOf(box, shown.day, !carriedShown));
     element.classList.toggle("box-draggable", box.state === "open");
     element.dataset.id = box.id;
     element.dataset.category = box.category;
     element.dataset.title = box.title;
     element.dataset.minutes = String(box.minutes ?? boxMinutes);
+    element.style.setProperty("--box-lines", String(body.children.length));
     element.addEventListener("click", (event: MouseEvent): void => {
         if (event.target === element || body.contains(event.target as Node))
             boxClick(calendar, box).catch((error: unknown): void => console.error(error));
     });
-    element.append(body, box.state === "open" ? actionsOf(calendar, box) : stateOf(calendar, box));
+    const end: HTMLElement = box.state === "open" ? actionsOf(calendar, box) : stateOf(calendar, box);
+    if (missed) {
+        const mark: HTMLElement = entryPartOf("span", "box-state", []);
+        iconPut(mark, CircleDashed, "Missed");
+        end.prepend(mark);
+    }
+    element.append(body, end);
     return element;
 }
 
 /**
  * Sections of the plan, in order, my projects, my modules and my living, named as the Skill picker names its groups;
- * their plans lie in `Skilling`, `University` and `Living` of `NomManagecalendar`, see `reader/sources.ts`.
+ * their plans lie in `Skilling`, `Modules` and `Living` of `NomManagecalendar`, see `reader/sources.ts`.
  */
 const sections: string[] = ["Projects", "Modules", "Living"];
 
@@ -782,8 +799,8 @@ function boxesShow(calendar: Calendar): void {
 }
 
 /**
- * Loads the plan of the shown day and, on today, the boxes carried along to it,
- * and shows them, unless another day is shown meanwhile, without the hint of a box not logged, see {@link logFailShow}.
+ * Loads the plan of the shown day and, on today, the boxes carried along to it, and shows them, unless another day
+ * is shown meanwhile, without the hint of a box not logged, see {@link logFailShow}.
  * - `day`: The shown day.
  * - `plans`: Its plan, the one day of the range.
  * - `carriedNow`: The boxes carried along to it, none for any day but today.
@@ -901,7 +918,7 @@ function boxDragFollow(calendar: Calendar, down: PointerEvent): void {
         if (rect === undefined || event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top
             || event.clientY > rect.bottom)
             return;
-        boxPush(item.dataset.id ?? "", true).then((): void => calendar.next()).catch(logFailShow);
+        boxPush(item.dataset.id ?? "").then((): void => calendar.next()).catch(logFailShow);
     };
     document.addEventListener("pointermove", move);
     document.addEventListener("pointerup", up);
@@ -936,7 +953,14 @@ export function boxesStart(calendar: Calendar): void {
     document.getElementById("plan-new")?.addEventListener("click", (): void => {
         boxOpenNew(calendar.view.currentStart).catch((error: unknown): void => console.error(error));
     });
-    ["entry", "gift"].forEach((id: string): void => document.getElementById(id)?.addEventListener("close", (): void => {
+    const series: HTMLElement = document.getElementById("plan-series") as HTMLElement;
+    iconPut(series, Repeat, "New series");
+    series.classList.add("plus-quiet");
+    series.addEventListener("click", (): void => {
+        seriesNew(dayOf(calendar.view.currentStart), (): void => {})
+            .catch((error: unknown): void => console.error(error));
+    });
+    ["entry", "gift", "series"].forEach((id: string): void => document.getElementById(id)?.addEventListener("close", (): void => {
         boxesLoad(calendar).catch((error: unknown): void => console.error(error));
     }));
 }

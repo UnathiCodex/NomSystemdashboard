@@ -1,7 +1,7 @@
 /* Trackers and the timer of a session in the bar of the day: Sleep, Water and Food as three tiles at its right end,
    the water's tile a button that logs a glass, the session running now between them and the date, all filled in
    the soft grey of a card without a frame, like the cards of the phone; none on a phone */
-/* Timer of a session running now, see `timer.ts`, always there, `None` while none runs, so the bar never jumps: all
+/* Timer of a session running now, see `timer.ts`, always there, its name `Session` while none runs, so the bar never jumps: all
    the room the bar leaves between the date and the trackers, never more, so the bar keeps one line, as far from both
    as the trackers from each other, at least 9rem, so its time always shows, filled like a tracker, at least one
    control high, on one line: what the session is at the left, giving way with an ellipsis where the room is too

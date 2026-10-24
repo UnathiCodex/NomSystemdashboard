@@ -7,7 +7,7 @@
  * of an entry finds them above my foods too, each with its short title in brackets, see {@link dishNameOf}.
  * - The line of a meal, wherever it stands, is that of every list of meals or foods, see `listLineOf` in `search.ts`:
  *   its name with its short title grey in brackets on one line, see {@link dishNameOf}, and what it gave the last time
- *   I ate it, a bare number under the head `My meals` and `kcal / meal`; for a meal never eaten what its foods give
+ *   I ate it, a bare number under the head `Meals` and `kcal / meal`; for a meal never eaten what its foods give
  *   at the grams I logged each with last, see `dishesRead` in `reader/food.ts`.
  * - The section of the food view, built as that of my foods: `Meals`, then a search field, which shows only the meals
  *   whose name or foods hold what is typed, ignoring case and accents, see {@link dishesFound}, like `reis` finding
@@ -146,7 +146,7 @@ function dishFit(name: HTMLElement, brackets: HTMLElement, dish: Dish): void {
  * its short title, as a food has its brand and store in brackets,
  * like `Chilli con Carne (Tomaten, Hackfleisch, Bohnen)`, cut where the line has no room, see {@link dishFit},
  * again whenever the line gets narrower or wider, and once the font of the page has loaded, which changes the room
- * it takes; a meal without a short title shows its name alone.
+ * it takes, both whole as its tooltip; a meal without a short title shows its name alone.
  * - `line`: The name with its short title.
  * - `name`: The name itself, white.
  * - `brackets`: Its short title in brackets, hidden for none.
@@ -161,6 +161,7 @@ export function dishNameOf(dish: Dish): HTMLElement {
     const name: HTMLElement = elementOf("span", "", dish.name);
     const brackets: HTMLElement = elementOf("span", "food-brand", "");
     brackets.hidden = dish.short === "";
+    line.title = dish.short === "" ? dish.name : `${dish.name} (${dish.short})`;
     line.append(name, brackets);
     let width: number = -1;
     const fit: () => void = (): void => dishFit(name, brackets, dish);
@@ -441,7 +442,7 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
         const plus: HTMLElement[] = typed === "" || dishes.some((dish: Dish): boolean =>
             dish.name.toLowerCase() === typed.toLowerCase()) ? [] : [newOf(typed)];
         list.replaceChildren(...naming ? [nameFormOf()] : [],
-            ...shown.length > 0 || plus.length > 0 ? [listHeadOf("My meals", "kcal / meal"), ...rows, ...plus] : [],
+            ...shown.length > 0 || plus.length > 0 ? [listHeadOf("Meals", "kcal / meal"), ...rows, ...plus] : [],
             ...dishes.length === 0 && fresh === "" && plus.length === 0 && !naming
                 ? [elementOf("p", "food-none", "No meals yet")] : []);
     };

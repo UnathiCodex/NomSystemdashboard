@@ -49,14 +49,13 @@
     content: "\200b";
 }
 
-/* A row without a value, like `Cooked +`, `Chapter +` or `Repeat +` with its plus beside its name, or the summary
+/* A row without a value, like `Cooked +`, `Chapter +` or `Series +` with its plus beside its name, or the summary
    of a Food without foods, holds one empty line of a value, a space of no width, as an empty line does, so it is
    as high as a row with a value, its name on the same line, and all rows stand equally apart; but on a phone, see
    the end of this file */
 .picker-head:empty::before,
 .meal-summary:empty::before,
-.meal:has(> .meal-rows:empty)::before,
-.entry-empty::before {
+.meal:has(> .meal-rows:empty)::before {
     content: "\200b";
 }
 
@@ -225,6 +224,20 @@
     color: var(--text-main);
 }
 
+/* A value in the line that opens what it names, like a person of `Persons.md` in `With`, see `lineValueOf`
+   in `choices.ts`: in the colour of every value, as a chapter that opens the scripts view, see `.picker-added-text`,
+   never underlined, only its text lighter under the pointer, softly as every hover, see `--hover-in`
+   in `../variants.css`; any other value of the line stays plain text */
+.picker-link {
+    color: inherit;
+    transition: color var(--hover-out);
+}
+
+.picker-link:hover {
+    color: var(--text-main);
+    transition: color var(--hover-in);
+}
+
 /* The × of a value picked, which has no text of its own, on the line of its text, its icon level with the small
    letters, as an icon beside a word stands and as the × of a food, see `.meal-row` in `meal.css`, not above them */
 .picker-added > .cross-quiet {
@@ -332,6 +345,19 @@
     display: none;
 }
 
+/* The parts of the people of `With`, one block of parts per person, see `withPartsOf` in `categories.ts`, each with
+   its own thin grey line, a little more room between two blocks than between the parts of one, so two lecturers
+   read as two people */
+.people-parts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.people-parts[hidden] {
+    display: none;
+}
+
 .field-part {
     display: contents;
 }
@@ -385,8 +411,7 @@
        an empty line would only take room */
     .picker-head:empty::before,
     .meal-summary:empty::before,
-    .meal:has(> .meal-rows:empty)::before,
-    .entry-empty::before {
+    .meal:has(> .meal-rows:empty)::before {
         content: none;
     }
 
@@ -429,4 +454,26 @@
         display: block;
         margin-left: 0;
     }
+}
+
+/* Label of a place with its star at its right, see `standardStarOf` in `places.ts`: the field as wide as the star
+   leaves it; the star as large as the pencil of a place, filled while the place is my default place */
+.place-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.place-label > input {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.place-star svg.lucide {
+    width: 0.9375rem;
+    height: 0.9375rem;
+}
+
+.place-star[aria-pressed="true"] svg.lucide {
+    fill: currentColor;
 }

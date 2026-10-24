@@ -2,25 +2,30 @@
  * ## Skill in the entry by category
  *
  * A skill entry in the dialog, for a box of the plan and the log alike, one row per field, each one line showing
- * its value, see `choices.ts`: below the times and the category its summary, its skill and its type side by side
+ * its value, see `choices.ts`: below the category its summary, its skill and its type side by side
  * on one line, like `IN2028_BusinessAnalyticsMachineLearning` and `VO`, no type, the type empty, for my own learning
- * or a project, like `WokFlow`; the reader writes what it is from both, like
- * `IN2028_BusinessAnalyticsMachineLearning (VO)`, see `reader/documents.ts`, and writes it anew when I change either
- * later. Then its place, its name with its pencil and its address below it, see `categories.ts`, as every category
- * has it; then in this order its semester, and its chapters one after another, each with its documents.
+ * or a project, like `WokFlow`, which a click opens to pick another; the reader links the folder of both, which names
+ * them, see `reader/documents.ts`. Its title is free, like `IN2028 Lecture 3 recap`, typed by the pencil of the summary
+ * as every summary is, see `summaryPartsOf` in `categories.ts`; while I never typed it, it follows skill and type,
+ * like `IN2028_BusinessAnalyticsMachineLearning (VO)`, see {@link skillTitleOf}. Then its place, its name with its pencil and its address below it, and its times, see `categories.ts`,
+ * as every category has them; below them who I was with, then in this order its semester, and its chapters one after
+ * another, each with its documents.
  * Its semester says from which semester the lecture or the material is, not when I did it:
  * the semester of the day of the dialog, which follows that day as I type it, until I pick another from its list,
  * never typed: that semester first, then every semester the module has material for, newest first.
  * The one Skill list shows the skills of the semester by the whole names of their folders, like
  * `IN2028_BusinessAnalyticsMachineLearning` or the project `WokFlow`, and its search every module folder,
- * since I sometimes attend another module.
+ * since I sometimes attend another module. A module without folder yet I add there by its code and name typed,
+ * like `IN2346 Deep Learning`: the last row `+ New module IN2346_DeepLearning` makes its empty folder
+ * in `NomSkillingmodules`, named as my module folders are, see {@link moduleFolderNameOf}, and picks it at once;
+ * its row of `Modules.md` and its notes come later by hand.
  * Chapters come one after another once a skill is picked, see {@link chapterRowsOf}: the list of an empty row
  * `Chapter` offers the chapters of my system of the module, by the names of their folders, for every type, like
  * a lecture of `02_LogisticPoissonRegression` or exam training over several; a pick closes the list and makes
  * the row the chapter's, its name a link that opens the chapter in the scripts view, without the module, which
  * the summary names, with a small × that takes it back, see `addedRowOf` in `choices.ts`, and unlocks its
- * documents; below them the next empty row `Chapter` adds the next. A module without chapters says so in the row,
- * `No chapters yet`. The reader writes one `X-CHAPTER` each, and an entry keeps the name a chapter had, also once
+ * documents; below them the next empty row `Chapter` adds the next; a module without chapters keeps the row
+ * `Chapter +`, its list empty, without a grey hint. The reader writes one `X-CHAPTER` each, and an entry keeps the name a chapter had, also once
  * its folder has another name.
  * The documents are the real documents the entry used, several, each a row with a small ×, see `addedRowsOf`
  * in `choices.ts`: for my own learning, no type, the notes of each chapter picked right below it; for a type,
@@ -37,32 +42,37 @@
  * Any type may hold attempts, like the tasks I solved in a tutorial. Every field may stay empty, the skill too.
  * Below skill and type stands the link of the summary, small and grey, as every summary has it, see `summaryPartsOf`
  * in `categories.ts`: the folder of its skill, the path its entry links, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`, for a type on into the folder
- * of its material and of the semester, like `…/VO_UniversityLectureLessons/TUM_2026W`, a module opening
- * in the scripts view, see {@link skillPathOf}. A skill entry of the log already logged shows its attempts, which stay;
- * new ones are added after them. Everything stays editable, its skill too, whose older attempts keep their task.
+ * of its material and of the semester, like `…/VO_UniversityLectureLessons/TUM_2026W`, a folder of a module opening
+ * in the scripts view, see {@link skillPathOf}; after the type the pencil of the summary, which shows its title
+ * to type below them; another skill or type a click on it picks for this entry alone, also of a box of a series.
+ * A skill entry of the log already logged shows its attempts, which stay; new ones are added after them.
+ * Everything stays editable, its skill too, whose older attempts keep their task.
  * Saving sends a skill entry of the log to the reader's one writer of skill entries, with the times, the place
  * and the note of the dialog; a skill box of the plan has the same fields but tasks and attempts, which only happen
  * in the log, and the dialog writes it itself as a box with its chapters and documents.
  *
  * - `./choices.ts`: Pickers, each one line in a row with its name, two side by side in one row, and the rows
- *   of a field of several values; marks where a long name may go on over a next line.
+ *   of a field of several values.
  * - `../skill/attempts.ts`: Loads the tasks with when they are due and what a module offers, groups the tasks,
  *   writes days out and sends skill entries.
  * - `../today.ts`: Gives today's calendar date, for the tasks due.
- * - `../skill/links.ts`: Names the folder of my modules.
+ * - `../skill/links.ts`: Names the folder of my modules, and shows the folder of a skill as the link below its
+ *   summary.
  * - `../changes.ts`: Keeps the skills with their tasks, loaded once and anew after every change of a file.
+ * - `../reader.ts`: Asks the reader to make the folder of a new module.
  * - `fullcalendar`: Calendar that shows the entries.
  */
 
 import {
-    addedRowOf, addedRowsOf, addRowOf, breakableOf, choiceOf, choicesOf, lineMove, pairOf, rowOf, searchOf,
+    addedRowOf, addedRowsOf, addRowOf, choiceOf, choicesOf, lineMove, pairOf, rowOf, searchOf,
 } from "./choices.ts";
 import {
     dayTextOf, groupsOf, moduleLoad, semesterOf, skillEntrySend, skillingLoad,
 } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
-import { modulesFolder } from "../skill/links.ts";
+import { folderLinkShow, modulesFolder } from "../skill/links.ts";
 import { changesKept } from "../changes.ts";
+import { readerAsk } from "../reader.ts";
 
 import type { Calendar } from "fullcalendar";
 import type { Choice } from "./choices.ts";
@@ -189,28 +199,37 @@ const materialFolders: { [type: string]: string } = {
 const chapterNote: RegExp = /^(\d{2}_[^/]*)\/[^/]+$/;
 
 /**
+ * Code of a module of the university, two to four capitals and then three to six digits, like `IN2028` or `MGT1372`.
+ */
+const moduleCode: RegExp = /^[A-Z]{2,4}\d{3,6}$/;
+
+/**
+ * Umlauts and `ß` as the names of my module folders write them out, like `Mikrooekonomie` for `Mikroökonomie`.
+ */
+const umlauts: { [letter: string]: string } = { ä: "ae", ö: "oe", ü: "ue", Ä: "Ae", Ö: "Oe", Ü: "Ue", ß: "ss" };
+
+/**
  * Day of the dialog, like `2026-10-13`, whose semester the entry has while I pick none, see {@link skillDaySet}.
  */
 let semesterDay: string = "";
 
 /**
  * Where the fields of `Skill` show and the call that tells the dialog of a change, as last shown, so a changed day
- * shows its semester, see {@link skillDaySet}, and a changed place its line, see {@link skillPlaceShow};
- * `null` before the fields of `Skill` show.
+ * shows its semester, see {@link skillDaySet}; `null` before the fields of `Skill` show.
  *
  * - `head`: Place of skill and type, below the category.
- * - `more`: Place of the fields below them, before the note.
- * - `place`: Rows of the place of the entry, which `categories.ts` builds, put first below skill and type.
+ * - `more`: Place of the fields below the times, before the note.
+ * - `people`: The row of who I was with, which `categories.ts` builds, put first below the times.
  * - `summary`: Pencil, link and parts of the summary, which `categories.ts` builds as for every summary,
- *   see `summaryPartsOf` there: the pencil after the type, hidden, since its text is its skill and type, the link
- *   and the parts below skill and type.
+ *   see `summaryPartsOf` there: the pencil after the type, which shows the title to type, the link and the parts
+ *   below skill and type.
  * - `changed`: Tells the dialog that what is picked changed, so it shows the link of the summary anew and allows
  *   saving or not.
  */
 type SkillShown = {
     head: HTMLElement;
     more: HTMLElement;
-    place: HTMLElement[];
+    people: HTMLElement[];
     summary: HTMLElement[];
     changed: () => void;
 };
@@ -223,7 +242,7 @@ let shownIn: SkillShown | null = null;
 /**
  * Chapters and documents of the skill picked, as the reader gave them, none before a skill is picked and for a project.
  */
-let contents: ModuleContents = { folder: "", chapters: [], documents: [] };
+let contents: ModuleContents = { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
 
 /**
  * Time of the tap at the start of an `X-ATTEMPT` a button wrote, like `140500` for 14:05, or `14:05` in an older one,
@@ -246,12 +265,6 @@ let inPlan: boolean = false;
  * First choice of the list of types, which takes the type back, my own learning without type.
  */
 const noType: string = "None";
-
-/**
- * Whether the dialog changes an entry of the log logged from a box of the plan, whose skill and type stay the plan's,
- * see `asPlanned` in `categories.ts`.
- */
-let asPlanned: boolean = false;
 
 
 /**
@@ -276,25 +289,28 @@ function documentPathsOf(links: Link[]): string[] {
 /**
  * Gives the folders of the material of the entry below the folder of its module, which its link goes on into,
  * as the reader writes it, see `skillLinkOf` in `reader/documents.ts`: for a type the folder of its material,
- * see {@link materialFolders}, and in it the folder of the semester of the entry, as far as the module holds files
- * there, like `VO_UniversityLectureLessons` and `TUM_2026W`, or `VO_UniversityLectureLessons` alone while it holds
- * no slides of that semester; none for my own learning, for a project and for a module without material of the type.
- * - `folder`: Beginning of the name of the folder of the material of the type, `undefined` for none.
+ * also while the module has none yet, see `ModuleContents`, and in it the folder of the semester of the entry
+ * while it is there, also empty, else as far as the module holds files there, like `VO_UniversityLectureLessons`
+ * and `TUM_2026W`, or `VO_UniversityLectureLessons` alone; none for my own learning and for a project.
+ * - `folder`: The folder of that semester there, like `VO_UniversityLectureLessons/TUM_2026W`, `undefined` for none.
+ * - `material`: The folder of the material of the type, `undefined` for none.
  * - `semester`: Semester of the entry, like `2026W`.
- * - `material`: Paths of the documents in the folder of the material, each parted by `/`.
- * - `inSemester`: Path of a document in the folder of the semester there, `undefined` for none.
+ * - `inSemester`: Path of a document in the folder of the semester there, parted by `/`, `undefined` for none.
  *
  * @returns Names of the folders, like `VO_UniversityLectureLessons` and `TUM_2026W`, none for none
  */
 function materialOf(): string[] {
-    const folder: string | undefined = materialFolders[picks.type];
+    const material: string | undefined = contents.materials[picks.type];
     const semester: string = skillSemesterOf(semesterDay);
-    const material: string[][] = folder === undefined ? [] : contents.documents
+    const folder: string | undefined = contents.inner.find((path: string): boolean =>
+        path.split("/")[0] === material && /\d{4}[WS]/.exec(path.split("/")[1] ?? "")?.[0] === semester);
+    if (material !== undefined && folder !== undefined)
+        return folder.split("/");
+    const inSemester: string[] | undefined = contents.documents
         .map((path: string): string[] => path.split("/"))
-        .filter((parts: string[]): boolean => parts.length > 1 && parts[0].startsWith(folder));
-    const inSemester: string[] | undefined = material.find((parts: string[]): boolean =>
-        parts.length > 2 && /\d{4}[WS]/.exec(parts[1])?.[0] === semester);
-    return inSemester?.slice(0, 2) ?? material[0]?.slice(0, 1) ?? [];
+        .find((parts: string[]): boolean => parts.length > 2 && parts[0] === material
+            && /\d{4}[WS]/.exec(parts[1])?.[0] === semester);
+    return material === undefined ? [] : [material, ...(inSemester?.slice(1, 2) ?? [])];
 }
 
 /**
@@ -313,25 +329,52 @@ export function skillPathOf(): string {
 }
 
 /**
+ * Tells whether a skill is a module, its folder in `NomSkillingmodules`, the only skills with types, like `VO`;
+ * a project, like `NomSystemdashboard`, has none, so its summary offers no type.
+ *
+ * @param code - Name of the skill, like `IN2028` or `NomSystemdashboard`, empty for none
+ * @returns Whether it is a module
+ */
+function moduleIs(code: string): boolean {
+    return (skilling.paths[code] ?? "").startsWith(`${modulesFolder}/`);
+}
+
+/**
+ * Gives the name of the folder of the skill picked, which names the files of its plan and its log, as the reader
+ * names it, see `skillFolderNameOf` in `reader/documents.ts`: the last part of its folder, a skill without folder
+ * by its name alone.
+ * - `path`: The folder of the skill picked, empty for none.
+ *
+ * @returns Name like `IN2028_BusinessAnalyticsMachineLearning` or `WokFlow`, empty while no skill is picked
+ */
+export function skillFolderNameOf(): string {
+    const path: string = skilling.paths[picks.module] ?? "";
+    return path === "" ? picks.module : path.slice(path.lastIndexOf("/") + 1);
+}
+
+/**
+ * Gives the title of the skill and the type picked while I type none, as the reader writes it, see `skillTitleOf`
+ * in `reader/documents.ts`: the name of the folder of the skill, see {@link skillFolderNameOf}, with the type
+ * in round brackets when it has one.
+ * - `name`: Name of the folder of the skill, empty while none is picked.
+ *
+ * @returns Title like `IN2028_BusinessAnalyticsMachineLearning (VO)`, empty while neither is picked
+ */
+export function skillTitleOf(): string {
+    const name: string = skillFolderNameOf();
+    if (picks.type === "")
+        return name;
+    return name === "" ? `(${picks.type})` : `${name} (${picks.type})`;
+}
+
+/**
  * Shows the folder of the skill picked, see {@link skillPathOf}, as the link below the summary, small and grey,
- * as a place has its address below it, see `summaryPartsOf` in `categories.ts`: for a module a link that opens
- * the module in the scripts view in this window, never a second one, underlined under the pointer, for a project, which the scripts view
- * has not, its path alone; hidden while no skill is picked. Where it is wider than its row, as on a phone, it goes on
- * below after a `/`, after a `_` or between the words of a name, like `NomSkillingmodules/IN2028_Business`
- * and `AnalyticsMachineLearning`, never within a word, see {@link breakableOf}.
- * - `folder`: The folder of the skill picked without its material, empty for none.
+ * see `folderLinkShow` in `../skill/links.ts`; hidden while no skill is picked.
  *
  * @param link - The link below the summary
  */
 export function skillPathShow(link: HTMLAnchorElement): void {
-    const folder: string = skilling.paths[picks.module] ?? "";
-    link.textContent = breakableOf(skillPathOf()).replaceAll("/", "/\u200b");
-    link.removeAttribute("target");
-    if (folder.startsWith(`${modulesFolder}/`))
-        link.href = `/scripts?module=${encodeURIComponent(folder.slice(modulesFolder.length + 1))}`;
-    else
-        link.removeAttribute("href");
-    link.hidden = folder === "";
+    folderLinkShow(link, skillPathOf());
 }
 
 /**
@@ -360,19 +403,73 @@ function hintOf(text: string): HTMLParagraphElement {
  *   as value, the name of its folder as text, its kind as group.
  * - `shown`: Skills the search looks through.
  *
+ * @param current - The skill picked, which the list offers while nothing is typed; that of the dialog when left out
  * @returns Search for the picker
  */
-function moduleSearchOf(): (text: string) => Promise<Choice[]> {
-    const module: (name: string) => boolean = (name: string): boolean => /^[A-Z]{2,4}\d{3,6}$/.test(name);
+function moduleSearchOf(current: string = picks.module): (text: string) => Promise<Choice[]> {
+    const module: (name: string) => boolean = (name: string): boolean => moduleCode.test(name);
     const named: string[] = [...skilling.skills, ...skilling.otherModules];
     const choices: Choice[] = [...named.filter(module), ...named.filter((name: string): boolean => !module(name))]
         .map((name: string): Choice =>
             ({ value: name, text: skilling.folders[name] ?? name, group: module(name) ? "Modules" : "Projects" }));
     return async (text: string): Promise<Choice[]> => {
         const shown: Choice[] = text.trim() !== "" ? choices : choices.filter((choice: Choice): boolean =>
-            choice.value === picks.module || skilling.skills.includes(choice.value));
+            choice.value === current || skilling.skills.includes(choice.value));
         return await searchOf(shown)(text);
     };
+}
+
+/**
+ * Gives the folder of a new module for the text typed in the Skill list, its code and then its name, named as my
+ * module folders are: the code in capitals, `_`, and the name in CamelCase without spaces, umlauts written out,
+ * each word with a capital first, a word all in capitals as one, so `IN2346 Deep Learning` makes
+ * `IN2346_DeepLearning`, `wi0021 Mikroökonomie` `WI0021_Mikrooekonomie` and `IN0042 Grundlagen IT-Sicherheit`
+ * `IN0042_GrundlagenItSicherheit`; a word is letters and digits, anything else between them, like a space or `-`,
+ * parts them, and other accents go, like `é` to `e`.
+ * - `typed`: Code and name as typed, parted by spaces or `_`.
+ * - `code`: The code in capitals, like `IN2346`.
+ * - `words`: Words of the name, each as the folder writes it, like `Deep`.
+ *
+ * @param text - Text typed, like `IN2346 Deep Learning`
+ * @returns Name of the folder, like `IN2346_DeepLearning`; `null` for a text that makes no new module: no code first,
+ *   no name after it, or the code of a skill the list has already
+ */
+function moduleFolderNameOf(text: string): string | null {
+    const typed: RegExpMatchArray | null = text.trim().match(/^([A-Za-z]+\d+)[\s_]+(.+)$/);
+    const code: string = typed?.[1].toUpperCase() ?? "";
+    const words: string[] = (typed?.[2] ?? "").replace(/[äöüÄÖÜß]/g, (letter: string): string => umlauts[letter])
+        .normalize("NFD").replace(/\p{M}/gu, "").split(/[^A-Za-z\d]+/).filter((word: string): boolean => word !== "")
+        .map((word: string): string => {
+            const letters: string = word === word.toUpperCase() ? word.toLowerCase() : word;
+            return letters[0].toUpperCase() + letters.slice(1);
+        });
+    if (!moduleCode.test(code) || words.length === 0 || skilling.folders[code] !== undefined)
+        return null;
+    return `${code}_${words.join("")}`;
+}
+
+/**
+ * Makes the empty folder of a new module typed in the Skill list by the reader, see {@link moduleFolderNameOf}
+ * and `moduleMake` in `reader/notes.ts`, and adds it to the modules of the list, so it is picked at once,
+ * by its folder like every module.
+ * - `folder`: Name of its folder, like `IN2346_DeepLearning`.
+ * - `code`: Its code, like `IN2346`.
+ *
+ * @param text - Text typed, like `IN2346 Deep Learning`
+ * @returns Code of the new module to pick, `null` for a text that makes no new module
+ * @throws {Error} - When the reader does not make it, like for a folder there already
+ */
+async function moduleAdd(text: string): Promise<string | null> {
+    const folder: string | null = moduleFolderNameOf(text);
+    if (folder === null)
+        return null;
+    await readerAsk<null>("/api/notes/module", { method: "POST", body: JSON.stringify({ folder: folder }) });
+    const code: string = folder.slice(0, folder.indexOf("_"));
+    skilling = {
+        ...skilling, otherModules: [...skilling.otherModules, code], folders: { ...skilling.folders, [code]: folder },
+        paths: { ...skilling.paths, [code]: `${modulesFolder}/${folder}` },
+    };
+    return code;
 }
 
 /**
@@ -390,17 +487,48 @@ export function skillSemesterOf(day: string): string {
  * then every semester the module has material for, by the folders of its material, like `TUM_2026S`, `TUM_2024W`
  * and `LMU_2024S` giving `2026S`, `2024W` and `2024S`, newest first, see {@link documentSemesterOf}; and the one
  * picked when it is none of them, like that of an older entry, among them by its rank.
- * - `current`: The semester of the day of the dialog.
- * - `others`: The other semesters, each once.
  *
  * @returns Choices of the semester
  */
 function semesterChoicesOf(): Choice[] {
-    const current: string = semesterOf(semesterDay);
-    const others: string[] = [...new Set([...contents.documents.map(documentSemesterOf), picks.semester])]
+    return semesterListOf(semesterDay, contents.documents, picks.semester);
+}
+
+/**
+ * Builds the choices of the semester from a day, the documents of a module and the semester picked,
+ * as {@link semesterChoicesOf} gives them for the dialog of an entry.
+ * - `current`: The semester of the day.
+ * - `others`: The other semesters, each once.
+ *
+ * @param day - Day like `2026-10-24`, whose semester comes first
+ * @param documents - Paths of the documents of the module, like `VO_UniversityLectureLessons/TUM_2026W/01.pdf`
+ * @param picked - The semester picked, like `2025W`, empty for none
+ * @returns Choices of the semester
+ */
+function semesterListOf(day: string, documents: string[], picked: string): Choice[] {
+    const current: string = semesterOf(day);
+    const others: string[] = [...new Set([...documents.map(documentSemesterOf), picked])]
         .filter((semester: string): boolean => semester !== "" && semester !== current)
         .sort((first: string, second: string): number => semesterRankOf(second) - semesterRankOf(first));
     return [current, ...others].map(choiceOf);
+}
+
+/**
+ * Gives the choices of the semester of a skill for a form of its own, the dialog of a series, see `series.ts`:
+ * the same as the dialog of an entry offers, see {@link semesterListOf}, by the documents of its module; a skill
+ * without module, like a project, has only the semester of the day and the one picked.
+ * - `documents`: The documents of the module, none for none or while the reader cannot give them.
+ *
+ * @param module - The skill, like `IN2028` or `NomFrequencediary`
+ * @param day - Day like `2026-10-24`, whose semester comes first
+ * @param picked - The semester picked, like `2025W`, empty for none
+ * @returns Choices of the semester
+ */
+export async function semestersOf(module: string, day: string, picked: string): Promise<Choice[]> {
+    const documents: string[] = module === "" ? [] : await moduleLoad(module)
+        .then((loaded: ModuleContents): string[] => loaded.documents)
+        .catch((): string[] => []);
+    return semesterListOf(day, documents, picked);
 }
 
 /**
@@ -591,7 +719,7 @@ function loggedOf(): HTMLElement[] {
  */
 async function contentsLoad(): Promise<void> {
     const module: string = picks.module;
-    const none: ModuleContents = { folder: "", chapters: [], documents: [] };
+    const none: ModuleContents = { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
     const loaded: ModuleContents = module === "" ? none
         : await moduleLoad(module).catch((error: unknown): ModuleContents => {
             console.error(error);
@@ -654,8 +782,8 @@ function tasksOf(changed: () => void): HTMLElement[] {
  * while the module has chapters left, the list that adds one by the names of their folders, its plus beside the name
  * `Chapter`, `Add a chapter` as its tooltip, see `addRowOf` in `choices.ts`, as a meal adds its next food: every plus
  * right after what it adds to, none on a line of its own; a module without any chapter folder,
- * like `MGT1372` before its chapters are written, holds a calm `No chapters yet` in the row `Chapter`, as the scripts
- * view says it, so the row never just disappears; a project has no chapters and no row. A chapter keeps the name it has
+ * like `MGT1372` before its chapters are written, keeps the row `Chapter +` with its list empty, no grey hint,
+ * so the row never just disappears; a project has no chapters and no row. A chapter keeps the name it has
  * in the entry, also once its folder has another name. Taking back a chapter of my own learning takes back
  * its notes too; documents of my own learning that belong to no chapter picked stay below, to be taken back.
  * Each change shows the fields again, the tasks of the chapters picked with them, see {@link tasksOf}.
@@ -698,7 +826,7 @@ function chapterRowsOf(again: () => void): HTMLElement[] {
         rows.push(...documentRowsOf([], loose, again, false));
     else if (picks.chapters.length > 0 || picks.documents.length > 0)
         rows.push(...documentRowsOf(documentChoicesOf(""), picks.documents, again, false));
-    if (offered.length > 0)
+    if (offered.length > 0 || (contents.chapters.length === 0 && picks.chapters.length === 0 && contents.folder !== ""))
         rows.push(addRowOf("Chapter", first, choicesOf({
             search: searchOf(offered), picked: [], many: false, adding: false, noun: "chapter",
             empty: "Add a chapter", plus: true,
@@ -707,8 +835,6 @@ function chapterRowsOf(again: () => void): HTMLElement[] {
                 again();
             },
         })));
-    else if (contents.chapters.length === 0 && picks.chapters.length === 0 && contents.folder !== "")
-        rows.push(rowOf("Chapter", hintOf("No chapters yet")));
     return rows;
 }
 
@@ -761,8 +887,9 @@ function documentRowsOf(choices: Choice[], shown: string[], again: () => void, n
 
 /**
  * Shows the fields of `Skill` as picked so far, see the top of this file: skill and type side by side in the row
- * of its summary below the category; below them the place, the semester, the chapters one after another with their
- * documents, see {@link chapterRowsOf}, and in the log the tasks of the chapters picked with a result
+ * of its summary below the category, the type only for a module, see {@link moduleIs}, and right below it the semester,
+ * as the form of a series has it; below the place and the times who I was with, the chapters
+ * one after another with their documents, see {@link chapterRowsOf}, and in the log the tasks of the chapters picked with a result
  * for each task picked, see {@link tasksOf}, and the attempts the entry has; the link of the summary below skill
  * and type, see {@link SkillShown}.
  * Picking a skill loads its chapters and documents and shows the fields again, with no chapters, documents or tasks
@@ -778,35 +905,41 @@ function picksShow(shown: SkillShown): void {
         shown.changed();
     };
 
-    shown.head.replaceChildren(rowOf("Summary", pairOf(
-        choicesOf({
-            search: moduleSearchOf(), picked: picks.module === "" ? [] : [picks.module], many: false, adding: false,
-            noun: "skill", locked: asPlanned, below: shown.summary.slice(1),
-            pick: (values: string[]): void => {
-                picks = { ...picks, module: values[0] ?? "", chapters: [], documents: [], attempts: [] };
-                contentsLoad().then(again).catch((error: unknown): void => console.error(error));
-            },
-        }),
+    if (!moduleIs(picks.module))
+        picks.type = "";
+    const skill: HTMLElement = choicesOf({
+        search: moduleSearchOf(), picked: picks.module === "" ? [] : [picks.module], many: false, adding: true,
+        add: moduleAdd, noun: "module", below: shown.summary.slice(1),
+        aside: moduleIs(picks.module) ? [] : shown.summary.slice(0, 1),
+        newTextOf: (text: string): string | null => {
+            const folder: string | null = moduleFolderNameOf(text);
+            return folder === null ? null : `New module ${folder}`;
+        },
+        pick: (values: string[]): void => {
+            picks = { ...picks, module: values[0] ?? "", chapters: [], documents: [], attempts: [] };
+            contentsLoad().then(again).catch((error: unknown): void => console.error(error));
+        },
+    });
+    shown.head.replaceChildren(rowOf("Summary", !moduleIs(picks.module) ? skill : pairOf(skill,
         choicesOf({
             search: searchOf([noType, ...skilling.types].map(choiceOf)), picked: picks.type === "" ? [] : [picks.type],
-            many: false, adding: false, noun: "type", locked: asPlanned, empty: "Add a type", plus: true,
+            many: false, adding: false, noun: "type", empty: "Add a type", plus: true,
             aside: shown.summary.slice(0, 1),
             pick: (values: string[]): void => {
                 picks.type = values[0] === noType ? "" : values[0] ?? "";
                 again();
             },
-        }))));
+        }))), rowOf("Semester", choicesOf({
+        search: searchOf(semesterChoicesOf()), picked: [skillSemesterOf(semesterDay)], many: false, adding: false,
+        noun: "semester",
+        pick: (values: string[]): void => {
+            picks.semester = values[0] ?? "";
+            again();
+        },
+    })));
     shownIn = shown;
     shown.more.replaceChildren(
-        ...shown.place,
-        rowOf("Semester", choicesOf({
-            search: searchOf(semesterChoicesOf()), picked: [skillSemesterOf(semesterDay)], many: false, adding: false,
-            noun: "semester",
-            pick: (values: string[]): void => {
-                picks.semester = values[0] ?? "";
-                again();
-            },
-        })),
+        ...shown.people,
         ...chapterRowsOf(again),
         ...tasksOf(shown.changed),
         ...loggedOf(),
@@ -814,27 +947,94 @@ function picksShow(shown: SkillShown): void {
 }
 
 /**
+ * Makes skill and type side by side, as the row of the summary of the dialog has them, see {@link picksShow}, for a form
+ * of its own, the dialog of a new series, see `seriesNew` in `series.ts`: the same lists, a new module typed as there,
+ * see {@link moduleAdd}, and below the skill once one is picked the folder they link, small and grey, as the dialog
+ * shows it, see `folderLinkShow` in `../skill/links.ts`, like `NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons`,
+ * so the plus of the type stands as high as there; what is picked goes to that form, never to the dialog of an entry.
+ * - `again`: Builds the pair anew in its place once something is picked, and tells the form.
+ * - `link`: The folder below the skill.
+ * - `pair`: The two pickers.
+ *
+ * @param picked - Skill and type picked so far, like `IN2028` and `VO`, each empty for none
+ * @param pick - Takes skill and type once one of them is picked
+ * @returns The two pickers side by side
+ * @throws {Error} - When the reader cannot answer
+ */
+export async function skillPairOf(picked: ModuleType, pick: (picked: ModuleType) => void): Promise<HTMLElement> {
+    skilling = await skillingKept();
+    const again: (next: ModuleType) => void = (next: ModuleType): void => {
+        pick(next);
+        skillPairOf(next, pick).then((fresh: HTMLElement): void => pair.replaceWith(fresh))
+            .catch((error: unknown): void => console.error(error));
+    };
+    const link: HTMLAnchorElement = document.createElement("a");
+    link.className = "entry-address";
+    folderLinkShow(link, skillNamesOf(picked).link);
+    const skill: HTMLElement = choicesOf({
+        search: moduleSearchOf(picked.module), picked: picked.module === "" ? [] : [picked.module], many: false,
+        adding: true, add: moduleAdd, noun: "module", below: picked.module === "" ? [] : [link],
+        newTextOf: (text: string): string | null => {
+            const folder: string | null = moduleFolderNameOf(text);
+            return folder === null ? null : `New module ${folder}`;
+        },
+        pick: (values: string[]): void =>
+            again({ ...picked, module: values[0] ?? "", type: moduleIs(values[0] ?? "") ? picked.type : "" }),
+    });
+    const pair: HTMLElement = !moduleIs(picked.module) ? skill : pairOf(skill,
+        choicesOf({
+            search: searchOf([noType, ...skilling.types].map(choiceOf)), picked: picked.type === "" ? [] : [picked.type],
+            many: false, adding: false, noun: "type", empty: "Add a type", plus: true,
+            pick: (values: string[]): void => again({ ...picked, type: values[0] === noType ? "" : values[0] ?? "" }),
+        }));
+    return pair;
+}
+
+/**
+ * Gives what a skill and a type are as the reader writes them, see `skillTitleOf` and `skillLinkOf`
+ * in `reader/documents.ts`: the title they give, like `IN2028_BusinessAnalyticsMachineLearning (VO)`, the folder they
+ * link, the folder of the skill and of the material of the type, like
+ * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_`, and the plan their boxes go into, like
+ * `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
+ * - `path`: The folder of the skill, empty for none.
+ * - `name`: Its last part, the skill by its name without folder.
+ *
+ * @param picked - Skill and type, like `IN2028` and `VO`
+ * @returns Title, folder and plan, each empty while no skill is picked
+ */
+export function skillNamesOf(picked: ModuleType): { title: string; link: string; file: string } {
+    const path: string = skilling.paths[picked.module] ?? "";
+    const name: string = path === "" ? picked.module : path.slice(path.lastIndexOf("/") + 1);
+    if (name === "")
+        return { title: "", link: "", file: "" };
+    return {
+        title: picked.type === "" ? name : `${name} (${picked.type})`,
+        link: [path, ...picked.type === "" ? [] : [materialFolders[picked.type] ?? ""]]
+            .filter((part: string): boolean => part !== "").join("/"),
+        file: `NomManageplannings/NomManagecalendar/${/^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
+    };
+}
+
+/**
  * Shows the fields of `Skill` for a box of the plan or an entry of the log, as it has them, see {@link picksShow}.
  *
  * @param head - Place of skill and type in the dialog, below the category
- * @param more - Place of the fields below them, before the note
- * @param place - Rows of the place of the entry, put first below skill and type
+ * @param more - Place of the fields below the times, before the note
+ * @param people - The row of who I was with, put first below the times
  * @param plan - Whether it is a box of the plan, which takes no tasks and attempts
  * @param values - Values of the entry, empty for a new one
  * @param day - Day of the dialog, like `2026-10-13`, whose semester the entry has while it has none
- * @param planned - Whether it is an entry of the log logged from a box of the plan, whose skill and type stay the plan's
  * @param changed - Tells the dialog that what is picked changed, so it shows the link of the summary anew and allows
  *   saving or not
  * @param summary - Pencil, link and parts of the summary, see {@link SkillShown}; none when left out
  * @throws {Error} - When the reader cannot answer
  */
-export async function skillFieldsShow(head: HTMLElement, more: HTMLElement, place: HTMLElement[], plan: boolean,
-                                      values: SkillValues, day: string, planned: boolean,
+export async function skillFieldsShow(head: HTMLElement, more: HTMLElement, people: HTMLElement[], plan: boolean,
+                                      values: SkillValues, day: string,
                                       changed: () => void, summary: HTMLElement[] = []): Promise<void> {
 
     skilling = await skillingKept();
     inPlan = plan;
-    asPlanned = planned;
     semesterDay = day;
     logged = plan ? [] : values.attempts;
     picks = {
@@ -843,7 +1043,7 @@ export async function skillFieldsShow(head: HTMLElement, more: HTMLElement, plac
     };
     await contentsLoad();
     picks.documents = documentPathsOf(values.links);
-    picksShow({ head: head, more: more, place: place, summary: summary, changed: changed });
+    picksShow({ head: head, more: more, people: people, summary: summary, changed: changed });
 }
 
 /**
@@ -864,17 +1064,6 @@ export type SkillLinks = {
  */
 export function skillLinksRead(): SkillLinks {
     return { chapters: picks.chapters, documents: picks.documents };
-}
-
-/**
- * Shows the rows of the place of the entry anew, with the other fields as picked, like after my place was changed
- * in `Places.md`, see `placeChange` in `categories.ts`.
- *
- * @param place - Rows of the place
- */
-export function skillPlaceShow(place: HTMLElement[]): void {
-    if (shownIn !== null)
-        picksShow({ ...shownIn, place: place });
 }
 
 /**
@@ -925,8 +1114,8 @@ export async function skillSave(calendar: Calendar, id: string, fields: EntryFie
         : [{ task: pick.task, result: pick.result, comment: pick.result === "wrong" ? pick.comment : "" }]);
 
     const saved: boolean = await skillEntrySend(id, {
-        type: picks.type, module: picks.module, semester: fields.semester, chapters: picks.chapters,
-        documents: picks.documents, attempts: attempts,
+        title: fields.title, type: picks.type, module: picks.module, semester: fields.semester,
+        chapters: picks.chapters, documents: picks.documents, attempts: attempts,
         location: fields.location, online: fields.online, onlineLink: fields.onlineLink, passcode: fields.passcode,
         attendees: fields.attendees ?? [],
         planned: fields.planned, note: fields.note,

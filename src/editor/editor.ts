@@ -13,42 +13,56 @@
  * `NomManageplannings` for a file of my new system and at `/plannings`, where a click on a Markdown file of the three
  * folders of my new system, like `Foods.md`, `Places.md` or a daily note, opens it here to edit, saved back into its
  * file without a diff; an `.ics` file opens as its plain text, to read only, each block of it drawn one step in and its
- * entries apart, see `./ics.ts`; any other file shows in the tree, faint, and opens not.
+ * entries apart, its names grey, its values readable and each block folding, see `./ics.ts`; any other file shows
+ * in the tree, faint, and opens not.
  * A note of my modules shows the rows of its tasks under their headings, see `./tasks.ts`.
  * A section, a note with tasks of the semester, shows its round in the same view: its name in words, its round below
  * it, like `Round 1`, then only the block due, `Next` below it, and in the tree, in place of the outline, its blocks
  * with their places, a click opening one, see `./round.ts`.
  * While no note is open, the page asks to choose one, since the plan of the day says what is due; for the address of
  * a module or of one of its chapters, which a click on its name in the tree opens, like
- * `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`, it shows the overview
- * of the module, its whole plan, its course of the university, see `./course.ts`, and where each of its sections
- * stands, see `./overview.ts`, the chapter picked in the tree.
+ * `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`, it shows the page
+ * of the module, its course of the university, see `./course.ts`, or that of the chapter, where each of its sections
+ * stands, see `./overview.ts`, the chapter picked in the tree; for the address of a folder of my modules, which
+ * the folder of the material of a card of the course opens, like
+ * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2FVO_UniversityLectureLessons%2FTUM_2026W`, it shows
+ * its folders and files, see `./folder.ts`, its module picked in the tree. A file of my modules that is no Markdown,
+ * like an `.ics` file a folder opens, shows as its plain text, to read only, as an `.ics` file of my new system.
  * The address names a note by its path in the scripts view and the heading to scroll to, like
  * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanEstimator.md#…`,
  * so a reload and the back button of the browser stay on it, and a file of my new system by its path in the tree,
- * like `/edit?file=NomMetainformations/Foods.md`; a section opens where its round stands, a block it shows from the
+ * like `/edit?file=NomMetainformations/Foods.md`, with the row of its table to scroll to and mark by the text of its
+ * first cell, like `&row=Bichler%2C%20Martin` in `Persons.md`, see `rowShow` in `./preview.ts`, which a person's name
+ * opens, see `../persons.ts`; a section opens where its round stands, a block it shows from the
  * tree or a link staying out of the address, so a reload returns there.
  * Saves only with its button, the plain floppy disk of saving, so the round's check is the only check, its tooltip
  * `Save`, or Ctrl+S, never by itself, refused when the file changed on the disk since it was read, and asks before
  * leaving with changes unsaved, also for another file of the tree; the button faint while nothing is to save, its full
- * grey while there are changes, and beside it stands when it saved last, like `Saved 20:41`, or what went wrong.
+ * grey while there are changes, and the status line above the text says when it saved last, like `Saved 20:41`,
+ * or what went wrong; at its left it shows the name of the file, which the tree may be too narrow to show whole,
+ * its path from `NomWorkspace` on as its title.
  *
  * - `@codemirror/state`, `@codemirror/view`: The editor, CodeMirror 6, the engine of Obsidian's editor.
  * - `@codemirror/commands`: Undo, redo and the usual keys, Tab indenting a line.
  * - `@codemirror/language`: Indents with tabs.
- * - `./ics.ts`: Shows an `.ics` file with its blocks one step in and its entries apart.
+ * - `./ics.ts`: Shows an `.ics` file with its blocks one step in, its entries apart, its names grey and its values
+ *   readable, each block folding.
  * - `./keys.ts`: The keys of a Markdown file as in Obsidian, like Enter continuing a list.
  * - `./syntax.ts`: Reads the note as Markdown, with the Obsidian syntax.
  * - `./preview.ts`: Shows the Markdown as in the scripts view, folds its sections and scrolls to a heading.
  * - `./steps.ts`: Shows an unfolded solution one step at a time.
  * - `./tasks.ts`: Shows the rows of the tasks of a note.
  * - `./round.ts`: Shows the round of a section in the note.
- * - `./overview.ts`: Shows the overview of a module or of a chapter, its course and its chapters, and its chapter
+ * - `./overview.ts`: Shows the page of a module, its course, or of a chapter, its sections, and its chapter
  *   in the tree.
+ * - `./folder.ts`: Shows a folder of my modules with its folders and files.
  * - `../notes/tree.ts`: Shows the tree of one root, the file shown marked, and the outline of a note or the blocks
  *   of a section with their places.
- * - `lucide`, `../icons.ts`: The floppy disk of the save button and the check of the round's button.
+ * - `lucide`, `../icons.ts`: The floppy disk of the save button, crossed out for a file to read only, and the check
+ *   of the round's button.
+ * - `../day/choices.ts`: Marks where the name of the file may go on over a next line.
  * - `../notes/notes.css`: Look of the notes, for the rendered formulas, tables and images, and of the tree.
+ * - `../day/day.css`: The middle dot before the session, as between the parts of an entry of the day.
  * - `./editor.css`: Look of the editor.
  */
 
@@ -59,16 +73,19 @@ import { indentUnit } from "@codemirror/language";
 import { icsLook } from "./ics.ts";
 import { markdownKeys } from "./keys.ts";
 import { markdownSupport } from "./syntax.ts";
-import { headingShow, linksSet, livePreview, solutionsFold } from "./preview.ts";
+import { headingShow, linksSet, livePreview, rowShow, solutionsFold } from "./preview.ts";
 import { solutionSteps } from "./steps.ts";
 import { taskRows, tasksLoad } from "./tasks.ts";
 import { roundBlocksOf, roundClose, roundHeadingShow, roundNextOf, roundStart } from "./round.ts";
 import { outlineShow, treeShow } from "../notes/tree.ts";
 import { overviewShow, overviewTreeShow } from "./overview.ts";
+import { folderShow } from "./folder.ts";
 import { timeOf } from "../day/times.ts";
-import { Check, Save } from "lucide";
+import { pathBreakableOf } from "../day/choices.ts";
+import { Check, Save, SaveOff } from "lucide";
 import { iconPut } from "../icons.ts";
 import "../notes/notes.css";
+import "../day/day.css";
 import "./editor.css";
 
 import type { Extension } from "@codemirror/state";
@@ -111,12 +128,15 @@ type SystemFile = {
  *   whose links stay as they are written.
  * - `markdown`: Whether it is Markdown, shown with its preview; else its plain text, like an `.ics` file.
  * - `editable`: Whether I may change it: a note of my modules or a Markdown file of my new system.
+ * - `place`: Its path in `NomWorkspace`, from which its relative links lead,
+ *   like `NomManageplannings/NomMetainformations/Modules.md`.
  */
 type Opened = {
     text: string;
     links: Links;
     markdown: boolean;
     editable: boolean;
+    place: string;
 };
 
 /**
@@ -160,7 +180,7 @@ let outlineWait: number = 0;
 /**
  * Shows whether the file has changes not yet saved: the save button in its full grey while it has, else faint,
  * in a section too, above the round check, and in the status line at the bottom a notice, like `Saved 20:41`,
- * or when something went wrong, like `Not saved`, or for a file to read only.
+ * or when something went wrong, like `Not saved`.
  * - {@link EditorState#sliceDoc}: Gives the text, its lines joined by the line break of the file.
  *
  * @param notice - Notice of the moment, like `Not saved`, empty for none
@@ -245,8 +265,8 @@ function outlineRefresh(): void {
  * - `indentUnit`: Indents with a tab, as my notes do.
  * - `lineWrapping`: Wraps long lines at the reading width, as the scripts view does, so I see where a line overflows.
  * - `darkTheme`: Draws cursor and selection for a dark page.
- * - `scrollMargins`: Keeps the cursor above the status line, which stays at the bottom while the file scrolls,
- *   so moving down never hides the cursor under it.
+ * - `scrollMargins`: Keeps the cursor below the status line, which stays on top while the file scrolls,
+ *   so moving up never hides the cursor under it.
  * - `solutionSteps`: The steps of an unfolded solution, one at a time, see `./steps.ts`.
  * - `taskRows`: The rows of the tasks of a note, once loaded, see `./tasks.ts`.
  * - `roundStart`: The round of a section, see `./round.ts`, which shows the places of its blocks anew as it moves.
@@ -268,8 +288,9 @@ function extensionsOf(opened: Opened): Extension[] {
         EditorView.lineWrapping,
         EditorView.darkTheme.of(true),
         EditorView.scrollMargins.of((): Partial<Rect> =>
-            ({ bottom: (document.getElementById("editor-status") as HTMLElement).offsetHeight })),
-        ...(opened.markdown ? [livePreview(opened.links), solutionSteps, taskRows, roundStart(outlineRefresh)] : []),
+            ({ top: (document.getElementById("editor-status") as HTMLElement).offsetHeight })),
+        ...(opened.markdown
+            ? [livePreview(opened.links, opened.place), solutionSteps, taskRows, roundStart(outlineRefresh)] : []),
         ...(/\.ics$/i.test(path) ? [icsLook()] : []),
         EditorView.updateListener.of((update: ViewUpdate): void => {
             if (!update.docChanged)
@@ -287,6 +308,7 @@ function extensionsOf(opened: Opened): Extension[] {
  * - `response`: Answer of the reader.
  * - `sent`: The file of my new system as the reader sends it.
  * - `note`: The note as the reader sends it.
+ * - `markdown`: Whether the note is Markdown, else a file of my modules to read only, like an `.ics` file.
  *
  * @param file - Path of a file of my new system, like `NomMetainformations/Foods.md`, empty for a note
  * @returns The file, `null` when the reader cannot read it
@@ -297,14 +319,17 @@ async function openedRead(file: string): Promise<Opened | null> {
         if (!response.ok)
             return null;
         const sent: SystemFile = await response.json() as SystemFile;
-        return { text: sent.text, links: {}, markdown: /\.md$/i.test(sent.path), editable: sent.editable };
+        return { text: sent.text, links: {}, markdown: /\.md$/i.test(sent.path), editable: sent.editable,
+            place: `NomManageplannings/${sent.path}` };
     }
 
     const response: Response = await fetch(`/api/notes/note?path=${encodeURIComponent(path)}`);
     if (!response.ok)
         return null;
     const note: LinkedNote = await response.json() as LinkedNote;
-    return { text: note.text, links: note.links, markdown: true, editable: true };
+    const markdown: boolean = /\.md$/i.test(note.path);
+    return { text: note.text, links: note.links, markdown: markdown, editable: markdown,
+        place: `NomSkillingmodules/${note.path}` };
 }
 
 /**
@@ -347,14 +372,38 @@ function treeClick(event: MouseEvent): void {
 }
 
 /**
+ * Shows the name of the file opened on top of its text, as a folder and a module have theirs, see `folderShow`
+ * in `./folder.ts`: above it small and grey the path to it from its root, like `NomManageplannings/NomMetainformations`
+ * over `Places.md`, each name going on below where it is wider than its room; the status line above then names
+ * the file no more.
+ * - `title`: The heading, see `#editor-file-title` in `./editor.html`.
+ * - `parts`: The folders of the path, its root first.
+ *
+ * @param root - The root of the tree, like `NomManageplannings`
+ * @param path - Path of the file from it, like `NomMetainformations/Places.md`
+ */
+function fileTitleShow(root: string, path: string): void {
+    const title: HTMLElement = document.getElementById("editor-file-title") as HTMLElement;
+    const parts: string[] = [root, ...path.split("/").slice(0, -1)];
+    (title.querySelector(".folder-path") as HTMLElement).textContent = pathBreakableOf(parts.join("/"));
+    (title.querySelector(".day-date") as HTMLElement).textContent = pathBreakableOf(path.split("/").at(-1) ?? "");
+    title.hidden = false;
+}
+
+/**
  * Starts the editor after the router has put its HTML into the page: shows the tree on the left, that of my new system
  * for one of its files and at `/plannings`, else that of my modules, the module of the address picked while no note
  * is shown, like `/scripts?module=IN2028_BusinessAnalyticsMachineLearning` from a skill entry, see `../notes/tree.ts`,
- * and its chapter of the address, like `&chapter=01_RegressionAnalysis`, picked in the tree, while the overview
- * of the module stands on the right, see `./overview.ts`; Today stands there while the address names neither a note
- * nor a module;
- * reads the file the address names and shows it to edit, its solutions folded, see `./preview.ts`, with the save
- * button, Ctrl+S, and a question before leaving with changes unsaved; a file to read only says so, a file that cannot
+ * and its chapter of the address, like `&chapter=01_RegressionAnalysis`, picked in the tree, while the page
+ * of the module, or of the chapter the address names, stands on the right, see `./overview.ts`, and so does a folder
+ * of my modules the address names, like `/scripts?folder=…`, with its module picked, see `./folder.ts`; Today stands
+ * there while the address names neither a note nor a module nor a folder;
+ * reads the file the address names, its name in the status line above the text, its path as its title, and shows
+ * it to edit, its solutions folded, see `./preview.ts`,
+ * scrolled to the row of a table the address names, marked,
+ * see `rowShow` there, with the save
+ * button, Ctrl+S, and a question before leaving with changes unsaved; a file to read only has the save button crossed
+ * out, a file that cannot
  * be read shows a hint instead, and so does the editor while it shows no file.
  * A note of my modules gets the rows of its tasks, see `./tasks.ts`, its outline in the tree, and scrolls to the
  * heading of the address, also when the back or forward button of the browser changes it; a section its round,
@@ -363,6 +412,7 @@ function treeClick(event: MouseEvent): void {
  * dropped from the address, see {@link History#replaceState}.
  * - `address`: The parameters of the address.
  * - `file`: Path of the file of my new system, empty for a note.
+ * - `folder`: Path of the folder of my modules, empty for none.
  * - `plannings`: Whether the editor shows my new system, for one of its files or at `/plannings`; else my modules.
  * - `tree`: Place of the tree, and `shown` the tree once it is shown.
  * - `opened`: The file read.
@@ -374,17 +424,27 @@ function treeClick(event: MouseEvent): void {
 export async function editorStart(): Promise<void> {
     const address: URLSearchParams = new URLSearchParams(location.search);
     const file: string = address.get("file") ?? "";
+    const folder: string = address.get("folder") ?? "";
     const save: HTMLElement = document.getElementById("editor-save") as HTMLElement;
     const plannings: boolean = file !== "" || location.pathname === "/plannings";
     const tree: HTMLElement = document.getElementById("notes-tree") as HTMLElement;
     path = file !== "" ? file : address.get("path") ?? "";
+    const name: HTMLElement = document.getElementById("editor-name") as HTMLElement;
+    name.textContent = pathBreakableOf(path.slice(path.lastIndexOf("/") + 1));
+    name.title = path === "" ? "" : `${plannings ? "NomManageplannings" : "NomSkillingmodules"}/${path}`;
     saveAddress = file !== "" ? "/api/edit/file" : "/api/edit/note";
     const shown: Promise<void> = treeShow(tree, plannings ? "NomManageplannings" : "NomSkillingmodules", path,
-        address.get("module") ?? "");
+        address.get("module") ?? folder.split("/")[0]);
     shown.catch((error: unknown): void => console.error(error));
     const close: HTMLButtonElement = document.getElementById("editor-close") as HTMLButtonElement;
     iconPut(close, Check, "Close the round");
     close.addEventListener("click", roundClose);
+    if (path === "" && !plannings && folder !== "") {
+        save.hidden = true;
+        (document.getElementById("editor") as HTMLElement).classList.add("editor-on-overview");
+        await folderShow(document.getElementById("editor-folder") as HTMLElement, folder);
+        return;
+    }
     if (path === "" && !plannings && address.has("module")) {
         const module: string = address.get("module") ?? "";
         const chapter: string = address.get("chapter") ?? "";
@@ -392,17 +452,19 @@ export async function editorStart(): Promise<void> {
         (document.getElementById("editor") as HTMLElement).classList.add("editor-on-overview");
         shown.then((): void => overviewTreeShow(tree, module, chapter)).catch((error: unknown): void =>
             console.error(error));
-        await overviewShow(document.getElementById("editor-overview") as HTMLElement, module);
+        await overviewShow(document.getElementById("editor-overview") as HTMLElement, module, chapter);
         return;
     }
     const opened: Opened | null = path === "" ? null : await openedRead(file);
     if (opened === null) {
         save.hidden = true;
         (document.getElementById("editor-state") as HTMLElement).textContent =
-            path === "" ? `Choose a ${plannings ? "file" : "note"} on the left` : "This file cannot be read";
+            path === "" ? `Choose a ${plannings ? "file" : "module"} on the left` : "This file cannot be read";
         return;
     }
 
+    fileTitleShow(plannings ? "NomManageplannings" : "NomSkillingmodules", path);
+    name.hidden = true;
     const text: HTMLElement = document.getElementById("editor-text") as HTMLElement;
     text.classList.toggle("markdown", opened.markdown);
     text.classList.toggle("editor-plain", !opened.markdown);
@@ -413,18 +475,17 @@ export async function editorStart(): Promise<void> {
     });
     if (opened.markdown)
         solutionsFold(view);
-    iconPut(save, Save, "Save");
+    iconPut(save, view.state.readOnly ? SaveOff : Save, view.state.readOnly ? "Read only" : "Save");
     save.addEventListener("click", noteSave);
-    save.hidden = view.state.readOnly;
-    if (!view.state.readOnly)
-        stateShow("");
-    else
-        stateShow("Read only");
+    (save as HTMLButtonElement).disabled = view.state.readOnly;
+    stateShow("");
     window.addEventListener("keydown", keyDown);
     window.addEventListener("beforeunload", (event: BeforeUnloadEvent): void => {
         if (view.state.sliceDoc() !== saved)
             event.preventDefault();
     });
+    if (opened.markdown && address.has("row"))
+        rowShow(view, address.get("row") ?? "");
     if (plannings || !opened.markdown)
         return;
 

@@ -44,15 +44,20 @@ body:has(> .food) {
     flex: 1 1 100%;
 }
 
-/* The date on one line, every digit equally wide, as wide as the widest, like `Mon, 19.10.2026`, its text
-   in the middle, as the date of the day, see `#day-title` in `day/day.css`, so the arrow after it stays in place
-   from day to day and stands where the day has it */
+/* The date on one line, exactly where and as wide as the date of the day, see `.day-title-button` and
+   `.day-bar .day-title .day-date` in `day/day.css`: the same room around it and the same width, as wide as the widest,
+   like `30.12.2026 (Wed)`, every digit equally wide, so the date, the icon back to today and the arrow after it stand
+   at the same place in the day, the food and the sport view, from day to day */
 .food-day-title {
-    min-width: 9.25em;
     white-space: nowrap;
-    padding: 0.25rem var(--control-gap);
+    padding: 0.25rem 0.5rem 0.25rem 1.5rem;
     font-variant-numeric: tabular-nums;
-    text-align: center;
+    text-align: left;
+}
+
+.food-day-title .day-date {
+    display: inline-block;
+    min-width: 8.25em;
 }
 
 /* Name of my meals and of my foods, in the text of controls, the one plus right after it, which adds one,
@@ -104,19 +109,25 @@ body:has(> .food) {
 }
 
 /* The day's entries below the totals, each its start small and grey above it, so no column of times takes room
-   beside the names; then every line in the same two columns: what, and at the right one column of numbers, the kcal
-   of each entry on the line of its start and the grams of each food; the foods of a meal indented under its name,
-   so each meal reads as one block; every number at the right of its column, see `.food-value` in `search.css` */
+   beside the names; then every line in the same three columns: what, then two columns of numbers at the right,
+   the grams of a food grey in brackets and the kcal last, of each food, of each meal and, on the line of its start,
+   of each entry, like `(230 g) 363 kcal`; the kcal with the room of `999 kcal`, wider only on a line of more,
+   so the grams stand in one column too; the foods of a meal indented under its name, so each meal reads as one block;
+   every number at the right of its column, see `.food-value` in `search.css` */
 #food-meals {
     margin-top: var(--gap);
 }
 
 .food-line {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 6.5rem;
+    grid-template-columns: minmax(0, 1fr) max-content minmax(3.75rem, max-content);
     gap: 0.75rem;
     align-items: baseline;
     padding: 0.125rem 0;
+}
+
+.food-bracket {
+    color: var(--text-muted);
 }
 
 .food-line:not(.food-meal) > .food-what,
@@ -137,12 +148,12 @@ body:has(> .food) {
     border-left: 2px solid var(--guide);
 }
 
-/* Start of an entry in grey and its place after it, a grey line above it, apart from the entry before; in the column
-   of numbers, white and bold, what the whole entry gives, the one kcal of the entry, as the totals of the day are
-   bold; in the text of the lines below */
+/* Start of an entry in grey and its place after it, a grey line above it, apart from the entry before; in the last
+   column, that of kcal, white and bold, what the whole entry gives, the sum of its lines, as the totals of the day
+   are bold; in the text of the lines below */
 .food-entry {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 6.5rem;
+    grid-template-columns: minmax(0, 1fr) max-content minmax(3.75rem, max-content);
     gap: 0.75rem;
     margin-top: 0.75rem;
     padding-top: 0.625rem;
@@ -152,6 +163,7 @@ body:has(> .food) {
 }
 
 .food-entry > .food-value {
+    grid-column: -2;
     color: var(--text-main);
     font-weight: 600;
 }
@@ -161,6 +173,15 @@ body:has(> .food) {
     font-size: var(--control-text);
 }
 
+/* An entry, its lines one block, which a click opens in the dialog of the day; under the pointer no grey box,
+   only its place lighter, softly after a moment, as the icon buttons, see `.icon-button` in `../base.css`, its grams
+   in brackets staying grey; its start is a button of its own, so under the pointer only the start lights up,
+   not the block around it */
+.food-eaten {
+    padding-bottom: 0.25rem;
+    cursor: pointer;
+}
+
 /* Start of an entry, grey, linking to its day in the day view */
 .food-time {
     color: var(--text-muted);
@@ -168,8 +189,19 @@ body:has(> .food) {
     font-variant-numeric: tabular-nums;
 }
 
-.food-time:hover {
-    text-decoration: underline;
+@media (hover: hover) {
+    .food-entry {
+        transition: color var(--hover-out);
+    }
+
+    .food-eaten:not(:has(a:hover)):hover > .food-entry {
+        color: var(--text-main);
+        transition: color var(--hover-in);
+    }
+
+    .food-time:hover {
+        color: var(--text-main);
+    }
 }
 
 /* What of a meal and the name of a food, going on below where the column has no room, never cut */

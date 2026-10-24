@@ -50,8 +50,9 @@
     min-width: 0;
 }
 
-/* The name of a food of a meal opened, a link to the food among my foods: as plain as every name, lighter under
-   the pointer, so it shows that it leads somewhere */
+/* The name of a food of a meal opened, a link to the food among my foods: as plain as every name, a grey line below
+   it under the pointer, softly as every hover, see `--hover-in` in `../variants.css`, so it shows that it leads
+   somewhere */
 .food-link {
     min-width: 0;
     padding: 0;
@@ -60,10 +61,12 @@
     color: inherit;
     font: inherit;
     text-align: left;
+    text-decoration: underline transparent;
     cursor: pointer;
+    transition: text-decoration-color var(--hover-out);
 }
 
 .food-link:hover {
-    text-decoration: underline;
     text-decoration-color: var(--text-muted);
+    transition: text-decoration-color var(--hover-in);
 }

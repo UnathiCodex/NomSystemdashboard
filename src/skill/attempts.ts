@@ -212,11 +212,15 @@ export type Link = {
  * - `documents`: Its files outside the chapter folders, the university's material, and the notes of its chapters,
  *   by their paths from the module folder, like `VO_UniversityLectureLessons/TUM_2025W/04_….pdf`
  *   or `01_RegressionAnalysis/01_01_SampleMeanStandardError.md`.
+ * - `materials`: The folder of the material of each type, also while the module has none yet, like
+ *   `VO_UniversityLectureLessons` for `VO`, none for a project.
  */
 export type ModuleContents = {
     folder: string;
     chapters: string[];
     documents: string[];
+    materials: { [type: string]: string };
+    inner: string[];
 };
 
 /**
@@ -235,6 +239,7 @@ export type AttemptNew = {
 /**
  * A new skill entry of the log to send from the entry by category; an empty field is not written.
  *
+ * - `title`: Its title, free, like `IN2028 Lecture 3 recap`, empty for the one its skill and type give it.
  * - `type`: Its type, like `VO`, empty for none.
  * - `module`: Name of its skill, a module code like `IN2028` or a project like `WokFlow`.
  * - `semester`: Its semester, like `2026W`: from which semester the lecture or the material is, see {@link semesterOf}.
@@ -252,6 +257,7 @@ export type AttemptNew = {
  * - `end`: End of the entry, after the start.
  */
 export type SkillEntryNew = Partial<Online> & {
+    title: string;
     type: string;
     module: string;
     semester: string;
@@ -374,12 +380,12 @@ export function dayOf(date: Date): string {
 }
 
 /**
- * Writes a day out as the page shows it, in my standard way with its year, and its short weekday in English before it
- * where that helps, like for the day a task is due, as the date of the day shows it.
+ * Writes a day out as the page shows it, in my standard way with its year, and its short weekday in English after it
+ * in brackets where that helps, like for the day a task is due, as every day of the page shows it.
  *
  * @param day - Day like `2026-10-17`
  * @param weekday - Whether to write the weekday
- * @returns Day like `17.10.2026`, or `Sat, 17.10.2026`
+ * @returns Day like `17.10.2026`, or `17.10.2026 (Sat)`
  */
 export function dayTextOf(day: string, weekday: boolean): string {
     const [year, month, number]: number[] = day.split("-").map(Number);
@@ -387,7 +393,7 @@ export function dayTextOf(day: string, weekday: boolean): string {
     if (!weekday)
         return text;
     const date: Date = new Date(year, month - 1, number);
-    return `${date.toLocaleDateString("en-GB", { weekday: "short" })}, ${text}`;
+    return `${text} (${date.toLocaleDateString("en-GB", { weekday: "short" })})`;
 }
 
 /**

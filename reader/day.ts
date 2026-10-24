@@ -4,13 +4,13 @@
  * Reads the log of a day, my one calendar, and adds, changes and removes its entries, by category, see `categories.ts`;
  * the plan of the day is a list of boxes beside it, see `boxes.ts`.
  * Writes into the logs of the new system, see `sources.ts`: a skill entry into the log of its skill,
- * like `University/IN2028_BusinessAnalyticsMachineLearning_Log.ics`, any other into the log of its month in Berlin time,
- * like `Living/2026_10_Log.ics`; an entry whose start moves into another month, or that changes its category or its skill,
- * moves into the log it belongs into then, as one from a month file of the layout before.
- * A skill entry names the folder of its skill and its type in its `SUMMARY` alone, linking the folder:
+ * like `Modules/IN2028_BusinessAnalyticsMachineLearning_Log.ics`, any other into the log of its topic in the year
+ * of its start in Berlin time, like `Living/Sleep_2026_Log.ics`, see `livingFileOf` in `sources.ts`; an entry whose start
+ * moves into another year, or that changes its category or its skill, moves into the log it belongs into then.
+ * A skill entry names its skill and its type by the folder its `SUMMARY` links, its title free:
  * `CATEGORIES:Skill`,
- * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…":IN2028_BusinessAnalyticsMachineLearning (VO)`,
- * without `X-TYPE` and `X-MODULE`, also one logged from a box, see `titleOf` in `documents.ts`;
+ * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons":IN2028 Lecture 3 recap`,
+ * also one logged from a box, which takes its title, see `titleOf` in `documents.ts`;
  * its chapters, document and attempts only `skill.ts` writes.
  * A change from the dialog is written only while the file holds the entry as the dialog opened it, see
  * {@link entryEdit}, and a drag writes only the new start and end, see {@link entryMove}, so no page writes back
@@ -22,8 +22,7 @@
  * in `calendar.ts`, written once when the log entry is added, also when a box is logged through the dialog,
  * so the box shows as done, with expected and real time, and offers no second log; removing the log entry opens
  * the box again, and so does one click on the check of the done box, see {@link boxUndo}. An older log entry points
- * to its box with `X-PLANNED:<UID of the box>`, which is still read. A tutorial of a group logged takes the later
- * weeks along to that group, see `groupFollow` in `course.ts`.
+ * to its box with `X-PLANNED:<UID of the box>`, which is still read. A tutorial logged moves no other week.
  *
  * The dialog of a new box takes the median of how long the last entries like it really lasted as its length,
  * see {@link realMinutesRead}.
@@ -42,7 +41,6 @@
  *
  * - `./boxes.ts`: Finds a box of the plan, an open one, and marks a box done or open again.
  * - `./calendar.ts`: Reads `.ics` files into entries, appends, changes and removes their events.
- * - `./course.ts`: Lets the later weeks of a tutorial follow the group I logged.
  * - `./categories.ts`: Tells whether the fields of an entry fit its category, and names the category of skill entries.
  * - `./documents.ts`: Writes what a skill entry was, linking the folder of its skill, gives its chapters,
  *   and the log an entry belongs into.
@@ -57,7 +55,6 @@ import {
     berlinDateOf, entriesOnceRead, entriesRead, entryAppend, entryChange, entryFind, entryLookup, entryRemove,
     propertiesPut, sportIcsOf,
 } from "./calendar.ts";
-import { groupFollow } from "./course.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
 import { calendarFileOf, chaptersOf, documentLinksOf, titleOf } from "./documents.ts";
 import { foodLineAllows, foodName, mealsOf, mealTitleOf } from "./food.ts";
@@ -189,10 +186,10 @@ const cookName: string = "Cook";
 
 /**
  * Gives the log an entry belongs into, see the top of this file: the log of its skill for a skill entry,
- * else the log of the month of its start in Berlin time, see `calendarFileOf` in `documents.ts`.
+ * else the log of its topic in the year of its start in Berlin time, see `calendarFileOf` in `documents.ts`.
  *
  * @param fields - Category, skill and start of the entry, like `Skill`, `IN2028` and 2026-10-13 10:00
- * @returns Path like `University/IN2028_BusinessAnalyticsMachineLearning_Log.ics` or `Living/2026_10_Log.ics`
+ * @returns Path like `Modules/IN2028_BusinessAnalyticsMachineLearning_Log.ics` or `Living/Sleep_2026_Log.ics`
  *   in `NomManagecalendar`
  */
 export function logFileOf(fields: { category: string; module: string; start: Date }): string {
@@ -448,7 +445,7 @@ export function realMinutesRead(category: string, title: string, module: string,
 /**
  * Adds an entry to the log, into the log it belongs into, see {@link logFileOf}, a meal with one line `X-FOOD`
  * per food, see {@link fieldsCheck}; an entry logged from a box with its `RELATED-TO`, after which the box is done,
- * see `boxDone` in `boxes.ts`, and the later weeks of a tutorial follow its group, see `groupFollow` in `course.ts`;
+ * see `boxDone` in `boxes.ts`;
  * a long neck session with my pain as `X-PAIN`, see {@link painCheck}; a meal drawn from a cooking with its
  * `X-COOKED`, see {@link cookedCheck}; a session of sport with its workout, exercises and videos,
  * see {@link sportCheck}.
@@ -481,6 +478,8 @@ export function entryAdd(entry: EntryNew, id?: string): string {
     const own: [string, string | Link][] = entry.foods.map((food: string): [string, string] => ["x-food", food]);
     if (entry.planned !== "")
         own.push(["related-to", entry.planned]);
+    if ((plan?.group ?? "") !== "")
+        own.push(["x-group", plan?.group ?? ""]);
     if (pain !== "")
         own.push(["x-pain", pain]);
     if (cooked !== "")
@@ -490,10 +489,8 @@ export function entryAdd(entry: EntryNew, id?: string): string {
     own.push(...exercises.map((line: string): [string, string] => ["x-exercise", sportIcsOf(line, false)]),
         ...videos.map((line: string): [string, string] => ["x-video", sportIcsOf(line, true)]));
     const added: string = entryAppend(logFileOf(fields), fields, own, id);
-    if (entry.planned !== "") {
+    if (entry.planned !== "")
         boxDone(entry.planned);
-        groupFollow(entry.planned);
-    }
     cookedShare(cooked);
     return added;
 }
@@ -503,8 +500,8 @@ export function entryAdd(entry: EntryNew, id?: string): string {
  * entry
  * with its skill and type, written as the reader writes them, see `titleOf` in `documents.ts`, linking the folder
  * of its skill and of its material, or the web address I typed for the box, from the start to the end the day sends,
- * pointing to the box with `RELATED-TO`, after which the box is done, see `boxDone` in `boxes.ts`, and the later weeks
- * of a tutorial follow its group, see `groupFollow` in `course.ts`. Its note stays
+ * pointing to the box with `RELATED-TO`, a tutorial with the group I went to as its `X-GROUP`, like `X-GROUP:23`, so the
+ * log shows it as the plan does, after which the box is done, see `boxDone` in `boxes.ts`. Its note stays
  * empty, since the note of a log entry is my diary note about what happened; a skill box hands on its links
  * to documents, like the slides of a lecture, see `documents.ts`, and its chapters as `X-CHAPTER`s, also those
  * whose folders an older box links; more chapters and documents a skill entry gets later in the dialog.
@@ -537,11 +534,11 @@ export function boxLog(logged: BoxLogged): string {
     fieldsCheck(fields, [], box);
     const id: string = entryAppend(logFileOf(fields), fields, [
         ["related-to", box.id],
+        ...(box.group === "" ? [] : [["x-group", box.group] as [string, string]]),
         ...(skill ? documentLinksOf(box.links) : []).map((link: Link): [string, Link] => ["attach", link]),
         ...(skill ? box.chapters : []).map((chapter: string): [string, string] => ["x-chapter", chapter]),
     ]);
     boxDone(box.id);
-    groupFollow(box.id);
     return id;
 }
 

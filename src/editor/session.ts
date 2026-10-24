@@ -67,7 +67,7 @@ export async function sessionOf(module: string): Promise<Session | null> {
  * - `start`: Its start.
  *
  * @param session - Session
- * @returns Text like `Sat, 17.10.2026 · 21:40 – 22:40`
+ * @returns Text like `17.10.2026 (Sat) · 21:40 – 22:40`
  */
 export function sessionTextOf(session: Session): string {
     const start: Date = new Date(session.start);

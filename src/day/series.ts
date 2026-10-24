@@ -2,71 +2,151 @@
  * ## Series
  *
  * The one form of a series of my course, the lectures, exercises, tutorials and sheets of a module in a semester,
- * see `reader/course.ts`, wherever I change it: from the day, by `Series` in the menu `⋯` of one of its boxes or by the
- * pencil below the fields of a box of it, see `./boxes.ts` and `./categories.ts`, and from the page of its module,
+ * see `reader/course.ts`, wherever I change it: from the day, by the series icon ⟳ after the times in the dialog of a box
+ * of it, see `./categories.ts`, and from the page of its module,
  * by the pencil of its card or the plus of a new series, see `../editor/course.ts`; the same dialog in both places,
- * {@link seriesOpen}, so changing a series here or there is one and the same.
- * It looks like the dialog of an entry, one row per field, see `./choices.ts`: what the series is, as its boxes are
- * written, like `IN2028_BusinessAnalyticsMachineLearning (VO)`, its type picked for a new one; of a type with groups
- * my group, which made another one makes that group mine from its next session on; then when it meets: its days,
- * each a weekday with its times, `+` beside them for one more, like a lecture on Mondays 14:00–16:00 and on Thursdays
- * 10:00–12:00, numbered across both; its first and last day; then its boxes, see below, which also leave out a day,
- * bring it back and add an extra, a single date besides its weeks with its times; then its place, picked as in
- * the dialog, the rooms of the university among them as I type; what it does online, its platform with the link
- * and the passcode of its meetings; and who I am with. At the bottom the plan it writes into, small and grey,
- * Cancel and Save.
+ * {@link seriesOpen}, so changing a series here or there is one and the same; and new from nothing by `⟳` beside
+ * `+` of the plan, see {@link seriesNew}, so making a series is the same too. Opened from
+ * the dialog of a box, by that pencil, it opens over that dialog: closing it goes back one level,
+ * to that dialog as it was, and saving it closes both; opened from the page of a module, it simply closes.
+ * It looks like the dialog of an entry, one row per field, see `./choices.ts`: its summary, what the series is,
+ * as its boxes are written and as the dialog of one of them names it, like
+ * `IN2028_BusinessAnalyticsMachineLearning (VO)`, the folder they link small and grey below it,
+ * see {@link seriesRowOf}, its type picked for a new one; of a skill its semester, picked as in the dialog,
+ * which picks the series of that semester, see {@link semesterRowOf}; then its place, picked as in the dialog, the rooms
+ * of the university among them as I type, its parts changed by its pencil, see {@link placeRowOf}; what it does
+ * online, its platform with the link and the passcode of its meetings; then when it meets: its days,
+ * each a weekday with its times, `+` beside them for one more, like a lecture on Mondays 14:00 – 16:00 and on Thursdays
+ * 10:00 – 12:00, numbered across both; its first and last day; of a numbered type its group, empty for my own series;
+ * then its boxes, see below, which also add an extra,
+ * a single date besides its weeks with its times; and who I am with. At the bottom the plan it writes into, small
+ * and grey, Cancel and Save.
  * Nothing is written before I save: then the reader changes only open boxes from today on, a box done, skipped,
- * cancelled or pushed staying as it is, and numbers the series anew, see `seriesApply` in `reader/course.ts`.
+ * cancelled or pushed staying as it is, but for the times I typed for a box, which every box takes but one pushed,
+ * and numbers the series anew, see `seriesApply` in `reader/course.ts`,
+ * and writes the place everywhere when I changed its parts, see {@link placeRename}.
+ * The exams of a module, single dates the reader reads back as no series, open in the same dialog from the pencil
+ * of their card, see {@link examRuleOf}, and from `⟳` with the exams picked, see {@link seriesNew}: only what they are and their boxes, the list open, each exam with its kind
+ * where a box of a series has its number, picked from a small menu, see {@link kindMenuOf}, and with its times,
+ * `+` adding one more, which saving adds as an exam alone with the kind I picked.
+ * Of a numbered type of a module the row `Semester` has the group beside the semester, as the summary has the type
+ * beside the skill, see {@link semesterRowOf}: of my series the menu of the groups of the type in the semester, my
+ * group pinned, a pick making a group mine, see {@link groupPickOf}, each group with its ⟳, which opens it in this
+ * same form, and right after the menu a plus, which opens a new group, its name typed there, like `5` for `Group 05`,
+ * see {@link groupPartOf}; closing, saving or removing the group goes back to my series, see {@link groupReturn}.
+ * While no group is mine, my series shows only its summary and its semester, see {@link groupWaits}; the first group
+ * made while none is mine becomes mine as it is saved. So I make the groups of my tutorials by hand as the university lists them, with the same rows: what
+ * it is, its place, what it does online, its days, each a weekday with its times, its weeks, its sessions, of which
+ * `⋯` cancels one, and its tutors in `With`; saved, the reader writes it as one weekly to-do per weekday, and my boxes
+ * that go to it take its sessions anew, see `groupApply` in `reader/course.ts`. A group there opens in the same form,
+ * see {@link groupOpen}, from the menu of the groups, see `./groups.ts`, its group fixed, a bin at the left of Cancel,
+ * see {@link seriesBinOf}. Which group is mine I pick in the menu beside the semester or on the page of the module.
  * Enter confirms only its field, Ctrl+Enter saves, Escape and a click beside it cancel.
  *
  * The boxes a series makes stay one calm line, see {@link previewSoon}, as the reader would write them, anew a moment
- * after each change: how many, then grey what to know, like `14 entries · 1 done · 2 left out`, and what a change
- * does, like `1 new · 2 changed`, their first and last day already in `Dates`;
+ * after each change, in the row `Entries`, without a fold arrow, since a tap on it opens: how many, by the icon of
+ * a calendar, then grey what a change does, like `1 new · 2 changed`, and how many happen and how many not, each by
+ * the icon of its state, also at none, like `14 · ✓ 1 · ✗ 2 · → 0`, the check for those done, the cross for those
+ * skipped or cancelled, the arrow for those pushed, their first and last day already in `Dates`;
  * a tap on it opens them below it as a list by month, the month short where the names of the rows stand, like
- * `Oct 2026`, each box one small grey box across the dialog, as a block of a section in the tree: its number, `–` for
- * one the university cancelled, its weekday and day, like `Friday, 16.10.2026`, grey its times and what the change
- * does to it, `extra` for an extra, and at its right its `⋯` while open, else the icon of its state as in the plan,
- * never its word: the check of one done, the cross of one I skipped, the calendar crossed out of one the university
- * cancelled, the arrow of one I pushed; a day left out stands among them grey, with the icon that brings it back.
- * The `⋯` skips a box, marks it cancelled by the university or leaves its day out, an extra removed instead, an icon
- * takes its state back; `+ Date` below the list adds an extra, its day to type, the times of the series to change,
- * a day left out brought back instead, numbered by its day as every box, see `numbersOf` in `reader/course.ts`;
- * each only in the form until I save, so a box done is only shown.
- * The row `Repeat` of a new box in the dialog of an entry has the same rows of days, dates and boxes,
- * see `./categories.ts`.
+ * `Oct 2026`, each box one row built by the same code as a row of a card on the page of its module, see `./rows.ts`,
+ * so both look and work alike: its number in a small grey box, `–` for one the university cancelled, a button that
+ * opens the box there already in the dialog of an entry over this one, see {@link boxShow}, where everything of it
+ * changes as in the plan, its day moved a push; its day, like `16.10.2026 (Fri)`, of my tutorials its group with
+ * the menu of the groups of its week; grey its times and its place, or what it does online, and right below them who
+ * I am with; what the change does to it, `extra` for an extra; at its right edge of a box there already its actions
+ * as in the plan, log, move, cancel, skip, each done at once, or the icon of its state, which takes it back; of a box
+ * not written yet `Cancel`, which marks it cancelled by the university, a new one too, so a date that does not take
+ * place stays, without number, and `Remove` for an extra, one typed by mistake, both kept in the form until I save.
+ * A day the university does not teach has no box and shows not, see `lectureFreeOf` in `reader/course.ts`.
+ * `+` below the list adds an extra, its day to type, the times of the series to change, numbered by its day as
+ * every box, see `numbersOf` in `reader/course.ts`. Once a box changed, by its actions or in its dialog, the list
+ * shows anew, see {@link seriesRefresh}.
+ * A new series from nothing, by `⟳`, see {@link seriesNew}, first asks on top what it is, its category and of a skill
+ * its skill and type: of a numbered type of a module it becomes the series of its type, the one there already opening
+ * instead, see {@link seriesRepeat}, of the exams the exams of its module, of anything else a plain series, see below;
+ * it starts on the day shown.
+ * Every other series is a plain one, one to-do that repeats by its rule, see `reader/rules.ts`, like my sleep
+ * of every night: the same dialog without numbers, types and groups, see {@link plainOpen}: its category, its summary,
+ * picked as in the dialog of a box, see {@link plainSummaryOf}, which every box of it takes, its place, what it does
+ * online, its weekdays picked on one line with the one time of them all,
+ * or, by the switch beside them, only how long they last, like `08:00` for my sleep, see {@link plainTimeRowsOf},
+ * since a rule has one time; its first day and its last, empty for a series without end, who I am with, and its boxes
+ * of the next weeks as the reader would write them. Saved, the past of a series never changes, see `plainApply`
+ * in `reader/rules.ts`: one lying wholly ahead is written whole, also every day of it changed alone; one that began
+ * before today ends yesterday and goes on with a new one from today; a summary changed alone renames it whole,
+ * past days and the series it goes on from too. The dialog of one of its boxes changes that box alone.
+ * A series there already has its bin at the left of Cancel, see {@link seriesBinOf}; a new one comes from nothing
+ * by `⟳` beside `+` of the plan, its category and summary picked on top, see {@link seriesNew}.
  *
- * - `./choices.ts`: The dashboard's own pickers, the rows of a form and the parts of a field.
- * - `./times.ts`: Starts the fields of times and days, and reads and writes times and days.
- * - `./places.ts`: Gives the name, the address and the parts of a place, its choice in a list, and adds a platform.
- * - `./entries.ts`: Gives the standard address of a name.
+ * - `./choices.ts`: The dashboard's own pickers, the rows of a form, the parts of a field and the file of the plan.
+ * - `./times.ts`: Starts the fields of times and days, reads and writes times, days and lengths, and makes the switch
+ *   between times and a length.
+ * - `./places.ts`: Gives the name, the address and the parts of a place, its choice in a list, changes a place
+ *   everywhere and adds a platform.
+ * - `./entries.ts`: Adds an exam as a box and a new box repeated once per date of its days, logs a box of the list,
+ *   takes it back, skips it and cancels it.
+ * - `./categories.ts`: Makes the row `With`, the same as in the dialog of an entry; opens a box of the list
+ *   in the dialog of an entry, and gives the calendar it writes with.
+ * - `./actions.ts`: Makes the actions of an open box of the list, as in the plan.
+ * - `./boxes.ts`: Loads the boxes of the days of the list.
+ * - `./groups.ts`: Makes the group of a box of the list with the menu of the groups of its week.
+ * - `./rows.ts`: Makes the row of a box of the list, its number and its times, as every list of boxes has them.
  * - `../skill/attempts.ts`: Writes a date as a day, and names the category of skill boxes.
  * - `../food/foods.ts`: Makes elements.
- * - `../icons.ts`: Puts the icons into the buttons, the plus that adds and the cross that takes back.
- * - `../menu.ts`: Puts the actions of a box behind one button `⋯`.
+ * - `../icons.ts`: Puts the icons into the buttons, the plus that adds and the cross that takes back, makes
+ *   the chevron of the kind of an exam, and the plain question mark of the bin of a group.
+ * - `../menu.ts`: Opens the menu of the kinds of an exam in its place and look.
  * - `../reader.ts`: Asks the reader.
- * - `lucide`: The icons of the states of a box, of leaving a day out and bringing it back, of `+ Date`, of Cancel
- *   and of Save.
+ * - `../skill/links.ts`: Shows the folder the boxes of a series link below its summary.
+ * - `../persons.ts`: The people of `Persons.md`, which `With` offers.
+ * - `lucide`: The icons of the states of a box,
+ *   of removing an extra, of `+`, of the pencils of the place and the group, of the bin of a group,
+ *   of Cancel and of Save, and the chevron and the check of the menu of the kinds.
  * - `./series.css`: Look of the rows, of the boxes and of the dialog.
  */
 
-import { breakableOf, choiceOf, choicesOf, pairOf, partFieldOf, partOf, rowOf, searchOf } from "./choices.ts";
-import { dateFieldStart, dateParse, dateTextOf, timeFieldRead, timeFieldStart, timeOf } from "./times.ts";
-import { addressOf, labelOf, placeChoiceOf, platformSend } from "./places.ts";
-import { standardAddressOf } from "./entries.ts";
-import { dayOf, skillName } from "../skill/attempts.ts";
+import {
+    breakableOf, choiceOf, choicesOf, fileShow, pairOf, partFieldOf, partOf, rowOf, searchOf,
+} from "./choices.ts";
+import {
+    boxTimesOf, dateFieldStart, dateParse, lengthSwapOf, lengthTextOf, minutesOf, timeFieldRead, timeFieldStart,
+    weekdayDateTextOf,
+} from "./times.ts";
+import {
+    addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, platformSend, renameSend,
+} from "./places.ts";
+import {
+    boxAdd, boxDrop, boxLog, boxRepeat, boxSubmit, boxUndo, boxUniversity,
+} from "./entries.ts";
+import { boxOpenEdit, dayCalendarOf, entryBoxOf, entryOpenFromBox, livingFileOf, withRowOf } from "./categories.ts";
+import { boxActionsOf } from "./actions.ts";
+import { boxesFetch } from "./boxes.ts";
+import { boxGroupOf, pinnedMenuOf } from "./groups.ts";
+import { whereLinkedOf } from "./places.ts";
+import { listRowOf, numberOf, rowTimesOf } from "./rows.ts";
+import { dayOf, semesterOf, skillName } from "../skill/attempts.ts";
+import { semestersOf, skillNamesOf, skillPairOf } from "./skill.ts";
 import { elementOf } from "../food/foods.ts";
-import { crossPut, iconOf, iconPut, plusPut } from "../icons.ts";
-import { menuItemOf, menuOf } from "../menu.ts";
+import { crossPut, iconOf, iconPut, iconWordsOf, plusPut, QuestionMark } from "../icons.ts";
+import { menuAnchor, menuItemOf } from "../menu.ts";
 import { readerAsk } from "../reader.ts";
-import { ArrowRight, CalendarMinus, CalendarOff, CalendarPlus, Check, Plus, X } from "lucide";
+import { folderLinkShow } from "../skill/links.ts";
+import { personsKept, personsRename } from "../persons.ts";
+import {
+    ArrowRight, Calendar, CalendarMinus, CalendarOff, Check, ChevronDown, Pencil, Plus, Trash, X,
+} from "lucide";
 import "./series.css";
 
-import type { Box, BoxState } from "./boxes.ts";
+import type { Box, BoxState, PlanDay } from "./boxes.ts";
 import type { Category, Field } from "./categories.ts";
 import type { Choice } from "./choices.ts";
-import type { Attendee, Online } from "./entries.ts";
-import type { Platform } from "./places.ts";
+import type { Attendee, BoxFields, Online } from "./entries.ts";
+import type { Place, Platform } from "./places.ts";
+import type { Person, PersonEdit } from "../persons.ts";
+import type { ModuleType } from "./skill.ts";
 import type { IconNode } from "lucide";
+import type { Calendar as DayCalendar } from "fullcalendar";
 
 
 /**
@@ -94,6 +174,12 @@ export type Extra = {
 };
 
 /**
+ * The dates of the slots of a series with times of their own, other than those of their slot, by their days,
+ * like `2026-10-30` with `14:00` and `17:00`, as the reader takes them, see `Times` in `reader/course.ts`.
+ */
+export type Times = { [day: string]: Pick<Slot, "start" | "end"> };
+
+/**
  * The days of a series as typed so far, see the top of this file.
  *
  * - `slots`: Its weekdays with their times, in the order of their rows.
@@ -101,7 +187,8 @@ export type Extra = {
  *   added, all of them 0 for a new series, see `before` of `SeriesChange` in `reader/course.ts`.
  * - `extras`: Its single dates besides its weeks, in the order of their rows.
  * - `first`, `last`: Its first and last day, like `2026-10-19`, empty while not typed as a day.
- * - `excepts`: The days it leaves out, in order.
+ * - `times`: The dates of its slots with times of their own, see {@link Times}, typed in the list of its boxes;
+ *   of the exams, see {@link examRuleOf}, the exams I gave other times.
  */
 export type Days = {
     slots: Slot[];
@@ -109,14 +196,16 @@ export type Days = {
     extras: Extra[];
     first: string;
     last: string;
-    excepts: string[];
+    times: Times;
 };
 
 /**
  * A box of a series, as the reader sends it for the preview, see `Planned` in `reader/course.ts`: its identifier,
  * empty for a new one, its day, its time as ISO instant, empty for none, and its length in minutes, `null` for none,
- * its number, like `2`, `NONE` for one the university cancelled, empty for none, its state, `new` for a new one,
- * whether I pushed it, whether I may skip it or mark it cancelled, and what the change does to it.
+ * its number, like `2`, `NONE` for one the university cancelled, of an exam its kind, like `Endterm`, empty for none,
+ * its state, `new` for a new one, `university` for a new one I cancelled, whether I pushed it, whether I may skip it
+ * or mark it cancelled, whether I may give it other times, what the change does to it, who I am with, like a tutor
+ * or the lecturers, and of a plain series whether it is a day of another series of its chain, only shown.
  */
 export type Planned = {
     id: string;
@@ -127,36 +216,48 @@ export type Planned = {
     state: BoxState | "new";
     pushed: boolean;
     editable: boolean;
+    retimable: boolean;
     change: "new" | "changed" | "renumbered" | "removed" | "";
+    attendees: Attendee[];
+    chained?: boolean;
 };
 
 /**
- * The state I gave a box of a series in its form, by its identifier, until I save, see `states` of `SeriesChange`
- * in `reader/course.ts`.
+ * The state I gave a box of a series in its form, by its identifier, a new one by its day, like `2026-12-03`, until
+ * I save, see `states` of `SeriesChange` in `reader/course.ts`.
  */
 export type States = { [id: string]: BoxState };
+
+/**
+ * The kinds I gave the exams of a module in their form, like `Endterm`, by their days, until I save,
+ * see {@link kindMenuOf}.
+ */
+export type Kinds = { [day: string]: string };
 
 /**
  * How the boxes of a series show, see {@link previewSoon}.
  *
  * - `ask`: Asks the reader what the series makes: its boxes, or a hint why it makes none, shown in their place;
  *   `null` while the series is not typed enough.
- * - `days`: The days of the series, whose days left out show among its boxes and which a row changes.
+ * - `days`: The days of the series, whose slots and extras the rows of its boxes read and change.
  * - `states`: The states I gave its boxes, which a row changes.
+ * - `kinds`: Of the exams, the kinds I gave them, which a row changes; left out for every series but the exams,
+ *   whose boxes carry their numbers.
  * - `filled`: Builds the rows of the form anew from what it holds, once a row of a box changed it.
  */
 export type Preview = {
     ask: (() => Promise<Planned[] | HTMLElement>) | null;
     days: Days;
     states: States;
+    kinds?: Kinds;
     filled: () => void;
 };
 
 /**
  * A weekly rule of a series or a group, as the reader sends it and the form sends it back, see `Rule`
  * in `reader/course.ts`: its type, like `VO`, its slots and extras, its place with its link, what it does online,
- * who I am with, its first and last day, the days it leaves out, its group, like `03`, of my tutorials my group,
- * empty for none, and its semester, like `2026W`.
+ * who I am with, its first and last day, the dates of its slots with times of their own, see {@link Times}, its group,
+ * like `03`, of my tutorials my group, empty for none, and its semester, like `2026W`.
  */
 export type Rule = Online & {
     type: string;
@@ -167,7 +268,7 @@ export type Rule = Online & {
     attendees: Attendee[];
     first: string;
     last: string;
-    excepts: string[];
+    times: Times;
     group: string;
     semester: string;
 };
@@ -189,13 +290,41 @@ export type Session = {
 };
 
 /**
- * A group of the tutorials of a module, as the reader sends it: its identifier, its rule with its group, like `03`,
- * and its sessions, the earliest first.
+ * A group of the tutorials of a module, as the reader sends it: the identifiers of its to-dos, one per weekday it meets
+ * on, its rule with its group, like `03`, and its sessions, the earliest first.
  */
 export type Group = {
-    id: string;
+    ids: string[];
     rule: Rule;
     sessions: Session[];
+};
+
+/**
+ * The folder of the material of a type of a semester in a module, as the reader sends it, see `MaterialFolder`
+ * in `reader/notes.ts`.
+ *
+ * - `path`: Its path from the module folder, like `VO_UniversityLectureLessons/TUM_2026W`.
+ * - `exists`: Whether it is there; one that is not a click on it makes.
+ */
+export type MaterialFolder = {
+    path: string;
+    exists: boolean;
+};
+
+/**
+ * A session of my own learning of a module logged without a box, as the reader sends it, see `Learned`
+ * in `reader/course.ts`: the identifier of its log entry, its day, its start as ISO instant, how long it lasted
+ * in minutes, its place with its link, what it did online, who I was with and its note.
+ */
+export type Learned = Online & {
+    id: string;
+    day: string;
+    time: string;
+    minutes: number;
+    location: string;
+    locationLink: string;
+    attendees: Attendee[];
+    note: string;
 };
 
 /**
@@ -204,19 +333,25 @@ export type Group = {
  * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `semester`: The semester, like `2026W`.
  * - `boxes`: Its skill boxes of the semester, of every type, the earliest first.
+ * - `learned`: My own learning of the module in the semester logged without a box, the earliest first.
  * - `series`: Its series, one per numbered type with boxes.
  * - `groups`: Its groups, by type and group.
- * - `folders`: The folder of the material of the semester of each type that has one, like
- *   `VO_UniversityLectureLessons/TUM_2026W` for `VO`.
- * - `file`: Its plan, like `University/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
+ * - `folders`: The folder of the material of the semester of each type, like `VO_UniversityLectureLessons/TUM_2026W`
+ *   for `VO`, also one not there yet.
+ * - `links`: The folder a box of each type links, as the reader writes it now, like
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons` for `VO`.
+ * - `file`: Its plan from `NomWorkspace` on,
+ *   like `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
  */
 export type Course = {
     module: string;
     semester: string;
     boxes: Box[];
+    learned: Learned[];
     series: Series[];
     groups: Group[];
-    folders: { [type: string]: string };
+    folders: { [type: string]: MaterialFolder };
+    links: { [type: string]: string };
     file: string;
 };
 
@@ -229,9 +364,8 @@ export type Course = {
  * - `location`, `locationLink`: Its place with its link.
  * - `online`, `onlineLink`, `passcode`: What its boxes do online.
  * - `attendees`: Who I am with.
- * - `group`: Of the tutorials of a module with groups the group picked, like `03`; one other than that of `old`
- *   makes the group mine, see `groupMine` in `reader/course.ts`; empty for none.
  * - `states`: The states I gave its boxes.
+ * - `kinds`: Of the exams, the kinds I gave them.
  */
 type Form = Days & Online & {
     type: string;
@@ -239,8 +373,55 @@ type Form = Days & Online & {
     location: string;
     locationLink: string;
     attendees: Attendee[];
-    group: string;
     states: States;
+    kinds: Kinds;
+};
+
+/**
+ * A new series of my course, as the rows on top of the dialog of a new series picked it, see {@link seriesNew}
+ * and {@link seriesRepeat}: what one of its boxes is.
+ *
+ * - `box`: Its fields as typed there, as that dialog adds a box, see `BoxFields` in `./entries.ts`.
+ * - `summary`: Its summary as that dialog shows it, of a skill box its skill and type, like
+ *   `IN2028_BusinessAnalyticsMachineLearning (VO)`, of any other its text, like `Gym`.
+ * - `link`: The folder its summary links, as that dialog shows it below the summary, like
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons`, empty for none.
+ * - `file`: The plan it writes into, like that of its skill, empty while its boxes may fill several, like those
+ *   of months.
+ */
+export type Repeated = {
+    box: BoxFields;
+    summary: string;
+    link: string;
+    file: string;
+};
+
+/**
+ * A plain series, one to-do that repeats by its rule, as the reader sends it and the form sends it back, see `Plain`
+ * in `reader/rules.ts`: its `UID`, empty for a new one, what it is, of a skill its semester, like `2026W`, empty
+ * for any other, its place, what it does online, who I am with,
+ * its weekdays from 1 for Monday to 7 for Sunday, its times in Berlin time, both empty without time, how long it lasts
+ * without time in minutes, `null` for no length, its first day, its last, empty for none, its single dates besides
+ * its weekdays, its extras, each with its times, without time its day alone, and its plan from `NomWorkspace` on,
+ * empty for a new one.
+ */
+export type Plain = Online & {
+    id: string;
+    category: string;
+    title: string;
+    module: string;
+    type: string;
+    semester: string;
+    location: string;
+    attendees: Attendee[];
+    weekdays: number[];
+    start: string;
+    end: string;
+    minutes: number | null;
+    first: string;
+    last: string;
+    extras: Extra[];
+    file: string;
 };
 
 /**
@@ -248,6 +429,17 @@ type Form = Days & Online & {
  * in `reader/boxes.ts`.
  */
 export const numberedTypes: string[] = ["VO", "UE", "ZU", "TU", "HU"];
+
+/**
+ * Type of the exams of a module, single dates whose `X-NUMBER` is their kind, like `Endterm`, no series the reader
+ * reads back, see {@link examRuleOf}.
+ */
+const examType: string = "FA";
+
+/**
+ * The kinds of an exam, its `X-NUMBER`, in the order they come in a semester, see {@link kindMenuOf}.
+ */
+const examKinds: string[] = ["Midterm", "Endterm", "Retake"];
 
 /**
  * Waiting preview after a change, so typing asks the reader once, a moment after it rests, see {@link previewSoon}.
@@ -271,9 +463,27 @@ let previewShown: Node[] = [];
 let listOpened: boolean = false;
 
 /**
+ * The boxes of the rows of the list there already, by their identifiers, as loaded with the list last, see
+ * {@link boxesLoad}: a row of one opens it and acts on it as the plan does, see {@link boxRowOf}; none for a row
+ * not written yet.
+ */
+let boxesKnown: Map<string, Box> = new Map();
+
+/**
  * The extra being typed below the list of the boxes, see {@link draftRowOf}, `null` while none is.
  */
 let extraTyped: Extra | null = null;
+
+/**
+ * Of the exams, the kind I gave the date being typed, see {@link draftRowOf}, empty while I gave none.
+ */
+let kindTyped: string = "";
+
+/**
+ * Of the exams, the day of the date added as the dialog opened, see {@link seriesOpen}, whose menu of the kinds opens
+ * once its row shows, so I pick its kind first, as after `+`; empty once it opened, and for none.
+ */
+let kindAsked: string = "";
 
 /**
  * The course whose series the dialog shows, `null` before it opened.
@@ -286,6 +496,42 @@ let course: Course | null = null;
 let typing: Form | null = null;
 
 /**
+ * The place of the form as I changed it by its parts, see {@link placeRowOf}, which saving writes everywhere,
+ * see {@link placeRename}; `null` while I changed nothing, and once another place is picked.
+ */
+let placeEdit: Place | null = null;
+
+/**
+ * Whether the place of the form shows its parts below it to change, opened and closed by its pencil,
+ * see {@link placeRowOf}.
+ */
+let placeOpen: boolean = false;
+
+/**
+ * Whether what the series does online shows its parts below it, its passcode and its link, opened and closed by its
+ * pencil as in the dialog of an entry, see {@link onlineRowOf}.
+ */
+let onlineOpen: boolean = false;
+
+/**
+ * Whether `With` of the form shows the parts of its people below its names, opened and closed by its pencil,
+ * see `withRowOf` in `./categories.ts`.
+ */
+let withOpen: boolean = false;
+
+/**
+ * Each person of `With` I changed by its parts, by its name as picked, see `withRowOf` in `./categories.ts`, which
+ * saving writes everywhere, see `personsRename` in `../persons.ts`; none while I changed nobody, and once the dialog
+ * closes.
+ */
+let personEdits: { [old: string]: PersonEdit & { address: string } } = {};
+
+/**
+ * The people of `Persons.md` as kept when the dialog opened, see `personsKept` in `../persons.ts`, which `With` offers.
+ */
+let persons: Person[] = [];
+
+/**
  * The categories with the values of their fields, for the places and the people of the form, as loaded last.
  */
 let categories: Category[] = [];
@@ -294,6 +540,62 @@ let categories: Category[] = [];
  * Whether the dialog started, its buttons and keys, see {@link dialogStart}.
  */
 let dialogStarted: boolean = false;
+
+/**
+ * The new box of the dialog of an entry the form makes a series of, see {@link seriesRepeat}, `null` for a series
+ * of my course.
+ */
+let repeated: Repeated | null = null;
+
+/**
+ * The plain series the form changes or makes, see {@link plainOpen}, as typed so far but its place, what it does
+ * online, who I am with and its days, which the form holds; `null` for a series of my course.
+ */
+let plain: Plain | null = null;
+
+/**
+ * Whether the plain series of the form has times, else only how long it lasts, as its switch sets it,
+ * see {@link plainSwapOf}.
+ */
+let plainTimed: boolean = true;
+
+/**
+ * The group of the tutorials of its type the form makes or changes, see {@link groupPartOf} and {@link groupStart}:
+ * its group, like `05`, and whether it is new; `null` while the form is that of my own series.
+ */
+let grouped: { group: string; made: boolean } | null = null;
+
+/**
+ * My series of the type the form of a group was opened from, by the menu of the groups beside its semester, see
+ * {@link groupPickOf}, as typed so far, to which the form goes back once the group closes, is saved or removed,
+ * see {@link groupReturn}; `null` for a group opened from elsewhere and for any other form.
+ */
+let groupBack: Form | null = null;
+
+/**
+ * A new series made from nothing, by `⟳` beside `+` of the plan, see {@link seriesNew}: the day it starts on and what
+ * is picked so far, its category and, of a skill, its skill and type, which the rows of category and summary on top
+ * of the form show, see {@link freshRowsOf}, and its semester, at first that of the day, see {@link semesterRowOf};
+ * `null` for any other form.
+ */
+let fresh: { day: string; category: string; picked: ModuleType; semester: string } | null = null;
+
+/**
+ * Whether the bin of a group asked whether I really remove it, see {@link seriesBinOf}.
+ */
+let removeAsked: boolean = false;
+
+/**
+ * Comes once the form is saved, like closing the dialog of the box the dialog opened over, see {@link seriesOpen};
+ * nothing for the dialog opened from the page of a module or the menu of a box.
+ */
+let done: () => void = (): void => {};
+
+/**
+ * The box the dialog of an entry showed below this one before a number of the list opened another box in it,
+ * see {@link boxShow}, which that dialog shows again once this one closes unsaved, one level back; `null` for none.
+ */
+let entryBack: Box | null = null;
 
 
 /**
@@ -345,22 +647,23 @@ export function weekdayNameOf(weekday: number, whole: boolean): string {
  * Writes a slot as the heading of a card, a row of the table of the groups and a group in a list read it.
  *
  * @param slot - The slot
- * @returns Text like `Mon 14:00–16:00`
+ * @returns Text like `Mon 14:00 – 16:00`
  */
 export function slotTextOf(slot: Slot): string {
-    return `${weekdayNameOf(slot.weekday, false)} ${slot.start}–${slot.end}`;
+    return `${weekdayNameOf(slot.weekday, false)} ${slot.start} – ${slot.end}`;
 }
 
 /**
- * Writes the room of a place short, as the rule of a series and the row of a box name it: a room of the university by
- * its code, like `5416.01.003` of `5416.01.003 (Hörsaal 2 "Interims II")`, any other place by its name,
- * like `Zoom`, see `labelOf` in `./places.ts`.
+ * Writes the room of a place short, as the plan, the log, the rule of a series and the row of a box name it: its name,
+ * see `labelOf` in `./places.ts`, without what stands in brackets, from the first `(` on, which only its row
+ * in `Places.md` or `Rooms.md` and the dialog show, like `5416.01.003` of `5416.01.003 (Hörsaal 2 "Interims II")`
+ * or `Home Munich`; so whatever I write in brackets never makes a place too long for its line.
  *
  * @param line - Place as an entry writes it
  * @returns The room, empty for no place
  */
 export function roomOf(line: string): string {
-    return /^\d{4}\.\S+\.\S+/.test(labelOf(line)) ? labelOf(line).split(" ")[0] : labelOf(line);
+    return labelOf(line).replace(/\s*\(.*$/, "");
 }
 
 /**
@@ -375,22 +678,12 @@ export function seriesHas(box: Box): boolean {
 }
 
 /**
- * Gives the days a series leaves out between its first and its last day, the only ones it sends and shows.
- *
- * @param days - The days of the series
- * @returns Days like `2026-12-28`, in order
- */
-export function exceptsWithin(days: Days): string[] {
-    return days.excepts.filter((day: string): boolean => days.first <= day && day <= days.last);
-}
-
-/**
  * Tells whether a start and an end are typed enough: both a time, the start before the end.
  *
- * @param times - A slot or an extra
+ * @param times - A slot, an extra or the times of a box
  * @returns Whether they are
  */
-function timesReady(times: Slot | Extra): boolean {
+function timesReady(times: Pick<Slot, "start" | "end">): boolean {
     return times.start !== "" && times.end !== "" && times.start < times.end;
 }
 
@@ -410,8 +703,8 @@ export function daysReady(days: Days): boolean {
 
 /**
  * Moves the days of a series that fall on the weekday of a slot to its new weekday in their week, its first day,
- * its last and the days it leaves out, so a lecture moved from Monday to Tuesday keeps its weeks,
- * like `19.10.2026–01.02.2027` becoming `20.10.2026–02.02.2027`.
+ * its last and those with times of their own, so a lecture moved from Monday to Tuesday keeps its weeks,
+ * like `19.10.2026 – 01.02.2027` becoming `20.10.2026 – 02.02.2027`.
  * - `move`: Moves a day on the old weekday.
  *
  * @param days - The days of the series
@@ -423,7 +716,9 @@ function daysMove(days: Days, from: number, to: number): void {
         from !== 0 && day !== "" && weekdayOf(day) === from ? dayAdd(day, to - from) : day;
     days.first = move(days.first);
     days.last = move(days.last);
-    days.excepts = days.excepts.map(move).sort();
+    days.times = Object.fromEntries(Object.entries(days.times)
+        .map(([day, times]: [string, Pick<Slot, "start" | "end">]): [string, Pick<Slot, "start" | "end">] =>
+            [move(day), times]));
 }
 
 /**
@@ -433,7 +728,7 @@ function daysMove(days: Days, from: number, to: number): void {
  * - `input`: The field.
  *
  * @param kind - `time-field` or `date-field`
- * @param value - Its value at first, like `14:00` or `19.10.2026`
+ * @param value - Its value at first, like `14:00` or `19.10.2026 (Mon)`
  * @param name - What it holds, for screen readers, like `Start of Monday`
  * @param take - Takes what is typed, `14:15` of `1415`, empty for no time or day
  * @param changed - Tells the form that the series changed
@@ -461,9 +756,10 @@ function fieldOf(kind: string, value: string, name: string, take: (value: string
 
 /**
  * Makes two fields of a series side by side with the range dash between them, as start and end of the dialog,
- * like `14:00 – 16:00` or `19.10.2026 – 01.02.2027`.
+ * like `14:00 – 16:00` or `19.10.2026 (Mon) – 01.02.2027 (Mon)`, the dash going with the second, as there, so a narrow
+ * row breaks before it.
  * - `range`: The two.
- * - `first`: The first with the dash.
+ * - `second`: The second with the dash before it.
  *
  * @param from - The first field
  * @param to - The second field
@@ -471,20 +767,20 @@ function fieldOf(kind: string, value: string, name: string, take: (value: string
  */
 function rangeOf(from: HTMLInputElement, to: HTMLInputElement): HTMLElement {
     const range: HTMLElement = elementOf("span", "entry-range", "");
-    const first: HTMLElement = elementOf("span", "entry-moment", "");
-    first.append(from, elementOf("span", "entry-dash", "–"));
-    range.append(first, to);
+    const second: HTMLElement = elementOf("span", "entry-moment", "");
+    second.append(elementOf("span", "entry-dash", "–"), to);
+    range.append(from, second);
     return range;
 }
 
 /**
- * Makes the fields of the times of a slot or an extra side by side, like `14:00 – 16:00`, see {@link rangeOf}.
+ * Makes the fields of the times of a slot, an extra or a box side by side, like `14:00 – 16:00`, see {@link rangeOf}.
  *
- * @param times - The slot or the extra, which takes what I type
+ * @param times - The slot, the extra or the times of a box, which take what I type
  * @param changed - Tells the form that the series changed
  * @returns The two
  */
-function timesRangeOf(times: Slot | Extra, changed: () => void): HTMLElement {
+function timesRangeOf(times: Pick<Slot, "start" | "end">, changed: () => void): HTMLElement {
     return rangeOf(fieldOf("time-field", times.start, "Start", (time: string): void => {
         times.start = time;
     }, changed), fieldOf("time-field", times.end, "End", (time: string): void => {
@@ -525,16 +821,20 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the rows of the days of a series, each its weekday, picked from a list, grey `ddd` while none is picked,
- * as a time says `hh:mm`, and its times, with its `×` while there are several; `+` beside the name of the first adds one more, with the times of the last; a weekday picked anew
- * moves the days of the series with it, see {@link daysMove}.
+ * Makes the row `Day` of the days of a series, all of them in its one frame, as the boxes stand in the row `Entries`,
+ * each day one line: its weekday, picked from a list, grey `ddd` while none is picked, as a time says `hh:mm`,
+ * and its times, with its `×` while there are several; `+` beside the name `Day` adds one more line, with the times
+ * of the last; a weekday picked anew moves the days of the series with it, see {@link daysMove}; a click beside
+ * the fields of a line opens the list of its own weekday.
  * - `weekdays`: The weekdays to pick from.
  * - `plus`: The plus.
+ * - `lines`: The days, one line each.
+ * - `row`: The row.
  *
  * @param days - The days of the series
  * @param changed - Tells the form that the series changed
  * @param filled - Builds the rows of the form anew from what it holds, once a day is added, taken back or moved
- * @returns The rows
+ * @returns The row, alone, as the rows of the form are given
  */
 export function slotRowsOf(days: Days, changed: () => void, filled: () => void): HTMLElement[] {
     const weekdays: Choice[] = [1, 2, 3, 4, 5, 6, 7].map((weekday: number): Choice =>
@@ -545,7 +845,8 @@ export function slotRowsOf(days: Days, changed: () => void, filled: () => void):
         days.before.push(0);
         filled();
     });
-    return days.slots.map((slot: Slot, index: number): HTMLElement => {
+    const lines: HTMLElement = elementOf("div", "series-slots", "");
+    lines.append(...days.slots.map((slot: Slot, index: number): HTMLElement => {
         const value: HTMLElement = elementOf("div", "series-slot", "");
         value.append(choicesOf({
             search: searchOf(weekdays), picked: slot.weekday === 0 ? [] : [String(slot.weekday)], many: false,
@@ -561,16 +862,22 @@ export function slotRowsOf(days: Days, changed: () => void, filled: () => void):
             days.before.splice(index, 1);
             filled();
         })] : []));
-        const row: HTMLElement = rowOf(index === 0 ? "Day" : "", value);
-        if (index === 0)
-            row.querySelector(".entry-name")?.append(plus);
-        return row;
-    });
+        value.addEventListener("click", (event: MouseEvent): void => {
+            if ((event.target as HTMLElement).closest("button, input, a, label, .picker-box") !== null)
+                return;
+            event.stopPropagation();
+            value.querySelector<HTMLButtonElement>(".picker-line")?.click();
+        });
+        return value;
+    }));
+    const row: HTMLElement = rowOf("Day", lines);
+    row.querySelector(".entry-name")?.append(plus);
+    return [row];
 }
 
 /**
  * Makes the row of the first and the last day of a series, side by side with the range dash between them,
- * like `19.10.2026 – 01.02.2027`, each saying grey `dd.mm.yyyy` while empty, as the day of a deadline.
+ * like `19.10.2026 (Mon) – 01.02.2027 (Mon)`, each saying grey `dd.mm.yyyy` while empty, as the day of a deadline.
  * - `first`, `last`: The fields of the first and the last day.
  *
  * @param days - The days of the series
@@ -578,21 +885,21 @@ export function slotRowsOf(days: Days, changed: () => void, filled: () => void):
  * @returns The row
  */
 export function datesRowOf(days: Days, changed: () => void): HTMLElement {
-    const first: HTMLInputElement = fieldOf("date-field", days.first === "" ? "" : dateTextOf(days.first), "First day",
+    const first: HTMLInputElement = fieldOf("date-field", days.first === "" ? "" : weekdayDateTextOf(days.first),
+        "First day",
         (day: string): void => {
             days.first = day;
         }, changed);
-    const last: HTMLInputElement = fieldOf("date-field", days.last === "" ? "" : dateTextOf(days.last), "Last day",
+    const last: HTMLInputElement = fieldOf("date-field", days.last === "" ? "" : weekdayDateTextOf(days.last),
+        "Last day",
         (day: string): void => {
             days.last = day;
         }, changed);
-    first.placeholder = "dd.mm.yyyy";
-    last.placeholder = "dd.mm.yyyy";
     return rowOf("Dates", rangeOf(first, last));
 }
 
 /**
- * Makes the row of the boxes a series makes, showing what it showed last until the reader answers again,
+ * Makes the row `Entries` of the boxes a series makes, showing what it showed last until the reader answers again,
  * see {@link previewSoon}.
  * - `preview`: The place of the boxes.
  *
@@ -601,7 +908,25 @@ export function datesRowOf(days: Days, changed: () => void): HTMLElement {
 export function boxesRowOf(): HTMLElement {
     const preview: HTMLElement = elementOf("div", "series-preview", "");
     preview.append(...previewShown);
-    return rowOf("Boxes", preview);
+    const row: HTMLElement = rowOf("Entries", preview);
+    row.hidden = previewShown.length === 0;
+    return row;
+}
+
+/**
+ * Puts what the boxes of a series show into the row `Entries` of the form, see {@link boxesRowOf}, the row shown only
+ * while it shows something, so a series not typed enough yet has no empty row.
+ * - `place`: The place of the boxes in the form, `null` for none.
+ *
+ * @param form - The form
+ * @param shown - What the boxes show, none for nothing
+ */
+function previewPut(form: HTMLElement, shown: Node[]): void {
+    const place: HTMLElement | null = form.querySelector(".series-preview");
+    place?.replaceChildren(...shown);
+    const row: HTMLElement | null = place?.closest<HTMLElement>(".panel-field") ?? null;
+    if (row !== null)
+        row.hidden = shown.length === 0;
 }
 
 /**
@@ -613,13 +938,14 @@ export function previewForget(): void {
     previewShown = [];
     listOpened = false;
     extraTyped = null;
+    kindAsked = "";
 }
 
 /**
- * Writes how many there are of something, like `2 left out`, or nothing for none.
+ * Writes how many there are of something, like `2 changed`, or nothing for none.
  *
  * @param count - How many
- * @param words - What they are, like `left out`
+ * @param words - What they are, like `changed`
  * @returns The part, none for none
  */
 function countOf(count: number, words: string): string[] {
@@ -627,22 +953,41 @@ function countOf(count: number, words: string): string[] {
 }
 
 /**
- * Makes the line of the boxes of a series, see the top of this file: the fold arrow, how many entries there are,
- * white, then grey what a change does to them, while the series had boxes before, a box removed by a day left out
- * counted only as left out, and how many are done, skipped, cancelled, pushed and left out; a tap opens and closes
- * the list below it.
+ * Makes a part of the line of the boxes of a series that counts them by an icon, like `✓ 1`, its words as tooltip
+ * and as its name for screen readers.
+ * - `part`: The part.
+ *
+ * @param count - How many
+ * @param icon - Icon of what they are, like `Check`
+ * @param words - What they are, like `done`
+ * @returns The part
+ */
+export function tallyOf(count: number, icon: IconNode, words: string): HTMLElement {
+    const part: HTMLElement = elementOf("span", "series-tally", "");
+    part.title = `${count} ${words}`;
+    part.setAttribute("aria-label", part.title);
+    part.append(...iconWordsOf(icon, String(count)));
+    return part;
+}
+
+/**
+ * Makes the line of the boxes of a series, see the top of this file, grey, lighter under the pointer: how many
+ * entries there are, by the icon of a calendar, then what a change does to them, while the series had boxes before,
+ * and by the icons of their states how many of those it keeps are done, how many not, skipped or cancelled, and how
+ * many pushed, each also at none, like `✓ 0`, as the cards of the course count; a tap opens and closes the list
+ * below it.
  * - `kept`: The boxes after the change, without those it removes.
  * - `had`: Whether the series had boxes before.
  * - `counted`: How many boxes of a state or a change there are.
  * - `line`: The line, a button.
- * - `parts`: Its grey parts.
+ * - `parts`: Its grey parts of a change.
+ * - `states`: How many are done, how many not, and how many pushed, each with its icon and its words.
  *
  * @param planned - The boxes as the reader would write them, removed ones too
- * @param left - The days left out, see {@link exceptsWithin}
  * @param toggle - Opens or closes the list
  * @returns The line
  */
-function summaryOf(planned: Planned[], left: string[], toggle: () => void): HTMLButtonElement {
+function summaryOf(planned: Planned[], toggle: () => void): HTMLButtonElement {
     const kept: Planned[] = planned.filter((box: Planned): boolean => box.change !== "removed");
     const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
     const counted: (keep: (box: Planned) => boolean) => number = (keep: (box: Planned) => boolean): number =>
@@ -651,19 +996,24 @@ function summaryOf(planned: Planned[], left: string[], toggle: () => void): HTML
     const parts: string[] = [
         ...had ? countOf(counted((box: Planned): boolean => box.change === "new"), "new") : [],
         ...countOf(counted((box: Planned): boolean => box.change === "changed"), "changed"),
-        ...countOf(counted((box: Planned): boolean => box.change === "removed" && !left.includes(box.day)),
-            "removed"),
-        ...countOf(counted((box: Planned): boolean => box.change !== "removed" && box.state === "done"), "done"),
-        ...countOf(counted((box: Planned): boolean => box.state === "dropped"), "skipped"),
-        ...countOf(counted((box: Planned): boolean => box.state === "university"), "cancelled"),
-        ...countOf(counted((box: Planned): boolean => box.pushed), "pushed"),
-        ...countOf(left.length, "left out"),
+        ...countOf(counted((box: Planned): boolean => box.change === "removed"), "removed"),
+    ];
+    const states: [number, IconNode, string][] = [
+        [counted((box: Planned): boolean => box.change !== "removed" && box.state === "done"), Check, "done"],
+        [counted((box: Planned): boolean => box.change !== "removed"
+            && (box.state === "dropped" || box.state === "university")), X, "skipped or cancelled"],
+        [counted((box: Planned): boolean => box.pushed), ArrowRight, "pushed"],
     ];
     line.type = "button";
     line.className = "series-summary";
     line.setAttribute("aria-expanded", String(listOpened));
-    line.append(elementOf("span", "series-count", `${kept.length} ${kept.length === 1 ? "entry" : "entries"}`),
-        ...parts.map((part: string): HTMLElement => elementOf("span", "entry-parted", part)));
+    line.append(tallyOf(kept.length, Calendar, kept.length === 1 ? "entry" : "entries"),
+        ...parts.map((part: string): HTMLElement => elementOf("span", "entry-parted", part)),
+        ...states.map(([count, icon, words]: [number, IconNode, string]): HTMLElement => {
+            const part: HTMLElement = tallyOf(count, icon, words);
+            part.classList.add("entry-parted");
+            return part;
+        }));
     line.addEventListener("click", toggle);
     return line;
 }
@@ -690,121 +1040,326 @@ function markOf(icon: IconNode, word: string, back: (() => void) | null): HTMLEl
 }
 
 /**
- * Makes what stands at the right of the row of a box, see the top of this file: its `⋯` while open or new, with `Skip`
- * and `Cancel` for a box I may give another state, and `Leave out` for one from today on whose day the series makes,
- * a day of its slots, which leaves that day out, or `Remove` for an extra, which takes it back; else the icon of its
- * state, see {@link markOf}, a skipped or cancelled box taking it back, a pushed or done box only shown.
+ * Sends a change of a box of the list to the reader, then shows the list anew, see {@link seriesRefresh}, also when
+ * the reader does not take it, which the console says.
+ *
+ * @param send - Sends the change
+ */
+function seriesAct(send: () => Promise<unknown>): void {
+    send().catch((error: unknown): void => console.error(error)).then((): Promise<void> => seriesRefresh())
+        .catch((error: unknown): void => console.error(error));
+}
+
+/**
+ * Shows the list of the form anew as its files hold it now, after a box of it changed, by its actions or in the dialog
+ * of the box, see {@link boxShow}: the course of my series loaded anew, then the boxes the form makes, see
+ * {@link formChanged}; nothing once the dialog closed.
+ *
+ * @throws {Error} - When the reader cannot answer
+ */
+async function seriesRefresh(): Promise<void> {
+    if (typing === null)
+        return;
+    if (course !== null)
+        course = await readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(course.module)}`
+            + `&semester=${course.semester}`);
+    formChanged();
+}
+
+/**
+ * Opens a box of the list over the dialog of the series, as the plan opens it, see `boxClick` in `./boxes.ts`: one
+ * that can be changed in the dialog of an entry to change it, an open one that cannot in the dialog of the log,
+ * at the times it is logged at; the dialog of an entry standing below, the one the series opened from, closes first,
+ * its box kept to show again once the series closes unsaved, see {@link entryBack}, and the box shows on top, marked
+ * `data-over`, which `series.css` leaves visible. Once it closes, saved or not, the list shows anew,
+ * see {@link dialogStart}.
+ * - `entry`: The dialog of an entry.
+ * - `start`, `end`: The times it is logged at.
+ *
+ * @param box - The box
+ * @throws {Error} - When the reader cannot answer
+ */
+async function boxShow(box: Box): Promise<void> {
+    const entry: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
+    if (entry.open && entryBack === null)
+        entryBack = entryBoxOf();
+    if (entry.open)
+        entry.close();
+    if (box.editable)
+        await boxOpenEdit(box);
+    else if (box.state === "open") {
+        const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
+        await entryOpenFromBox(box, start, end);
+    }
+    if (entry.open)
+        entry.dataset.over = "";
+}
+
+/**
+ * Shows the box again in the dialog of an entry that it showed before a number of the list opened another one,
+ * see {@link entryBack}, as it stands now, changes of the series included, once the series closes unsaved.
+ * - `fresh`: The box as the plan of its day holds it now, `undefined` once it is gone.
+ *
+ * @param box - The box as it showed
+ * @throws {Error} - When the reader cannot answer
+ */
+async function entryBackShow(box: Box): Promise<void> {
+    const fresh: Box | undefined = (await boxesFetch(box.day, dayAdd(box.day, 1)))
+        .flatMap((plan: PlanDay): Box[] => plan.boxes).find((other: Box): boolean => other.id === box.id);
+    if (fresh !== undefined)
+        await boxOpenEdit(fresh);
+}
+
+/**
+ * Loads the boxes of the rows of the list, see {@link boxesKnown}: of my course its boxes, as loaded with it, of a plain
+ * series those of the days of its rows, see `boxesFetch` in `./boxes.ts`, never the greyed copy a box leaves on a day
+ * it was pushed from; none of a group, whose rows are its sessions.
+ * - `ids`: The identifiers of the rows of a box.
+ * - `days`: The days of the rows, the earliest first.
+ * - `boxes`: The boxes found.
+ *
+ * @param planned - The rows of the list
+ * @throws {Error} - When the reader cannot answer
+ */
+async function boxesLoad(planned: Planned[]): Promise<void> {
+    const ids: string[] = planned.filter((box: Planned): boolean => box.id !== "").map((box: Planned): string => box.id);
+    const days: string[] = planned.map((box: Planned): string => box.day).sort();
+    if (ids.length === 0 || grouped !== null) {
+        boxesKnown = new Map();
+        return;
+    }
+    const boxes: Box[] = course !== null && plain === null ? course.boxes
+        : (await boxesFetch(days[0], dayAdd(days[days.length - 1], 8)))
+            .flatMap((plan: PlanDay): Box[] => plan.boxes).filter((box: Box): boolean => box.state !== "pushed");
+    boxesKnown = new Map(boxes.filter((box: Box): boolean => ids.includes(box.id))
+        .map((box: Box): [string, Box] => [box.id, box]));
+}
+
+/**
+ * Makes one action of a box of the list not written yet, as an action of a box of the plan looks, see `actions.ts`.
+ * - `button`: The button.
+ *
+ * @param icon - Icon, like `CalendarOff`
+ * @param words - What it does, its tooltip, like `Cancel`
+ * @param click - What a click does
+ * @returns The button
+ */
+function pendingActionOf(icon: IconNode, words: string, click: () => void): HTMLButtonElement {
+    const button: HTMLButtonElement = document.createElement("button");
+    button.type = "button";
+    button.className = "box-action";
+    iconPut(button, icon, words);
+    button.addEventListener("click", click);
+    return button;
+}
+
+/**
+ * Makes what stands at the right edge of the row of a box there already, as on the page of its module, see
+ * `../editor/course.ts`: its actions while open, as in the plan, see `boxActionsOf` in `./actions.ts`, each sent
+ * at once, `Log` logging it at its times, see `boxTimesOf` in `./times.ts`; else the icon of its state, which takes it
+ * back with a click where it can be, a box logged as in the plan; the list then shows anew, see {@link seriesAct}.
+ * - `calendar`: The calendar the dialog of an entry writes with, `null` before it started.
+ * - `back`: Takes its state back, `null` where it cannot be.
+ * - `shown`: The icon of its state and its word.
+ * - `take`: The same, fixed for the click.
+ *
+ * @param box - The box
+ * @returns Its actions, or its state
+ */
+function knownEndOf(box: Box): HTMLElement {
+    const calendar: DayCalendar | null = dayCalendarOf();
+    if (box.state === "open")
+        return boxActionsOf(box, (): void => seriesAct(async (): Promise<void> => {
+            const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
+            if (calendar !== null)
+                await boxLog(calendar, box.id, start, end);
+        }), seriesAct, true);
+    let back: (() => Promise<void>) | null = null;
+    if (box.state === "done")
+        back = box.deadline !== "" ? (): Promise<void> => boxSubmit(box.id, false)
+            : calendar === null ? null : (): Promise<void> => boxUndo(calendar, box.id);
+    else if (box.editable)
+        back = box.state === "dropped" ? (): Promise<void> => boxDrop(box.id, false)
+            : (): Promise<void> => boxUniversity(box.id, false);
+    const shown: [IconNode, string] = box.state === "done" ? [Check, box.deadline === "" ? "Logged" : "Submitted"]
+        : box.state === "dropped" ? [X, "Skipped"] : [CalendarOff, "Cancelled"];
+    const take: (() => Promise<void>) | null = back;
+    return markOf(shown[0], shown[1], take === null ? null : (): void => seriesAct(take));
+}
+
+/**
+ * Makes what stands at the right edge of the row of a box not written yet, or of one only shown: of a new one its
+ * actions as the form keeps them until I save, see {@link States}, `Cancel` for one numbered in its series and for
+ * a session of a group, which the reader makes cancelled, see `seriesApply` and `groupApply` in `reader/course.ts`,
+ * `Remove` for an extra from today on, which takes it back; a state given so its icon, which takes it back; of a day
+ * of another series of the chain of a plain series, see `chained` of {@link Planned}, and of one the change removes
+ * only the icon of its state, or nothing.
  * - `today`: Today's date.
  * - `extra`: The extra on its day, `undefined` for none.
- * - `stated`: Gives the state to a box, until I save.
- * - `items`: The items of the menu.
+ * - `stated`: Gives the state to a box, a new one by its day, until I save.
+ * - `shown`: Whether it is only shown.
+ * - `buttons`: Its actions.
+ * - `actions`: Its actions in their row.
  *
  * @param box - The box
  * @param preview - How the boxes show
- * @returns The `⋯` with its menu, or the icon
+ * @returns Its actions or its state, or nothing
  */
-function actionOf(box: Planned, preview: Preview): HTMLElement {
+function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
     const days: Days = preview.days;
     const today: string = dayOf(new Date());
     const extra: Extra | undefined = days.extras.find((one: Extra): boolean => one.day === box.day);
     const stated: (state: BoxState) => () => void = (state: BoxState): () => void => (): void => {
-        preview.states[box.id] = state;
+        preview.states[box.id || box.day] = state;
         preview.filled();
     };
+    const shown: boolean = box.chained === true || box.change === "removed";
     if (box.state === "done")
         return markOf(Check, "Done", null);
     if (box.state === "dropped")
-        return markOf(X, "Skipped", box.editable ? stated("open") : null);
+        return markOf(X, "Skipped", box.editable && !shown ? stated("open") : null);
     if (box.state === "university")
-        return markOf(CalendarOff, "Cancelled", box.editable ? stated("open") : null);
-    if (box.change === "removed")
-        return elementOf("span", "box-state", "");
-    const items: HTMLButtonElement[] = [
-        ...box.id !== "" && box.editable ? [menuItemOf(X, "Skip", stated("dropped")),
-            menuItemOf(CalendarOff, "Cancel", stated("university"))] : [],
-        ...box.day >= today && !box.pushed && (extra !== undefined || days.slots
-            .some((slot: Slot): boolean => slot.weekday === weekdayOf(box.day)))
-            ? [menuItemOf(CalendarMinus, extra !== undefined ? "Remove" : "Leave out", (): void => {
-                if (extra !== undefined)
-                    days.extras.splice(days.extras.indexOf(extra), 1);
-                else
-                    days.excepts = [...days.excepts, box.day].sort();
+        return markOf(CalendarOff, "Cancelled", box.editable && !shown ? stated("open") : null);
+    if (shown)
+        return elementOf("span", "series-end", "");
+    const buttons: HTMLButtonElement[] = [
+        ...box.editable && (/^\d+$/.test(box.number) || grouped !== null)
+            ? [pendingActionOf(CalendarOff, "Cancel", stated("university"))] : [],
+        ...extra !== undefined && box.day >= today && !box.pushed
+            ? [pendingActionOf(CalendarMinus, "Remove", (): void => {
+                days.extras.splice(days.extras.indexOf(extra), 1);
                 preview.filled();
             })] : [],
     ];
-    if (box.pushed && items.length === 0)
+    if (box.pushed && buttons.length === 0)
         return markOf(ArrowRight, "Pushed", null);
-    return items.length === 0 ? elementOf("span", "box-state", "") : menuOf(items);
+    const actions: HTMLElement = elementOf("div", buttons.length === 0 ? "series-end" : "box-actions", "");
+    actions.append(...buttons);
+    return actions;
 }
 
 /**
- * Writes the day of a box or of a day left out in the list whole, with its year.
+ * Makes the kind of an exam in its row where a box of a series has its number, see {@link boxRowOf}
+ * and {@link draftRowOf}: its small grey box a button, the kind with a small chevron, like `Endterm`, `Kind` while
+ * it has none, which opens the menu of the kinds as the menu `⋯` does, see `menuAnchor` in `../menu.ts`, in the look
+ * of the menu of the groups on the page of a module, see `groupMenuOf` in `../editor/course.ts`: each kind
+ * of {@link examKinds}, the kind of the exam checked, the others without; a click on a kind closes the menu, shows it
+ * on the button and gives it to the exam, but for the one checked. Asked, its menu opens once its row shows,
+ * see {@link kindAsked}.
+ * - `place`: The button with its menu.
+ * - `button`: The button.
+ * - `menu`: The menu.
+ * - `items`: The kinds in the menu.
+ * - `shown`: Shows the kind on the button and checks it in the menu.
  *
- * @param day - The day, like `2026-10-16`
- * @returns Text like `Friday, 16.10.2026`
+ * @param kind - The kind of the exam, empty for none
+ * @param asked - Whether its menu opens once its row shows, the date added as the dialog opened
+ * @param pick - Gives the exam the kind picked
+ * @returns The button with its menu
  */
-function listDayOf(day: string): string {
-    return `${weekdayNameOf(weekdayOf(day), true)}, ${dateTextOf(day)}`;
+function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void): HTMLElement {
+    const place: HTMLElement = elementOf("span", "series-kind", "");
+    const button: HTMLButtonElement = document.createElement("button");
+    const menu: HTMLElement = document.createElement("div");
+    const items: HTMLButtonElement[] = examKinds.map((one: string): HTMLButtonElement =>
+        menuItemOf(Check, one, (): void => {
+            menu.hidePopover();
+            if (one === kind)
+                return;
+            kind = one;
+            shown();
+            pick(one);
+        }));
+    const shown: () => void = (): void => {
+        button.replaceChildren(kind === "" ? "Kind" : kind, iconOf(ChevronDown));
+        items.forEach((item: HTMLButtonElement, index: number): void => {
+            item.classList.toggle("menu-item-blank", examKinds[index] !== kind);
+        });
+    };
+    button.type = "button";
+    button.className = "block-kind series-number";
+    menuAnchor(menu, button);
+    menu.append(...items);
+    shown();
+    place.append(button, menu);
+    if (asked) {
+        kindAsked = "";
+        queueMicrotask((): void => {
+            if (menu.isConnected)
+                menu.showPopover();
+        });
+    }
+    return place;
 }
 
 /**
- * Makes the row of a box in the list, see the top of this file: its number, `–` for one the university cancelled,
- * none for one the change removes, its weekday and day, see {@link listDayOf}, grey its times, like `14:00 – 16:00`,
- * and what the change does to it, like `new`, but while every box is new, `extra` after it for an extra, like
- * `new extra`, `pushed` for a box I pushed whose `⋯` stands in place of the arrow, then its `⋯` or its state,
- * see {@link actionOf}; greyed while not open, done, skipped, cancelled or removed, as in the plan.
- * - `row`: The row.
- * - `start`: Its start, `null` for none.
- * - `times`: Its times.
+ * Makes the row of a box in the list, see the top of this file, with the one row of a box of every list, see
+ * `listRowOf` in `./rows.ts`, so it stands as on the page of its module: its number, `–` for one the university
+ * cancelled, none for one the change removes, a button that opens its box there already, see {@link boxShow},
+ * of an exam its kind to pick, see {@link kindMenuOf}; its day, of a box without number, like a day of my sleep,
+ * the button that opens it instead; of my tutorials its group with the menu of the groups
+ * of its week, see `boxGroupOf` in `./groups.ts`, an empty place in a list of groups for a row without one; grey its
+ * times after the change, see `rowTimesOf` in `./rows.ts`, and its place, of a box there already its own, else that
+ * of the form, its platform while it does something online, and right below them who I am with, of a box not written
+ * yet those of the series, which its dialog changes once it is; what the change does to it, like `new`, but while every box is new, `extra` after
+ * it for an extra, like `new extra`, `pushed` for a box I pushed; at its right edge of a box there already its actions
+ * or its state, see {@link knownEndOf}, of any other what the form keeps, see {@link pendingEndOf}; greyed while not
+ * open, done, skipped, cancelled or removed, as in the plan.
+ * - `kinds`: Of the exams, the kinds I gave them, `undefined` for any other series.
+ * - `known`: Its box there already, `undefined` for one not written yet and one the change removes.
  * - `word`: What the change does to it, that I pushed it, and that it is an extra.
+ * - `number`: Its number, or of an exam its kind, given until I save, see {@link examSend}.
+ * - `place`: Its place, or what it does online, with its link.
+ * - `opening`: Opens its box from its day, of a box there already without number, `null` for any other.
  *
  * @param box - The box
  * @param had - Whether the series had boxes before, so a new one says so
  * @param preview - How the boxes show
+ * @param grouping - Whether the rows of the list name their groups
  * @returns The row
  */
-function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
-    const row: HTMLElement = elementOf("div", "series-row", "");
-    const start: Date | null = box.time === "" ? null : new Date(box.time);
-    let times: string = start === null ? "" : timeOf(start);
-    if (start !== null && box.minutes !== null)
-        times = `${times} – ${timeOf(new Date(start.getTime() + box.minutes * 60 * 1000))}`;
+function boxRowOf(box: Planned, had: boolean, preview: Preview, grouping: boolean): HTMLElement {
+    const kinds: Kinds | undefined = preview.kinds;
+    const known: Box | undefined = box.change === "removed" ? undefined : boxesKnown.get(box.id);
     let word: string = box.change === "renumbered" || (box.change === "new" && !had) ? "" : box.change;
     if (word === "" && box.pushed && box.editable && box.state === "open")
         word = "pushed";
     if (preview.days.extras.some((extra: Extra): boolean => extra.day === box.day))
         word = word === "" ? "extra" : `${word} extra`;
-    row.classList.toggle("series-row-faded", box.change === "removed"
-        || ["done", "dropped", "university"].includes(box.state));
-    row.append(elementOf("span", "series-number", box.change === "removed" ? "" : box.number.replace("NONE", "–")),
-        elementOf("span", "series-day", listDayOf(box.day)), elementOf("span", "series-times", times),
-        elementOf("span", "series-word", word), actionOf(box, preview));
-    return row;
-}
-
-/**
- * Makes the row of a day left out in the list: no number, its weekday and day, see {@link listDayOf}, and at its
- * right the icon that brings it back until I save, which says it is left out.
- * - `row`: The row.
- *
- * @param day - The day, like `2026-12-28`
- * @param preview - How the boxes show
- * @returns The row
- */
-function leftRowOf(day: string, preview: Preview): HTMLElement {
-    const row: HTMLElement = elementOf("div", "series-row series-row-faded", "");
-    row.append(elementOf("span", "series-number", ""), elementOf("span", "series-day", listDayOf(day)),
-        elementOf("span", "series-times", ""), elementOf("span", "series-word", ""),
-        markOf(CalendarPlus, "Bring back", (): void => {
-            preview.days.excepts = preview.days.excepts.filter((other: string): boolean => other !== day);
+    const number: HTMLElement = kinds === undefined
+        ? numberOf(box.change === "removed" ? "" : box.number.replace("NONE", "–"),
+            known === undefined || box.number === "" ? null : (): void => {
+                boxShow(known).catch((error: unknown): void => console.error(error));
+            }, known?.note || "Open")
+        : kindMenuOf(box.number, box.id === "" && box.day === kindAsked, (kind: string): void => {
+            kinds[box.day] = kind;
             preview.filled();
-        }));
-    return row;
+        });
+    const place: (string | Node)[] = known !== undefined ? whereLinkedOf(known.category, known.from,
+        roomOf(known.location), known.locationLink, known.online, known.onlineLink)
+        : whereLinkedOf(plain?.category ?? skillName, "", roomOf(typing?.location ?? ""), typing?.locationLink ?? "",
+            typing?.online ?? "", typing?.onlineLink ?? "");
+    const opening: (() => void) | null = known === undefined || kinds !== undefined || box.number !== "" ? null
+        : (): void => {
+            boxShow(known).catch((error: unknown): void => console.error(error));
+        };
+    return listRowOf({
+        number: number, day: box.day, open: opening,
+        group: known !== undefined && known.group !== "" && course !== null
+            ? boxGroupOf(course, known, (_: () => void, send: () => Promise<unknown>): void => seriesAct(send))
+            : grouping ? elementOf("span", "", "") : null,
+        meta: [[rowTimesOf(box.time, box.minutes)], place],
+        people: known?.attendees ?? (box.attendees.length > 0 ? box.attendees : typing?.attendees ?? []),
+        persons: persons, mark: word,
+        end: known !== undefined && box.chained !== true ? knownEndOf(known) : pendingEndOf(box, preview),
+        faded: box.change === "removed" || ["done", "dropped", "university"].includes(box.state),
+    });
 }
 
 /**
- * Makes the line `+ Date` below the list, the plus where the numbers stand, `Date` where the days stand, which opens
- * the row of an extra to type, see {@link draftRowOf}, with the times of the last day of the series.
+ * Makes the line `+` below the list, the plus where the numbers stand, which opens the row of an extra to type, see
+ * {@link draftRowOf}, with the times of the last day of the series, its day to type; of the exams with the menu of its
+ * kind open, to pick it first.
  * - `add`: The line, a button.
  * - `plus`: The place of the plus.
  * - `last`: The last day of the series.
@@ -819,25 +1374,36 @@ function addRowOf(preview: Preview, redraw: () => void): HTMLButtonElement {
     add.type = "button";
     add.className = "series-row series-add";
     add.setAttribute("aria-label", "Add a date");
+    add.title = "Add a date";
     plus.append(iconOf(Plus));
-    add.append(plus, elementOf("span", "series-day", "Date"));
+    add.append(plus);
     add.addEventListener("click", (): void => {
-        const last: Slot = preview.days.slots[preview.days.slots.length - 1];
-        extraTyped = { day: "", start: last.start, end: last.end };
+        const last: Slot | undefined = preview.days.slots[preview.days.slots.length - 1];
+        extraTyped = plain !== null && !plainTimed ? { day: "", start: "", end: "" }
+            : { day: "", start: last?.start ?? "", end: last?.end ?? "" };
+        kindTyped = "";
         redraw();
-        document.querySelector<HTMLInputElement>(".series-draft .date-field")?.focus();
+        if (preview.kinds === undefined)
+            document.querySelector<HTMLInputElement>(".series-draft .date-field")?.focus();
+        else
+            document.querySelector<HTMLElement>(".series-draft .menu")?.showPopover();
     });
     return add;
 }
 
 /**
- * Makes the row of an extra being typed below the list, as a box stands in it: its day, grey `dd.mm.yyyy` while
- * empty, its times, those of the series at first, and its `×`, which takes it back. Typed enough, a day with a start
- * before its end, it joins the series as the focus leaves the row, by Enter too, and stands in the list by its day;
- * a day left out brought back instead; one taken back by its `×` never, though its field loses the focus as the list
- * shows anew.
+ * Makes the row of an extra being typed below the list, as a box stands in it: of the exams its kind,
+ * see {@link kindMenuOf}, the day to type once it is picked; its day, grey `dd.mm.yyyy` while empty, its times,
+ * those of the series at first, small and grey as the times of a row, of a plain series without time none, since it
+ * takes the length of the series; and its `×`, which takes it back. Nothing else to type: it takes what the series
+ * is, its place and who I am with, and its own once its box is written, by its number, see {@link boxShow}.
+ * Typed enough, it joins the series as the focus leaves the row, by Enter too, and stands in the list by its day,
+ * see {@link extraJoin}; one taken back by its `×` never, though its field loses the focus as the list shows anew.
  * - `row`: The row.
+ * - `kinds`: Of the exams, the kinds I gave them, `undefined` for any other series.
+ * - `number`: Where the numbers stand, of the exams its kind.
  * - `day`: The field of its day.
+ * - `times`: The fields of its times, an empty place for a plain series without time.
  *
  * @param extra - The extra being typed
  * @param preview - How the boxes show
@@ -846,54 +1412,66 @@ function addRowOf(preview: Preview, redraw: () => void): HTMLButtonElement {
  */
 function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "series-row series-draft", "");
-    const day: HTMLInputElement = fieldOf("date-field", extra.day === "" ? "" : dateTextOf(extra.day),
+    const kinds: Kinds | undefined = preview.kinds;
+    const day: HTMLInputElement = fieldOf("date-field", extra.day === "" ? "" : weekdayDateTextOf(extra.day),
         "Day of the extra", (typed: string): void => {
             extra.day = typed;
         }, (): void => {});
-    day.placeholder = "dd.mm.yyyy";
-    row.append(elementOf("span", "series-number", ""), day, timesRangeOf(extra, (): void => {}),
-        elementOf("span", "series-word", ""), removeOf("Take the date back", (): void => {
+    const times: HTMLElement = plain !== null && !plainTimed ? elementOf("span", "series-times", "")
+        : timesRangeOf(extra, (): void => {});
+    times.classList.add("series-times");
+    const number: HTMLElement = kinds === undefined ? elementOf("span", "series-number", "")
+        : kindMenuOf(kindTyped, kindAsked !== "" && extra.day === kindAsked, (kind: string): void => {
+            kindTyped = kind;
+            day.focus();
+        });
+    row.append(number, day, times, elementOf("span", "series-word", ""),
+        removeOf("Take the date back", (): void => {
             extraTyped = null;
             redraw();
         }));
     row.addEventListener("focusout", (event: FocusEvent): void => {
-        if (extraTyped !== extra || row.contains(event.relatedTarget as Node | null) || extra.day === ""
-            || !timesReady(extra))
-            return;
-        extraTyped = null;
-        if (preview.days.excepts.includes(extra.day))
-            preview.days.excepts = preview.days.excepts.filter((other: string): boolean => other !== extra.day);
-        else
-            preview.days.extras.push(extra);
-        preview.filled();
+        if (extraTyped === extra && !row.contains(event.relatedTarget as Node | null)
+            && extraJoin(preview.days, kinds))
+            preview.filled();
     });
     return row;
 }
 
 /**
- * Makes the list of the boxes of a series, see the top of this file: the boxes and the days left out by their days,
- * each month short at the left, like `Oct 2026`, where the names of the rows stand, its boxes beside it; a box a day
- * left out removes stands as that day, once; below them `+ Date`, see {@link addRowOf}, or the extra being typed,
- * see {@link draftRowOf}.
- * - `had`: Whether the series had boxes before.
- * - `items`: Each box and day left out with its place in time and its row.
+ * Joins the extra being typed to the series, see {@link draftRowOf}, once typed enough, a day with a start before
+ * its end, of a plain series without time a day alone, with its kind, as the focus leaves its row or the form saves,
+ * see {@link formSave}.
+ * - `extra`: The extra being typed, `null` for none.
+ *
+ * @param days - The days of the series, which take it
+ * @param kinds - Of the exams, the kinds I gave them, `undefined` for any other series
+ * @returns Whether it joined, so the list shows anew
+ */
+function extraJoin(days: Days, kinds: Kinds | undefined): boolean {
+    const extra: Extra | null = extraTyped;
+    if (extra === null || extra.day === "" || ((plain === null || plainTimed) && !timesReady(extra)))
+        return false;
+    extraTyped = null;
+    if (kinds !== undefined && kindTyped !== "")
+        kinds[extra.day] = kindTyped;
+    days.extras.push(extra);
+    days.extras.sort((first: Extra, second: Extra): number => first.day.localeCompare(second.day));
+    return true;
+}
+
+/**
+ * Makes the list of the boxes of a series by month, see {@link boxListOf}: each month short at the left, like
+ * `Oct 2026`, where the names of the rows stand, its rows beside it, in the order given; the cards of the course
+ * on the page of a module list the same rows without months, see `../editor/course.ts`.
  * - `list`: The list.
  * - `month`: The month of the row before, empty before the first.
- * - `boxes`: The boxes of that month.
+ * - `boxes`: The rows of that month.
  *
- * @param planned - The boxes as the reader would write them, removed ones too
- * @param left - The days left out
- * @param preview - How the boxes show
- * @param redraw - Shows the list anew
+ * @param items - Each row with its place in time, like `2026-10-16T13:00:00Z` or `2026-10-16`, the earliest first
  * @returns The list
  */
-function boxListOf(planned: Planned[], left: string[], preview: Preview, redraw: () => void): HTMLElement {
-    const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
-    const items: [string, HTMLElement][] = [
-        ...planned.filter((box: Planned): boolean => !(box.change === "removed" && left.includes(box.day)))
-            .map((box: Planned): [string, HTMLElement] => [box.time || box.day, boxRowOf(box, had, preview)]),
-        ...left.map((day: string): [string, HTMLElement] => [day, leftRowOf(day, preview)]),
-    ].sort((first: [string, HTMLElement], second: [string, HTMLElement]): number => first[0].localeCompare(second[0]));
+function monthListOf(items: [string, HTMLElement][]): HTMLElement {
     const list: HTMLElement = elementOf("div", "series-list", "");
     let month: string = "";
     let boxes: HTMLElement = list;
@@ -907,18 +1485,43 @@ function boxListOf(planned: Planned[], left: string[], preview: Preview, redraw:
         month = name;
         boxes.append(row);
     });
-    list.append(extraTyped === null ? addRowOf(preview, redraw) : draftRowOf(extraTyped, preview, redraw));
+    return list;
+}
+
+/**
+ * Makes the list of the boxes of a series, see the top of this file: the boxes by their days, by month,
+ * see {@link monthListOf}; below them `+`, see {@link addRowOf}, or the extra being typed, see {@link draftRowOf},
+ * but for a group, whose sessions are the university's; of a plain series an extra is one of its single dates,
+ * its `RDATE`, see `extras` of `Plain` in `reader/rules.ts`.
+ * - `had`: Whether the series had boxes before.
+ * - `grouping`: Whether some rows name their groups, so all keep the place of a group.
+ * - `items`: Each box with its place in time and its row.
+ * - `list`: The list.
+ *
+ * @param planned - The boxes as the reader would write them, removed ones too, the earliest first
+ * @param preview - How the boxes show
+ * @param redraw - Shows the list anew
+ * @returns The list
+ */
+function boxListOf(planned: Planned[], preview: Preview, redraw: () => void): HTMLElement {
+    const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
+    const grouping: boolean = course !== null
+        && planned.some((box: Planned): boolean => (boxesKnown.get(box.id)?.group ?? "") !== "");
+    const items: [string, HTMLElement][] = planned.map((box: Planned): [string, HTMLElement] =>
+        [box.time || box.day, boxRowOf(box, had, preview, grouping)]);
+    const list: HTMLElement = monthListOf(items);
+    if (grouped === null)
+        list.append(extraTyped === null ? addRowOf(preview, redraw) : draftRowOf(extraTyped, preview, redraw));
     return list;
 }
 
 /**
  * Shows the boxes a series makes in the row of its boxes, see {@link boxesRowOf}, as the reader answers, see the top
  * of this file: their line, and below it their list while opened; in their place the hint why it makes none; nothing
- * while the series is not typed enough, or the reader does not take it, and only the answer to the last question.
- * - `place`: The place of the boxes, `null` while the form has none.
+ * while the series is not typed enough, or the reader does not take it, the row then hidden, see {@link previewPut},
+ * and only the answer to the last question.
  * - `asked`: The number of this question.
  * - `answer`: What the reader answered.
- * - `left`: The days left out.
  * - `draw`: Shows the line, and the list while opened.
  *
  * @param form - The form of the series, which holds the row of its boxes
@@ -927,10 +1530,9 @@ function boxListOf(planned: Planned[], left: string[], preview: Preview, redraw:
  */
 async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
     const asked: number = ++previewsAsked;
-    const placeOf: () => HTMLElement | null = (): HTMLElement | null => form.querySelector(".series-preview");
     if (preview.ask === null) {
         previewShown = [];
-        placeOf()?.replaceChildren();
+        previewPut(form, previewShown);
         return;
     }
     let answer: Planned[] | HTMLElement;
@@ -939,7 +1541,7 @@ async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
     } catch (error: unknown) {
         if (asked === previewsAsked) {
             previewShown = [];
-            placeOf()?.replaceChildren();
+            previewPut(form, previewShown);
         }
         throw error;
     }
@@ -947,17 +1549,19 @@ async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
         return;
     if (answer instanceof HTMLElement) {
         previewShown = [answer];
-        placeOf()?.replaceChildren(answer);
+        previewPut(form, previewShown);
         return;
     }
     const planned: Planned[] = answer;
-    const left: string[] = exceptsWithin(preview.days);
+    await boxesLoad(planned);
+    if (asked !== previewsAsked)
+        return;
     const draw: () => void = (): void => {
-        previewShown = [summaryOf(planned, left, (): void => {
+        previewShown = [summaryOf(planned, (): void => {
             listOpened = !listOpened;
             draw();
-        }), ...listOpened ? [boxListOf(planned, left, preview, draw)] : []];
-        placeOf()?.replaceChildren(...previewShown);
+        }), ...listOpened ? [boxListOf(planned, preview, draw)] : []];
+        previewPut(form, previewShown);
     };
     draw();
 }
@@ -999,20 +1603,6 @@ function groupsOf(type: string): Group[] {
 }
 
 /**
- * Gives the choice of a group in a list, by its weekday, times and room, like `Group 03` with
- * `Wed 10:00–12:00 · 5610.01.011` beside it.
- *
- * @param group - The group
- * @returns Its choice
- */
-export function groupChoiceOf(group: Group): Choice {
-    return {
-        value: group.rule.group, text: `Group ${group.rule.group}`, group: "",
-        detail: `${group.rule.slots.map(slotTextOf).join(" · ")} · ${roomOf(group.rule.location)}`,
-    };
-}
-
-/**
  * Gives a field of `Skill` as the reader offers it, its places, platforms or people, see `categoriesRead`
  * in `reader/categories.ts`.
  *
@@ -1025,51 +1615,231 @@ function skillFieldOf(key: string): Field | undefined {
 }
 
 /**
- * Tells whether the form of a series makes a group mine, see {@link Form}.
+ * Gives my default place, `★` in `Places.md`, like `Home Munich`, which a new series starts with, as a new box does,
+ * see `wayEndFill` in `./categories.ts`.
+ * - `standard`: My default place, `undefined` for none.
  *
- * @param form - The form
- * @returns Whether its group is another than that of the series as it opened
+ * @returns Its line, like `Home Munich, Burg-Eltz-Weg, 81375, München, Deutschland`, empty for none
  */
-function mineMade(form: Form): boolean {
-    return form.group !== "" && form.group !== (form.old?.group ?? "");
+function standardLineOf(): string {
+    const standard: Place | undefined = Object.values(skillFieldOf("location")?.places ?? {})
+        .find((place: Place): boolean => place.standard);
+    return standard === undefined ? "" : lineOf(standard);
 }
 
 /**
- * Tells whether the form of a series is typed enough to make boxes: its type picked, and, unless it makes a group
- * mine, its days, see {@link daysReady}.
+ * Gives the plan a plain series lies in or goes into, shown at the left of the buttons of its form: of one there its
+ * file, of a new one as soon as it is known, the plan of its skill, see `skillNamesOf` in `./skill.ts`, or the plan
+ * of its topic in the year of its first day in `Living/`, see `livingFileOf` in `./categories.ts`.
+ *
+ * @param series - The plain series
+ * @param form - The form, which holds its first day
+ * @returns Path from `NomWorkspace` on, like `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`,
+ *   empty while not known
+ */
+function plainFileOf(series: Plain, form: Form): string {
+    if (series.file !== "")
+        return series.file;
+    if (series.category === skillName)
+        return skillNamesOf({ module: series.module, type: series.type }).file;
+    return series.category === "" || form.first === "" ? "" : livingFileOf(series.category, form.first, "_Plan.ics");
+}
+
+/**
+ * Tells whether the form asks who I am with: for a series of my course, and for a new box repeated or a plain series
+ * whose category has `With`, as the dialog of the box asks it, so not for `Sport`, which I do alone, see `reader/categories.ts`.
+ * - `category`: The category of the box repeated, `undefined` for none.
+ *
+ * @returns Whether it asks
+ */
+function withAsked(): boolean {
+    const category: Category | undefined = categories.find((one: Category): boolean =>
+        one.name === (plain?.category ?? repeated?.box.category));
+    return (repeated === null && plain === null)
+        || (category?.fields.some((field: Field): boolean => field.key === "with") ?? false);
+}
+
+/**
+ * Tells whether the form makes a new group whose name its type has already, see {@link groupPartOf}.
+ *
+ * @param form - The form
+ * @returns Whether the group typed is there already
+ */
+function groupTaken(form: Form): boolean {
+    return grouped?.made === true
+        && groupsOf(form.type).some((group: Group): boolean => group.rule.group === grouped?.group);
+}
+
+/**
+ * Tells whether the form of a new group has no name yet, see {@link groupPartOf}.
+ *
+ * @returns Whether it is a group without name
+ */
+function groupUnnamed(): boolean {
+    return grouped !== null && grouped.group === "";
+}
+
+/**
+ * Tells whether the form of a series is typed enough to make boxes: of a plain series as {@link plainReady} says,
+ * else its type picked, but for a new box repeated of any type or none, see {@link seriesRepeat}, and its days,
+ * see {@link daysReady}; a new group not named as one there already, see {@link groupTaken}.
  *
  * @param form - The form
  * @returns Whether it is ready
  */
 function formReady(form: Form): boolean {
-    if (form.type === "")
+    if (fresh !== null && (fresh.category === "" || (fresh.category === skillName && fresh.picked.module === "")))
         return false;
-    return mineMade(form) || daysReady(form);
+    if (plain !== null)
+        return plainReady(plain, form);
+    if (form.type === "" && repeated === null)
+        return false;
+    return daysReady(form) && !groupTaken(form) && !groupUnnamed() && !groupWaits(form);
 }
 
 /**
- * Sends the form of a series to the reader: a group made mine, see `groupMine` in `reader/course.ts`, else the series
- * by its rule and the states I gave its boxes, see `seriesApply` there, its days left out only those between its first
- * and its last day.
+ * Gives the exams of the course of the dialog as the rule of a series, see the top of this file: no weekdays,
+ * its first and last day those of its exams, no extras, so its form lists the exams with the kinds and the times
+ * I give them and holds as extras only the dates I add, see {@link examSend}.
+ * - `days`: The days of its exams, the earliest first.
+ *
+ * @param loaded - The course
+ * @returns The rule
+ */
+function examRuleOf(loaded: Course): Rule {
+    const days: string[] = loaded.boxes.filter((box: Box): boolean => box.type === examType)
+        .map((box: Box): string => box.day);
+    return {
+        type: examType, slots: [], extras: [], location: "", locationLink: "", online: "", onlineLink: "",
+        passcode: "", attendees: [], first: days[0] ?? dayOf(new Date()), last: days[days.length - 1] ?? dayOf(new Date()),
+        times: {}, group: "", semester: loaded.semester,
+    };
+}
+
+/**
+ * Lists the exams of the form, see {@link examRuleOf}, each with the kind and the times I gave it, see {@link Kinds}
+ * and `times` of {@link Days}, and the dates I added as new, each with the kind I gave it, the earliest first;
+ * or writes them: each exam I gave another kind or other times, see `examSet` in `reader/course.ts`, then each date
+ * added as an exam of the module alone, as the dialog of an entry adds a box, see `boxAdd` in `./entries.ts`,
+ * with the kind I gave it and who I am with.
+ * - `timed`: Gives the start and the length of times on a day.
+ * - `exams`: The exams with the kinds and the times I gave them.
+ * - `start`: The start of the times I gave an exam, `null` while I gave it none.
+ * - `time`, `minutes`, `number`: Its time, its length and its kind after the change.
+ * - `added`: The dates added, each with its start and length.
+ * - `id`: The identifier of an exam added.
+ *
+ * @param form - The form of the exams
+ * @param dry - Whether only to list them, for the preview
+ * @returns The exams after the change
+ * @throws {Error} - When the reader does not take an exam or a date
+ */
+async function examSend(form: Form, dry: boolean): Promise<Planned[]> {
+    const timed: (day: string, times: Pick<Slot, "start" | "end">) => [Date, number] =
+        (day: string, times: Pick<Slot, "start" | "end">): [Date, number] => {
+            const start: Date = new Date(`${day}T${times.start}:00`);
+            return [start, (new Date(`${day}T${times.end}:00`).getTime() - start.getTime()) / (60 * 1000)];
+        };
+    const exams: Planned[] = (course?.boxes ?? []).filter((box: Box): boolean => box.type === examType)
+        .map((box: Box): Planned => {
+            const [start, minutes]: [Date | null, number | null] = form.times[box.day] === undefined
+                ? [null, box.minutes] : timed(box.day, form.times[box.day]);
+            const time: string = start === null ? box.time : start.toISOString();
+            const number: string = form.kinds[box.day] ?? box.number;
+            return {
+                id: box.id, day: box.day, time: time, minutes: minutes, number: number, state: box.state,
+                pushed: box.pushed.length > 0, editable: false,
+                retimable: box.editable && box.todo && !box.series && box.pushed.length === 0,
+                change: time === box.time && minutes === box.minutes && number === box.number ? "" : "changed",
+                attendees: box.attendees,
+            };
+        });
+    const added: [Extra, Date, number][] = form.extras.map((extra: Extra): [Extra, Date, number] =>
+        [extra, ...timed(extra.day, extra)]);
+    if (!dry) {
+        for (const exam of exams.filter((one: Planned): boolean => one.change === "changed"))
+            await courseSend<null>("/api/course/exam", {
+                box: exam.id, kind: exam.number, start: form.times[exam.day]?.start ?? "",
+                end: form.times[exam.day]?.end ?? "",
+            });
+        for (const [extra, start, minutes] of added) {
+            const id: string = await boxAdd({
+                category: skillName, title: "", location: "", from: "", module: (course?.module ?? "").split("_")[0],
+                type: examType, semester: course?.semester ?? "", note: "", day: extra.day, time: start,
+                minutes: minutes, deadline: "", chapters: [], documents: [], attendees: form.attendees,
+            });
+            if (form.kinds[extra.day] !== undefined)
+                await courseSend<null>("/api/course/exam",
+                    { box: id, kind: form.kinds[extra.day], start: "", end: "" });
+        }
+    }
+    return [...exams, ...added.map(([extra, start, minutes]: [Extra, Date, number]): Planned => ({
+        id: "", day: extra.day, time: start.toISOString(), minutes: minutes, number: form.kinds[extra.day] ?? "",
+        state: "new", pushed: false, editable: true, retimable: true, change: "new",
+        attendees: form.attendees,
+    }))].sort((first: Planned, second: Planned): number => (first.time || first.day).localeCompare(second.time
+        || second.day));
+}
+
+/**
+ * Sends the form of a series to the reader: a plain series, see {@link plainSend}, a group, its days, place, tutors,
+ * weeks and the dates I cancelled, see `groupApply` in `reader/course.ts`, the exams, see {@link examSend}, a group
+ * made mine, see `groupMine` there, a new box repeated, see {@link repeatedSend}, else the series by its rule
+ * and the states I gave its boxes, see `seriesApply` there.
  *
  * @param form - The form, ready, see {@link formReady}
  * @param dry - Whether only to tell what it would make, for the preview
- * @returns The boxes of the series after the change
+ * @returns The boxes of the series after the change, of a group its sessions
  * @throws {Error} - When the reader does not take it
  */
 async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
-    if (mineMade(form))
-        return courseSend<Planned[]>("/api/course/mine",
-            { module: course?.module ?? "", type: form.type, group: form.group, dry: dry });
+    if (plain !== null)
+        return plainSend(plain, form, dry);
+    if (grouped !== null)
+        return courseSend<Planned[]>("/api/course/groups", {
+            module: course?.module ?? "", made: grouped.made, states: form.states, dry: dry,
+            rule: {
+                type: form.type, slots: form.slots, extras: [], location: form.location,
+                locationLink: form.locationLink, online: form.online, onlineLink: form.onlineLink,
+                passcode: form.passcode, attendees: form.attendees, first: form.first, last: form.last,
+                group: grouped.group, semester: course?.semester ?? "",
+            },
+        });
+    if (form.type === examType)
+        return examSend(form, dry);
+    if (repeated !== null)
+        return repeatedSend(repeated.box, form, dry);
     return courseSend<Planned[]>("/api/course/series", {
         module: course?.module ?? "", old: form.old, before: form.before, states: form.states, dry: dry,
         rule: {
             type: form.type, slots: form.slots, extras: form.extras, location: form.location,
             locationLink: form.locationLink, online: form.online, onlineLink: form.onlineLink, passcode: form.passcode,
-            attendees: form.attendees, first: form.first, last: form.last, excepts: exceptsWithin(form),
+            attendees: form.attendees, first: form.first, last: form.last, times: form.times,
             group: form.old?.group ?? "", semester: course?.semester ?? "",
         },
     });
+}
+
+/**
+ * Sends a new box repeated, see {@link seriesRepeat}, once per date of the days of the form, see `boxRepeat`
+ * in `./entries.ts`: its fields with the place, what it does online and who I am with as the form has them, its days,
+ * and the states I gave its boxes, of a lecture a date cancelled by its day.
+ * - `planned`: The boxes it makes, `null` when the reader refuses it since the series of its type is there already.
+ *
+ * @param box - The fields of the box
+ * @param form - The form, ready, see {@link formReady}
+ * @param dry - Whether only to tell what it would make, for the preview
+ * @returns The boxes it makes
+ * @throws {Error} - When the reader does not take it, also since the series of its type is there already
+ */
+async function repeatedSend(box: BoxFields, form: Form, dry: boolean): Promise<Planned[]> {
+    const planned: Planned[] | null = await boxRepeat({
+        ...box, location: form.location, online: form.online, onlineLink: form.onlineLink, passcode: form.passcode,
+        attendees: form.attendees,
+    }, form, form.states, dry);
+    if (planned === null)
+        throw new Error(`${box.module} ${box.type} has its series already`);
+    return planned;
 }
 
 /**
@@ -1083,8 +1853,8 @@ function formElementOf(): HTMLFormElement {
 
 /**
  * Takes a change of the form of a series: allows saving while it is ready, see {@link formReady}, and shows anew
- * the boxes it makes as the reader would write them, see {@link formSend} and {@link previewSoon}, the days it leaves
- * out among them unless it makes a group mine.
+ * the boxes it makes as the reader would write them, see {@link formSend} and {@link previewSoon}, its extras among
+ * them, of the exams each with its kind to pick.
  * - `save`: Its button Save.
  * - `form`: The form.
  */
@@ -1096,34 +1866,57 @@ function formChanged(): void {
     save.disabled = !formReady(form);
     previewSoon(formElementOf(), {
         ask: formReady(form) ? (): Promise<Planned[]> => formSend(form, true) : null,
-        days: mineMade(form) ? { ...form, excepts: [], extras: [] } : form, states: form.states, filled: formFill,
+        days: form, states: form.states,
+        kinds: form.type === examType ? form.kinds : undefined, filled: formFill,
     });
 }
 
 /**
  * Shows the address of the place of the form below it, small and grey, as the dialog does, a link to the link
- * of the place while it has one, never the link itself as text, so nothing for no place or a place without address.
+ * of the place while it has one, never the link itself as text, so nothing for no place or a place without address;
+ * a place I changed by its parts with the address and the link I gave it, see {@link placeEdit}.
+ * - `link`: The link to open, empty for none.
  *
  * @param address - The address below the place
  * @param form - The form
  */
 function addressShow(address: HTMLAnchorElement, form: Form): void {
-    address.textContent = addressOf(form.location);
-    if (form.locationLink !== "")
-        address.href = form.locationLink;
+    const link: string = placeEdit?.link ?? form.locationLink;
+    address.textContent = placeEdit !== null ? placeAddressOf(placeEdit) : addressOf(form.location);
+    if (link !== "")
+        address.href = link;
     else
         address.removeAttribute("href");
     address.hidden = address.textContent === "";
 }
 
 /**
- * Makes the row of what the series is, as its boxes are written, like `IN2028_BusinessAnalyticsMachineLearning (VO)`:
- * the folder of its module and its type in brackets, a series that is there as plain text, which stays as it is,
- * a new one with its type picked from the numbered types without series, its list open as the dialog opens,
- * see {@link seriesOpen}.
+ * Gives the place of the form as it is, before I change it by its parts: as its row holds it, my place or the room
+ * of its name, else as its line says, with the link of the series, see `placeOf` in `./places.ts`.
+ *
+ * @param form - The form
+ * @returns The place
+ */
+function placeOriginOf(form: Form): Place {
+    return placeOf(form.location, form.locationLink, skillFieldOf("location")?.places ?? {});
+}
+
+/**
+ * Makes the row `Summary`, what the series is, as its boxes are written and as the dialog of one of them names it,
+ * see `summaryPartsOf` in `./categories.ts`: the title of the series, never changed here, since it follows from
+ * elsewhere: of my course the folder of its module and its type in brackets, like
+ * `IN2028_BusinessAnalyticsMachineLearning (VO)`, a series that is there and a group as plain text,
+ * a new one with only its type to pick, its plus right after the module, from the numbered types without series,
+ * its list open as the dialog opens, see {@link seriesOpen}; of a new box repeated its summary as plain text,
+ * which the pencil of the summary of the box changes, see {@link Repeated}. Below it, small and grey, the folder
+ * its boxes link, as the dialog of a box shows it, see `folderLinkShow` in `../skill/links.ts`: that of its type
+ * as the reader writes it now, of a new box repeated that of the box, none while it has none. No frame under
+ * the pointer, as every row written by itself, see `.panel-fixed` in `./day.css`.
  * - `module`: The folder of the module.
  * - `types`: The numbered types without series, and that of the form.
- * - `row`: The row of a series that is there.
+ * - `link`: The folder below the summary.
+ * - `value`: The summary with the folder below it, or of a new series the module with the type to pick.
+ * - `row`: The row.
  *
  * @param form - The form
  * @returns The row
@@ -1132,20 +1925,24 @@ function seriesRowOf(form: Form): HTMLElement {
     const module: string = course?.module ?? "";
     const types: string[] = numberedTypes.filter((type: string): boolean =>
         type === form.type || !(course?.series ?? []).some((series: Series): boolean => series.rule.type === type));
-    if (form.old !== null) {
-        const row: HTMLElement = rowOf("Series", elementOf("span", "", breakableOf(`${module} (${form.type})`)));
-        row.classList.add("panel-fixed");
-        return row;
-    }
-    return rowOf("Series", pairOf(elementOf("span", "", breakableOf(module)), choicesOf({
-        search: searchOf(types.map(choiceOf)), picked: form.type === "" ? [] : [form.type], many: false,
-        adding: false, noun: "type", plus: true, empty: "Pick a type",
-        pick: (values: string[]): void => {
-            form.type = values[0] ?? "";
-            form.group = "";
-            formFill();
-        },
-    })));
+    const link: HTMLAnchorElement = elementOf("a", "entry-address", "") as HTMLAnchorElement;
+    folderLinkShow(link, repeated?.link ?? course?.links[form.type] ?? "");
+    const value: HTMLElement = elementOf("div", "", "");
+    if (form.old !== null || repeated !== null || grouped !== null)
+        value.append(elementOf("span", "", breakableOf(repeated?.summary ?? `${module} (${form.type})`)), link);
+    else
+        value.append(pairOf(elementOf("span", "", breakableOf(module)), choicesOf({
+            search: searchOf(types.map(choiceOf)), picked: form.type === "" ? [] : [form.type], many: false,
+            adding: false, noun: "type", plus: true, empty: "Pick a type", below: [link],
+            pick: (values: string[]): void => {
+                form.type = values[0] ?? "";
+                grouped = null;
+                formFill();
+            },
+        })));
+    const row: HTMLElement = rowOf("Summary", value);
+    row.classList.add("panel-fixed");
+    return row;
 }
 
 /**
@@ -1153,8 +1950,17 @@ function seriesRowOf(form: Form): HTMLElement {
  * my places, the most used first, and as I type the rooms of the university too, each with its address
  * grey beside it, see `placeChoiceOf` in `./places.ts`, the place of the series among them; below it its address,
  * a link. A place picked takes the link of my place or room.
+ * Right after the place, while one is picked, its pencil shows and hides its parts below it, the columns of its row,
+ * its label, street, code, city, country, link and star, see `placeEditOf` in `./places.ts`, which I change in place as in
+ * the dialog: the form takes the place as I type, see {@link placeEdit}, its line and its address show it once I leave
+ * a part, the row built anew, the part or field I went on to keeping the cursor, and saving writes it everywhere,
+ * see {@link placeRename}.
  * - `field`: The field of the place of `Skill`, `undefined` while the categories are not loaded.
  * - `address`: The address below the place.
+ * - `pencil`: The pencil, `✎`.
+ * - `parts`: The parts, shown while the pencil opened them, see {@link placeOpen}.
+ * - `nameShown`: Gives the name a place shows, the one I gave the place of the form.
+ * - `row`: The row.
  *
  * @param form - The form
  * @returns The row
@@ -1162,29 +1968,54 @@ function seriesRowOf(form: Form): HTMLElement {
 function placeRowOf(form: Form): HTMLElement {
     const field: Field | undefined = skillFieldOf("location");
     const address: HTMLAnchorElement = document.createElement("a");
+    const pencil: HTMLButtonElement = document.createElement("button");
+    const parts: HTMLElement = elementOf("div", "field-parts", "");
+    const nameShown: (line: string) => string = (line: string): string =>
+        line === form.location && placeEdit !== null && placeEdit.name !== "" ? placeEdit.name : labelOf(line);
     address.className = "entry-address";
     address.target = "_blank";
     address.rel = "noopener";
     addressShow(address, form);
-    return rowOf("Place", choicesOf({
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    pencil.hidden = form.location === "";
+    iconPut(pencil, Pencil, "Change the place");
+    parts.hidden = !placeOpen;
+    const row: HTMLElement = rowOf("Place", choicesOf({
         search: async (text: string): Promise<Choice[]> => {
             const values: string[] = text.trim() === ""
                 ? [...field?.values ?? [], ...(form.location === "" ? [] : [form.location])]
                 : [...field?.values ?? [], ...field?.rooms ?? []];
-            return await searchOf([...new Set(values)].map(placeChoiceOf))(text);
+            return await searchOf([...new Set(values)].map((value: string): Choice =>
+                placeChoiceOf(value, nameShown(value))))(text);
         },
         picked: form.location === "" ? [] : [form.location], many: false, adding: false, noun: "place",
-        textOf: labelOf,
-        below: [address],
+        textOf: nameShown,
+        aside: [pencil],
+        below: [address, parts],
         pick: (values: string[]): void => {
             const line: string = values[0] ?? "";
             if (line === form.location)
                 return;
             form.location = line;
             form.locationLink = field?.places[line]?.link ?? "";
+            placeEdit = null;
             formFill();
         },
     }));
+    parts.append(...placeEditOf(placeEdit ?? placeOriginOf(form), (typed: Place): void => {
+        placeEdit = typed;
+    }, (next: string | null): void => {
+        row.replaceWith(placeRowOf(form));
+        formElementOf().querySelector<HTMLInputElement>(`input[aria-label="${next}"]`)?.focus();
+    }));
+    pencil.addEventListener("click", (): void => {
+        placeOpen = !placeOpen;
+        parts.hidden = !placeOpen;
+        if (placeOpen)
+            parts.querySelector("input")?.focus();
+    });
+    return row;
 }
 
 /**
@@ -1192,10 +2023,12 @@ function placeRowOf(form: Form): HTMLElement {
  * in `./categories.ts`: its platform, my platforms the most used first, a platform typed added to `Online.md`,
  * see `platformSend` in `./places.ts`; below it, while one is picked, the link of its meetings, the link of its
  * web app of its row in it, as the dialog has it, until I type the link of the meetings in its place, which alone is
- * kept, and their passcode, the link last. Another platform picked empties both.
+ * kept, and their passcode, the link last, shown only while its pencil opened them, as in the dialog of an entry.
+ * Another platform picked empties both.
  * - `field`: The field `Online` of `Skill`, `undefined` while the categories are not loaded.
  * - `link`, `pass`: Fields of the link and the passcode.
- * - `parts`: The parts, shown while a platform is picked.
+ * - `parts`: The parts, shown while a platform is picked and its pencil opened them, see {@link onlineOpen}.
+ * - `pencil`: The pencil, `✎`, while a platform is picked.
  * - `show`: Shows the parts for the platform picked.
  *
  * @param form - The form
@@ -1206,11 +2039,22 @@ function onlineRowOf(form: Form): HTMLElement {
     const link: HTMLInputElement = partFieldOf("url", form.onlineLink, "Link online");
     const pass: HTMLInputElement = partFieldOf("text", form.passcode, "Passcode online");
     const parts: HTMLElement = elementOf("div", "field-parts", "");
+    const pencil: HTMLButtonElement = document.createElement("button");
     const show: () => void = (): void => {
         if (link !== document.activeElement)
             link.value = form.onlineLink !== "" ? form.onlineLink : field?.platforms[form.online]?.link ?? "";
-        parts.hidden = form.online === "";
+        parts.hidden = !onlineOpen || form.online === "";
+        pencil.hidden = form.online === "";
     };
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    iconPut(pencil, Pencil, "Change online");
+    pencil.addEventListener("click", (): void => {
+        onlineOpen = !onlineOpen;
+        show();
+        if (onlineOpen)
+            parts.querySelector("input")?.focus();
+    });
     parts.append(partOf("Passcode", pass), partOf("Link", link));
     link.addEventListener("input", (): void => {
         form.onlineLink = link.value.trim() === (field?.platforms[form.online]?.link ?? "") ? ""
@@ -1224,7 +2068,7 @@ function onlineRowOf(form: Form): HTMLElement {
     show();
     return rowOf("Online", choicesOf({
         search: searchOf((field?.values ?? []).map(choiceOf)), picked: form.online === "" ? [] : [form.online],
-        many: false, adding: true, noun: "platform", below: [parts],
+        many: false, adding: true, noun: "platform", aside: [pencil], below: [parts],
         add: async (name: string): Promise<string | null> => {
             if (name.trim() === "")
                 return null;
@@ -1249,112 +2093,394 @@ function onlineRowOf(form: Form): HTMLElement {
 }
 
 /**
- * Makes the row of who I am with in the form, as `With` of the dialog: the names my entries wrote, the most used
- * first, several, a name typed added, each with the address it had, else that of its last entry, else its standard
- * address, see `standardAddressOf` in `./entries.ts`.
+ * Makes the row of who I am with in the form, the row `With` of the dialog of an entry, see `withRowOf`
+ * in `./categories.ts`, its field that of `Skill`; what I pick goes into the form, so into its boxes.
  * - `field`: The field `With` of `Skill`, `undefined` while the categories are not loaded.
  *
  * @param form - The form
- * @returns The row
+ * @returns The row, none while the categories are not loaded
  */
-function withRowOf(form: Form): HTMLElement {
+function peopleRowsOf(form: Form): HTMLElement[] {
     const field: Field | undefined = skillFieldOf("with");
-    return rowOf("With", choicesOf({
-        search: searchOf((field?.values ?? []).map(choiceOf)),
-        picked: form.attendees.map((attendee: Attendee): string => attendee.name), many: true, adding: true,
-        add: async (name: string): Promise<string | null> => name.includes(",") ? null : name.trim(), noun: "person",
-        pick: (names: string[]): void => {
-            form.attendees = names.map((name: string): Attendee => ({
-                name: name, address: form.attendees.find((attendee: Attendee): boolean => attendee.name === name)
-                    ?.address ?? field?.links[name] ?? standardAddressOf(name),
-            }));
+    return field === undefined ? [] : [withRowOf({
+        field: field, persons: persons, people: form.attendees, open: withOpen, edits: personEdits,
+        opened: (open: boolean): void => {
+            withOpen = open;
+        },
+        pick: (people: Attendee[]): void => {
+            form.attendees = people;
             formChanged();
         },
-    }));
+    })];
 }
 
 /**
- * Makes the row of the group of the form of the tutorials of a module with groups: my group, picked from the groups,
- * see {@link groupChoiceOf}; another one picked makes it mine from its next session on, see `groupMine`
- * in `reader/course.ts`, its days, place, people and dates then those of the group, so their rows hide.
+ * Gives the group typed in the row `Group` as a group is named, see {@link groupPartOf}: digits filled up to two,
+ * like `05` of `5`, any other name as typed, of letters, digits, `_` and `-`.
+ * - `name`: The text typed, without spaces at its ends.
+ *
+ * @param text - The text typed, like `5`
+ * @returns The group, like `05`, empty for nothing typed, `null` for a text no group is named so
+ */
+function groupTypedOf(text: string): string | null {
+    const name: string = /^\d+$/.test(text.trim()) ? text.trim().padStart(2, "0") : text.trim();
+    return name === "" || /^[\w-]+$/.test(name) ? name : null;
+}
+
+/**
+ * Makes the group of the form of a group of the tutorials, beside its semester, see {@link semesterRowOf}: a group
+ * there by its name as plain text, like `Group 05`, never to type; a new one a field I type its name into, grey `nn`
+ * while empty, as a time says `hh:mm`, like `5` for `Group 05`, see {@link groupTypedOf}, with a grey line below it while the type has a group of that name already,
+ * from which the form opens that group instead, or while no group is named so.
+ * - `input`: The field.
+ * - `hint`: The grey line.
+ * - `open`: Opens the group of that name there already.
+ * - `value`: The field with the line below it.
+ *
+ * @returns The group
+ */
+function groupPartOf(): HTMLElement {
+    if (grouped?.made === false)
+        return elementOf("span", "", `Group ${grouped.group}`);
+    const input: HTMLInputElement = partFieldOf("text", grouped?.group ?? "", "Group");
+    const hint: HTMLElement = elementOf("p", "entry-none", "");
+    const open: HTMLButtonElement = document.createElement("button");
+    const value: HTMLElement = elementOf("div", "", "");
+    input.placeholder = "nn";
+    open.type = "button";
+    open.className = "series-group-open";
+    hint.hidden = true;
+    input.addEventListener("input", (): void => {
+        const name: string | null = groupTypedOf(input.value);
+        const type: string = typing?.type ?? "";
+        grouped = { group: name ?? "", made: true };
+        hint.hidden = name !== null && (typing === null || !groupTaken(typing));
+        if (name === null)
+            hint.replaceChildren("No group is named so");
+        else {
+            open.textContent = `Open Group ${name}`;
+            hint.replaceChildren(`Group ${name} is there already · `, open);
+            open.onclick = (): void => groupStart(type, name);
+        }
+        formChanged();
+    });
+    value.append(input, hint);
+    return value;
+}
+
+/**
+ * Makes the group of my series of a numbered type of a module beside its semester, see {@link semesterRowOf}, as
+ * the summary has its type beside its skill: while the type has groups in the semester, the menu of them, see
+ * `pinnedMenuOf` in `./groups.ts`, naming my group with the pin before it, like `Group 05`, `No group yet` while none
+ * is, a pick making the group mine, my boxes to come going to it, and showing my series anew, the series icon ⟳ of each
+ * group opening it in this form; right after it the plus, which opens the form of a new group, see {@link groupFrom},
+ * alone while the type has no group yet.
+ * - `loaded`: The course of the form.
+ * - `plus`: The plus.
+ * - `part`: The menu and the plus.
+ *
+ * @param form - The form of my series
+ * @returns The menu and the plus
+ */
+function groupPickOf(form: Form): HTMLElement {
+    const loaded: Course | null = course;
+    const plus: HTMLButtonElement = plusOf("Add a group", (): void => groupFrom(form, ""));
+    const part: HTMLElement = elementOf("span", "series-group-pick", "");
+    plus.classList.add("plus-quiet");
+    if (loaded !== null && groupsOf(form.type).length > 0)
+        part.append(pinnedMenuOf(loaded, form.type, (_change: () => void, send: () => Promise<unknown>): void => {
+            send().then((): Promise<void> => seriesOpen(loaded.module, form.type, loaded.semester, done))
+                .catch((error: unknown): void => console.error(error));
+        }, (group: string): void => groupFrom(form, group)));
+    part.append(plus);
+    return part;
+}
+
+/**
+ * Tells whether the form of my series of a type with groups waits for my group: while none is mine, it shows only
+ * its summary and its semester with the menu of the groups, see {@link groupPickOf}, since my boxes follow my group.
  *
  * @param form - The form
- * @returns The row
+ * @returns Whether it waits
  */
-function groupRowOf(form: Form): HTMLElement {
-    return rowOf("Group", choicesOf({
-        search: searchOf(groupsOf(form.type).map(groupChoiceOf)),
-        picked: form.group === "" ? [] : [form.group], many: false, adding: false, noun: "group",
-        pick: (values: string[]): void => {
-            form.group = values[0] ?? form.old?.group ?? "";
-            formFill();
-        },
-    }));
+function groupWaits(form: Form): boolean {
+    return course !== null && grouped === null && numberedTypes.includes(form.type)
+        && groupsOf(form.type).length > 0 && (form.old?.group ?? "") === "";
 }
 
 /**
- * Builds the rows of the form of a series anew from what it holds, see the top of this file: what it is, its group
- * while its type has groups, then, unless it makes a group mine, its days and its first and last day; its boxes; then, unless it makes a group mine, its place, what it does online and its people;
- * below them the hint when the reader does not take it, then the plan it writes into, a link that opens it
- * in the editor of my new system, like `/edit?file=NomManagecalendar%2FUniversity%2F…_Plan.ics`, Cancel and Save.
+ * Opens a group in the form from my series, by its series icon or `+ Group` in the menu of the groups, see
+ * {@link groupPickOf}: my series kept as I left it to go back to, see {@link groupBack}, the group there or a new one
+ * without name.
+ *
+ * @param form - The form of my series
+ * @param group - The group, like `05`, empty for a new one
+ */
+function groupFrom(form: Form, group: string): void {
+    groupBack = form;
+    groupStart(form.type, group);
+}
+
+/**
+ * Turns the form into that of a group of the tutorials of a type, see the top of this file, from the row `Group`,
+ * see {@link groupPartOf}, or as it opens from the menu of the groups, see {@link groupOpen}: of a group there as
+ * the reader reads it back, see `groupsRead` in `reader/course.ts`, its days,
+ * place, what it does online, tutors and weeks, to change them; of a new one its days, place and tutors empty, its
+ * weeks those of the series of its type, else of any series of the course, so a group of the semester needs only its
+ * day, its times and its room. The form it came from is left as it was, unsaved.
+ * - `found`: The group there, `undefined` for a new one.
+ * - `rule`: Its rule, `undefined` for a new one.
+ * - `weeks`: The rule whose weeks a new group takes, `undefined` for none.
+ *
+ * @param type - The type, like `TU`
+ * @param group - The group, like `05`
+ */
+function groupStart(type: string, group: string): void {
+    const found: Group | undefined = groupsOf(type).find((one: Group): boolean => one.rule.group === group);
+    const rule: Rule | undefined = found?.rule;
+    const weeks: Rule | undefined = (course?.series.find((series: Series): boolean => series.rule.type === type)
+        ?? course?.series[0])?.rule;
+    grouped = { group: group, made: found === undefined };
+    repeated = null;
+    removeAsked = false;
+    previewForget();
+    listOpened = false;
+    placeEdit = null;
+    placeOpen = false;
+    onlineOpen = false;
+    withOpen = false;
+    typing = {
+        type: type, old: rule ?? null,
+        slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [{ weekday: 0, start: "", end: "" }],
+        before: rule?.slots.map((slot: Slot): number => slot.weekday) ?? [0], extras: [],
+        location: rule?.location ?? "", locationLink: rule?.locationLink ?? "", online: rule?.online ?? "",
+        onlineLink: rule?.onlineLink ?? "", passcode: rule?.passcode ?? "", attendees: rule?.attendees ?? [],
+        first: rule?.first ?? weeks?.first ?? "", last: rule?.last ?? weeks?.last ?? "", times: {}, states: {},
+        kinds: {},
+    };
+    formFill();
+}
+
+/**
+ * Tells whether the form has the bin, see {@link seriesBinOf}: a group there already, a plain series there already,
+ * and my series of a type of a module there already, the exams too; never a new one.
+ *
+ * @param form - The form
+ * @returns Whether it has the bin
+ */
+function binShows(form: Form): boolean {
+    if (grouped !== null)
+        return !grouped.made;
+    if (plain !== null)
+        return plain.id !== "";
+    return course !== null && repeated === null && form.old !== null;
+}
+
+/**
+ * Makes the bin of a series there already, at the left of Cancel, as the dialog of an entry has it: the first click
+ * only asks, the bin turning into a question mark, `Really remove?` as its tooltip, of my series of a module
+ * `Really remove? Its boxes done stay`; the second removes it and closes the dialog: a group, see `groupRemove`
+ * in `reader/course.ts`, a plain series whole, its days changed alone too, see `plainRemove` in `reader/rules.ts`,
+ * my series of a type of a module but its boxes done, whose log entries point to them, see `courseSeriesRemove`
+ * in `reader/course.ts`. When the reader does not take it, the hint above the buttons says so.
+ * - `bin`: The bin.
+ * - `ask`: What the first click asks.
+ * - `address`: Where the reader removes it.
+ *
+ * @param form - The form
+ * @returns The bin
+ */
+function seriesBinOf(form: Form): HTMLButtonElement {
+    const bin: HTMLButtonElement = document.createElement("button");
+    const ask: string = grouped === null && plain === null ? "Really remove? Its boxes done stay" : "Really remove?";
+    const address: string = grouped !== null
+        ? `/api/course/groups?${new URLSearchParams({
+            module: course?.module ?? "", type: form.type, group: grouped.group, semester: course?.semester ?? "",
+        })}`
+        : plain !== null ? `/api/day/plain?${new URLSearchParams({ id: plain.id })}`
+        : `/api/course/series?${new URLSearchParams({
+            module: course?.module ?? "", type: form.type, semester: course?.semester ?? "",
+        })}`;
+    bin.type = "button";
+    bin.className = "panel-remove";
+    iconPut(bin, Trash, grouped !== null ? "Remove the group" : "Remove the series");
+    bin.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    bin.addEventListener("click", (): void => {
+        if (!removeAsked) {
+            removeAsked = true;
+            iconPut(bin, QuestionMark, ask);
+            return;
+        }
+        readerAsk<unknown>(address, { method: "DELETE" }).then(async (): Promise<void> => {
+            if (await groupReturn(true))
+                return;
+            entryBack = null;
+            (document.getElementById("series") as HTMLDialogElement).close();
+            done();
+        }).catch((error: unknown): void => {
+            console.error(error);
+            formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
+        });
+    });
+    return bin;
+}
+
+/**
+ * Builds the rows of the form of a series anew from what it holds, see the top of this file: what it is, its place,
+ * what it does online, its days and its first and last day; of a numbered type of a module its group, see
+ * {@link groupRowOf}; its boxes; then, where asked, its people, see {@link withAsked}, of a group always, its tutors;
+ * below them the hint when the reader does not take it, then the plan it writes
+ * into, see `fileShow` in `choices.ts`, of a group there its bin, see {@link seriesBinOf},
+ * Cancel and Save; the dialog stays where it is scrolled to, read before the rows are built, since building them takes
+ * the boxes shown out of the rows standing, which would scroll a dialog scrolled to its end up. Save takes no focus,
+ * so the extra being typed joins as it saves, not as the focus leaves it, which would build the rows anew under
+ * the pointer and lose the click, see {@link formSave}.
+ * - `dialog`: The dialog.
+ * - `scrolled`: Where it is scrolled to.
  * - `form`: The form.
  * - `rows`: Its rows.
  * - `fields`: The rows together.
- * - `buttons`: The plan, Cancel and Save.
+ * - `buttons`: The plan, the bin of a group there, Cancel and Save.
  * - `file`: The link of the plan.
  * - `cancel`, `save`: Cancel and Save.
  * - `hint`: The hint when the reader does not take it.
+ * - `picking`: Whether only the rows on top of a new series show, its category or skill still to pick.
  */
 function formFill(): void {
     if (typing === null)
         return;
+    const dialog: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
+    const scrolled: number = dialog.scrollTop;
     const form: Form = typing;
-    const mine: boolean = mineMade(form);
-    const rows: HTMLElement[] = [seriesRowOf(form), ...groupsOf(form.type).length > 0 ? [groupRowOf(form)] : [],
-        ...mine ? [] : [...slotRowsOf(form, formChanged, formFill), datesRowOf(form, formChanged)],
-        boxesRowOf(),
-        ...mine ? [] : [placeRowOf(form), onlineRowOf(form), withRowOf(form)]];
+    const picking: boolean = fresh !== null && (fresh.category === ""
+        || (fresh.category === skillName && fresh.picked.module === "")) || (plain === null && repeated === null
+        && course === null);
+    const rows: HTMLElement[] = picking ? [] : plain !== null ? plainRowsOf(plain, form)
+        : form.type === examType ? [seriesRowOf(form), semesterRowOf(courseSemesterOf()), boxesRowOf()]
+        : groupWaits(form) ? [seriesRowOf(form), semesterRowOf(courseSemesterOf())]
+        : [seriesRowOf(form), semesterRowOf(courseSemesterOf()), placeRowOf(form), onlineRowOf(form),
+            ...slotRowsOf(form, formChanged, formFill), datesRowOf(form, formChanged), boxesRowOf(),
+            ...grouped !== null || withAsked() ? peopleRowsOf(form) : []];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
-    fields.append(...rows);
+    fields.append(...fresh === null ? rows
+        : [...freshRowsOf(), ...fresh.category === skillName ? rows.slice(1) : rows]);
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");
     const cancel: HTMLButtonElement = document.createElement("button");
     const save: HTMLButtonElement = document.createElement("button");
     cancel.type = "button";
     iconPut(cancel, X, "Cancel");
-    cancel.addEventListener("click", (): void => (document.getElementById("series") as HTMLDialogElement).close());
+    cancel.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    cancel.addEventListener("click", (): void => {
+        groupReturn(false).then((back: boolean): void => {
+            if (!back)
+                (document.getElementById("series") as HTMLDialogElement).close();
+        }).catch((error: unknown): void => console.error(error));
+    });
     save.type = "submit";
     save.className = "panel-main";
     iconPut(save, Check, "Save");
+    save.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     const hint: HTMLElement = elementOf("p", "panel-error", "Saving failed");
     hint.hidden = true;
-    const file: HTMLAnchorElement = elementOf("a", "series-file", course?.file ?? "") as HTMLAnchorElement;
-    file.href = `/edit?file=${encodeURIComponent(`NomManagecalendar/${course?.file ?? ""}`)}`;
-    buttons.append(file, cancel, save);
+    const file: HTMLAnchorElement = elementOf("a", "panel-file", "") as HTMLAnchorElement;
+    fileShow(file, plain === null ? repeated?.file ?? course?.file ?? "" : plainFileOf(plain, form));
+    buttons.append(file, ...binShows(form) ? [seriesBinOf(form)] : [], cancel, save);
     formElementOf().replaceChildren(fields, hint, buttons);
+    formElementOf().classList.toggle("series-exams", form.type === examType);
+    dialog.scrollTop = scrolled;
     formChanged();
 }
 
 /**
- * Saves the form of a series, see {@link formSend}, and closes the dialog, the day and the page of the module loading
- * anew as their files change; when the reader does not take it, the hint above the buttons says so and the dialog
- * stays open.
+ * Writes the place of the form everywhere while I changed it by its parts, see {@link placeRowOf} and `renameSend`
+ * in `./places.ts`: the place of its old name as I changed it, its row and every entry that names it; before the series
+ * is saved only checked, so nothing is written while the reader would refuse it, and after it written, so its boxes,
+ * saved with the place as it was, take it with every other entry; nothing for a place I left as it is.
+ *
+ * @param form - The form
+ * @param dry - Whether only to check it, before the series is saved
+ * @throws {Error} - When the reader does not take the place, like one with an empty name
+ */
+async function placeRename(form: Form, dry: boolean): Promise<void> {
+    if (form.location !== "" && placeEdit !== null
+        && JSON.stringify(placeEdit) !== JSON.stringify(placeOriginOf(form)))
+        await renameSend(labelOf(form.location), placeEdit, dry);
+}
+
+/**
+ * Saves the form of a series, see {@link formSend}, the extra being typed joined first, see {@link extraJoin},
+ * so one click on Save takes it, a place and the people renamed checked before and renamed after,
+ * see {@link placeRename} and `personsRename` in `../persons.ts`, and closes the dialog, with the dialog of the box it opened over, see {@link done}, the day and the page
+ * of the module loading anew as their files change; when the reader does not take it, the hint above the buttons
+ * says so and the dialog stays open. A new group saved while no group of its type is mine becomes mine, my boxes
+ * to come made from it, and the form shows my series anew; a group saved from my series goes back to it, see
+ * {@link groupReturn}.
+ * - `exams`: Whether the form is that of the exams.
+ * - `pinning`: The new group to make mine as it is saved, empty for none.
+ * - `type`: The type of the form.
  */
 async function formSave(): Promise<void> {
-    if (typing === null || !formReady(typing))
+    if (typing === null)
+        return;
+    const exams: boolean = typing.type === examType;
+    const type: string = typing.type;
+    const pinning: string = grouped?.made === true && !(course?.series ?? []).some((series: Series): boolean =>
+        series.rule.type === type && series.rule.group !== "") ? grouped.group : "";
+    if (extraJoin(typing, exams ? typing.kinds : undefined))
+        formFill();
+    if (!formReady(typing))
         return;
     try {
+        await placeRename(typing, true);
+        await personsRename(personEdits, persons, true);
         await formSend(typing, false);
+        await placeRename(typing, false);
+        await personsRename(personEdits, persons, false);
+        if (pinning !== "" && course !== null)
+            await courseSend<Planned[]>("/api/course/mine", { module: course.module, type: type, group: pinning });
     } catch (error: unknown) {
         console.error(error);
         formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
         return;
     }
+    if (pinning !== "" && course !== null && groupBack !== null) {
+        await seriesOpen(course.module, type, course.semester, done);
+        return;
+    }
+    if (await groupReturn(true))
+        return;
+    entryBack = null;
     (document.getElementById("series") as HTMLDialogElement).close();
+    done();
+}
+
+/**
+ * Goes back from the form of a group to my series it was opened from, see {@link groupBack}: as I left it, unsaved,
+ * the course loaded anew once the group was saved or removed, so the menu of its groups shows them as they are now.
+ *
+ * @param reload - Whether to load the course anew first
+ * @returns Whether it went back; false for a form opened otherwise, which closes as usual
+ * @throws {Error} - When the reader cannot answer
+ */
+async function groupReturn(reload: boolean): Promise<boolean> {
+    if (groupBack === null || grouped === null)
+        return false;
+    if (reload && course !== null)
+        course = await readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(course.module)}`
+            + `&semester=${course.semester}`);
+    typing = groupBack;
+    groupBack = null;
+    grouped = null;
+    removeAsked = false;
+    previewForget();
+    formFill();
+    return true;
 }
 
 /**
  * Starts the dialog once for the page: its form saves by Save or Ctrl+Enter, Enter confirms only its field, as in
- * the dialog of an entry, and closed by Cancel, Escape or a click beside it, it forgets the form.
+ * the dialog of an entry, and closed by Cancel, Escape or a click beside it, it forgets the form; once the dialog
+ * of a box closes over it, opened from its list, see {@link boxShow}, its list shows anew, see {@link seriesRefresh}.
  * - `dialog`: The dialog.
  */
 function dialogStart(): void {
@@ -1374,17 +2500,32 @@ function dialogStart(): void {
         if (event.ctrlKey)
             formSave().catch((error: unknown): void => console.error(error));
     });
+    const entry: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
+    entry.addEventListener("close", (): void => {
+        if (!entry.open)
+            entry.removeAttribute("data-over");
+        if (dialog.open && !entry.open)
+            seriesRefresh().catch((error: unknown): void => console.error(error));
+    });
     dialog.addEventListener("close", (): void => {
+        if (entryBack !== null)
+            entryBackShow(entryBack).catch((error: unknown): void => console.error(error));
+        entryBack = null;
         typing = null;
+        plain = null;
+        grouped = null;
+        personEdits = {};
         previewForget();
     });
 }
 
 /**
  * Opens the dialog of a series, see the top of this file: the series of a type of a module in a semester as its rule
- * reads back, or, without type, a new series of the module, its type to pick, its days and dates empty, its list
- * of types open.
- * - `loaded`: The course and the categories, for its groups, places, platforms and people.
+ * reads back, a type without series yet, like the tutorials while only their groups are there, new with that type,
+ * or, without type, a new series of the module, its type to pick, its days and dates empty, its list
+ * of types open; over the dialog of a box, when that opens it, which stands as it was once this one closes.
+ * - `loaded`: The course, the categories, for its groups, places, platforms and people, and the people
+ *   of `Persons.md`.
  * - `rule`: The rule of the series as read back, `null` for a new one.
  * - `dialog`: The dialog.
  *
@@ -1392,31 +2533,689 @@ function dialogStart(): void {
  *   like `IN2028`
  * @param type - Type of the series, like `VO`, empty for a new one
  * @param semester - Its semester, like `2026W`, empty for that of today
+ * @param saved - Comes once the series is saved, like closing the dialog of the box it opened over, see
+ *   `seriesFromBox` in `./categories.ts`; nothing when left out
  * @throws {Error} - When the reader cannot answer
  */
-export async function seriesOpen(module: string, type: string, semester: string): Promise<void> {
+export async function seriesOpen(module: string, type: string, semester: string,
+                                 saved: () => void = (): void => {}): Promise<void> {
     dialogStart();
-    const loaded: [Course, Category[]] = await Promise.all([
+    fresh = null;
+    repeated = null;
+    plain = null;
+    grouped = null;
+    groupBack = null;
+    removeAsked = false;
+    done = saved;
+    const loaded: [Course, Category[], Person[]] = await Promise.all([
         readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(module)}&semester=${semester}`),
         readerAsk<Category[]>(`/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`),
+        personsKept(),
     ]);
-    [course, categories] = loaded;
-    const rule: Rule | null = course.series.find((series: Series): boolean => series.rule.type === type)?.rule ?? null;
+    [course, categories, persons] = loaded;
+    const rule: Rule | null = course.series.find((series: Series): boolean => series.rule.type === type)?.rule
+        ?? (type === examType ? examRuleOf(course) : null);
     previewForget();
+    listOpened = type === examType;
+    placeEdit = null;
+    placeOpen = false;
+    onlineOpen = false;
+    withOpen = false;
     typing = {
-        type: rule?.type ?? "", old: rule, slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot }))
+        type: rule?.type ?? type, old: rule, slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot }))
             ?? [{ weekday: 0, start: "", end: "" }],
         before: rule?.slots.map((slot: Slot): number => slot.weekday) ?? [0],
         extras: rule?.extras.map((extra: Extra): Extra => ({ ...extra })) ?? [], location: rule?.location ?? "",
         locationLink: rule?.locationLink ?? "", online: rule?.online ?? "", onlineLink: rule?.onlineLink ?? "",
         passcode: rule?.passcode ?? "", attendees: rule?.attendees ?? [], first: rule?.first ?? "",
-        last: rule?.last ?? "", excepts: [...rule?.excepts ?? []], group: rule?.group ?? "", states: {},
+        last: rule?.last ?? "", times: { ...rule?.times ?? {} }, states: {}, kinds: {},
+    };
+    kindTyped = "";
+    kindAsked = "";
+    extraTyped = null;
+    formFill();
+    const dialog: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
+    if (!dialog.open)
+        dialog.showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+    if (rule === null && type === "")
+        formElementOf().querySelector<HTMLButtonElement>(".picker-line")?.click();
+}
+
+/**
+ * Opens a group of the tutorials of a module in the form of a series, see the top of this file, from the menu
+ * of the groups, see `./groups.ts`: the group as the reader reads it back, its group fixed, to change it or remove it,
+ * see {@link groupStart}; over the dialog of a box, when that opens it, which stands as it was once this one closes.
+ * - `loaded`: The course, the categories, for its places, platforms and people, and the people of `Persons.md`.
+ * - `dialog`: The dialog.
+ *
+ * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param type - Type of the group, like `TU`
+ * @param semester - Its semester, like `2026W`
+ * @param group - The group, like `05`
+ * @throws {Error} - When the reader cannot answer
+ */
+export async function groupOpen(module: string, type: string, semester: string, group: string): Promise<void> {
+    dialogStart();
+    fresh = null;
+    groupBack = null;
+    plain = null;
+    done = (): void => {};
+    const loaded: [Course, Category[], Person[]] = await Promise.all([
+        readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(module)}&semester=${semester}`),
+        readerAsk<Category[]>(`/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`),
+        personsKept(),
+    ]);
+    [course, categories, persons] = loaded;
+    groupStart(type, group);
+    const dialog: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
+    if (!dialog.open)
+        dialog.showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+}
+
+/**
+ * Shows in the dialog my new series of a skill of a numbered type of a module picked in its rows on top,
+ * see {@link seriesNew}, so making a series and changing one are one dialog: the series of its type in its semester,
+ * the one there already as {@link seriesOpen} opens it, else a new one of that type, its days, its place, what it does
+ * online and who I am with, see {@link Repeated}, which saves as a box repeated, see {@link repeatedSend}.
+ * - `loaded`: The course of its module, `null` for none, the categories, for its places, platforms and people,
+ *   and the people of `Persons.md`.
+ * - `dialog`: The dialog.
+ *
+ * @param from - What its boxes are, with their summary, their folder and their plan
+ * @param days - Its days, one weekday, that of the day it starts on, its first day that day
+ * @param saved - Comes once the series is saved
+ * @throws {Error} - When the reader cannot answer
+ */
+async function seriesRepeat(from: Repeated, days: Days, saved: () => void): Promise<void> {
+    const loaded: [Course | null, Category[], Person[]] = await Promise.all([
+        readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(from.box.module)}`
+            + `&semester=${from.box.semester}`).catch((): null => null),
+        readerAsk<Category[]>(`/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`),
+        personsKept(),
+    ]);
+    if (loaded[0]?.series.some((series: Series): boolean => series.rule.type === from.box.type) === true) {
+        await seriesOpen(from.box.module, from.box.type, from.box.semester, saved);
+        return;
+    }
+    dialogStart();
+    [course, categories, persons] = loaded;
+    repeated = from;
+    plain = null;
+    grouped = null;
+    groupBack = null;
+    removeAsked = false;
+    done = saved;
+    previewForget();
+    listOpened = false;
+    placeEdit = null;
+    placeOpen = false;
+    onlineOpen = false;
+    withOpen = false;
+    typing = {
+        ...days, type: from.box.type, old: null, location: from.box.location,
+        locationLink: skillFieldOf("location")?.places[from.box.location]?.link ?? "", online: from.box.online ?? "",
+        onlineLink: from.box.onlineLink ?? "", passcode: from.box.passcode ?? "", attendees: from.box.attendees ?? [],
+        states: {}, kinds: {},
     };
     formFill();
     const dialog: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
     if (!dialog.open)
         dialog.showModal();
     (document.activeElement as HTMLElement | null)?.blur();
-    if (rule === null)
-        formElementOf().querySelector<HTMLButtonElement>(".picker-line")?.click();
+}
+
+/**
+ * Tells whether the form of a plain series is typed enough to make boxes, see {@link plainTimeRowsOf}: with times its days,
+ * each a weekday, each once, with a start before its end; without times its days, each a weekday, each once,
+ * and a length of more than nothing;
+ * and its first day on or before its last, or no last day.
+ *
+ * @param series - The plain series
+ * @param form - The form, which holds its days
+ * @returns Whether it is ready
+ */
+function plainReady(series: Plain, form: Form): boolean {
+    const days: boolean = plainTimed
+        ? form.slots.length > 0 && form.slots.every((slot: Slot): boolean => slot.weekday > 0 && timesReady(slot))
+            && new Set(form.slots.map((slot: Slot): number => slot.weekday)).size === form.slots.length
+        : form.slots.length > 0 && form.slots.every((slot: Slot): boolean => slot.weekday > 0)
+            && new Set(form.slots.map((slot: Slot): number => slot.weekday)).size === form.slots.length
+            && (series.minutes ?? 0) > 0;
+    const named: boolean = series.category === skillName ? series.module !== "" : series.title.trim() !== "";
+    return named && days && form.first !== "" && (form.last === "" || form.first <= form.last);
+}
+
+/**
+ * Gives the parts a plain series is written as, one per time, since a rule has one time for all its weekdays,
+ * see `reader/rules.ts`: with times the days of the form grouped by their times, like Gym on Monday at 18:00
+ * and on Thursday at 07:00 two series, the series being changed the group of the times it had, so its days of those
+ * times stay as they are, else the first group; without times one with the weekdays of its days and its length.
+ * Its extras, its single dates, go with the series being changed, else with the first part.
+ * - `texts`: What every part takes from the form.
+ * - `groups`: The weekdays of each time, by its start and end, in the order of the days.
+ * - `kept`: The times of the group that stays the series being changed.
+ *
+ * @param series - The plain series
+ * @param form - The form, ready, see {@link plainReady}
+ * @returns The parts, each a plain series of its own
+ */
+function plainPartsOf(series: Plain, form: Form): Plain[] {
+    const texts: Plain = {
+        ...series, location: form.location, online: form.online, onlineLink: form.onlineLink,
+        passcode: form.passcode, attendees: form.attendees, first: form.first, last: form.last, extras: [],
+    };
+    if (!plainTimed)
+        return [{ ...texts, start: "", end: "",
+            weekdays: form.slots.map((slot: Slot): number => slot.weekday)
+                .sort((first: number, second: number): number => first - second),
+            extras: form.extras.map((extra: Extra): Extra => ({ day: extra.day, start: "", end: "" })) }];
+    const groups: Map<string, number[]> = new Map();
+    form.slots.forEach((slot: Slot): void => {
+        groups.set(`${slot.start}-${slot.end}`, [...groups.get(`${slot.start}-${slot.end}`) ?? [], slot.weekday]);
+    });
+    const kept: string = groups.has(`${series.start}-${series.end}`) ? `${series.start}-${series.end}`
+        : [...groups.keys()][0];
+    return [...groups.entries()].map(([times, weekdays]: [string, number[]]): Plain => ({
+        ...texts, id: times === kept ? series.id : "", start: times.split("-")[0], end: times.split("-")[1],
+        minutes: null, weekdays: weekdays.sort((first: number, second: number): number => first - second),
+        extras: times === kept ? form.extras : [],
+    }));
+}
+
+/**
+ * Sends a plain series to the reader, see `plainApply` in `reader/rules.ts`, each of its parts, see
+ * {@link plainPartsOf}, one after another: the first as the series being changed, or new, every further one new;
+ * of a series that has begun, whose past never changes, see `plainApply` in `reader/rules.ts`, every further one
+ * from today on at the earliest, pointing back to the series being changed as its sibling; a day of the chain each part
+ * names, see `chained` of {@link Planned}, once. A day one part takes from another counts once, as what really happens
+ * to it: a day the series being changed loses, `removed`, that a new part makes, `new`, is that new day, `changed`
+ * for other times, else as it was.
+ * - `planned`: The boxes of the parts sent so far.
+ * - `today`: Today.
+ * - `begun`: Whether the series being changed has begun.
+ * - `removed`: The days a part loses.
+ * - `moved`: Tells whether a new day is one another part loses.
+ *
+ * @param series - The plain series
+ * @param form - The form, ready, see {@link plainReady}
+ * @param dry - Whether only to tell what it would make, for the preview
+ * @returns The boxes it makes, the earliest first
+ * @throws {Error} - When the reader does not take a part
+ */
+async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Planned[]> {
+    const planned: Planned[] = [];
+    const today: string = dayOf(new Date());
+    const begun: boolean = series.id !== "" && series.first < today;
+    for (const part of plainPartsOf(series, form))
+        planned.push(...await courseSend<Planned[]>("/api/day/plain", {
+            ...part, first: begun && part.id === "" && part.first < today ? today : part.first, dry: dry,
+            sibling: begun && part.id === "" ? series.id : "",
+        }));
+    const removed: Planned[] = planned.filter((box: Planned): boolean => box.change === "removed");
+    const moved: (box: Planned) => Planned | undefined = (box: Planned): Planned | undefined =>
+        box.change === "new" ? removed.find((gone: Planned): boolean => gone.day === box.day) : undefined;
+    return planned
+        .filter((box: Planned, index: number): boolean => box.chained !== true
+            || planned.findIndex((other: Planned): boolean => other.id === box.id) === index)
+        .filter((box: Planned): boolean => box.change !== "removed"
+            || !planned.some((other: Planned): boolean => other.change === "new" && other.day === box.day))
+        .map((box: Planned): Planned => {
+            const gone: Planned | undefined = moved(box);
+            return gone === undefined ? box : {
+                ...box, state: gone.state,
+                change: gone.time === box.time && gone.minutes === box.minutes ? "" : "changed",
+            };
+        })
+        .sort((first: Planned, second: Planned): number =>
+            (first.time || first.day).localeCompare(second.time || second.day));
+}
+
+/**
+ * Makes the switch of a plain series between times and a length, see {@link plainTimed} and `lengthSwapOf`
+ * in `./times.ts`: either way it keeps its days, their weekdays; from times to a length it takes the length of their
+ * first times, from a length to times their times stay to type, see {@link plainTimeRowsOf}.
+ *
+ * @param series - The plain series
+ * @param form - The form, which holds its days
+ * @returns The switch
+ */
+function plainSwapOf(series: Plain, form: Form): HTMLButtonElement {
+    return lengthSwapOf(plainTimed, (): void => {
+        if (plainTimed) {
+            const first: Slot | undefined = form.slots.find(timesReady);
+            series.minutes = first === undefined ? series.minutes : minutesOf(first.end) - minutesOf(first.start);
+        }
+        form.slots = form.slots.map((slot: Slot): Slot => ({ weekday: slot.weekday, start: "", end: "" }));
+        plainTimed = !plainTimed;
+        formFill();
+    });
+}
+
+/**
+ * Makes the row `Day` of a plain series, one line: its weekdays as seven toggles, `Mon Tue Wed Thu Fri Sat Sun`,
+ * the picked ones light on the calm grey of what is picked, then the one time of them all, like `10:00 – 12:00`,
+ * or, by the switch beside the name `Day`, see {@link plainSwapOf}, only how long they last, like `08:00` for my sleep,
+ * since a rule has one time for all its weekdays; a click on a weekday picks it or takes it back, but the last one.
+ * The days of the form, see {@link Form}, hold one slot per weekday picked, all with that time.
+ * - `times`: The time of all its days, as typed, from its first day.
+ * - `typed`: Gives every day the time as typed, and tells the form.
+ * - `toggles`: The seven weekdays.
+ * - `row`: The row.
+ *
+ * @param series - The plain series, which takes its length
+ * @param form - The form, which holds its days
+ * @returns The row, alone, as the rows of the form are given
+ */
+function plainTimeRowsOf(series: Plain, form: Form): HTMLElement[] {
+    const times: Pick<Slot, "start" | "end"> = { start: form.slots[0]?.start ?? "", end: form.slots[0]?.end ?? "" };
+    const typed: () => void = (): void => {
+        form.slots.forEach((slot: Slot): void => {
+            slot.start = times.start;
+            slot.end = times.end;
+        });
+        formChanged();
+    };
+    const toggles: HTMLElement = elementOf("span", "series-weekdays", "");
+    toggles.append(...[1, 2, 3, 4, 5, 6, 7].map((weekday: number): HTMLButtonElement => {
+        const index: number = form.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
+        const toggle: HTMLButtonElement = elementOf("button", "series-weekday", weekdayNameOf(weekday, false)) as
+            HTMLButtonElement;
+        toggle.type = "button";
+        toggle.setAttribute("aria-pressed", String(index !== -1));
+        toggle.addEventListener("click", (): void => {
+            if (index === -1)
+                form.slots.push({ weekday: weekday, start: times.start, end: times.end });
+            else if (form.slots.length > 1)
+                form.slots.splice(index, 1);
+            form.slots.sort((first: Slot, second: Slot): number => first.weekday - second.weekday);
+            form.before = form.slots.map((): number => 0);
+            formFill();
+        });
+        return toggle;
+    }));
+    const value: HTMLElement = elementOf("div", "series-slot", "");
+    value.append(toggles, plainTimed ? timesRangeOf(times, typed)
+        : fieldOf("time-field", series.minutes === null ? "" : lengthTextOf(series.minutes), "How long",
+            (time: string): void => {
+                series.minutes = time === "" ? null : minutesOf(time);
+            }, formChanged));
+    const row: HTMLElement = rowOf("Day", value);
+    row.querySelector(".entry-name")?.append(plainSwapOf(series, form));
+    return [row];
+}
+
+/**
+ * Makes the rows of the form of a plain series, see the top of this file: its summary, see {@link plainSummaryOf},
+ * its place, what it does online, its days and its time, its first and last day, its boxes and who I am with; no row
+ * of its category, which stays that of the box it opened from.
+ *
+ * @param series - The plain series
+ * @param form - The form, which holds its place, what it does online, who I am with and its days
+ * @returns The rows
+ */
+function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
+    return [rowOf("Summary", plainSummaryOf(series)),
+        ...series.category === skillName ? [semesterRowOf(series.semester || semesterOf(form.first))] : [],
+        placeRowOf(form), onlineRowOf(form),
+        ...plainTimeRowsOf(series, form), datesRowOf(form, formChanged), boxesRowOf(),
+        ...withAsked() ? peopleRowsOf(form) : []];
+}
+
+/**
+ * Makes the summary of a plain series, which every box of it takes, see the top of this file: picked as the dialog
+ * of a box picks it, see `fieldRowsOf` in `./categories.ts`, from the values of its category, the most used first,
+ * a new one typed where its category takes new ones, so not for `Sleep`, `Sport` or `Way`, several parted by `, `
+ * where it takes several, like `Caring, Shower`, in the order of the list, a way in the order picked, see `manyRowOf`
+ * there; of a skill its text to type, since what a skill box is follows from its skill. A summary picked has its pencil
+ * right after it, as in the dialog of a box, which opens its list to change it, like `Night ✎`.
+ * - `field`: The field `Summary` of its category, `undefined` for a skill, a category without one, and while
+ *   the categories are not loaded.
+ * - `title`: The field of the text of a skill.
+ * - `rankOf`: Gives where a value stands in the list, the most used first, a new one after all.
+ * - `pencil`: The pencil.
+ * - `picker`: The picker.
+ *
+ * @param series - The plain series, which takes the summary picked
+ * @returns The summary, its picker or its field
+ */
+function plainSummaryOf(series: Plain): HTMLElement {
+    const field: Field | undefined = series.category === skillName ? undefined : categories
+        .find((category: Category): boolean => category.name === series.category)?.fields
+        .find((one: Field): boolean => one.key === "title");
+    if (field === undefined) {
+        const title: HTMLInputElement = partFieldOf("text", series.title, "Summary");
+        title.addEventListener("input", (): void => {
+            series.title = title.value;
+            formChanged();
+        });
+        return title;
+    }
+    const rankOf: (value: string) => number = (value: string): number =>
+        field.values.includes(value) ? field.values.indexOf(value) : field.values.length;
+    const pencil: HTMLButtonElement = document.createElement("button");
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    pencil.hidden = series.title === "";
+    iconPut(pencil, Pencil, "Change the summary");
+    const picker: HTMLElement = choicesOf({
+        search: searchOf(field.values.map(choiceOf)),
+        picked: series.title === "" ? [] : field.many === true ? series.title.split(", ") : [series.title],
+        many: field.many === true, adding: !field.fixed, noun: "summary",
+        order: field.many !== true || field.fixed ? undefined : (chosen: string[]): string[] => [...chosen]
+            .sort((first: string, second: string): number => rankOf(first) - rankOf(second)),
+        aside: [pencil],
+        pick: (values: string[]): void => {
+            series.title = values.join(", ");
+            pencil.hidden = series.title === "";
+            formChanged();
+        },
+    });
+    pencil.addEventListener("click", (event: MouseEvent): void => {
+        event.stopPropagation();
+        picker.querySelector<HTMLButtonElement>(".picker-line")?.click();
+    });
+    return picker;
+}
+
+/**
+ * Opens the dialog for a plain series, over the dialog of a box when that opens it: the categories, for its places,
+ * platforms and people, and the people of `Persons.md` loaded, its form filled from the series, with times while
+ * it has them, each weekday a day with them, see {@link plainTimeRowsOf}, else with its length.
+ * - `loaded`: The categories and the people.
+ * - `slots`: Its weekdays with its times.
+ * - `dialog`: The dialog.
+ *
+ * @param series - The plain series, new or as the reader sends it
+ * @param saved - Comes once the series is saved, like closing the dialog of the box
+ * @throws {Error} - When the reader cannot answer
+ */
+async function plainStart(series: Plain, saved: () => void): Promise<void> {
+    const loaded: [Category[], Person[]] = await Promise.all([
+        readerAsk<Category[]>(`/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`),
+        personsKept(),
+    ]);
+    dialogStart();
+    [categories, persons] = loaded;
+    course = null;
+    repeated = null;
+    plain = series;
+    grouped = null;
+    groupBack = null;
+    removeAsked = false;
+    plainTimed = series.start !== "";
+    done = saved;
+    previewForget();
+    listOpened = false;
+    placeEdit = null;
+    placeOpen = false;
+    onlineOpen = false;
+    withOpen = false;
+    const slots: Slot[] = series.weekdays.map((weekday: number): Slot =>
+        ({ weekday: weekday, start: series.start, end: series.end }));
+    typing = {
+        type: "", old: null, slots: slots, before: slots.map((): number => 0),
+        extras: series.extras.map((extra: Extra): Extra => ({ ...extra })), location: series.location,
+        locationLink: skillFieldOf("location")?.places[series.location]?.link ?? "", online: series.online,
+        onlineLink: series.onlineLink, passcode: series.passcode, attendees: series.attendees, first: series.first,
+        last: series.last, times: {}, states: {}, kinds: {},
+    };
+    formFill();
+    const dialog: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
+    if (!dialog.open)
+        dialog.showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+}
+
+/**
+ * Opens the dialog of a plain series by its `UID`, from the series icon ⟳ after the times of one of its boxes,
+ * see `seriesShow` in `./categories.ts`, as the reader reads it back, see `plainRead` in `reader/rules.ts`.
+ *
+ * @param id - Its `UID`, like `037dba76-43d3-4e42-b85d-8e39c5ab8478@nomsystem`
+ * @param saved - Comes once the series is saved, like closing the dialog of the box
+ * @throws {Error} - When the reader cannot answer
+ */
+export async function plainOpen(id: string, saved: () => void): Promise<void> {
+    fresh = null;
+    await plainStart(await readerAsk<Plain>(`/api/day/plain?id=${encodeURIComponent(id)}`), saved);
+}
+
+/**
+ * Opens the dialog of my own learning of a module as a series, from the pencil of the card `Learning` on the page of the
+ * module, see `../editor/course.ts`: the plain series its planned boxes belong to while they belong to one, else a new
+ * one of the skill without type in the semester, its first day today, see {@link plainStart}.
+ * - `today`: Today's day.
+ *
+ * @param module - Code of the module, like `IN2028`
+ * @param semester - Its semester, like `2026W`
+ * @param id - The `UID` of the series of its boxes, empty for none
+ * @throws {Error} - When the reader cannot answer
+ */
+export async function learningOpen(module: string, semester: string, id: string): Promise<void> {
+    fresh = null;
+    if (id !== "") {
+        await plainOpen(id, (): void => {});
+        return;
+    }
+    const today: string = dayOf(new Date());
+    await plainStart({
+        id: "", category: skillName, title: "", module: module, type: "", semester: semester, location: "", online: "",
+        onlineLink: "", passcode: "", attendees: [], weekdays: [weekdayOf(today)], start: "", end: "", minutes: null,
+        first: today, last: "", extras: [], file: "",
+    }, (): void => {});
+}
+
+/**
+ * Makes the rows on top of the dialog of a new series, see {@link seriesNew}: its category, picked from those
+ * of the plan, its list open as the dialog opens, and of a skill its skill and type side by side, see `skillPairOf`
+ * in `./skill.ts`, in place of the summary its form shows below them; a pick shows the form it makes,
+ * see {@link freshFollow}.
+ * - `category`: The row of the category.
+ * - `holder`: Where skill and type show once their lists are loaded.
+ *
+ * @returns The rows
+ */
+function freshRowsOf(): HTMLElement[] {
+    if (fresh === null)
+        return [];
+    const category: HTMLElement = rowOf("Category", choicesOf({
+        search: searchOf(categories.map((one: Category): Choice => choiceOf(one.name))),
+        picked: fresh.category === "" ? [] : [fresh.category], many: false, adding: false, noun: "category",
+        pick: (values: string[]): void => {
+            if (fresh === null)
+                return;
+            fresh = { ...fresh, category: values[0] ?? "", picked: { module: "", type: "" } };
+            freshFollow().catch((error: unknown): void => console.error(error));
+        },
+    }));
+    if (fresh.category !== skillName)
+        return [category];
+    const holder: HTMLElement = elementOf("div", "", "");
+    skillPairOf(fresh.picked, (picked: ModuleType): void => {
+        if (fresh === null)
+            return;
+        fresh = { ...fresh, picked: picked };
+        freshFollow().catch((error: unknown): void => console.error(error));
+    }).then((pair: HTMLElement): void => holder.replaceChildren(pair))
+        .catch((error: unknown): void => console.error(error));
+    return [category, rowOf("Summary", holder)];
+}
+
+/**
+ * Gives the semester of the form of a series of my course: that of its course, else of the box it repeats, else
+ * the one picked for a new series, see {@link fresh}.
+ *
+ * @returns Semester like `2026W`, empty for none
+ */
+function courseSemesterOf(): string {
+    return course?.semester ?? repeated?.box.semester ?? fresh?.semester ?? "";
+}
+
+/**
+ * Makes the row `Semester` of a skill series, as the dialog of an entry has it right after its summary: the semester
+ * of the form, picked from those of its skill, never typed, see `semestersOf` in `./skill.ts`; picking another shows
+ * the form of that semester, see {@link semesterSwitch}, since a series of my course is one of a module, a type and
+ * a semester, like `IN2028` `VO` `2026W`. Of a numbered type of a module the group stands beside it, as the type
+ * beside the skill in the summary: of my series the menu of its groups with the plus, see {@link groupPickOf}, of
+ * a group its name, see {@link groupPartOf}.
+ * - `picker`: The picker of the semester.
+ * - `form`: The form.
+ * - `module`: The skill, like `IN2028`, of a course by the code of its folder.
+ * - `day`: The day whose semester comes first in the list, the first day of the form, else today.
+ * - `pair`: The semester with the group beside it, as close as the skill and its type, see `.series-semester`
+ *   in `series.css`.
+ *
+ * @param semester - The semester of the form, like `2026W`
+ * @returns The row
+ */
+function semesterRowOf(semester: string): HTMLElement {
+    const module: string = plain?.module ?? repeated?.box.module
+        ?? (course === null ? fresh?.picked.module ?? "" : course.module.split("_")[0]);
+    const day: string = typing?.first || dayOf(new Date());
+    const picker: HTMLElement = choicesOf({
+        search: async (text: string): Promise<Choice[]> => searchOf(await semestersOf(module, day, semester))(text),
+        picked: semester === "" ? [] : [semester], many: false, adding: false, noun: "semester",
+        pick: (values: string[]): void => {
+            if ((values[0] ?? semester) !== semester)
+                semesterSwitch(values[0]).catch((error: unknown): void => console.error(error));
+        },
+    });
+    const form: Form | null = typing;
+    if (plain !== null || course === null || form === null || !numberedTypes.includes(form.type))
+        return rowOf("Semester", picker);
+    const pair: HTMLDivElement = pairOf(picker, grouped === null ? groupPickOf(form) : groupPartOf());
+    pair.classList.add("series-semester");
+    return rowOf("Semester", pair);
+}
+
+/**
+ * Shows the form in another semester, as its row `Semester` picks it, see {@link semesterRowOf}: a plain series takes
+ * it as its `X-SEMESTER`; a new series from nothing follows its rows on top with it, see {@link freshFollow}; a group
+ * opens that group of the type in that semester, a new one there while it has none, see {@link groupOpen}; my series
+ * of a type that of that semester, a new one while it has none, see {@link seriesOpen}.
+ * - `module`: The folder of the module, or its code.
+ * - `type`: The type of the form, like `VO`.
+ *
+ * @param semester - The semester picked, like `2026S`
+ * @throws {Error} - When the reader cannot answer
+ */
+async function semesterSwitch(semester: string): Promise<void> {
+    if (plain !== null) {
+        plain.semester = semester;
+        formFill();
+        return;
+    }
+    if (fresh !== null && grouped === null) {
+        fresh = { ...fresh, semester: semester };
+        await freshFollow();
+        return;
+    }
+    const module: string = course?.module ?? repeated?.box.module ?? "";
+    const type: string = typing?.type ?? "";
+    if (grouped !== null)
+        await groupOpen(module, type, semester, grouped.group);
+    else
+        await seriesOpen(module, type, semester, done);
+}
+
+/**
+ * Shows the form the rows on top of the dialog of a new series picked, see {@link freshRowsOf}: while no category
+ * is picked, or of a skill no skill, those rows alone; of the exams of a module the exams of its module, see
+ * {@link seriesOpen}; of a skill of a numbered type my series of that type, see {@link seriesRepeat}; of any other
+ * a new plain series, its summary still to pick, its weekday that of the day it starts on, see {@link plainStart};
+ * the rows on top stay above every new one.
+ * - `day`: The day it starts on.
+ * - `picked`: Skill and type picked.
+ * - `names`: What they give, its title, its folder and its plan, see `skillNamesOf` in `./skill.ts`.
+ *
+ * @throws {Error} - When the reader cannot answer
+ */
+async function freshFollow(): Promise<void> {
+    if (fresh === null)
+        return;
+    const day: string = fresh.day;
+    const picked: ModuleType = fresh.picked;
+    const skill: boolean = fresh.category === skillName;
+    if (fresh.category === "" || (skill && picked.module === "")) {
+        plain = null;
+        repeated = null;
+        course = null;
+        formFill();
+        return;
+    }
+    if (skill && picked.type === examType) {
+        await seriesOpen(picked.module, examType, fresh.semester, done);
+        return;
+    }
+    if (skill && numberedTypes.includes(picked.type)) {
+        const names: { title: string; link: string; file: string } = skillNamesOf(picked);
+        const kept: { day: string; category: string; picked: ModuleType; semester: string } = fresh;
+        await seriesRepeat({
+            box: {
+                category: skillName, title: "", location: standardLineOf(), from: "", module: picked.module,
+                type: picked.type, semester: fresh.semester, note: "", day: day, time: null, minutes: null, deadline: "",
+                chapters: [], documents: [], attendees: [],
+            },
+            summary: names.title, link: names.link, file: names.file,
+        }, { slots: [{ weekday: weekdayOf(day), start: "", end: "" }], before: [0], extras: [], first: day, last: "",
+            times: {} }, done);
+        if (course !== null && course.series.some((series: Series): boolean => series.rule.type === picked.type))
+            return;
+        fresh = kept;
+        formFill();
+        return;
+    }
+    await plainStart({
+        id: "", category: fresh.category, title: "", module: skill ? picked.module : "", type: skill ? picked.type : "",
+        semester: skill ? fresh.semester : "",
+        location: standardLineOf(), online: "", onlineLink: "", passcode: "", attendees: [], weekdays: [weekdayOf(day)], start: "",
+        end: "", minutes: null, first: day, last: "", extras: [], file: "",
+    }, done);
+}
+
+/**
+ * Opens the dialog of a new series from nothing, by `⟳` beside `+` of the plan, see `boxesStart` in `./boxes.ts`:
+ * on top its category to pick, its list open, and of a skill its skill and type, see {@link freshRowsOf}; once picked,
+ * the form of what it makes below them, see {@link freshFollow}, its first day the day shown. Saving makes a plain series,
+ * my series of a type of a module, or with `Group` typed a group of its tutorials, see {@link formSave}.
+ * - `loaded`: The categories, for the list, places, platforms and people, and the people of `Persons.md`.
+ * - `dialog`: The dialog.
+ *
+ * @param day - The day shown, like `2026-10-24`, its first day
+ * @param saved - Comes once the series is saved
+ * @throws {Error} - When the reader cannot answer
+ */
+export async function seriesNew(day: string, saved: () => void): Promise<void> {
+    const loaded: [Category[], Person[]] = await Promise.all([
+        readerAsk<Category[]>(`/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`),
+        personsKept(),
+    ]);
+    dialogStart();
+    [categories, persons] = loaded;
+    fresh = { day: day, category: "", picked: { module: "", type: "" }, semester: semesterOf(day) };
+    course = null;
+    repeated = null;
+    plain = null;
+    grouped = null;
+    groupBack = null;
+    removeAsked = false;
+    done = saved;
+    previewForget();
+    listOpened = false;
+    placeEdit = null;
+    placeOpen = false;
+    onlineOpen = false;
+    withOpen = false;
+    typing = {
+        type: "", old: null, slots: [{ weekday: weekdayOf(day), start: "", end: "" }], before: [0], extras: [],
+        location: "", locationLink: "", online: "", onlineLink: "", passcode: "", attendees: [], first: day, last: "",
+        times: {}, states: {}, kinds: {},
+    };
+    formFill();
+    const dialog: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
+    if (!dialog.open)
+        dialog.showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+    formElementOf().querySelector<HTMLButtonElement>(".picker-line")?.click();
 }

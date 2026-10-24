@@ -22,12 +22,13 @@
  *
  * A skill entry of the log is one block of learning of a type, as in the plan: a lecture or a tutorial I attended,
  * a homework sheet I worked on, or study, solving the tasks of my notes, of any module of `NomSkillingmodules`,
- * also one of another semester I attend: `CATEGORIES:Skill`, its `SUMMARY` the name of the folder of its module
- * with its type in round brackets, linking the folder, for a type on into that of its material, as `ALTREP`,
- * without `X-MODULE` and `X-TYPE`,
+ * also one of another semester I attend: `CATEGORIES:Skill`, its `SUMMARY` its title, free, at first the name
+ * of the folder of its module with its type in round brackets, linking the folder, for a type on into that of its
+ * material, as `ALTREP`, which names its module and type,
  * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_…/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * see `documents.ts`; or a block of work on a project of the semester, see `activeSkills` in `sources.ts`,
- * which behaves like a module without chapters and tasks, named by its folder, like `SUMMARY:WokFlow`;
+ * which behaves like a module without chapters and tasks, linking its folder,
+ * like `SUMMARY;ALTREP="NomSystemdashboard":NomSystemdashboard`;
  * the type may stay empty for any skill, like my own learning. Below them, each only when there is one:
  * - one `ATTACH` per real document it used, like the slides of a lecture, the sheet of an exercise or the notes
  *   of a chapter, just its path, a file of the university with the fingerprint of its content, so the link survives
@@ -388,6 +389,8 @@ export type AttemptNew = {
 /**
  * A new skill entry of the log, as the entry by category sends it; an empty field is not written.
  *
+ * - `title`: Its title, `SUMMARY`, free, like `IN2028 Lecture 3 recap`, empty for the one its skill and type give it,
+ *   see `titleOf` in `documents.ts`.
  * - `type`: Its type, one of the types of `categories.ts`, like `VO`, empty for none.
  * - `module`: Name of its skill: the code of any module folder, like `IN2028`, or a project of the semester,
  *   like `WokFlow`.
@@ -410,6 +413,7 @@ export type AttemptNew = {
  * - `end`: End as ISO instant, after the start.
  */
 export type SkillEntryNew = Partial<Online> & {
+    title: string;
     type: string;
     module: string;
     semester: string;
@@ -1286,7 +1290,7 @@ function folderOf(code: string): string {
  */
 export function moduleRead(code: string): ModuleContents {
     if (projectOf(code) !== undefined)
-        return { folder: "", chapters: [], documents: [] };
+        return { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
     return moduleContentsRead(folderOf(code));
 }
 
@@ -1381,8 +1385,8 @@ function skillEntryCheck(entry: SkillEntryNew, values: string[], kept: string[],
 
 /**
  * Writes a new skill entry into the log, into the log of its skill, see `logFileOf` in `day.ts`, from the entry
- * by category: `CATEGORIES` is `Skill`, `SUMMARY` its module and type with the folder of its skill as `ALTREP`,
- * like `IN2028_BusinessAnalyticsMachineLearning (VO)`, see `titleOf` in `documents.ts`, its place and note,
+ * by category: `CATEGORIES` is `Skill`, `SUMMARY` its title with the folder of its skill and material as `ALTREP`,
+ * which names its module and type, see `titleOf` in `documents.ts`, its place and note,
  * the documents it used, see `linksOf` in `documents.ts`, one `X-CHAPTER` per chapter,
  * see {@link chaptersWith}, one `X-ATTEMPT` per attempt, and the box it is logged from, which is done then;
  * my own learning, without type and box, like the session the learning view opens, is logged from the study box
@@ -1411,7 +1415,7 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
             ? studyBoxOf(entry.module, berlinDateOf(new Date(entry.start)), chapters) ?? null : null;
     skillEntryCheck(entry, values, plan?.chapters ?? [], plan?.type ?? "");
 
-    const [title, titleLink]: [string, string] = titleOf({ ...entry, category: skillName, title: "" }, null);
+    const [title, titleLink]: [string, string] = titleOf({ ...entry, category: skillName }, null);
     const fields: EntryFields = {
         category: skillName, title: title, titleLink: titleLink, location: entry.location,
         locationLink: placeLinkOf(entry.location, plan), ...onlineFor(entry, plan), from: "",
@@ -1426,6 +1430,8 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
     own.push(...values.map((value: string): [string, string] => ["x-attempt", value]));
     if (plan !== null)
         own.push(["related-to", plan.id]);
+    if ((plan?.group ?? "") !== "")
+        own.push(["x-group", plan?.group ?? ""]);
     const id: string = entryAppend(logFileOf(fields), fields, own);
     if (plan !== null)
         boxDone(plan.id);
@@ -1435,9 +1441,9 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
 /**
  * Changes a skill entry of the log from the entry by category: its type, module, place, semester, chapters,
  * documents, note and times, and adds the new attempts after those it has, every other line as it is; the entry moves
- * into the log of its new skill when that is another file, see `logFileOf` in `day.ts`. What it is, its `SUMMARY`,
- * follows its skill and type, see `titleOf` in `documents.ts`, and its links its skill and documents, see `linksOf`
- * there: a document it had keeps its link with its fingerprint, a new one gets its own; its chapters are its
+ * into the log of its new skill when that is another file, see `logFileOf` in `day.ts`. Its title, its `SUMMARY`,
+ * is the one sent, the link of it follows its skill and type, see `titleOf` in `documents.ts`, and its links its skill
+ * and documents, see `linksOf` there: a document it had keeps its link with its fingerprint, a new one gets its own; its chapters are its
  * `X-CHAPTER`s, the folders of chapters an older entry links going. Its place keeps its link while it stays the same,
  * see `placeLinkOf` in `places.ts`. The attempts it has keep their task, also once I change its skill: then each
  * that names its task without module is written the older way, with its module, see {@link lineValueOf}, and each
@@ -1477,7 +1483,7 @@ export function skillEntryEdit(change: SkillEntryChange): boolean {
     const worked: string[] = [...tasksOf(values, change.module), ...old.tutors]
         .filter((task: string): boolean => task.split("/")[0] === change.module);
     const chapters: string[] = chaptersWith(change.chapters, worked, tasks);
-    const [title, titleLink]: [string, string] = titleOf({ ...change, category: skillName, title: "" }, old);
+    const [title, titleLink]: [string, string] = titleOf({ ...change, category: skillName }, old);
     const fields: EntryFields = {
         category: skillName, title: title, titleLink: titleLink, location: change.location,
         locationLink: placeLinkOf(change.location, old), ...onlineFor(change, old), from: "",
@@ -1503,8 +1509,8 @@ export function skillEntryEdit(change: SkillEntryChange): boolean {
  * of its section, or after the others when it has none, links the note of each section of them as an `ATTACH`
  * without fingerprint, see {@link notePathOf}, with the chapters of their tasks, and moves its end to the end
  * of the quarter hour of now, if that is later. Without an open entry of the module, starts one covering the quarter
- * hour of now: logged from the open skill box of the module for now, with its type, which is done then, else without
- * type.
+ * hour of now: logged from the open skill box of the module for now, with its type and its title, which is done then,
+ * else without type.
  * - `quarter`: End of the quarter hour of now, now rounded up to the quarter hour.
  * - `worked`: Identities of the tasks of the new lines, and for a line `X-ROUND` one task of its section.
  * - `notes`: Links to the notes of their sections, each once, without fingerprint.
@@ -1550,10 +1556,13 @@ function momentWrite(module: string, open: Entry | undefined, attempts: string[]
         ];
         if (plan !== undefined)
             own.push(["related-to", plan.id]);
+        if ((plan?.group ?? "") !== "")
+            own.push(["x-group", plan?.group ?? ""]);
         const start: Date = new Date(quarter.getTime() - quarterHour);
         const semester: string = semesterFor(skillName, plan?.semester ?? "", berlinDateOf(start));
         const [title, titleLink]: [string, string] =
-            titleOf({ category: skillName, title: "", module: module, type: type, semester: semester }, null);
+            titleOf({ category: skillName, title: plan?.title ?? "", module: module, type: type, semester: semester },
+                null);
         const fields: EntryFields = {
             category: skillName, title: title, titleLink: titleLink, location: plan?.location ?? "",
             locationLink: plan?.locationLink ?? "", online: plan?.online ?? "", onlineLink: plan?.onlineLink ?? "",

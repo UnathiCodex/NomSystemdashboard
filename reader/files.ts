@@ -7,7 +7,7 @@
  * Reads and writes only inside the folders of my new system, see `systemFiles` in `sources.ts`:
  * a Markdown file, like `NomMetainformations/Foods.md` or a daily note, to edit, written exactly as sent,
  * without a diff, since only the notes of my modules keep diffs, see `edit.ts`; an `.ics` file only to read.
- * Paths are written from `NomManageplannings` with `/`, like `NomManagecalendar/Living/2026_10_Log.ics`.
+ * Paths are written from `NomManageplannings` with `/`, like `NomManagecalendar/Living/Sleep_2026_Log.ics`.
  *
  * - `node:fs`: Lists folders, reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
@@ -90,7 +90,8 @@ function opensOf(path: string): boolean {
 }
 
 /**
- * Lists a folder of the tree, its folders first, then its files, each part by name, the left out ones not,
+ * Lists a folder of the tree, its folders first, then its files the editor opens, each part by name, any other file
+ * and the left out ones not,
  * see {@link leftOut}; a symbolic link is neither a folder nor a file here, so it is left out too.
  * - `entries`: Folders and files in it.
  *
@@ -109,7 +110,7 @@ function nodesOf(folder: string, path: string): FileNode[] {
             name: entry.name, path: inner, folder: entry.isDirectory(), opens: entry.isFile() && opensOf(inner),
             children: entry.isDirectory() ? nodesOf(join(folder, entry.name), inner) : [],
         };
-    });
+    }).filter((node: FileNode): boolean => node.folder || node.opens);
 }
 
 /**
@@ -161,7 +162,7 @@ function systemFileOf(path: string, endings: string[]): string {
 /**
  * Reads a file of my new system for the editor: a Markdown file to edit, an `.ics` file to read only.
  *
- * @param path - Path like `NomManagecalendar/Living/2026_10_Log.ics`
+ * @param path - Path like `NomManagecalendar/Living/Sleep_2026_Log.ics`
  * @returns The file with its text
  * @throws {Error} - When it is no such file, see {@link systemFileOf}
  */

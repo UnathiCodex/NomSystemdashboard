@@ -8,15 +8,24 @@
  * When the field loses focus, its time shows as `HH:MM`; any other text marks the field invalid,
  * so the browser does not send the form and says what it takes instead. An empty field is left to its `required`:
  * start and end of a log entry need a time, the expected time of a box may stay empty.
- * A date field, like the day of a deadline, takes a date in my standard way with its year, `23.10.2026`,
- * and marks itself invalid the same way.
+ * A date field, like the day of a deadline, shows its day with its weekday short after it, as every day of the page
+ * is written, `23.10.2026 (Fri)`, see {@link weekdayDateTextOf}, and says grey while empty what I type, `dd.mm.yyyy`;
+ * it takes a date in my standard way with its year, `23.10.2026`, the weekday filled in once I leave it, and marks
+ * itself invalid the same way.
+ * A box of the plan and a plain series take their time either from and to, or only how long they last, typed
+ * as a time is, like `08:00` for my sleep, a switch after the fields going from one to the other,
+ * see {@link lengthSwapOf}.
  *
- * - `../skill/attempts.ts`: Writes a date as a day.
+ * - `lucide`: The arrows of the switch between times and a length.
+ * - `../icons.ts`: Puts an icon into a button.
+ * - `../skill/attempts.ts`: Writes a date as a day, and a day with its weekday.
  * - `../today.ts`: Gives today's calendar date.
  * - `./boxes.ts`: The type of a box, for the type checker only.
  */
 
-import { dayOf } from "../skill/attempts.ts";
+import { ArrowLeftRight } from "lucide";
+import { iconPut } from "../icons.ts";
+import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
 
 import type { Box } from "./boxes.ts";
@@ -48,6 +57,47 @@ export function timeOf(date: Date): string {
  */
 export function lengthOf(minutes: number): string {
     return `${String(Math.floor(minutes / 60)).padStart(2, "0")}h\u00a0${String(minutes % 60).padStart(2, "0")}m`;
+}
+
+/**
+ * Writes minutes as a length in its field, hours and minutes as a time is written, see {@link lengthSwapOf}.
+ *
+ * @param minutes - Minutes, like 480
+ * @returns Length like `08:00`
+ */
+export function lengthTextOf(minutes: number): string {
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+/**
+ * Gives the minutes of a time or a length typed as `hh:mm`.
+ *
+ * @param time - Time like `08:30`
+ * @returns Minutes, like 510
+ */
+export function minutesOf(time: string): number {
+    const [hour, minute]: number[] = time.split(":").map(Number);
+    return hour * 60 + minute;
+}
+
+/**
+ * Makes the switch of the time of a box or a plain series between from and to and only how long it lasts, see the
+ * top of this file: the two arrows as a small icon button right beside the name of the row, like `Time ⇆`, where
+ * the plus of a row like `Chapter +` stands, in its look, see `.entry-name .plus-quiet` in `choices.ts`, saying what
+ * a click goes to.
+ * - `swap`: The switch.
+ *
+ * @param timed - Whether the time is from and to now
+ * @param click - Goes to the other
+ * @returns The switch
+ */
+export function lengthSwapOf(timed: boolean, click: () => void): HTMLButtonElement {
+    const swap: HTMLButtonElement = document.createElement("button");
+    swap.type = "button";
+    swap.className = "plus-quiet";
+    iconPut(swap, ArrowLeftRight, timed ? "Only how long" : "From and to");
+    swap.addEventListener("click", click);
+    return swap;
 }
 
 /**
@@ -124,7 +174,20 @@ export function dateTextOf(day: string): string {
 }
 
 /**
- * Reads a typed date in my standard way: day, month and year with dots between, like `23.10.2026` or `1.2.2027`.
+ * Writes a day with its weekday short after it, like `23.10.2026 (Fri)`, the value of a date field, as every day
+ * of the page is written, see `dayTextOf` in `../skill/attempts.ts`.
+ *
+ * @param day - Day like `2026-10-23`
+ * @returns Date like `23.10.2026 (Fri)`
+ */
+export function weekdayDateTextOf(day: string): string {
+    return dayTextOf(day, true);
+}
+
+/**
+ * Reads a typed date in my standard way: day, month and year with dots between, like `23.10.2026` or `1.2.2027`,
+ * also with its weekday after it, as a date field shows it, like `23.10.2026 (Fri)`, the weekday not read, since
+ * the date says it.
  * - `match`: Day, month and year of the text.
  * - `day`: The day, like `2026-10-23`.
  * - `date`: The day at noon, which is no date or another day for a day the month lacks, like `31.02.2027`.
@@ -133,7 +196,7 @@ export function dateTextOf(day: string): string {
  * @returns Day like `2026-10-23`, or `null` when the text is no date
  */
 export function dateParse(text: string): string | null {
-    const match: RegExpMatchArray | null = text.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    const match: RegExpMatchArray | null = text.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s*\([a-z]+\))?$/i);
     if (match === null)
         return null;
     const day: string = `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
@@ -204,20 +267,22 @@ export function timeFieldStart(field: HTMLInputElement): void {
 }
 
 /**
- * Starts a date field: it marks itself invalid while its text is neither empty nor a date, and writes its date
- * as `DD.MM.YYYY` when it loses focus, like `01.02.2027` of `1.2.2027`.
+ * Starts a date field: while empty it says grey what it takes, `dd.mm.yyyy`, as a time field says `hh:mm`;
+ * it marks itself invalid while its text is neither empty nor a date, and writes its date with its weekday when it
+ * loses focus, like `01.02.2027 (Mon)` of `1.2.2027`, see {@link weekdayDateTextOf}.
  * - `change`: Comes when a changed field loses focus.
  * - `day`: Typed date as day, `null` when it is no date.
  *
  * @param field - Date field, like `<input class="date-field">`
  */
 export function dateFieldStart(field: HTMLInputElement): void {
+    field.placeholder = "dd.mm.yyyy";
     field.addEventListener("input", (): void =>
         field.setCustomValidity(field.value.trim() !== "" && dateParse(field.value) === null
             ? "Date like 23.10.2026" : ""));
     field.addEventListener("change", (): void => {
         const day: string | null = dateParse(field.value);
-        field.value = day === null ? field.value : dateTextOf(day);
+        field.value = day === null ? field.value : weekdayDateTextOf(day);
     });
 }
 

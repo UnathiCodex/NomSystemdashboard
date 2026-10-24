@@ -1,5 +1,5 @@
-/* Course of a module on its page, above its chapters, see `course.ts`: one card per type, a breath apart as
-   the chapters below the thin line, see `.overview-list` in `overview.css`, then the plus that adds a series */
+/* Course of a module on its page, see `course.ts`: one card per type, a breath apart, its first name as high as
+   the name of a chapter on its page, see `.overview-list` in `overview.css` */
 .overview-course {
     display: flex;
     flex-direction: column;
@@ -7,228 +7,107 @@
     margin-top: 0.75rem;
 }
 
-/* The plus after the cards and `No series yet` before it, in line with the names of the cards */
-.overview-course > .plus-quiet,
-.overview-course > .plan-none {
-    margin-left: 1.25rem;
+/* A thin grey line over the whole width between two cards, as between the sections of the plan, see `.plan-section`
+   in `../day/boxes.css`, as much room below it as above it */
+.course-card + .course-card {
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
 }
 
-/* Heading of a card: its type at the left, bold as the name of a chapter, see `.overview-chapter`, and at its right
-   its rule, small and grey as the line of a box, its room a link, then the pencil; in line with the text of its rows,
-   as the line of a chapter's name */
+/* Heading of a card: its type at the left, bold as the name of a chapter, see `.overview-chapter`, the pencil right
+   after it, and at its right the menu of the group pinned of a type with groups, see `../day/groups.css`; in line with
+   the text of its rows, as the line of a chapter's name; the type and its pencil in the size of its name, so the pencil
+   meets the middle of its small letters, see `.entry-pencil` in `../day/day.css` */
 .course-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: var(--gap);
-    padding: 0 1.25rem;
 }
 
-.course-rule {
+.course-title {
     display: flex;
     align-items: baseline;
-    min-width: 0;
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
+    font-size: 1rem;
 }
 
 /* The folder of the material of the semester below the heading, small and grey, as close below it as an address
-   below its place */
+   below its place, in line with the heading: a link only as wide as its text, see `folderLinkOf` in `course.ts`,
+   in the grey of a link of the page, never underlined, lighter under the pointer, softly as every hover, see
+   `--hover-in` in `../variants.css` */
 .course-folder {
-    margin: -0.5rem 0 0;
-    padding: 0 1.25rem;
+    align-self: flex-start;
+    margin-top: -0.5rem;
     font-size: 0.8125rem;
     color: var(--text-muted);
+    text-decoration: none;
     overflow-wrap: anywhere;
+    transition: color var(--hover-out);
 }
 
-/* A row of a box on one grid, as the row of a section of a chapter, see `.overview-row`, as high as a row of the tree:
-   its type and number, as wide as the widest, `HU 12`, its day, as wide as the widest, `Wed, 30.12.2026`, grey its
-   times, place and people, going on below where they do not fit, the picker of its group, what stands at its right,
-   like `Next`, and its `⋯` or its state, as wide as either; a grey under the pointer, as a row of a chapter, a tap
-   on it opening its box */
-.course-row {
-    display: grid;
-    grid-template-columns: 3rem 7.5rem minmax(0, 1fr) auto auto 2.125rem;
-    column-gap: 1rem;
-    align-items: center;
-    min-height: var(--tree-row-height);
-    padding-left: 0.75rem;
-    border-radius: var(--chip-radius);
+a.course-folder:hover {
+    color: var(--text-main);
+    transition: color var(--hover-in);
+}
+
+/* The folder not there yet, see `folderLinkOf` in `course.ts`: no link, so a step fainter than a link and nothing
+   under the pointer */
+.course-folder-none {
+    opacity: 0.6;
+}
+
+/* The list of a card, the rows of the list of the boxes in the dialog of a series, see `.series-row`
+   in `../day/series.css`, built by the same code, see `listRowOf` in `../day/rows.ts`, without its months, each
+   row's day naming its month and year: its rows one below the other, from the left edge of the card's text, in line
+   with its heading, every row on the same columns, folded or not */
+.course-list {
+    display: flex;
+    flex-direction: column;
     font-variant-numeric: tabular-nums;
-    cursor: pointer;
 }
 
-.course-row:hover {
-    background: var(--chosen);
-}
-
-.course-what,
-.course-day,
-.course-mark {
-    white-space: nowrap;
-}
-
-.course-meta {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    overflow-wrap: anywhere;
-}
-
-/* The `⋯` of an open box and the state of one no longer open in the last column, centred on its row, see `menu.css`
-   and `.box-state` in `../day/boxes.css`, not placed as in a box of the plan */
-.course-row .menu-place {
+/* The line of counts of a card, see `countsOf` in `course.ts`, as the line of the boxes of a series, see
+   `.series-summary` in `../day/series.css`, with a little more room above and below it than that line, so it stands
+   apart from the folder above it and the rows below it; without a click while no row folds */
+.course-counts {
     display: flex;
-    justify-content: center;
+    align-items: baseline;
+    margin-block: 0.375rem;
 }
 
-.course-row .box-state {
-    grid-row: auto;
-    grid-column: auto;
-    justify-self: center;
-    margin: 0;
+.course-still {
+    cursor: auto;
 }
 
-/* A box done, and one not done whose day is over, its type, number and day grey, as a done box of the plan,
-   see `.box-done` in `../day/boxes.css`; one I skipped or the university cancelled faded, as in the plan */
-.course-done .course-what,
-.course-done .course-day,
-.course-missed .course-what,
-.course-missed .course-day {
+/* The chevron after the counts while some rows fold, down while folded, up while open: as small as the icons of the
+   counts, in the middle of the line as they are, grey and apart from the last count */
+.course-counts .series-summary > svg.lucide {
+    align-self: center;
+    width: 0.9375rem;
+    height: 0.9375rem;
+    margin-left: 1rem;
     color: var(--text-muted);
 }
 
-.course-dropped,
-.course-university {
-    opacity: 0.55;
-}
-
-/* A folded line of a card, like `✓ 1 done`, `11 more · until 01.02.2027` or `10 groups`: a row of its own, grey,
-   its words light under the pointer, as of every button with words, never on a grey box, its check a letter high */
-.course-fold {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    min-height: var(--tree-row-height);
-    padding: 0 0.75rem;
-    border: 0;
-    border-radius: var(--chip-radius);
-    background: none;
-    color: var(--text-muted);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-}
-
-.course-fold:hover {
-    color: var(--text-main);
-}
-
-.course-fold svg.lucide {
-    width: 0.875rem;
-    height: 0.875rem;
-}
-
-/* The group of a box in its row and my group in a heading: the dashboard's own picker, see `../day/choices.ts`,
-   its line small and grey as the times beside it, lighter under the pointer, `⇄` after it while the box goes to another
-   group than mine; its list right under its line, its right edge under the line's, as wide as its values */
-.course-pick .picker-line {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
-.course-pick .picker-line:hover {
-    color: var(--text-main);
-}
-
-.course-pick .picker-box {
-    left: auto;
-    right: anchor(--list-field right);
-    width: max-content;
-    min-width: 18rem;
-    max-width: 32rem;
-}
-
-.course-other {
-    margin-left: 0.375rem;
+/* Month above the rows of a card where a new month begins, see `monthsOf` in `course.ts`: small and grey, like `Oct 2026`,
+   as the months of the list of a series, see `.series-month` in `../day/series.css`; a little room above it but
+   before the first */
+.course-month {
+    margin: 0.75rem 0 0.375rem;
     font-size: 0.8125rem;
     color: var(--text-muted);
 }
 
-/* The group of a box no longer to move, like a tutorial done, grey and small as the line of the picker */
-.course-group {
-    font-size: 0.8125rem;
-    color: var(--text-muted);
-    white-space: nowrap;
+.course-month:first-child {
+    margin-top: 0;
 }
 
-/* The line of the week of the groups of a type, see `course.ts`: a row of its own, small and grey as the line
-   of a box, its number and its days between the arrows, then the icon back to this week, faded and off on this week,
-   all three icon buttons, see `.icon-button` in `../base.css` */
-.course-week {
-    display: flex;
+/* The one line of a card whose rows all fold, see `foldedOf` in `course.ts`, like `⌄ 1 done`: small and grey as
+   the counts, its chevron before its words */
+.course-folded {
+    display: inline-flex;
+    align-self: start;
     align-items: center;
     gap: 0.25rem;
-    min-height: var(--tree-row-height);
-    padding: 0 0.75rem;
     font-size: 0.8125rem;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.course-week button {
-    width: 1.75rem;
-    height: 1.75rem;
-}
-
-.course-week svg.lucide {
-    width: 0.875rem;
-    height: 0.875rem;
-}
-
-/* A session of a group in that week, on the grid of a box, see `.course-row`: a grey under the pointer, lighter than
-   the grey of the session I go to, its circle filled; a session over its day grey, its circle faded; a row whose click
-   picks nothing without the hand */
-.course-session:hover {
-    background: var(--fill-over);
-}
-
-.course-on,
-.course-on:hover {
-    background: var(--chosen);
-}
-
-.course-fixed {
-    cursor: default;
-}
-
-.course-ring {
-    width: 1.125rem;
-    height: 1.125rem;
-    border: 1px solid var(--text-muted);
-    border-radius: 50%;
-}
-
-.course-on .course-ring {
-    border-color: var(--text-main);
-    background: var(--text-main);
-    box-shadow: inset 0 0 0 0.25rem var(--chosen);
-}
-
-.course-over .course-day {
-    color: var(--text-muted);
-}
-
-.course-over .course-ring {
-    opacity: 0.45;
-}
-
-/* `No group meets this week`, grey, in line with the text of the rows */
-.course-none {
-    margin: 0;
-    padding: 0 0.75rem 0.5rem;
-    color: var(--text-muted);
 }

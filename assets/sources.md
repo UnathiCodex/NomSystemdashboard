@@ -18,11 +18,11 @@ The page draws them from the npm package `lucide`, see `src/icons.ts`; the five 
 
 | Icon | Where |
 |---|---|
-| [calendar-1.svg](icons/calendar-1.svg) | Area Day |
+| [calendar-1.svg](icons/calendar-1.svg) | Area NomManagecalendar |
 | [book-open-text.svg](icons/book-open-text.svg) | Area Scripts, NomSkillingmodules |
 | [folder-open.svg](icons/folder-open.svg) | Area NomManageplannings |
 | [graduation-cap.svg](icons/graduation-cap.svg) | Area Skill |
-| [utensils.svg](icons/utensils.svg) | Area Food |
+| [utensils.svg](icons/utensils.svg) | Area NomMetafoods |
 | [chevron-left.svg](icons/chevron-left.svg), [chevron-right.svg](icons/chevron-right.svg) | Day, month and food before and after |
 | [chevrons-left.svg](icons/chevrons-left.svg), [chevrons-right.svg](icons/chevrons-right.svg) | Year before and after in the month |
 | [calendar-check.svg](icons/calendar-check.svg) | Back to today |

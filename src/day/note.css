@@ -48,12 +48,12 @@
     margin-right: 0.25rem;
     background: var(--text-muted);
     mask: var(--fold-icon) center / 0.875em no-repeat;
-    transition: rotate 100ms ease-in-out, background-color 150ms;
+    transition: rotate 100ms ease-in-out, background-color var(--hover-out);
 }
 
 .note-fold:hover::before {
     background: var(--text-main);
-    transition: rotate 100ms ease-in-out, background-color 150ms 100ms;
+    transition: rotate 100ms ease-in-out, background-color var(--hover-in);
 }
 
 .note-folded .note-fold::before {

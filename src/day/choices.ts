@@ -15,8 +15,8 @@
  * A search field at its top, like `Search or add a place`, filters the values as I type, ignoring case and accents:
  * a value matches when each typed word stands somewhere in its name, so `mensa garch` finds `Mensa-Garching`;
  * Enter picks the first match. Each value shows its whole name, its detail grey beside it, like the address
- * of a place; where a list takes new values, the small grey plus with the typed text, like `+ “Zz”`, stands at its end
- * while no value has that text, and adds it, or first asks for what a new value needs, like the address of a new
+ * of a place; where a list takes new values, the small grey plus with the typed text, like `+ “Zz”`, or with what it
+ * makes of it, like `+ New module IN2346_DeepLearning`, stands at its end while no value has that text, and adds it, or first asks for what a new value needs, like the address of a new
  * place; with nothing typed it shows nowhere, so a plus inside a list always names what it adds;
  * a fixed list, like the categories, has none.
  * Values keep their order, like the most used first; a group, like `Due today`, stands above its first value.
@@ -26,20 +26,23 @@
  * The values come from a search function, so a list can later come from the reader, like the foods.
  * A short list that takes no new values, like the types, needs no search field and has none.
  * A value wider than its row goes on below, never cut, a long name broken where its parts meet,
- * see {@link breakableOf}.
+ * see {@link breakableOf}. A value picked that opens what it names, like a person of `Persons.md` in `With`,
+ * is a link in the line, see {@link lineValueOf}.
  *
  * - `../icons.ts`: Puts the one plus into a line that adds, or before the typed text it adds, and the one `×`
  *   into the button that takes a value back, and makes the search field of a list.
  * - `../search.ts`: Compares a typed text with the values, as every search of the page does.
+ * - `../persons.ts`: Puts the people of a line apart by a middle dot.
  */
 
 import { crossPut, plusPut, plusTake, plusTypedPut, searchFieldOf } from "../icons.ts";
 import { matchesAll, searchTextOf, wordsOf } from "../search.ts";
+import { peopleOf } from "../persons.ts";
 
 
 /**
  * Marks where a long name may go on over a next line, where it is wider than its room, as on a phone, in the line
- * of a field and in the documents of a box of the day: after each `_` and between a small and a capital letter, so
+ * of a field: after each `_` and between a small and a capital letter, so
  * `IN0004_EinfuehrungRechnerarchitektur (VO)` breaks into `IN0004_Einfuehrung` and `Rechnerarchitektur (VO)`
  * instead of right after `Skill:` and within a word, see `.picker-line` in `choices.css`; the mark is a space
  * of no width, U+200B, which shows nothing.
@@ -52,10 +55,75 @@ export function breakableOf(text: string): string {
 }
 
 /**
+ * Marks where a path may go on over a next line, where it is wider than its room, as on a phone: after each `/`
+ * and where the parts of a name meet, see {@link breakableOf}.
+ *
+ * @param path - Path from `NomWorkspace` on, like `NomManageplannings/NomMetainformations/Foods.md`
+ * @returns The same path with the marks
+ */
+export function pathBreakableOf(path: string): string {
+    return breakableOf(path).replaceAll("/", "/\u200b");
+}
+
+/**
+ * Writes the name of a file into its line, whole where it fits, else cut in its middle and not at its end, so its
+ * ending stays in sight, the `…` right before it, like `IN2028_BusinessAnalyticsMach…_Plan.ics` beside
+ * `IN2028_BusinessAnalyticsMach…_Log.ics`; the name whole as its tooltip. Its ending is its last part from its last `_`
+ * on, with its extension, where that is the shorter part of the name, like `_Plan.ics`, else its extension alone, like
+ * `.md` of `IN2028_BusinessAnalyticsMachineLearning.md`, so the code of the module at its start stays in sight too;
+ * a name with neither ends in `…`; a path keeps its last name from its last `/` on instead, like
+ * `VO_UniversityLecture…/TUM_2026W`. Its start keeps as many letters as fit, measured in the font of the line, see
+ * {@link measurer}, once the line shows and again whenever its width changes, like when its folder opens, and once
+ * the font of the page has loaded, which changes the room the name takes, as for the name of a meal, see `dishNameOf`
+ * in `../food/meals.ts`; while the line does not show, like in a closed folder, it stays as it is.
+ * - `slash`, `under`, `dot`: Where its last `/`, its last `_` and its last `.` stand, `-1` for none.
+ * - `cut`: Where its ending starts, its length for no ending.
+ * - `room`: Width the line has for the name, when last fitted, `0` while it does not show.
+ * - `fit`: Writes the name into that room: whole, else with a letter less of its start before the `…` each time
+ *   until it fits.
+ * - `start`: Letters of its start kept.
+ * - `text`: The name as it shows.
+ *
+ * @param line - Line of the name, as wide as its room whatever it holds, like a row of the tree
+ * @param name - Name of the file, like `IN2028_BusinessAnalyticsMachineLearning_Plan.ics`, or a path of folders,
+ *   like `VO_UniversityLectureLessons/TUM_2026W`
+ */
+export function middleCutPut(line: HTMLElement, name: string): void {
+    const slash: number = name.lastIndexOf("/");
+    const under: number = name.lastIndexOf("_");
+    const dot: number = name.lastIndexOf(".");
+    const cut: number = slash > 0 ? slash : under > name.length - under ? under : dot > 0 ? dot : name.length;
+    let room: number = 0;
+    const fit: () => void = (): void => {
+        if (room === 0)
+            return;
+        const style: CSSStyleDeclaration = getComputedStyle(line);
+        measurer.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        let start: number = cut;
+        let text: string = name;
+        while (measurer.measureText(text).width > room && start > 0) {
+            start -= 1;
+            text = `${name.slice(0, start)}…${name.slice(cut)}`;
+        }
+        line.textContent = text;
+    };
+    line.textContent = name;
+    line.title = name;
+    new ResizeObserver((entries: ResizeObserverEntry[]): void => {
+        const now: number = entries[0]?.contentRect.width ?? room;
+        if (now === room)
+            return;
+        room = now;
+        fit();
+    }).observe(line);
+    document.fonts.ready.then(fit).catch((error: unknown): void => console.error(error));
+}
+
+/**
  * A value to pick.
  *
  * - `value`: Value, like `IN2028/Airline Revenue Interval`.
- * - `text`: Text shown and searched, like `Airline Revenue Interval · due Mon, 12.10.2026`.
+ * - `text`: Text shown and searched, like `Airline Revenue Interval · due 12.10.2026 (Mon)`.
  * - `group`: Name of its group, like `Due today`, empty for none.
  * - `detail`: Grey detail beside the text in the list, like the address of a place; left out for none.
  */
@@ -75,6 +143,8 @@ export type Choice = {
  * - `adding`: Whether the plus with the typed text at the end of the list adds it as a new value.
  * - `add`: Takes the typed text as a new value before it is picked, like a new place, which the reader writes,
  *   and gives the value to pick, `null` to pick none; left out, the plus picks the typed text itself.
+ * - `newTextOf`: Gives what the plus shows for the typed text, like `New module IN2346_DeepLearning`
+ *   for `IN2346 Deep Learning`, `null` to offer no plus for it; left out, the typed text in quotes, like `“skyr”`.
  * - `pick`: Takes the values picked after each change, in the order they were picked, or in `order`; for a list
  *   of one value once it is closed.
  * - `order`: Puts the values picked of a list of several in the order the line shows and `pick` takes them,
@@ -95,6 +165,10 @@ export type Choice = {
  *   back in its picker once a value shows; false when left out.
  * - `textOf`: Text of a value picked before its list ever opened, like the name and day of a cooking
  *   of its identifier; the value itself when left out.
+ * - `people`: Whether the values are people, like those of `With`, whose names hold a comma, parted in the line
+ *   by a middle dot, like `Bichler, Martin · Willi`, see `peopleOf` in `../persons.ts`; parted by `, ` when left out.
+ * - `linkOf`: Address a value picked opens from the line, like the row of a person in `Persons.md`, empty for a value
+ *   that opens nothing, see {@link lineValueOf}; every value plain text when left out.
  */
 export type ChoicesSetup = {
     search: (text: string) => Promise<Choice[]>;
@@ -102,6 +176,7 @@ export type ChoicesSetup = {
     many: boolean;
     adding: boolean;
     add?: (text: string) => Promise<string | null>;
+    newTextOf?: (text: string) => string | null;
     pick: (values: string[]) => void;
     order?: (values: string[]) => string[];
     empty?: string;
@@ -112,6 +187,8 @@ export type ChoicesSetup = {
     plus?: boolean;
     besideName?: boolean;
     textOf?: (value: string) => string;
+    people?: boolean;
+    linkOf?: (value: string) => string;
 };
 
 /**
@@ -146,6 +223,13 @@ export type AddedSetup = {
  * a list with more gets one above it.
  */
 const searchedLength: number = 60;
+
+/**
+ * Measures how wide a text is in the font of a line without showing it, see {@link middleCutPut}: the drawing
+ * of a canvas never put into the page, which measures a text exactly as the page writes it.
+ */
+const measurer: CanvasRenderingContext2D =
+    document.createElement("canvas").getContext("2d") as CanvasRenderingContext2D;
 
 /**
  * The picker whose list is open, `null` while none is, so only one list is open at a time, see {@link listOf}.
@@ -253,6 +337,31 @@ function valueButtonOf(choice: Choice, chosen: boolean, click: () => void): HTML
 }
 
 /**
+ * Makes a value picked in the line of its picker, see `linkOf` of {@link ChoicesSetup}: one that opens what it names,
+ * like a person its row in `Persons.md`, a link of its own in the line, see `.picker-link` in `choices.css`, which
+ * a click follows in this window instead of opening the list; a span, since the line is a button, which holds
+ * no real link. Any other value its plain text.
+ * - `link`: The value as a link.
+ *
+ * @param text - Text of the value, like `Bichler, Martin`
+ * @param address - Address it opens, like `/edit?file=NomMetainformations%2FPersons.md&row=Bichler%2C%20Martin`,
+ *   empty for none
+ * @returns The value as the line shows it
+ */
+function lineValueOf(text: string, address: string): string | HTMLSpanElement {
+    if (address === "")
+        return breakableOf(text);
+    const link: HTMLSpanElement = document.createElement("span");
+    link.className = "picker-link";
+    link.textContent = breakableOf(text);
+    link.addEventListener("click", (event: MouseEvent): void => {
+        event.stopPropagation();
+        location.assign(address);
+    });
+    return link;
+}
+
+/**
  * Makes a list that the line of a field opens and closes as a menu of its own over the dialog, see the top
  * of this file, the same for every list of the dialogs: a popover of the browser, `manual`, so this file alone
  * decides when it closes, which the anchors of CSS place right under the line that opened it, as wide as the values
@@ -341,11 +450,13 @@ export function listOpen(box: HTMLElement): boolean {
  * - `close`: Closes the list.
  * - `linePlace`: Puts the line beside the name of its row while it shows the plus, see `besideName`
  *   of {@link ChoicesSetup}, else back at the start of its head; nothing before the picker stands in a row.
- * - `lineShow`: Shows the texts of the values picked in the line, or nothing without them.
+ * - `lineShow`: Shows the texts of the values picked in the line, each that opens what it names a link, see
+ *   {@link lineValueOf}, or nothing without them.
  * - `toggle`: Picks a value or takes it back, shows it in the line, and tells the dialog; a list of one value
  *   closes first.
  * - `show`: Shows the values found for the text of the search field, unless a newer text came meanwhile,
- *   and shows the plus with the typed text while no value has it.
+ *   and shows the plus with what it adds for the typed text, see `newTextOf` of {@link ChoicesSetup}, while no value
+ *   has that text.
  * - `typedPick`: Picks the value Enter or the plus gives, empties the search and shows all values again,
  *   the value picked scrolled into sight, like a new dish at the end of a long list; a value picked already,
  *   like the place an entry kept, now added to my places, stays picked, and the dialog is told again.
@@ -382,8 +493,9 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
             head.prepend(line);
     };
     const lineShow: () => void = (): void => {
-        const text: string = chosen.map((value: string): string => texts.get(value) ?? setup.textOf?.(value) ?? value)
-            .join(", ");
+        const shown: string[] = chosen.map((value: string): string =>
+            texts.get(value) ?? setup.textOf?.(value) ?? value);
+        const text: string = shown.join(setup.people === true ? " · " : ", ");
         if (text === "" && setup.plus === true) {
             plusPut(line, setup.empty ?? "");
             line.classList.add("picker-empty");
@@ -393,6 +505,13 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         linePlace(false);
         plusTake(line);
         line.textContent = text === "" ? setup.empty ?? "" : breakableOf(text);
+        const values: (string | Node)[] = chosen.map((value: string, index: number): string | Node =>
+            lineValueOf(shown[index], setup.linkOf?.(value) ?? ""));
+        if (text !== "" && setup.people === true)
+            line.replaceChildren(...peopleOf(values));
+        else if (text !== "" && setup.linkOf !== undefined)
+            line.replaceChildren(...values.flatMap((value: string | Node, index: number): (string | Node)[] =>
+                [...(index === 0 ? [] : [", "]), value]));
         line.title = setup.locked ? "As planned" : text;
         line.classList.toggle("picker-empty", text === "");
     };
@@ -433,9 +552,10 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
             group.textContent = choice.group;
             return [group, button];
         }));
-        newButton.hidden = text === "" || found.some((choice: Choice): boolean =>
+        const newText: string | null = setup.newTextOf === undefined ? `“${text}”` : setup.newTextOf(text);
+        newButton.hidden = text === "" || newText === null || found.some((choice: Choice): boolean =>
             searchTextOf(choice.value) === searchTextOf(text) || searchTextOf(choice.text) === searchTextOf(text));
-        plusTypedPut(newButton, text);
+        plusTypedPut(newButton, newText ?? "");
     };
     const typedPick: (value: string) => void = (value: string): void => {
         input.value = "";
@@ -715,6 +835,26 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
     });
     row.append(label, picker);
     return row;
+}
+
+/**
+ * Shows the file of the entry of a dialog, the box of a plan, the entry of a log, a series or a birthday, at the left
+ * of its buttons, small and grey, see `.panel-file` in `day.css`: only its name after `…/`, since it is no whole path,
+ * like `…/WI1059_FinancialAccounting_Plan.ics`, so it stays on one line beside the buttons, its whole path from `NomWorkspace`
+ * on as its title, like `NomManageplannings/NomManagecalendar/Modules/WI1059_FinancialAccounting_Plan.ics`; a link
+ * that opens it in the editor of my new system, whose paths start inside `NomManageplannings`, like
+ * `/edit?file=NomManagecalendar%2FModules%2FWI1059_FinancialAccounting_Plan.ics`; hidden while the file
+ * is not known, like that of a new entry before its category is picked. Where even the name is wider than its room,
+ * as on a phone, it goes on below where the parts of the name meet, see {@link pathBreakableOf}.
+ *
+ * @param link - The link at the left of the buttons
+ * @param file - Path of the file from `NomWorkspace` on, empty while not known
+ */
+export function fileShow(link: HTMLAnchorElement, file: string): void {
+    link.textContent = pathBreakableOf(`…/${file.slice(file.lastIndexOf("/") + 1)}`);
+    link.title = file;
+    link.href = `/edit?file=${encodeURIComponent(file.replace(/^NomManageplannings\//, ""))}`;
+    link.hidden = file === "";
 }
 
 /**

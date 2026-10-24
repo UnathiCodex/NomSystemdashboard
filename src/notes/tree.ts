@@ -3,34 +3,41 @@
  *
  * The tree on the left of the editor, see `../editor/editor.ts`, which is the scripts view too,
  * as Obsidian's file explorer, of one of two roots at a time, each an area of its own in the rail:
- * - `NomSkillingmodules`, the book, the modules of the semester, one at a time, since I learn one module at a time:
- *   right below the name of the root the module picked, then its chapter picked, each a picker whose arrow brings
- *   its menu down below it and whose name opens the overview of the module, see {@link pickerOf}, then the notes
- *   of that chapter as a plain list, nothing folding, which open in the scripts view to write, saved right into their files;
+ * - `NomSkillingmodules`, the book, every module of mine, one at a time, since I learn one module at a time:
+ *   right below the name of the root the module picked, then its chapter picked, each a line of plain text that opens
+ *   its menu beside the tree, a pick in it opening the page of the module or of the chapter, see {@link pickerOf},
+ *   then the notes of that chapter as a plain list, nothing folding, which open in the scripts view to write, saved
+ *   right into their files;
+ *   while no module is picked, on the start of the scripts, its search and every module below the name of the root
+ *   instead, grouped by semester, see {@link choiceListOf}, a pick opening the page of the module;
  * - `NomManageplannings`, the open folder, my new system, as the reader lists it, without my old system
  *   `NomSystemprevious`, see `reader/files.ts`: a Markdown file, like `Foods.md`, opens in the editor to edit,
  *   an `.ics` file as its plain text to read, any other file shows faint and opens not.
- * The name of the root stands on top as a heading that never folds, so nothing lies deeper than it needs.
+ * The name of the root stands on top as a heading that never folds, so nothing lies deeper than it needs; that of my
+ * modules a link to their start, the name of my new system no link.
  * Of my modules the module and chapter of the note shown are picked; while none is shown, the module asked for,
- * else the first, with its first chapter. Of my new system its folders stand right below, folders first,
- * all closed but those on the way to the file shown.
- * Of my new system a search filters the tree as I type, see {@link searchStart}; my modules have none, their chapter
- * is short enough to see; the name of either root on top is no link.
+ * with its first chapter, else none, the start then showing.
+ * Of my new system its folders stand right below, folders first, all closed but those on the way to the file shown.
+ * Of my new system a search filters the tree as I type, see {@link searchStart}; of my modules one their list on the
+ * start and in the menu of their picker, see {@link choiceListOf}, their chapter short enough to see without.
  * Under the note shown stands its outline, as Obsidian's outline, see {@link outlineShow}; under a section its blocks
  * in the places of its round, see {@link roundListOf}; a click on the note shown folds them away, as a folder closes,
  * and a further click opens them again, see {@link outlineFold}.
- * Each name stands on one line, one too long for it ending in dots; its look is in `./notes.css`.
+ * Each name stands on one line, one too long for it ending in dots, a file of my new system cut in its middle instead,
+ * so its ending stays in sight, like `IN2028_BusinessAnalyticsMach…_Plan.ics`, see {@link fileNodeOf}; each whole
+ * as its tooltip; its look is in `./notes.css`.
  *
  * - `../search.ts`: Compares a typed text with the paths of the files and notes, as every search of the page does.
- * - `../day/choices.ts`: Marks where a long name may go on below.
+ * - `../day/choices.ts`: Marks where a long name may go on below, and cuts the name of a file in its middle.
  * - `./markdown.ts`, `./math.ts`: Render the headings of the outline, their formulas as in the note.
- * - `lucide`, `../icons.ts`: The check and the cross of a block done in its round, and the search field of my new system.
+ * - `lucide`, `../icons.ts`: The check and the cross of a block done in its round, and the search fields of my new
+ *   system and of my modules.
  * - `../reader.ts`: Asks the reader for the tree.
  * - `../changes.ts`: Loads the tree of my new system anew after every change of its files, see {@link filesAgain}.
  */
 
 import { matchesAll, wordsOf } from "../search.ts";
-import { breakableOf } from "../day/choices.ts";
+import { breakableOf, middleCutPut } from "../day/choices.ts";
 import { inlineHtmlOf } from "./markdown.ts";
 import { mathRender } from "./math.ts";
 import { iconOf, searchFieldOf } from "../icons.ts";
@@ -79,21 +86,26 @@ type Chapter = {
 };
 
 /**
- * A module of the semester with its chapters, as the reader sends it.
+ * A module with its chapters, as the reader sends it, in the order of the list of the modules, see `menuRead`
+ * in `reader/notes.ts`.
  *
  * - `name`: Name of its folder, like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `title`: Its name, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `semester`: The semester it stands under in the list: for a module of the semester that of today, like `2026W`,
+ *   else the last I took it in, like `2026S`, empty for none.
  * - `chapters`: Its chapters that hold notes, in order.
  */
-type NotesModule = {
+export type NotesModule = {
     name: string;
     title: string;
+    semester: string;
     chapters: Chapter[];
 };
 
 
 /**
- * Makes a folder of the tree that folds, like a chapter: its name, and below it the place of its entries.
+ * Makes a folder of the tree that folds, like a chapter: its name, whole as its tooltip, and below it the place of its
+ * entries.
  *
  * @param name - Name shown, like `01_RegressionAnalysis`
  * @returns Folder, its entries to go into its last child
@@ -104,6 +116,7 @@ export function folderOf(name: string): HTMLDetailsElement {
     const children: HTMLDivElement = document.createElement("div");
     folder.className = "tree-folder";
     summary.textContent = breakableOf(name);
+    summary.title = name;
     children.className = "tree-children";
     folder.append(summary, children);
     return folder;
@@ -124,11 +137,11 @@ export function noteAddressOf(path: string, heading: string): string {
 }
 
 /**
- * Builds the address of the overview of a module in the scripts view, see `../editor/overview.ts`, with the chapter
- * to pick in the tree.
+ * Builds the address of the page of a module in the scripts view, see `../editor/overview.ts`, or of one of its
+ * chapters, which the tree picks too.
  *
  * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
- * @param chapter - Name of the chapter, like `01_RegressionAnalysis`, empty for none
+ * @param chapter - Name of the chapter, like `01_RegressionAnalysis`, empty for the page of the module
  * @returns Address like `/scripts?module=…&chapter=…`
  */
 export function overviewAddressOf(module: string, chapter: string): string {
@@ -139,9 +152,85 @@ export function overviewAddressOf(module: string, chapter: string): string {
 }
 
 /**
+ * Builds the address of a folder of my modules in the scripts view, see `../editor/folder.ts`.
+ *
+ * @param path - Path of the folder from `NomSkillingmodules`,
+ *   like `IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`
+ * @returns Address like `/scripts?folder=…`
+ */
+export function folderAddressOf(path: string): string {
+    return `/scripts?folder=${encodeURIComponent(path)}`;
+}
+
+/**
+ * Finds the place in `NomWorkspace` a relative link of a file leads to, as VSCodium follows it: from the folder
+ * of the file, each `..` one folder up, `.` staying; `%20` and the like decoded, as the reader reads a link.
+ * - `parts`: The folders on the way so far, from `NomWorkspace`.
+ * - `decoded`: The link decoded, as written when it cannot be decoded.
+ *
+ * @param file - Path of the file in `NomWorkspace`,
+ *   like `NomManageplannings/NomModulesuniversity/IN2028_BusinessAnalyticsMachineLearning.md`
+ * @param link - Link as written, before `#`, like `../../NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`
+ * @returns Its path in `NomWorkspace`, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
+ *   `null` for a link from `/` or one leading out of `NomWorkspace`
+ */
+export function linkPlaceOf(file: string, link: string): string | null {
+    if (link.startsWith("/"))
+        return null;
+
+    const parts: string[] = file.split("/").slice(0, -1);
+    let decoded: string = link;
+    try {
+        decoded = decodeURIComponent(link);
+    } catch {
+        // as written
+    }
+    for (const part of decoded.split("/")) {
+        if (part === "..") {
+            if (parts.pop() === undefined)
+                return null;
+        } else if (part !== "." && part !== "") {
+            parts.push(part);
+        }
+    }
+    return parts.join("/");
+}
+
+/**
+ * Builds the address the dashboard opens a place of `NomWorkspace` at, see {@link linkPlaceOf}:
+ * - a Markdown or `.ics` file of my new system in the editor, like `/edit?file=NomMetainformations%2FModules.md`;
+ * - a note of my modules in the scripts view at its heading, see {@link noteAddressOf};
+ * - the folder of a module, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`, as its overview,
+ *   see {@link overviewAddressOf};
+ * none for any other place, like another folder, a PDF or my old system, which opens only on the computer.
+ * - `parts`: Its folders and its name, from `NomWorkspace`.
+ * - `inner`: Its path inside `NomManageplannings` or `NomSkillingmodules`.
+ *
+ * @param place - Path in `NomWorkspace`, like `NomManageplannings/NomMetainformations/Modules.md`
+ * @param heading - Heading of a note to scroll to, empty for the top
+ * @returns Address, empty for none
+ */
+export function placeAddressOf(place: string, heading: string): string {
+    const parts: string[] = place.split("/");
+    const inner: string = parts.slice(1).join("/");
+    if (parts.some((part: string): boolean => part.startsWith(".")))
+        return "";
+    if (parts[0] === "NomManageplannings" && parts.length > 2 && parts[1] !== "NomSystemprevious"
+        && /\.(md|ics)$/i.test(place))
+        return `/edit?file=${encodeURIComponent(inner)}`;
+    if (parts[0] === "NomSkillingmodules" && parts.length > 2 && /\.md$/i.test(place))
+        return noteAddressOf(inner, heading);
+    if (parts[0] === "NomSkillingmodules" && parts.length === 2 && !inner.includes("."))
+        return overviewAddressOf(inner, "");
+    return "";
+}
+
+/**
  * Makes a folder or file of `NomManageplannings`: a folder with its entries and its path, so it opens again once
  * the tree is loaded anew, see {@link filesAgain}; a file that opens as a link to it in the editor, named as
- * on the disk, like `Foods.md`; any other file faint, opening nothing.
+ * on the disk, like `Foods.md`, cut in its middle where it is too long, so its ending stays, like `_Plan.ics`,
+ * see `middleCutPut` in `../day/choices.ts`, its name whole as its tooltip; any other file faint, opening nothing,
+ * cut alike, its tooltip saying why below its name.
  * - `folder`: The folder of a folder.
  * - `link`: The link of a file that opens.
  * - `name`: The name of any other file.
@@ -161,14 +250,14 @@ function fileNodeOf(node: FileNode): HTMLElement {
         link.className = "tree-file";
         link.dataset.path = node.path;
         link.href = `/edit?file=${encodeURIComponent(node.path)}`;
-        link.textContent = breakableOf(node.name);
+        middleCutPut(link, node.name);
         return link;
     }
     const name: HTMLSpanElement = document.createElement("span");
     name.className = "tree-file tree-closed";
     name.dataset.path = node.path;
-    name.title = "Only Markdown and .ics files of the folders of my new system open";
-    name.textContent = breakableOf(node.name);
+    middleCutPut(name, node.name);
+    name.title = `${node.name}\nOnly .md and .ics files of the folders of my new system open`;
     return name;
 }
 
@@ -194,15 +283,17 @@ function outlineFold(event: MouseEvent): void {
 }
 
 /**
- * Makes a module of the semester, shown once it is picked, see {@link chapterShow}: the name of its folder
- * and its name as data, so it can be picked, see {@link treeShow}, its chapters in it, each shown once it is picked,
- * its notes a plain list, which link to the scripts view, named without `.md` as in Obsidian, the note shown
- * folding its outline by a click on it, see {@link outlineFold};
- * a module without chapter notes holds a calm `No chapters yet`, as its overview says it.
+ * Makes a module, shown once it is picked, see {@link chapterShow}: the name of its folder, its name and its group
+ * in the list of the modules as data, so it can be picked, see {@link choiceListOf}, the group the semester it stands
+ * under, like `2026W`, or `Other` for none; its chapters in it, each shown once it is picked,
+ * its notes a plain list, which link to the scripts view, named without `.md` as in Obsidian, whole as their tooltip,
+ * the note shown folding its outline by a click on it, see {@link outlineFold};
+ * a module without chapter notes, like most of my earlier modules, holds a calm `No notes yet`.
  * - `element`: The module.
  * - `group`: A chapter.
  * - `link`: Link of a note.
- * - `none`: The hint for a module without chapters.
+ * - `name`: Name of a note, without `.md`.
+ * - `none`: The hint for a module without chapter notes.
  *
  * @param module - Module with its chapters and their notes
  * @returns The module
@@ -212,16 +303,19 @@ function moduleNodeOf(module: NotesModule): HTMLDivElement {
     element.className = "tree-module";
     element.dataset.module = module.name;
     element.dataset.title = module.title;
+    element.dataset.group = module.semester === "" ? "Other" : module.semester;
     element.append(...module.chapters.map((chapter: Chapter): HTMLDivElement => {
         const group: HTMLDivElement = document.createElement("div");
         group.className = "tree-chapter";
         group.dataset.chapter = chapter.title;
         group.append(...chapter.notes.map((note: NoteEntry): HTMLAnchorElement => {
             const link: HTMLAnchorElement = document.createElement("a");
+            const name: string = note.name.replace(/\.md$/i, "");
             link.className = "tree-file";
             link.dataset.path = note.path;
             link.href = noteAddressOf(note.path, "");
-            link.textContent = breakableOf(note.name.replace(/\.md$/i, ""));
+            link.textContent = breakableOf(name);
+            link.title = name;
             link.addEventListener("click", outlineFold);
             return link;
         }));
@@ -230,17 +324,77 @@ function moduleNodeOf(module: NotesModule): HTMLDivElement {
     if (module.chapters.length === 0) {
         const none: HTMLParagraphElement = document.createElement("p");
         none.className = "tree-none";
-        none.textContent = "No chapters yet";
+        none.textContent = "No notes yet";
         element.append(none);
     }
     return element;
 }
 
 /**
+ * Makes a list of choices to pick from, see the top of this file: every module on the start of the scripts, or the menu
+ * of a picker, see {@link pickerOf}; each choice a row, a link to the overview of what it picks,
+ * see `../editor/overview.ts`, named by the name of its folder, like `IN2028_BusinessAnalyticsMachineLearning`, whole
+ * as its tooltip, plain text in the grey of a note, the one picked in the light text, see `.tree-choice`
+ * in `./notes.css`.
+ * A list of the modules, too many to see at once, has the one search field of the page on top, see `searchFieldOf`
+ * in `../icons.ts`: as I type, only the modules whose name holds each typed word stay, as every search of the page
+ * compares, see `../search.ts`, so `in00` finds them by their code and `software` by their name, and Enter opens
+ * the first; they stand in the order of the reader, each group named small and grey above its first module,
+ * like `2026W`, see `menuRead` in `reader/notes.ts`.
+ * - `input`: The search field.
+ * - `list`: The rows.
+ * - `found`: The choices found for the typed text, all while nothing is typed.
+ * - `show`: Shows the choices found for the typed text, the name of a group above its first choice, from the top
+ *   of the list, so the first one, which Enter opens, is in sight.
+ *
+ * @param choices - What it offers: the modules, or the chapters of the module picked
+ * @param nameOf - Gives the name of a choice, like `01_RegressionAnalysis`
+ * @param groupOf - Gives the group of a choice, like `2026W` of a module; `null` for a list without search
+ *   and groups, that of the chapters
+ * @param addressOf - Gives the address of the overview of a choice, see {@link overviewAddressOf}
+ * @returns The search field, none without groups, and the list, every choice shown
+ */
+function choiceListOf(choices: HTMLElement[], nameOf: (choice: HTMLElement) => string,
+                      groupOf: ((choice: HTMLElement) => string) | null,
+                      addressOf: (choice: HTMLElement) => string): HTMLElement[] {
+    const input: HTMLInputElement = document.createElement("input");
+    const list: HTMLDivElement = document.createElement("div");
+    let found: HTMLElement[] = [];
+    const show: () => void = (): void => {
+        const words: string[] = wordsOf(input.value);
+        found = choices.filter((choice: HTMLElement): boolean => matchesAll(nameOf(choice), words));
+        list.replaceChildren(...found.flatMap((choice: HTMLElement, index: number): HTMLElement[] => {
+            const row: HTMLAnchorElement = document.createElement("a");
+            row.className = "tree-choice";
+            row.classList.toggle("picked", choice.classList.contains("picked"));
+            row.href = addressOf(choice);
+            row.textContent = breakableOf(nameOf(choice));
+            row.title = nameOf(choice);
+            if (groupOf === null || (index > 0 && groupOf(found[index - 1]) === groupOf(choice)))
+                return [row];
+            const group: HTMLParagraphElement = document.createElement("p");
+            group.className = "tree-group";
+            group.textContent = groupOf(choice);
+            return [group, row];
+        }));
+        list.scrollTop = 0;
+    };
+    list.className = "tree-list";
+    input.addEventListener("input", show);
+    input.addEventListener("keydown", (event: KeyboardEvent): void => {
+        if (event.key === "Enter" && found.length > 0)
+            location.assign(addressOf(found[0]));
+    });
+    show();
+    return groupOf === null ? [list] : [searchFieldOf(input, "Search modules"), list];
+}
+
+/**
  * Makes a picker of the tree of my modules, see the top of this file: a row, the name of what is picked, no arrow,
  * since a click on it opens its menu, the browser's own popover, which a pick, Escape or a click beside it closes;
- * each choice a row, the one picked in the calm grey of what is picked. A pick shows it in the tree and opens
- * the overview of its module, see `../editor/overview.ts`, with what is picked.
+ * the menu holds its list of choices, made anew each time it opens, see {@link choiceListOf}, the cursor in its search,
+ * the one picked scrolled into sight; a pick opens the page of what it picks, the module or the chapter,
+ * see `../editor/overview.ts`.
  * - `pick`: The row, a button.
  * - `name`: The name of what is picked on it, see `.tree-pick` in `./notes.css`.
  * - `menu`: The menu.
@@ -248,12 +402,14 @@ function moduleNodeOf(module: NotesModule): HTMLDivElement {
  * @param kind - What it picks, `module` or `chapter`, which names its anchor, see `.tree-pick` in `./notes.css`
  * @param choices - Gives what it may pick: the modules, or the chapters of the module picked
  * @param nameOf - Gives the name of a choice, like `01_RegressionAnalysis`
- * @param choose - Shows the choice picked
- * @param addressOf - Gives the address of the overview of what is picked, see {@link overviewAddressOf}
+ * @param groupOf - Gives the group of a choice, like `2026W` of a module; `null` for a menu without search
+ *   and groups, that of the chapters
+ * @param addressOf - Gives the address of the overview of a choice, see {@link overviewAddressOf}
  * @returns The row and its menu
  */
 function pickerOf(kind: string, choices: () => HTMLElement[], nameOf: (choice: HTMLElement) => string,
-                  choose: (choice: HTMLElement) => void, addressOf: () => string): [HTMLButtonElement, HTMLDivElement] {
+                  groupOf: ((choice: HTMLElement) => string) | null,
+                  addressOf: (choice: HTMLElement) => string): [HTMLButtonElement, HTMLDivElement] {
     const pick: HTMLButtonElement = document.createElement("button");
     const name: HTMLSpanElement = document.createElement("span");
     const menu: HTMLDivElement = document.createElement("div");
@@ -265,21 +421,14 @@ function pickerOf(kind: string, choices: () => HTMLElement[], nameOf: (choice: H
     menu.className = `tree-menu tree-menu-${kind}`;
     menu.popover = "auto";
     menu.addEventListener("beforetoggle", (event: ToggleEvent): void => {
+        if (event.newState === "open")
+            menu.replaceChildren(...choiceListOf(choices(), nameOf, groupOf, addressOf));
+    });
+    menu.addEventListener("toggle", (event: ToggleEvent): void => {
         if (event.newState !== "open")
             return;
-        menu.replaceChildren(...choices().map((choice: HTMLElement): HTMLButtonElement => {
-            const row: HTMLButtonElement = document.createElement("button");
-            row.type = "button";
-            row.className = "tree-choice";
-            row.classList.toggle("picked", choice.classList.contains("picked"));
-            row.textContent = breakableOf(nameOf(choice));
-            row.addEventListener("click", (): void => {
-                menu.hidePopover();
-                choose(choice);
-                location.assign(addressOf());
-            });
-            return row;
-        }));
+        menu.querySelector("input")?.focus();
+        menu.querySelector(".picked")?.scrollIntoView({ block: "nearest" });
     });
     return [pick, menu];
 }
@@ -287,10 +436,11 @@ function pickerOf(kind: string, choices: () => HTMLElement[], nameOf: (choice: H
 /**
  * Shows one chapter of one module in the tree of my modules, see the top of this file: their names in their pickers,
  * each by the name of its folder on one line, like `IN2028_BusinessAnalyticsMachineLearning` and
- * `01_RegressionAnalysis`; the notes of that chapter below, both marked `picked`, every other module and chapter hidden;
- * a module without chapters shows its hint `No chapters yet` and no picker of chapters.
- * - `chapterPick`: The picker of the chapter.
+ * `01_RegressionAnalysis`, whole as its tooltip; the notes of that chapter below, both marked `picked`, every other
+ * module and chapter hidden; a module without chapters shows its hint `No notes yet` and no picker of chapters.
+ * - `modulePick`, `chapterPick`: The pickers of the module and of the chapter.
  * - `title`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `name`: Name of the folder of the chapter, like `01_RegressionAnalysis`, empty for none.
  *
  * @param tree - The tree
  * @param module - The module, see {@link moduleNodeOf}
@@ -303,10 +453,14 @@ export function chapterShow(tree: HTMLElement, module: HTMLElement, chapter: HTM
     module.querySelectorAll<HTMLElement>(".tree-chapter").forEach((other: HTMLElement): void => {
         other.classList.toggle("picked", other === chapter);
     });
+    const modulePick: HTMLButtonElement = tree.querySelector(".tree-pick-module") as HTMLButtonElement;
     const chapterPick: HTMLButtonElement = tree.querySelector(".tree-pick-chapter") as HTMLButtonElement;
     const title: string = module.dataset.title ?? "";
-    (tree.querySelector(".tree-pick-module > .tree-pick-name") as HTMLElement).textContent = breakableOf(title);
-    (chapterPick.firstElementChild as HTMLElement).textContent = breakableOf(chapter?.dataset.chapter ?? "");
+    const name: string = chapter?.dataset.chapter ?? "";
+    (modulePick.firstElementChild as HTMLElement).textContent = breakableOf(title);
+    modulePick.title = title;
+    (chapterPick.firstElementChild as HTMLElement).textContent = breakableOf(name);
+    chapterPick.title = name;
     chapterPick.hidden = chapter === null;
 }
 
@@ -321,7 +475,7 @@ export function chapterShow(tree: HTMLElement, module: HTMLElement, chapter: HTM
  * @param tree - The tree
  * @param shown - Path of the file or note shown, like `NomMetainformations/Foods.md`
  *   or `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanStandardError.md`
- * @returns Its entry, `null` while it is not in the tree, like a note of a module not of the semester
+ * @returns Its entry, `null` while it is not in the tree, like a note outside the chapter folders of its module
  */
 export function treeMark(tree: HTMLElement, shown: string): HTMLElement | null {
     tree.querySelectorAll(".tree-file.shown").forEach((file: Element): void => file.classList.remove("shown"));
@@ -455,7 +609,7 @@ function blockNameOf(heading: string): Node[] {
 }
 
 /**
- * Builds the small grey box of a type word, like `Definition`, see `.block-kind` in `./notes.css`.
+ * Builds the small grey box of a type word, like `Definition`, see `.block-kind` in `../base.css`.
  *
  * @param kind - Type word
  * @returns The box
@@ -469,9 +623,10 @@ function kindBoxOf(kind: string): HTMLSpanElement {
 
 /**
  * Builds the list of the blocks of a section in their order, each linking to its heading by its heading as written,
- * named by its type word as a small grey box and its name, see {@link blockNameOf}: a block done with a check after it,
+ * named by its type word as a small grey box and its name, see {@link blockNameOf}, that heading without an older
+ * `(cold)` whole as its tooltip: a block done with a check after it,
  * or with a cross, the one its heading line has, once its last result failed, like `Food Truck` after Wrong, the one
- * shown in the calm grey of what is shown, a later one of the round plain, one outside the round grey.
+ * shown in the light text of what is shown, a later one of the round grey, one outside the round fainter.
  * Every block of the section stands in it, never hidden without a trace: once two or more blocks of one kind are
  * outside the round, like the Examples and Tasks round 0 does not need, they fold into one grey line of their kind
  * after its last block, its type word boxed as on their lines and how many, like `Task` boxed and `7 more`, the line
@@ -499,6 +654,7 @@ export function roundListOf(path: string, blocks: [string, BlockMark][], opened:
         link.className = `tree-file tree-${mark}`;
         link.href = noteAddressOf(path, heading);
         link.dataset.heading = heading;
+        link.title = heading.replace(/[ \t]*\(cold\)$/, "");
         link.append(...blockNameOf(heading));
         if (mark === "done" || mark === "wrong")
             link.append(iconOf(mark === "done" ? Check : X));
@@ -533,7 +689,8 @@ export function roundListOf(path: string, blocks: [string, BlockMark][], opened:
 
 /**
  * Puts the outline of the note shown under its entry in the tree, as Obsidian's outline: each heading `##` in order,
- * linking to it, each worked or faded task under the block above it that is no task, like
+ * linking to it, its name as written whole as its tooltip, each worked or faded task under the block above it that is
+ * no task, like
  * `Definition. Standard Error of the Mean`, which then folds its tasks by its arrow and still links to its heading
  * by its name; tasks named without their type word, `Example.`, `Completion.` or `Task.`, formulas rendered as in
  * the note. A block without tasks below it stays a plain link, and so does a task without such a block above it;
@@ -541,7 +698,7 @@ export function roundListOf(path: string, blocks: [string, BlockMark][], opened:
  * at the end of its section; there a plain `Task.` is worked or faded. An Example without a solution is theory.
  * The outline put before goes; a block I folded in it stays folded. A section shows the blocks of its round instead,
  * see {@link roundListOf}, a line of a kind I opened staying open.
- * - `entry`: Entry of the note in the tree, `null` while it is none, like a note of a module not of the semester.
+ * - `entry`: Entry of the note in the tree, `null` while it is none, like a note outside the chapter folders.
  * - `folded`: Names of the blocks folded in the outline before.
  * - `kinds`: Type words of the lines of a kind open in the list of a section before.
  * - `outline`: The outline.
@@ -552,6 +709,7 @@ export function roundListOf(path: string, blocks: [string, BlockMark][], opened:
  * - `block`: Link of the last block that is no task, until its first task makes it a folder.
  * - `tasks`: Place of the tasks below that block, the outline itself before the first block.
  * - `heading`: Text of a heading `##` as written, `undefined` for a line that is none.
+ * - `name`: Its name shown, as written, a task's without its type word and `(cold)`.
  * - `link`: Link to a heading, its text rendered.
  *
  * @param tree - The tree
@@ -591,12 +749,14 @@ export function outlineShow(tree: HTMLElement, path: string, text: string, round
         const cold: boolean = older ? /^Task\..*\(cold\)$/.test(heading) : heading.startsWith("Task. ");
         const ladder: boolean = !cold && (heading.startsWith("Completion. ") || (older && heading.startsWith("Task. "))
             || (heading.startsWith("Example. ") && solved));
+        const name: string = cold || ladder
+            ? heading.replace(/^(Task|Completion|Example)\.\s*/, "").replace(/[ \t]*\(cold\)$/, "") : heading;
         const link: HTMLAnchorElement = document.createElement("a");
         link.className = "tree-file";
         link.href = noteAddressOf(path, heading);
         link.dataset.heading = heading;
-        link.innerHTML = inlineHtmlOf(cold || ladder
-            ? heading.replace(/^(Task|Completion|Example)\.\s*/, "").replace(/[ \t]*\(cold\)$/, "") : heading);
+        link.title = name;
+        link.innerHTML = inlineHtmlOf(name);
         if (!cold && !ladder) {
             outline.append(link);
             block = link;
@@ -620,34 +780,35 @@ export function outlineShow(tree: HTMLElement, path: string, text: string, round
 }
 
 /**
- * A root of the tree, an area of its own in the rail: the modules of the semester or my new system.
+ * A root of the tree, an area of its own in the rail: my modules or my new system.
  */
 export type TreeRoot = "NomSkillingmodules" | "NomManageplannings";
 
 /**
- * Loads one root of the tree from the reader and shows it, see the top of this file: its name as a heading,
- * then of my modules the pickers of module and chapter, see {@link pickerOf}, of my new system its
- * search, see {@link searchStart},
+ * Loads one root of the tree from the reader and shows it, see the top of this file: its name as a heading, that of my
+ * modules a link to their start, then of my modules the pickers of module and chapter, see {@link pickerOf},
+ * of my new system its search, see {@link searchStart},
  * its folders or notes below, those of my new system loaded anew after every change of its files,
  * see {@link filesAgain}, the file or note shown marked, see {@link treeMark}; in the modules, while none is shown,
  * the module asked for is picked, like the module of a skill entry clicked in the day, see `../skill/links.ts`,
- * else the first module, with its first chapter.
+ * with its first chapter, see {@link chapterShow}; else none, the start then showing the search and every module
+ * in place of the pickers, see {@link choiceListOf}.
  * - `heading`: The name of the root on top.
  * - `search`: The search of my new system, below its name.
+ * - `link`: The name of my modules, a link to their start.
  * - `modules`: Of my modules the modules, each with its chapters and notes, see {@link moduleNodeOf}.
- * - `choose`: Picks a module or a chapter: shows it, see {@link chapterShow};
- *   a module with the chapter of the note shown, if it holds the note, else with its first chapter.
- * - `moduleOf`: Gives the name of the folder of the module picked, for the address of its overview.
- * - `modulePick`, `chapterPick`: The pickers of module and chapter, each with its menu, their names opening
- *   the overview of the module, the chapter picked staying picked.
+ * - `nameOf`, `groupOf`, `moduleAddressOf`: Give the name of a module, its group, like `2026W`, and the address
+ *   of its overview.
+ * - `moduleOf`: Gives the name of the folder of the module picked, for the address of the overview of a chapter.
+ * - `modulePick`, `chapterPick`: The pickers of module and chapter, each with its menu.
  * - `entries`: Of my new system its folders and files.
- * - `asked`: The module asked for, `null` for none.
+ * - `asked`: The module asked for, `undefined` for none.
  *
  * @param tree - Place of the tree
  * @param root - The root to show
  * @param shown - Path of the file or note shown, empty for none
  * @param module - Name of the folder of the module to open while none is shown,
- *   like `IN2028_BusinessAnalyticsMachineLearning`, empty for the first
+ *   like `IN2028_BusinessAnalyticsMachineLearning`, empty for none
  * @throws {Error} - When the reader cannot answer
  */
 export async function treeShow(tree: HTMLElement, root: TreeRoot, shown: string, module: string): Promise<void> {
@@ -667,28 +828,31 @@ export async function treeShow(tree: HTMLElement, root: TreeRoot, shown: string,
         return;
     }
 
+    const link: HTMLAnchorElement = document.createElement("a");
     const modules: HTMLDivElement[] = (await readerAsk<NotesModule[]>("/api/notes/modules")).map(moduleNodeOf);
-    const choose: (choice: HTMLElement) => void = (choice: HTMLElement): void => {
-        const picked: HTMLElement = choice.closest(".tree-module") as HTMLElement;
-        const chapter: HTMLElement | null = choice !== picked ? choice
-            : picked.querySelector(".tree-file.shown")?.closest<HTMLElement>(".tree-chapter")
-                ?? picked.querySelector(".tree-chapter");
-        chapterShow(tree, picked, chapter);
-    };
+    const nameOf: (choice: HTMLElement) => string = (choice: HTMLElement): string => choice.dataset.title ?? "";
+    const groupOf: (choice: HTMLElement) => string = (choice: HTMLElement): string => choice.dataset.group ?? "";
+    const moduleAddressOf: (choice: HTMLElement) => string = (choice: HTMLElement): string =>
+        overviewAddressOf(choice.dataset.module ?? "", "");
     const moduleOf: () => string = (): string =>
         tree.querySelector<HTMLElement>(".tree-module.picked")?.dataset.module ?? "";
     const modulePick: [HTMLButtonElement, HTMLDivElement] = pickerOf("module", (): HTMLElement[] => modules,
-        (choice: HTMLElement): string => choice.dataset.title ?? "", choose,
-        (): string => overviewAddressOf(moduleOf(), ""));
+        nameOf, groupOf, moduleAddressOf);
     const chapterPick: [HTMLButtonElement, HTMLDivElement] = pickerOf("chapter", (): HTMLElement[] =>
         [...tree.querySelectorAll<HTMLElement>(".tree-module.picked > .tree-chapter")],
-        (choice: HTMLElement): string => choice.dataset.chapter ?? "", choose,
-        (): string => overviewAddressOf(moduleOf(),
-            tree.querySelector<HTMLElement>(".tree-module.picked > .tree-chapter.picked")?.dataset.chapter ?? ""));
+        (choice: HTMLElement): string => choice.dataset.chapter ?? "", null,
+        (choice: HTMLElement): string => overviewAddressOf(moduleOf(), choice.dataset.chapter ?? ""));
+    link.className = "tree-root-link";
+    link.href = "/scripts";
+    link.textContent = root;
+    heading.replaceChildren(link);
     tree.replaceChildren(heading, ...modulePick, ...chapterPick, ...modules);
-    if (treeMark(tree, shown) !== null || modules.length === 0)
+    if (treeMark(tree, shown) !== null)
         return;
     const asked: HTMLDivElement | undefined = modules.find((element: HTMLDivElement): boolean =>
         element.dataset.module === module);
-    choose(asked ?? modules[0]);
+    if (asked !== undefined)
+        chapterShow(tree, asked, asked.querySelector<HTMLElement>(".tree-chapter"));
+    else
+        tree.replaceChildren(heading, ...choiceListOf(modules, nameOf, groupOf, moduleAddressOf));
 }

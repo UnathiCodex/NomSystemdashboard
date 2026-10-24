@@ -596,7 +596,7 @@ function roundLineOf(shown: Round): string {
 
 /**
  * Shows beside the round line the session the round writes into, smaller, as the calendar shows an entry: its day
- * and its times, like `Sat, 17.10.2026 · 21:40 – 22:40`; nothing while no session of the module runs, since reading
+ * and its times, like `17.10.2026 (Sat) · 21:40 – 22:40`; nothing while no session of the module runs, since reading
  * needs none, see `./session.ts`. What it showed stays until the reader answers, so nothing flickers.
  *
  * @param shown - The round
@@ -841,7 +841,7 @@ export function roundBlocksOf(view: EditorView): [string, BlockMark][] | null {
 /**
  * Tells when the section shown has its next Task, for the line of its Tasks outside the round in the tree, see
  * `roundListOf` in `../notes/tree.ts`: the day its Task comes back, by the rule of the overview, see `stateOf`
- * in `./overview.ts`, `Tomorrow` for the day after today, else like `Mon, 19.10.2026`; nothing while its Task is due
+ * in `./overview.ts`, `Tomorrow` for the day after today, else like `19.10.2026 (Mon)`; nothing while its Task is due
  * today, since its result decides the day, or no day is known.
  * - `today`, `due`: Today and the day its Task comes back, empty for none.
  * - `year`, `month`, `day`: Today in numbers.

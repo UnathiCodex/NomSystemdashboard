@@ -16,12 +16,16 @@
     height: 0.875rem;
 }
 
-/* The menu: right under its button, its right edge under the button's, with the background, line and soft shadow
-   of every menu of a list, see `.picker-box`; each item a row one control high, its icon and then its words,
-   like `Move` */
+/* The menu: right under its button, its left edge under the button's, inside the dialog it opens in, see `menuAnchor`
+   in `menu.ts`, with the background, line and soft shadow of every menu of a list, see `.picker-box`; each item a row
+   one control high, its icon and then its words, like `Move`; never higher or wider than the window, scrolling a long
+   list, like the groups of a week */
 .menu {
     position: fixed;
     inset: auto;
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100vh - 0.5rem);
+    overflow: hidden auto;
     margin: 0.25rem 0 0;
     padding: 0.375rem;
     border: 1px solid var(--line);
@@ -47,8 +51,23 @@
     background: none;
     color: var(--text-main);
     font: inherit;
+    flex-shrink: 0;
     white-space: nowrap;
     cursor: pointer;
+}
+
+/* An item of a list without mark, its own icon kept invisible, so its words start where those of the marked one do,
+   like the groups of a week beside the one checked, see `groupMenuOf` in `day/groups.ts` */
+.menu-item-blank > svg.lucide {
+    visibility: hidden;
+}
+
+/* A thin line between the parts of a menu, like the groups of a week and pinning one of them */
+.menu-line {
+    height: 1px;
+    flex-shrink: 0;
+    margin: 0.375rem 0;
+    background: var(--line);
 }
 
 /* Phone: the button `⋯` as it looks, but a finger's width to hit, its own width and 0.5rem above and below;

@@ -8,10 +8,10 @@
  * the cross turning into the plain question mark, `Really remove?` as its tooltip.
  * Both come from one load of everything of mine, see `mineLoad` in `mine.ts`, and every change sends back all of
  * it, so an exercise added to a workout stands among my exercises.
- * - Workouts: each its name with its parts grey in brackets on one line, cut with … where they have no room, and what
- *   its videos burn, when all its parts are videos with minutes; a click opens it below, as a meal of the food view:
- *   its name, which changes in place, a click into it or on the small grey pencil after its name on top, and its parts
- *   in their order, each with its `×` while it has more than one, a video
+ * - Workouts: each its name with its parts grey in brackets on one line, cut with … where they have no room, whole
+ *   as its tooltip, and what its videos burn, when all its parts are videos with minutes; a click opens it below,
+ *   as a meal of the food view: its name, which changes in place, a click into it or on the small grey pencil after
+ *   its name on top, and its parts in their order, each with its `×` while it has more than one, a video
  *   with its channel and its minutes, a click on it showing its minutes and its kind below it to change; the plus right
  *   after its name opens the search of my exercises and videos below its parts, see {@link partSearchOf}, which adds
  *   the one picked, `+ New exercise “Squat”` for a name typed that no exercise has, and a new video by its YouTube link
@@ -168,7 +168,8 @@ function headingOf(name: string, plus: HTMLButtonElement | null): HTMLElement {
 
 /**
  * Makes the name of a line with what stands grey in brackets after it, on one line, the brackets cut with … where
- * they have no room, like `Push (Bench press, Shoulder press, Di…)`, see `.sport-name` in `sport.css`.
+ * they have no room, like `Push (Bench press, Shoulder press, Di…)`, see `.sport-name` in `sport.css`, both whole
+ * as its tooltip.
  * - `name`: The name.
  *
  * @param text - The name, like `Push`
@@ -177,6 +178,7 @@ function headingOf(name: string, plus: HTMLButtonElement | null): HTMLElement {
  */
 function nameOf(text: string, brackets: string): HTMLElement {
     const name: HTMLElement = elementOf("span", "sport-name", "");
+    name.title = brackets === "" ? text : `${text} (${brackets})`;
     name.append(elementOf("span", "", text));
     if (brackets !== "")
         name.append(elementOf("span", "food-brand", ` (${brackets})`));
@@ -425,9 +427,7 @@ function workoutsSectionOf(): HTMLElement {
         list.replaceChildren(...naming ? [nameFormOf()] : [],
             ...linkTyped(search.value) ? [elementOf("p", "food-none",
                 "A video goes into a workout: open it and paste the link into its search")] : [],
-            ...shown.length > 0 || plus.length > 0 ? [listHeadOf("My workouts", "kcal"), ...rows, ...plus] : [],
-            ...mine.workouts.length === 0 && fresh === "" && plus.length === 0 && !naming
-                ? [elementOf("p", "food-none", "No workouts yet")] : []);
+            ...shown.length > 0 || plus.length > 0 ? [listHeadOf("My workouts", "kcal"), ...rows, ...plus] : []);
     };
     const workoutLinesOf: (workout: Workout) => HTMLElement[] = (workout: Workout): HTMLElement[] => {
         const key: string = workout.name.toLowerCase();
@@ -490,7 +490,7 @@ function workoutsSectionOf(): HTMLElement {
                     editing = editing === videoKey ? "" : videoKey;
                     show();
                 });
-                opening.title = `Minutes and kind of ${video.title}`;
+                name.title += `\nMinutes and kind of ${video.title}`;
                 opening.append(name);
                 line.append(opening);
             }

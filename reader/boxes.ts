@@ -8,24 +8,33 @@
  * When I do it, it goes into the log at its real time, see `boxLog` in `day.ts`, so expected and real time
  * can be compared later; a box I decide against is cancelled, dropped with one tap, and stays in its file
  * as `STATUS:CANCELLED`, so it can be counted; `STATUS:CANCELLED` is always my own decision, lectures included.
- * A box neither done nor cancelled stays on its day once that is over and is carried along to today,
- * see {@link boxesCarried}, lectures too, until I do it, cancel it or push it; it never moves into the next days
- * by itself, only when I push it there, a box whose day is over to tomorrow, see {@link boxPush}. A pushed box
- * stays greyed on each day it left, once per push, with the start and the length it had there, like a skipped box,
- * see {@link leftBoxesOf}; it is not carried along from there.
+ * I push a box to a later day by hand, a box whose day is over to tomorrow, see {@link boxPush}; any change of its day
+ * in the dialog is a push too, to a later day or to an earlier one, see {@link boxEdit}, so every move is counted
+ * and a move by mistake is set right by moving it again. A pushed box stays greyed on each day it left, once per push,
+ * with the start and the length it had there, like a skipped box, see {@link leftBoxesOf}.
+ * A box without deadline neither done nor cancelled is carried along once its day is over, lectures too: it counts
+ * as pushed to the next day at the end of each day, as if I had pushed it by hand, so it stands on today, greyed
+ * on each day it left, and is shown, counted and moved the same, see {@link carriedOf}; one done
+ * on a later day counts as pushed to the day of its log entry. These pushes are not written while it is carried,
+ * only once I change it, so its file then holds them as if I had pushed it, see {@link carryWrite}.
+ * One I no longer mean to do I skip, see {@link boxDrop}; one I move to a day that is over stays there, missed,
+ * and is no longer carried along until its day changes again. A box with a deadline is never pushed, so it is carried
+ * along to today as it is,
+ * see {@link boxesCarried}.
  * A lecture, an exercise, a tutorial and a sheet, a skill box of a type of {@link numberedTypes}, carries its number
  * in its series, the boxes of the same skill and type by date, as `X-NUMBER`, like `X-NUMBER:3`, the next one when
  * the dialog adds it, see {@link numberNextOf}. One the university cancels gets `X-NUMBER:NONE` by its own button,
  * see {@link boxUniversity}, and the later ones of its series move up a number; it is neither done nor carried along.
- * A box repeated weekly in the dialog of a new box, like my gym on Mondays and Thursdays, is no rule in a file either:
- * it is one box per date, each as the dialog adds one alone, see {@link boxesAdd}, a lecture's numbered as its series,
- * see `repeatApply` in `course.ts`.
+ * An exam carries its kind there instead, like `X-NUMBER:Endterm`, `Midterm` or `Retake`, which nothing numbers.
+ * A box made a series in the dialog of a series, by the pencil after its times, is a rule: one to-do that repeats
+ * by its `RRULE`, like my sleep of every night, see `rules.ts`, each of its days a box of its own in the plan, changed
+ * alone as a component of its own with its `RECURRENCE-ID`, see {@link boxOwn}; but a lecture, an exercise, a tutorial
+ * and a sheet, whose series is one box per date, numbered, see `repeatApply` in `course.ts`.
  *
- * A box of the new system is a to-do of iCalendar, a `VTODO`, in the plan of its month, like `Living/2026_10_Plan.ics`,
- * or a skill box in the plan of its skill, like `University/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`,
+ * A box of the new system is a to-do of iCalendar, a `VTODO`, in the plan of its topic and year, like `Living/Sleep_2026_Plan.ics`,
+ * or a skill box in the plan of its skill, like `Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`,
  * both in `NomManagecalendar`, see `sources.ts` and `calendar.ts`; a box moves into the plan it belongs into
- * when its day moves into another year or it changes its category or its skill, also one from a month file
- * of the layout before, see {@link planFileAfter}:
+ * when its day moves into another year or it changes its category or its skill, see {@link planFileAfter}:
  * - its day and its expected time in `DTSTART`: `DTSTART;VALUE=DATE:20261013` without time,
  *   `DTSTART;TZID=Europe/Berlin:20261013T120000` with;
  * - or instead its deadline in `DUE`, like a homework I must hand in: `DUE;TZID=Europe/Berlin:20261023T120000`,
@@ -41,10 +50,12 @@
  *   and after a `DTSTART` without time it may only be whole days;
  * - its state in `STATUS`: `NEEDS-ACTION` while open, `COMPLETED` once done, without the moment it was done,
  *   since the log entry written from it holds its real time, and `CANCELLED` once dropped;
- * - each push to a later day, by its arrow or its day in the dialog, see {@link boxPush} and {@link boxEdit},
+ * - each push, to a later day by its arrow or to any other day in the dialog, see {@link boxPush} and {@link boxEdit},
  *   in one `X-PUSHED` with its start and its length as they stood before, since the standard has nothing for it,
  *   like `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`, see `pushAdd`
- *   in `calendar.ts`;
+ *   in `calendar.ts`; a push stays, also once the box moves back, which is one more push;
+ * - that it is no longer carried along, see above, in `X-CARRIED:FALSE`, once I move it to a day that is over
+ *   in the dialog, see {@link boxEdit}, gone once its day changes again;
  * - its category, what, place, module, type, semester and note as an entry of the log has them, a skill box its
  *   semester as `X-SEMESTER`, like `X-SEMESTER:2026W`, see `semesterFor` in `categories.ts`, its chapters
  *   as `X-CHAPTER`s and the documents it will use as `ATTACH`es, like the slides of a lecture,
@@ -62,19 +73,26 @@
  * it becomes a component of its own in the file of its series, with the same `UID` and its start in the series
  * as `RECURRENCE-ID`, see `occurrenceOwn` in `calendar.ts`, the way the standard changes one occurrence,
  * which a drop then marks `STATUS:CANCELLED`, as any dropped box, so it shows greyed and crossed and is counted;
- * it stays in that file, whatever its new day. It cannot be removed, since it belongs to its series.
+ * it stays in that file, whatever its new day. It cannot be removed, since it belongs to its series. Its summary
+ * too changes for it alone; the whole series changes only in the dialog of the series, see `rules.ts`.
  *
  * The plan files also hold events, `VEVENT`s, like the lectures imported from TUMonline.
  * Each is read as a box: its time is its start, its duration its length, and one of the whole day
  * is a box without time. A change keeps an event an event, so its time and duration stay: dropped, it is
  * `STATUS:CANCELLED`, which events have too, and it is done when a log entry points to it.
+ * A to-do with `X-GROUP` and without `X-NUMBER` is no box but a group of the tutorials of a module, in the plan
+ * of the module, which the course of the module offers to pick from, see `course.ts`, so no day, count, series
+ * or suggestion shows it, see {@link groupIs}; a box of my tutorials that goes to a group has `X-GROUP`
+ * and its `X-NUMBER`.
  *
- * Above its boxes a day shows its birthdays and holidays, those of `Birthdays.ics` and `Holidays.ics`
- * in `NomManagecalendar/Meta/`, see `sources.ts`, each on its date, a yearly series on each of its days,
- * with its category, like `Birthday: Karlbauer Florian` or `Holiday: Ostermontag (AT, DE)`, and my gift idea for it,
+ * Above its boxes a day shows its birthdays, holidays and semester dates, those of `Birthdays.ics`, `Holidays.ics`
+ * and `University.ics` in `NomManagecalendar/Meta/`, see `sources.ts`, each on its date, a yearly series
+ * and a period of days on each of its days, with its category, like `Birthday: Karlbauer Florian`,
+ * `Holiday: Ostermontag (AT, DE)` or `University: Weihnachtsferien (TUM)`, and my gift idea for it,
  * its `DESCRIPTION`, see `gifts.ts`; none of a file while it is missing.
  *
- * - `./calendar.ts`: Reads plan and log, writes to-dos, changes and removes them, and calculates with days.
+ * - `./calendar.ts`: Reads plan and log, writes to-dos, changes and removes them, and calculates
+ *   with days.
  * - `./categories.ts`: Tells whether a box fits its category, names the category of skill entries,
  *   and gives the semester of a skill box.
  * - `./documents.ts`: Writes what a skill box is, linking the folder of its skill and of its material, its links
@@ -82,13 +100,13 @@
  *   reads its chapters, and gives the plan a box belongs into.
  * - `./notes.ts`: Finds the chapters of a module, which a skill box may name.
  * - `./places.ts`: Gives the link of the place of a box.
- * - `./sources.ts`: Names the plan, the log and the birthdays and holidays.
+ * - `./sources.ts`: Names the plan, the log and the birthdays, holidays and semester dates.
  */
 
 import {
     berlinDateOf, berlinDayStartOf, berlinLater, dayAdd, entriesOnceRead, entriesRead, entryChange, entryIdOf,
-    entryLookup, entryRemove, occurrenceLookup, occurrenceOwn, propertiesPut, pushAdd, pushTake, statusPut, todoAppend,
-    todoChange,
+    entryLookup, entryRemove, occurrenceLookup, occurrenceOwn, occurrencesTidy, propertiesPut, pushAdd,
+    seriesDayRemove, statusPut, todoAppend, todoChange,
 } from "./calendar.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
 import { calendarFileOf, chaptersOf, linksOf, titleOf } from "./documents.ts";
@@ -125,24 +143,25 @@ export const numberedTypes: string[] = ["VO", "UE", "ZU", "TU", "HU"];
  * - `deadline`: Deadline as ISO instant, or as its day like `2026-10-23` when it has no time; empty for none.
  * - `state`: Whether it is open, done, dropped, cancelled by the university, or pushed from the day it shows on.
  * - `pushed`: Where it stood before each push to a later day, in order, see `Push` in `calendar.ts`,
- *   like Fri, 16.10.2026, 15:00 for 195 minutes.
+ *   like Fri, 16.10.2026, 15:00 for 195 minutes, those it is carried along by last, see {@link carriedOf}.
  * - `log`: Start and end of the log entry written from it, for a box with a deadline of its last session,
  *   as ISO instants, `null` for none.
  * - `editable`: Whether it can be changed, pushed and dropped: a to-do or an event with times, see `calendar.ts`,
  *   also one occurrence of a series.
- * - `series`: Whether it is one occurrence of a series, like a weekly lecture, which cannot be removed.
+ * - `series`: Whether it is one occurrence of a series, like my sleep of one night, whose bin takes that day alone
+ *   out of it, see {@link boxDelete}.
  * - `todo`: Whether it is a to-do; an event keeps its time and duration, see the top of this file.
  * - `links`: Its links, its `ATTACH`es, like the slides a lecture of my plan links, see `documents.ts`;
  *   none for none.
  * - `chapters`: Chapters of my system a skill box belongs to, its `X-CHAPTER`s, or those whose folders an older box
  *   links, see `chaptersOf` in `documents.ts`, like `02_LogisticPoissonRegression`; none for none.
- * - `number`: Its number in its series, its `X-NUMBER`, like `3`, `NONE` for one the university cancelled;
- *   empty for none.
+ * - `number`: Its number in its series, its `X-NUMBER`, like `3`, `NONE` for one the university cancelled,
+ *   the kind of an exam, like `Endterm`; empty for none.
  * - `group`: The group of a tutorial whose session it goes to, its `X-GROUP`, like `03`, see `course.ts`;
  *   empty for none.
- * - `picked`: Whether I picked its group by hand for its week, its `X-PICKED:TRUE`, see `weekPick` in `course.ts`.
  * - `moved`: For a box shown greyed on a day it was pushed from, where it went, see {@link Moved};
  *   `null` for any other.
+ * - `file`: Its `.ics` file from `NomWorkspace` on, see `file` of `Entry` in `calendar.ts`, which its dialog shows.
  */
 export type Box = EntryTexts & {
     id: string;
@@ -160,20 +179,19 @@ export type Box = EntryTexts & {
     chapters: string[];
     number: string;
     group: string;
-    picked: boolean;
     moved: Moved | null;
+    file: string;
 };
 
 /**
  * Where a box went that shows greyed on a day it was pushed from, see {@link leftBoxesOf}.
  *
  * - `day`: The day it stands on now, like `2026-10-17`.
- * - `last`: Whether it is its last push and the box is still open and can be changed, so the push can be taken back,
- *   see {@link boxUnpush}.
+ * - `went`: The day it went to from the day it shows on, by that push, its next day, later or earlier.
  */
 export type Moved = {
     day: string;
-    last: boolean;
+    went: string;
 };
 
 /**
@@ -183,12 +201,14 @@ export type Moved = {
  * - `category`: Its category, like `Birthday` or `Holiday`, empty for none.
  * - `title`: Its name as its file writes it, like `Karlbauer Florian` or `Ostermontag (AT, DE)`.
  * - `gift`: My gift idea for it, its `DESCRIPTION`, see `gifts.ts`, empty for none.
+ * - `file`: Its `.ics` file from `NomWorkspace` on, see `file` of `Entry` in `calendar.ts`, which its dialog shows.
  */
 export type Occasion = {
     id: string;
     category: string;
     title: string;
     gift: string;
+    file: string;
 };
 
 /**
@@ -258,11 +278,11 @@ const deadlineDays: number = 4;
 
 /**
  * Gives the plan a box belongs into, see the top of this file: the plan of its skill for a skill box,
- * else the plan of the month of its day, see `calendarFileOf` in `documents.ts`.
+ * else the plan of its topic in the year of its day, see `calendarFileOf` in `documents.ts`.
  *
  * @param box - Category and skill of the box, like `Skill` and `IN2028`, or `Talk` and no skill
  * @param date - Its day, like `2026-10-13`
- * @returns Path like `University/IN2028_BusinessAnalyticsMachineLearning_Plan.ics` or `Living/2026_10_Plan.ics`
+ * @returns Path like `Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics` or `Living/Sleep_2026_Plan.ics`
  *   in `NomManagecalendar`
  */
 function planFileOf(box: { category: string; module: string }, date: string): string {
@@ -271,14 +291,13 @@ function planFileOf(box: { category: string; module: string }, date: string): st
 
 /**
  * Gives the plan file a box is written into once it changes, see the top of this file: the plan it belongs into
- * with its new category, skill and day, see {@link planFileOf}, also for a box from a month file of the layout before,
- * like `2026/2026_10/2026_10_Plan.ics`; always the file of its series for one occurrence of a series.
+ * with its new category, skill and day, see {@link planFileOf}; always the file of its series for one occurrence of a series.
  *
  * @param file - Path of the plan file the box lies in
  * @param entry - Entry of the box
  * @param box - New category and skill of the box
  * @param date - New day of the box, like `2027-01-04`
- * @returns Path like `Living/2027_01_Plan.ics` or the path of its file
+ * @returns Path like `Living/Living_2027_Plan.ics` or the path of its file
  */
 function planFileAfter(file: string, entry: Entry, box: { category: string; module: string }, date: string): string {
     return entry.recurrence === "" ? planFileOf(box, date) : file;
@@ -295,6 +314,19 @@ function planFileAfter(file: string, entry: Entry, box: { category: string; modu
 function boxOwn(file: string, entry: Entry): void {
     if (entry.recurrence !== "")
         occurrenceOwn(file, entry);
+}
+
+/**
+ * Gives a box that is one occurrence of a series back to its series once it holds nothing of its own any more,
+ * like one changed and changed back, taken back after a push or a drop, see `occurrencesTidy` in `calendar.ts`;
+ * any other box stays as it is.
+ *
+ * @param file - Path of the plan file the box lies in
+ * @param entry - Entry of the box
+ */
+function boxTidy(file: string, entry: Entry): void {
+    if (entry.recurrence !== "")
+        occurrencesTidy(file, entry.id);
 }
 
 /**
@@ -348,22 +380,55 @@ function logsUntilOf(date: string): string {
 }
 
 /**
+ * Tells whether an entry of the plan is a group of the tutorials of a module, see the top of this file: a to-do
+ * with `X-GROUP` and without `X-NUMBER`, never a box, which always has its number.
+ *
+ * @param entry - Entry of the plan
+ * @returns Whether it is a group
+ */
+export function groupIs(entry: Entry): boolean {
+    return entry.group !== "" && entry.number === "";
+}
+
+/**
+ * Reads the entries of the plan that are boxes in a range, see `entriesRead` in `calendar.ts`: every to-do and event
+ * but the groups, see {@link groupIs}, whose sessions are never walked.
+ *
+ * @param start - Start of the range with offset, like `2026-07-03T00:00:00+02:00`
+ * @param end - End of the range, excluded, in the same form
+ * @returns The entries overlapping the range
+ */
+function planRead(start: string, end: string): Entry[] {
+    return entriesRead(day.plan, start, end, (entry: Entry): boolean => !groupIs(entry));
+}
+
+/**
+ * Reads the entries of the plan that are boxes and happen once, see `entriesOnceRead` in `calendar.ts`, whenever
+ * they lie: every to-do and event but the groups, see {@link groupIs}.
+ *
+ * @returns The entries, file by file in the order they were read
+ */
+function planOnceRead(): Entry[] {
+    return entriesOnceRead(day.plan).filter((entry: Entry): boolean => !groupIs(entry));
+}
+
+/**
  * Finds the entry of the plan of a box by its identifier, see `entryIdOf` in `calendar.ts`: the to-do or event
  * that happens once with that `UID`, else the occurrence of a series named by the `UID` and the start after
- * the last `#`, a component of its own or not.
+ * the last `#`, a component of its own or not; never a group, see {@link groupIs}.
  * - `found`: Its `.ics` file and its entry, `undefined` while none is found.
  * - `at`: Place of the last `#`, -1 for none.
  *
  * @param id - Identifier of the box, like `weekly-lecture@nomsystem#2026-10-13T08:00:00.000Z`
  * @returns Path of its `.ics` file and its entry
- * @throws {Error} - When the plan holds no such entry
+ * @throws {Error} - When the plan holds no such entry, or it is a group
  */
 function planEntryFind(id: string): [string, Entry] {
     let found: [string, Entry] | undefined = entryLookup(day.plan, id);
     const at: number = id.lastIndexOf("#");
     if (found === undefined && at !== -1)
         found = occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1));
-    if (found === undefined)
+    if (found === undefined || groupIs(found[1]))
         throw new Error(`No box ${id}`);
     return found;
 }
@@ -371,7 +436,7 @@ function planEntryFind(id: string): [string, Entry] {
 /**
  * Turns an entry of the plan, a to-do or an event, into a box, see the top of this file: dropped while I cancelled it,
  * done once it is `COMPLETED`, or one without deadline once a log entry points to it, cancelled by the university
- * while its number is `NONE`, else open.
+ * while its number is `NONE`, else open; carried along, see {@link carriedOf}.
  * - `log`: The log entry written from it, `undefined` for none.
  *
  * @param entry - Entry of the plan
@@ -390,7 +455,7 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
         state = "done";
     else if (entry.number === "NONE")
         state = "university";
-    return {
+    return carriedOf({
         id: entryIdOf(entry), category: entry.category, title: entry.title, titleLink: entry.titleLink,
         location: entry.location, locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink,
         passcode: entry.passcode, from: entry.from, attendees: entry.attendees,
@@ -409,8 +474,53 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
         chapters: chaptersOf(entry),
         number: entry.number,
         group: entry.group,
-        picked: entry.picked,
         moved: null,
+        file: entry.file,
+    }, entry.carried);
+}
+
+/**
+ * Gives the days from one day to another, like 1 from `2026-10-23` to `2026-10-24`.
+ *
+ * @param from - The first day, like `2026-10-23`
+ * @param to - The other day, like `2026-10-24`
+ * @returns The days, below zero when the other day lies before
+ */
+function daysOf(from: string, to: string): number {
+    return Math.round((Date.parse(to) - Date.parse(from)) / (dayMinutes * minuteLength));
+}
+
+/**
+ * Gives a box as it stands carried along, see the top of this file: a box without deadline, open while its day is over,
+ * as pushed at the end of each day from its day to today, one done by a log entry of a later day than its own
+ * as pushed so to the day of that log entry; each push one more {@link Push} after those of its file, with its time
+ * of day and its length, like WI1059 (VO) of Fri, 23.10.2026, 15:00 on Sat, 24.10.2026, 15:00, pushed
+ * from Fri, 23.10.2026, 15:00 for 195 minutes. Any other box stands as it is, also one no longer carried along,
+ * its `X-CARRIED:FALSE`, see {@link carriedPut}.
+ * - `until`: The day it is carried to: today for an open box, the day of its log entry for a done one,
+ *   empty for any other.
+ * - `days`: Days it is carried by.
+ * - `laterOf`: Its time, days later, empty for a box without time.
+ *
+ * @param box - The box as its file holds it
+ * @param carried - Whether it is carried along, false for its `X-CARRIED:FALSE`
+ * @returns The box as it stands
+ */
+function carriedOf(box: Box, carried: boolean): Box {
+    let until: string = "";
+    if (box.state === "open")
+        until = berlinDateOf(new Date());
+    else if (box.state === "done")
+        until = loggedDayOf(box);
+    if (!carried || box.deadline !== "" || until <= box.day)
+        return box;
+    const days: number = daysOf(box.day, until);
+    const laterOf: (later: number) => string = (later: number): string =>
+        box.time === "" ? "" : berlinLater(new Date(box.time), later).toISOString();
+    return {
+        ...box, day: until, time: laterOf(days),
+        pushed: [...box.pushed, ...Array.from({ length: days }, (_: unknown, later: number): Push =>
+            ({ day: dayAdd(box.day, later), time: laterOf(later), minutes: box.minutes }))],
     };
 }
 
@@ -418,7 +528,7 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
  * Gives a box as it stood on each day it was pushed from, see the top of this file: once per push, greyed like
  * a skipped box, with the start and the length it had there, see `Push` in `calendar.ts`, else the length it has now,
  * without deadline, since a box with one is never pushed, and with the pushes before that one; each knows the day
- * the box stands on now, and the last one whether its push can be taken back, see {@link Moved}.
+ * the box stands on now and the day it went to from there, later or earlier, see {@link Moved}.
  *
  * @param box - The box as it stands now
  * @returns One greyed box per push, in the order of its pushes, none for a box never pushed
@@ -427,7 +537,7 @@ function leftBoxesOf(box: Box): Box[] {
     return box.pushed.map((push: Push, index: number): Box => ({
         ...box, day: push.day, time: push.time, minutes: push.minutes ?? box.minutes, deadline: "", state: "pushed",
         pushed: box.pushed.slice(0, index), log: null,
-        moved: { day: box.day, last: index === box.pushed.length - 1 && box.state === "open" && box.editable },
+        moved: { day: box.day, went: box.pushed[index + 1]?.day ?? box.day },
     }));
 }
 
@@ -484,18 +594,17 @@ function loggedDayOf(box: Box): string {
  * Reads the plans of the days of a range: the birthdays and holidays of each day with my gift ideas for them,
  * their `DESCRIPTION`s, and its boxes, each with its state and the time of its log entry.
  * A box belongs to the day it starts on, a box with a deadline to each day it shows on, see {@link deadlineShows},
- * and a pushed box greyed to each day it was pushed from, see {@link leftBoxesOf}, wherever it lies now;
- * a box without time and deadline carried along and done on a later day, see {@link boxesCarried}, also to the day
- * of its log entry, done, like the box of 18.10 for 01 Regression Analysis that my session of 19.10 did,
- * see {@link loggedDayOf}.
+ * and a pushed box greyed to each day it was pushed from, see {@link leftBoxesOf}, wherever it lies now, also one
+ * carried along, see {@link carriedOf}, like the box of 18.10 for 01 Regression Analysis that my session of 19.10 did,
+ * done on 19.10 and greyed on 18.10.
  * - `from`: Start of the first day, in Berlin time.
  * - `logs`: Log entries written from boxes, until {@link deadlineDays} days after the last day, or after today
  *   when it is later, see {@link logsOf} and {@link logsUntilOf}.
- * - `boxes`: Boxes of the plan from the first day to {@link deadlineDays} days after the last,
- *   so a deadline after the range shows in it.
- * - `left`: Boxes as they stood on the days of the range they were pushed from: those of the plan that happen once,
- *   whenever they lie, since one occurrence of a series becomes one of its own before it is pushed, see {@link boxOwn}.
- * - `done`: Boxes without time and deadline done by a log entry of a later day than their own, that day in the range.
+ * - `boxes`: Boxes of the plan up to {@link deadlineDays} days after the last day, so a deadline after the range
+ *   shows in it, from the first entry of the plan, so one carried along into the range shows in it, and those
+ *   that happen once wherever they lie, so one pushed from a day of the range shows there, since one occurrence
+ *   of a series becomes one of its own before it is pushed, see {@link boxOwn}; each once.
+ * - `left`: Boxes as they stood on the days of the range they were pushed from.
  * - `occasions`: Birthdays and holidays of the days of the range, none of a file while it is missing.
  * - `days`: The plans so far.
  * - `planned`: Boxes of the plan of one day.
@@ -510,16 +619,13 @@ export function boxesRead(start: string, end: string): PlanDay[] {
     dateCheck(end);
     const from: string = berlinDayStartOf(start);
     const logs: Map<string, Entry> = logsOf(dayAdd(logsUntilOf(end), deadlineDays));
-    const boxes: Box[] = entriesRead(day.plan, from, berlinDayStartOf(dayAdd(end, deadlineDays)))
+    const boxes: Box[] = [...new Map([
+        ...planRead("1970-01-01T00:00:00Z", berlinDayStartOf(dayAdd(end, deadlineDays))), ...planOnceRead(),
+    ].map((entry: Entry): [string, Entry] => [entryIdOf(entry), entry])).values()]
         .map((entry: Entry): Box => boxOf(entry, logs));
-    const left: Box[] = entriesOnceRead(day.plan)
-        .filter((entry: Entry): boolean =>
-            entry.pushed.some((push: Push): boolean => start <= push.day && push.day < end))
-        .flatMap((entry: Entry): Box[] => leftBoxesOf(boxOf(entry, logs)));
-    const done: Box[] = entriesOnceRead(day.plan)
-        .map((entry: Entry): Box => boxOf(entry, logs))
-        .filter((box: Box): boolean => box.state === "done" && box.time === "" && box.deadline === ""
-            && box.day < loggedDayOf(box) && start <= loggedDayOf(box) && loggedDayOf(box) < end);
+    const left: Box[] = boxes
+        .filter((box: Box): boolean => box.pushed.some((push: Push): boolean => start <= push.day && push.day < end))
+        .flatMap(leftBoxesOf);
     const occasions: Entry[] = entriesRead(day.system, from, berlinDayStartOf(end));
 
     const days: PlanDay[] = [];
@@ -527,7 +633,6 @@ export function boxesRead(start: string, end: string): PlanDay[] {
         const planned: Box[] = [
             ...boxes.filter((box: Box): boolean => box.deadline === "" ? box.day === date : deadlineShows(box, date)),
             ...left.filter((box: Box): boolean => box.day === date),
-            ...done.filter((box: Box): boolean => loggedDayOf(box) === date),
         ];
         days.push({
             day: date,
@@ -536,6 +641,7 @@ export function boxesRead(start: string, end: string): PlanDay[] {
                     ? occasion.start <= date && occasion.end > date : dayOf(occasion) === date)
                 .map((occasion: Entry): Occasion => ({
                     id: occasion.id, category: occasion.category, title: occasion.title, gift: occasion.note.trim(),
+                    file: occasion.file,
                 })),
             boxes: planned.sort(boxCompare),
         });
@@ -544,10 +650,10 @@ export function boxesRead(start: string, end: string): PlanDay[] {
 }
 
 /**
- * Reads the boxes carried along to a day: those of the days before it that are neither done nor cancelled,
- * also a box whose deadline is over and one date of a series, like a lecture I did not log, each on its own day,
- * by their days, the boxes of one day in their order, see {@link boxCompare}; they stay there until I do them
- * or cancel them.
+ * Reads the boxes with a deadline carried along to a day, see the top of this file: those whose deadline lies
+ * on a day before it and that are not done, each on its own day, by their days, the boxes of one day in their order,
+ * see {@link boxCompare}; they stay there until I tick them submitted or cancel them. A box without deadline
+ * is carried along as pushed instead, see {@link carriedOf}, so it stands on today itself.
  * - `logs`: Log entries written from boxes, up to the day after the day, see {@link logsOf}.
  *
  * @param date - The day, like `2026-10-13`, today on the page
@@ -557,9 +663,9 @@ export function boxesRead(start: string, end: string): PlanDay[] {
 export function boxesCarried(date: string): Box[] {
     dateCheck(date);
     const logs: Map<string, Entry> = logsOf(date);
-    return entriesRead(day.plan, "1970-01-01T00:00:00Z", berlinDayStartOf(date))
+    return planRead("1970-01-01T00:00:00Z", berlinDayStartOf(date))
         .map((entry: Entry): Box => boxOf(entry, logs))
-        .filter((box: Box): boolean => box.state === "open" && box.day < date)
+        .filter((box: Box): boolean => box.state === "open" && box.deadline !== "" && box.day < date)
         .sort((first: Box, second: Box): number => first.day.localeCompare(second.day) || boxCompare(first, second));
 }
 
@@ -576,7 +682,7 @@ export function boxesCarried(date: string): Box[] {
 export function skillBoxesRead(until: string): Box[] {
     dateCheck(until);
     const logs: Map<string, Entry> = logsOf(until);
-    return entriesRead(day.plan, "1970-01-01T00:00:00Z", berlinDayStartOf(until))
+    return planRead("1970-01-01T00:00:00Z", berlinDayStartOf(until))
         .map((entry: Entry): Box => boxOf(entry, logs))
         .filter((box: Box): boolean => box.category === skillName);
 }
@@ -739,9 +845,8 @@ function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
 
 /**
  * Reads the series of a skill box, see the top of this file: the boxes of the plan of the same skill and type, like
- * `IN2028` and `VO`, by date, whatever their state, each with its plan file, whatever form its `SUMMARY` has,
- * like `IN2028_BusinessAnalyticsMachineLearning (VO)` or an older `IN2028 Business Analytics Machine Learning (VO)`,
- * see `skillPartsOf` in `calendar.ts`; up to two years after today, so a daily box without end, like that of my diary,
+ * `IN2028` and `VO`, by date, whatever their state, each with its plan file, whatever its title, by the `ALTREP`
+ * of its `SUMMARY`, see `skillPartsOf` in `calendar.ts`; up to two years after today, so a daily box without end, like that of my diary,
  * is not walked through a century, which took seconds for each lecture cancelled or added.
  * - `entries`: Every entry of the plan up to then.
  *
@@ -750,7 +855,7 @@ function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
  * @returns The entries of the series, the earliest first
  */
 function seriesOf(module: string, type: string): Entry[] {
-    const entries: Entry[] = entriesRead(day.plan, "1970-01-01T00:00:00Z",
+    const entries: Entry[] = planRead("1970-01-01T00:00:00Z",
         berlinDayStartOf(dayAdd(berlinDateOf(new Date()), 2 * 366)));
     return entries
         .filter((entry: Entry): boolean => entry.category === skillName && entry.module === module
@@ -841,11 +946,11 @@ export function boxesAdd(boxes: BoxNew[], dry: boolean): string[] {
  * @param id - Identifier of the box, like `lecture-26@nomsystem`
  * @param cancelled - Whether the university cancelled it, else taking that back
  * @throws {Error} - When there is no such box in the new system, it is not open, or, taken back, not cancelled
- *   by the university
+ *   by the university, or it is of no type of {@link numberedTypes}, like an exam, whose `X-NUMBER` is its kind
  */
 export function boxUniversity(id: string, cancelled: boolean): void {
     const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (!entry.editable || box.state !== (cancelled ? "open" : "university"))
+    if (!entry.editable || box.state !== (cancelled ? "open" : "university") || !numberedTypes.includes(entry.type))
         throw new Error(`${entry.title} is no box of the new system to mark`);
     const series: Entry[] = seriesOf(entry.module, entry.type)
         .filter((other: Entry): boolean => entryIdOf(other) !== id);
@@ -867,15 +972,21 @@ export function boxUniversity(id: string, cancelled: boolean): void {
 }
 
 /**
- * Changes a box of the new system, see {@link boxCheck}, one occurrence of a series alone, see {@link boxOwn};
+ * Changes a box of the new system, see {@link boxCheck}, one occurrence of a series alone, its summary too,
+ * see {@link boxOwn}, the whole series changing only in the dialog of the series, see `rules.ts`;
  * a box moves into the plan it belongs into now when that is another file, see {@link planFileAfter}.
  * A to-do changes as it is sent; an event, like a lecture imported from TUMonline, keeps a time and a duration,
  * its start and its end. A skill box takes its chapters and documents, see {@link boxLinksPut}.
- * An open box without deadline whose day moves later is pushed, like with its arrow, see {@link boxPush}:
+ * An open box without deadline whose day moves, later or earlier, is pushed, like with its arrow, see {@link boxPush}:
  * its start and its length as they stood go into one more `X-PUSHED`, like
  * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261017T150000` for one moved
- * from Sat, 17.10.2026, 15:00 to Mon, 19.10.2026; a box moved earlier or with a deadline is not pushed.
+ * from 17.10.2026 (Sat), 15:00 to 19.10.2026 (Mon), or one from tomorrow done today instead; every push stays, so the box
+ * shows greyed on each day it left, see {@link leftBoxesOf}; a box with a deadline is not pushed.
+ * A box carried along has the pushes it stands for written first, see {@link carryWrite},
+ * and one moved to a day that is over stays there, no longer carried along, see {@link carriedPut}.
  * All of it is checked before anything is written, so a change the reader does not take changes nothing.
+ * One occurrence of a series left with nothing of its own goes back to its series, see {@link boxTidy}.
+ * - `old`: Its entry as its file holds it, before the pushes of a box carried along are written.
  * - `todo`: New fields of a to-do, `null` for an event.
  * - `event`: New fields and times of an event, see {@link eventFieldsOf}, `null` for a to-do.
  * - `links`: Its chapters and documents, see {@link boxLinksOf}.
@@ -886,15 +997,17 @@ export function boxUniversity(id: string, cancelled: boolean): void {
  *   is no web address, an event would lose its time or its duration, or a document is none of the module's
  */
 export function boxEdit(change: BoxChange): void {
-    const [file, entry, box]: [string, Entry, Box] = boxFind(change.id);
-    if (!entry.editable)
-        throw new Error(`${entry.title} may not be changed`);
-    boxCheck(change, entry);
-    const todo: TodoFields | null = entry.todo ? todoFieldsOf(change, entry) : null;
-    const event: EntryFields | null = entry.todo ? null : eventFieldsOf(change, entry);
-    const links: [string, (string | Link)[]][] = boxLinksOf(change, entry);
+    const found: [string, Entry, Box] = boxFind(change.id);
+    const old: Entry = found[1];
+    if (!old.editable)
+        throw new Error(`${old.title} may not be changed`);
+    boxCheck(change, old);
+    const todo: TodoFields | null = old.todo ? todoFieldsOf(change, old) : null;
+    const event: EntryFields | null = old.todo ? null : eventFieldsOf(change, old);
+    const links: [string, (string | Link)[]][] = boxLinksOf(change, old);
+    const [file, entry, box]: [string, Entry, Box] = carryWrite(found);
     boxOwn(file, entry);
-    if (box.state === "open" && box.deadline === "" && change.deadline === "" && change.day > box.day)
+    if (box.state === "open" && box.deadline === "" && change.deadline === "" && change.day !== box.day)
         pushAdd(file, change.id, entry);
     const target: string = planFileAfter(file, entry, change, change.day);
     if (todo !== null)
@@ -902,118 +1015,170 @@ export function boxEdit(change: BoxChange): void {
     else if (event !== null)
         entryChange(file, entry, event, target);
     boxLinksPut(target, change.id, links);
+    if (change.day !== box.day)
+        carriedPut(target, change.id, entry, change.deadline !== "" || change.day >= berlinDateOf(new Date()));
+    boxTidy(file, entry);
 }
 
 /**
  * Removes a box of the new system that is not done, like one planned by mistake;
  * a box I decided against is dropped instead, see {@link boxDrop}, so it can be counted.
- * A done box stays, since its log entry points to it, and so does one occurrence of a series, which belongs to it.
+ * A done box stays, since its log entry points to it. One day of a series, like my sleep of one night, goes alone:
+ * its day leaves the series, see `seriesDayRemove` in `calendar.ts`, every other day of it staying.
  *
  * @param id - Identifier of the box
- * @throws {Error} - When there is no such box in the new system, it is done, or it is one occurrence of a series
+ * @throws {Error} - When there is no such box in the new system, or it is done
  */
 export function boxDelete(id: string): void {
     const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (!entry.editable || box.state === "done" || box.series)
+    if (!entry.editable || box.state === "done")
         throw new Error(`${entry.title} may not be removed`);
-    entryRemove(file, id);
+    if (entry.recurrence !== "")
+        seriesDayRemove(file, entry.id, entry.recurrence);
+    else
+        entryRemove(file, id);
 }
 
 /**
- * Pushes an open box of the new system with one tap, by its arrow, also one carried along: to the next day, or,
- * when its day is over, to tomorrow, the day after today in Berlin time, so it does not land on a day over too,
- * like a box of Wed, 14.10.2026 pushed on Fri, 16.10.2026 to Sat, 17.10.2026. Notes where it leaves in one more
- * `X-PUSHED`, then moves its day and its time by as many days, its time of day and its length kept, an event
- * its start and its end, into the plan of the next year when it moves into it, see {@link planFileAfter};
- * one occurrence of a series alone, see {@link boxOwn}.
+ * Gives the text fields of an entry, as they are, for a change of its times alone.
+ *
+ * @param entry - Entry of the plan
+ * @returns Its text fields
+ */
+function textsOf(entry: Entry): EntryTexts {
+    return {
+        category: entry.category, title: entry.title, titleLink: entry.titleLink, location: entry.location,
+        locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink, passcode: entry.passcode,
+        from: entry.from, attendees: entry.attendees, module: entry.module, type: entry.type, semester: entry.semester,
+        note: entry.note,
+    };
+}
+
+/**
+ * Gives an entry as it would stand days later, its time of day and its length kept, see `berlinLater`
+ * in `calendar.ts`, a whole-day entry by whole days.
+ * - `laterOf`: A start or an end, days later.
+ *
+ * @param entry - Entry of the plan
+ * @param days - Days later
+ * @returns The entry, its start and its end days later
+ */
+function entryLater(entry: Entry, days: number): Entry {
+    const laterOf: (instant: string) => string = (instant: string): string =>
+        entry.allDay ? dayAdd(instant, days) : berlinLater(new Date(instant), days).toISOString();
+    return { ...entry, start: laterOf(entry.start), end: laterOf(entry.end) };
+}
+
+/**
+ * Moves a box of the new system by days, its time of day and its length kept, an event its start and its end,
+ * into the plan of the next year when it moves into it, see {@link planFileAfter}.
+ * - `later`: Its entry, days later.
+ * - `day`: Its new day.
+ *
+ * @param file - Path of the plan file the box lies in
+ * @param entry - Entry of the box
+ * @param days - Days to move it by
+ * @returns The plan file it lies in then
+ */
+function boxShift(file: string, entry: Entry, days: number): string {
+    const later: Entry = entryLater(entry, days);
+    const day: string = dayOf(later);
+    const target: string = planFileAfter(file, entry, entry, day);
+    if (entry.todo)
+        todoChange(file, entry, {
+            ...textsOf(entry), day: day, time: entry.allDay ? null : new Date(later.start), minutes: entry.minutes,
+            deadline: "",
+        }, target);
+    else
+        entryChange(file, entry, { ...textsOf(entry), start: new Date(later.start), end: new Date(later.end) }, target);
+    return target;
+}
+
+/**
+ * Writes the pushes a box carried along stands for into its file, before it changes, see {@link carriedOf}:
+ * one more `X-PUSHED` for each day it was carried from, see `pushAdd` in `calendar.ts`, and it moves to the day
+ * it is carried to, see {@link boxShift}, so its file holds what I would have written pushing it by hand each day,
+ * like WI1059 (VO) of Fri, 23.10.2026, 15:00 that I move on Sat, 24.10.2026, which is pushed from Friday
+ * and from Saturday then, see {@link boxPush}; one occurrence of a series alone, see {@link boxOwn}.
+ * Any other box stays as it is.
+ * - `carried`: Days it is carried by, its pushes beyond those of its file.
+ *
+ * @param found - Its plan file, its entry and the box, see {@link boxFind}
+ * @returns Its plan file, its entry and the box as they stand then
+ * @throws {Error} - When the file lies outside the new system
+ */
+function carryWrite(found: [string, Entry, Box]): [string, Entry, Box] {
+    const [file, entry, box]: [string, Entry, Box] = found;
+    const carried: number = box.pushed.length - entry.pushed.length;
+    if (carried === 0)
+        return found;
+    boxOwn(file, entry);
+    for (let later: number = 0; later < carried; later++)
+        pushAdd(file, box.id, entryLater(entry, later));
+    boxShift(file, entry, carried);
+    return boxFind(box.id);
+}
+
+/**
+ * Notes whether a box is carried along once its day is over, see the top of this file: `X-CARRIED:FALSE` for one
+ * I move to a day that is over, so it stays there, missed, see {@link boxEdit}, no line for any other;
+ * written only when it changes.
+ *
+ * @param file - Path of the plan file the box lies in now
+ * @param id - Identifier of the box
+ * @param entry - Entry of the box, as it stood before
+ * @param carried - Whether it is carried along
+ * @throws {Error} - When the file lies outside the new system or does not hold the box
+ */
+function carriedPut(file: string, id: string, entry: Entry, carried: boolean): void {
+    if (carried !== entry.carried)
+        propertiesPut(file, id, [["x-carried", carried ? [] : ["FALSE"]]]);
+}
+
+/**
+ * Pushes an open box of the new system with one tap, by its arrow, also one carried along, which gets the pushes
+ * it stands for first, see {@link carryWrite}: to the next day, or, when its day is over, to tomorrow, the day after
+ * today in Berlin time, so it does not land on a day over too, like a box of 14.10.2026 (Wed) that I moved back there,
+ * see {@link boxEdit}, pushed on 16.10.2026 (Fri) to 17.10.2026 (Sat). Notes where it leaves in one more
+ * `X-PUSHED`, then moves its day and its time by as many days, see {@link boxShift}, one occurrence of a series alone,
+ * see {@link boxOwn}, and it is carried along again, see {@link carriedPut}.
  * A box with a deadline stays, since its day is the day of its deadline.
  * - `today`: Today in Berlin time.
  * - `next`: The day it goes to, the day after its own day or after today, the later of them.
- * - `days`: Days it moves by, one for a box whose day is not over.
- * - `texts`: Its text fields, as they are.
  *
  * @param id - Identifier of the box
  * @throws {Error} - When there is no such box in the new system, it is not open, or it has a deadline
  */
 export function boxPush(id: string): void {
-    const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (!entry.editable || box.state !== "open" || box.deadline !== "")
-        throw new Error(`${entry.title} is no open box of the new system without deadline`);
+    const found: [string, Entry, Box] = boxFind(id);
+    if (!found[1].editable || found[2].state !== "open" || found[2].deadline !== "")
+        throw new Error(`${found[1].title} is no open box of the new system without deadline`);
 
+    const [file, entry, box]: [string, Entry, Box] = carryWrite(found);
     const today: string = berlinDateOf(new Date());
     const next: string = dayAdd(box.day < today ? today : box.day, 1);
-    const days: number = Math.round((Date.parse(next) - Date.parse(box.day)) / (dayMinutes * minuteLength));
-    const texts: EntryTexts = {
-        category: entry.category, title: entry.title, titleLink: entry.titleLink, location: entry.location,
-        locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink, passcode: entry.passcode,
-        from: entry.from, attendees: entry.attendees, module: entry.module, type: entry.type, semester: entry.semester,
-        note: entry.note,
-    };
     boxOwn(file, entry);
     pushAdd(file, id, entry);
-    if (entry.todo)
-        todoChange(file, entry, {
-            ...texts, day: next, time: box.time === "" ? null : berlinLater(new Date(box.time), days),
-            minutes: entry.minutes, deadline: "",
-        }, planFileAfter(file, entry, entry, next));
-    else
-        entryChange(file, entry, {
-            ...texts, start: berlinLater(new Date(entry.start), days), end: berlinLater(new Date(entry.end), days),
-        }, planFileAfter(file, entry, entry, next));
-}
-
-/**
- * Takes back the last push of an open box of the new system, by its arrow or by its day in the dialog: puts it back
- * where it stood before, its start and its length as its last `X-PUSHED` notes them, which goes, see `pushTake`
- * in `calendar.ts`, like WI1059 (VO) back from Mon, 19.10.2026, 10:00 for 2 hours to Sun, 18.10.2026, 15:00
- * for 3 hours 15 minutes; its length stays where the push noted none; into the plan of its month again,
- * see {@link planFileAfter}.
- * - `start`, `minutes`: Start and length before the push, see `pushTake`.
- * - `day`: Its day before the push.
- * - `texts`: Its text fields, as they are.
- *
- * @param id - Identifier of the box
- * @throws {Error} - When there is no such box in the new system, it is not open, or it was never pushed
- */
-export function boxUnpush(id: string): void {
-    const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (!entry.editable || box.state !== "open" || entry.pushed.length === 0)
-        throw new Error(`${entry.title} is no open box of the new system pushed before`);
-
-    const [start, minutes]: [string, number | null] = pushTake(file, id, entry);
-    const day: string = box.time === "" ? start : berlinDateOf(new Date(start));
-    const texts: EntryTexts = {
-        category: entry.category, title: entry.title, titleLink: entry.titleLink, location: entry.location,
-        locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink, passcode: entry.passcode,
-        from: entry.from, attendees: entry.attendees, module: entry.module, type: entry.type, semester: entry.semester,
-        note: entry.note,
-    };
-    if (entry.todo)
-        todoChange(file, entry, {
-            ...texts, day: day, time: box.time === "" ? null : new Date(start), minutes: minutes ?? entry.minutes,
-            deadline: "",
-        }, planFileAfter(file, entry, entry, day));
-    else
-        entryChange(file, entry, {
-            ...texts, start: new Date(start), end: new Date(Date.parse(start)
-                + (minutes === null ? Date.parse(entry.end) - Date.parse(entry.start) : minutes * 60 * 1000)),
-        }, planFileAfter(file, entry, entry, day));
+    carriedPut(boxShift(file, entry, daysOf(box.day, next)), id, entry, true);
 }
 
 /**
  * Drops a box of the new system that is not done, with one tap, or takes it back: a dropped box stays in its file
  * as `STATUS:CANCELLED`, so it can be counted; taken back, a to-do is `NEEDS-ACTION` again,
  * an event without status, as it was imported. One occurrence of a series drops alone, see {@link boxOwn},
- * like the lecture `IN2028 VO` on 26.10.2026, the series staying.
+ * like the lecture `IN2028 VO` on 26.10.2026, the series staying. A box carried along has the pushes it stands for
+ * written first, see {@link carryWrite}, so it is dropped where it stands, like a box pushed by hand; taken back,
+ * one occurrence of a series left with nothing of its own goes back to its series, see {@link boxTidy}.
  *
  * @param id - Identifier of the box
  * @param dropped - Whether to drop it, else to take it back
  * @throws {Error} - When there is no such box in the new system, or it is done
  */
 export function boxDrop(id: string, dropped: boolean): void {
-    const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (!entry.editable || box.state === "done")
-        throw new Error(`${entry.title} cannot be dropped`);
+    const found: [string, Entry, Box] = boxFind(id);
+    if (!found[1].editable || found[2].state === "done")
+        throw new Error(`${found[1].title} cannot be dropped`);
+    const [file, entry]: [string, Entry, Box] = carryWrite(found);
     let status: string = "";
     if (dropped)
         status = "CANCELLED";
@@ -1021,6 +1186,8 @@ export function boxDrop(id: string, dropped: boolean): void {
         status = "NEEDS-ACTION";
     boxOwn(file, entry);
     statusPut(file, id, status);
+    if (!dropped)
+        boxTidy(file, entry);
 }
 
 /**
@@ -1085,8 +1252,8 @@ function skillBoxOpen(box: Box, module: string): boolean {
 
 /**
  * Finds the open study box of a module for a day, one without time, like the box of a chapter the plan of today
- * holds, see `suggestions.ts`: of that day, else one carried along to it, see {@link boxesCarried}, the earliest
- * first; a box with chapters only for learning in one of them, see {@link skillBoxOpen}.
+ * holds, see `suggestions.ts`, also one carried along to it, see {@link carriedOf}, the first as the day orders them;
+ * a box with chapters only for learning in one of them, see {@link skillBoxOpen}.
  * - `fits`: Whether a box is one.
  *
  * @param module - Module code, like `IN2028`
@@ -1098,7 +1265,7 @@ export function studyBoxOf(module: string, date: string, chapters: string[]): Bo
     const fits: (box: Box) => boolean = (box: Box): boolean => skillBoxOpen(box, module) && box.time === ""
         && (chapters.length === 0 || box.chapters.length === 0
             || box.chapters.some((chapter: string): boolean => chapters.includes(chapter)));
-    return boxesRead(date, dayAdd(date, 1))[0].boxes.find(fits) ?? boxesCarried(date).find(fits);
+    return boxesRead(date, dayAdd(date, 1))[0].boxes.find(fits);
 }
 
 /**

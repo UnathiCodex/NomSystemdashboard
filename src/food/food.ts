@@ -2,19 +2,23 @@
  * ## Food
  *
  * Shows what I ate on a day, and my foods, in the scheme of the day view; my water I count in the trackers of the day.
- * The bar of the day, as the day has it: its weekday short and its date, like `Tue, 13.10.2026`, between the arrows
+ * The bar of the day, as the day has it: its weekday short and its date, like `13.10.2026 (Tue)`, between the arrows
  * to the day before and after, a small icon beside it back to today, faded and off on today.
  * The day: the number of its meals and its totals
  * of kcal, protein, carbs and fat, all alike, without goals, so the log stays a log, not calorie control;
  * then each meal of the log: its start, linking to the day in the day view, where, and its kcal in bold,
- * below it what it holds, each food by its name alone with its grams, a drink with its millilitres.
+ * below it what it holds, each meal of mine with its kcal, the sum of its foods, each food by its name alone
+ * with its grams grey in brackets and its kcal, like `Rigatoni (230 g) 363 kcal`, a drink with its millilitres;
+ * a click on it opens the day view's dialog of its entry, the same as a click on it in the log, to change, copy
+ * or remove it there, see {@link mealBlockOf}.
  * A food listed without grams counts nothing; every amount is rounded and an estimate anyway,
  * so none is marked as one. A food not in `Foods.md` and a meal that lists no foods count nothing,
  * and a line below the totals says so; so does a nutrient a food does not know, the totals adding what is known,
  * like `Not counted, fat unknown: Gouda`.
- * My meals and my foods, built alike, each list its search field, its head and a flat line per meal or food, a click
- * opening it below: my meals, each only its foods, with what it gave the last time I ate it, see `meals.ts`, above
- * my foods, the food search, which finds mine first, then those of Open Food Facts, adds a product with a click,
+ * My meals and my foods, built alike, each list its search field and a flat line per meal or food, a click
+ * opening it below: my meals under their head, each only its foods, with what it gave the last time I ate it,
+ * see `meals.ts`, above my foods, the food search, which finds mine at once, then those of Open Food Facts below
+ * them, adds a product with a click,
  * opens one of mine to change its name, brand and store, and adds a food by hand by the plus beside the name `Foods`,
  * see `search.ts`.
  * It opens on today's calendar date, which turns at 00:00, also after a reload, and while it shows today it moves on
@@ -26,11 +30,11 @@
  * - `./search.ts`: Finds foods, mine first, then on Open Food Facts, adds new ones and changes mine.
  * - `./meals.ts`: The section of my meals.
  * - `../day/places.ts`: Gives the name of the place of a meal.
- * - `../day/times.ts`: Writes a day as its date, like `13.10.2026`.
- * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader.
+ * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader, and a day with its weekday for the bar.
  * - `../today.ts`: Gives today's calendar date and the day a link asks for, and moves the food view on to the new day
  *   while it shows today.
  * - `../changes.ts`: Loads the day anew the moment a file of my new system changes.
+ * - `../editor/dialog.ts`: Opens the day view's dialog of the entry of a meal.
  * - `../icons.ts`: Puts the arrows and the icon back to today into their buttons, their words as tooltip.
  * - `lucide`: The icons of the arrows and of today.
  * - `./food.css`: Look of the food view.
@@ -40,10 +44,10 @@ import { amountOf, buttonOf, elementOf, foodDayLoad, summaryOf, unitOf } from ".
 import { foodNewShow, foodSearchOf, foodShow } from "./search.ts";
 import { mealsSectionOf } from "./meals.ts";
 import { labelOf } from "../day/places.ts";
-import { dateTextOf } from "../day/times.ts";
-import { dayOf } from "../skill/attempts.ts";
+import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
+import { logEntryOpen } from "../editor/dialog.ts";
 import { iconPut, plusPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
 import "./food.css";
@@ -153,32 +157,48 @@ function totalsShow(day: FoodDay): void {
 }
 
 /**
+ * Adds up the kcal of foods of an entry that count, those of my foods with grams.
+ * - `counted`: The foods that count.
+ *
+ * @param foods - Foods with what they give, like those of a meal of mine
+ * @returns Their kcal, `null` when none of them counts, so its line shows none, never 0
+ */
+function kcalOf(foods: Eaten[]): number | null {
+    const counted: Eaten[] = foods.filter((eaten: Eaten): boolean => eaten.known && eaten.grams > 0);
+    return counted.length === 0 ? null : counted.reduce((sum: number, eaten: Eaten): number => sum + eaten.kcal, 0);
+}
+
+/**
  * Builds a line of what an entry holds, a name: a meal of mine alone, or a food alone, without its brand and store,
- * which only tell which one it is when I pick it, with its grams in the column of numbers, the millilitres of a drink,
- * like `330 ml`, none for a food without grams, which the hints below the totals name, see {@link totalsShow}; a meal
- * or a food eaten by itself in the text of controls, the foods of a meal indented below it, see {@link mealLinesOf}.
+ * which only tell which one it is when I pick it; in the two columns of numbers what it gives, a food its grams grey
+ * in brackets and its kcal last, like `(230 g) 363 kcal`, the millilitres of a drink, like `(330 ml)`, a meal its kcal
+ * alone, the sum of its foods, like `842 kcal`; a food not in my foods only its grams, and a food without grams
+ * nothing, which the hints below the totals name, see {@link totalsShow}; a meal or a food eaten by itself in the text
+ * of controls, the foods of a meal indented below it, see {@link mealLinesOf}.
  * - `line`: The line.
  *
  * @param name - Name of the meal or the food, like `Chili con Carne` or `Semmel`
- * @param eaten - The food, `null` for a meal, which has no grams
+ * @param kcal - What it gives, see {@link kcalOf}, `null` for nothing known
+ * @param eaten - The food with its grams, `null` for a meal, which has none
  * @param item - Whether it stands at the top of its entry, as a meal or a food eaten by itself
  * @returns Line in the columns of the meals
  */
-function whatLineOf(name: string, eaten: Eaten | null, item: boolean): HTMLElement {
+function whatLineOf(name: string, kcal: number | null, eaten: Eaten | null, item: boolean): HTMLElement {
     const line: HTMLElement = elementOf("div", item ? "food-line food-meal" : "food-line", "");
-    line.append(elementOf("span", "food-what", name), elementOf("span", "food-value",
-        eaten === null || eaten.grams === 0 ? "" : amountTextOf(eaten.grams, unitOf(eaten.kind))));
+    line.append(elementOf("span", "food-what", name), elementOf("span", "food-value food-bracket",
+        eaten === null || eaten.grams === 0 ? "" : `(${amountTextOf(eaten.grams, unitOf(eaten.kind))})`),
+        elementOf("span", "food-value", kcal === null ? "" : amountTextOf(kcal, "kcal")));
     return line;
 }
 
 /**
  * Builds the lines of an entry: its start in grey above it, linking to its day in the day view, so no column of times
- * takes room beside the names, and where, and at the right what the whole entry gives, its kcal in bold, the one
- * number of kcal of every entry, always where it gives anything known; then what it holds, each line a name,
- * see {@link whatLineOf}: each meal of mine, below it its foods with their grams, and each food eaten by itself
- * with its grams, like bread beside the chili or an apple alone, so a food never stands under a meal it does not
- * belong to; an older entry whose summary names more than its foods, like `Bortzeit`, stands as one meal of that name;
- * an entry without foods stands by its summary with a hint.
+ * takes room beside the names, and where, and in the column of kcal what the whole entry gives, in bold, the sum
+ * of the lines below it, always where it gives anything known; then what it holds, each line a name with what it gives,
+ * see {@link whatLineOf}: each meal of mine with the kcal of its foods, below it its foods with their kcal and grams,
+ * and each food eaten by itself with its kcal and grams, like bread beside the chili or an apple alone, so a food
+ * never stands under a meal it does not belong to; an older entry whose summary names more than its foods,
+ * like `Bortzeit`, stands as one meal of that name; an entry without foods stands by its summary with a hint.
  * - `entry`: Line of its start and place, and of its kcal.
  * - `when`: Its start and place.
  * - `meals`: Foods of each meal of mine, by the name of the meal, in the order of the lines.
@@ -199,7 +219,7 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
     if (meal.foods.length === 0) {
         const none: HTMLElement = elementOf("div", "food-line", "");
         none.append(elementOf("span", "food-place", "No foods listed"));
-        return [entry, whatLineOf(meal.title, null, true), none];
+        return [entry, whatLineOf(meal.title, null, null, true), none];
     }
 
     const meals: Map<string, Eaten[]> = new Map();
@@ -217,33 +237,53 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
         entry.append(elementOf("span", "food-value", amountTextOf(meal.kcal, "kcal")));
     return [
         entry,
-        ...[...meals].flatMap(([name, foods]: [string, Eaten[]]): HTMLElement[] => [whatLineOf(name, null, true),
-            ...foods.map((eaten: Eaten): HTMLElement => whatLineOf(eaten.name, eaten, false))]),
-        ...alone.map((eaten: Eaten): HTMLElement => whatLineOf(eaten.name, eaten, true)),
+        ...[...meals].flatMap(([name, foods]: [string, Eaten[]]): HTMLElement[] => [
+            whatLineOf(name, kcalOf(foods), null, true),
+            ...foods.map((eaten: Eaten): HTMLElement => whatLineOf(eaten.name, kcalOf([eaten]), eaten, false)),
+        ]),
+        ...alone.map((eaten: Eaten): HTMLElement => whatLineOf(eaten.name, kcalOf([eaten]), eaten, true)),
     ];
 }
 
 /**
- * Shows a day: writes its weekday short and its date in the bar, like `Tue, 13.10.2026`, turns the icon back to today
+ * Builds an entry as one block of its lines, see {@link mealLinesOf}, which a click opens in the day view's dialog
+ * of the entry, the same as a click on it in the log, see `logEntryOpen` in `../editor/dialog.ts`; a click on its
+ * start shows its day instead. A change saved there loads the day anew, as every change of a file does,
+ * see {@link foodStart}.
+ * - `block`: The block.
+ *
+ * @param meal - Entry with what it gives
+ * @returns Block of the entry
+ */
+function mealBlockOf(meal: Meal): HTMLElement {
+    const block: HTMLElement = elementOf("div", "food-eaten", "");
+    block.append(...mealLinesOf(meal));
+    block.addEventListener("click", (event: MouseEvent): void => {
+        if ((event.target as HTMLElement).closest("a") === null)
+            logEntryOpen(meal.id, meal.start).catch((error: unknown): void => console.error(error));
+    });
+    return block;
+}
+
+/**
+ * Shows a day: writes its weekday short and its date in the bar, like `13.10.2026 (Tue)`, turns the icon back to today
  * off on today, then loads its meals and shows them with their totals, unless another day was asked for meanwhile;
  * a day without meals shows no totals, only that it has none.
  * - `food`: Meals of the day with what they give.
- * - `lines`: Lines of all meals.
+ * - `lines`: Blocks of all meals, see {@link mealBlockOf}.
  *
  * @param day - Day like `2026-10-10`
  * @throws {Error} - When the reader cannot answer
  */
 async function dayShow(day: string): Promise<void> {
     shown = day;
-    (document.getElementById("food-weekday") as HTMLElement).textContent =
-        new Date(`${day}T12:00:00`).toLocaleDateString("en-GB", { weekday: "long" });
-    (document.getElementById("food-date") as HTMLElement).textContent = dateTextOf(day);
+    (document.getElementById("food-date") as HTMLElement).textContent = dayTextOf(day, true);
     (document.getElementById("food-today") as HTMLButtonElement).disabled = day === calendarTodayOf();
 
     const food: FoodDay = await foodDayLoad(day);
     if (day !== shown)
         return;
-    const lines: HTMLElement[] = food.meals.flatMap(mealLinesOf);
+    const lines: HTMLElement[] = food.meals.map(mealBlockOf);
     if (food.meals.length > 0)
         totalsShow(food);
     else {

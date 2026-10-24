@@ -9,38 +9,57 @@
     <div class="editor-file">
         <!-- Page of the file as wide as the room beside the tree, with little room left and right -->
         <div class="editor-page">
-            <!-- Overview of a module, once its name or that of one of its chapters in the tree is clicked: the way up
-                 small and grey above its name, as the weekday above the date, then its course of the university,
-                 one card per type, see course.ts, a thin line, and my own learning, one card per chapter,
-                 see overview.ts -->
+            <!-- Status line above the text, quiet: for a section its round in a small grey box, see round.ts, then
+                 the name of the file, its path from NomWorkspace on as its title, as the dialogs show it, then the
+                 session the round writes into; at the right whether the changes are saved; stays on top while
+                 scrolling -->
+            <div class="editor-status" id="editor-status">
+                <p class="editor-title"><span class="block-kind" id="editor-round" hidden><span
+                        id="editor-round-label"></span></span><span id="editor-name"></span><span class="entry-parted"
+                        id="editor-session"></span></p>
+                <span class="editor-state" id="editor-state"></span>
+            </div>
+
+            <!-- Page of a module or of one of its chapters, once its name in the tree is picked: of the module on top
+                 its name, above it the path to it, as a folder has them, see folder.ts, then its course of the
+                 university, one card per type, see course.ts; of a chapter its sections, see overview.ts -->
             <section class="editor-overview" id="editor-overview" hidden>
-                <div class="day-bar">
-                    <h2 class="day-title"><a class="day-weekday overview-up"></a> <span class="day-date"></span></h2>
+                <div class="day-bar overview-title">
+                    <h2 class="day-title"><span class="day-weekday folder-path"></span><span
+                            class="day-date"></span></h2>
                 </div>
                 <div class="overview-course"></div>
-                <hr class="overview-line">
                 <div class="overview-list"></div>
             </section>
+
+            <!-- A folder of my modules, once the folder of the material of a card of the course is clicked: on top,
+                 where a module names itself, its name, above it as the weekday above the date of the day the path
+                 to it, each folder on the way a link to it; then its folders and files, see folder.ts -->
+            <section class="editor-overview" id="editor-folder" hidden>
+                <div class="day-bar">
+                    <h2 class="day-title"><span class="day-weekday folder-path"></span><span
+                            class="day-date"></span></h2>
+                </div>
+                <div class="overview-card folder-list"></div>
+            </section>
+
+            <!-- Name of the file opened on top, as a folder and a module have theirs: above it small and grey the path
+                 to it, like NomManageplannings/NomMetainformations over Places.md; filled by editor.ts -->
+            <div class="day-bar overview-title" id="editor-file-title" hidden>
+                <h2 class="day-title"><span class="day-weekday folder-path"></span><span class="day-date"></span></h2>
+            </div>
 
             <!-- Text of the file, CodeMirror inside; `markdown` gives the rendered pieces of a Markdown file the look
                  of the scripts view, `editor-plain` shows any other file as its plain text -->
             <div class="editor-text markdown" id="editor-text"></div>
         </div>
 
-        <!-- Head: no name of the file, since the tree shows it; the save button at the right edge of the screen, beside
-             the page, and below it for a section the round check, see round.ts; stays in the corner while scrolling -->
+        <!-- Head: the save button at the right edge of the screen, beside the page, and below it for a section
+             the round check, see round.ts; stays in the corner while scrolling -->
         <div class="editor-head" id="editor-head">
             <button type="button" class="editor-save" id="editor-save"></button>
             <!-- A section only: closes its round by hand, see round.ts -->
             <button type="button" class="editor-close" id="editor-close" hidden></button>
-        </div>
-
-        <!-- Status line at the bottom of the page: for a section its round, and the session it writes into beside it,
-             see round.ts; at its right whether the changes are saved; stays at the bottom while scrolling -->
-        <div class="editor-status" id="editor-status">
-            <p class="editor-round" id="editor-round" hidden><span id="editor-round-label"></span><span
-                    class="editor-session" id="editor-session"></span></p>
-            <span class="editor-state" id="editor-state"></span>
         </div>
     </div>
 </div>

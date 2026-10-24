@@ -137,7 +137,8 @@ button.food-row {
 }
 
 /* A value of a food of mine that changes in place, its name, brand or store: as plain as every value beside it,
-   no frame; a thin line below it under the pointer and while I type, so I see that a click changes it */
+   no frame; a thin line below it under the pointer, softly as every hover, see `--hover-in` in `../variants.css`,
+   and while I type, so I see that a click changes it */
 .food-inline {
     width: 100%;
     padding: 0 0 0.125rem;
@@ -146,10 +147,12 @@ button.food-row {
     background: none;
     color: var(--text-main);
     font: inherit;
+    transition: border-color var(--hover-out);
 }
 
 .food-inline:hover {
     border-bottom-color: var(--line);
+    transition: border-color var(--hover-in);
 }
 
 .food-inline:focus {

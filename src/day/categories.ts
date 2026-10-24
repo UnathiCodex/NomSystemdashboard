@@ -3,16 +3,16 @@
  *
  * Writes plan and log the same way, by category, in one dialog without a title, all its room for the fields,
  * one column of rows in the order of the file, each its name grey at the left, all names equally wide, and its value
- * at the right, like `Category  Skill`, see `choices.ts`: start and end fixed at the top, then the category, below it
- * each of its fields one after another, the note always at the bottom, a click on a row opening its one list right
- * under it, then `Save`; an empty field stays empty, without dash or placeholder, but a time, which says grey
+ * at the right, like `Category  Skill`, see `choices.ts`: the category at the top, then what it is, where it is, its
+ * times, then its other fields one after another, the note always at the bottom, a click on a row opening its one
+ * list right under it, then `Save`; an empty field stays empty, without dash or placeholder, but a time, which says grey
  * `hh:mm`, see `timeFieldStart` in `times.ts`. Esc closes an open list, else
  * the dialog, and a click beside the dialog closes it without saving. Enter in a field confirms only that field,
  * and the entry saves only by its check or by Ctrl+Enter, see {@link enterTake}. A new entry opens with the list
  * of the categories open. A changed entry of the log saves only while its file still holds it as the dialog opened it,
  * the first save winning, else the dialog says so above its buttons, see {@link entrySave}.
  * Every category has its `Summary`, the `SUMMARY` of its file, its `Place`, a way also `From` before its place,
- * and `With` right below its place, who I was with, see {@link withRowOf};
+ * and below the times `With`, who I was with, see {@link withRowOf};
  * the summary of `Sleep` only `Night` or `Day`, a nap, that of `Way` my means of transport;
  * a value with steps shows them below its line while it is picked, with the note of its last entry;
  * `Body` is my body care, one or several, like `Shower` or `Caring, Shower`;
@@ -23,8 +23,9 @@
  * `Sport` in the log has below its place its workout, its exercises and its videos, see `sport.ts`, and no note,
  * since what I did stands in its rows.
  * `Skill` is a skill and a type or none side by side, like `IN2028` and `VO` or the project `WokFlow`, in plan and log,
- * written by the reader as the folder of its skill with the type in brackets, like
- * `IN2028_BusinessAnalyticsMachineLearning (VO)`, its place and its semester; in the log also
+ * linked by the reader as the folder of its skill and its material, which names both, with a free title, at first
+ * the folder of its skill with the type in brackets, like `IN2028_BusinessAnalyticsMachineLearning (VO)`, its place
+ * and its semester; in the log also
  * its chapters, documents and attempts at tasks, each with its result and my effort, see `skill.ts`.
  * Every entry can carry a free note, typed like start and end.
  * The categories come in the order the reader gives them, by their importance for my life, without `Drink`, since
@@ -32,26 +33,35 @@
  * Each list comes from the log, the most used first, searched as I type, see `choices.ts`;
  * the typed text can be added as a new value with `+ New summary` at the end of the list, which is then picked,
  * the way to write a new summary or another one in place of the one picked, but to the summary of `Sleep`, `Sport`
- * and `Way`, which take no new ones.
- * A summary is plain text: one that takes new values has a pencil `✎` beside it, as a place has, which shows below it
- * its text, which I change in place, like `Wolrd News` to `World News`, see {@link summaryPartsOf}; I type no link
- * of it, every link of mine goes with what I did online, see {@link onlineRowOf}. The summary of `Skill` links
- * the folder of its skill, for a type on into the folder of its material, which the reader writes, shown small
- * and grey below it, see `skill.ts`, and an older entry shows the link it kept there, like the page of an event.
+ * and `Way`, whose lists take no new ones.
+ * A summary is plain text, and every summary has a pencil `✎` beside it, as a place has, which always changes it,
+ * in plan and log alike, see {@link summaryChange}: it shows below it its text, which I change in place, like
+ * `Wolrd News` to `World News`, see {@link summaryPartsOf}, also that of `Sleep`, `Sport` and `Way`, which the reader
+ * still takes only as one of their values, and one as planned; the new text changes only this box or entry, also
+ * a box of a series of the plan, like my sleep every night, whose whole series changes only in the dialog
+ * of the series, by the series icon ⟳ after its times, see {@link seriesShow}. The pencil of a skill entry shows its title the same way, free, like
+ * `IN2028 Lecture 3 recap`, which changes only this entry, also a box of a series of my course, whose series opens
+ * by ⟳ after its times, never by this one, and shows it at once when I typed it, see {@link categoryPick};
+ * its skill and type a click on them picks, see `skill.ts`; that of a meal
+ * of the log, which its foods write, the list of its foods. I type no link of it, every link of mine goes with what I did online,
+ * see {@link onlineRowOf}. The summary of `Skill` links the folder of its skill, for a type on into the folder of its
+ * material, which the reader writes, shown small and grey below it, see `skill.ts`, and an older entry shows the link
+ * it kept there, like the page of an event.
  * Places, the place of an entry and where a way starts, are only my places of `Places.md`, the most used first,
  * each by its name, like `TUM Innenstadt`, its address grey beside it in the list; a picked one is written with its address,
  * as one line, like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`; its row shows its name with a pencil `✎`
- * beside it and its address small and grey below it, which opens the link of the place, its `ALTREP`, when it has
- * one; the pencil shows its parts below it, see {@link minePartsOf}, its label, street, code, city, country
- * and link, the columns of `Places.md`, each one row, as the foods of a meal stand, which change my place
- * in `Places.md` as I type them, entries written before keeping what they have; a new place goes into `Places.md`
- * by its typed name when picked, its parts showing below it at once, so I type them next, see {@link placeAdd}.
+ * right after it, while a place is picked, and its address small and grey below it, which opens the link of the place,
+ * its `ALTREP`, when it has one; the pencil shows its parts below it, see {@link partsOf}, each one row, as the foods
+ * of a meal stand: its label, street, code, city, country and link, the columns of `Places.md`, which I change in place
+ * as the text of a summary, and which change the place everywhere once the dialog saves, its row and every entry that
+ * names it, see {@link placesRename}; a new place goes into `Places.md` by its typed name when picked, its parts
+ * showing below it at once, so I type them next, see {@link placeAdd}.
  * A place is only where I physically am; below it every category has `Online`, what I did online: its platform
  * of `Online.md`, like `Zoom`, and below it the link of its own meeting or video and its passcode, typed per entry,
  * see {@link onlineRowOf}.
- * A new entry or box, also one logged from a box, starts where the last way before it ended: a way its `From`,
- * every other category its place, with its link, as picked from the list, see {@link wayEndFill}; a way's place,
- * its goal, stays empty.
+ * A new entry, also one logged from a box, starts where the last way before it ended, else at my default place,
+ * the place I starred, like `Home Munich`, and a new box always there: a way its `From`, every other category its place,
+ * with its link, as picked from the list, see {@link wayEndFill}; a way's place, its goal, stays empty.
  * Plan and log use one and the same dialog with the same fields and lists, see `skill.ts`: an entry of the log
  * and a box of the plan alike have a start and an end, each a day like `13.10.2026` and a plain time, as calendar apps
  * write them: the day of the start, its calendar date, typed to move it to any other day, and the day of the end,
@@ -62,16 +72,15 @@
  * Only a to-do of the plan has one more field, its deadline, a day like `23.10.2026` with a time or without; a box
  * with a deadline lies on the day of its deadline and has no expected time, so start and end are off while
  * the day of a deadline is typed.
- * A new box of the plan has one more row below them, `Repeat`, closed with its plus beside its name: opened, the box
- * is made once per date of a weekly series instead of once, its rows those of the dialog of a series, see `series.ts`:
- * its days, the first the weekday of the start with its times, `+` beside the name for one more; its first day,
- * that of the start, and its last; and the boxes it makes, as the reader would write them, which also leave out a day
- * and add an extra, a single date besides its weeks. Start, end and deadline hide while it is open, since its rows
- * take their place, and `Weekly` with its `×` closes it again, see {@link repeatShow}. Saved, the reader writes one
- * box per date, see `repeatApply` in `reader/course.ts`: a skill box of a numbered type of a module as its series, numbered as
- * on the page of the module, any other box each as one made alone; a series that is there already says so, with
- * the pencil that opens it. A box being changed has no `Repeat`; a box of a series of my course says so below
- * its fields, small and grey, like `Series: VO 2`, with the pencil that opens its series, see `series.ts`.
+ * `+` always makes one box; a new series comes only from `⟳` beside it, see `seriesNew` in `series.ts`. A box that belongs
+ * to a series has the series icon ⟳ after its times, see {@link seriesShow}, which opens that series in the dialog of a series:
+ * a box of a series of my course that series, see {@link seriesFromBox}, a box of a plain series, one to-do that repeats
+ * by its rule, see `reader/rules.ts`, that series whole, see `plainOpen` in `series.ts`; a box alone has none.
+ * A box of a series of my course shows after its times its group
+ * while it has one, like `14:00 – 16:00    Group 05`, where it may still go to another group the menu of the groups
+ * for this one date, the only place to pick the group of one week, like `Group 05 ⌄`, and the pencil, which opens its
+ * series. The dialog of a series opens over this one, which stands as it was once it closes,
+ * one level back, and closes with it once it saves, see {@link seriesFromBox}.
  * The dialog opens for the log from `+` below the time grid, from a range selected in the time grid,
  * and from a log entry that can be changed, to change it; for a box from `+` below the list of boxes,
  * and from a box that can be changed, to change it, or to log it instead, filled in as planned;
@@ -83,58 +92,59 @@
  *
  * - `./choices.ts`: Pickers, each one line in a row with its name, its list on top, a value picked in a row
  *   of its own, and the parts of a field.
- * - `./entries.ts`: Sends new, changed and removed entries to the reader, a new box repeated weekly too, names who
- *   I was with, and gives the standard address of a name.
- * - `./series.ts`: The rows of a weekly series, as the dialog of a series has them, for `Repeat`, the weekday
- *   of a day, and the dialog of the series of a box.
+ * - `./entries.ts`: Sends new, changed and removed entries to the reader, names who I was with, and gives
+ *   the standard address of a name.
+ * - `./series.ts`: Tells a box of a series of my course, and opens the dialog of the series of a box.
  * - `./meal.ts`: A meal of the log: its summary and its meals and foods, picked from one search, and its new meals.
  * - `./sport.ts`: A session of sport of the log: its workout, its exercises and its videos.
  * - `./places.ts`: The parts of a place, which add a new one with its address to `Places.md` or change mine,
  *   and the choice of a place in a list.
  * - `./skill.ts`: The fields of `Skill`: skill and type, place, semester, chapters, documents,
- *   and in the log attempts; the folder its summary links while I type no link.
+ *   and in the log attempts; the folder its summary links, and the title skill and type give it.
  * - `./times.ts`: Turns dates into the values of time fields and back, writes and reads days like `13.10.2026`,
  *   and gives the times a box is logged at.
+ * - `../persons.ts`: The people of `Persons.md`, which `With` offers, each a link to its row there.
  * - `../skill/attempts.ts`: Names the category of skill entries.
  * - `../icons.ts`: Shows the icons of the copy, the bin and its question, Cancel and Save in their buttons,
- *   the pencil of a place and of a summary, and the plus of `Repeat`; makes the plain question mark of the bin.
+ *   the pencil of a place, of a summary and of a series; makes the plain question mark of the bin.
  * - `../reader.ts`: Asks the reader.
  * - `../changes.ts`: Keeps the categories, loaded once and anew after every change of a file.
  * - `lucide`: The icons of the copy, the bin, Cancel, Save and the pencil.
  * - `fullcalendar`: Calendar that shows the entries.
  */
 
-import { addedRowOf, choiceOf, choicesOf, listsStart, partFieldOf, partOf, rowOf, searchOf } from "./choices.ts";
-import {
-    boxAdd, boxChange, boxDelete, boxRepeat, entryAdd, entryChange, entryDelete, standardAddressOf,
-} from "./entries.ts";
+import { choiceOf, choicesOf, fileShow, listsStart, partFieldOf, partOf, rowOf, searchOf } from "./choices.ts";
+import { boxAdd, boxChange, boxDelete, entryAdd, entryChange, entryDelete, standardAddressOf } from "./entries.ts";
 import { cookName, foodName, mealCooked, mealFoods, mealOf, mealTitle } from "./meal.ts";
 import { sportName, sportOpen, sportRead, sportRowsOf } from "./sport.ts";
 import {
-    addressOf, labelOf, lineOf, mapsLinkIs, mapsLinkOf, placeAddressOf, placeChoiceOf, placeSend, platformSend,
+    addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, placeSend, platformSend,
+    renameSend,
 } from "./places.ts";
 import {
-    skillDaySet, skillFieldsShow, skillLinksRead, skillModuleType, skillPathShow, skillPlaceShow,
-    skillSave, skillSemesterOf,
+    skillDaySet, skillFieldsShow, skillFolderNameOf, skillLinksRead, skillModuleType, skillPathShow,
+    skillSave, skillSemesterOf, skillTitleOf,
 } from "./skill.ts";
+import { plainOpen, seriesHas, seriesOpen } from "./series.ts";
+import { boxGroupOf, pickable } from "./groups.ts";
 import {
-    boxesRowOf, datesRowOf, daysReady, exceptsWithin, previewForget, previewSoon, seriesHas,
-    seriesOpen, slotRowsOf, weekdayOf,
-} from "./series.ts";
-import { dateOf, dateParse, dateTextOf, timeFieldRead, timeFieldShow, timeOf } from "./times.ts";
+    dateOf, dateParse, lengthSwapOf, lengthTextOf, minutesOf, timeFieldRead, timeFieldShow, timeOf, weekdayDateTextOf,
+} from "./times.ts";
+import { personEditOf, personOf, personRowAddressOf, personsKept, personsRename } from "../persons.ts";
 import { dayOf, semesterOf, skillName } from "../skill/attempts.ts";
-import { iconPut, plusPut, QuestionMark } from "../icons.ts";
+import { iconPut, QuestionMark } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { changesKept } from "../changes.ts";
-import { Check, Copy, Pencil, Trash, X } from "lucide";
+import { Check, Copy, Pencil, Repeat, Trash, X } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
 import type { Box } from "./boxes.ts";
-import type { Choice } from "./choices.ts";
+import type { Choice, ChoicesSetup } from "./choices.ts";
 import type { Place, Platform } from "./places.ts";
 import type { Attendee, BoxFields, EntryFields } from "./entries.ts";
 import type { ModuleType, SkillLinks, SkillValues } from "./skill.ts";
-import type { Days, Planned } from "./series.ts";
+import type { Person, PersonEdit } from "../persons.ts";
+import type { Course } from "./series.ts";
 
 
 /**
@@ -149,6 +159,19 @@ export type FieldKey = "title" | "from" | "location" | "online" | "with";
 const placeKeys: FieldKey[] = ["from", "location"];
 
 /**
+ * What parts the names of `With` in the values of the dialog, `; `, since a person of `Persons.md` holds a comma
+ * in its name, like `Bichler, Martin; Willi`; its line shows them apart by a middle dot, see {@link withRowOf}.
+ */
+const withParting: string = "; ";
+
+/**
+ * Topics of the files of plan and log in `Living/`, by category, as `livingTopics` in `reader/sources.ts` names them:
+ * my sleep, and my food with my cooking, each in files of its own, any other category in those of the topic `Living`,
+ * see {@link entryFileOf}.
+ */
+const livingTopics: { [category: string]: string } = { Sleep: "Sleep", Food: "Food", Cook: "Food" };
+
+/**
  * A field of a category, as the reader gives it.
  *
  * - `name`: Name shown, like `Summary`.
@@ -157,8 +180,8 @@ const placeKeys: FieldKey[] = ["from", "location"];
  * - `steps`: Steps of a value offered in the code, by the value, like the exercises of `Neck short`.
  * - `fixed`: Whether it takes only its values, like `Night` and `Day` of `Sleep`, and no new ones.
  * - `many`: Whether it takes several of its values, parted by `, `, like the means of a way, `U-Bahn, Bus`,
- *   or my body care, `Caring, Shower`, see {@link manyRowOf}, or the people of `With`, `Sophale, Willi`,
- *   see {@link withRowOf}; one when left out.
+ *   or my body care, `Caring, Shower`, see {@link manyRowOf}, or the people of `With`, parted by `; `,
+ *   `Bichler, Martin; Willi`, see {@link withRowOf}; one when left out.
  * - `rooms`: For a field of a place, the rooms of the university in `Rooms.md`, each as the line an entry writes,
  *   which its list offers only as I search, see {@link placeSearchOf}; none for any other field.
  * - `places`: For a field of a place, each of my places and rooms as its row holds it, its address in its parts
@@ -206,8 +229,8 @@ type EntryTarget = "log" | "box";
  * - `time`: Expected time of a box, `null` for none and for an entry of the log.
  * - `minutes`: Expected duration of a box in minutes, `null` for none and for an entry of the log.
  * - `category`: Category picked already, else `null`.
- * - `values`: Values picked already, by the field they write into; for `with` the names, like `Sophale, Willi`,
- *   for `online` the platform, like `Zoom`.
+ * - `values`: Values picked already, by the field they write into; for `with` the names, parted by `; `,
+ *   see {@link withParting}, like `Bichler, Martin; Willi`, for `online` the platform, like `Zoom`.
  * - `addresses`: Address of each name of `With` as the entry, the box or the box to log has it,
  *   or the one it is a copy of, like `sophale@invalid`; none for nobody.
  * - `titleLink`: Link of what it was, the `ALTREP` of its `SUMMARY`, as the entry, the box or the box to log has it,
@@ -303,6 +326,12 @@ let onlineOpen: boolean = false;
 let partsOpen: FieldKey | null = null;
 
 /**
+ * The place picked in each field of a place as I changed it by its parts, see {@link partsOf}, which the dialog writes
+ * everywhere once it saves, see {@link placesRename}; `null` while I changed nothing, and once another place is picked.
+ */
+let edits: { [key in FieldKey]: Place | null } = { title: null, from: null, location: null, online: null, with: null };
+
+/**
  * Line of the place just added, see {@link placeAdd}, so picking it shows its parts; empty for none.
  */
 let addedLine: string = "";
@@ -324,6 +353,12 @@ let summaryLink: string = "";
  * Whether the summary shows its text to change below it, opened and closed by its pencil, see {@link summaryPartsOf}.
  */
 let summaryOpen: boolean = false;
+
+/**
+ * The title the skill and the type picked of a skill entry give it, as last shown, see {@link skillChanged};
+ * empty for any other entry.
+ */
+let skillGiven: string = "";
 
 /**
  * Pencil beside the summary, its link below it and the field of its text as shown, see {@link summaryPartsOf};
@@ -377,16 +412,35 @@ let endDayTyped: boolean = false;
 let addresses: { [name: string]: string } = {};
 
 /**
- * Whether the names of `With` show their addresses below them to type, opened and closed by its pencil,
+ * Whether the names of `With` show their parts below them to type, opened and closed by its pencil,
  * see {@link withRowOf}.
  */
 let withOpen: boolean = false;
+
+/**
+ * Each person of `With` I changed by its parts, by its name as picked, with the address it had in the entry,
+ * see {@link withPartsOf}, which the dialog writes everywhere once it saves, see `personsRename` in `../persons.ts`;
+ * none while I changed nobody.
+ */
+let personEdits: { [old: string]: PersonEdit & { address: string } } = {};
+
+/**
+ * The people of `Persons.md` as kept when the dialog opened, see `personsKept` in `../persons.ts`, which `With`
+ * offers, each a link to its row there, see {@link withRowOf}.
+ */
+let persons: Person[] = [];
 
 /**
  * Place a new entry or box started with, where the last way before it ended, see {@link wayEndFill}, so a way picked
  * after it starts there instead of going there; empty while none was filled in.
  */
 let placeFilled: string = "";
+
+/**
+ * Whether the box of the dialog lasts only so long, its day and its length without times, like my sleep of `08:00`,
+ * as the switch after its times sets it, see {@link lengthShow}; never an entry of the log.
+ */
+let lengthOnly: boolean = false;
 
 /**
  * Field of the times that {@link timesCheck} marked wrong, like the day of the end for an end before the start,
@@ -396,10 +450,10 @@ let placeFilled: string = "";
 let timesMarked: HTMLInputElement | null = null;
 
 /**
- * The days of a new box repeated weekly, as its row `Repeat` holds them, see {@link repeatShow}; `null` while the row
- * is closed, the box made once.
+ * The calendar of the day the dialog writes with, as it started, see {@link categoriesStart}, `null` before; the dialog
+ * of a series logs and takes back the boxes of its list with it, see `series.ts`.
  */
-let repeat: Days | null = null;
+let dayCalendar: Calendar | null = null;
 
 
 
@@ -459,18 +513,74 @@ function foodsListed(): boolean {
 }
 
 /**
- * Allows saving once a category is picked: every other field may stay empty, but the times, which the browser
- * asks for before it sends the form; a skill entry may stay without skill, and a task picked without result
- * is left out, see `skill.ts`; a box repeated once its days are typed enough, see `daysReady` in `series.ts`.
+ * Allows saving once a category and its summary are picked, never without: of a skill its skill, its type
+ * may stay empty, see `categoryAllows` in `reader/categories.ts`, which refuses it too; while one is missing, Save
+ * stays off, as everywhere in the dashboard, without a word. Every other field may stay empty, but the times, which the browser asks for
+ * before it sends the form; a task picked without result is left out, see `skill.ts`.
  * Called on every change of the fields, it also shows the pencil and the link of the summary as it now is,
- * see {@link summaryPartsShow}, and the boxes a box repeated makes, see {@link repeatPreview}.
+ * see {@link summaryPartsShow}, and its file, see {@link entryFileShow}.
+ * - `named`: Whether what it is is picked, of a skill its skill.
  */
 function saveAllow(): void {
-    (document.getElementById("entry-save") as HTMLButtonElement).disabled =
-        chosen === null || (repeat !== null && !daysReady(repeat));
+    const named: boolean = chosen !== null && (chosen.name === skillName ? skillModuleType().module !== ""
+        : titleRead(valuesRead().title).trim() !== "");
+    (document.getElementById("entry-save") as HTMLButtonElement).disabled = !named;
     summaryPartsShow();
     realLoad().catch((error: unknown): void => console.error(error));
-    repeatPreview();
+    entryFileShow();
+}
+
+/**
+ * Gives the file of the entry or the box: the file it lies in, or for a new one the file the reader will write it into,
+ * as `calendarFileOf` in `reader/documents.ts` names it: for `Skill` the log or the plan of its skill, in `Modules/`
+ * for a module and in `Skilling/` for a project, none while no skill is picked; for any other
+ * category those of its topic in the year of its day in `Living/`, see {@link livingTopics}; nothing while no category
+ * is picked.
+ * - `folder`: The folder of plan and log from `NomWorkspace` on.
+ * - `ending`: End of the name of the file, as `logEnding` and `planEnding` in `reader/sources.ts`.
+ * - `name`: Name of the folder of the skill picked, empty for none, see `skillFolderNameOf` in `skill.ts`.
+ * - `skills`: Folder of its files, `Modules` for a module, whose folder starts with its code, else `Skilling`.
+ * - `fresh`: Whether the entry or the box is new.
+ * - `file`: The file, empty for none.
+ *
+ * @returns Path of the file from `NomWorkspace` on, like
+ *   `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`, empty while not known
+ */
+function entryFileOf(): string {
+    const folder: string = "NomManageplannings/NomManagecalendar";
+    const ending: string = opened.target === "log" ? "_Log.ics" : "_Plan.ics";
+    const name: string = skillFolderNameOf();
+    const skills: string = /^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling";
+    const fresh: boolean = opened.entry === null && opened.box === null;
+    let file: string = opened.entry?.extendedProps.file ?? opened.box?.file ?? "";
+    if (fresh && chosen?.name === skillName)
+        file = name === "" ? "" : `${folder}/${skills}/${name}${ending}`;
+    else if (fresh && chosen !== null)
+        file = livingFileOf(chosen.name, dayRead(), ending);
+    return file;
+}
+
+/**
+ * Gives the file of plan or log in `Living/` of an entry or a box of a category other than `Skill`, as the reader
+ * names it, see `livingFileOf` in `reader/sources.ts`: that of its topic in the year of its day, see {@link livingTopics},
+ * like `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`; for the dialog of an entry and that
+ * of a new series, see `series.ts`.
+ *
+ * @param category - Its category, like `Sleep`
+ * @param day - Its day, like `2026-10-24`
+ * @param ending - End of the name of the file, `_Plan.ics` or `_Log.ics`
+ * @returns Path of the file from `NomWorkspace` on
+ */
+export function livingFileOf(category: string, day: string, ending: string): string {
+    return `NomManageplannings/NomManagecalendar/Living/${livingTopics[category] ?? "Living"}_${day.slice(0, 4)}${ending}`;
+}
+
+/**
+ * Shows the file of the entry or the box at the left of the buttons, see {@link entryFileOf} and `fileShow`
+ * in `choices.ts`.
+ */
+function entryFileShow(): void {
+    fileShow(document.getElementById("entry-file") as HTMLAnchorElement, entryFileOf());
 }
 
 /**
@@ -630,15 +740,32 @@ function fixedValueOf(field: Field, value: string): string {
 }
 
 /**
+ * Gives the text of a field as the field takes it: each of its values as {@link fixedValueOf} gives it, those
+ * of a field of several values parted by `, `, like `U-Bahn, Bus` for an older `UBahn, Bus` or a typed `u bahn, bus`;
+ * the text of a field that takes new values as it is.
+ *
+ * @param field - Field of the text, like the summary of `Way`
+ * @param text - Text as written, like `UBahn, Bus`
+ * @returns Text of the field, like `U-Bahn, Bus`
+ */
+function fixedTextOf(field: Field, text: string): string {
+    return (field.many === true ? text.split(", ") : [text])
+        .map((value: string): string => fixedValueOf(field, value)).join(", ");
+}
+
+/**
  * Makes the choice of a value of a field: a place by its name, its address grey beside it in the list, see
- * `placeChoiceOf` in `places.ts`; any other value as it is.
+ * `placeChoiceOf` in `places.ts`, the place picked by the name I gave it by its parts while it has one, see
+ * {@link edits}, so its line shows it; any other value as it is.
+ * - `name`: The name I gave the place picked, empty for none.
  *
  * @param field - Field of the value, like `Place`
  * @param value - Value, like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland` or `Bahn`
  * @returns Choice, like one showing `TUM Innenstadt`
  */
 function fieldChoiceOf(field: Field, value: string): Choice {
-    return field.key === "title" ? choiceOf(value) : placeChoiceOf(value);
+    const name: string = labelOf(value) === labelOf(values[field.key]) ? edits[field.key]?.name ?? "" : "";
+    return field.key === "title" ? choiceOf(value) : placeChoiceOf(value, name !== "" ? name : labelOf(value));
 }
 
 /**
@@ -657,14 +784,32 @@ function mineOf(field: Field): string | undefined {
 }
 
 /**
+ * Gives the place picked in a field as it is, before I change it by its parts: as its row holds it, my place
+ * or the room of its name, else as its line says, with the link the place of the entry kept while it is that place,
+ * also where a way starts, see `placeOf` in `places.ts`.
+ * - `line`: The place picked.
+ * - `kept`: The link of the place the entry kept while it is that place, empty for none.
+ *
+ * @param field - Field of a place, like `Place`
+ * @returns The place
+ */
+function placeOriginOf(field: Field): Place {
+    const line: string = values[field.key];
+    const kept: string = labelOf(line) === labelOf(opened.values.location) ? opened.locationLink : "";
+    return placeOf(line, kept, field.places);
+}
+
+/**
  * Shows the address of the place picked in a field below its label, small and grey, as a link that opens in a new tab
  * the link of the place: the one the place of the entry kept, its `ALTREP`, while that same place stays picked,
  * else the link of my place or room in `Places.md` or `Rooms.md`, never that of another place;
  * plain text for a place without link, which opens nothing; never the link itself as text, so nothing for no place,
- * a place without address, or an older place written by its name alone, like `Home Munich`;
- * beside the label the pencil, which shows and hides the parts of the place, see {@link partsToggle}, while it is
- * one of mine or a room.
+ * a place without address, or an older place written by its name alone, like `Home Munich`; a place I changed by its
+ * parts with the address and the link I gave it, see {@link edits};
+ * right after the label the pencil, which shows and hides the parts of the place, see {@link partsToggle}, while
+ * a place is picked.
  * - `line`: The place picked.
+ * - `edit`: The place as I changed it, `null` while I changed nothing.
  * - `kept`: The link of the place the entry kept, empty for none.
  * - `link`: The link to open, empty for none.
  *
@@ -674,15 +819,17 @@ function mineOf(field: Field): string | undefined {
  */
 function placePartsShow(pencil: HTMLButtonElement, address: HTMLAnchorElement, field: Field): void {
     const line: string = values[field.key];
+    const edit: Place | null = edits[field.key];
     const kept: string = field.key === "location" && line === opened.values.location ? opened.locationLink : "";
-    const link: string = kept !== "" ? kept : field.places[mineOf(field) ?? line]?.link ?? "";
-    address.textContent = addressOf(line);
+    const link: string = edit !== null ? edit.link
+        : kept !== "" ? kept : field.places[mineOf(field) ?? line]?.link ?? "";
+    address.textContent = edit !== null ? placeAddressOf(edit) : addressOf(line);
     if (link !== "")
         address.href = link;
     else
         address.removeAttribute("href");
     address.hidden = address.textContent === "";
-    pencil.hidden = mineOf(field) === undefined;
+    pencil.hidden = line === "";
 }
 
 /**
@@ -709,25 +856,21 @@ function placePartsOf(field: Field): [HTMLButtonElement, HTMLAnchorElement] {
 }
 
 /**
- * Shows the rows of the places anew, with the other fields as picked: those of a skill entry where `skill.ts`
- * shows them, see `skillPlaceShow`, any other's with all fields, see {@link fieldsShow}.
+ * Shows the rows of where it is anew, below what it is, see {@link placeRowsOf}, the other rows staying as they are.
  */
 function placesShow(): void {
-    if (chosen?.name === skillName)
-        skillPlaceShow(placeRowsOf());
-    else
-        fieldsShow();
+    document.getElementById("entry-place")?.replaceChildren(...placeRowsOf());
 }
 
 /**
  * Tells whether the place picked in a field shows its parts below it, see {@link partsOf}: while they are open
- * for the field and the place is one of mine or a room.
+ * for the field and a place is picked.
  *
  * @param field - Field of the category picked, like `Place`
  * @returns Whether its parts show
  */
 function partsShown(field: Field): boolean {
-    return partsOpen === field.key && mineOf(field) !== undefined;
+    return partsOpen === field.key && values[field.key] !== "";
 }
 
 /**
@@ -755,118 +898,28 @@ function partsToggle(field: Field): void {
 
 /**
  * Builds the parts of the place picked in a field, as the foods of a meal and the documents of a chapter stand:
- * indented under the place with a thin grey line at their left, see `.field-parts` in `day.css`: its row,
- * see {@link minePartsOf}; they carry the key of their field, like `location`, so the dialog
- * finds them apart from those of another place and from the link of the summary.
+ * indented under the place with a thin grey line at their left, see `.field-parts` in `day.css`: the columns
+ * of its row, its label, street, code, city, country, link and star, see `placeEditOf` in `places.ts`, as it is,
+ * see {@link placeOriginOf}, or as I changed it; I change them in place as the text of a summary,
+ * see {@link summaryPartsOf}: the dialog takes the place as I type, see {@link edits}, its line and its address show it
+ * once I leave a part, the rows built anew, see {@link placesShow}, the part I went on to keeping the cursor, and once
+ * the dialog saves, the reader writes it everywhere, see {@link placesRename}. They carry the key of their field,
+ * like `location`, so the dialog finds them apart from those of another place and from the link of the summary.
  * - `element`: The parts.
  *
  * @param field - Field of the place, like `Place`
- * @param parts - Pencil and address of the place, see {@link placePartsOf}
  * @returns The parts
  */
-function partsOf(field: Field, parts: [HTMLButtonElement, HTMLAnchorElement]): HTMLElement {
-    const element: HTMLElement = minePartsOf(field, parts);
-    element.dataset.field = field.key;
-    return element;
-}
-
-/**
- * Takes my place as the reader wrote it into every field of a place, since places are one list: each offers its new
- * line in place of its old one, among my places or the rooms, with its link, and a field that picked it takes
- * the new line, like the place of the entry whose parts I type; entries written before keep what they have.
- * - `line`: Its new line.
- *
- * @param old - Its line as it was, like `Café, Leopoldstraße 1, 80802, München, Deutschland`
- * @param place - The place as written
- */
-function placeTake(old: string, place: Place): void {
-    const line: string = lineOf(place);
-    categories.flatMap((category: Category): Field[] => category.fields)
-        .filter(placeIs)
-        .forEach((other: Field): void => {
-            other.values = other.values.map((value: string): string => value === old ? line : value);
-            other.rooms = other.rooms.map((room: string): string => room === old ? line : room);
-            delete other.places[old];
-            other.places[line] = place;
-        });
-    (Object.keys(values) as FieldKey[])
-        .filter((key: FieldKey): boolean => placeKeys.includes(key) && values[key] === old)
-        .forEach((key: FieldKey): void => {
-            values[key] = line;
-        });
-}
-
-/**
- * Builds the parts of my place picked in a field, see {@link partsOf}: its name, which renames it, then its street,
- * its code, its city and its country, as its row holds them, see `Place` in `places.ts`, a place just added
- * without any, then its link, which follows the address as the search of Google Maps while it is that search
- * or empty, see `mapsLinkIs`, until I type a link myself, like the NavigaTUM page of a room. A part goes into `Places.md` as I leave it, or `Rooms.md` for a room,
- * the row of my place changed, see `placeSend` in `places.ts`, every field of a place taking it as written,
- * see {@link placeTake}; a new name shows the rows anew, the part I went on to keeping the cursor; when the reader
- * does not take a part, like a name another place has or a link that is no web address, a grey line says so.
- * - `line`: The line of my place, as last written.
- * - `mine`: My place as its row holds it.
- * - `name`, `street`, `code`, `city`, `country`, `link`: Fields of its label, its name, the parts of its address and its link.
- * - `follows`: Whether the link follows the address.
- * - `typed`: The place as typed.
- * - `hint`: Line saying that the reader did not take a part.
- * - `write`: Sends my place as typed and takes it as written.
- * - `element`: The parts.
- *
- * @param field - Field of the place, like `Place`
- * @param parts - Pencil and address of the place, see {@link placePartsOf}
- * @returns The parts
- */
-function minePartsOf(field: Field, parts: [HTMLButtonElement, HTMLAnchorElement]): HTMLElement {
-    let line: string = mineOf(field) ?? values[field.key];
-    const mine: Place = field.places[line]
-        ?? { name: labelOf(line), street: "", code: "", city: "", country: "", link: "" };
-    const name: HTMLInputElement = partFieldOf("text", mine.name, "Name of the place");
-    const street: HTMLInputElement = partFieldOf("text", mine.street, "Street of the place");
-    const code: HTMLInputElement = partFieldOf("text", mine.code, "Code of the place");
-    const city: HTMLInputElement = partFieldOf("text", mine.city, "City of the place");
-    const country: HTMLInputElement = partFieldOf("text", mine.country, "Country of the place");
-    const link: HTMLInputElement = partFieldOf("url", mine.link, "Link of the place");
-    let follows: boolean = link.value === "" || mapsLinkIs(link.value, placeAddressOf(mine));
-    const typed: () => Place = (): Place => ({
-        name: name.value, street: street.value.trim(), code: code.value.trim(), city: city.value.trim(),
-        country: country.value.trim(), link: link.value,
-    });
-    const hint: HTMLParagraphElement = document.createElement("p");
-    hint.className = "entry-none";
-    hint.textContent = "Not saved: it needs a new name, and a link only as a web address";
-    hint.hidden = true;
-    const write: () => void = (): void => {
-        placeSend(typed(), labelOf(line)).then((place: Place): void => {
-            const renamed: boolean = place.name !== labelOf(line);
-            const typing: string | null = document.activeElement?.getAttribute("aria-label") ?? null;
-            placeTake(line, place);
-            line = lineOf(place);
-            hint.hidden = true;
-            placePartsShow(parts[0], parts[1], field);
-            if (!renamed)
-                return;
-            placesShow();
-            document.querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${typing}"]`)?.focus();
-        }).catch((error: unknown): void => {
-            console.error(error);
-            hint.hidden = false;
-        });
-    };
-    for (const part of [street, code, city, country])
-        part.addEventListener("input", (): void => {
-            if (follows)
-                link.value = mapsLinkOf(placeAddressOf(typed()));
-        });
-    link.addEventListener("input", (): void => {
-        follows = false;
-    });
-    for (const part of [name, street, code, city, country, link])
-        part.addEventListener("change", write);
+function partsOf(field: Field): HTMLElement {
     const element: HTMLElement = document.createElement("div");
     element.className = "field-parts";
-    element.append(partOf("Label", name), partOf("Street", street), partOf("Code", code), partOf("City", city),
-        partOf("Country", country), partOf("Link", link), hint);
+    element.dataset.field = field.key;
+    element.append(...placeEditOf(edits[field.key] ?? placeOriginOf(field), (typed: Place): void => {
+        edits[field.key] = typed;
+    }, (next: string | null): void => {
+        placesShow();
+        document.querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)?.focus();
+    }));
     return element;
 }
 
@@ -874,21 +927,18 @@ function minePartsOf(field: Field, parts: [HTMLButtonElement, HTMLAnchorElement]
  * Shows the link of what the entry or the box was below its summary, small and grey, as a link that opens
  * in a new tab, like the address of a place, see {@link placePartsShow}: the link an older entry kept, like the page
  * of an event; for a skill entry without one the folder of its skill, which opens in this window, being NomSystem's
- * own, see `skillPathShow` in `skill.ts`; nothing while it has none; the pencil beside the summary while it has its
- * text to change and names something, see {@link titleRead}; the field of its text the summary picked, while I don't
- * type in it.
+ * own, see `skillPathShow` in `skill.ts`; nothing while it has none; the pencil beside the summary while it names
+ * something, see {@link titleRead}; the field of its text the summary picked, while I don't type in it.
  * - `pencil`, `link`, `text`: Pencil, link and text of the summary as shown.
- * - `skill`: Skill and type of a skill entry, `null` for any other entry.
  */
 function summaryPartsShow(): void {
     if (summaryShown === null)
         return;
     const [pencil, link, text]: [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement] = summaryShown;
-    const skill: ModuleType | null = chosen?.name === skillName ? skillModuleType() : null;
     if (text !== document.activeElement)
         text.value = values.title;
-    pencil.hidden = text.closest(".field-parts") === null || titleRead(valuesRead().title) === "";
-    if (skill !== null && summaryLink === "") {
+    pencil.hidden = titleRead(valuesRead().title) === "";
+    if (chosen?.name === skillName && summaryLink === "") {
         skillPathShow(link);
         return;
     }
@@ -903,13 +953,16 @@ function summaryPartsShow(): void {
 
 /**
  * Makes the parts of what the entry or the box was, as a place has its parts, see {@link placePartsOf}: the pencil
- * beside its summary, which shows and hides its text to change, and the link below the summary, see
+ * beside its summary, which always changes it, see {@link summaryChange}, and the link below the summary, see
  * {@link summaryPartsShow}; that of a skill entry beside and below its skill and type, see `skill.ts`.
- * A summary that takes new values and is not as planned, like `Wolrd News` of `Watch`, has the part `Text`,
- * indented with the grey line at its left, see {@link partOf}, its summary as written, which I change in place,
- * as the name of my place: the entry takes it as I type, and its line shows it once I leave the part, its rows built
- * anew, see {@link titleRowsShow}; that happens at `focusout`, whose `relatedTarget` names the field I went on to,
- * which then keeps the cursor. Any other summary has no pencil, its text being what it picks.
+ * The summary of a field, like `Wolrd News` of `Watch`, `Night` of `Sleep` or `U-Bahn, Bus` of `Way`, also one
+ * as planned, has the part `Text`, indented with the grey line at its left, see {@link partOf}, its summary as written,
+ * which its pencil shows and hides and I change in place, as the name of my place: the entry takes it as I type,
+ * the values of a field that takes only its values as that field writes them, see {@link fixedTextOf}, and its line
+ * shows it once I leave the part, its rows built anew, see {@link titleRowsShow}; that happens at `focusout`,
+ * whose `relatedTarget` names the field I went on to, which then keeps the cursor. The title of a skill entry has
+ * the part `Text` too, taken as I type, its skill and type staying as they show; a summary written by itself,
+ * that of a meal, has no text to type.
  * - `pencil`: The pencil, `✎`.
  * - `link`: The link below the summary.
  * - `text`: The field of the summary as written, the same as its line while I type elsewhere,
@@ -917,11 +970,14 @@ function summaryPartsShow(): void {
  * - `parts`: The parts holding it, shown while the pencil opened them, see {@link summaryOpen}.
  * - `shown`: The summary as its line shows it, taken as I enter `text`.
  *
- * @param summary - Field of the summary, which shows its text to change; left out for a summary written by itself,
- *   like that of a meal or of a skill entry
+ * @param summary - Field of the summary, which shows its text to change; left out for a summary without field,
+ *   like that of a meal or the title of a skill entry
+ * @param typed - Whether it has its text to change, like the title of a skill entry; whether it has a field when
+ *   left out
  * @returns Pencil, link and the parts to type them, to put beside and below the summary
  */
-function summaryPartsOf(summary?: Field): [HTMLButtonElement, HTMLAnchorElement, HTMLElement] {
+function summaryPartsOf(summary?: Field,
+                        typed: boolean = summary !== undefined): [HTMLButtonElement, HTMLAnchorElement, HTMLElement] {
     const pencil: HTMLButtonElement = document.createElement("button");
     const link: HTMLAnchorElement = document.createElement("a");
     const text: HTMLInputElement = partFieldOf("text", values.title, "Text of the summary");
@@ -932,7 +988,7 @@ function summaryPartsOf(summary?: Field): [HTMLButtonElement, HTMLAnchorElement,
     link.className = "entry-address";
     link.rel = "noopener";
     parts.className = "field-parts";
-    if (summary !== undefined && !summary.fixed && !asPlanned())
+    if (typed)
         parts.append(partOf("Text", text));
     iconPut(pencil, Pencil, "Change the summary");
     parts.hidden = !summaryOpen;
@@ -940,22 +996,19 @@ function summaryPartsOf(summary?: Field): [HTMLButtonElement, HTMLAnchorElement,
         shown = values.title;
     });
     text.addEventListener("input", (): void => {
-        values.title = text.value.trim();
+        values.title = summary === undefined ? text.value.trim() : fixedTextOf(summary, text.value.trim());
         saveAllow();
     });
     text.addEventListener("focusout", (event: FocusEvent): void => {
         const next: string | null = event.relatedTarget instanceof HTMLElement
             ? event.relatedTarget.getAttribute("aria-label") : null;
-        if (values.title === shown)
+        if (values.title === shown || summary === undefined)
             return;
         titleRowsShow();
         document.querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)?.focus();
     });
     pencil.addEventListener("click", (): void => {
-        summaryOpen = !summaryOpen;
-        parts.hidden = !summaryOpen;
-        if (summaryOpen)
-            parts.querySelector("input")?.focus();
+        summaryChange(parts);
     });
     summaryShown = [pencil, link, text];
     summaryPartsShow();
@@ -963,8 +1016,27 @@ function summaryPartsOf(summary?: Field): [HTMLButtonElement, HTMLAnchorElement,
 }
 
 /**
+ * Changes the summary of this entry alone as its pencil asks, see {@link summaryPartsOf}, never opening a series:
+ * opens the list of the foods of a meal, which its foods write, see `meal.ts`; shows and hides the text of any
+ * other summary, also the title of a skill entry, its field focused as it shows.
+ *
+ * @param parts - The parts of the summary, which hold its text
+ */
+function summaryChange(parts: HTMLElement): void {
+    if (meal !== null)
+        meal.at(-1)?.querySelector<HTMLButtonElement>(".picker-line")?.click();
+    else {
+        summaryOpen = !summaryOpen;
+        parts.hidden = !summaryOpen;
+        if (summaryOpen)
+            parts.querySelector("input")?.focus();
+    }
+}
+
+/**
  * Puts the link of a meal or a cooking beside and below its summary, which `meal.ts` writes by itself from its foods,
- * see {@link summaryPartsOf}: the pencil right after the summary, which it never shows, and the link below it.
+ * see {@link summaryPartsOf}: the pencil right after the summary, which opens the list of its foods,
+ * see {@link summaryChange}, and the link below it.
  * - `value`: The summary with its link.
  *
  * @param row - The row of the summary, see `mealOf` in `meal.ts`
@@ -976,10 +1048,16 @@ function mealLinkPut(row: HTMLElement): void {
 }
 
 /**
- * Tells the dialog that what is picked for a skill entry changed: shows the link of its summary anew, which follows
- * its skill, type and semester, see {@link summaryPartsShow}, and allows saving or not.
+ * Tells the dialog that what is picked for a skill entry changed: its title follows its skill and type while it is
+ * the one they gave it, see `skillTitleOf` in `skill.ts`, a title I typed staying; shows the link of its summary
+ * anew, which follows its skill, type and semester, see {@link summaryPartsShow}, and allows saving or not.
+ * - `given`: The title the skill and type picked now give it.
  */
 function skillChanged(): void {
+    const given: string = skillTitleOf();
+    if (values.title === skillGiven)
+        values.title = given;
+    skillGiven = given;
     summaryPartsShow();
     saveAllow();
 }
@@ -987,7 +1065,7 @@ function skillChanged(): void {
 /**
  * Adds a place typed that is none of mine yet, see the top of this file: the reader writes it into `Places.md`
  * at once by its name, a room into `Rooms.md`, and picked it shows its parts, so I type its address and its link
- * below it next, its name still to mend, see {@link minePartsOf}; nothing for an empty name, which no place has.
+ * below it next, its name still to mend, see {@link partsOf}; nothing for an empty name, which no place has.
  * - `place`: The place as written.
  *
  * @param field - Field of a place, like `Place`
@@ -998,7 +1076,9 @@ function skillChanged(): void {
 async function placeAdd(field: Field, name: string): Promise<string | null> {
     if (name.trim() === "")
         return null;
-    const place: Place = await placeSend({ name: name, street: "", code: "", city: "", country: "", link: "" }, "");
+    const place: Place = await placeSend({
+        name: name, street: "", code: "", city: "", country: "", link: "", standard: false,
+    }, "");
     addedLine = lineOf(place);
     partsOpen = field.key;
     return addedLine;
@@ -1035,7 +1115,8 @@ function placeSearchOf(field: Field): (text: string) => Promise<Choice[]> {
  * of the value picked below it, see {@link stepsShow}. A meal of the log has its summary, its meals and its foods
  * in place of the summary, see {@link meal}. A summary has its pencil beside it and its link below it,
  * see {@link summaryPartsOf}. A place shows its parts below it, see {@link partsOf}, once added, or by its pencil,
- * and hides them as another place is picked. `Online` has a row of its own, see {@link onlineRowOf}.
+ * and hides them as another place is picked, which forgets what I changed of the one before, see {@link edits}.
+ * `Online` has a row of its own, see {@link onlineRowOf}.
  * - `place`: Pencil and address of a place, `null` for any other field.
  * - `summary`: Pencil, link and the part to type it of a summary, see {@link summaryPartsOf}, none for a place.
  * - `steps`: Place of the steps of the field.
@@ -1046,7 +1127,18 @@ function placeSearchOf(field: Field): (text: string) => Promise<Choice[]> {
  */
 function fieldRowsOf(field: Field): HTMLElement[] {
     if (field.key === "with")
-        return [withRowOf(field)];
+        return [withRowOf({
+            field: field, persons: persons, people: peopleRead(), open: withOpen, edits: personEdits,
+            opened: (open: boolean): void => {
+                withOpen = open;
+            },
+            pick: (people: Attendee[]): void => {
+                values.with = namesOf(people);
+                addresses = { ...addresses, ...addressesOf(people) };
+                people.forEach((person: Attendee): void => valueAdd(field, person.name));
+                saveAllow();
+            },
+        })];
     if (field.key === "online")
         return [onlineRowOf(field)];
     if (field.key === "title" && meal !== null)
@@ -1068,7 +1160,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
         add: field.key === "title" ? undefined : (name: string): Promise<string | null> => placeAdd(field, name),
         noun: field.key === "title" ? "summary" : "place",
         aside: place !== null ? [place[0]] : summary.slice(0, 1),
-        below: place === null ? [...summary.slice(1), steps] : [place[1], ...shown ? [partsOf(field, place)] : []],
+        below: place === null ? [...summary.slice(1), steps] : [place[1], ...shown ? [partsOf(field)] : []],
         locked: field.key === "title" && asPlanned(),
         pick: (picked: string[]): void => {
             const line: string = picked[0] ?? "";
@@ -1078,6 +1170,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             if (line !== "")
                 valueAdd(field, line);
             if (place !== null && labelOf(line) !== before) {
+                edits[field.key] = null;
                 if (line === addedLine)
                     partsOpen = field.key;
                 else if (partsOpen === field.key)
@@ -1154,73 +1247,170 @@ function personAddressOf(field: Field, name: string): string {
 }
 
 /**
- * Builds the parts below the names of `With`, see {@link withRowOf}: each name small and grey, then its address
- * to type, like `sophale@invalid`, if I ever want a real e-mail there, as the parts of a place stand,
- * see {@link partOf}; an address goes along as typed when the entry is saved, see {@link peopleRead}, an empty one
- * as the name's standard address.
- * - `input`: Field of the address of a name.
+ * How a row `With` is built, see {@link withRowOf}, the same in this dialog and in that of a series, see `./series.ts`;
+ * only what it saves differs.
  *
- * @param field - The field `With`
- * @param names - Names picked, like `Sophale` and `Willi`
- * @returns The part of each name
+ * - `field`: The field `With`, the names my entries wrote, the most used first, with the address of each.
+ * - `persons`: The people of `Persons.md`, which it offers, each a link to its row there.
+ * - `people`: Who is picked, each with its address.
+ * - `open`: Whether the parts of the people show below the names.
+ * - `edits`: Each person I changed by its parts, which the row fills as I type, see {@link withPartsOf}, and its
+ *   dialog sends once it saves, see `personsRename` in `../persons.ts`.
+ * - `opened`: Takes whether they show, as its pencil opens or closes them.
+ * - `pick`: Takes who is picked, each with its address, after each name picked or taken back and each mail typed.
  */
-function withPartsOf(field: Field, names: string[]): HTMLLabelElement[] {
-    return names.map((name: string): HTMLLabelElement => {
-        const input: HTMLInputElement = partFieldOf("email", personAddressOf(field, name), `Address of ${name}`);
-        input.addEventListener("input", (): void => {
-            addresses[name] = input.value.trim() === "" ? standardAddressOf(name) : input.value.trim();
-        });
-        return partOf(name, input);
+export type WithSetup = {
+    field: Field;
+    persons: Person[];
+    people: Attendee[];
+    open: boolean;
+    edits: { [old: string]: PersonEdit & { address: string } };
+    opened: (open: boolean) => void;
+    pick: (people: Attendee[]) => void;
+};
+
+/**
+ * Builds the parts below the names of `With`, see {@link withRowOf}, as the parts of a place stand, see {@link partOf}:
+ * for each person picked a block of its own, indented with its thin grey line, so several people never crowd
+ * one another, like the two lecturers of Financial Accounting: its `Name`, its `Mail` and its `Link`, its page
+ * in TUMonline, as `Persons.md` holds them, or as I changed them, see `personEditOf` in `../persons.ts`. What I type
+ * goes into the edits of the dialog, which writes the person everywhere once it saves, its row in `Persons.md`,
+ * the columns that name people and every entry; the mail is also the address of the person in this entry, an empty
+ * one the name's standard address, see `standardAddressOf` in `./entries.ts`.
+ * - `edit`: The person as it shows, as I changed it or as it is.
+ * - `name`, `mail`, `link`: Fields of its parts.
+ * - `take`: Takes what is typed into the edits and the address into the entry.
+ * - `block`: The block of the person.
+ *
+ * @param setup - The row, its people of `Persons.md` and its edits
+ * @param people - Who is picked, like `Ernstberger, Jürgen` and `Cuzic, Mihovil`, each with its address
+ * @param typed - Takes a name with the address typed for it
+ * @returns The block of each person
+ */
+function withPartsOf(setup: WithSetup, people: Attendee[],
+                     typed: (name: string, address: string) => void): HTMLElement[] {
+    return people.map((person: Attendee): HTMLElement => {
+        const edit: PersonEdit = setup.edits[person.name] ?? personEditOf(setup.persons, person.name, person.address);
+        const name: HTMLInputElement = partFieldOf("text", edit.name, `Name of ${person.name}`);
+        const mail: HTMLInputElement = partFieldOf("email", edit.mail, `Mail of ${person.name}`);
+        const link: HTMLInputElement = partFieldOf("url", edit.link, `Link of ${person.name}`);
+        const take: () => void = (): void => {
+            setup.edits[person.name] = {
+                name: name.value.trim(), mail: mail.value.trim(), link: link.value.trim(), address: person.address,
+            };
+            typed(person.name, mail.value.trim() === "" ? standardAddressOf(person.name) : mail.value.trim());
+        };
+        [name, mail, link].forEach((input: HTMLInputElement): void => input.addEventListener("input", take));
+        const block: HTMLElement = document.createElement("div");
+        block.className = "field-parts";
+        block.append(partOf("Name", name), partOf("Mail", mail), partOf("Link", link));
+        return block;
     });
 }
 
 /**
- * Builds the row of `With`, who I was with, one or more people or groups, mostly one group, like `Socials`,
- * sometimes several, like `Sophale, Willi`: one line of the row, the names picked parted by `, `, as the means
- * of a way, see {@link manyRowOf}; its list offers the names my earlier entries wrote, the most used first, takes
- * a name or takes it back by a click and stays open for the next, and adds a typed name, `Search or add a person`,
- * but none with a comma, which parts names; beside the line the pencil, while a name is picked, which shows below it
- * the address of each name to change, see {@link withPartsOf}. Who I was with shows only here, not in the time grid
- * or the plan.
- * - `picked`: The names picked, in their order.
- * - `pencil`: The pencil, `✎`.
- * - `parts`: The addresses below the names, shown while the pencil opened them.
- * - `show`: Shows the pencil and the addresses for the names picked.
+ * Builds the search of the list of `With`: while nothing is typed the names my entries wrote, the most used first,
+ * each as `Persons.md` names its person, like `Zimmer, Philip` for an older `Philip Zimmer`, see `personOf`
+ * in `../persons.ts`; as I type every person of `Persons.md` too, after them, like `bich` finding `Bichler, Martin`,
+ * as a field of a place offers the rooms, see {@link placeSearchOf}.
+ * - `used`: The names my entries wrote, as `Persons.md` names their people.
+ * - `shown`: Names the search looks through, each once.
  *
  * @param field - The field `With`
+ * @param people - The people of `Persons.md`
+ * @returns Search for the picker
+ */
+function withSearchOf(field: Field, people: Person[]): (text: string) => Promise<Choice[]> {
+    return async (text: string): Promise<Choice[]> => {
+        const used: string[] = field.values.map((name: string): string => personOf(people, name)?.name ?? name);
+        const shown: string[] = [...new Set(text.trim() !== ""
+            ? [...used, ...people.map((person: Person): string => person.name)] : used)];
+        return await searchOf(shown.map(choiceOf))(text);
+    };
+}
+
+/**
+ * Gives how the list of `With` works, see {@link withRowOf}, the one list of who I am with, in its row and after
+ * the times of an exam added in the dialog of a series, see `examinersOf` in `./series.ts`: the names my entries
+ * wrote, the most used first, as I type every person of `Persons.md`, see {@link withSearchOf}, several of them,
+ * a typed name added as `Persons.md` names it, but none with `;`, and each name of a person there a link to its row.
+ * - `person`: The person of `Persons.md` a name names, `undefined` for none.
+ *
+ * @param field - The field `With`
+ * @param persons - The people of `Persons.md`
+ * @returns How the list works, but what is picked
+ */
+export function withChoicesOf(field: Field, persons: Person[]): Omit<ChoicesSetup, "picked" | "pick"> {
+    return {
+        search: withSearchOf(field, persons), many: true, adding: true,
+        add: async (name: string): Promise<string | null> =>
+            name.includes(";") ? null : personOf(persons, name.trim())?.name ?? name.trim(),
+        noun: "person", people: true,
+        linkOf: (name: string): string => {
+            const person: Person | undefined = personOf(persons, name);
+            return person === undefined ? "" : personRowAddressOf(person);
+        },
+    };
+}
+
+/**
+ * Builds the row of `With`, who I was with, one or more people or groups, mostly one group, like `Socials`,
+ * sometimes several, like `Bichler, Martin · Willi`, the one maker of this dialog and of that of a series, see
+ * {@link WithSetup}: one line of the row, the names picked apart by a middle dot,
+ * since a person of `Persons.md` holds a comma in its name, see `peopleOf` in `../persons.ts`, going on over the next
+ * line where it is too long; a name of a person there, also an older
+ * one spoken, like `Philip Zimmer`, is a link in the line to its row there, see `personOf` in `../persons.ts`, any
+ * other name plain text.
+ * Its list offers the names my earlier entries wrote, the most used first, and as I type every person of
+ * `Persons.md`, see {@link withSearchOf}, takes a name or takes it back by a click and stays open for the next,
+ * and adds a typed name, `Search or add a person`, a person as `Persons.md` names it, like `Bichler, Martin` for
+ * a typed `Martin Bichler`, but none with `;`, which parts names; beside the line the pencil, while a name is picked,
+ * which shows below it the parts of each person to change, its name, its mail and its link, see {@link withPartsOf}. A name picked anew takes
+ * the address it had, else that of its last entry, else its standard one, see `standardAddressOf` in `./entries.ts`.
+ * - `people`: Who is picked, in their order, each with its address.
+ * - `open`: Whether the parts of the people show.
+ * - `pencil`: The pencil, `✎`.
+ * - `parts`: The parts of the people below the names, shown while the pencil opened them.
+ * - `show`: Shows the pencil and the parts for who is picked.
+ *
+ * @param setup - What it shows and what it saves into
  * @returns Its row
  */
-function withRowOf(field: Field): HTMLElement {
-    const picked: string[] = values.with === "" ? [] : values.with.split(", ");
+export function withRowOf(setup: WithSetup): HTMLElement {
+    let people: Attendee[] = setup.people;
+    let open: boolean = setup.open;
     const pencil: HTMLButtonElement = document.createElement("button");
     const parts: HTMLElement = document.createElement("div");
-    const show: (names: string[]) => void = (names: string[]): void => {
-        pencil.hidden = names.length === 0;
-        parts.hidden = !withOpen || names.length === 0;
-        parts.replaceChildren(...withPartsOf(field, names));
+    const show: () => void = (): void => {
+        pencil.hidden = people.length === 0;
+        parts.hidden = !open || people.length === 0;
+        parts.replaceChildren(...withPartsOf(setup, people, (name: string, address: string): void => {
+            people = people.map((other: Attendee): Attendee =>
+                other.name === name ? { name: name, address: address } : other);
+            setup.pick(people);
+        }));
     };
     pencil.type = "button";
     pencil.className = "entry-pencil";
-    iconPut(pencil, Pencil, "Change the addresses");
+    iconPut(pencil, Pencil, "Change the people");
     pencil.addEventListener("click", (): void => {
-        withOpen = !withOpen;
-        show(values.with === "" ? [] : values.with.split(", "));
-        if (withOpen)
+        open = !open;
+        setup.opened(open);
+        show();
+        if (open)
             parts.querySelector("input")?.focus();
     });
-    parts.className = "field-parts";
-    parts.dataset.field = field.key;
-    show(picked);
-    return rowOf(field.name, choicesOf({
-        search: searchOf(field.values.map(choiceOf)), picked: picked, many: true, adding: true,
-        add: async (name: string): Promise<string | null> => name.includes(",") ? null : name.trim(),
-        noun: "person",
+    parts.className = "people-parts";
+    parts.dataset.field = setup.field.key;
+    show();
+    return rowOf(setup.field.name, choicesOf({
+        ...withChoicesOf(setup.field, setup.persons), picked: people.map((person: Attendee): string => person.name),
         aside: [pencil], below: [parts],
         pick: (names: string[]): void => {
-            values.with = names.join(", ");
-            names.forEach((name: string): void => valueAdd(field, name));
-            show(names);
-            saveAllow();
+            people = names.map((name: string): Attendee => people.find((person: Attendee): boolean =>
+                person.name === name) ?? { name: name, address: setup.field.links[name] ?? standardAddressOf(name) });
+            show();
+            setup.pick(people);
         },
     }));
 }
@@ -1380,25 +1570,38 @@ function peopleRead(): Attendee[] {
     const field: Field | undefined = chosen?.fields.find((other: Field): boolean => other.key === "with");
     if (field === undefined || values.with === "")
         return [];
-    return values.with.split(", ")
+    return values.with.split(withParting)
         .map((name: string): Attendee => ({ name: name, address: personAddressOf(field, name) }));
 }
 
 /**
- * Builds the rows of the place of a skill entry, what it did online and who I was with, the fields of `Skill`
- * from the reader, see {@link fieldRowsOf}, which `skill.ts` shows below skill and type.
+ * Builds the rows of where it is, see {@link fieldRowsOf}: a way where it starts, then its place, see {@link placeIs},
+ * then what it did online, see {@link onlineRowOf}, in the order of the fields of the category picked.
  *
- * @returns The rows of the place, `Online` and `With`, none before `Skill` is picked
+ * @returns The rows, none before a category is picked
  */
 function placeRowsOf(): HTMLElement[] {
-    return (chosen?.fields ?? []).flatMap(fieldRowsOf);
+    return (chosen?.fields ?? []).filter((field: Field): boolean => placeIs(field) || field.key === "online")
+        .flatMap(fieldRowsOf);
+}
+
+/**
+ * Builds the rows of the fields of the category picked below its times, see {@link fieldRowsOf}: those neither
+ * its summary nor where it is, see {@link placeRowsOf}, which is who I was with, see {@link withRowOf}.
+ *
+ * @returns The rows, none before a category is picked
+ */
+function moreRowsOf(): HTMLElement[] {
+    return (chosen?.fields ?? []).filter((field: Field): boolean =>
+        field.key !== "title" && !placeIs(field) && field.key !== "online").flatMap(fieldRowsOf);
 }
 
 /**
  * Tells whether the dialog logs a box of the plan that has a category, or changes an entry of the log logged from
  * a box, which points to it with `RELATED-TO`: its category and summary stay the plan's, so the link shows how
  * the plan was really done, while its times, place, people, semester and note change freely, like a lecture
- * watched online at home. A box without category leaves both open, to be picked.
+ * watched online at home; its summary changes only by its pencil, see {@link summaryChange}, and the skill and type
+ * of a skill entry by a click on them, see `skill.ts`. A box without category leaves both open, to be picked.
  *
  * @returns Whether it does
  */
@@ -1418,17 +1621,15 @@ function titleRowsShow(): void {
 
 /**
  * Shows the fields of the category picked, each its rows, see {@link fieldRowsOf}, in the order of the file,
- * the same for every category, below the times and the category: what, then its place, a way where it starts
- * before its place, then who I was with, see {@link withRowOf};
+ * the same for every category, below the category: what, then where it is, a way where it starts before its place,
+ * see {@link placesShow}, then below the times who I was with, see {@link moreRowsOf};
  * after them for `Body` my neck pain, shown while `Neck long` is picked, see {@link painRowOf};
  * a meal of the log is its summary, see {@link meal}.
- * - `fields`: The fields of the category picked.
  */
 function fieldsShow(): void {
-    const fields: Field[] = chosen?.fields ?? [];
     titleRowsShow();
-    document.getElementById("entry-more")?.replaceChildren(...fields
-        .filter((field: Field): boolean => field.key !== "title").flatMap(fieldRowsOf),
+    placesShow();
+    document.getElementById("entry-more")?.replaceChildren(...moreRowsOf(),
         ...painRowOf(), ...sportShown() ? sportRowsOf(saveAllow, endFit) : []);
     document.getElementById("entry-note")?.closest(".panel-field")?.toggleAttribute("hidden", sportShown());
     saveAllow();
@@ -1459,15 +1660,18 @@ async function wayEndLoad(): Promise<string> {
 }
 
 /**
- * Fills in where a new entry or box starts, also one logged from a box, as where the last way before it ended,
- * see {@link wayEndLoad}: a way its `From`, every other category its place, while that field is empty; nothing for
- * an entry or a box being changed. The place is my place or room of that name as its list offers it, so it shows
- * with its link, as picked there, like `Mensa Leopoldstraße` for a Talk after a way that ended there; a way picked
- * after another category leaves the place filled in for it, so its place, its goal, stays empty; nothing once another
- * category was picked meanwhile.
+ * Fills in where a new entry starts, also one logged from a box, as where the last way before it ended,
+ * see {@link wayEndLoad}, else as my default place, `★` in `Places.md`, like `Home Munich`; a new box of the plan
+ * always as my default place, since no way before it tells where I will be: a way its `From`, every other category
+ * its place, while that field is empty; nothing for an entry or a box being changed. The place is my place or room
+ * of that name as its list offers it, so it shows with its link, as picked there, like `Mensa Leopoldstraße` for a Talk
+ * after a way that ended there; a way picked after another category leaves the place filled in for it, so its place,
+ * its goal, stays empty; nothing once another category was picked meanwhile.
  * - `way`: Whether the category is `Way`, which has the field `from`.
  * - `field`: The field to fill in, `From` of a way, else `Place`.
- * - `line`: The place where the last way ended, as that way wrote it.
+ * - `end`: The place where the last way ended, as that way wrote it, empty for none and for a box.
+ * - `standard`: My default place, `undefined` for none.
+ * - `line`: The place to fill in.
  *
  * @param category - Category picked
  * @throws {Error} - When the reader gives no valid answer
@@ -1480,9 +1684,11 @@ async function wayEndFill(category: Category): Promise<void> {
         values.location = "";
     if (field === undefined || opened.entry !== null || opened.box !== null || values[field.key] !== "")
         return;
-    const line: string = await wayEndLoad();
+    const end: string = opened.target === "box" ? "" : await wayEndLoad();
     if (chosen !== category)
         return;
+    const standard: Place | undefined = Object.values(field.places).find((place: Place): boolean => place.standard);
+    const line: string = end !== "" ? end : standard === undefined ? "" : lineOf(standard);
     values[field.key] = [...field.values, ...field.rooms]
         .find((value: string): boolean => line !== "" && labelOf(value) === labelOf(line)) ?? line;
     if (!way)
@@ -1496,10 +1702,11 @@ async function wayEndFill(category: Category): Promise<void> {
  * A new entry starts where the last way before it ended, see {@link wayEndFill}.
  * `Food` in the log shows its summary, its meals and its foods in place of the summary, with those of the meal being
  * changed, see `meal.ts`, built before its fields show, unless another category was picked meanwhile;
- * `Skill` shows its skill and type before the times, and its place, semester, chapters, documents and attempts
- * after them,
- * see `skill.ts`; `Sport` in the log loads my workouts, exercises and videos, with those of the session being changed,
- * see `sport.ts`.
+ * `Skill` shows its skill and type, then where it is, see {@link placesShow}, and below the times who I was with,
+ * its semester, chapters, documents and attempts, see `skill.ts`, with the title skill and type give it while it has
+ * none, its title shown to type below them while it is another, one I typed; `Sport` in the log loads my workouts,
+ * exercises and videos, with those of the session being changed, see `sport.ts`.
+ * - `summary`: Pencil, link and parts of the summary of a skill entry, see {@link summaryPartsOf}.
  * - `changing`: Whether the dialog changes a meal, whose foods and what the meal starts with.
  * - `built`: The rows of the meal, its summary with its link, see {@link mealLinkPut}.
  *
@@ -1513,18 +1720,24 @@ async function categoryPick(category: Category | null): Promise<void> {
     summaryShown = null;
     chosen = category;
     (category?.fields ?? []).forEach((field: Field): void => {
-        values[field.key] = (field.many === true ? values[field.key].split(", ") : [values[field.key]])
-            .map((value: string): string => fixedValueOf(field, value)).join(", ");
+        values[field.key] = fixedTextOf(field, values[field.key]);
     });
     meal = null;
+    document.getElementById("entry-place")?.replaceChildren();
     document.getElementById("entry-more")?.replaceChildren();
     if (category !== null)
         await wayEndFill(category);
     if (category?.name === skillName) {
+        const summary: HTMLElement[] = summaryPartsOf(undefined, true);
         await skillFieldsShow(document.getElementById("entry-fields") as HTMLElement,
-            document.getElementById("entry-more") as HTMLElement, placeRowsOf(), opened.target === "box",
-            opened.category === skillName ? opened.skill : skillNone, dayRead(), asPlanned(), skillChanged,
-            summaryPartsOf());
+            document.getElementById("entry-more") as HTMLElement, moreRowsOf(), opened.target === "box",
+            opened.category === skillName ? opened.skill : skillNone, dayRead(), skillChanged, summary);
+        skillGiven = skillTitleOf();
+        if (values.title === "")
+            values.title = skillGiven;
+        summaryOpen = values.title !== skillGiven;
+        summary[2].hidden = !summaryOpen;
+        placesShow();
         skillChanged();
         return;
     }
@@ -1575,8 +1788,7 @@ function categoryShow(): void {
 }
 
 /**
- * Reads what the entry was, its `SUMMARY`: nothing for a skill entry, which the reader names itself
- * from its skill and type, like `IN2028_BusinessAnalyticsMachineLearning (VO)`, see `reader/documents.ts`,
+ * Reads what the entry was, its `SUMMARY`: the title of a skill entry, see {@link skillChanged},
  * a meal of the log with foods their names, see {@link mealTitle};
  * else what is picked, like `Night` of `Sleep`, or the name of a category without the field `title`.
  *
@@ -1585,7 +1797,7 @@ function categoryShow(): void {
  */
 function titleRead(picked: string): string {
     if (chosen?.name === skillName)
-        return "";
+        return values.title;
     if (foodsListed())
         return mealTitle();
     return chosen?.fields.some((field: Field): boolean => field.key === "title") ? picked : chosen?.name ?? "";
@@ -1631,16 +1843,13 @@ function textsRead(): BoxFields {
 
 /**
  * Gives the day of the entry as the fields of the dialog say: the typed day of its start, for a box with a deadline
- * the typed day of its deadline, for a box repeated the first day of its series, see {@link repeat}; the day
- * the dialog opened with while the typed day is no date.
+ * the typed day of its deadline; the day the dialog opened with while the typed day is no date.
  * - `deadlineDay`: Typed day of the deadline of a box, `null` for none and for an entry of the log.
  * - `typed`: The typed day, `null` when it is no date.
  *
  * @returns Day like `2026-10-13`
  */
 function dayRead(): string {
-    if (repeat !== null && repeat.first !== "")
-        return repeat.first;
     const deadlineDay: string | null = opened.target === "box"
         ? dateParse((document.getElementById("entry-deadline-day") as HTMLInputElement).value) : null;
     const typed: string | null =
@@ -1679,8 +1888,9 @@ function endDayFill(): void {
     const next: Date = new Date(`${day}T12:00:00`);
     next.setDate(next.getDate() + 1);
     const field: HTMLInputElement = document.getElementById("entry-end-day") as HTMLInputElement;
-    field.value = dateTextOf(end <= start ? dayOf(next) : day);
+    field.value = weekdayDateTextOf(end <= start ? dayOf(next) : day);
     field.setCustomValidity("");
+    endDayShow();
 }
 
 /**
@@ -1716,16 +1926,18 @@ function fieldsRead(): EntryFields {
  * Reads fields, note, start, end and deadline of the dialog for a box, as for an entry of the log: its day is the day
  * of its start, its expected time its start, its expected duration the minutes from its start to its end,
  * so `19.10.2026 09:15` to `10:45` moves a box of 12 October at 14:00 to 19 October at 09:15 for 90 minutes,
- * and the reader into the plan it belongs into; a box whose times stay empty lies on its day without time,
- * keeping the duration it had, like `00h 45m`; with a deadline it lies on the day of its deadline, without
- * expected time, start and end off, keeping the duration it had; an empty deadline is none.
+ * and the reader into the plan it belongs into; a box whose times stay empty lies on its day without time
+ * and duration; a box that lasts only so long, see {@link lengthOnly}, lies on its day without time for its length,
+ * like `08:00` for 480 minutes, none for an empty length or `00:00`; with a deadline it lies on the day of its deadline,
+ * without expected time, start and end off, keeping the duration it had; an empty deadline is none.
  * - `day`: Typed day of the start, like `2026-10-19`, the day the dialog opened with should it be no date.
  * - `startTime`, `endTime`: Typed times of start and end, empty for none.
+ * - `length`: Typed length, like `08:00`, empty for none.
  * - `deadlineDay`: Typed day of the deadline, like `2026-10-23`, empty for none.
  * - `deadlineTime`: Typed time of the deadline, empty for none.
- * - `start`: Start of the box, `null` without start time.
- * - `minutes`: Minutes from its start to its end, the ones it had while both times stay empty, else `null`
- *   without both.
+ * - `start`: Start of the box, `null` without start time and for a box that lasts only so long.
+ * - `minutes`: Minutes of its length, else from its start to its end, `null` without both; with a deadline
+ *   the ones it had.
  *
  * @returns Fields of the box
  */
@@ -1734,13 +1946,16 @@ function boxFieldsRead(): BoxFields {
         dateParse((document.getElementById("entry-start-day") as HTMLInputElement).value) ?? dayOf(opened.start);
     const startTime: string = timeFieldRead(document.getElementById("entry-start") as HTMLInputElement);
     const endTime: string = timeFieldRead(document.getElementById("entry-end") as HTMLInputElement);
+    const length: string = timeFieldRead(document.getElementById("entry-length") as HTMLInputElement);
     const deadlineDay: string =
         dateParse((document.getElementById("entry-deadline-day") as HTMLInputElement).value) ?? "";
     const deadlineTime: string = timeFieldRead(document.getElementById("entry-deadline-time") as HTMLInputElement);
-    const start: Date | null = startTime === "" ? null : dateOf(new Date(`${day}T12:00:00`), startTime);
-    let minutes: number | null = start === null || endTime === "" ? null
-        : Math.round((endRead(start).getTime() - start.getTime()) / (60 * 1000));
-    if (deadlineDay !== "" || (startTime === "" && endTime === ""))
+    const start: Date | null =
+        startTime === "" || lengthOnly ? null : dateOf(new Date(`${day}T12:00:00`), startTime);
+    let minutes: number | null = lengthOnly ? (length === "" || minutesOf(length) === 0 ? null : minutesOf(length))
+        : start === null || endTime === "" ? null
+            : Math.round((endRead(start).getTime() - start.getTime()) / (60 * 1000));
+    if (deadlineDay !== "")
         minutes = opened.minutes;
     return {
         ...textsRead(),
@@ -1777,21 +1992,39 @@ function errorShow(error: unknown): void {
 }
 
 /**
- * Sends the new or changed box to the reader, its fields, note, start, end and deadline, see {@link boxFieldsRead},
- * a new box repeated once per date of its series instead, see {@link repeatSend}, then closes the dialog, after which
- * the list of boxes loads again, see `boxes.ts`.
+ * Writes each place picked that I changed by its parts everywhere, see {@link partsOf} and `renameSend` in `places.ts`:
+ * the place of its old name, the label of the place picked in its field, as I changed it, its row and every entry
+ * that names it; nothing for a place I left as it is, nor for a field the category picked does not have.
+ * Before the entry or the box is saved only checked, so the dialog saves nothing the reader would refuse, and after it
+ * written, so the entry or the box, saved with the place as it was, takes it with every other.
+ * - `field`: Each field of a place of the category picked.
+ * - `edit`: Its place as I changed it, `null` while I changed nothing.
  *
- * @throws {Error} - When the reader does not take the box, also when it refuses a box repeated since its series
- *   is there already
+ * @param dry - Whether only to check, before saving
+ * @throws {Error} - When the reader does not take a place, like one with an empty name
+ */
+async function placesRename(dry: boolean): Promise<void> {
+    for (const field of (chosen?.fields ?? []).filter(placeIs)) {
+        const edit: Place | null = edits[field.key];
+        if (values[field.key] !== "" && edit !== null && JSON.stringify(edit) !== JSON.stringify(placeOriginOf(field)))
+            await renameSend(labelOf(values[field.key]), edit, dry);
+    }
+}
+
+/**
+ * Sends the new or changed box to the reader, its fields, note, start, end and deadline, see {@link boxFieldsRead},
+ * writes a place and the people I changed by their parts everywhere, see {@link placesRename} and `personsRename`
+ * in `../persons.ts`, then closes the dialog, after which the list of boxes loads again, see `boxes.ts`.
+ *
+ * @throws {Error} - When the reader does not take the box
  */
 async function boxSave(): Promise<void> {
-    if (repeat !== null) {
-        if (await repeatSend(repeat, false) === null)
-            throw new Error("Its series is there already");
-    } else if (opened.box !== null)
+    if (opened.box !== null)
         await boxChange(opened.box.id, boxFieldsRead());
     else
         await boxAdd(boxFieldsRead());
+    await placesRename(false);
+    await personsRename(personEdits, persons, false);
     (document.getElementById("entry") as HTMLDialogElement).close();
 }
 
@@ -1803,15 +2036,19 @@ async function boxSave(): Promise<void> {
  * wins. When the file changed it since, like Eier renamed on the phone while the dialog on the laptop showed Eier,
  * nothing is saved and the dialog stays open, saying `Not saved: it changed on the disk, close and open it again`,
  * see {@link hintShow}; opened again, it shows the entry as the file holds it, to change and save once more.
+ * A place and the people I changed by their parts are checked before anything is saved, and written everywhere once
+ * the entry or the box is, see {@link placesRename} and `personsRename` in `../persons.ts`.
  * - `fields`: Fields, note and times of the dialog.
  * - `version`: Fingerprint of the entry being changed as the dialog opened it, see `version` of `Entry`
  *   in `reader/calendar.ts`; empty for a new one.
  * - `saved`: Whether the reader wrote it, `false` when the file changed the entry since the dialog opened it.
  *
  * @param calendar - Calendar of the day
- * @throws {Error} - When the reader does not take the entry
+ * @throws {Error} - When the reader does not take the entry or a place or person I changed
  */
 async function entrySave(calendar: Calendar): Promise<void> {
+    await placesRename(true);
+    await personsRename(personEdits, persons, true);
     if (opened.target === "box") {
         await boxSave();
         return;
@@ -1825,15 +2062,18 @@ async function entrySave(calendar: Calendar): Promise<void> {
         saved = await entryChange(calendar, opened.entry.id, fields, version);
     else
         await entryAdd(calendar, fields);
-    if (saved)
+    if (saved) {
+        await placesRename(false);
+        await personsRename(personEdits, persons, false);
         (document.getElementById("entry") as HTMLDialogElement).close();
-    else
+    } else
         hintShow("entry-changed");
 }
 
 /**
  * Removes the entry of the log or the box being changed on the second click, then closes the dialog;
  * the first click only asks, the bin turning into a question mark, `Really remove?` as its tooltip. A box planned by mistake is removed;
+ * a box of a series that day alone, the series staying, see `boxDelete` in `reader/boxes.ts`;
  * a box I decided against is dropped instead, with its cross in the list, so it can be counted.
  *
  * @param calendar - Calendar of the day
@@ -1855,8 +2095,9 @@ async function entryRemove(calendar: Calendar): Promise<void> {
 }
 
 /**
- * Turns start and end of a box off while the day of a deadline is typed, since a box with a deadline lies on the day
- * of its deadline and has no expected time, so `23.10.2026` typed as deadline leaves them unread;
+ * Turns start and end of a box off while the day of a deadline is typed, its length and the switch to it too,
+ * see {@link lengthShow}, since a box with a deadline lies on the day of its deadline and has no expected time,
+ * so `23.10.2026` typed as deadline leaves them unread;
  * and asks for the day of a deadline while its time is typed, since a time alone is no deadline.
  * - `deadlineDay`, `deadlineTime`: Fields of the day and the time of the deadline.
  * - `off`: Whether start and end are off.
@@ -1865,23 +2106,13 @@ function deadlineSee(): void {
     const deadlineDay: HTMLInputElement = document.getElementById("entry-deadline-day") as HTMLInputElement;
     const deadlineTime: HTMLInputElement = document.getElementById("entry-deadline-time") as HTMLInputElement;
     const off: boolean = opened.target === "box" && deadlineDay.value.trim() !== "";
-    ["entry-start-day", "entry-start", "entry-end-day", "entry-end"].forEach((id: string): void => {
+    ["entry-start-day", "entry-start", "entry-end-day", "entry-end", "entry-length"].forEach((id: string): void => {
         (document.getElementById(id) as HTMLInputElement).disabled = off;
     });
+    document.querySelectorAll<HTMLButtonElement>("#entry-swap button").forEach((swap: HTMLButtonElement): void => {
+        swap.disabled = off;
+    });
     deadlineDay.required = deadlineTime.value.trim() !== "";
-}
-
-/**
- * Marks the row of the deadline empty while neither its day nor its time holds anything, so a phone shows it one line
- * high, its empty fields beside its name, as every empty row, see `.entry-deadline-empty` in `day.css`; looked at
- * when the dialog opens and when I leave one of its fields, never while I type, so the row never changes under
- * my finger.
- * - `row`: The row of the deadline.
- */
-function deadlineEmptyShow(): void {
-    const row: HTMLElement = document.getElementById("entry-deadline") as HTMLElement;
-    row.classList.toggle("entry-deadline-empty", [...row.querySelectorAll("input")]
-        .every((field: HTMLInputElement): boolean => field.value.trim() === ""));
 }
 
 /**
@@ -1892,7 +2123,8 @@ function deadlineEmptyShow(): void {
  * of its end the calendar date of the end it opens with, which fills itself again as I type, see {@link endDayFill}.
  * A box starts at its expected time, on the day the dialog opened with, like `12.10.2026`, the shown day for a new one,
  * and ends after its expected duration; its times may stay empty, but for an event of the plan, which keeps both
- * and has no deadline, since only a to-do has one.
+ * and has no deadline, since only a to-do has one; a box without time but with a duration and without deadline,
+ * like my sleep, shows only its day and its length, see {@link lengthShow}.
  * - `boxed`: Whether the dialog writes a box.
  * - `required`: Whether the times are needed: for an entry of the log and an event of the plan.
  * - `start`: Start shown, the expected time of a box, `null` for none.
@@ -1914,178 +2146,169 @@ function timesShow(opening: EntryOpening): void {
     const deadlineRow: HTMLElement = document.getElementById("entry-deadline") as HTMLElement;
     const deadlineDay: HTMLInputElement = document.getElementById("entry-deadline-day") as HTMLInputElement;
     const deadline: string = opening.box?.deadline ?? "";
-    startDay.value = dateTextOf(dayOf(opening.start));
+    startDay.value = weekdayDateTextOf(dayOf(opening.start));
     startDay.setCustomValidity("");
-    endDay.value = dateTextOf(dayOf(end ?? opening.start));
+    endDay.value = weekdayDateTextOf(dayOf(end ?? opening.start));
     endDay.setCustomValidity("");
     endDayTyped = false;
     timeFieldShow(startTime, start);
     timeFieldShow(endTime, end);
     startTime.required = required;
     endTime.required = required;
+    lengthOnly = boxed && !required && start === null && opening.minutes !== null && deadline === "";
+    (document.getElementById("entry-length") as HTMLInputElement).value =
+        lengthOnly && opening.minutes !== null ? lengthTextOf(opening.minutes) : "";
+    lengthShow();
     deadlineRow.hidden = required;
     deadlineRow.querySelectorAll("input").forEach((field: HTMLInputElement): void => {
         field.disabled = required;
     });
-    deadlineDay.value = deadline === "" ? "" : dateTextOf(opening.box?.day ?? "");
+    deadlineDay.value = deadline === "" ? "" : weekdayDateTextOf(opening.box?.day ?? "");
     deadlineDay.setCustomValidity("");
     timeFieldShow(document.getElementById("entry-deadline-time") as HTMLInputElement,
         deadline === "" || deadline === opening.box?.day ? null : new Date(deadline));
     deadlineSee();
-    deadlineEmptyShow();
+    endDayShow();
 }
 
 /**
- * Shows the row `Repeat` below the times, see the top of this file, only for a new box: closed, its name with the plus
- * beside it, a click on the row opening it, see {@link repeatOpen}; open, `Weekly` with the `×` that closes it,
- * see {@link repeatClose}, then the rows of its series as every series has them, see `series.ts`: its days, its first
- * and last day and the boxes it makes, which also leave out a day and add an extra. While it is open, start, end
- * and deadline hide, off, so the browser asks nothing of them, since its rows take their place.
- * - `place`: Where the row stands, below the times.
- * - `times`: Start, end and deadline.
- * - `plus`, `empty`, `row`: The plus, the empty value and the row of `Repeat` closed.
- * - `days`: The days of its series.
+ * Hides the day of the end while it is the day of the start, so the row of the times reads
+ * `24.10.2026 (Sat) 10:00 – 12:00`, and shows it once the end lies on another day, like a night of sleep from
+ * `23:30` to `07:30`, see `.entry-same-day` in `day.css`; a field being typed in stays.
+ * - `start`, `end`: The fields of the day of the start and of the end.
  */
-function repeatShow(): void {
-    const place: HTMLElement = document.getElementById("entry-repeat") as HTMLElement;
-    const times: HTMLFieldSetElement = document.getElementById("entry-times") as HTMLFieldSetElement;
-    times.hidden = repeat !== null;
-    times.disabled = repeat !== null;
-    if (opened.target !== "box" || opened.box !== null) {
-        place.replaceChildren();
-        return;
-    }
-    if (repeat === null) {
-        const plus: HTMLButtonElement = document.createElement("button");
-        const empty: HTMLDivElement = document.createElement("div");
-        const row: HTMLDivElement = rowOf("Repeat", empty);
-        plus.type = "button";
-        plusPut(plus, "Repeat the box");
-        empty.className = "entry-empty";
-        row.querySelector(".entry-name")?.append(plus);
-        row.addEventListener("click", repeatOpen);
-        place.replaceChildren(row);
-        return;
-    }
-    const days: Days = repeat;
-    place.replaceChildren(addedRowOf("Repeat", "Weekly", repeatClose, ""),
-        ...slotRowsOf(days, repeatChanged, repeatShow), datesRowOf(days, repeatChanged), boxesRowOf());
-    repeatChanged();
+function endDayShow(): void {
+    const start: HTMLInputElement = document.getElementById("entry-start-day") as HTMLInputElement;
+    const end: HTMLInputElement = document.getElementById("entry-end-day") as HTMLInputElement;
+    end.classList.toggle("entry-same-day", end !== document.activeElement
+        && dateParse(end.value) !== null && dateParse(end.value) === dateParse(start.value));
 }
 
 /**
- * Opens the row `Repeat` of a new box, see {@link repeatShow}: its series has one day, the weekday of the typed day
- * of its start with the times typed, like `Thursday 14:00 – 16:00` of `22.10.2026 14:00 – 16:00`, its first day that
- * day and its last day still to type.
- * - `day`: The typed day of its start, the day the dialog opened with should it be no date.
+ * Shows the time of the dialog as {@link lengthOnly} says, see `day.html`: from and to, or the day and how long the box
+ * lasts, like `08:00` for my sleep; right beside the name `Time` of a box of the plan whose times may stay empty,
+ * not an event imported, which keeps both, nor an entry of the log, the switch between them, see `lengthSwapOf`
+ * in `times.ts`,
+ * as in the dialog of a series: to a length it keeps how long the times typed last, like `01:30` of `14:00 – 15:30`,
+ * and empties them; to times it empties the length; the field shown then focused.
+ * - `length`: The field of the length.
+ * - `start`, `end`: The fields of the times of start and end.
+ * - `swappable`: Whether the switch shows.
+ * - `minutes`: How long the times typed last, 0 for no times.
  */
-function repeatOpen(): void {
-    const day: string =
-        dateParse((document.getElementById("entry-start-day") as HTMLInputElement).value) ?? dayOf(opened.start);
-    repeat = {
-        slots: [{
-            weekday: weekdayOf(day), start: timeFieldRead(document.getElementById("entry-start") as HTMLInputElement),
-            end: timeFieldRead(document.getElementById("entry-end") as HTMLInputElement),
-        }],
-        before: [0], extras: [], first: day, last: "", excepts: [],
-    };
-    previewForget();
-    repeatShow();
+function lengthShow(): void {
+    const length: HTMLInputElement = document.getElementById("entry-length") as HTMLInputElement;
+    const start: HTMLInputElement = document.getElementById("entry-start") as HTMLInputElement;
+    const end: HTMLInputElement = document.getElementById("entry-end") as HTMLInputElement;
+    const swappable: boolean = opened.target === "box" && !start.required;
+    document.getElementById("entry-times")?.classList.toggle("entry-length-only", lengthOnly);
+    document.getElementById("entry-swap")?.replaceChildren(...!swappable ? [] : [lengthSwapOf(!lengthOnly, (): void => {
+        const minutes: number = timeFieldRead(start) === "" || timeFieldRead(end) === "" ? 0
+            : Math.round((endRead(startRead()).getTime() - startRead().getTime()) / (60 * 1000));
+        length.value = !lengthOnly && minutes > 0 ? lengthTextOf(minutes) : "";
+        if (!lengthOnly) {
+            timeFieldShow(start, null);
+            timeFieldShow(end, null);
+        }
+        lengthOnly = !lengthOnly;
+        lengthShow();
+        (lengthOnly ? length : start).focus();
+    })]);
 }
 
 /**
- * Closes the row `Repeat`, the box made once again, with start, end and deadline as they were, see {@link repeatShow},
- * a skill box with the semester of its day again, see {@link repeatChanged}.
- */
-function repeatClose(): void {
-    repeat = null;
-    repeatShow();
-    repeatChanged();
-}
-
-/**
- * Takes a change of the row `Repeat`: a skill box takes the semester of the first day of its series while I picked
- * none, as a box made once takes that of its day, see `skillDaySet` in `skill.ts` and {@link dayRead}, and saving
- * and the boxes it makes follow, see {@link saveAllow}.
- */
-function repeatChanged(): void {
-    if (chosen?.name === skillName)
-        skillDaySet(dayRead());
-    saveAllow();
-}
-
-/**
- * Sends the new box with its row `Repeat` open to the reader, see `boxRepeat` in `entries.ts`: its fields as of a box
- * made once, see {@link textsRead}, a skill box with the semester of the first day of its series while I picked none,
- * and its days, those it leaves out only between its first and its last day.
+ * Shows the series of the box, see the top of this file: after the times of a box of a series the series icon ⟳,
+ * the same as the new series beside `Plan +`, see `boxes.ts`, since the pencil always changes one property and ⟳ always
+ * means the series, as far from the times as the pencil from a summary; for a box of a series of my course, see
+ * `seriesHas` in `series.ts`, after it its group while it
+ * has one, like `Group 05`, where it may still go to another group as the menu of the groups for this one date,
+ * `Group 05 ⌄`, see `boxGroupOf` in `groups.ts`, a pick closing the dialog, see {@link groupPick}, ⟳ opening that
+ * series, see {@link seriesFromBox}; for a box of a plain series, one to-do that repeats, like my sleep of every night,
+ * ⟳ opening that series whole, see `plainOpen` in `series.ts`; saving the series closes this dialog too; nothing
+ * for a new box, a box alone or an entry of the log.
+ * - `of`: Where ⟳ and the group stand, after the times.
+ * - `box`: The box being changed, `null` for a new box and for an entry of the log.
+ * - `pencil`: The series icon ⟳, which takes no focus, so a field of the times I leave by it, like a day written out
+ *   with its weekday then, never moves it away from under the pointer before the click.
+ * - `course`: The course of a box of a group that may go to another group, see `pickable` in `groups.ts`, which
+ *   offers the groups of its week, `null` for any other box and when the reader cannot give it, which shows
+ *   its group without menu.
+ * - `group`: Its group, `null` for none.
  *
- * @param days - The days of its series
- * @param dry - Whether only to tell what it would make, for the preview
- * @returns The boxes it makes, by their days, `null` when the reader refuses it since its series is there already
- * @throws {Error} - When the reader does not take it for another reason
+ * @throws {Error} - When the reader gives no valid answer
  */
-async function repeatSend(days: Days, dry: boolean): Promise<Planned[] | null> {
-    return await boxRepeat({ ...textsRead(), semester: chosen?.name === skillName ? skillSemesterOf(days.first) : "" },
-        { ...days, excepts: exceptsWithin(days) }, dry);
+async function seriesShow(): Promise<void> {
+    const of: HTMLElement = document.getElementById("entry-of-series") as HTMLElement;
+    const box: Box | null = opened.target === "box" ? opened.box : null;
+    const pencil: HTMLButtonElement = document.createElement("button");
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    iconPut(pencil, Repeat, "Change the series");
+    pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    of.replaceChildren();
+    of.hidden = box === null || (!box.series && !seriesHas(box));
+    if (box !== null && seriesHas(box)) {
+        pencil.addEventListener("click", (): void =>
+            seriesFromBox(box.module, box.type, box.semester || semesterOf(box.day)));
+        const course: Course | null = box.group === "" || !pickable(box) ? null
+            : await readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(box.module)}`
+                + `&semester=${box.semester || semesterOf(box.day)}`).catch((error: unknown): null => {
+                console.error(error);
+                return null;
+            });
+        const group: HTMLElement | null = box.group === "" ? null : boxGroupOf(course, box, groupPick);
+        of.append(pencil, ...group === null ? [] : [group]);
+    }
+    else if (box !== null && box.series) {
+        pencil.addEventListener("click", (): void => {
+            plainOpen(box.id.split("#")[0], entryClose).catch((error: unknown): void => console.error(error));
+        });
+        of.append(pencil);
+    }
 }
 
 /**
- * Shows anew the boxes a box repeated makes, as the reader would write them, see {@link repeatSend} and `previewSoon`
- * in `series.ts`, a day left out from their list leaving it out here too: nothing while it is closed, no category
- * is picked or its days are not typed enough; in their place, when the reader refuses it, since a skill box
- * of a numbered type has its series in the semester already, that it has, with the pencil that opens that series,
- * see {@link seriesFromBox}.
- * - `days`: The days of its series.
- * - `ask`: Asks the reader what it makes, its skill and type named when it refuses.
+ * Closes the dialog without saving it, as once the dialog of a series opened over it saved, see {@link seriesFromBox}
+ * and {@link seriesShow}.
  */
-function repeatPreview(): void {
-    if (repeat === null)
-        return;
-    const days: Days = repeat;
-    const ask: () => Promise<Planned[] | HTMLElement> = async (): Promise<Planned[] | HTMLElement> => {
-        const skill: ModuleType = skillModuleType();
-        const planned: Planned[] | null = await repeatSend(days, true);
-        if (planned !== null)
-            return planned;
-        const hint: HTMLElement = document.createElement("p");
-        const pencil: HTMLButtonElement = document.createElement("button");
-        hint.className = "entry-none";
-        hint.textContent = `${skill.module} ${skill.type} has its series already`;
-        pencil.type = "button";
-        pencil.className = "entry-pencil";
-        iconPut(pencil, Pencil, "Change the series");
-        pencil.addEventListener("click", (): void => seriesFromBox(skill.module, skill.type,
-            skillSemesterOf(days.first === "" ? dayOf(opened.start) : days.first)));
-        hint.append(pencil);
-        return hint;
-    };
-    previewSoon(document.getElementById("entry-repeat") as HTMLElement, {
-        ask: chosen === null || !daysReady(days) ? null : ask, days: days, states: {}, filled: repeatShow,
-    });
+function entryClose(): void {
+    (document.getElementById("entry") as HTMLDialogElement).close();
 }
 
 /**
- * Closes the dialog and opens the series of a box instead, see `seriesOpen` in `series.ts`, from the pencil below
- * the fields of a box of a series, see {@link entryShow}, or beside the hint of a box repeated whose series is there.
+ * Picks a group for the box of the dialog, from the menu of the groups after its times, see {@link seriesShow}:
+ * closes the dialog without saving, since the box moves to the session of that group, and sends the pick,
+ * see `PickShow` in `groups.ts`; the plan and the page of the module load anew as their files change.
+ *
+ * @param change - Changes the box as the pick does, which the dialog leaves to the page loading anew
+ * @param send - Sends the pick
+ */
+function groupPick(change: () => void, send: () => Promise<unknown>): void {
+    entryClose();
+    send().catch((error: unknown): void => console.error(error));
+}
+
+/**
+ * Opens the series of a box over the dialog, see `seriesOpen` in `series.ts`, from the series icon ⟳ after the times of a box
+ * of a series of my course, see {@link seriesShow}: closed, it leaves
+ * this dialog as it was, one level back; saved, this dialog closes too, see {@link entryClose}, since its box changed
+ * with its series.
  *
  * @param module - Code of the module, like `IN2028`
  * @param type - Type of the series, like `VO`
  * @param semester - Its semester, like `2026W`
  */
 function seriesFromBox(module: string, type: string, semester: string): void {
-    (document.getElementById("entry") as HTMLDialogElement).close();
-    seriesOpen(module, type, semester).catch((error: unknown): void => console.error(error));
+    seriesOpen(module, type, semester, entryClose).catch((error: unknown): void => console.error(error));
 }
 
 /**
  * Shows the dialog as an opening says, a new one without category with the list of the categories open.
  * It has no title: below its fields, small and grey, the box a log entry comes from, with a pencil beside it to change
- * that box instead, when it can be changed, or of a box of a series of my course its series, like `Series: VO 2`,
- * with a pencil beside it to change the series instead, see {@link seriesFromBox}; at the bottom the copy and the bin
- * at the left, then cancel and save, see `day.html`.
+ * that box instead, when it can be changed; at the bottom its file at the left, see {@link entryFileShow}, the copy,
+ * the bin, cancel and save at the right, see `day.html`.
  * The first button, which the dialog focuses as it opens, loses the focus again, so its ring never looks like a pick.
  * - `dialog`: The dialog, open already when one of those two buttons opens it anew.
- * - `series`: The box being changed while it is one of a series of my course, `null` for any other.
  * - {@link HTMLDialogElement#showModal}: Shows the dialog over the page, `Esc` closes it.
  *
  * @param opening - What the dialog shows
@@ -2094,6 +2317,7 @@ function seriesFromBox(module: string, type: string, semester: string): void {
 async function entryShow(opening: EntryOpening): Promise<void> {
     const dialog: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
     categories = structuredClone(await categoriesKept());
+    persons = await personsKept();
     opened = opening;
     onlineLink = opening.onlineLink;
     passcode = opening.passcode;
@@ -2101,8 +2325,10 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     summaryLink = opening.category === skillName && !linkForm.test(opening.titleLink) ? "" : opening.titleLink;
     summaryOpen = false;
     partsOpen = null;
+    edits = { title: null, from: null, location: null, online: null, with: null };
     addresses = { ...opening.addresses };
     withOpen = false;
+    personEdits = {};
     addedLine = "";
     placeFilled = "";
     chosen = null;
@@ -2110,25 +2336,17 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     realMiddle = null;
     removeAsked = false;
     pain = String(opening.entry?.extendedProps.pain ?? "");
-    repeat = null;
 
-    const series: Box | null = opening.target === "box" && opening.box !== null && seriesHas(opening.box)
-        ? opening.box : null;
-    (document.getElementById("entry-plan-title") as HTMLElement).textContent = series !== null
-        ? `Series: ${series.type} ${series.number === "NONE" ? "–" : series.number}`
-        : opening.plan === null ? "" : `From the plan: ${opening.plan.title}`;
-    document.getElementById("entry-plan")?.toggleAttribute("hidden",
-        series === null && (opening.target === "box" || opening.plan === null));
-    document.getElementById("entry-plan-edit")?.toggleAttribute("hidden",
-        series === null && opening.plan?.editable !== true);
-    iconPut(document.getElementById("entry-plan-edit") as HTMLElement, Pencil,
-        series === null ? "Change the box in the plan" : "Change the series");
+    (document.getElementById("entry-plan-title") as HTMLElement).textContent =
+        opening.plan === null ? "" : `From the plan: ${opening.plan.title}`;
+    document.getElementById("entry-plan")?.toggleAttribute("hidden", opening.target === "box" || opening.plan === null);
+    document.getElementById("entry-plan-edit")?.toggleAttribute("hidden", opening.plan?.editable !== true);
     timesShow(opening);
-    repeatShow();
+    await seriesShow();
     (document.getElementById("entry-note") as HTMLTextAreaElement).value = opening.note;
     iconPut(document.getElementById("entry-remove") as HTMLElement, Trash, "Remove");
     document.getElementById("entry-remove")?.toggleAttribute("hidden",
-        opening.entry === null && (opening.box === null || opening.box.state === "done" || opening.box.series));
+        opening.entry === null && (opening.box === null || opening.box.state === "done"));
     document.getElementById("entry-duplicate")?.toggleAttribute("hidden",
         opening.entry === null && opening.box === null);
     document.getElementById("entry-error")?.setAttribute("hidden", "");
@@ -2143,13 +2361,23 @@ async function entryShow(opening: EntryOpening): Promise<void> {
 }
 
 /**
- * Gives the names of who I was with as `With` shows them, parted by `, `.
+ * Gives the box the dialog shows, so the dialog of a series that opens another box in it can show this one again
+ * once it closes, see `boxShow` in `series.ts`.
+ *
+ * @returns The box, `null` while the dialog is closed or shows a new box or an entry of the log
+ */
+export function entryBoxOf(): Box | null {
+    return (document.getElementById("entry") as HTMLDialogElement).open ? opened.box : null;
+}
+
+/**
+ * Gives the names of who I was with as the values of `With` keep them, parted by `; `, see {@link withParting}.
  *
  * @param people - The people of an entry or a box
- * @returns Names, like `Sophale, Willi`, empty for nobody
+ * @returns Names, like `Bichler, Martin; Willi`, empty for nobody
  */
 function namesOf(people: Attendee[]): string {
-    return people.map((person: Attendee): string => person.name).join(", ");
+    return people.map((person: Attendee): string => person.name).join(withParting);
 }
 
 /**
@@ -2334,7 +2562,8 @@ async function entryDuplicate(): Promise<void> {
 /**
  * Checks the times before the dialog sends them, saying what is wrong at its field: the end lies after the start,
  * for an entry of the log and for a box with both times, and a box with the time of its end has the time of its start;
- * a box with a deadline has no times to check, nor a box repeated, whose start and end are off, see {@link repeatShow}.
+ * a box with a deadline has no times to check, its start and end being off, see {@link deadlineSee}, and neither has
+ * a box that lasts only so long, see {@link lengthOnly}.
  * - `startTime`, `endTime`: Fields of the times of start and end.
  * - `field`: The field that is wrong, `null` for none.
  *
@@ -2344,7 +2573,7 @@ function timesCheck(): boolean {
     const startTime: HTMLInputElement = document.getElementById("entry-start") as HTMLInputElement;
     const endTime: HTMLInputElement = document.getElementById("entry-end") as HTMLInputElement;
     let field: HTMLInputElement | null = null;
-    if (startTime.matches(":disabled"))
+    if (startTime.matches(":disabled") || lengthOnly)
         return true;
     if (timeFieldRead(startTime) === "" && timeFieldRead(endTime) !== "") {
         field = startTime;
@@ -2379,8 +2608,7 @@ function timesUnmark(event: Event): void {
  * of a food, which a field takes once I leave it; Enter in a field without
  * its own use of it, like a time, a day, a part of a place or an address of `With`, only confirms that field,
  * what I typed staying and the cursor leaving it, instead of sending the form; a field that uses Enter keeps it,
- * like a list taking its first match, the grams of a food opening the list again or a field of a food saving
- * that food, and the note keeps it as a new line.
+ * like a list taking its first match or a field of a food saving that food, and the note keeps it as a new line.
  * - `form`: The form of the dialog.
  */
 function enterTake(): void {
@@ -2402,6 +2630,15 @@ function enterTake(): void {
 }
 
 /**
+ * Gives the calendar of the day the dialog writes with, see {@link dayCalendar}.
+ *
+ * @returns The calendar, `null` before the dialog started
+ */
+export function dayCalendarOf(): Calendar | null {
+    return dayCalendar;
+}
+
+/**
  * Starts the entry by category after the router has put its HTML into the page:
  * the copy duplicates the entry or the box being changed, see {@link entryDuplicate}, the pencil beside the box being
  * logged changes that box; the dialog logs no box, since the menu of the box in the plan does that already;
@@ -2416,6 +2653,7 @@ function enterTake(): void {
  * @param calendar - Calendar of the day
  */
 export function categoriesStart(calendar: Calendar): void {
+    dayCalendar = calendar;
     listsStart();
     iconPut(document.getElementById("entry-cancel") as HTMLElement, X, "Cancel");
     iconPut(document.getElementById("entry-save") as HTMLElement, Check, "Save");
@@ -2428,18 +2666,18 @@ export function categoriesStart(calendar: Calendar): void {
     document.getElementById("entry-duplicate")?.addEventListener("click", (): void => {
         entryDuplicate().catch(errorShow);
     });
+    iconPut(document.getElementById("entry-plan-edit") as HTMLElement, Pencil, "Change the box in the plan");
     document.getElementById("entry-plan-edit")?.addEventListener("click", (): void => {
-        if (opened.target === "box" && opened.box !== null && seriesHas(opened.box))
-            seriesFromBox(opened.box.module, opened.box.type, opened.box.semester || semesterOf(opened.box.day));
-        else if (opened.plan !== null)
+        if (opened.plan !== null)
             boxOpenEdit(opened.plan).catch(errorShow);
     });
     ["entry-deadline-day", "entry-deadline-time"].forEach((id: string): void => {
         document.getElementById(id)?.addEventListener("input", deadlineSee);
-        document.getElementById(id)?.addEventListener("change", deadlineEmptyShow);
     });
     ["entry-start-day", "entry-start", "entry-end"].forEach((id: string): void =>
         document.getElementById(id)?.addEventListener("input", endDayFill));
+    ["entry-start-day", "entry-end-day"].forEach((id: string): void =>
+        document.getElementById(id)?.addEventListener("change", endDayShow));
     ["entry-start-day", "entry-start", "entry-end-day", "entry-end"].forEach((id: string): void =>
         document.getElementById(id)?.addEventListener("input", timesUnmark));
     document.getElementById("entry-start")?.addEventListener("change", endFill);
@@ -2447,6 +2685,7 @@ export function categoriesStart(calendar: Calendar): void {
         document.getElementById(id)?.addEventListener("input", (): void => {
             if (chosen?.name === skillName)
                 skillDaySet(dayRead());
+            entryFileShow();
         }));
     const endDay: HTMLInputElement = document.getElementById("entry-end-day") as HTMLInputElement;
     endDay.addEventListener("input", (): void => {

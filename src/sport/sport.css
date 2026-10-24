@@ -115,14 +115,21 @@ button.sport-weight-amount {
     cursor: pointer;
 }
 
+/* No weight yet: `– kg` grey, so the pencil follows a value as everywhere */
+.sport-weight-none {
+    color: var(--text-muted);
+}
+
 .sport-weight-amount svg.lucide {
     width: 0.9375rem;
     height: 0.9375rem;
     color: var(--text-muted);
+    transition: color var(--hover-out);
 }
 
 button.sport-weight-amount:hover svg.lucide {
     color: var(--text-main);
+    transition: color var(--hover-in);
 }
 
 .sport-weight-field {
@@ -141,8 +148,8 @@ button.sport-weight-amount:hover svg.lucide {
     outline: none;
 }
 
-/* The sessions of the day with the room of their longest value, like `3 × 10 · 12.5 kg` of an exercise, where the
-   food view keeps the room of `1,250 kcal`; every value still at the right of its column */
+/* The sessions of the day in one column of values with the room of their longest, like `3 × 10 · 12.5 kg`
+   of an exercise, where the food view keeps two, grams and kcal; every value still at the right of its column */
 .sport-sessions .food-line,
 .sport-sessions .food-entry {
     grid-template-columns: minmax(0, 1fr) 8.5rem;

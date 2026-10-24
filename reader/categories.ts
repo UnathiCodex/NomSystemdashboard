@@ -12,11 +12,12 @@
  * `Online`, below the place in every category, offers my platforms of `Online.md`, like `Zoom`, the most used first,
  * with the link of each, see `Platform` in `places.ts`; per entry I type the link of its meeting or video
  * and its passcode, see `Online` in `calendar.ts`.
- * `With` takes one or more people or groups, each by a name without comma, mostly one group, like `Socials`,
- * sometimes several, like `Sophale, Willi`, offering the names the entries of the log wrote, the most used first,
+ * `With` takes one or more people or groups, each by a name without `;`, which parts them, mostly one group, like
+ * `Socials`, sometimes several, like `Bichler, Martin; Willi`, a person by its name in `Persons.md`, see `persons.ts`,
+ * offering the names the entries of the log wrote, the most used first,
  * equal ones alphabetical, with the address the last of them wrote, see {@link addressesOf}, and Vu, with whom
  * I share, before I ever log with Vu, see `partners` in `sources.ts`; an entry with Vu goes to Vu, see `shared.ts`;
- * there is no file of people.
+ * the dialog offers every person of `Persons.md` besides, see `src/day/categories.ts`.
  * A value offered in the code may come with steps, which the dialog shows while it is picked, and below them
  * the note of the last entry of it, like `Last time: band red · 3×10`, so the load can rise.
  * `Body` is my body care, showering and any care, offering `Caring` and `Shower` before any use, and takes several,
@@ -45,9 +46,11 @@
  * - `./places.ts`: Reads my places from `Places.md` and my platforms online from `Online.md`.
  * - `./sport.ts`: Names the category of a session and its kinds.
  * - `./sources.ts`: Names every folder and file the reader reads, and the people I share with.
+ * - `./persons.ts`: Names a person I share with as `Persons.md` names it.
  */
 
 import { entriesRead, skillName } from "./calendar.ts";
+import { personNameOf } from "./persons.ts";
 import { labelOf, lineOf, placesRead, platformsRead, roomsRead } from "./places.ts";
 import { sportKinds, sportName } from "./sport.ts";
 import { day, partners } from "./sources.ts";
@@ -74,7 +77,8 @@ export type FieldKey = "title" | "from" | "location" | "online" | "with";
  *   like the exercises of `Neck short`; none for the other values.
  * - `fixed`: Whether it takes only the values offered in the code, like `Night` and `Day` of `Sleep`, and no new ones.
  * - `many`: Whether it takes several of its values, parted by `, `, like the means of a way, `U-Bahn, Bus`,
- *   my body care, `Caring, Shower`, or the people of `With`, `Sophale, Willi`; one when left out.
+ *   my body care, `Caring, Shower`, or the people of `With`, parted by `; `, `Bichler, Martin; Willi`; one when
+ *   left out.
  */
 export type Field = {
     name: string;
@@ -186,7 +190,8 @@ function categoryOf(name: string): Category {
 
 /**
  * Category of skill entries, written as `CATEGORIES:Skill`: in plan and log a skill and a type or none,
- * both in its `SUMMARY`, like `IN2028_BusinessAnalyticsMachineLearning (VO)`, see `skillPartsOf` in `calendar.ts`,
+ * both in the `ALTREP` of its `SUMMARY`, like `NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons`,
+ * see `skillPartsOf` in `calendar.ts`,
  * which names the category, its place and who I was with,
  * in the log also its documents and its attempts, which only `skill.ts` writes.
  */
@@ -464,7 +469,7 @@ function stepsWithNoteOf(logs: Entry[], name: string, steps: { [what: string]: s
  *   of `Rooms.md`, none of the name of one of my places.
  * - `rows`: My places and rooms by their lines.
  * - `people`: The names of `With`, the most used first, see {@link peopleUsesOf}, those I share with offered
- *   before any use, see `partners` in `sources.ts`.
+ *   before any use, see `partners` in `sources.ts`, each as `Persons.md` names it, like `Family, Sopha`.
  * - `addresses`: The address of each of them, see {@link addressesOf}.
  *
  * @param now - Present as ISO instant, as the page knows it
@@ -484,7 +489,7 @@ export function categoriesRead(now: string): CategoryShown[] {
     const rooms: Place[] = roomsRead().filter((room: Place): boolean => !names.includes(room.name));
     const rows: { [line: string]: Place } = Object.fromEntries([...mine, ...rooms]
         .map((place: Place): [string, Place] => [lineOf(place), place]));
-    const people: string[] = valuesOrder(peopleUsesOf(logs), partners);
+    const people: string[] = valuesOrder(peopleUsesOf(logs), partners.map(personNameOf));
     const addresses: { [name: string]: string } = addressesOf(logs);
     return categories
         .filter((category: Category): boolean => !hiddenNames.includes(category.name))
@@ -523,25 +528,26 @@ export function wayEndRead(before: string): string {
 
 /**
  * Tells whether the people of an entry or a box are well formed, see `Attendee` in `calendar.ts`: each a name without
- * comma and without spaces around it, like `Herr Müller`, and an address without spaces and commas, like
- * `herr.mueller@invalid`.
+ * `;`, which parts the names of `With`, and without spaces around it, like `Bichler, Martin` or `Herr Müller`,
+ * and an address without spaces and commas, like `martin.bichler@invalid`.
  *
  * @param attendees - Who I was with
  * @returns Whether they may be written
  */
 export function attendeesAllow(attendees: Attendee[]): boolean {
-    return attendees.every((attendee: Attendee): boolean => attendee.name !== "" && !attendee.name.includes(",")
+    return attendees.every((attendee: Attendee): boolean => attendee.name !== "" && !attendee.name.includes(";")
         && attendee.name.trim() === attendee.name && /^[^\s,]+$/.test(attendee.address));
 }
 
 /**
  * Tells whether the fields of an entry fit its category, in plan and log alike:
- * the category is in the list, what is empty or picked, one of its values for a field that takes no new ones,
+ * the category is in the list, what is picked, never empty, one of its values for a field that takes no new ones,
  * like `Night` or `Day` of `Sleep`, or, without a field `title`, the name of the category,
  * `from` is only set when the category has the field, and module and type stay empty, the people of every category
- * well formed, see {@link attendeesAllow}; every field but the category and the times may stay empty.
- * `Skill` is a skill or none, a module code like `IN2028` or a project like `WokFlow`, and one of the
- * {@link skillTypes} or none; what it was the reader writes from both, see `skillTitleOf` in `documents.ts`,
+ * well formed, see {@link attendeesAllow}; every other field but the category and the times may stay empty.
+ * `Skill` is a skill, never none, a module code like `IN2028` or a project like `WokFlow`, and one of the
+ * {@link skillTypes} or none, and its title free, at first what the reader writes from both, see `skillTitleOf`
+ * in `documents.ts`,
  * and its chapters, documents and attempts in the log only `skill.ts` writes.
  * - `keys`: Fields of the category.
  * - `what`: Its field `title`, `undefined` for none.
@@ -557,14 +563,14 @@ export function categoryAllows(fields: Omit<EntryTexts, "locationLink" | "titleL
     if (category === undefined || !attendeesAllow(fields.attendees ?? []))
         return false;
     if (category.name === skillName)
-        return /^\w*$/.test(fields.module) && (fields.type === "" || skillTypes.includes(fields.type))
+        return /^\w+$/.test(fields.module) && (fields.type === "" || skillTypes.includes(fields.type))
             && fields.from === "";
 
     const keys: FieldKey[] = category.fields.map((field: Field): FieldKey => field.key);
     const what: Field | undefined = category.fields.find((field: Field): boolean => field.key === "title");
     const whatAllowed: boolean = what === undefined ? fields.title === category.name
-        : fields.title.trim() === "" || !what.fixed
+        : fields.title.trim() !== "" && (!what.fixed
             || (what.many === true ? fields.title.split(", ") : [fields.title])
-                .every((value: string): boolean => what.values.includes(value));
+                .every((value: string): boolean => what.values.includes(value)));
     return whatAllowed && (keys.includes("from") || fields.from === "") && fields.module === "" && fields.type === "";
 }

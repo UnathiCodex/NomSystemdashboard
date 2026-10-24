@@ -9,17 +9,19 @@
  *
  * - `lucide`: The icons of the bin, Cancel and Save.
  * - `../icons.ts`: Shows them in their buttons.
+ * - `./choices.ts`: Shows the file of the birthday or holiday.
  */
 
 import { Check, Trash, X } from "lucide";
 import { iconPut } from "../icons.ts";
+import { fileShow } from "./choices.ts";
 import type { Occasion } from "./boxes.ts";
 
 
 /**
  * The birthday or holiday the dialog writes the gift idea of.
  */
-let opened: Occasion = { id: "", category: "", title: "", gift: "" };
+let opened: Occasion = { id: "", category: "", title: "", gift: "", file: "" };
 
 
 /**
@@ -57,7 +59,7 @@ function giftSave(gift: string): void {
 /**
  * Opens the dialog of the gift idea for a birthday or holiday, its category and name small and grey above the field,
  * like `Birthday: Karlbauer Florian`, the field holding the idea I have, focused; the bin shows only when there is one
- * to take out.
+ * to take out; at the left of the buttons its file, see `fileShow` in `choices.ts`.
  * - {@link HTMLDialogElement#showModal}: Shows the dialog over the page, `Esc` closes it.
  *
  * @param occasion - The birthday or holiday with my gift idea for it
@@ -68,6 +70,7 @@ export function giftOpen(occasion: Occasion): void {
     (document.getElementById("gift-occasion") as HTMLElement).textContent =
         occasion.category === "" ? occasion.title : `${occasion.category}: ${occasion.title}`;
     field.value = occasion.gift;
+    fileShow(document.getElementById("gift-file") as HTMLAnchorElement, occasion.file);
     document.getElementById("gift-remove")?.toggleAttribute("hidden", occasion.gift === "");
     document.getElementById("gift-error")?.setAttribute("hidden", "");
     (document.getElementById("gift") as HTMLDialogElement).showModal();

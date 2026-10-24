@@ -1,0 +1,148 @@
+/* The menu of the groups, see `groups.ts`, the same in the heading of a card of the page of a module and in the
+   dialog of a box, and the group of a box shown alone */
+/* The group of a box, and the button of the menu of the groups: small and grey as the times beside it, the button its
+   group with a small chevron, the pin before the group pinned in the heading of a card, the icons in the middle of the
+   text and the text giving the line its baseline, so the group stands on the line of the text beside it; lighter under
+   the pointer and while its menu is open */
+.group-name {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+button.group-name {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    transition: color var(--hover-out);
+}
+
+button.group-name > svg.lucide {
+    align-self: center;
+}
+
+button.group-name:is(:hover, :has(+ .menu:popover-open)) {
+    color: var(--text-main);
+    transition: color var(--hover-in);
+}
+
+.group-place svg.lucide {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+/* The menu of the groups: the menu `⋯`, see `../menu.css`, in the small text of the day, `--day-text`, wherever
+   it opens, as wide as its groups, never wider than the window; each group on one line, on the same columns as the
+   others: the check, the pin of the group pinned, the group, and a margin after it, then its times and place, grey,
+   see `groupPartsOf` in `groups.ts`, as far after them its tutors, grey in the same size, plain text, so the row
+   is one click, and at its right end its series icon; times and tutors wrapping where the window is narrower, like on a phone;
+   the day of the groups of one day small and grey above them, a breath apart from the groups of the day before */
+.group-menu {
+    width: max-content;
+    overflow-wrap: normal;
+    font-size: var(--day-text);
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    cursor: default;
+}
+
+.menu.group-menu:popover-open {
+    display: grid;
+    grid-template-columns: repeat(6, auto);
+}
+
+.group-menu > * {
+    grid-column: 1 / -1;
+}
+
+.group-menu > .menu-item {
+    height: auto;
+    padding-block: 0.5rem;
+}
+
+.group-item {
+    display: grid;
+    grid-template-columns: subgrid;
+    gap: 0;
+    align-items: center;
+    text-align: start;
+}
+
+.group-item > svg.lucide {
+    margin-right: 0.5rem;
+}
+
+.group-pin > svg.lucide {
+    display: block;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    margin-right: 0.375rem;
+    color: var(--text-muted);
+}
+
+.group-pin + span,
+.group-detail:has(+ .group-tutors) {
+    margin-right: 1.25rem;
+}
+
+.group-detail {
+    color: var(--text-muted);
+    white-space: normal;
+}
+
+/* Times and place of a group each one unit, never broken inside, like `10:00 – 12:00` or `5610.01.011` */
+.group-detail > span {
+    white-space: nowrap;
+}
+
+.group-tutors {
+    color: var(--text-muted);
+    white-space: normal;
+}
+
+/* The series icon at the right end of a group, see `seriesIconOf` in `groups.ts`, the icon after the times of a box
+   of a series, grey, lighter under the pointer, a margin before it, so it stands apart from the tutors */
+.group-series {
+    display: inline-flex;
+    justify-self: end;
+    margin-left: 1.25rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color var(--hover-out);
+}
+
+.group-series:hover {
+    color: var(--text-main);
+    transition: color var(--hover-in);
+}
+
+.group-series > svg.lucide {
+    width: 0.9375rem;
+    height: 0.9375rem;
+}
+
+.group-day {
+    padding: 0.75rem 0.75rem 0.25rem;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.group-day:first-child {
+    padding-top: 0.375rem;
+}
+
+/* On a phone the tutors of a group on a second line under its times and place, so neither breaks inside a word */
+@media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
+    .group-tutors {
+        grid-row: 2;
+        grid-column: 4 / 6;
+    }
+
+    .group-detail:has(+ .group-tutors) {
+        margin-right: 0;
+    }
+}

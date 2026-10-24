@@ -219,7 +219,8 @@ function linesOf(name: string, value: string): HTMLElement[] {
 /**
  * Builds the water: what I drank in litres, every drink one glass of 0.25 l, like `1.5 l` of six glasses, its tile
  * one button, which logs one more glass of water, and `−` in its corner, which takes the last glass of water back;
- * the words of `−` only for screen readers, no description under the pointer, no goal.
+ * the words of `−` only for screen readers, no description under the pointer, no goal; on a day still to come the tile
+ * greyed and `−` hidden, since nothing is drunk there yet.
  * The tile takes no clicks while a glass is sent, so a double tap logs one glass; the card loads again once the log
  * changed.
  * - `litres`: What I drank, in litres, as shown.
@@ -257,7 +258,8 @@ function waterOf(calendar: Calendar, trackers: Trackers, day: string): HTMLEleme
     less.className = "icon-button chip-button water-less";
     less.append(iconOf(Minus));
     less.setAttribute("aria-label", "0.25 l less");
-    less.disabled = coming || last === undefined;
+    less.disabled = last === undefined;
+    less.hidden = coming;
     less.addEventListener("click", (): void =>
         send((): Promise<void> => entryDelete(calendar, last?.id ?? "")));
     row.append(add, less);

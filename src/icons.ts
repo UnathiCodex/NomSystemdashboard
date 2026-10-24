@@ -95,14 +95,15 @@ export function plusTake(button: HTMLElement): void {
 }
 
 /**
- * Shows the small grey plus with the text typed in a button at the end of a list with a search, like `+ “skyr”`,
+ * Shows the small grey plus with what it adds in a button at the end of a list with a search, like `+ “skyr”`
+ * for the text typed, or `+ New module IN2346_DeepLearning` for the folder a typed code and name make,
  * see `.picker-new` in `base.css`, so a plus inside a list always names what it adds.
  *
  * @param button - Button at the end of the list
- * @param typed - Text typed, like `skyr`
+ * @param text - What it adds, like `“skyr”`
  */
-export function plusTypedPut(button: HTMLElement, typed: string): void {
-    button.replaceChildren(iconOf(Plus), `“${typed}”`);
+export function plusTypedPut(button: HTMLElement, text: string): void {
+    button.replaceChildren(iconOf(Plus), text);
 }
 
 /**
