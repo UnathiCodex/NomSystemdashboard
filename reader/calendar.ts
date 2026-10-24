@@ -1844,7 +1844,8 @@ function relatedOf(box: string): ICAL.Property {
  * Builds a property of a new entry beyond its fields, see {@link entryAppend}: the box a log entry was logged from
  * as its `RELATED-TO`, see {@link relatedOf}, the rule of a series as its `RRULE`, read from its text,
  * like `FREQ=WEEKLY;UNTIL=20270202T090000Z`, a moment in Berlin time, like a date a series leaves out as `EXDATE`,
- * `EXDATE;TZID=Europe/Berlin:20261110T100000`, every other one with its value as it is, see {@link propertyOf}.
+ * `EXDATE;TZID=Europe/Berlin:20261110T100000`, or a day of a series without times, like `2026-11-10` as
+ * `EXDATE;VALUE=DATE:20261110`, every other one with its value as it is, see {@link propertyOf}.
  * - `rule`: The `RRULE`.
  * - {@link ICAL.Recur.fromString}: Reads the rule of a series into the form `ical.js` writes it from, since it writes
  *   a rule given as text letter by letter.
@@ -1856,6 +1857,8 @@ function relatedOf(box: string): ICAL.Property {
 function ownPropertyOf(name: string, value: string | Link | Date): ICAL.Property {
     if (value instanceof Date)
         return propertyOf(name, writtenOf(value));
+    if (name === "exdate" && typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value))
+        return propertyOf(name, ICAL.Time.fromDateString(value));
     if (name === "rrule" && typeof value === "string") {
         const rule: ICAL.Property = new ICAL.Property(name);
         rule.setValue(ICAL.Recur.fromString(value));
@@ -1999,7 +2002,8 @@ function durationOf(minutes: number): string {
  * @param file - Path of the `.ics` file
  * @param fields - Fields of the to-do
  * @param own - Properties beyond the fields, each its name with its value, like
- *   `["rrule", "FREQ=WEEKLY;UNTIL=20270202T090000Z"]` and one `["exdate", date]` per date left out of a group;
+ *   `["rrule", "FREQ=WEEKLY;UNTIL=20270202T090000Z"]` and one `["exdate", date]` per date left out of a group, its day
+ *   for a group without times;
  *   none when left out
  * @param open - Whether it is a box, open, `STATUS:NEEDS-ACTION`; false for a group, without `STATUS`
  * @returns Identifier of the new to-do, like `b8f1e81f-15b4-460e-910d-ef6b1b3d09b3@nomsystem`

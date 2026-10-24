@@ -111,11 +111,14 @@ import type { MaterialFolder } from "./notes.ts";
  * - `weekday`: Its weekday, from 1 for Monday to 7 for Sunday.
  * - `start`: Its time of start in Berlin time, like `14:00`; empty for boxes without time.
  * - `end`: Its time of end in Berlin time, like `16:00`, after its start; empty for boxes without time.
+ * - `minutes`: Of a slot without times only how long its boxes last, like 480, as a plain series by its length,
+ *   see `reader/rules.ts`; none for a slot with times.
  */
 export type Slot = {
     weekday: number;
     start: string;
     end: string;
+    minutes?: number;
 };
 
 /**
@@ -189,7 +192,8 @@ export type Series = {
 /**
  * A session of a group, as the page shows it.
  *
- * - `start`: Its start as ISO instant, like `2026-10-27T09:00:00.000Z`.
+ * - `start`: Its start as ISO instant, like `2026-10-27T09:00:00.000Z`, of a group without times its day,
+ *   like `2026-10-27`.
  * - `minutes`: Its length in minutes, like 120.
  */
 export type Session = {
@@ -455,10 +459,11 @@ type Dated = Pick<Box, "day" | "time" | "minutes" | "location" | "locationLink" 
 
 /**
  * A date of a rule, see {@link datesOf}: its day, its times, like `14:00` and `16:00`, as those of its slot or its
- * extra, and the place of its slot in the rule, -1 for an extra.
+ * extra, of a slot without times its length, and the place of its slot in the rule, -1 for an extra.
  */
 type RuleDate = Extra & {
     slot: number;
+    minutes?: number;
 };
 
 /**
@@ -772,7 +777,11 @@ function ruleOf(type: string, items: Dated[], all: Dated[], group: string, semes
             && weekdayOf(item.day) === weekday),
         (item: Dated): string => `${berlinTimeOf(new Date(item.time))} ${item.minutes}`);
         const [start, end]: [string, string] = timed === undefined ? ["", ""] : timesOf(timed);
-        return { weekday: weekday, start: start, end: end };
+        const long: Dated | undefined = timed !== undefined ? undefined : modeOf(items.filter((item: Dated): boolean =>
+            item.time === "" && (item.minutes ?? 0) > 0 && weekdayOf(item.day) === weekday),
+        (item: Dated): string => String(item.minutes));
+        return long === undefined ? { weekday: weekday, start: start, end: end }
+            : { weekday: weekday, start: "", end: "", minutes: long.minutes ?? 0 };
     });
     const placed: Dated | undefined = modeOf(items, (item: Dated): string => item.location);
     const met: Dated | undefined = modeOf(items, (item: Dated): string =>
@@ -855,7 +864,7 @@ function datesOf(rule: Rule): RuleDate[] {
             const day: string = dayAdd(week, slot.weekday - 1);
             const own: Pick<Slot, "start" | "end"> = rule.times?.[day] ?? slot;
             if (rule.first <= day && day <= rule.last && !skipped.has(day))
-                dates.push({ day: day, start: own.start, end: own.end, slot: index });
+                dates.push({ day: day, start: own.start, end: own.end, slot: index, minutes: slot.minutes });
         });
     return dates.sort((first: RuleDate, second: RuleDate): number =>
         first.day.localeCompare(second.day) || first.start.localeCompare(second.start));
@@ -907,7 +916,7 @@ function pinPut(module: string, type: string, semester: string, group: string): 
 function tutorialWeeksOf(groups: Group[], type: string): string[] {
     const starts: string[] = groups.filter((group: Group): boolean => group.rule.type === type)
         .flatMap((group: Group): string[] => group.sessions
-            .map((session: Session): string => berlinDateOf(new Date(session.start)))).sort();
+            .map((session: Session): string => dayOfStart(session.start))).sort();
     if (starts.length === 0)
         return [];
     const last: string = mondayOf(starts[starts.length - 1]);
@@ -993,14 +1002,14 @@ function groupsRead(module: string, semester: string): Group[] {
     const begin: string = semesterBeginOf(semester);
     const sessions: Entry[] = entriesRead([{ folder: dirname(file), ending: basename(file) }],
         berlinDayStartOf(begin), berlinDayStartOf(dayAdd(begin, 366)))
-        .filter((entry: Entry): boolean => groupIs(entry) && entry.category === skillName && !entry.allDay
-            && (entry.semester === "" ? semesterOf(berlinDateOf(new Date(entry.start))) : entry.semester) === semester)
+        .filter((entry: Entry): boolean => groupIs(entry) && entry.category === skillName
+            && (entry.semester === "" ? semesterOf(dayOfStart(entry.start)) : entry.semester) === semester)
         .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
     const keyOf: (entry: Entry) => string = (entry: Entry): string => `${entry.type} ${entry.group}`;
     return [...new Set(sessions.map(keyOf))].map((key: string): Group => {
         const own: Entry[] = sessions.filter((entry: Entry): boolean => keyOf(entry) === key);
         const dated: Dated[] = own.map((entry: Entry): Dated => ({
-            day: berlinDateOf(new Date(entry.start)), time: entry.start,
+            day: dayOfStart(entry.start), time: entry.allDay ? "" : entry.start,
             minutes: entry.minutes, location: entry.location,
             locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink, passcode: entry.passcode,
             attendees: entry.attendees,
@@ -1008,7 +1017,7 @@ function groupsRead(module: string, semester: string): Group[] {
         return {
             ids: [...new Set(own.map((entry: Entry): string => entry.id))],
             rule: ruleOf(own[0].type, dated, dated, own[0].group, semester),
-            sessions: dated.map((item: Dated): Session => ({ start: item.time, minutes: item.minutes ?? 0 })),
+            sessions: dated.map((item: Dated): Session => ({ start: item.time || item.day, minutes: item.minutes ?? 0 })),
             pinned: own.some((entry: Entry): boolean => entry.pinned),
         };
     }).sort((first: Group, second: Group): number => first.rule.type.localeCompare(second.rule.type)
@@ -1088,8 +1097,52 @@ function timesRight(times: Pick<Slot, "start" | "end">): boolean {
 }
 
 /**
+ * Tells whether a slot is well formed: its times well formed, see {@link timesRight}, or without times its length,
+ * a whole number of minutes, more than nothing and at most a day.
+ *
+ * @param slot - The slot
+ * @returns Whether it is
+ */
+function slotRight(slot: Slot): boolean {
+    return timesRight(slot) || slot.start === "" && slot.end === "" && Number.isInteger(slot.minutes)
+        && (slot.minutes ?? 0) > 0 && (slot.minutes ?? 0) <= 24 * 60;
+}
+
+/**
+ * Gives the length of a slot, an extra or a date: of its times, else its length, see `minutes` of {@link Slot}.
+ *
+ * @param times - The slot, the extra or the date
+ * @returns Its length in minutes, `null` for none
+ */
+function slotLengthOf(times: Pick<Slot, "start" | "end" | "minutes">): number | null {
+    return times.start === "" ? times.minutes ?? null : minutesOf(times.end) - minutesOf(times.start);
+}
+
+/**
+ * Gives the day of a start, an ISO instant in Berlin time or a day itself, as a session of a group without times
+ * has it, see {@link Session}.
+ *
+ * @param start - The start, like `2026-10-29T13:00:00.000Z` or `2026-10-29`
+ * @returns The day, like `2026-10-29`
+ */
+function dayOfStart(start: string): string {
+    return /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : berlinDateOf(new Date(start));
+}
+
+/**
+ * Gives the start of a box of a date as ISO instant, empty for a date without times, see `minutes` of {@link Slot}.
+ *
+ * @param day - The day, like `2026-10-29`
+ * @param start - Its time of start, like `14:00`, empty for none
+ * @returns The start, like `2026-10-29T13:00:00.000Z`, empty for none
+ */
+function slotMomentOf(day: string, start: string): string {
+    return start === "" ? "" : instantOf(day, start).toISOString();
+}
+
+/**
  * Tells whether the weeks of a rule are well formed, see {@link Rule}: slots on different weekdays, each with a start
- * before its end, its first day on or before its last, at most {@link ruleWeeks} weeks apart, its days written like
+ * before its end or only a length, see {@link slotRight}, its first day on or before its last, at most {@link ruleWeeks} weeks apart, its days written like
  * `2026-10-19`, and its extras, each a day with a start before its end, at most {@link ruleWeeks} weeks from its first
  * day, so a slip of a year typed makes no box far away, and the times of their own of its dates, each of a day with
  * a start before its end, see {@link timesRight}.
@@ -1105,7 +1158,7 @@ function weeksRight(rule: Rule): boolean {
         Math.abs(Date.parse(other) - Date.parse(rule.first)) <= ruleWeeks * weekLength;
     return Array.isArray(rule.extras) && rule.slots.length > 0 && rule.slots.every((slot: Slot): boolean =>
             Number.isInteger(slot.weekday)
-            && slot.weekday >= 1 && slot.weekday <= 7 && timesRight(slot))
+            && slot.weekday >= 1 && slot.weekday <= 7 && slotRight(slot))
         && new Set(rule.slots.map((slot: Slot): number => slot.weekday)).size === rule.slots.length
         && day.test(rule.first) && day.test(rule.last) && rule.first <= rule.last && near(rule.last)
         && rule.extras.every((extra: Extra): boolean => day.test(extra.day) && near(extra.day) && timesRight(extra))
@@ -1236,9 +1289,9 @@ function madeDraftOf(target: Target): Draft {
  * @returns The date
  */
 function targetOf(group: Group, session: Session): Target {
-    const day: string = berlinDateOf(new Date(session.start));
+    const day: string = dayOfStart(session.start);
     return {
-        day: day, start: berlinTimeOf(new Date(session.start)), minutes: session.minutes,
+        day: day, start: session.start === day ? "" : berlinTimeOf(new Date(session.start)), minutes: session.minutes,
         location: group.rule.location, locationLink: group.rule.locationLink, online: group.rule.online,
         onlineLink: group.rule.onlineLink, passcode: group.rule.passcode, attendees: group.rule.attendees,
         group: group.rule.group, before: weekdayOf(day), fields: allFields, made: true, added: false,
@@ -1515,7 +1568,7 @@ function slotFieldsOf(before: Slot | Extra | undefined, date: Slot | Extra, shar
         return ["day", "time", "location", "online", "attendees"];
     const changed: [Field, boolean][] = [
         ["day", "weekday" in before && "weekday" in date && before.weekday !== date.weekday],
-        ["time", before.start !== date.start || before.end !== date.end],
+        ["time", before.start !== date.start || slotLengthOf(before) !== slotLengthOf(date)],
     ];
     return [...changed.filter(([, differs]: [Field, boolean]): boolean => differs)
         .map(([field]: [Field, boolean]): Field => field), ...shared];
@@ -1590,7 +1643,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
     const own: Group[] = mine === "" ? [] : groups
         .filter((group: Group): boolean => group.rule.type === rule.type && group.rule.group === mine);
     const met: Set<string> | null = own.length === 0 ? null : new Set(own.flatMap((group: Group): string[] =>
-        group.sessions.map((session: Session): string => berlinDateOf(new Date(session.start)))));
+        group.sessions.map((session: Session): string => dayOfStart(session.start))));
     const held: Set<string> = new Set(typed.map(weekOf));
     const targets: Target[] = datesOf(rule).filter((date: RuleDate): boolean =>
         met === null || met.has(date.day) || held.has(mondayOf(date.day))).map((date: RuleDate): Target => {
@@ -1601,7 +1654,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
             ? was !== undefined && (was.start !== date.start || was.end !== date.end)
             : JSON.stringify(rule.times?.[date.day]) !== JSON.stringify(old?.times?.[wasDay]);
         return {
-            day: date.day, start: date.start, minutes: minutesOf(date.end) - minutesOf(date.start),
+            day: date.day, start: date.start, minutes: slotLengthOf(date),
             location: rule.location, locationLink: link, ...online, attendees: rule.attendees, group: mine,
             before: was !== undefined && "weekday" in was ? was.weekday : weekdayOf(date.day),
             fields: slotFieldsOf(was === undefined ? undefined : { ...was, ...old?.times?.[wasDay] },
@@ -1658,8 +1711,7 @@ export function repeatApply(change: RepeatChange): Planned[] | null {
     if (!weeksRight(rule))
         throw new Error(`No days of a box: ${JSON.stringify(rule)}`);
     const boxes: BoxNew[] = datesOf(rule).map((date: RuleDate): BoxNew => ({
-        ...box, day: date.day, time: instantOf(date.day, date.start).toISOString(),
-        minutes: minutesOf(date.end) - minutesOf(date.start), deadline: "",
+        ...box, day: date.day, time: slotMomentOf(date.day, date.start), minutes: slotLengthOf(date), deadline: "",
     }));
     boxesAdd(boxes, change.dry);
     return boxes.map((one: BoxNew): Planned => ({
@@ -1792,7 +1844,7 @@ export function groupMine(change: MineChange): Planned[] {
  */
 export function weekPick(change: PickChange): void {
     folderCheck(change.module);
-    const semester: string = semesterOf(berlinDateOf(new Date(change.start)));
+    const semester: string = semesterOf(dayOfStart(change.start));
     const groups: Group[] = groupsRead(change.module, semester);
     const group: Group | undefined = groups
         .find((one: Group): boolean => one.rule.type === change.type && one.rule.group === change.group);
@@ -1800,13 +1852,14 @@ export function weekPick(change: PickChange): void {
         .find((one: Session): boolean => Date.parse(one.start) === Date.parse(change.start));
     if (group === undefined || session === undefined)
         throw new Error(`No session of group ${change.type} ${change.group} at ${change.start} in ${change.module}`);
-    const weekOfSession: (one: Session) => string = (one: Session): string => mondayOf(berlinDateOf(new Date(one.start)));
+    const weekOfSession: (one: Session) => string = (one: Session): string => mondayOf(dayOfStart(one.start));
     const week: string = weekOfSession(session);
     const typedRead: () => Box[] = (): Box[] => courseBoxesRead(codeOf(change.module), semester)
         .filter((one: Box): boolean => one.type === change.type);
     let typed: Box[] = typedRead();
     if (change.extra === true) {
-        if (typed.some((one: Box): boolean => one.time !== "" && Date.parse(one.time) === Date.parse(session.start)))
+        if (typed.some((one: Box): boolean => (one.time || one.day) === session.start
+            || one.time !== "" && Date.parse(one.time) === Date.parse(session.start)))
             throw new Error(`A box of ${change.type} of ${change.module} is there already at ${change.start}`);
         const drafts: Draft[] = [...typed.map(draftOf), madeDraftOf(targetOf(group, session))];
         numbersOf(drafts, tutorialWeeksOf(groups, change.type));
@@ -1863,14 +1916,15 @@ function groupsTake(gone: GroupGone): number {
  * per day of its slot between them without session, a day the university does not teach or one cancelled, like
  * `EXDATE;TZID=Europe/Berlin:20261229T100000`, what it is as a box of its type is,
  * see `titleOf` in `documents.ts`, its room with its link, see `placeLinkOf` in `places.ts`, what it does online,
- * see `onlineFor` there, its tutor, `X-GROUP` and `X-SEMESTER`; the plan made when missing.
+ * see `onlineFor` there, its tutor, `X-GROUP` and `X-SEMESTER`; the plan made when missing. A slot without times,
+ * only its length, see `minutes` of {@link Slot}, writes days, as my sleep: `DTSTART;VALUE=DATE`, `UNTIL` its last day
+ * and `EXDATE;VALUE=DATE`.
  * - `slot`: Its one slot.
  * - `code`: Code of the module, like `IN2028`.
  * - `title`, `titleLink`: What it is, its `SUMMARY` and the `ALTREP` of it.
- * - `start`: The start of its first session.
- * - `minutes`: The length of each session.
+ * - `start`: The start of its first session, `null` for a slot without times.
  * - `fields`: Its fields, the time of its first session and its length.
- * - `until`: The start of its last session, in the form of the iCalendar format in UTC.
+ * - `until`: The start of its last session, in the form of the iCalendar format in UTC, or its day.
  * - `left`: The days of its slot between its first and its last session without a session.
  *
  * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
@@ -1884,22 +1938,22 @@ function groupWrite(module: string, rule: Rule, days: string[]): string {
     const code: string = codeOf(module);
     const [title, titleLink]: [string, string] =
         titleOf({ category: skillName, title: "", module: code, type: rule.type, semester: rule.semester }, null);
-    const start: Date = instantOf(days[0], slot.start);
-    const minutes: number = minutesOf(slot.end) - minutesOf(slot.start);
+    const start: Date | null = slot.start === "" ? null : instantOf(days[0], slot.start);
     const fields: TodoFields = {
         category: skillName, title: title, titleLink: titleLink, location: rule.location,
         locationLink: placeLinkOf(rule.location, null), ...onlineFor(rule, null), from: "", attendees: rule.attendees,
         module: code, type: rule.type, semester: rule.semester, note: "",
-        day: days[0], time: start, minutes: minutes, deadline: "",
+        day: days[0], time: start, minutes: slotLengthOf(slot), deadline: "",
     };
-    const until: string = icsTextOf(instantOf(days[days.length - 1], slot.start).toISOString());
+    const until: string = start === null ? days[days.length - 1].replace(/-/g, "")
+        : icsTextOf(instantOf(days[days.length - 1], slot.start).toISOString());
     const left: string[] = [];
     for (let day: string = dayAdd(days[0], 7); day < days[days.length - 1]; day = dayAdd(day, 7))
         if (!days.includes(day))
             left.push(day);
     return todoAppend(skillFileOf(module, planEnding), fields, [
         ["rrule", `FREQ=WEEKLY;UNTIL=${until}`],
-        ...left.map((day: string): [string, Date] => ["exdate", instantOf(day, slot.start)]),
+        ...left.map((day: string): [string, string | Date] => ["exdate", start === null ? day : instantOf(day, slot.start)]),
         ["x-group", rule.group],
     ], false);
 }
@@ -2008,7 +2062,7 @@ export function groupApply(change: GroupChange): Planned[] {
     if (was !== rule.group && groups.some((group: Group): boolean => group.rule.group === rule.group))
         throw new Error(`A group there already: ${rule.type} ${rule.group}`);
     const met: Set<string> = new Set((old?.sessions ?? [])
-        .map((session: Session): string => berlinDateOf(new Date(session.start))));
+        .map((session: Session): string => dayOfStart(session.start)));
     const skipped: Set<string> = new Set(old === undefined ? [] : datesOf(old.rule)
         .map((date: RuleDate): string => date.day).filter((day: string): boolean => !met.has(day)));
     const dates: RuleDate[] = datesOf(rule);
@@ -2019,29 +2073,31 @@ export function groupApply(change: GroupChange): Planned[] {
         !== JSON.stringify([rule.location, rule.online, rule.onlineLink, rule.passcode, rule.attendees]);
     const planned: Planned[] = [
         ...dates.map((date: RuleDate): Planned => {
-            const time: Date = instantOf(date.day, date.start);
-            const minutes: number = minutesOf(date.end) - minutesOf(date.start);
+            const time: string = slotMomentOf(date.day, date.start);
+            const minutes: number | null = slotLengthOf(date);
             const was: Session | undefined = old?.sessions
-                .find((session: Session): boolean => berlinDateOf(new Date(session.start)) === date.day);
+                .find((session: Session): boolean => dayOfStart(session.start) === date.day);
             const had: boolean = was !== undefined || skipped.has(date.day);
             return {
-                id: "", day: date.day, time: time.toISOString(), minutes: minutes, number: "",
+                id: "", day: date.day, time: time, minutes: minutes, number: "",
                 state: cancelled(date) ? "university" : had ? "open" : "new", pushed: false, editable: true,
                 retimable: false, attendees: rule.attendees,
                 change: !had ? "new" : shared || (was === undefined) !== cancelled(date)
-                    || (was !== undefined && (Date.parse(was.start) !== time.getTime() || was.minutes !== minutes))
+                    || (was !== undefined && (was.start !== (time || date.day) || was.minutes !== minutes))
                     ? "changed" : "",
             };
         }),
         ...(old?.sessions ?? [])
             .filter((session: Session): boolean => !dates.some((date: RuleDate): boolean =>
-                date.day === berlinDateOf(new Date(session.start))))
+                date.day === dayOfStart(session.start)))
             .map((session: Session): Planned => ({
-                id: "", day: berlinDateOf(new Date(session.start)), time: session.start, minutes: session.minutes,
+                id: "", day: dayOfStart(session.start), time: session.start === dayOfStart(session.start) ? ""
+                    : session.start, minutes: session.minutes,
                 number: "", state: "open", pushed: false, editable: false, retimable: false, change: "removed",
                 attendees: old?.rule.attendees ?? [],
             })),
-    ].sort((first: Planned, second: Planned): number => first.time.localeCompare(second.time));
+    ].sort((first: Planned, second: Planned): number =>
+        (first.time || first.day).localeCompare(second.time || second.day));
     if (change.dry)
         return planned;
     if (dates.every(cancelled))

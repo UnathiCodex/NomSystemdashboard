@@ -40,7 +40,7 @@
  */
 
 import { courseSend, groupOpen, mondayOf, roomOf, weekdayNameOf } from "./series.ts";
-import { rangeDash, timeOf, weekdayDateTextOf } from "./times.ts";
+import { lengthOf, rangeDash, timeOf, weekdayDateTextOf } from "./times.ts";
 import { dayOf } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
 import { elementOf } from "../food/foods.ts";
@@ -95,6 +95,30 @@ export function pickable(box: Box): boolean {
 }
 
 /**
+ * Tells whether a session of a group has no times, only its day and its length, see `Session` in `reader/course.ts`.
+ *
+ * @param session - The session
+ * @returns Whether it has none
+ */
+function dayIs(session: Session): boolean {
+    return /^\d{4}-\d{2}-\d{2}$/.test(session.start);
+}
+
+/**
+ * Writes the times of a session of a group, like `10:00 – 12:00`, of one without times its length, like `02h 00m`.
+ * - `start`: Its start.
+ *
+ * @param session - The session
+ * @returns Its times
+ */
+function sessionTimesOf(session: Session): string {
+    if (dayIs(session))
+        return lengthOf(session.minutes);
+    const start: Date = new Date(session.start);
+    return `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + session.minutes * 60 * 1000))}`;
+}
+
+/**
  * Tells whether a session of a group is over.
  *
  * @param session - The session
@@ -140,7 +164,7 @@ function pinnedOf(course: Course, type: string): string {
  */
 function boxMove(box: Box, group: Group, session: Session): void {
     Object.assign<Box, Partial<Box>>(box, {
-        day: dayOf(new Date(session.start)), time: session.start, minutes: session.minutes,
+        day: dayOf(new Date(session.start)), time: dayIs(session) ? "" : session.start, minutes: session.minutes,
         location: group.rule.location, locationLink: group.rule.locationLink, online: group.rule.online,
         onlineLink: group.rule.onlineLink, passcode: group.rule.passcode, attendees: group.rule.attendees,
         group: group.rule.group,
@@ -350,7 +374,8 @@ export function pinnedMenuOf(course: Course, type: string, show: PickShow,
             const slot: Slot | undefined = group.rule.slots[0];
             return {
                 group: group, day: slot === undefined ? "" : weekdayNameOf(slot.weekday, false),
-                times: slot === undefined ? "" : `${slot.start}${rangeDash}${slot.end}`, checked: false,
+                times: slot === undefined ? "" : slot.start === "" ? lengthOf(slot.minutes ?? 0)
+                    : `${slot.start}${rangeDash}${slot.end}`, checked: false,
                 pick: (): void => {
                     if (group.rule.group !== pinned)
                         pinPick(course, group, show);
@@ -453,8 +478,7 @@ export function boxGroupOf(course: Course | null, box: Box, show: PickShow,
         meetings.map(([group, session]: [Group, Session]): Item => {
             const start: Date = new Date(session.start);
             return {
-                group: group, day: weekdayDateTextOf(dayOf(start)),
-                times: `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + session.minutes * 60 * 1000))}`,
+                group: group, day: weekdayDateTextOf(dayOf(start)), times: sessionTimesOf(session),
                 checked: group.rule.group === box.group, pick: (): void => weekPick(course, box, group, session, show),
             };
         }), pinned, open ?? groupOpenOf(course, box.type));
