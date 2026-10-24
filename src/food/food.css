@@ -111,7 +111,7 @@ body:has(> .food) {
 /* The day's entries below the totals, each its start small and grey above it, so no column of times takes room
    beside the names; then every line in the same three columns: what, then two columns of numbers at the right,
    the grams of a food grey in brackets and the kcal last, of each food, of each meal and, on the line of its start,
-   of each entry, like `(230 g) 363 kcal`; the kcal with the room of `999 kcal`, wider only on a line of more,
+   of each entry, like `(230 g) 363 kcal`; the kcal with the room of `9.999 kcal`, wider only on a line of more,
    so the grams stand in one column too; the foods of a meal indented under its name, so each meal reads as one block;
    every number at the right of its column, see `.food-value` in `search.css` */
 #food-meals {
@@ -120,7 +120,7 @@ body:has(> .food) {
 
 .food-line {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content minmax(3.75rem, max-content);
+    grid-template-columns: minmax(0, 1fr) max-content minmax(4.5rem, max-content);
     gap: 0.75rem;
     align-items: baseline;
     padding: 0.125rem 0;
@@ -153,7 +153,7 @@ body:has(> .food) {
    are bold; in the text of the lines below */
 .food-entry {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content minmax(3.75rem, max-content);
+    grid-template-columns: minmax(0, 1fr) max-content minmax(4.5rem, max-content);
     gap: 0.75rem;
     margin-top: 0.75rem;
     padding-top: 0.625rem;
