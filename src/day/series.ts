@@ -1252,8 +1252,9 @@ function knownEndOf(box: Box): HTMLElement {
  * Makes what stands at the right edge of the row of a box not written yet, or of one only shown: of a new one its
  * actions as the form keeps them until I save, see {@link States}, `Cancel` for one numbered in its series and for
  * a session of a group, which the reader makes cancelled, see `seriesApply` and `groupApply` in `reader/course.ts`,
- * `Remove` for an extra from today on, which takes it back, and of a session of a group there already from today
- * on `+`, which makes it a box of mine besides the box of its week, see {@link extraAdd}; a state given so its icon, which takes it back; of a day
+ * `Remove` for an extra from today on, which takes it back, and of a session of a group there already, of the days
+ * over too, so a tutorial I went to is added afterwards and then logged, `+`, which makes it a box of mine besides the
+ * box of its week, see {@link extraAdd}, but not where a box of mine stands already, see {@link mineAt}; a state given so its icon, which takes it back; of a day
  * of another series of the chain of a plain series, see `chained` of {@link Planned}, and of one the change removes
  * only the icon of its state, or nothing.
  * - `today`: Today's date.
@@ -1292,7 +1293,7 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
                 days.extras.splice(days.extras.indexOf(extra), 1);
                 preview.filled();
             })] : [],
-        ...grouped !== null && !grouped.made && box.time !== "" && box.day >= today
+        ...grouped !== null && !grouped.made && box.time !== "" && !mineAt(box.time)
             ? [pendingActionOf(Plus, "Add as a box of mine", (): void => {
                 extraAdd(box.time).catch((error: unknown): void => console.error(error));
             })] : [],
@@ -1302,6 +1303,17 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
     const actions: HTMLElement = elementOf("div", buttons.length === 0 ? "series-end" : "box-actions", "");
     actions.append(...buttons);
     return actions;
+}
+
+/**
+ * Tells whether a box of mine of the course stands at a moment, so a session of a group there is mine already and offers
+ * no `+`, see {@link pendingEndOf}.
+ *
+ * @param time - The moment, like `2026-10-27T13:00:00.000Z`
+ * @returns Whether a box of mine starts then
+ */
+function mineAt(time: string): boolean {
+    return (course?.boxes ?? []).some((one: Box): boolean => one.time !== "" && Date.parse(one.time) === Date.parse(time));
 }
 
 /**
@@ -1954,9 +1966,9 @@ function formElementOf(): HTMLFormElement {
 }
 
 /**
- * Locks rows of my series that waits for my group, see {@link groupWaits}: its place, what it does online, its days,
- * its dates and who I am with come from the group I pin, so while none is pinned they show, empty, but take no
- * input; any other form as it is.
+ * Locks rows of my series of a type with groups: its place, what it does online, its days, its dates and who I am with
+ * come from the group I pin, so they show as the group has them but take no input, changed in the form of the group;
+ * while none is pinned, see {@link groupWaits}, empty; any other form as it is.
  *
  * @param locked - Whether to lock them
  * @param rows - The rows
@@ -2285,17 +2297,16 @@ function peopleRowsOf(form: Form): HTMLElement[] {
 }
 
 /**
- * Gives the group typed in the row `Group` as a group is named, see {@link groupPartOf}: a leading `Group ` left out,
- * as the menus write it, digits filled up to two, like `05` of `5` or `Group 5`, any other name as typed, of letters,
- * digits, `_` and `-`.
- * - `name`: The text typed, without spaces at its ends and without `Group `.
+ * Gives the group typed in the row `Group` as a group is named, see {@link groupPartOf}: digits filled up to two,
+ * like `05` of `5`, any other name as typed, of letters, digits, `_` and `-`; a space anywhere, also at an end, makes
+ * no name, never trimmed away in silence.
+ * - `name`: The text typed, its digits filled up.
  *
- * @param text - The text typed, like `5` or `Group 99`
+ * @param text - The text typed, like `5` or `Di-1400`
  * @returns The group, like `05`, empty for nothing typed, `null` for a text a group may not be named
  */
 function groupTypedOf(text: string): string | null {
-    const typed: string = text.trim().replace(/^group\s+/i, "");
-    const name: string = /^\d+$/.test(typed) ? typed.padStart(2, "0") : typed;
+    const name: string = /^\d+$/.test(text) ? text.padStart(2, "0") : text;
     return name === "" || /^[\w-]+$/.test(name) ? name : null;
 }
 
@@ -2372,15 +2383,36 @@ function groupWaits(form: Form): boolean {
 
 /**
  * Opens a group in the form from my series, by its series icon or `+ Group` in the menu of the groups, see
- * {@link groupPickOf}: my series kept as I left it to go back to, see {@link groupBack}, the group there or a new one
- * without name.
+ * {@link groupPickOf}: my series kept as I left it to go back to, see {@link groupBack}, and a still copy of it left
+ * below, dimmed with the page, so the form of the group reads as a dialog of its own over my series, as a box opened
+ * from the list stands over it, see {@link boxShow}; the group there or a new one without name.
+ * - `series`, `under`: The dialog, and that of the copy.
+ * - `copy`: The form of my series copied, without the identifiers of its parts.
  *
  * @param form - The form of my series
  * @param group - The group, like `05`, empty for a new one
  */
 function groupFrom(form: Form, group: string): void {
+    const series: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
+    const under: HTMLDialogElement = document.getElementById("series-under") as HTMLDialogElement;
+    const copy: HTMLElement = formElementOf().cloneNode(true) as HTMLElement;
+    [copy, ...copy.querySelectorAll<HTMLElement>("[id]")].forEach((part: HTMLElement): void => part.removeAttribute("id"));
+    under.replaceChildren(copy);
+    under.show();
+    under.scrollTop = series.scrollTop;
     groupBack = form;
     groupStart(form.type, group);
+}
+
+/**
+ * Takes away the still copy of my series below the form of a group, see {@link groupFrom}, once that form goes back
+ * to my series or the dialog closes.
+ * - `under`: The dialog of the copy.
+ */
+function underClose(): void {
+    const under: HTMLDialogElement = document.getElementById("series-under") as HTMLDialogElement;
+    under.close();
+    under.replaceChildren();
 }
 
 /**
@@ -2513,6 +2545,7 @@ function seriesBinOf(form: Form): HTMLButtonElement {
  * - `picking`: Whether only the rows on top of a new series show, its category or skill still to pick.
  * - `waits`: Whether my series waits for my group, see {@link groupWaits}: its rows then the same as with a group,
  *   in the same places, so pinning one never makes rows appear, but empty and locked, see {@link lockedOf}.
+ * - `follows`: Whether my series follows a group, waiting for one or with one pinned, its rows of the group locked.
  */
 function formFill(): void {
     if (typing === null)
@@ -2524,13 +2557,14 @@ function formFill(): void {
         || (fresh.category === skillName && fresh.picked.module === "")) || (plain === null && repeated === null
         && course === null);
     const waits: boolean = groupWaits(form);
+    const follows: boolean = waits || grouped === null && plain === null && (form.old?.group ?? "") !== "";
     if (waits)
         waitingFill(form);
     const rows: HTMLElement[] = picking ? [] : plain !== null ? plainRowsOf(plain, form)
         : form.type === examType ? [seriesRowOf(form), semesterRowOf(courseSemesterOf()), boxesRowOf()]
-        : [seriesRowOf(form), semesterRowOf(courseSemesterOf()), ...lockedOf(waits, [placeRowOf(form),
+        : [seriesRowOf(form), semesterRowOf(courseSemesterOf()), ...lockedOf(follows, [placeRowOf(form),
             onlineRowOf(form), ...courseTimeRowsOf(form), datesRowOf(form, formChanged)]),
-            boxesRowOf(), ...lockedOf(waits, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
+            boxesRowOf(), ...lockedOf(follows, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
     fields.append(...fresh === null ? rows
         : [...freshRowsOf(), ...fresh.category === skillName ? rows.slice(1) : rows]);
@@ -2643,15 +2677,19 @@ async function groupReturn(reload: boolean): Promise<boolean> {
     grouped = null;
     removeAsked = false;
     previewForget();
+    underClose();
     formFill();
     return true;
 }
 
 /**
  * Starts the dialog once for the page: its form saves by Save or Ctrl+Enter, Enter confirms only its field, as in
- * the dialog of an entry, and closed by Cancel, Escape or a click beside it, it forgets the form; once the dialog
- * of a box closes over it, opened from its list, see {@link boxShow}, its list shows anew, see {@link seriesRefresh}.
+ * the dialog of an entry, and closed by Cancel, Escape or a click beside it, it forgets the form, but the form of a
+ * group opened from my series, which goes back to it instead, see {@link groupReturn}; once the dialog of a box closes
+ * over it, opened from its list, see {@link boxShow}, its list shows anew, see {@link seriesRefresh}.
  * - `dialog`: The dialog.
+ * - `back`: Goes back from the form of a group to my series on Escape, while no list of it is open, or a click
+ *   beside the dialog, the copy of my series below standing in the way of the browser's own Escape.
  */
 function dialogStart(): void {
     if (dialogStarted)
@@ -2677,7 +2715,17 @@ function dialogStart(): void {
         if (dialog.open && !entry.open)
             seriesRefresh().catch((error: unknown): void => console.error(error));
     });
+    const back: (event: Event) => void = (event: Event): void => {
+        if (groupBack === null || !dialog.open || event instanceof KeyboardEvent
+            && (event.key !== "Escape" || document.querySelector(":popover-open") !== null))
+            return;
+        event.preventDefault();
+        groupReturn(false).catch((error: unknown): void => console.error(error));
+    };
+    dialog.addEventListener("cancel", back);
+    document.addEventListener("keydown", back);
     dialog.addEventListener("close", (): void => {
+        underClose();
         if (entryBack !== null)
             entryBackShow(entryBack).catch((error: unknown): void => console.error(error));
         entryBack = null;
