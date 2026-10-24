@@ -2574,7 +2574,7 @@ function formFill(): void {
             boxesRowOf(), ...lockedOf(follows, grouped !== null || withAsked() ? peopleRowsOf(form) : [])];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
     if (grouped !== null)
-        fields.append(elementOf("h2", "series-heading", `Series: Group ${grouped.was}`.trim()));
+        fields.append(elementOf("h2", "series-heading", "Series: Group"));
     fields.append(...fresh === null ? rows
         : [...freshRowsOf(), ...fresh.category === skillName ? rows.slice(1) : rows]);
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");

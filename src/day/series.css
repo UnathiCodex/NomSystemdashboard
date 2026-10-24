@@ -521,7 +521,7 @@
     background: rgb(0 0 0 / 0.15);
 }
 
-/* The heading of the form of a group, see `formFill` in `series.ts`, like `Series: Group Di-1400`, a new group only `Series: Group` till it is saved, so it reads
+/* The heading of the form of a group, see `formFill` in `series.ts`, `Series: Group`, so it reads
    as a group of my series, not as my series below it: bold as the type of a card, see `.course-title` in `../editor/course.css`, in line
    with the names of the rows */
 .series-heading {
