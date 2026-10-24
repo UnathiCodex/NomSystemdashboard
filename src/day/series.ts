@@ -1463,7 +1463,7 @@ function extraJoin(days: Days, kinds: Kinds | undefined): boolean {
 /**
  * Makes the list of the boxes of a series by month, see {@link boxListOf}: each month short at the left, like
  * `Oct 2026`, where the names of the rows stand, its rows beside it, in the order given; the cards of the course
- * on the page of a module list the same rows by month alike, see `../editor/course.ts`.
+ * on the page of a module list the same rows by month, each month above its rows, see `../editor/course.ts`.
  * - `list`: The list.
  * - `month`: The month of the row before, empty before the first.
  * - `boxes`: The rows of that month.

@@ -10,7 +10,7 @@
  * line, and below it my own learning, the chapters.
  *
  * A card is the numbered list of its boxes, the rows of the list `Entries` of the dialog of a series, built by the same
- * code, see `listRowOf` in `../day/rows.ts`, its months small and grey at the left beside their rows,
+ * code, see `listRowOf` in `../day/rows.ts`, its months small and grey above their rows,
  * see {@link monthsOf}: the rows one below the other, every row on the same columns, folded or not, each row the same
  * unit as a box of the plan, see `../day/boxes.ts`: its number in a small grey box, like `2`, `–` for one the
  * university cancelled, of an exam its kind in its place, its `X-NUMBER` too,
@@ -426,7 +426,7 @@ function countsOf(type: string, boxes: Box[], folds: boolean, learned: number = 
 
 /**
  * Makes the line of counts of a card and the list of its boxes, see the top of this file: the line, see
- * {@link countsOf}; the list one row per box, see {@link boxRowOf}, each month beside its rows, see {@link monthsOf},
+ * {@link countsOf}; the list one row per box, see {@link boxRowOf}, each month above its rows, see {@link monthsOf},
  * folded by the one rule of every card: of the days over the open exams, the others only while
  * opened; then from today on the next open box and the rows up to two after it, the rest only while opened, going on
  * in place, so nothing above what I click moves; an exam to come saying how near it is, like `in 77 days`.
@@ -479,7 +479,7 @@ function foldedOf(type: string, count: number, done: boolean): HTMLButtonElement
 }
 
 /**
- * Puts the month before the rows of a card where a new month begins, shown beside them, see `.course-month`, small and grey, like `Oct 2026`, as the list
+ * Puts the month above the rows of a card where a new month begins, small and grey, like `Oct 2026`, as the list
  * of a series names its months, see `monthListOf` in `../day/series.ts`, so both lists read alike; a folded list
  * names the months of the rows it shows.
  * - `shown`: The rows with their months.
