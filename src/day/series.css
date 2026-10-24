@@ -105,7 +105,7 @@
     grid-template-columns: subgrid;
     row-gap: 0.5rem;
     align-items: baseline;
-    margin-top: 0.75rem;
+    margin-top: 1.25rem;
     font-variant-numeric: tabular-nums;
 }
 
