@@ -7,8 +7,8 @@
  * its number in a small grey box, like `2`, `–` for one the university cancelled, of an exam its kind, like `Endterm`,
  * the one button that opens its box while it has one, see {@link numberOf}, of a box without number, like a day
  * of my sleep, its day instead; its day with its weekday after it, like `29.10.2026 (Thu)`, as wide in every row;
- * right of them grey its group while it has one, like `05 ⌄`, its times and its place, then what more there is to say, like `in 77 days` of an exam or `new`
- * of a box a change of its series makes, after its place the first of the people I am with, a link to its row in
+ * right of them grey its group while it has one, like `05 ⌄`, its times and its place, then what more there is to
+ * say, like `new` of a box a change of its series makes, after its place the first of the people I am with, a link to its row in
  * `Persons.md`, all of them in its box, like `10:00 – 12:00 · 5610.01.011 · Zimmer, Philip`, see {@link metaOf}, one
  * line; and at its right edge, in a column as wide in every row, its actions while open, else the icon of its state,
  * as in the plan.
@@ -41,7 +41,7 @@ import type { Person } from "../persons.ts";
  *   see {@link metaOf}; a part without anything left out.
  * - `people`: Who I am with, the first shown as a link to its row in `Persons.md` while it has one.
  * - `persons`: The people of `Persons.md`, which the names are found among.
- * - `mark`: What more there is to say, last on its first line, like `in 77 days` or `new`, empty for nothing.
+ * - `mark`: What more there is to say, last on its first line, like `new`, empty for nothing.
  * - `end`: Its actions or the icon of its state, at its right edge.
  * - `faded`: Whether it is greyed.
  */
@@ -98,10 +98,9 @@ export function numberOf(text: string, open: (() => void) | null, title: string)
 }
 
 /**
- * Makes the grey first line of a row right of its day, its times and place, apart by a middle dot, on one line;
- * a part with no room left, like `in 124 days` of an exam, goes whole onto a next line, never cut, without a dot
- * in front of it there, since every part has its dot before it and the dot of a part that begins a line lies left
- * of the line, hidden, see `.series-parts` in `series.css`; the whole line as its tooltip.
+ * Makes the grey line of a row right of its day, its times and place, apart by a middle dot, always on one line,
+ * its first person cut by `…` where the line has no more room, see `.series-parts` in `series.css`; the whole line
+ * as its tooltip.
  * - `kept`: Its parts, none left out.
  * - `meta`: The line.
  * - `shown`: Its parts side by side.
@@ -142,7 +141,9 @@ function firstPersonOf(people: Attendee[], persons: Person[]): (string | Node)[]
     if (first === undefined)
         return [];
     const person: Person | undefined = personOf(persons, first.name);
-    return [person === undefined ? first.name : personLinkOf(person, first.name)];
+    const shown: HTMLElement = elementOf("span", "series-person", "");
+    shown.append(person === undefined ? first.name : personLinkOf(person, first.name));
+    return [shown];
 }
 
 /**

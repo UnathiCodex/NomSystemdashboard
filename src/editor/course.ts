@@ -18,9 +18,7 @@
  * like `29.10.2026 (Thu)`, then grey its group while it has one, like `05`, first on its grey line, the menu of the groups of its date
  * while it may still go to another, as in the dialog of the box, see `boxGroupOf` in `../day/groups.ts`; right of them
  * grey two lines, one below the other: its times, like `10:00 – 12:00`, without times its length, like `01h 00m`,
- * its place, like `5610.01.011`, which opens its link, its chapters, like `01_RegressionAnalysis`, and of an exam
- * how near it is, like `in 77 days`, as the deadline of a box says it, never cut, a part with no room left going
- * whole onto a next line, and right below all the people I am with, each a link to its row in `Persons.md`, see
+ * its place, like `5610.01.011`, which opens its link, its chapters, like `01_RegressionAnalysis`, and right below all the people I am with, each a link to its row in `Persons.md`, see
  * `../persons.ts`, cut by `…` where it is too long, on a phone going on over the next line; and at its right edge,
  * beside both lines, the actions of an open box as small icon buttons in one row, on a phone below the row,
  * the same as in the plan, see `../day/actions.ts`; an open box whose day is over counts as skipped, its box still
@@ -91,7 +89,7 @@ import { personsKept } from "../persons.ts";
 import { listRowOf, numberOf, rowTimesOf } from "../day/rows.ts";
 import { learningOpen, monthListOf, numberedTypes, roomOf, seriesOpen, tallyOf } from "../day/series.ts";
 import { boxGroupOf, pinnedMenuOf } from "../day/groups.ts";
-import { boxTimesOf, nearOf } from "../day/times.ts";
+import { boxTimesOf } from "../day/times.ts";
 import { calendarTodayOf } from "../today.ts";
 import { elementOf } from "../food/foods.ts";
 import { iconOf, iconPut } from "../icons.ts";
@@ -331,20 +329,18 @@ function groupPick(change: () => void, send: () => Promise<unknown>): void {
  * `Endterm`, a button that opens the box, see {@link boxOpen}, its note as tooltip; its day, its group grey, its menu
  * where it may still go to another, see `boxGroupOf` in `../day/groups.ts`, a pick shown at once, see
  * {@link groupPick}; its times, without times its length, its place short, see {@link roomOf}, its platform in its
- * place while it does something online, its chapters, and what more there is to say, like `in 77 days`, right below
- * them its people; then its actions while open and its day not over, see {@link actionsOf}, else its state, see
+ * place while it does something online, its chapters, its first person; then its actions while open and its day not over, see {@link actionsOf}, else its state, see
  * {@link stateOf}, an open one whose day is over skipped; greyed while not open, and so is a box not done whose day
  * is over, but
  * an exam, which stays light; of an exam without kind `–` where the kind stands.
  * - `over`: Whether it is open and its day over, so skipped, see {@link overIs}.
  *
  * @param box - The box
- * @param mark - What stands at its right, like `in 77 days` of an exam, empty for nothing
  * @param number - Its number, like `2`; its `X-NUMBER` when left out, of an exam without kind `–`, of the card
  *   `Learning` its place by date
  * @returns The row
  */
-function boxRowOf(box: Box, mark: string,
+function boxRowOf(box: Box,
                   number: string = box.number.replace("NONE", "–") || (box.type === "FA" ? "–" : "")): HTMLElement {
     const over: boolean = overIs(box);
     return listRowOf({
@@ -355,7 +351,7 @@ function boxRowOf(box: Box, mark: string,
         meta: [[rowTimesOf(box.time, box.minutes)],
             whereLinkedOf(box.category, box.from, roomOf(box.location), box.locationLink, box.online, box.onlineLink),
             [box.chapters.join(", ")]],
-        people: box.attendees, persons: persons, mark: mark,
+        people: box.attendees, persons: persons, mark: "",
         end: box.state === "open" && !over ? actionsOf(box) : stateOf(box),
         faded: box.type !== "FA" && (box.state !== "open" || box.day < calendarTodayOf()),
     });
@@ -429,13 +425,12 @@ function countsOf(type: string, boxes: Box[], folds: boolean, learned: number = 
  * {@link countsOf}; the list one row per box, see {@link boxRowOf}, by month, see `monthListOf` in `../day/series.ts`,
  * folded by the one rule of every card: of the days over the open exams, the others only while
  * opened; then from today on the next open box and the rows up to two after it, the rest only while opened, going on
- * in place, so nothing above what I click moves; an exam to come saying how near it is, like `in 77 days`.
+ * in place, so nothing above what I click moves.
  * - `today`: Today's calendar date.
  * - `past`, `coming`: The boxes of the days over and those from today on.
  * - `next`: The next open box from today on, `undefined` for none.
  * - `cut`: How many boxes to come show while folded.
  * - `folded`: The boxes that show while folded, the earliest first.
- * - `markOf`: Gives what stands at the right of a box.
  * - `list`: The list.
  *
  * @param type - The type, like `VO`
@@ -450,11 +445,9 @@ function listOf(type: string, boxes: Box[]): [HTMLElement, HTMLElement] {
     const cut: number = next === undefined ? shownAhead : coming.indexOf(next) + shownAhead;
     const folded: Box[] = [...past.filter((box: Box): boolean => box.state === "open" && box.type === "FA"),
         ...coming.slice(0, cut)];
-    const markOf: (box: Box) => string = (box: Box): string =>
-        type === "FA" && box.state === "open" && box.day >= today ? nearOf(box.day, today) : "";
     const list: HTMLElement = elementOf("div", type === "FA" ? "course-list series-kinds" : "course-list", "");
     list.append(monthListOf((opened.has(type) ? boxes : folded).map((box: Box): [string, HTMLElement] =>
-        [box.time || box.day, boxRowOf(box, markOf(box))])));
+        [box.time || box.day, boxRowOf(box)])));
     if (!opened.has(type) && folded.length === 0 && boxes.length > 0)
         list.append(foldedOf(type, boxes.length, boxes.every((box: Box): boolean => box.state === "done")));
     return [countsOf(type, boxes, folded.length < boxes.length), list];
@@ -522,7 +515,7 @@ function learningListOf(): [HTMLElement, HTMLElement] {
     const learned: Learned[] = shown?.learned ?? [];
     const items: [string, boolean, (number: number) => HTMLElement][] = [
         ...boxes.map((box: Box): [string, boolean, (number: number) => HTMLElement] =>
-            [box.time || box.day, box.state === "open", (number: number): HTMLElement => boxRowOf(box, "", String(number))]),
+            [box.time || box.day, box.state === "open", (number: number): HTMLElement => boxRowOf(box, String(number))]),
         ...learned.map((session: Learned): [string, boolean, (number: number) => HTMLElement] =>
             [session.time, false, (number: number): HTMLElement => learnedRowOf(session, number)]),
     ].sort((first: [string, boolean, (number: number) => HTMLElement],

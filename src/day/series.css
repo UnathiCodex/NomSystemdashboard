@@ -126,13 +126,14 @@
    `../editor/course.css`: on its first line its number, or of an exam its kind, in a column as wide in every row
    as `Endterm`, so numbers and kinds take one width, its day with its weekday, as wide in every row as
    `30.12.2026 (Wed)`, grey its group, like `05 ⌄`, its times and place and what more there is to say, and at its
-   right edge its actions or its state, packed at the right of a column as wide in every row as four actions; all on
+   right edge its actions or its state, side by side without gaps, packed at the right of a column as wide in every
+   row as four actions; all on
    one line, room below it, so two rows stand apart.
    Every row of every list on the same columns, whatever its rows hold, a card or a dialog, by month or not */
 .series-row {
     --series-number: 2.75rem;
     display: grid;
-    grid-template-columns: var(--series-number) 7.25rem minmax(0, 1fr) 7rem;
+    grid-template-columns: var(--series-number) 7.25rem minmax(0, 1fr) 6.25rem;
     column-gap: 0.625rem;
     align-items: baseline;
     padding-bottom: 1.125rem;
@@ -306,24 +307,28 @@
     text-overflow: ellipsis;
 }
 
-/* The first grey line of a row never cuts a part, like `in 124 days` of an exam, see `metaOf` in `rows.ts`: it takes
-   all the room up to the actions, and a part with no room left goes whole onto a next line; every part has its middle
-   dot before it, as `.entry-parted` draws it, and the parts begin one dot left of the line, so the dot of a part
-   that begins a line, the first too, lies there, hidden by the line; only one part wider than the line ends in `…` */
+/* The grey line of a row always one line, see `metaOf` in `rows.ts`: it takes all the room up to the actions, and its
+   first person, the part that gives way, ends in `…` where it has no more; every part has its middle dot before it,
+   as `.entry-parted` draws it, and the parts begin one dot left of the line, so the dot of the first lies there,
+   hidden by the line */
 .series-meta {
     display: block;
 }
 
 .series-parts {
     display: flex;
-    flex-wrap: wrap;
     margin-left: -1.3em;
 }
 
 .series-part {
+    flex-shrink: 0;
     overflow: hidden;
-    max-width: calc(100% - 1.3em);
     text-overflow: ellipsis;
+}
+
+.series-part:has(> .series-person) {
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .series-part::before {
@@ -369,6 +374,10 @@
     align-self: center;
     justify-self: end;
     margin: -0.625rem 0;
+}
+
+.series-row > .box-actions {
+    gap: 0;
 }
 
 .series-end {
