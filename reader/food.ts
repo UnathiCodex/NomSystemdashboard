@@ -606,13 +606,15 @@ function portionOf(given: number | null): number {
 
 /**
  * Cuts a row of a table into its cells, without the empty texts before its first `|` and after its last,
- * each without spaces at its ends.
+ * each without spaces at its ends: parted only by a `|` that is no `\|`, as the editor writes a `|` typed into a cell,
+ * see `cellWritten` in `src/editor/table.ts`, so such a cell never moves the cells after it one column on; the cell
+ * keeps its `\|` as written, so it stays one when its row is written back.
  *
  * @param line - Row like `| Gouda | 356 | 25 |  |  | 4056489012345 | Milbona | Lidl | 30 | 400 | Eat |`
  * @returns Its cells
  */
 function cellsOf(line: string): string[] {
-    return line.split("|").slice(1, -1).map((cell: string): string => cell.trim());
+    return line.split(/(?<!\\)\|/).slice(1, -1).map((cell: string): string => cell.trim());
 }
 
 /**

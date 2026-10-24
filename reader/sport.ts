@@ -483,13 +483,15 @@ function dayOf(text: string): string {
 
 /**
  * Cuts a row of a table into its cells, without the empty texts before its first `|` and after its last,
- * each without spaces at its ends.
+ * each without spaces at its ends: parted only by a `|` that is no `\|`, as the editor writes a `|` typed into a cell,
+ * see `cellWritten` in `src/editor/table.ts`, so such a cell never moves the cells after it one column on; the cell
+ * keeps its `\|` as written, so it stays one when its file is written anew.
  *
  * @param line - Row like `| Push | Exercise | Bench press |  |`
  * @returns Its cells
  */
 function cellsOf(line: string): string[] {
-    return line.split("|").slice(1, -1).map((cell: string): string => cell.trim());
+    return line.split(/(?<!\\)\|/).slice(1, -1).map((cell: string): string => cell.trim());
 }
 
 /**

@@ -166,6 +166,19 @@ function cellOf(text: string): string {
 }
 
 /**
+ * Cuts a row of the table of `Places.md`, `Rooms.md` or `Online.md` into its cells, without the empty texts before
+ * its first `|` and after its last, each without spaces at its ends: parted only by a `|` that is no `\|`, as the
+ * editor writes a `|` typed into a cell, see `cellWritten` in `src/editor/table.ts`, so such a cell never moves
+ * the cells after it one column on, like a link into the column of the country.
+ *
+ * @param line - Row like `| TUM Innenstadt | Arcisstraße 21 | 80333 | München | Deutschland | https://nav.tum.de |`
+ * @returns Its cells
+ */
+function cellsOf(line: string): string[] {
+    return line.split(/(?<!\\)\|/).slice(1, -1).map((cell: string): string => cell.trim());
+}
+
+/**
  * Cleans the name or a part of the address of a place, which never holds a comma, since an entry writes its place
  * as one line whose commas part it: as a cell, see {@link cellOf}, each comma dropped, leaving a space,
  * as for a name of a room from NavigaTUM, `0509.EG.980 (Audimax, Werner-von-Siemens-Hörsaal)` becoming
@@ -232,13 +245,13 @@ export function placeLinkOf(line: string, from: { location: string; locationLink
 
 /**
  * Reads a row of the table of `Places.md` or `Rooms.md`; a row without link has none.
- * - `cells`: Its cells, without the empty texts before its first `|` and after its last.
+ * - `cells`: Its cells, see {@link cellsOf}.
  *
  * @param line - Row, like `| Home Munich | Burg-Eltz-Weg | 81375 | München | Deutschland | https://… | ★ |`
  * @returns The place, its name empty for a row without one
  */
 function rowPlaceOf(line: string): Place {
-    const cells: string[] = line.split("|").slice(1, -1).map((cell: string): string => cell.trim());
+    const cells: string[] = cellsOf(line);
     return {
         name: nameOf(cells[0] ?? ""), street: cells[1] ?? "", code: cells[2] ?? "", city: cells[3] ?? "",
         country: cells[4] ?? "", link: cells[5] ?? "", standard: cells[6] === "★",
@@ -353,7 +366,7 @@ function rowsSort(lines: string[]): void {
     const first: number = lines.findIndex((line: string): boolean => line.startsWith("|")) + tableHead;
     const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
     lines.splice(first, last + 1 - first, ...lines.slice(first, last + 1).sort((one: string, other: string): number =>
-        nameOrder.compare(nameOf(one.split("|")[1] ?? ""), nameOf(other.split("|")[1] ?? ""))));
+        nameOrder.compare(nameOf(cellsOf(one)[0] ?? ""), nameOf(cellsOf(other)[0] ?? ""))));
 }
 
 /**
@@ -408,7 +421,7 @@ export function placeChange(sent: PlaceChanged): Place {
     const lines: string[] = placeLinesRead(file);
     const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
     const row: number = lines.findIndex((line: string, index: number): boolean => index >= first + tableHead
-        && line.startsWith("|") && nameOf(line.split("|")[1] ?? "").toLowerCase() === old);
+        && line.startsWith("|") && nameOf(cellsOf(line)[0] ?? "").toLowerCase() === old);
     if (old === "" || row === -1)
         throw new Error(`No place of the name: ${sent.old}`);
     lines[row] = rowOf({ ...changed, standard: rowPlaceOf(lines[row]).standard });
@@ -461,7 +474,7 @@ export function placeRename(sent: PlaceRenamed): PlaceChanged | null {
             const lines: string[] = placeLinesRead(file);
             const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
             const named: number[] = lines.flatMap((line: string, index: number): number[] =>
-                index >= first + tableHead && line.startsWith("|") && nameOf(line.split("|")[1] ?? "") === old
+                index >= first + tableHead && line.startsWith("|") && nameOf(cellsOf(line)[0] ?? "") === old
                     ? [index] : []).reverse();
             named.forEach((row: number): void => {
                 if (target === undefined)
@@ -523,7 +536,7 @@ export function platformsRead(): Platform[] {
     return readFileSync(day.online, "utf8").split("\n")
         .filter((line: string): boolean => line.startsWith("|"))
         .slice(tableHead)
-        .map((line: string): string[] => line.split("|").slice(1, -1).map((cell: string): string => cell.trim()))
+        .map(cellsOf)
         .filter((cells: string[]): boolean => (cells[0] ?? "") !== "")
         .map((cells: string[]): Platform => ({ name: cells[0], provider: cells[1] ?? "", link: cells[2] ?? "" }));
 }
@@ -634,12 +647,12 @@ export function platformChange(sent: PlatformChanged): Platform {
     const lines: string[] = existsSync(day.online) ? readFileSync(day.online, "utf8").split("\n") : [];
     const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
     const row: number = lines.findIndex((line: string, index: number): boolean => index >= first + tableHead
-        && line.startsWith("|") && (line.split("|")[1] ?? "").trim().toLowerCase() === old);
+        && line.startsWith("|") && (cellsOf(line)[0] ?? "").toLowerCase() === old);
     if (old === "" || row === -1)
         throw new Error(`No platform of the name: ${sent.old}`);
     const changed: Platform = {
         name: cellOf(String(sent.name ?? "")), provider: cellOf(String(sent.provider ?? "")),
-        link: lines[row].split("|")[3]?.trim() ?? "",
+        link: cellsOf(lines[row])[2] ?? "",
     };
     if (changed.name === "" || platformsRead().some((platform: Platform): boolean =>
         platform.name.toLowerCase() === changed.name.toLowerCase() && platform.name.toLowerCase() !== old))

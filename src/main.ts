@@ -39,10 +39,13 @@ import { phone } from "./phone.ts";
 /**
  * Tells the reader what this device shows of the page, its size and that of its screen in CSS pixels, its scale
  * and whether it runs as the installed app, so the dashboard can be shaped for each of my devices,
- * see `reader/devices.ts`.
+ * see `reader/devices.ts`; nothing while a size is 0, like for a page the browser loads unseen, which the reader
+ * would refuse with an error, so the next load or change of its size reports it.
  * - {@link Navigator#sendBeacon}: Sends a small report to the reader without waiting for its answer.
  */
 function deviceReport(): void {
+    if ([innerWidth, innerHeight, screen.width, screen.height].includes(0))
+        return;
     navigator.sendBeacon("/api/devices", JSON.stringify({
         width: innerWidth, height: innerHeight, scale: devicePixelRatio, screenWidth: screen.width,
         screenHeight: screen.height, app: matchMedia("(display-mode: standalone)").matches,
