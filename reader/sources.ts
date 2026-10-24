@@ -250,29 +250,50 @@ export const systemFiles: SystemFilesSources = {
 };
 
 /**
- * Skills of the semester, 2026W, each by its folder from `NomWorkspace`, written with `/`: my modules
- * in `NomSkillingmodules`, the pilot first, then my projects,
+ * Skills of the semester, 2026W, of each of us by {@link myName}, each by its folder from `NomWorkspace`,
+ * written with `/`: my modules in `NomSkillingmodules`, the pilot first, then my projects,
  * like `NomProgramprojects/AsiaWok_Wokflow_2026`, and the time I spend logging, planning and
  * thinking about my day, `NomFrequencediary`, linking the folder of my diary.
+ * Sopha's are her modules of LMU, each in the folder of its module like the material of LMU in it, like `LMU_2026W`:
+ * Betriebssysteme, Juristisches IT-Projektmanagement, the SEP Trustworthy Machine Learning with Python,
+ * Digitale Medien and Mensch-Maschine-Interaktion, which she takes again, as one of the semester like the others.
+ * Changed on request, when the semester's skills change.
+ */
+const skillsOf: { [name: string]: string[] } = {
+    Vu: [
+        "NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning",
+        "NomSkillingmodules/WI1059_FinancialAccounting",
+        "NomSkillingmodules/WI0219_InvestitionFinanzmanagement",
+        "NomSkillingmodules/WI1057_CostAccounting",
+        "NomSkillingmodules/MGT1373_AppliedEconometrics",
+        "NomSkillingmodules/IN0004_EinfuehrungRechnerarchitektur",
+        "NomSkillingmodules/MGT1372_EntrepreneurialBusiness",
+        "NomProgramprojects/AsiaWok_Wokflow_2026",
+        "NomSystemdashboard",
+        "NomManageplannings/NomFrequencediary",
+    ],
+    Sopha: [
+        "NomSkillingmodules/IN0009_BetriebssystemeSystemsoftware",
+        "NomSkillingmodules/IN9049_JuristischesItProjektmanagement",
+        "NomSkillingmodules/CIT43317_TrustworthyMachineLearning",
+        "NomSkillingmodules/EI05381_DigitaleMedien",
+        "NomSkillingmodules/IN0033_MenschMaschineInteraktion",
+        "NomSystemdashboard",
+        "NomManageplannings/NomFrequencediary",
+    ],
+};
+
+/**
+ * Skills of the semester of this reader, see {@link skillsOf}, Vu's when {@link myName} names none of us there,
+ * like a reader without `NOM_NAME`.
  * The Skill picker offers them first, in this order, a module by its code, the part of its folder name before `_`,
  * like `IN2028`, a project by its folder name, like `WokFlow`; the menu of the scripts view shows the modules first,
  * see {@link activeModules}, and no project, since a project has no chapters and no tasks.
  * Each skill entry names the folder of its skill in its `SUMMARY` and links it by this path, for a type on into
  * the folder of its material, see `skillLinkOf` in `documents.ts`.
- * A link in a note still opens a note of any module. Changed on request, when the semester's skills change.
+ * A link in a note still opens a note of any module.
  */
-export const activeSkills: string[] = [
-    "NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning",
-    "NomSkillingmodules/WI1059_FinancialAccounting",
-    "NomSkillingmodules/WI0219_InvestitionFinanzmanagement",
-    "NomSkillingmodules/WI1057_CostAccounting",
-    "NomSkillingmodules/MGT1373_AppliedEconometrics",
-    "NomSkillingmodules/IN0004_EinfuehrungRechnerarchitektur",
-    "NomSkillingmodules/MGT1372_EntrepreneurialBusiness",
-    "NomProgramprojects/AsiaWok_Wokflow_2026",
-    "NomSystemdashboard",
-    "NomManageplannings/NomFrequencediary",
-];
+export const activeSkills: string[] = skillsOf[myName] ?? skillsOf.Vu;
 
 /**
  * Tells whether a skill of {@link activeSkills} is a module, a folder in `NomSkillingmodules`, else a project.
