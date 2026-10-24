@@ -685,7 +685,8 @@ function resultElementOf(pick: AttemptPick, name: string, changed: () => void): 
  * - `parts`: An `X-ATTEMPT` cut at each `;`: task, result and comment, of an older one task, result, effort, and where
  *   I got stuck, why I skipped or what went wrong, without the time of the tap a button wrote at its start,
  *   see {@link tapTime}.
- * - `older`: Whether it is written the older way, its task with its module, see `reader/skill.ts`.
+ * - `older`: Whether it is written the older way, its task with its module, a skill or another module before `/`,
+ *   see `attemptLineOf` in `reader/skill.ts`, so a task of today's form keeps a `/` in its name, like `Train/Test Split`.
  *
  * @returns Attempts, none for an entry without attempts
  */
@@ -699,10 +700,12 @@ function loggedOf(): HTMLElement[] {
         const parts: string[] = value.split(";");
         if (tapTime.test(parts[0]))
             parts.shift();
-        const older: boolean = parts[0].includes("/");
+        const older: boolean = parts[0].includes("/")
+            && [...skilling.skills, ...skilling.otherModules].includes(parts[0].split("/")[0]);
         const effort: string = older ? parts[2] ?? "" : "";
         const item: HTMLLIElement = document.createElement("li");
-        item.textContent = [parts[0].slice(parts[0].indexOf("/") + 1), parts[1], effort === "" ? "" : `${effort} effort`,
+        item.textContent = [older ? parts[0].slice(parts[0].indexOf("/") + 1) : parts[0], parts[1],
+            effort === "" ? "" : `${effort} effort`,
             parts.slice(older ? 3 : 2).join(";")].filter((part: string): boolean => part !== "").join(" · ");
         return item;
     }));

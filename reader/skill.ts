@@ -787,8 +787,11 @@ function skillEntriesRead(start: string, end: string): Entry[] {
  * - `tap`: Hours and minutes of the time, `null` for none.
  * - `time`: The time, like `14:05`, empty for none.
  * - `named`: The task as written, with its part after `#` in an older one.
+ * - `before`: What stands before its first `/`.
  * - `task`, `part`: The task and its part, the part `undefined` for none.
- * - `older`: Whether it is written the older way.
+ * - `older`: Whether it is written the older way: what stands before its first `/` is the module of its skill entry
+ *   or the code of a module folder, see `notes.ts`, so a task of today's form keeps a `/` in its name,
+ *   like `Train/Test Split`.
  *
  * @param value - `X-ATTEMPT`, like `Kiosk Chain;wrong;Step 2: weights add up to 1.2, not 1`, or of an older one
  *   `140500;IN2028/Kiosk Chain Review#2;stuck;high;step 2` or `14:05;…`
@@ -802,7 +805,9 @@ function attemptLineOf(value: string, module: string): AttemptLine {
     if (time !== "")
         fields.shift();
     const named: string = fields[0] ?? "";
-    const older: boolean = named.includes("/");
+    const before: string = named.split("/")[0];
+    const older: boolean = named.includes("/")
+        && (before === module || moduleFoldersRead().map(codeOf).includes(before));
     if (!older)
         return {
             older: false, time: "", task: `${module}/${named}`, part: "", result: fields[1] ?? "", effort: "",
