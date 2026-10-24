@@ -621,9 +621,3 @@
 .ics-box :is(.box-what, .box-part) {
     overflow-x: visible;
 }
-
-/* Name of the file on top of its text, see `fileTitleShow` in `editor.ts`, as far from the text below it as the head
-   of a module from its first card */
-#editor-file-title {
-    margin-bottom: 1rem;
-}

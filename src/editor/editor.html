@@ -10,12 +10,11 @@
         <!-- Page of the file as wide as the room beside the tree, with little room left and right -->
         <div class="editor-page">
             <!-- Status line above the text, quiet: for a section its round in a small grey box, see round.ts, then
-                 the name of the file, its path from NomWorkspace on as its title, as the dialogs show it, then the
-                 session the round writes into; at the right whether the changes are saved; stays on top while
+                 the session the round writes into, the file named only by the tree; at the right whether the changes are saved; stays on top while
                  scrolling -->
             <div class="editor-status" id="editor-status">
                 <p class="editor-title"><span class="block-kind" id="editor-round" hidden><span
-                        id="editor-round-label"></span></span><span id="editor-name"></span><span class="entry-parted"
+                        id="editor-round-label"></span></span><span class="entry-parted"
                         id="editor-session"></span></p>
                 <span class="editor-state" id="editor-state"></span>
             </div>
@@ -42,12 +41,6 @@
                 </div>
                 <div class="overview-card folder-list"></div>
             </section>
-
-            <!-- Name of the file opened on top, as a folder and a module have theirs: above it small and grey the path
-                 to it, like NomManageplannings/NomMetainformations over Places.md; filled by editor.ts -->
-            <div class="day-bar overview-title" id="editor-file-title" hidden>
-                <h2 class="day-title"><span class="day-weekday folder-path"></span><span class="day-date"></span></h2>
-            </div>
 
             <!-- Text of the file, CodeMirror inside; `markdown` gives the rendered pieces of a Markdown file the look
                  of the scripts view, `editor-plain` shows any other file as its plain text -->

@@ -60,7 +60,6 @@
  *   of a section with their places.
  * - `lucide`, `../icons.ts`: The floppy disk of the save button, crossed out for a file to read only, and the check
  *   of the round's button.
- * - `../day/choices.ts`: Marks where the name of the file may go on over a next line.
  * - `../notes/notes.css`: Look of the notes, for the rendered formulas, tables and images, and of the tree.
  * - `../day/day.css`: The middle dot before the session, as between the parts of an entry of the day.
  * - `./editor.css`: Look of the editor.
@@ -81,7 +80,6 @@ import { outlineShow, treeShow } from "../notes/tree.ts";
 import { overviewShow, overviewTreeShow } from "./overview.ts";
 import { folderShow } from "./folder.ts";
 import { timeOf } from "../day/times.ts";
-import { pathBreakableOf } from "../day/choices.ts";
 import { Check, Save, SaveOff } from "lucide";
 import { iconPut } from "../icons.ts";
 import "../notes/notes.css";
@@ -372,25 +370,6 @@ function treeClick(event: MouseEvent): void {
 }
 
 /**
- * Shows the name of the file opened on top of its text, as a folder and a module have theirs, see `folderShow`
- * in `./folder.ts`: above it small and grey the path to it from its root, like `NomManageplannings/NomMetainformations`
- * over `Places.md`, each name going on below where it is wider than its room; the status line above then names
- * the file no more.
- * - `title`: The heading, see `#editor-file-title` in `./editor.html`.
- * - `parts`: The folders of the path, its root first.
- *
- * @param root - The root of the tree, like `NomManageplannings`
- * @param path - Path of the file from it, like `NomMetainformations/Places.md`
- */
-function fileTitleShow(root: string, path: string): void {
-    const title: HTMLElement = document.getElementById("editor-file-title") as HTMLElement;
-    const parts: string[] = [root, ...path.split("/").slice(0, -1)];
-    (title.querySelector(".folder-path") as HTMLElement).textContent = pathBreakableOf(parts.join("/"));
-    (title.querySelector(".day-date") as HTMLElement).textContent = pathBreakableOf(path.split("/").at(-1) ?? "");
-    title.hidden = false;
-}
-
-/**
  * Starts the editor after the router has put its HTML into the page: shows the tree on the left, that of my new system
  * for one of its files and at `/plannings`, else that of my modules, the module of the address picked while no note
  * is shown, like `/scripts?module=IN2028_BusinessAnalyticsMachineLearning` from a skill entry, see `../notes/tree.ts`,
@@ -398,8 +377,7 @@ function fileTitleShow(root: string, path: string): void {
  * of the module, or of the chapter the address names, stands on the right, see `./overview.ts`, and so does a folder
  * of my modules the address names, like `/scripts?folder=…`, with its module picked, see `./folder.ts`; Today stands
  * there while the address names neither a note nor a module nor a folder;
- * reads the file the address names, its name in the status line above the text, its path as its title, and shows
- * it to edit, its solutions folded, see `./preview.ts`,
+ * reads the file the address names, named by the tree alone, and shows it to edit, its solutions folded, see `./preview.ts`,
  * scrolled to the row of a table the address names, marked,
  * see `rowShow` there, with the save
  * button, Ctrl+S, and a question before leaving with changes unsaved; a file to read only has the save button crossed
@@ -429,9 +407,6 @@ export async function editorStart(): Promise<void> {
     const plannings: boolean = file !== "" || location.pathname === "/plannings";
     const tree: HTMLElement = document.getElementById("notes-tree") as HTMLElement;
     path = file !== "" ? file : address.get("path") ?? "";
-    const name: HTMLElement = document.getElementById("editor-name") as HTMLElement;
-    name.textContent = pathBreakableOf(path.slice(path.lastIndexOf("/") + 1));
-    name.title = path === "" ? "" : `${plannings ? "NomManageplannings" : "NomSkillingmodules"}/${path}`;
     saveAddress = file !== "" ? "/api/edit/file" : "/api/edit/note";
     const shown: Promise<void> = treeShow(tree, plannings ? "NomManageplannings" : "NomSkillingmodules", path,
         address.get("module") ?? folder.split("/")[0]);
@@ -463,8 +438,6 @@ export async function editorStart(): Promise<void> {
         return;
     }
 
-    fileTitleShow(plannings ? "NomManageplannings" : "NomSkillingmodules", path);
-    name.hidden = true;
     const text: HTMLElement = document.getElementById("editor-text") as HTMLElement;
     text.classList.toggle("markdown", opened.markdown);
     text.classList.toggle("editor-plain", !opened.markdown);
