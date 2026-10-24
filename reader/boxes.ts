@@ -17,10 +17,10 @@
  * on each day it left, and is shown, counted and moved the same, see {@link carriedOf}; one done
  * on a later day counts as pushed to the day of its log entry. These pushes are not written while it is carried,
  * only once I change it, so its file then holds them as if I had pushed it, see {@link carryWrite}.
- * One I no longer mean to do I skip, see {@link boxDrop}; one I move to a day that is over stays there, missed,
- * and is no longer carried along until its day changes again. A box with a deadline is never pushed, so it is carried
- * along to today as it is,
- * see {@link boxesCarried}.
+ * One I no longer mean to do I skip, see {@link boxDrop}; only a box that got its day on that day or before,
+ * its `DTSTAMP`, is carried along, so one I add for a day that is over or move to one stays there, missed,
+ * until its day changes again.
+ * A box with a deadline is never pushed, so it is carried along to today as it is, see {@link boxesCarried}.
  * A lecture, an exercise, a tutorial and a sheet, a skill box of a type of {@link numberedTypes}, carries its number
  * in its series, the boxes of the same skill and type by date, as `X-NUMBER`, like `X-NUMBER:3`, the next one when
  * the dialog adds it, see {@link numberNextOf}. One the university cancels gets `X-NUMBER:NONE` by its own button,
@@ -54,8 +54,10 @@
  *   in one `X-PUSHED` with its start and its length as they stood before, since the standard has nothing for it,
  *   like `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`, see `pushAdd`
  *   in `calendar.ts`; a push stays, also once the box moves back, which is one more push;
- * - that it is no longer carried along, see above, in `X-CARRIED:FALSE`, once I move it to a day that is over
- *   in the dialog, see {@link boxEdit}, gone once its day changes again;
+ * - when it got its day in `DTSTAMP`, set as it is added and anew with each change of its day, by a push, the dialog,
+ *   the course or as it is carried along, see `componentWrite` in `calendar.ts`, never by another change; it is carried
+ *   along only while that lies on its day or before, see {@link carriedOf}; an occurrence of a series the `DTSTAMP`
+ *   of its series, also once it is a component of its own, see `occurrenceOwn` in `calendar.ts`;
  * - its category, what, place, module, type, semester and note as an entry of the log has them, a skill box its
  *   semester as `X-SEMESTER`, like `X-SEMESTER:2026W`, see `semesterFor` in `categories.ts`, its chapters
  *   as `X-CHAPTER`s and the documents it will use as `ATTACH`es, like the slides of a lecture,
@@ -476,7 +478,7 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
         group: entry.group,
         moved: null,
         file: entry.file,
-    }, entry.carried);
+    }, entry.written);
 }
 
 /**
@@ -495,24 +497,24 @@ function daysOf(from: string, to: string): number {
  * as pushed at the end of each day from its day to today, one done by a log entry of a later day than its own
  * as pushed so to the day of that log entry; each push one more {@link Push} after those of its file, with its time
  * of day and its length, like WI1059 (VO) of Fri, 23.10.2026, 15:00 on Sat, 24.10.2026, 15:00, pushed
- * from Fri, 23.10.2026, 15:00 for 195 minutes. Any other box stands as it is, also one no longer carried along,
- * its `X-CARRIED:FALSE`, see {@link carriedPut}.
+ * from Fri, 23.10.2026, 15:00 for 195 minutes. Any other box stands as it is, also one that got its day after that day,
+ * its `DTSTAMP` later, like a box added for a day that is over or moved to one, which stays there, missed.
  * - `until`: The day it is carried to: today for an open box, the day of its log entry for a done one,
  *   empty for any other.
  * - `days`: Days it is carried by.
  * - `laterOf`: Its time, days later, empty for a box without time.
  *
  * @param box - The box as its file holds it
- * @param carried - Whether it is carried along, false for its `X-CARRIED:FALSE`
+ * @param written - When it got its day, its `DTSTAMP`, see `written` of `Entry` in `calendar.ts`
  * @returns The box as it stands
  */
-function carriedOf(box: Box, carried: boolean): Box {
+function carriedOf(box: Box, written: string): Box {
     let until: string = "";
     if (box.state === "open")
         until = berlinDateOf(new Date());
     else if (box.state === "done")
         until = loggedDayOf(box);
-    if (!carried || box.deadline !== "" || until <= box.day)
+    if (berlinDateOf(new Date(written)) > box.day || box.deadline !== "" || until <= box.day)
         return box;
     const days: number = daysOf(box.day, until);
     const laterOf: (later: number) => string = (later: number): string =>
@@ -987,7 +989,7 @@ export function boxUniversity(id: string, cancelled: boolean): void {
  * from 17.10.2026 (Sat), 15:00 to 19.10.2026 (Mon), or one from tomorrow done today instead; every push stays, so the box
  * shows greyed on each day it left, see {@link leftBoxesOf}; a box with a deadline is not pushed.
  * A box carried along has the pushes it stands for written first, see {@link carryWrite},
- * and one moved to a day that is over stays there, no longer carried along, see {@link carriedPut}.
+ * and one moved to a day that is over stays there, no longer carried along, see {@link carriedOf}.
  * All of it is checked before anything is written, so a change the reader does not take changes nothing.
  * One occurrence of a series left with nothing of its own goes back to its series, see {@link boxTidy}.
  * - `old`: Its entry as its file holds it, before the pushes of a box carried along are written.
@@ -1019,8 +1021,6 @@ export function boxEdit(change: BoxChange): void {
     else if (event !== null)
         entryChange(file, entry, event, target);
     boxLinksPut(target, change.id, links);
-    if (change.day !== box.day)
-        carriedPut(target, change.id, entry, change.deadline !== "" || change.day >= berlinDateOf(new Date()));
     boxTidy(file, entry);
 }
 
@@ -1124,28 +1124,12 @@ function carryWrite(found: [string, Entry, Box]): [string, Entry, Box] {
 }
 
 /**
- * Notes whether a box is carried along once its day is over, see the top of this file: `X-CARRIED:FALSE` for one
- * I move to a day that is over, so it stays there, missed, see {@link boxEdit}, no line for any other;
- * written only when it changes.
- *
- * @param file - Path of the plan file the box lies in now
- * @param id - Identifier of the box
- * @param entry - Entry of the box, as it stood before
- * @param carried - Whether it is carried along
- * @throws {Error} - When the file lies outside the new system or does not hold the box
- */
-function carriedPut(file: string, id: string, entry: Entry, carried: boolean): void {
-    if (carried !== entry.carried)
-        propertiesPut(file, id, [["x-carried", carried ? [] : ["FALSE"]]]);
-}
-
-/**
  * Pushes an open box of the new system with one tap, by its arrow, also one carried along, which gets the pushes
  * it stands for first, see {@link carryWrite}: to the next day, or, when its day is over, to tomorrow, the day after
  * today in Berlin time, so it does not land on a day over too, like a box of 14.10.2026 (Wed) that I moved back there,
  * see {@link boxEdit}, pushed on 16.10.2026 (Fri) to 17.10.2026 (Sat). Notes where it leaves in one more
  * `X-PUSHED`, then moves its day and its time by as many days, see {@link boxShift}, one occurrence of a series alone,
- * see {@link boxOwn}, and it is carried along again, see {@link carriedPut}.
+ * see {@link boxOwn}, and it is carried along again, see {@link carriedOf}.
  * A box with a deadline stays, since its day is the day of its deadline.
  * - `today`: Today in Berlin time.
  * - `next`: The day it goes to, the day after its own day or after today, the later of them.
@@ -1163,7 +1147,7 @@ export function boxPush(id: string): void {
     const next: string = dayAdd(box.day < today ? today : box.day, 1);
     boxOwn(file, entry);
     pushAdd(file, id, entry);
-    carriedPut(boxShift(file, entry, daysOf(box.day, next)), id, entry, true);
+    boxShift(file, entry, daysOf(box.day, next));
 }
 
 /**

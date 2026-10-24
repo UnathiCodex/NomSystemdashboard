@@ -55,8 +55,8 @@
  * and pushed look and work alike, greyed with their icon, and none of them is carried along.
  * A box neither done nor cancelled is carried along once its day is over, as if I pushed it to the next day at the end
  * of each day, see `carriedOf` in `reader/boxes.ts`: it stands among the boxes of today, greyed on each day it left,
- * and shows, counts and moves as a box I pushed by hand; one I no longer mean to do I skip, and one I move to a day
- * that is over stays there, open, and counts as skipped. A box with a deadline, which is never pushed, is carried along on today
+ * and shows, counts and moves as a box I pushed by hand; one I no longer mean to do I skip, and one I add for a day
+ * that is over or move to one stays there, open, and counts as skipped. A box with a deadline, which is never pushed, is carried along on today
  * as it is: in its
  * section after the open boxes of today, without a heading of its own, since its deadline says so, the earliest first,
  * see `boxesCarried` in `reader/boxes.ts`, until I tick it submitted or cancel it with `Skip`; a click on it changes it.
@@ -702,7 +702,7 @@ function tutorialIs(box: Box): boolean {
  * near its deadline is, since its deadline line names it. An open box without deadline whose day is over counts as
  * skipped, as in the list of a module, see `overIs` in `../editor/course.ts`: not carried along, greyed as
  * `box-over`, the cross of a skipped box in place of its actions, nothing written, its dialog still logging it;
- * moving it by its dialog to today or later carries it along again, see `carriedPut` in `reader/boxes.ts`.
+ * moving it by its dialog to today or later carries it along again, see `carriedOf` in `reader/boxes.ts`.
  * An open box has the class `box-draggable`, so it can be dragged into the log, see {@link boxesStart},
  * and keeps its identifier, which names it when it is dropped, see {@link boxReceive}, its category, its title
  * and its minutes in the log as data of its element, and how many lines it has as `--box-lines`, so its actions
