@@ -114,8 +114,6 @@ import type { CalendarSource } from "./sources.ts";
  *   like Fri, 16.10.2026, 15:00 for 195 minutes
  *   of `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`;
  *   none when it has none.
- * - `carried`: Whether a box is carried along once its day is over, false for its `X-CARRIED:FALSE`,
- *   see `carriedPut` in `boxes.ts`.
  * - `number`: Number of a lecture, an exercise, a tutorial or a sheet in its series, its `X-NUMBER`, like `3`,
  *   `NONE` for one the university cancelled, see `boxUniversity` in `boxes.ts`; empty for none.
  * - `group`: Group of a tutorial, its `X-GROUP`, like `03`, as TUMonline names it: of a group of the course
@@ -124,8 +122,9 @@ import type { CalendarSource } from "./sources.ts";
  * - `pinned`: Whether a group of the course is the one I pinned, the group my tutorials go to, its
  *   `X-GROUP;X-PINNED=TRUE`,
  *   see `pinPut` in `course.ts`; false for any other entry.
- * - `written`: When the entry was written, its `DTSTAMP`, as ISO instant, which the reader sets once as it adds an entry;
- *   empty when the event has none.
+ * - `written`: When the entry got its day, its `DTSTAMP`, as ISO instant, which the reader sets as it adds an entry
+ *   and anew whenever its `DTSTART` or its `DUE` changes, see {@link componentWrite}, so a box is carried along
+ *   only while it lies on its day or before, see `carriedOf` in `boxes.ts`; empty when the event has none.
  * - `version`: Fingerprint of the entry as its file holds it, the SHA-256 of its lines as read, in hexadecimal digits,
  *   which changes with any change of the entry, by the dashboard, another device, Claude or by hand, and with no change
  *   of another entry; the dialog sends it back, so the reader writes nothing older than the file, see `entryEdit`
@@ -178,7 +177,6 @@ export type Entry = {
     minutes: number | null;
     deadline: string;
     pushed: Push[];
-    carried: boolean;
     number: string;
     group: string;
     pinned: boolean;
@@ -398,8 +396,8 @@ const zone: ICAL.Timezone = new ICAL.Timezone(zoneComponent);
  * `DURATION` and `ESTIMATED-DURATION` after them, then `RRULE`, `RDATE`, `EXDATE` and `RECURRENCE-ID`;
  * what, `CATEGORIES`, `SUMMARY`, `STATUS`; where, `LOCATION`, where a way started,
  * `X-FROM`, and online, `X-ONLINE`; with whom, `ATTENDEE`; more about it, `DESCRIPTION`, `ATTACH`, `RELATED-TO`,
- * the box of the plan a log entry did, `X-PLANNED`, the pushes of a box, `X-PUSHED`, whether it is carried along,
- * `X-CARRIED`, and the series a part of a plain series belongs to, `X-SERIES`; then the lines of each kind of entry:
+ * the box of the plan a log entry did, `X-PLANNED`, the pushes of a box, `X-PUSHED`, and the series a part of a plain
+ * series belongs to, `X-SERIES`; then the lines of each kind of entry:
  * a box of a course, `X-NUMBER` and `X-GROUP`, of the group I pinned with `X-PINNED=TRUE`; a meal, `X-FOOD` and `X-COOKED`;
  * sport, `X-WORKOUT`, `X-EXERCISE`, `X-VIDEO` and `X-PAIN`; a skill entry, `X-TUTOR`, `X-SEMESTER`, `X-CHAPTER`,
  * `X-ATTEMPT` and `X-ROUND`. Every other line comes after them, in the order it had, and the lines of a property that
@@ -410,7 +408,7 @@ const lineOrder: string[] = [
     "DTSTART", "DTEND", "DUE", "DURATION", "ESTIMATED-DURATION", "RRULE", "RDATE", "EXDATE", "RECURRENCE-ID",
     "CATEGORIES", "SUMMARY", "STATUS",
     "LOCATION", "X-FROM", "X-ONLINE", "ATTENDEE",
-    "DESCRIPTION", "ATTACH", "RELATED-TO", "X-PLANNED", "X-PUSHED", "X-CARRIED", "X-SERIES",
+    "DESCRIPTION", "ATTACH", "RELATED-TO", "X-PLANNED", "X-PUSHED", "X-SERIES",
     "X-NUMBER", "X-GROUP",
     "X-FOOD", "X-COOKED",
     "X-WORKOUT", "X-EXERCISE", "X-VIDEO", "X-PAIN",
@@ -437,8 +435,7 @@ ICAL.design.icalendar.param.altrep = { multiValue: ",", multiValueSeparateDQuote
  */
 const ownTexts: string[] = [
     "x-from", "x-semester", "x-chapter", "x-attempt", "x-round", "x-tutor", "x-food", "x-cooked", "x-pain",
-    "x-workout", "x-exercise", "x-video", "x-number", "x-group", "x-planned", "x-online",
-    "x-carried", "x-series",
+    "x-workout", "x-exercise", "x-video", "x-number", "x-group", "x-planned", "x-online", "x-series",
 ];
 ownTexts.forEach((name: string): void => {
     ICAL.design.icalendar.property[name] = { defaultType: "text" };
@@ -810,7 +807,6 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
         deadline: todo ? deadlineOf(event.component) : "",
         pushed: event.component.getAllProperties("x-pushed").map((property: ICAL.Property): Push =>
             pushOf(property, start.isDate ? null : berlinOf(start.toJSDate()))),
-        carried: String(event.component.getFirstPropertyValue("x-carried") ?? "").toUpperCase() !== "FALSE",
         number: String(event.component.getFirstPropertyValue("x-number") ?? ""),
         group: String(event.component.getFirstPropertyValue("x-group") ?? ""),
         pinned: String(event.component.getFirstProperty("x-group")?.getParameter("x-pinned") ?? "").toUpperCase()
@@ -1499,7 +1495,8 @@ function seriesTimeOf(series: ICAL.Event, name: string, time: ICAL.Time): ICAL.P
 /**
  * Makes one occurrence of a series a component of its own, so it can be dropped, pushed or changed alone,
  * the way the standard changes one occurrence: a copy of its series with the same `UID` right after it,
- * without `RRULE`, `RDATE` and `EXDATE`, its `DTSTAMP` now, its `DTSTART` and its `DTEND` those of the occurrence,
+ * without `RRULE`, `RDATE` and `EXDATE`, its `DTSTART` and its `DTEND` those of the occurrence, its `DTSTAMP` that
+ * of its series, since it got its day with the series, see `written` of {@link Entry},
  * and as `RECURRENCE-ID` the start it has in the series, like `RECURRENCE-ID;TZID=Europe/Berlin:20261026T100000`;
  * its lines in the fixed order, see {@link linesOrdered}; the series stays as it is, every other line of the file too.
  * From then on the occurrence is that component, found by its identifier with `#`, see {@link entryIdOf}.
@@ -1550,7 +1547,7 @@ function seriesStartOf(series: ICAL.Event, recurrence: string): ICAL.Time | unde
 
 /**
  * Gives the lines of the component of its own of one occurrence as its series gives it, see {@link occurrenceOwn}:
- * a copy of the series without `RRULE`, `RDATE` and `EXDATE`, its `DTSTAMP` now, its `DTSTART` the start
+ * a copy of the series without `RRULE`, `RDATE` and `EXDATE`, its `DTSTAMP` that of the series, its `DTSTART` the start
  * of the occurrence, its `DTEND`, while the series has one, that start and the length of the series, as `ical.js`
  * gives an occurrence, and as `RECURRENCE-ID` that start; in the fixed order, see {@link linesOrdered}.
  * - `own`: The lines.
@@ -1566,7 +1563,6 @@ function occurrenceLinesOf(series: ICAL.Event, lines: string[], start: ICAL.Time
     propertyPut(own, "rrule", []);
     propertyPut(own, "rdate", []);
     propertyPut(own, "exdate", []);
-    propertyPut(own, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
     propertyPut(own, "dtstart", [seriesTimeOf(series, "dtstart", start)]);
     if (propertyFind(own, "dtend") !== null) {
         const end: ICAL.Time = start.clone();
@@ -2071,10 +2067,22 @@ function textsPut(component: string[], entry: Entry, fields: EntryTexts): void {
 }
 
 /**
+ * Sets the `DTSTAMP` of an event or a to-do anew to now once its day changed, its `DTSTART` or its `DUE`,
+ * so it tells when it got its day, see `written` of {@link Entry}; any other change keeps it.
+ *
+ * @param old - Its lines as its file holds them
+ * @param component - Its changed lines, changed in place
+ */
+function stampRenew(old: string[], component: string[]): void {
+    if (["DTSTART", "DUE"].some((name: string): boolean => unfoldedOf(old, name) !== unfoldedOf(component, name)))
+        propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
+}
+
+/**
  * Writes the changed lines of an event or a to-do back where they stood in their file, or moves them into another file,
  * like the log of another year: writes them there first, so a failure in between leaves them twice
- * instead of losing them; its lines in the fixed order, see {@link linesOrdered}. Every other line of both files
- * stays as it is, byte for byte.
+ * instead of losing them; its lines in the fixed order, see {@link linesOrdered}, its `DTSTAMP` now once its day
+ * changed, see {@link stampRenew}. Every other line of both files stays as it is, byte for byte.
  *
  * @param file - Path of the `.ics` file of the event or the to-do
  * @param text - Lines of that file as read
@@ -2086,6 +2094,7 @@ function componentWrite(file: string, text: FileLines, place: [number, number], 
                         target: string): void {
 
     const [begin, end]: [number, number] = place;
+    stampRenew(text.lines.slice(begin, end), component);
     if (target === file)
         text.lines.splice(begin, end - begin, ...linesOrdered(component));
     else {
