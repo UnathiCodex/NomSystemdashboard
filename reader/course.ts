@@ -1770,7 +1770,8 @@ export function examSet(change: ExamChange): void {
  * - `from`: Monday of the week of its next session.
  * - `targets`: Its sessions not over, as the dates of the series.
  * - `weeks`: The weeks of the group and of the boxes from that week on.
- * - `drafts`: The boxes of the type as planned.
+ * - `drafts`: The boxes of the type as planned, one the university cancelled for my old group open again once it
+ *   goes to the new one, whose session that week meets.
  *
  * @param change - The group, as the page sends it
  * @returns The boxes of the series after the change, removed ones too, by their days
@@ -1806,6 +1807,10 @@ export function groupMine(change: MineChange): Planned[] {
         .filter((week: string): boolean => week >= from).sort();
     const drafts: Draft[] = draftsOf(typed, targets, [from, weeks[weeks.length - 1]],
         (box: Box): boolean => changeable(box));
+    drafts.filter((draft: Draft): boolean => draft.number === "NONE" && draft.box !== null
+        && draft.group !== draft.box.group).forEach((draft: Draft): void => {
+        draft.number = "";
+    });
     numbersOf(drafts, tutorialWeeksOf(groups, change.type));
     if (change.dry !== true) {
         draftsWrite(change.module, change.type, semester, drafts);
