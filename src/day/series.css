@@ -505,13 +505,31 @@
 }
 
 /* My series below the form of one of its groups, a still copy, see `groupFrom` in `series.ts`: where the dialog
-   stands, as large, dimmed with the page by the dialog of the group over it, which shows on top */
+   stood, then, in a short move, a step back, a little smaller, its top a little above the form of the group, see
+   `groupFrom` in `series.ts`, which stands in the middle. The dialog of the group dims the page less while my series stands below it, so my
+   series still reads behind it, and my series dims the page around it by its shadow, so the page stays as dark as
+   behind any dialog */
 #series-under {
     position: fixed;
     inset: 0;
     max-height: calc(100dvh - 2 * var(--gap));
     margin: auto;
     overflow: hidden;
+    scale: 0.94;
+    box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.4);
+    animation: series-back 250ms ease-out;
+}
+
+@keyframes series-back {
+    from {
+        scale: 1;
+        translate: 0;
+        box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0);
+    }
+}
+
+#series:has(~ #series-under[open])::backdrop {
+    background: rgb(0 0 0 / 0.35);
 }
 
 /* The heading of the form of a group, see `formFill` in `series.ts`, so it reads as the notice board of the uni,

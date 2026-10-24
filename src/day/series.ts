@@ -2386,11 +2386,11 @@ function groupWaits(form: Form): boolean {
  * {@link groupPickOf}: my series kept as I left it to go back to, see {@link groupBack}, and a still copy of it left
  * below, dimmed with the page, so the form of the group reads as a dialog of its own over my series, as a box opened
  * from the list stands over it, see {@link boxShow}; the group there or a new one without name. The form of the group
- * as wide as my series, so its rows stand as they do there, but a step lower, so the top of my series shows above it,
- * as a card on a stack.
+ * stands in the middle, fading in as my series steps back behind it, see `#series-under` in `series.css`, its top
+ * a little above the top of the form of the group, so it shows there, however long either is.
  * - `series`, `under`: The dialog, and that of the copy.
  * - `copy`: The form of my series copied, without the identifiers of its parts.
- * - `top`: Where the form of the group starts, a step below the top of my series.
+ * - `rem`, `lift`: The size of a `rem`, and how far my series moves up or down to stand so, its smaller size taken in.
  *
  * @param form - The form of my series
  * @param group - The group, like `05`, empty for a new one
@@ -2403,25 +2403,24 @@ function groupFrom(form: Form, group: string): void {
     under.replaceChildren(copy);
     under.show();
     under.scrollTop = series.scrollTop;
-    const top: number = under.getBoundingClientRect().top + 2.5 * parseFloat(getComputedStyle(document.documentElement).fontSize);
-    series.style.margin = `${top}px auto auto`;
-    series.style.maxHeight = `calc(100dvh - ${top}px - var(--gap))`;
+    series.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250, easing: "ease-out" });
     groupBack = form;
     groupStart(form.type, group);
+    const rem: number = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const lift: number = series.getBoundingClientRect().top - 1.5 * rem - under.offsetTop - 0.03 * under.offsetHeight;
+    under.style.translate = `0 ${lift}px`;
 }
 
 /**
  * Takes away the still copy of my series below the form of a group, see {@link groupFrom}, once that form goes back
- * to my series or the dialog closes, the dialog back where it stands.
+ * to my series or the dialog closes.
  * - `under`: The dialog of the copy.
  */
 function underClose(): void {
     const under: HTMLDialogElement = document.getElementById("series-under") as HTMLDialogElement;
-    const series: HTMLDialogElement = document.getElementById("series") as HTMLDialogElement;
-    series.style.margin = "";
-    series.style.maxHeight = "";
     under.close();
     under.replaceChildren();
+    under.style.translate = "";
 }
 
 /**
