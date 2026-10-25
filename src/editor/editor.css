@@ -201,47 +201,20 @@
 }
 
 /* Headings, lists and quotes stand in the elements of the scripts view and take its look,
-   see `./preview.ts`, but not its space above headings and around quotes:
-   CodeMirror measures no space between lines, so the empty line before a block gives it */
+   see `./preview.ts`, but not its space around them:
+   CodeMirror measures no space between lines, so the empty lines of the file give it */
 .editor-text.markdown :is(h1, h2, h3, h4, h5, h6, blockquote) {
     margin: 0;
 }
 
-/* Space above a heading and the little room around a list item,
-   which the scripts view gives their elements, given to their lines instead,
-   by the sizes of `../notes/notes.css`: CodeMirror measures lines, not the elements around them,
-   and a heading's element still stands around what takes the place of the lines far above
+/* No space of their own around headings, only the empty lines of the file above and below them;
+   the little room around a list item, which the scripts view gives its element,
+   given to its lines instead: CodeMirror measures lines, not the elements around them,
+   and an element still stands around what takes the place of the lines far above
    or below the screen, so its space pushed every line below off from where CodeMirror placed it,
    and a click or Arrow Down landed a line or two lower */
 .editor-text.markdown :is(h1, h2, h3, h4, h5, h6, li) {
     padding-block: 0;
-}
-
-.editor-text.markdown :is(h1, h2) > .cm-line {
-    padding-top: 2em;
-}
-
-/* The heading on the first line of the file, and the heading of the block a section shows alone,
-   see `aloneOf` in `round.ts`, the first on the page, without the room above a heading,
-   so the text starts right below the status line */
-.editor-text.markdown .cm-content > :is(h1, h2, h3, h4):first-child > .cm-line,
-.editor-text.markdown :is(h1, h2) > .cm-line.round-first {
-    padding-top: 0;
-}
-
-/* A heading right below the folded section of a heading of its level without the room
-   above a heading, so folded headings stand close below each other as a list,
-   see `belowFoldIs` in `preview.ts` */
-.editor-text.markdown :is(h1, h2, h3, h4) > .cm-line.cm-below-fold {
-    padding-top: 0;
-}
-
-.editor-text.markdown h3 > .cm-line {
-    padding-top: 1em;
-}
-
-.editor-text.markdown h4 > .cm-line {
-    padding-top: 0.5em;
 }
 
 .editor-text.markdown li > .cm-line:first-child {
@@ -252,13 +225,32 @@
     padding-bottom: 0.075em;
 }
 
-/* An empty line between two paragraphs or other blocks,
-   where a new paragraph begins, a small gap, a third of an empty line,
-   less than the room above a heading;
-   a visible empty line, the spacer `⠀` alone, stays one line high,
-   see `spaceLook` in `preview.ts` */
+/* A single empty line, where a new paragraph begins, a small gap, a third of a line,
+   as high as the cursor on it; the first of two or more in a row without height,
+   so the others show as full empty lines, see `spaceLook` in `preview.ts` */
 .editor-text.markdown .cm-line.cm-gap {
     height: calc(var(--empty-line) / 3);
+    line-height: calc(var(--empty-line) / 3);
+}
+
+.editor-text.markdown .cm-line.cm-absorbed {
+    height: 0;
+    line-height: 0;
+    overflow: hidden;
+}
+
+/* A point right after the sub-points of the point before it with the small gap of a single empty
+   line above it, its bullet moved down with its text, see `itemLook` in `preview.ts` */
+.editor-text.markdown li.cm-nest-end {
+    --nest-end: calc(var(--empty-line) / 3);
+}
+
+.editor-text.markdown li.cm-nest-end > .cm-line:first-child {
+    padding-top: calc(var(--nest-end) + 0.075em);
+}
+
+.editor-text.markdown ul > li.cm-nest-end::before {
+    top: calc(var(--nest-end) + 0.075em + 0.5lh - 0.15em);
 }
 
 /* Markup shown, like `##` and `**`, and the markers of lists in the faint grey of list markers */

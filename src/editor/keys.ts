@@ -3,33 +3,30 @@
  *
  * The keys of a Markdown file in the editor, as in Obsidian, see `./editor.ts`;
  * they go before CodeMirror's usual keys:
- * - In plain text Enter starts a new paragraph, a line break and an empty line,
- *   see {@link paragraphBreak},
- *   and Backspace at the start of a paragraph
- *   after it takes the empty line away again, see {@link gapBackward}.
- * - Enter continues a list, a task list or a quote on the next line,
+ * - In plain text and in a heading Enter writes one empty line more, wherever the cursor stands,
+ *   before a new paragraph a line break and an empty line, see {@link paragraphBreak}.
+ * - Enter continues a list or a task list on the next line,
  *   and on an empty item moves it one level out, at the outermost level ends the list;
  *   on a further line of a point it starts the next point too,
- *   on a spacer line the next point of its level, see {@link furtherContinue}.
- * - Shift+Enter goes on in the same paragraph or point on the next line, a single line break,
- *   in a list a spacer line without a new bullet;
- *   on a line with nothing visible, like the one a Shift+Enter just left, it keeps the spacer `⠀`,
- *   so Shift+Enter twice leaves a visible empty line, see {@link pointContinue}.
- *   Backspace right after the `-` of a new, empty item makes it the same spacer line,
- *   see {@link spacerBackward},
- *   else right after the `-` of an item or the `>` of a quote takes it away;
- *   Backspace on an empty spacer line takes the line away, see {@link spacerRemove};
- *   a further line whose text is all taken away, by Backspace, Delete or cutting,
- *   stays a spacer line, see {@link spacerKeep}.
- *   On an empty spacer line `- ` starts the next point of its level,
- *   below a numbered point a sub-point, `-` and Tab a sub-point,
- *   and text typed there belongs to the point of its level,
- *   or after the list to no point, also in Obsidian,
- *   see {@link lineTyping} and {@link waitingIndent}.
+ *   on a line of blanks below a list the next point of the level they reach,
+ *   an empty line above it, see {@link furtherContinue}.
+ * - Enter and Shift+Enter in a quote write its next `> ` line, see {@link quoteContinue}.
+ * - Shift+Enter goes on in the same paragraph or point on the next line, a single line break;
+ *   twice it leaves an empty line, see {@link pointContinue}.
+ * - Text typed first on a full empty line becomes a paragraph of its own,
+ *   see {@link paragraphTyping}.
+ * - Backspace takes away one line or one step, and nothing else moves:
+ *   at the start of a line an empty line above it, then the line break,
+ *   before the text of a heading too, see {@link headingBackward};
+ *   on an empty line the line, the cursor at the end of the line above;
+ *   right after the `-` of an item or the `>` of a quote the `-` or `>`,
+ *   the `-` of an item below another one leaving the blanks of a further line of the point above,
+ *   then each Backspace a level of the blanks, then the line, as CodeMirror does.
+ *   Delete does the same forwards, at the end of a line with the next one,
+ *   see {@link markupForward}.
  * - Tab moves a list item one step in, Shift+Tab one step out,
- *   always with its sub-points and further lines, see {@link itemIndent}, and a spacer line,
- *   or a line of blanks below a list, one level, see {@link spacerIndent};
- *   every change of a list counts
+ *   always with its sub-points and further lines, taking the `-` or number of the list it joins,
+ *   see {@link itemIndent}; every change of a list counts
  *   its numbered points in order again, a sub-list from `1.`, see {@link listChange};
  *   outside a list Tab writes a tab where the cursor is,
  *   on several lines picked it moves them all one step in, and Shift+Tab one step out.
@@ -43,7 +40,6 @@
  * - Ctrl+D takes away the line of the cursor, or the lines picked, as Obsidian's Delete paragraph.
  * - Arrow Up and Arrow Down go past the rows of a link or formula the cursor shows
  *   as its text in one step, and Arrow Down past a folded heading or point, see {@link lineMove};
- *   Home on an empty spacer line keeps the cursor on it, see {@link spacerHome};
  *   End goes past the hidden `]]` of a link that ends the line, see {@link lineEnd}.
  *
  * - `@codemirror/state`, `@codemirror/view`: The text with its cursor, and the keys.
@@ -105,6 +101,40 @@ export const spacerRule: RegExp = /^[ \t]*⠀/;
  * Empty spacer line: its indentation and the spacer, nothing after it.
  */
 const emptySpacerRule: RegExp = /^[ \t]*⠀$/;
+
+/**
+ * Tells an empty line: nothing or only blanks, in a quote only its `>`,
+ * drawn with the empty lines in a row with it, see `spaceLook` in `./preview.ts`;
+ * a line of code, of an HTML block or of a formula is none.
+ * - `node`: A piece of syntax at the start of the line, from the innermost outwards.
+ *
+ * @param state - Text and syntax tree
+ * @param line - The line
+ * @returns Whether it is empty
+ */
+export function emptyIs(state: EditorState, line: Line): boolean {
+    if (!/^[ \t>]*$/.test(line.text)) return false;
+    for (
+        let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.from, 1);
+        node !== null;
+        node = node.parent
+    )
+        if (/^(?:FencedCode|CodeBlock|HTMLBlock|CommentBlock|InlineMath)$/.test(node.name))
+            return false;
+    return /^[ \t]*$/.test(line.text) || quoteMarkIs(state, line);
+}
+
+/**
+ * Tells a line that starts with the `>` of a quote, not with a `>` of plain text.
+ *
+ * @param state - Text and syntax tree
+ * @param line - The line
+ * @returns Whether it does
+ */
+function quoteMarkIs(state: EditorState, line: Line): boolean {
+    const blanks: number = /^[ \t]*/.exec(line.text)?.[0].length ?? 0;
+    return syntaxTree(state).resolveInner(line.from + blanks, 1).name === "QuoteMark";
+}
 
 /**
  * Gives the indentation of the text of a point, as my notes indent a further line of it:
@@ -236,32 +266,46 @@ function proseIs(state: EditorState, line: Line): boolean {
 }
 
 /**
+ * Gives what the next line of the quote at a place begins with:
+ * the indentation and every `>` of its line, of a quote in a quote too, and a space, like `> `.
+ * - `node`: A piece of syntax at the place, from the innermost outwards.
+ * - `marks`: The indentation and the `>` of the line.
+ *
+ * @param state - Text
+ * @param pos - The place, like the cursor
+ * @returns What the next line begins with,
+ *   `null` outside a quote, in a list within it and on a line of a quote without `>`
+ */
+function quoteMarksOf(state: EditorState, pos: number): string | null {
+    for (
+        let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, -1);
+        node !== null;
+        node = node.parent
+    ) {
+        if (node.name === "ListItem") return null;
+        if (node.name !== "Blockquote") continue;
+        const marks: RegExpExecArray | null = /^[ \t]*(?:>[ \t]?)*>/.exec(
+            state.doc.lineAt(pos).text,
+        );
+        return marks === null ? null : `${marks[0]} `;
+    }
+    return null;
+}
+
+/**
  * Goes on in the same paragraph or point on the next line, with Shift+Enter,
  * where I want a new line but no new paragraph or bullet, as Enter starts them,
  * see {@link paragraphBreak} and {@link furtherContinue}:
  * a single line break, the new line with the indentation of the point's text in a list,
- * see {@link textIndentationOf}, else with that of the line.
- * In a list the new line is a spacer line, see {@link spacer}, the cursor after the spacer,
- * so Markdown keeps it in its point while it is empty;
- * text typed takes the place of the spacer, see {@link lineTyping}.
- * A line with nothing visible before the cursor,
- * like the one a Shift+Enter just left empty, keeps a spacer,
- * so Shift+Enter twice leaves a visible empty line within the paragraph or point,
- * never an empty line, which would end it,
- * and so does the line left behind by Shift+Enter before the text of a line.
- * The preview shows a spacer line one line high, in a list in its point, see `./preview.ts`.
- * In a heading, a quote, a table,
- * code or an HTML block a plain new line with the indentation of the line.
+ * see {@link textIndentationOf}, in a quote with its `> `, see {@link quoteMarksOf},
+ * as Enter writes it there, else with the indentation of the line.
+ * A line left with nothing but blanks, like the one a Shift+Enter just wrote, becomes empty,
+ * so Shift+Enter twice leaves an empty line, and the cursor goes on under the text of the point,
+ * where Markdown keeps the next text in the point.
  * - `range`: The cursor, or what is picked, which the line break replaces.
  * - `line`: Its line.
- * - `own`: Indentation of the line.
- * - `indentation`: Indentation of the new line.
- * - `before`, `after`: The text of the line before and after the cursor.
- * - `prose`: Whether the line holds prose, see {@link proseIs}.
- * - `blank`: Whether nothing visible stands before the cursor in prose, so the line keeps a spacer.
- * - `head`: What the line keeps before the line break.
- * - `start`: What the new line begins with:
- *   the indentation of the line where its text moves down, a point too, else that of the new line.
+ * - `before`: The text of the line before the cursor, nothing for blanks only.
+ * - `start`: What the new line begins with.
  *
  * @param view - The editor
  * @returns `true`, as it always takes the key
@@ -269,21 +313,17 @@ function proseIs(state: EditorState, line: Line): boolean {
 const pointContinue: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.from);
-    const own: string = /^[ \t]*/.exec(line.text)?.[0] ?? "";
-    const indentation: string = textIndentationOf(line.text) ?? own;
-    const before: string = view.state.sliceDoc(line.from, range.from);
-    const after: string = view.state.sliceDoc(range.to, view.state.doc.lineAt(range.to).to);
-    const prose: boolean = proseIs(view.state, line);
-    const blank: boolean = prose && /^[ \t]*⠀?$/.test(before);
-    const head: string = blank ? own + spacer : before;
+    const before: string = view.state.sliceDoc(line.from, range.from).replace(/^[ \t]+$/, "");
     const start: string =
-        after !== "" && blank
-            ? own
-            : indentation +
-              (prose && after === "" && itemOf(view.state, line) !== null ? spacer : "");
+        textIndentationOf(line.text) ??
+        quoteMarksOf(view.state, range.from) ??
+        /^[ \t]*/.exec(line.text)?.[0] ??
+        "";
     view.dispatch({
-        changes: { from: line.from, to: range.to, insert: head + view.state.lineBreak + start },
-        selection: { anchor: line.from + head.length + view.state.lineBreak.length + start.length },
+        changes: { from: line.from, to: range.to, insert: before + view.state.lineBreak + start },
+        selection: {
+            anchor: line.from + before.length + view.state.lineBreak.length + start.length,
+        },
         scrollIntoView: true,
         userEvent: "input",
     });
@@ -480,52 +520,6 @@ const spacerRemove: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Takes away the gap between two paragraphs with Backspace at the start of the one below it,
- * in one step, as Enter wrote it, see {@link paragraphBreak}: the empty lines above it go,
- * so its text joins the paragraph above as its next line, as Shift+Enter would have written it, or,
- * while the new paragraph is still empty, the cursor goes back to the end of the text above.
- * Only in plain text, a paragraph or an empty line between blocks,
- * see {@link proseIs}, outside a list; anywhere else it leaves the key to the next.
- * - `range`: The cursor.
- * - `line`: Its line.
- * - `above`: The last line with text above the empty lines, `null` for none.
- * - `empty`: Whether the line of the cursor is empty, a new paragraph without text.
- * - `from`, `to`: What goes: the empty lines, with the empty line of the cursor.
- *
- * @param view - The editor
- * @returns Whether it took the key
- */
-const gapBackward: Command = (view: EditorView): boolean => {
-    const range: SelectionRange = view.state.selection.main;
-    const line: Line = view.state.doc.lineAt(range.head);
-    if (
-        view.state.selection.ranges.length > 1 ||
-        !range.empty ||
-        line.number === 1 ||
-        !/^[ \t]*$/.test(view.state.sliceDoc(line.from, range.head)) ||
-        !/^[ \t]*$/.test(view.state.doc.line(line.number - 1).text) ||
-        itemOf(view.state, line) !== null ||
-        !proseIs(view.state, line)
-    )
-        return false;
-
-    let above: Line | null = view.state.doc.line(line.number - 1);
-    while (above !== null && /^[ \t]*$/.test(above.text))
-        above = above.number > 1 ? view.state.doc.line(above.number - 1) : null;
-    const empty: boolean = /^[ \t]*$/.test(line.text);
-    const from: number =
-        above === null ? 0 : empty ? above.to : above.to + view.state.lineBreak.length;
-    const to: number = empty ? line.to : line.from;
-    view.dispatch({
-        changes: { from: from, to: to },
-        selection: { anchor: from + (empty ? 0 : range.head - line.from) },
-        scrollIntoView: true,
-        userEvent: "delete.backward",
-    });
-    return true;
-};
-
-/**
  * Leaves a further line of a point in its place when all its text is taken away,
  * by Backspace on its last character, Ctrl+Backspace, Delete or cutting what is picked:
  * the line left with only its indentation becomes a spacer line,
@@ -678,26 +672,46 @@ const spacerHome: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Starts the next point with Enter on a further line of a point, the lines written below its text,
- * see {@link pointContinue}, as Enter does on the line of its `-`, as Obsidian does:
- * the new line takes the point's tabs and its `-`, or its number counted on, like `2.` after `1.`,
- * and what stood right of the cursor;
- * an empty further line becomes the new point itself, so no empty line stays behind.
- * On a spacer line the point is that of its level, see {@link spacerItemOf},
- * so Enter goes on with the list of the level Shift+Tab moved it to, see {@link spacerIndent};
- * the points after it count on, see {@link listChange}.
+ * Gives the start of the next point after a point: its indentation and its `-`,
+ * or its number counted on, like `2. ` after `1. `.
+ * - `point`: Its indentation, then its `-`, or its number and the `.` or `)` after it.
+ *
+ * @param state - Text
+ * @param item - The point, `ListItem`
+ * @returns The start of the next point, `null` for a point written otherwise
+ */
+function nextPointOf(state: EditorState, item: SyntaxNode): string | null {
+    const point: RegExpExecArray | null = /^([ \t]*)(?:([-*+])|(\d+)([.)]))(?:[ \t]|$)/.exec(
+        state.doc.lineAt(item.from).text,
+    );
+    return point === null
+        ? null
+        : `${point[1]}${point[2] ?? `${Number(point[3]) + 1}${point[4]}`} `;
+}
+
+/**
+ * Starts the next point with Enter where a list goes on without a `-` on the line, as Obsidian does,
+ * the points after it counted on, see {@link listChange}:
+ * - On a further line of a point, the lines written below its text, see {@link pointContinue},
+ *   as Enter does on the line of its `-`: the next point after that point,
+ *   with what stood right of the cursor; before the text of the line its blanks go,
+ *   so an empty line stands above the new point.
+ * - On a line of only blanks below a list,
+ *   like the one Backspace left of a point by taking its `-` away,
+ *   the next point of the level its blanks reach: of the innermost point above
+ *   whose text they reach, see {@link itemsOf}; the line becomes an empty line above the new point,
+ *   so the list goes on after a gap, a group of its own.
+ *   A line indented less than any text of the points above, at the left edge too,
+ *   stands outside the list.
  * Anywhere else it leaves the key to the next, CodeMirror's Markdown,
  * which continues a list from the line of a `-`.
  * - `range`: The cursor.
  * - `line`: Its line.
- * - `item`: The list item it stands in, `null` outside a list.
- * - `first`: The first line of the item, with its `-` or number.
- * - `blank`: Whether the line of the cursor holds nothing
- *   but the room of a further line, maybe with a spacer;
- *   the item is then that of the line above, for a spacer line that of its level.
- * - `point`: Its tabs, then its `-`,
- *   or its number and the `.` or `)` after it; `null` for no point.
+ * - `blank`: Whether the line holds blanks only, at least one.
+ * - `above`: The nearest line with text above a line of blanks.
+ * - `item`: The point the new point follows, `null` for none.
  * - `insert`: What the line of the new point begins with.
+ * - `from`: Where the change begins: the start of the line with only blanks before the cursor.
  *
  * @param view - The editor
  * @returns Whether it took the key
@@ -705,29 +719,33 @@ const spacerHome: Command = (view: EditorView): boolean => {
 const furtherContinue: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
-    const blank: boolean = line.length > 0 && /^\s*⠀?$/.test(line.text);
+    const blank: boolean = /^[ \t]+$/.test(line.text);
+    let above: Line = line;
+    while (blank && above.number > 1 && /^[ \t]*$/.test(above.text))
+        above = view.state.doc.line(above.number - 1);
     const item: SyntaxNode | null = !range.empty
         ? null
-        : spacerRule.test(line.text)
-          ? spacerItemOf(view.state, line)
-          : blank && line.number > 1
-            ? itemOf(view.state, view.state.doc.line(line.number - 1))
-            : itemAt(view.state);
+        : blank
+          ? (itemsOf(view.state, above).findLast(
+                (point: SyntaxNode): boolean =>
+                    columnsOf(textIndentationOf(view.state.doc.lineAt(point.from).text) ?? "") <=
+                    columnsOf(line.text),
+            ) ?? null)
+          : itemAt(view.state);
     if (item === null || view.state.doc.lineAt(item.from).number === line.number) return false;
 
-    const first: Line = view.state.doc.lineAt(item.from);
-    const point: RegExpExecArray | null = /^([ \t]*)(?:([-*+])|(\d+)([.)]))[ \t]/.exec(first.text);
-    if (point === null) return false;
-    const insert: string = `${point[1]}${point[2] ?? `${Number(point[3]) + 1}${point[4]}`} `;
+    const insert: string | null = nextPointOf(view.state, item);
+    if (insert === null) return false;
+    const from: number = /^[ \t]*$/.test(view.state.sliceDoc(line.from, range.head))
+        ? line.from
+        : range.head;
     listChange(view, {
-        changes: blank
-            ? { from: line.from, to: line.to, insert: insert }
-            : { from: range.head, insert: view.state.lineBreak + insert },
-        selection: {
-            anchor: blank
-                ? line.from + insert.length
-                : range.head + view.state.lineBreak.length + insert.length,
+        changes: {
+            from: from,
+            to: blank ? line.to : range.head,
+            insert: view.state.lineBreak + insert,
         },
+        selection: { anchor: from + view.state.lineBreak.length + insert.length },
         scrollIntoView: true,
         userEvent: "input",
     });
@@ -735,9 +753,28 @@ const furtherContinue: Command = (view: EditorView): boolean => {
 };
 
 /**
+ * Writes the next line of a quote with Enter, as Shift+Enter does, see {@link pointContinue}:
+ * each `> ` line of a quote is like a point of a list,
+ * so its source lines stay together; Backspace right after the `> ` of an empty line takes it away,
+ * which leaves the quote, see {@link markdownKeys}.
+ * A list in a quote it leaves to the next, CodeMirror's Markdown, which continues the list.
+ *
+ * @param view - The editor
+ * @returns Whether it took the key
+ */
+const quoteContinue: Command = (view: EditorView): boolean =>
+    view.state.selection.ranges.length === 1 &&
+    quoteMarksOf(view.state, view.state.selection.main.from) !== null &&
+    pointContinue(view);
+
+/**
  * Continues a list on Enter by CodeMirror's Markdown, on an empty point one level out,
  * with the numbers counted in order again, see {@link listChange},
- * so the `3.` of a sub-list below an emptied `2.` becomes `1.`.
+ * so the `3.` of a sub-list below an emptied `2.` becomes `1.`;
+ * never with the empty line CodeMirror writes before the new point in a list
+ * whose first points stand apart, so Enter adds one line, as everywhere.
+ * - `changes`: CodeMirror's changes without that empty line.
+ * - `removed`: Characters of the empty lines left out, all before the cursor.
  *
  * @param view - The editor
  * @returns Whether it took the key
@@ -745,36 +782,177 @@ const furtherContinue: Command = (view: EditorView): boolean => {
 const markupContinue: Command = (view: EditorView): boolean =>
     insertNewlineContinueMarkupCommand({ nonTightLists: false })({
         state: view.state,
-        dispatch: (transaction: Transaction): void =>
+        dispatch: (transaction: Transaction): void => {
+            const changes: ChangeSpec[] = [];
+            let removed: number = 0;
+            transaction.changes.iterChanges(
+                (from: number, to: number, fromB: number, toB: number, inserted: Text): void => {
+                    const insert: string = inserted.toString().replace(/^(\n)[ \t>]*\n/, "$1");
+                    removed += inserted.length - insert.length;
+                    changes.push({ from: from, to: to, insert: insert });
+                },
+            );
             listChange(view, {
-                changes: transaction.changes,
-                selection: transaction.selection,
+                changes: changes,
+                selection: { anchor: transaction.newSelection.main.head - removed },
                 scrollIntoView: true,
                 userEvent: transaction.annotation(Transaction.userEvent),
-            }),
+            });
+        },
     });
 
 /**
- * Starts a new paragraph with Enter in plain text, outside lists and quotes,
- * as a word processor does: a line break and an empty line, the cursor on the line after it,
- * where Markdown begins the next paragraph, drawn as a small gap,
- * see `spaceLook` in `./preview.ts`;
+ * Takes away one empty line above a heading with Backspace right before its text, after its `#`,
+ * as Backspace does before any text: the heading moves up a line and stays a heading.
+ * With text right above it it leaves the key to the next, which takes away the blank after the `#`.
+ * - `range`: The cursor.
+ * - `line`: Its line.
+ *
+ * @param view - The editor
+ * @returns Whether it took the key
+ */
+const headingBackward: Command = (view: EditorView): boolean => {
+    const range: SelectionRange = view.state.selection.main;
+    const line: Line = view.state.doc.lineAt(range.head);
+    if (
+        !range.empty ||
+        line.number === 1 ||
+        !/^#{1,6}[ \t]+$/.test(view.state.sliceDoc(line.from, range.head)) ||
+        syntaxTree(view.state).resolveInner(line.from, 1).name !== "HeaderMark" ||
+        !emptyIs(view.state, view.state.doc.line(line.number - 1))
+    )
+        return false;
+    view.dispatch({
+        changes: { from: view.state.doc.line(line.number - 1).from, to: line.from },
+        scrollIntoView: true,
+        userEvent: "delete.backward",
+    });
+    return true;
+};
+
+/**
+ * Takes away the markup of the next line with Delete at the end of a line, step by step,
+ * as Backspace right after it does, see CodeMirror's `deleteMarkupBackward`:
+ * the `>` of a quote, the `-` or number of a point, then a level of its blanks,
+ * what CodeMirror's Markdown does not take, like a bare `>`, one character as Backspace does,
+ * the cursor staying where it is; only a line without markup it joins to the line, as CodeMirror does,
+ * and on an empty line it takes the line away, as Backspace does.
+ * - `range`: The cursor.
+ * - `line`: Its line.
+ * - `next`: The line below it.
+ * - `markup`: The blanks, `>` and `-` or number at the start of the next line.
+ * - `changed`: Sends a change of the text, the cursor staying where it is.
+ *
+ * @param view - The editor
+ * @returns Whether it took the key
+ */
+const markupForward: Command = (view: EditorView): boolean => {
+    const range: SelectionRange = view.state.selection.main;
+    const line: Line = view.state.doc.lineAt(range.head);
+    if (
+        !range.empty ||
+        range.head !== line.to ||
+        line.number === view.state.doc.lines ||
+        emptyIs(view.state, line)
+    )
+        return false;
+    const next: Line = view.state.doc.line(line.number + 1);
+    const markup: string =
+        /^[ \t]*(?:>[ \t]?)*(?:(?:[-*+]|\d+[.)])[ \t]+)?/.exec(next.text)?.[0] ?? "";
+    const changed: (changes: ChangeSpec) => void = (changes: ChangeSpec): void =>
+        view.dispatch({
+            changes: changes,
+            selection: { anchor: range.head },
+            scrollIntoView: true,
+            userEvent: "delete.forward",
+        });
+    if (markup.length === 0) return false;
+    if (
+        !deleteMarkupBackward({
+            state: view.state.update({ selection: { anchor: next.from + markup.length } }).state,
+            dispatch: (transaction: Transaction): void => changed(transaction.changes),
+        })
+    )
+        changed({ from: next.from + markup.length - 1, to: next.from + markup.length });
+    return true;
+};
+
+/**
+ * Writes the first text typed on a full empty line as a paragraph of its own, as Word does:
+ * on an empty line of two or more in a row, which shows as a full line,
+ * see `spaceLook` in `./preview.ts`,
+ * it writes the empty lines around the text it lacks, one above it, one below it before text
+ * or a list, two before a heading, none at the end of the note,
+ * so the text stands apart from both sides, an empty line left above it showing as a small gap;
+ * below a quote too, so text typed where Backspace took a `>` away stays out of the quote.
+ * - `line`: The line typed on.
+ * - `above`: Whether the line above it is empty.
+ * - `below`: Empty lines right below it.
+ * - `next`: The first line with text below it, `null` for none.
+ * - `wanted`: Empty lines it wants below it.
+ * - `before`: What it writes before the text.
+ *
+ * @returns Handler of typed text
+ */
+const paragraphTyping: Extension = EditorView.inputHandler.of(
+    (view: EditorView, from: number, to: number, text: string): boolean => {
+        const line: Line = view.state.doc.lineAt(from);
+        if (
+            from !== to ||
+            line.length > 0 ||
+            line.number === 1 ||
+            /[\r\n]/.test(text) ||
+            !emptyIs(view.state, line)
+        )
+            return false;
+
+        const above: boolean = emptyIs(view.state, view.state.doc.line(line.number - 1));
+        let below: number = 0;
+        let next: Line | null = null;
+        for (let number: number = line.number + 1; number <= view.state.doc.lines; number++) {
+            next = view.state.doc.line(number);
+            if (!emptyIs(view.state, next)) break;
+            below++;
+            next = null;
+        }
+        const wanted: number = next === null ? 0 : /^#{1,6}(?:[ \t]|$)/.test(next.text) ? 2 : 1;
+        if ((!above && (below === 0 || next === null)) || (above && below >= wanted)) return false;
+        const before: string = above ? "" : view.state.lineBreak;
+        view.dispatch({
+            changes: {
+                from: from,
+                insert: before + text + view.state.lineBreak.repeat(Math.max(wanted - below, 0)),
+            },
+            selection: { anchor: from + before.length + text.length },
+            scrollIntoView: true,
+            userEvent: "input.type",
+        });
+        return true;
+    },
+);
+
+/**
+ * Starts a new paragraph with Enter in plain text and in a heading, outside lists and quotes,
+ * as a word processor does: one empty line more wherever the cursor stands,
+ * the text below moved down by it; a single empty line shows as a small gap,
+ * two as one full empty line, see `spaceLook` in `./preview.ts`;
  * Shift+Enter stays in the paragraph on the next line, see {@link pointContinue}.
- * Before the text of a line within a paragraph it puts the empty line above that line,
- * and on an empty line right below text it writes the empty line, so there is never more than one;
- * at the start of a paragraph, below an empty line or a heading, it changes nothing,
- * since the paragraph is begun already and Markdown reads more empty lines as one.
- * In a heading, a list, a quote, a table, code or an HTML block,
- * or within a formula, it leaves the key to the next, CodeMirror's own new line,
- * so a heading gets no empty line below it.
+ * Within or at the end of a line a line break and an empty line, the cursor on the line after it,
+ * where Markdown begins the next paragraph, with the rest of the line,
+ * at the end of a line with an empty line below it, not the last line of the note,
+ * only the empty line,
+ * the cursor on the empty line that was there, so the cursor stands on a full empty line;
+ * before the text of a line, at the start of a paragraph or heading too, the empty line above it;
+ * on an empty line one more, as many as I press, in a list and in code too.
+ * On a line of a list, a quote, a table, code or an HTML block,
+ * or within a formula, it leaves the key to the next, CodeMirror's own new line.
  * - `range`: The cursor.
  * - `line`: Its line.
  * - `node`: A piece of syntax at the cursor,
- *   from the innermost outwards up to the block of the note it stands in,
- *   the note itself on an empty line between blocks.
- * - `above`: The line above it, `null` for none.
+ *   from the innermost outwards up to the block of the note it stands in.
  * - `textStart`: Whether the cursor stands before the text of its line,
- *   after its indentation at most.
+ *   after its indentation at most, in a heading after its `#` too.
+ * - `onEmpty`: Whether it stands at the end of a line with text and an empty line below it.
  * - `insert`: What it writes: before the text of a line at the start of the line.
  *
  * @param view - The editor
@@ -791,21 +969,23 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
     for (; node.parent !== null && node.parent.parent !== null; node = node.parent)
         if (node.name === "InlineMath" && node.from < range.head && range.head < node.to)
             return false;
-    if (line.length > 0 ? node.name !== "Paragraph" : node.parent !== null) return false;
+    if (line.length > 0 && !/^(?:Paragraph|ATXHeading\d)$/.test(node.name)) return false;
 
-    const above: Line | null = line.number > 1 ? view.state.doc.line(line.number - 1) : null;
-    const textStart: boolean = /^[ \t]*$/.test(view.state.sliceDoc(line.from, range.head));
-    if (
-        textStart &&
-        (above === null || /^\s*$/.test(above.text) || /^#{1,6}(?:[ \t]|$)/.test(above.text))
-    )
-        return true;
-    const insert: string = textStart
-        ? view.state.lineBreak
-        : view.state.lineBreak + view.state.lineBreak;
+    const textStart: boolean = (node.name === "Paragraph" ? /^[ \t]*$/ : /^[ \t]*#*[ \t]*$/).test(
+        view.state.sliceDoc(line.from, range.head),
+    );
+    const onEmpty: boolean =
+        !textStart &&
+        range.head === line.to &&
+        line.number + 1 < view.state.doc.lines &&
+        emptyIs(view.state, view.state.doc.line(line.number + 1));
+    const insert: string =
+        textStart || onEmpty ? view.state.lineBreak : view.state.lineBreak + view.state.lineBreak;
     view.dispatch({
         changes: { from: textStart ? line.from : range.head, insert: insert },
-        selection: { anchor: range.head + insert.length },
+        selection: {
+            anchor: range.head + insert.length + (onEmpty ? view.state.lineBreak.length : 0),
+        },
         scrollIntoView: true,
         userEvent: "input",
     });
@@ -850,14 +1030,21 @@ function itemAt(state: EditorState): SyntaxNode | null {
 /**
  * Runs one of CodeMirror's commands on the lines of a list item,
  * from the line of its `-` to its last sub-point or further line, as if they were picked,
+ * with a further change of the same text, like the `-` of the item made `4.`,
  * and keeps my cursor where it was in the text;
  * the numbers of the lists it touched count in order again, see {@link listChange}.
  *
  * @param view - The editor
  * @param item - The list item
  * @param command - CodeMirror's command, like `indentMore`
+ * @param further - The further change
  */
-function itemLinesRun(view: EditorView, item: SyntaxNode, command: StateCommand): void {
+function itemLinesRun(
+    view: EditorView,
+    item: SyntaxNode,
+    command: StateCommand,
+    further: ChangeSpec,
+): void {
     const lines: SelectionRange = EditorSelection.range(
         view.state.doc.lineAt(item.from).from,
         view.state.doc.lineAt(item.to).to,
@@ -866,8 +1053,13 @@ function itemLinesRun(view: EditorView, item: SyntaxNode, command: StateCommand)
         state: view.state.update({ selection: lines }).state,
         dispatch: (transaction: Transaction): void =>
             listChange(view, {
-                changes: transaction.changes,
-                selection: view.state.selection.map(transaction.changes, 1),
+                changes: [transaction.changes, further],
+                selection: view.state.selection.map(
+                    transaction.changes.compose(
+                        view.state.changes(further).map(transaction.changes),
+                    ),
+                    1,
+                ),
                 userEvent: transaction.annotation(Transaction.userEvent),
             }),
     });
@@ -877,10 +1069,18 @@ function itemLinesRun(view: EditorView, item: SyntaxNode, command: StateCommand)
  * Moves a list item one step in, Tab,
  * or out, Shift+Tab, with its sub-points and further lines, as Obsidian does:
  * in only below an item of its own list, under which it then stands, out only from a sub-point.
+ * It takes the `-` or number of the list it joins, see {@link nextPointOf}:
+ * out after the point it stood in, like `4.` after `3.`,
+ * in after the last sub-point of the item above, like `- ` below `- a`,
+ * where it starts a sub-list it keeps its own, a number counted from `1.` again.
  * Outside a list, and on lines picked beyond one item, it leaves the key to the next,
  * see {@link markdownKeys}.
  * - `item`: The list item of the cursor.
- * - `nested`: Whether it is a sub-point, an item of a list inside another item.
+ * - `parent`: The point it stands in, `null` for none.
+ * - `last`: The last piece of the item above it, a list for sub-points.
+ * - `before`: The point it follows in the list it joins, `null` for a new sub-list.
+ * - `mark`: Its `-` or number, `ListMark`.
+ * - `start`: The start of its line in the list it joins, `null` to keep its own.
  *
  * @param inward - Whether it moves in, else out
  * @returns The command
@@ -890,9 +1090,24 @@ function itemIndent(inward: boolean): Command {
         const item: SyntaxNode | null = itemAt(view.state);
         if (item === null) return false;
 
-        const nested: boolean = item.parent?.parent?.name === "ListItem";
-        if (inward && item.prevSibling?.name === "ListItem") itemLinesRun(view, item, indentMore);
-        else if (!inward && nested) itemLinesRun(view, item, indentLess);
+        const parent: SyntaxNode | null =
+            item.parent?.parent?.name === "ListItem" ? item.parent.parent : null;
+        const last: SyntaxNode | null =
+            item.prevSibling?.name === "ListItem" ? item.prevSibling.lastChild : null;
+        const before: SyntaxNode | null = inward
+            ? /^(?:BulletList|OrderedList)$/.test(last?.name ?? "")
+                ? (last?.lastChild ?? null)
+                : null
+            : parent;
+        const mark: SyntaxNode | null = item.getChild("ListMark");
+        const start: string | null = before === null ? null : nextPointOf(view.state, before);
+        const further: ChangeSpec =
+            mark === null || start === null
+                ? []
+                : { from: mark.from, to: mark.to, insert: start.trim() };
+        if (inward && item.prevSibling?.name === "ListItem")
+            itemLinesRun(view, item, indentMore, further);
+        else if (!inward && parent !== null) itemLinesRun(view, item, indentLess, further);
         return true;
     };
 }
@@ -1324,27 +1539,23 @@ const lineTyping: Extension = EditorView.inputHandler.of(
 /**
  * Keys of a Markdown file, see the top of this file;
  * Enter, Tab and Shift+Tab, Alt+Up and Alt+Down try the list item first,
- * Enter a new paragraph after it, Backspace, Tab and Shift+Tab a spacer line before it,
- * Backspace the gap before a paragraph after it, Tab a waiting `-` before that,
+ * Enter then the next line of a quote, a new paragraph and CodeMirror's list,
+ * Backspace an empty line above a heading before CodeMirror's markup, Delete the markup below,
  * then the key goes on to the next command, CodeMirror's own;
- * the first text typed on an empty line of a list where its level says, see {@link lineTyping};
- * and a further line emptied of its text kept as a spacer line, see {@link spacerKeep}.
+ * and the first text typed on a full empty line, see {@link paragraphTyping}.
  */
 export const markdownKeys: Extension = [
-    lineTyping,
-    spacerKeep,
+    paragraphTyping,
     Prec.high(
         keymap.of([
             { key: "Enter", run: furtherContinue },
-            { key: "Enter", run: markupContinue },
+            { key: "Enter", run: quoteContinue },
             { key: "Enter", run: paragraphBreak },
+            { key: "Enter", run: markupContinue },
             { key: "Shift-Enter", run: pointContinue },
-            { key: "Backspace", run: spacerBackward },
-            { key: "Backspace", run: spacerRemove },
-            { key: "Backspace", run: gapBackward },
+            { key: "Backspace", run: headingBackward },
             { key: "Backspace", run: deleteMarkupBackward },
-            { key: "Tab", run: waitingIndent },
-            { key: "Tab", run: spacerIndent(true), shift: spacerIndent(false) },
+            { key: "Delete", run: markupForward },
             { key: "Tab", run: itemIndent(true), shift: itemIndent(false) },
             { key: "Tab", run: insertTab, shift: indentLess },
             { key: "Alt-ArrowUp", run: itemMove(false) },
@@ -1356,7 +1567,6 @@ export const markdownKeys: Extension = [
             { key: "Mod-d", run: deleteLine },
             { key: "ArrowUp", run: lineMove(cursorLineUp), shift: lineMove(selectLineUp) },
             { key: "ArrowDown", run: lineMove(cursorLineDown), shift: lineMove(selectLineDown) },
-            { key: "Home", run: spacerHome },
             {
                 key: "End",
                 run: lineEnd(cursorLineBoundaryForward),

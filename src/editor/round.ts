@@ -304,9 +304,7 @@ function endOf(state: EditorState, block: Block): number {
 
 /**
  * Shows one block alone, as a card of Today asks:
- * the text before it and after it hidden whole;
- * its heading marked as the first on the page,
- * without the room above a heading, see `./editor.css`.
+ * the text before it and after it hidden whole.
  * - `start`: Start of its heading line.
  *
  * @param state - Text of the note
@@ -318,7 +316,6 @@ function aloneOf(state: EditorState, block: Block, end: number): Alone {
     const start: number = state.doc.line(block.line).from;
     const marks: Range<Decoration>[] = [];
     if (start > 0) marks.push(Decoration.replace({ block: true }).range(0, start - 1));
-    marks.push(Decoration.line({ class: "round-first" }).range(start));
     if (end < state.doc.length)
         marks.push(Decoration.replace({ block: true }).range(end + 1, state.doc.length));
     return { from: start, to: end, decorations: Decoration.set(marks) };
