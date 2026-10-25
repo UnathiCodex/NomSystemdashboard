@@ -23,7 +23,6 @@
  *   each shown one a line the cursor stands on, see {@link spaceLook};
  *   a point right after the sub-points of the point before it the same small gap above it,
  *   see {@link itemLook}; no room of their own around headings and paragraphs.
- *   A visible empty line, a line of only the spacer `⠀`, is a line of text, one line high.
  * - The type word of a block of a section at the start of a heading `##`,
  *   like `Definition. `, a small grey box before the name,
  *   as in the tree, hanging left of the page where the file has room, see `./editor.css`,
@@ -47,11 +46,9 @@
  *   as Obsidian shows a callout;
  *   a table opens whole over the file by the button at its top right,
  *   to edit as a spreadsheet, see `./table.ts`.
- * - Spacers `⠀` (U+2800) and invisible characters like the soft hyphen blank,
- *   as in the scripts view; the spacer of a spacer line without room,
- *   so the cursor on it stands where its text will begin, see {@link paragraphLook};
- *   within a selection a tab shows as a faint `→` and a spacer as a faint `·`,
- *   also where the look hides them, like the indentation of a list, so I see what I select,
+ * - Invisible characters like the soft hyphen blank, as in the scripts view;
+ *   within a selection a tab shows as a faint `→`,
+ *   also where the look hides it, like the indentation of a list, so I see what I select,
  *   see {@link invisiblesLook}.
  * - The cursor never stands in what is hidden, so every key moves it where I see it,
  *   see {@link caretPlace}.
@@ -113,8 +110,7 @@
  *   `Tutor` and `Head` of a table into links to their rows,
  *   and gives the people, a person by its name
  *   and the address of its row for the names under `## Modulverantwortliche`.
- * - `./keys.ts`: Tells an empty line, for the gaps between paragraphs and points,
- *   a spacer line and the indentation of the text of a list item, for where the item ends.
+ * - `./keys.ts`: Tells an empty line, for the gaps between paragraphs and points.
  * - `./round.ts`: Shows a block of a section alone, for a link to its heading.
  * - `./table.ts`: Opens a table over the file, to edit as a spreadsheet.
  * - `./steps.ts`: Tells whether a section is folded.
@@ -147,7 +143,7 @@ import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
 import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
-import { columnsOf, emptyIs, spacerRule, textIndentationOf } from "./keys.ts";
+import { emptyIs } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
 import { foldedAt } from "./steps.ts";
 import { cellTitleShow, tableOpen } from "./table.ts";
@@ -270,9 +266,9 @@ const roleRule: RegExp = new RegExp(`^- (${peopleRoles.join("|")}): (\\S.*?)[ \\
 const solutionRule: RegExp = /^####[ \t]+Solution\b/;
 
 /**
- * Spacers `⠀` and invisible format characters, like the soft hyphen and the zero-width space.
+ * Invisible format characters, like the soft hyphen and the zero-width space.
  */
-const invisibleRule: RegExp = /[\u2800\p{Cf}]/gu;
+const invisibleRule: RegExp = /\p{Cf}/gu;
 
 /**
  * Markup hidden.
@@ -304,24 +300,24 @@ const hanging: Decoration = Decoration.mark({ class: "cm-hanging" });
 const kindBox: Decoration = Decoration.mark({ class: "block-kind" });
 
 /**
- * Spacer or other invisible character on the line of the cursor, drawn as a faint dot.
+ * Invisible character on the line of the cursor, kept invisible.
  */
-const spacerMark: Decoration = Decoration.mark({ class: "cm-spacer" });
+const invisibleMark: Decoration = Decoration.mark({ class: "cm-hidden-char" });
 
 /**
  * Marks of the invisible characters within a selection,
  * as VS Code shows them with `renderWhitespace: selection`:
- * a tab `→`, a spacer `⠀` `·`, see {@link invisiblesLook}.
+ * a tab `→`, see {@link invisiblesLook}.
  */
-const invisibleMarks: { [char: string]: string } = { "\t": "→", "⠀": "·" };
+const invisibleMarks: { [char: string]: string } = { "\t": "→" };
 
 /**
- * Tabs and spacers, which a selection shows by their marks, see {@link invisibleMarks}.
+ * Tabs, which a selection shows by their marks, see {@link invisibleMarks}.
  */
-const markedRule: RegExp = /[\t⠀]/g;
+const markedRule: RegExp = /\t/g;
 
 /**
- * Tab or spacer within a selection where it takes its room, its mark drawn faintly over it,
+ * Tab within a selection where it takes its room, its mark drawn faintly over it,
  * taking no room of its own, see `./editor.css`, by the character, see {@link invisibleMarks}.
  */
 const invisibleShown: { [char: string]: Decoration } = Object.fromEntries(
@@ -788,7 +784,7 @@ class BreakWidget extends WidgetType {
 }
 
 /**
- * Tabs and spacers `⠀` the look hides, like the indentation of a line of a list,
+ * Tabs the look hides, like the indentation of a line of a list,
  * as far as a selection covers them:
  * their marks, see {@link invisibleMarks}, faint left of where the text begins,
  * or of the bullet or number of a point, taking no room, so I see what I select,
@@ -1607,50 +1603,19 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
 }
 
 /**
- * List: its lines in a `ul` or `ol`, up to where its last item ends, see {@link itemEndOf},
- * as the scripts view draws them.
+ * List: its lines in a `ul` or `ol`, as the scripts view draws them.
  *
  * @param look - Look being built
  * @param node - `BulletList` or `OrderedList`
  * @returns `true`, to look into its items
  */
 function listLook(look: Look, node: SyntaxNode): boolean {
-    wrap(
-        look,
-        node,
-        node.name === "BulletList" ? "ul" : "ol",
-        {},
-        node.lastChild !== null ? itemEndOf(look, node.lastChild) : node.to,
-    );
+    wrap(look, node, node.name === "BulletList" ? "ul" : "ol");
     return true;
 }
 
 /**
- * Finds where a list item ends by the indentation of its lines:
- * Markdown reads spacer lines right below it into its text, whatever their indentation,
- * see `spacerLevelsOf` in `./keys.ts`;
- * those at its end that do not reach its text belong to a point it stands in, or to no list,
- * and stand after it, so a spacer line with the indentation of the text of `- Estimator` right
- * below its sub-point `\t- θ` ends `θ`, but stays in `Estimator`.
- * - `first`: The first line of the item.
- * - `text`: Columns of the indentation of its text.
- * - `line`: Its last line so far.
- *
- * @param look - Look being built
- * @param node - `ListItem`
- * @returns End of its last line
- */
-function itemEndOf(look: Look, node: SyntaxNode): number {
-    const first: Line = look.state.doc.lineAt(node.from);
-    const text: number = columnsOf(textIndentationOf(first.text) ?? "");
-    let line: Line = look.state.doc.lineAt(node.to);
-    while (line.number > first.number && spacerRule.test(line.text) && columnsOf(line.text) < text)
-        line = look.state.doc.line(line.number - 1);
-    return line.to;
-}
-
-/**
- * List item: its lines in an `li`, up to where it ends, see {@link itemEndOf},
+ * List item: its lines in an `li`,
  * which draws its bullet or number as in the scripts view, a number as written,
  * so a step skipped, like `4.` after `2.`, keeps its number;
  * while the cursor is on its first line, without them, as its marker shows there as written,
@@ -1684,7 +1649,7 @@ function itemLook(look: Look, node: SyntaxNode): boolean {
         attributes.class = `${attributes.class ?? ""} cm-nest-end`.trim();
     if (node.parent?.name === "OrderedList" && mark !== null)
         attributes.value = String(parseInt(look.state.sliceDoc(mark.from, mark.to)));
-    wrap(look, node, "li", attributes, itemEndOf(look, node));
+    wrap(look, node, "li", attributes);
     if (node.getChild("BulletList") !== null || node.getChild("OrderedList") !== null)
         foldLook(look, line, true);
     return true;
@@ -1722,13 +1687,9 @@ function listMarkLook(look: Look, node: SyntaxNode): boolean {
 
 /**
  * Paragraph: the indentation of its lines hidden,
- * as the scripts view leaves it out, in a list item putting them under the item's text,
- * and with it the spacer of a spacer line, see `spacerRule` in `./keys.ts`,
- * so the line is blank without the room of a blank and the cursor on it stands
- * where its text begins, never one blank further right.
+ * as the scripts view leaves it out, in a list item putting them under the item's text.
  * - `first`: The first line of the paragraph.
  * - `line`: One of its lines.
- * - `blank`: Its indentation, with the spacer of a spacer line.
  *
  * @param look - Look being built
  * @param node - `Paragraph`, or `Task`, the paragraph of a task item
@@ -1737,16 +1698,11 @@ function listMarkLook(look: Look, node: SyntaxNode): boolean {
 function paragraphLook(look: Look, node: SyntaxNode): boolean {
     const first: Line = look.state.doc.lineAt(node.from);
     if (/^[ \t]*$/.test(look.state.sliceDoc(first.from, node.from)))
-        hide(
-            look,
-            first.from,
-            look.state.sliceDoc(node.from, node.from + 1) === "⠀" ? node.from + 1 : node.from,
-        );
+        hide(look, first.from, node.from);
     const last: number = look.state.doc.lineAt(node.to).number;
     for (let number: number = first.number + 1; number <= last; number++) {
         const line: Line = look.state.doc.line(number);
-        const blank: number = /^[ \t]*⠀?/.exec(line.text)?.[0].length ?? 0;
-        hide(look, line.from, line.from + blank);
+        hide(look, line.from, line.from + (/^[ \t]*/.exec(line.text)?.[0].length ?? 0));
     }
     return true;
 }
@@ -1754,7 +1710,7 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
 /**
  * Gives how much of the start of a line the look hides,
  * see {@link paragraphLook} and {@link listMarkLook}:
- * of a line of a paragraph its indentation, with the spacer of a spacer line;
+ * of a line of a paragraph its indentation;
  * of the line of a list item the indentation before its `-` or number;
  * nothing of a line of blanks, a code block, a table or a quote, whose blanks show.
  * - `blanks`: Its indentation.
@@ -1772,9 +1728,7 @@ function hiddenStartOf(state: EditorState, line: Line): number {
         node !== null;
         node = node.parent
     ) {
-        if (node.name === "Paragraph" || node.name === "Task")
-            return blanks + (line.text[blanks] === "⠀" ? 1 : 0);
-        if (node.name === "ListItem") return blanks;
+        if (["Paragraph", "Task", "ListItem"].includes(node.name)) return blanks;
         if (["FencedCode", "CodeBlock", "HTMLBlock", "Table", "Blockquote"].includes(node.name))
             return 0;
     }
@@ -1785,7 +1739,7 @@ function hiddenStartOf(state: EditorState, line: Line): number {
  * Keeps the cursor off what the look hides, so every key moves it where I see it:
  * put into the hidden start of a line,
  * see {@link hiddenStartOf}, by a click, Home or an arrow up or down,
- * it goes to where the text begins, on an empty spacer line to its end;
+ * it goes to where the text begins;
  * moved left out of the text of a line it goes on to the end of the line above,
  * as from the start of any line.
  * Only for a cursor moved alone, never while text is picked or changed.
@@ -2041,12 +1995,11 @@ function spaceLook(look: Look): void {
 }
 
 /**
- * Keeps the spacers and invisible characters on the lines of the cursor invisible,
- * see {@link invisibleRule}.
+ * Keeps the invisible characters on the lines of the cursor invisible, see {@link invisibleRule}.
  *
  * @param look - Look being built
  */
-function spacersLook(look: Look): void {
+function invisibleCharsLook(look: Look): void {
     if (!look.focused) return;
 
     for (const range of look.state.selection.ranges) {
@@ -2055,17 +2008,17 @@ function spacersLook(look: Look): void {
             .sliceDoc(from, look.state.doc.lineAt(range.to).to)
             .matchAll(invisibleRule))
             look.decorations.push(
-                spacerMark.range(from + match.index, from + match.index + match[0].length),
+                invisibleMark.range(from + match.index, from + match.index + match[0].length),
             );
     }
 }
 
 /**
- * Shows the tabs and spacers `⠀` within each selection by their marks, see {@link invisibleMarks},
+ * Shows the tabs within each selection by their marks, see {@link invisibleMarks},
  * so I see what I select and can check they are there: where they take their room,
  * like a tab within a line, each mark over its character, see {@link invisibleShown};
  * where the look hides them,
- * like the indentation of a line of a list or the spacer of a spacer line,
+ * like the indentation of a line of a list,
  * the marks of what the selection covers in place of the hidden stretch,
  * left of where the text begins, see {@link InvisiblesWidget}.
  * Nothing outside a selection, and nothing takes room, so no text moves.
@@ -2205,7 +2158,7 @@ function drawingOf(state: EditorState): Drawing {
     });
     responsiblesLook(look);
     spaceLook(look);
-    spacersLook(look);
+    invisibleCharsLook(look);
     invisiblesLook(look);
     return {
         decorations: Decoration.set(look.decorations, true),
@@ -2528,7 +2481,7 @@ function pressHold(event: MouseEvent, view: EditorView): void {
  * like the tabs of the indentation of a list, which has no room to point at:
  * an end of a drag where the pointer stood left of where the text of its line begins,
  * in the room of the bullets and guide lines, reaches to the start of the line, as in VS Code,
- * so its tabs and spacers are selected, shown by their marks, see {@link invisiblesLook},
+ * so its tabs are selected, shown by their marks, see {@link invisiblesLook},
  * and go with Backspace or Delete. Set once the button is up and the editor has made the selection.
  * - `down`: Where the pointer went down, across the page.
  * - `range`: The selection made.

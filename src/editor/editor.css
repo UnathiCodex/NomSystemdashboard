@@ -458,16 +458,14 @@
     background: var(--chosen);
 }
 
-/* Spacers and invisible characters on the line of the cursor invisible, as away from it:
-   no faint line, which looked odd, and never a dot,
-   which at the start of a spacer line in a list looked like a second bullet;
-   they keep their room, so nothing moves */
-.editor-text .cm-spacer {
+/* Invisible characters on the line of the cursor invisible, as away from it:
+   no faint line, which looked odd; they keep their room, so nothing moves */
+.editor-text .cm-hidden-char {
     color: transparent;
 }
 
-/* Tabs and spacers within a selection, as VS Code shows them with `renderWhitespace: selection`:
-   a tab as `→`, a spacer as `·`, barely visible, the grey of the guide lines and fainter still;
+/* Tabs within a selection, as VS Code shows them with `renderWhitespace: selection`:
+   a tab as `→`, barely visible, the grey of the guide lines and fainter still;
    over their own room, and where the look hides them,
    like the indentation of a list, left of where the text begins;
    taking no room, so nothing moves, see `invisiblesLook` in `preview.ts` */

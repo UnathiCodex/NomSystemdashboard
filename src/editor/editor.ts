@@ -6,7 +6,7 @@
  * The scripts view, `/scripts`, is this editor, always writing,
  * with no view beside it to read only.
  * It edits the text of the file itself: saving writes exactly the edited text, nothing reformatted,
- * tabs, spacers `⠀` and soft hyphens,
+ * tabs and soft hyphens,
  * spaces at the ends of lines and the line breaks of the file as they were.
  * A note of my modules is saved right into its file in `NomSkillingmodules`,
  * and the reader keeps each change as a diff, so the AI learns my style from my corrections.
