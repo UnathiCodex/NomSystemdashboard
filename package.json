@@ -3,11 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node --watch reader/reader.ts"
+    "start": "node --watch reader/reader.ts",
+    "format": "prettier --write \"reader/**/*.ts\" \"src/**/*.{ts,css}\""
+  },
+  "prettier": {
+    "printWidth": 100,
+    "tabWidth": 4
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
     "playwright": "^1.64.0",
+    "prettier": "3.9.10",
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
   },
