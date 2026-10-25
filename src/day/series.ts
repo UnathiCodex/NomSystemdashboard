@@ -1314,9 +1314,9 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
                 days.extras.splice(days.extras.indexOf(extra), 1);
                 preview.filled();
             })] : [],
-        ...grouped !== null && !grouped.made && box.time !== "" && !mineAt(box.time)
+        ...grouped !== null && !grouped.made && !mineAt(box.time || box.day)
             ? [pendingActionOf(Plus, "Add as a box of mine", (): void => {
-                extraAdd(box.time).catch((error: unknown): void => console.error(error));
+                extraAdd(box.time || box.day).catch((error: unknown): void => console.error(error));
             })] : [],
         ...session !== undefined ? [pendingActionOf(Pencil, "Change this session alone", (): void => {
             sessionTyped = {
@@ -1412,14 +1412,16 @@ async function sessionSave(session: NonNullable<typeof sessionTyped>): Promise<v
 }
 
 /**
- * Tells whether a box of mine of the course stands at a moment, so a session of a group there is mine already and offers
- * no `+`, see {@link pendingEndOf}.
+ * Tells whether a box of mine of the type of the form stands at the start of a session, so the session is mine already
+ * and offers no `+`, see {@link pendingEndOf}, as the reader tells it, see `weekPick` in `reader/course.ts`: a box at
+ * that moment, or of a session without times, see `Session` there, a box without time on that day.
  *
- * @param time - The moment, like `2026-10-27T13:00:00.000Z`
- * @returns Whether a box of mine starts then
+ * @param start - The start, like `2026-10-27T13:00:00.000Z`, or the day of a session without times, like `2026-11-06`
+ * @returns Whether a box of mine stands there
  */
-function mineAt(time: string): boolean {
-    return (course?.boxes ?? []).some((one: Box): boolean => one.time !== "" && Date.parse(one.time) === Date.parse(time));
+function mineAt(start: string): boolean {
+    return (course?.boxes ?? []).some((one: Box): boolean => one.type === typing?.type && ((one.time || one.day) === start
+        || one.time !== "" && Date.parse(one.time) === Date.parse(start)));
 }
 
 /**
@@ -1427,7 +1429,8 @@ function mineAt(time: string): boolean {
  * tutorial in one week, see `weekPick` in `reader/course.ts`, the group as saved, not as typed since; the form stays,
  * its list shown anew, see {@link seriesRefresh}, the session now without `+`, so I take one session after another.
  *
- * @param start - The start of the session as ISO instant, like `2026-11-05T15:00:00.000Z`
+ * @param start - The start of the session as ISO instant, like `2026-11-05T15:00:00.000Z`, of a session without times
+ *   its day, like `2026-11-06`, which makes a box without time of its length
  * @throws {Error} - When the reader cannot answer
  */
 async function extraAdd(start: string): Promise<void> {
@@ -1703,12 +1706,10 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
  * Makes the list of the boxes of a series, see the top of this file: the boxes by their days, by month,
  * see {@link monthListOf}; below them `+`, see {@link addRowOf}, or the extra being typed, see {@link draftRowOf},
  * but for a group, whose sessions are the university's; of a plain series an extra is one of its single dates,
- * its `RDATE`, see `extras` of `Plain` in `reader/rules.ts`. The sessions of a group numbered by date from 1 on, as
- * my boxes are, one the university cancelled keeping its place in the count but showing `–`, one the change removes
- * none.
+ * its `RDATE`, see `extras` of `Plain` in `reader/rules.ts`. The sessions of a group numbered by their weeks of the
+ * semester as the reader numbers them, as my boxes are, see `groupApply` in `reader/course.ts`, one the university
+ * cancelled showing `–`, one the change removes none.
  * - `had`: Whether the series had boxes before.
- * - `count`: How many sessions of a group are numbered so far.
- * - `numbered`: The boxes, the sessions of a group with their numbers.
  * - `items`: Each box with its place in time and its row.
  * - `list`: The list.
  *
@@ -1719,14 +1720,7 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
  */
 function boxListOf(planned: Planned[], preview: Preview, redraw: () => void): HTMLElement {
     const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
-    let count: number = 0;
-    const numbered: Planned[] = grouped === null ? planned : planned.map((box: Planned): Planned => {
-        if (box.change === "removed")
-            return box;
-        count += 1;
-        return { ...box, number: box.state === "university" ? "NONE" : String(count) };
-    });
-    const items: [string, HTMLElement][] = numbered.map((box: Planned): [string, HTMLElement] =>
+    const items: [string, HTMLElement][] = planned.map((box: Planned): [string, HTMLElement] =>
         [box.time || box.day, sessionTyped !== null && sessionOf(box)?.id === sessionTyped.id
             ? sessionRowOf(sessionTyped, redraw) : boxRowOf(box, had, preview)]);
     const list: HTMLElement = monthListOf(items);

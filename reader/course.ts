@@ -979,24 +979,25 @@ function lecturesBeginOf(semester: string): string | undefined {
  * lies before or no first day is known, to the last session, that is not wholly free of lectures,
  * see {@link lectureFreeOf}, so a week the university cancelled one session of keeps its place, and a group added
  * or changed numbers no week anew; none for a type without groups.
- * - `typed`: Its groups.
- * - `starts`: The days of the sessions of its groups, the earliest first.
- * - `begin`: The first day of lectures of its semester, `undefined` for none.
+ * - `starts`: The days of the sessions of its groups and the days given, the earliest first.
+ * - `begin`: The first day of lectures of their semester, `undefined` for none.
  * - `first`: Monday of the first week.
  * - `free`: The days the university does not teach between them.
  * - `weeks`: The weeks.
  *
  * @param groups - The groups of the course
  * @param type - The type, like `TU`
+ * @param days - Days of sessions of a group as the form of a group changes it, see {@link groupApply}; none when left
+ *   out
  * @returns The Mondays of its weeks, the earliest first
  */
-function tutorialWeeksOf(groups: Group[], type: string): string[] {
-    const typed: Group[] = groups.filter((group: Group): boolean => group.rule.type === type);
-    const starts: string[] = typed.flatMap((group: Group): string[] => group.sessions
-        .map((session: Session): string => dayOfStart(session.start))).sort();
+function tutorialWeeksOf(groups: Group[], type: string, days: string[] = []): string[] {
+    const starts: string[] = [...days, ...groups.filter((group: Group): boolean => group.rule.type === type)
+        .flatMap((group: Group): string[] => group.sessions.map((session: Session): string => dayOfStart(session.start)))]
+        .sort();
     if (starts.length === 0)
         return [];
-    const begin: string | undefined = lecturesBeginOf(typed[0].rule.semester);
+    const begin: string | undefined = lecturesBeginOf(semesterOf(starts[0]));
     const first: string = mondayOf(begin !== undefined && begin < starts[0] ? begin : starts[0]);
     const last: string = mondayOf(starts[starts.length - 1]);
     const free: Set<string> = lectureFreeOf(first, dayAdd(last, 4));
@@ -1005,6 +1006,18 @@ function tutorialWeeksOf(groups: Group[], type: string): string[] {
         if ([0, 1, 2, 3, 4].some((day: number): boolean => !free.has(dayAdd(week, day))))
             weeks.push(week);
     return weeks;
+}
+
+/**
+ * Gives the number of the week of a day among the weeks of a type with groups, see {@link tutorialWeeksOf}: of a day
+ * before them all `1`, of one after them all that of the last week.
+ *
+ * @param weeks - The weeks, by their Mondays, the earliest first
+ * @param day - The day, like `2026-11-04`
+ * @returns The number, like 4
+ */
+function weekNumberOf(weeks: string[], day: string): number {
+    return Math.max(1, weeks.filter((week: string): boolean => week <= mondayOf(day)).length);
 }
 
 /**
@@ -1485,7 +1498,7 @@ function draftsOf(series: Box[], targets: Target[], weeks: [string, string], tou
  * `NONE` and counts not; one of another app or one date of a series of a file, which the dashboard does not number,
  * keeps its number, the next going on from it.
  * Of a type with groups each box takes the number of its week instead, see {@link tutorialWeeksOf}, a second box
- * of a week the same, one of a week before them all `1`, one after them all the number after the last week.
+ * of a week the same, see {@link weekNumberOf}.
  * - `placeOf`: Gives the place of a draft in the series: where its box stood before its first push, else its time,
  *   or its day for a box without time, after the change.
  * - `last`: The number of the box before.
@@ -1509,9 +1522,8 @@ function numbersOf(drafts: Draft[], weeks: string[]): void {
                 return;
             }
             const place: string = placeOf(draft);
-            const week: string = mondayOf(place.length > 10 ? berlinDateOf(new Date(place)) : place);
             last = weeks.length === 0 ? last + 1
-                : Math.max(1, weeks.filter((one: string): boolean => one <= week).length);
+                : weekNumberOf(weeks, place.length > 10 ? berlinDateOf(new Date(place)) : place);
             draft.number = String(last);
         });
 }
@@ -2194,7 +2206,8 @@ export function groupPut(change: GroupNew): string {
  * on a session I marked cancelled cancelled by the university too, see `boxUniversity` in `boxes.ts`, and one
  * cancelled on a session I marked open again open again, numbered by its week again, see {@link numbersRenew}.
  * The preview shows a session changed alone with its own times and room while the group changes in place, and
- * of a group going on from today its sessions before today as they are.
+ * of a group going on from today its sessions before today as they are; each session numbered by its week
+ * of the semester as my boxes are, see {@link weekNumberOf}, one cancelled `NONE`, one it loses none.
  * - `rule`: The rule as sent, without extras and times of their own.
  * - `file`: The plan of the module.
  * - `today`: Today in Berlin time.
@@ -2212,6 +2225,7 @@ export function groupPut(change: GroupNew): string {
  * - `whole`: Whether it is written anew, not changed in place.
  * - `begun`: Whether it is written anew from today on, a group there already with a session before today.
  * - `kept`: Tells whether a day stays as it is, of a group going on from today a day before today.
+ * - `weeks`: The weeks of the type with groups with its dates, see {@link tutorialWeeksOf}.
  * - `planned`: Its sessions after the change, cancelled ones too, and those of the group there already it loses.
  * - `time`, `minutes`: The start and the length of a date.
  * - `was`: The session of the group there already on its day, `undefined` for none.
@@ -2272,6 +2286,7 @@ export function groupApply(change: GroupChange): Planned[] {
     const begun: boolean = whole && (old?.sessions ?? []).some((session: Session): boolean =>
         dayOfStart(session.start) < today);
     const kept: (day: string) => boolean = (day: string): boolean => begun && day < today;
+    const weeks: string[] = tutorialWeeksOf(groups, rule.type, dates.map((date: RuleDate): string => date.day));
     const planned: Planned[] = [
         ...dates.filter((date: RuleDate): boolean => !kept(date.day)).map((date: RuleDate): Planned => {
             const was: Session | undefined = sessionOn(date.day);
@@ -2280,7 +2295,8 @@ export function groupApply(change: GroupChange): Planned[] {
             const minutes: number | null = own && was !== undefined ? was.minutes : slotLengthOf(date);
             const had: boolean = was !== undefined || skipped.has(date.day);
             return {
-                id: "", day: date.day, time: time, minutes: minutes, number: "",
+                id: "", day: date.day, time: time, minutes: minutes,
+                number: cancelled(date) ? "NONE" : String(weekNumberOf(weeks, date.day)),
                 state: cancelled(date) ? "university" : had ? "open" : "new", pushed: false, editable: true,
                 retimable: false, attendees: rule.attendees,
                 change: !had ? "new" : shared || (was === undefined) !== cancelled(date)
@@ -2291,8 +2307,8 @@ export function groupApply(change: GroupChange): Planned[] {
         }),
         ...(old === undefined ? [] : datesOf(old.rule)).filter((date: RuleDate): boolean =>
             kept(date.day) && skipped.has(date.day)).map((date: RuleDate): Planned => ({
-            id: "", day: date.day, time: slotMomentOf(date.day, date.start), minutes: slotLengthOf(date), number: "",
-            state: "university", pushed: false, editable: false, retimable: false, change: "",
+            id: "", day: date.day, time: slotMomentOf(date.day, date.start), minutes: slotLengthOf(date),
+            number: "NONE", state: "university", pushed: false, editable: false, retimable: false, change: "",
             attendees: old?.rule.attendees ?? [],
         })),
         ...(old?.sessions ?? [])
@@ -2301,7 +2317,8 @@ export function groupApply(change: GroupChange): Planned[] {
             .map((session: Session): Planned => ({
                 id: "", day: dayOfStart(session.start), time: session.start === dayOfStart(session.start) ? ""
                     : session.start, minutes: session.minutes,
-                number: "", state: "open", pushed: false, editable: false, retimable: false,
+                number: kept(dayOfStart(session.start)) ? String(weekNumberOf(weeks, dayOfStart(session.start))) : "",
+                state: "open", pushed: false, editable: false, retimable: false,
                 change: kept(dayOfStart(session.start)) ? "" : "removed", attendees: session.attendees,
                 ...session.changed ? { location: session.location, locationLink: session.locationLink } : {},
             })),
