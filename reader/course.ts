@@ -95,7 +95,9 @@
 
 import { existsSync } from "node:fs";
 import { basename, dirname } from "node:path";
-import { boxDelete, boxDrop, boxesAdd, boxFind, boxUniversity, groupIs, numberedTypes, skillBoxesRead } from "./boxes.ts";
+import {
+    boxDelete, boxDrop, boxesAdd, boxFind, boxUniversity, groupIs, numberedTypes, overKeep, skillBoxesRead,
+} from "./boxes.ts";
 import {
     berlinDateOf, berlinDayStartOf, berlinInstantOf, berlinTimeOf, dayAdd, entriesRead, entryIdOf, entryRemove,
     fileEntriesRead, groupPropertyOf, icsTextOf, occurrenceLookup, occurrenceOwn, occurrencesTidy, propertiesPut,
@@ -1535,7 +1537,8 @@ function draftMoved(draft: Draft, box: Box): boolean {
  * `X-GROUP` while it goes to a group, and its `X-SEMESTER`; of a box that
  * stays only what changed against its file: skipped or open again, see `boxDrop` in `boxes.ts`, its day, its time
  * and its place as the dialog changes them, see `todoChange` in `calendar.ts`, its number, `NONE` once the university
- * cancelled it, and its group in their lines.
+ * cancelled it, and its group in their lines, one of a day over open again staying on its day, see `overKeep`
+ * in `boxes.ts`.
  * - `file`: The plan of the module.
  * - `stands`: A box that stays as its file holds it now.
  * - `code`: The code of the module, like `IN2028`.
@@ -1586,6 +1589,8 @@ function draftsWrite(module: string, type: string, semester: string, drafts: Dra
                 ["x-number", draft.number === "" ? [] : [draft.number]],
                 ["x-group", draft.group === "" ? [] : [draft.group]],
             ]);
+        if (stands.number === "NONE" && draft.number !== "NONE")
+            overKeep(box.id);
     });
 }
 

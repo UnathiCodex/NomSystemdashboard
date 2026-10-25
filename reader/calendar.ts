@@ -123,7 +123,8 @@ import type { CalendarSource } from "./sources.ts";
  *   `X-GROUP;X-PINNED=TRUE`,
  *   see `pinPut` in `course.ts`; false for any other entry.
  * - `written`: When the entry got its day, its `DTSTAMP`, as ISO instant, which the reader sets as it adds an entry
- *   and anew whenever its `DTSTART` or its `DUE` changes, see {@link componentWrite}, so a box is carried along
+ *   and anew whenever its `DTSTART` or its `DUE` changes, see {@link componentWrite}, or a box of a day over is taken
+ *   back to open, see {@link stampPut}, so a box is carried along
  *   only while it lies on its day or before, see `carriedOf` in `boxes.ts`; empty when the event has none.
  * - `version`: Fingerprint of the entry as its file holds it, the SHA-256 of its lines as read, in hexadecimal digits,
  *   which changes with any change of the entry, by the dashboard, another device, Claude or by hand, and with no change
@@ -2204,6 +2205,24 @@ export function propertiesPut(file: string, id: string,
         name, values.map((value: string | Date | Link | ICAL.Property): string | ICAL.Time | Link | ICAL.Property =>
             value instanceof Date ? writtenOf(value) : value)));
     componentWrite(file, text, place, event, file);
+}
+
+/**
+ * Sets the `DTSTAMP` of an event or a to-do to now, as if it got its day now, see `written` of {@link Entry}, like
+ * a box of a day over taken back to open, which so stays on its day, missed, see `overKeep` in `boxes.ts`.
+ * Every other line of the file stays as it is.
+ *
+ * @param file - Path of the `.ics` file
+ * @param id - Identifier of the to-do or the event
+ * @throws {Error} - When the file lies outside the new system or does not hold the to-do or the event once
+ */
+export function stampPut(file: string, id: string): void {
+    writeCheck(file);
+    const text: FileLines = linesRead(file);
+    const place: [number, number] = componentFind(text.lines, id);
+    const component: string[] = text.lines.slice(...place);
+    propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
+    componentWrite(file, text, place, component, file);
 }
 
 /**

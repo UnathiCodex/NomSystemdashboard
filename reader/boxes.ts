@@ -19,7 +19,8 @@
  * only once I change it, so its file then holds them as if I had pushed it, see {@link carryWrite}.
  * One I no longer mean to do I skip, see {@link boxDrop}; only a box that got its day on that day or before,
  * its `DTSTAMP`, is carried along, so one I add for a day that is over or move to one stays there, missed,
- * until its day changes again.
+ * until its day changes again; so does one of a day over I take back to open, skipped, cancelled by the university
+ * or done, see {@link overKeep}, where I skip it or log it again.
  * A box with a deadline is never pushed, so it is carried along to today as it is, see {@link boxesCarried}.
  * A lecture, an exercise, a tutorial and a sheet, a skill box of a type of {@link numberedTypes}, carries its number
  * in its series, the boxes of the same skill and type by date, as `X-NUMBER`, like `X-NUMBER:3`, the next one when
@@ -55,7 +56,8 @@
  *   like `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`, see `pushAdd`
  *   in `calendar.ts`; a push stays, also once the box moves back, which is one more push;
  * - when it got its day in `DTSTAMP`, set as it is added and anew with each change of its day, by a push, the dialog,
- *   the course or as it is carried along, see `componentWrite` in `calendar.ts`, never by another change; it is carried
+ *   the course or as it is carried along, see `componentWrite` in `calendar.ts`, and as one of a day over is taken back
+ *   to open, see {@link overKeep}, never by another change; it is carried
  *   along only while that lies on its day or before, see {@link carriedOf}; an occurrence of a series the `DTSTAMP`
  *   of its series, also once it is a component of its own, see `occurrenceOwn` in `calendar.ts`;
  * - its category, what, place, module, type, semester and note as an entry of the log has them, a skill box its
@@ -108,7 +110,7 @@
 import {
     berlinDateOf, berlinDayStartOf, berlinLater, dayAdd, entriesOnceRead, entriesRead, entryChange, entryIdOf,
     entryLookup, entryRemove, occurrenceLookup, occurrenceOwn, occurrencesTidy, propertiesPut, pushAdd,
-    seriesDayRemove, statusPut, todoAppend, todoChange,
+    seriesDayRemove, stampPut, statusPut, todoAppend, todoChange,
 } from "./calendar.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
 import { calendarFileOf, chaptersOf, linksOf, titleOf } from "./documents.ts";
@@ -329,6 +331,24 @@ function boxOwn(file: string, entry: Entry): void {
 function boxTidy(file: string, entry: Entry): void {
     if (entry.recurrence !== "")
         occurrencesTidy(file, entry.id);
+}
+
+/**
+ * Keeps a box of a day over on its day once I take its state back to open, skipped, cancelled by the university
+ * or done, see the top of this file: it gets its day anew, its `DTSTAMP` now, see `stampPut` in `calendar.ts`,
+ * so it stays there, missed, never carried along to today, see {@link carriedOf}, and I skip it or log it again
+ * there; one occurrence of a series alone, see {@link boxOwn}. A box of today or later stays as it is.
+ * - `file`, `entry`: The box with its file.
+ *
+ * @param id - Identifier of the box
+ * @throws {Error} - When the plan holds no such box, or its file lies outside the new system
+ */
+export function overKeep(id: string): void {
+    const [file, entry]: [string, Entry] = planEntryFind(id);
+    if (!entry.editable || dayOf(entry) >= berlinDateOf(new Date()))
+        return;
+    boxOwn(file, entry);
+    stampPut(file, id);
 }
 
 /**
@@ -937,7 +957,8 @@ export function boxesAdd(boxes: BoxNew[], dry: boolean): string[] {
  * see the top of this file: cancelled, its number becomes `NONE`, and every later box of its series with a number
  * moves up one, `5` becoming `4`, once, here; taken back, it gets the number after the last one before it, or
  * the first number after it, or `1`, and every later box with a number moves down one again, so the numbers are
- * as before. Boxes I cancelled myself keep their numbers. One occurrence of a series changes alone, see {@link boxOwn}.
+ * as before, and one of a day over stays on its day, see {@link overKeep}. Boxes I cancelled myself keep their numbers.
+ * One occurrence of a series changes alone, see {@link boxOwn}.
  * A box of my tutorials that goes to a group, numbered by its week, see `numbersRenew` in `course.ts`, moves no other
  * box: taken back, it gets `1` here and its week's number there, as the reader asks next, see `reader.ts`.
  * - `file`, `entry`, `box`: The box with its file.
@@ -968,6 +989,8 @@ export function boxUniversity(id: string, cancelled: boolean): void {
     const step: number = cancelled ? -1 : 1;
     boxOwn(file, entry);
     propertiesPut(file, id, [["x-number", [entry.group !== "" && !cancelled ? "1" : number]]]);
+    if (!cancelled)
+        overKeep(id);
     if (entry.group !== "")
         return;
     after.forEach((other: Entry): void => {
@@ -1156,7 +1179,8 @@ export function boxPush(id: string): void {
  * an event without status, as it was imported. One occurrence of a series drops alone, see {@link boxOwn},
  * like the lecture `IN2028 VO` on 26.10.2026, the series staying. A box carried along has the pushes it stands for
  * written first, see {@link carryWrite}, so it is dropped where it stands, like a box pushed by hand; taken back,
- * one occurrence of a series left with nothing of its own goes back to its series, see {@link boxTidy}.
+ * one occurrence of a series left with nothing of its own goes back to its series, see {@link boxTidy}, and one of
+ * a day over stays on its day, see {@link overKeep}.
  *
  * @param id - Identifier of the box
  * @param dropped - Whether to drop it, else to take it back
@@ -1174,8 +1198,10 @@ export function boxDrop(id: string, dropped: boolean): void {
         status = "NEEDS-ACTION";
     boxOwn(file, entry);
     statusPut(file, id, status);
-    if (!dropped)
+    if (!dropped) {
         boxTidy(file, entry);
+        overKeep(id);
+    }
 }
 
 /**
@@ -1212,16 +1238,22 @@ export function boxSubmit(id: string, submitted: boolean): void {
 /**
  * Opens a box again once the log entry written from it is removed: a done to-do of the new system becomes
  * `NEEDS-ACTION`; an occurrence of a series is open again by itself, and a box no longer in the plan stays as it is,
- * as one with a deadline does, since only my tick decides it, see {@link boxSubmit}.
+ * as one with a deadline does, since only my tick decides it, see {@link boxSubmit}; one of a day over stays on its
+ * day, see {@link overKeep}.
  * - `found`: Its `.ics` file and its entry, `undefined` when it is gone.
+ * - `at`: Place of the last `#` of the identifier, -1 for none.
  *
  * @param id - Identifier of the box
  */
 export function boxReopen(id: string): void {
-    const found: [string, Entry] | undefined = entryLookup(day.plan, id);
-    if (found !== undefined && found[1].todo && found[1].editable && found[1].status === "COMPLETED"
-        && found[1].deadline === "")
+    const at: number = id.lastIndexOf("#");
+    const found: [string, Entry] | undefined = entryLookup(day.plan, id)
+        ?? (at === -1 ? undefined : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)));
+    if (found === undefined || found[1].deadline !== "")
+        return;
+    if (found[1].todo && found[1].editable && found[1].status === "COMPLETED")
         statusPut(found[0], id, "NEEDS-ACTION");
+    overKeep(id);
 }
 
 /**
