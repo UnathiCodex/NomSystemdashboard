@@ -46,6 +46,7 @@
  * - `node:path`: Gives the folder of `Foods.md` and `Meals.md`.
  * - `./calendar.ts`: Reads the log, finds the file of an entry, writes the foods of an entry anew and gives the day
  *   of an instant in Berlin time.
+ * - `./markdown.ts`: Gives `Meals.md` the empty lines of my Markdown.
  * - `./sources.ts`: Names `Foods.md`, `Meals.md`, the log and the addresses of Open Food Facts,
  *   and tells which files the reader may write.
  */
@@ -53,6 +54,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { berlinDateOf, entriesRead, entryLookup, propertiesPut } from "./calendar.ts";
+import { markdownFormOf } from "./markdown.ts";
 import { food, writeAllowed } from "./sources.ts";
 
 import type { Entry } from "./calendar.ts";
@@ -350,6 +352,7 @@ function tableHeadOf(): string[] {
  */
 const fileHead: string[] = [
     "# Foods",
+    "",
     "Nutrients per 100 g, or per 100 ml for a drink; Portion and Pack in g or ml.",
     "",
     ...tableHeadOf(),
@@ -1413,8 +1416,8 @@ function mealNameOf(typed: string): string {
 /**
  * Reads my meals of `Meals.md` as it holds them, see {@link Composition}: a section per meal from its heading `###`,
  * its name, the line below it its short title when it is no row, then a row per food of its table, each food in its
- * order, see {@link mealHead}.
- * - `lines`: Lines of a section, its name first.
+ * order, see {@link mealHead}; empty lines left out.
+ * - `lines`: Lines of a section with text, its name first.
  * - `rows`: Rows of its table after its head.
  *
  * @returns My meals in the order of their sections, none while `Meals.md` does not exist
@@ -1424,7 +1427,7 @@ export function compositionsRead(): Composition[] {
         return [];
 
     return readFileSync(food.meals, "utf8").split(/^### /m).slice(1).map((section: string): Composition => {
-        const lines: string[] = section.trim().split("\n");
+        const lines: string[] = section.split("\n").filter((line: string): boolean => line.trim() !== "");
         const rows: string[][] = lines.filter((line: string): boolean => line.startsWith("|")).slice(tableHead)
             .map(cellsOf);
         return {
@@ -1458,7 +1461,8 @@ export function dishesRead(): Dish[] {
 /**
  * Writes my meals into `Meals.md` anew, its title first, then a section per meal: its name as heading `###`,
  * its short title below unless empty, then its table, see {@link mealHead}, a row per food, its standard grams whole
- * or to one decimal, empty where none is set; an empty line only before the next heading.
+ * or to one decimal, empty where none is set; with the empty lines of my Markdown, see `markdownFormOf`
+ * in `markdown.ts`.
  * - `sections`: Lines of the section of each meal.
  *
  * @param meals - My meals to write, in their order
@@ -1475,8 +1479,7 @@ function compositionsWrite(meals: Composition[]): void {
         }),
     ]);
     mkdirSync(dirname(food.meals), { recursive: true });
-    writeFileSync(food.meals, ["# Meals", ...sections.flatMap((section: string[], index: number): string[] =>
-        index === 0 ? section : ["", ...section]), ""].join("\n"));
+    writeFileSync(food.meals, markdownFormOf(["# Meals", ...sections.flat()].join("\n")));
 }
 
 /**

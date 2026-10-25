@@ -148,6 +148,7 @@ const nameOrder: Intl.Collator = new Intl.Collator("de");
  */
 const platformHead: string[] = [
     "# Online",
+    "",
     "Link is the platform's web app; an entry carries its own meeting link and passcode.",
     "",
     "| Platform | Provider | Link |",

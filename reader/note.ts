@@ -8,9 +8,12 @@
  *
  * ```
  * ## Gratitude
+ *
  * - Viele Socials getroffen
  *
+ *
  * ## About
+ *
  * - Univeranstaltungen so richtig begonnen
  * ```
  *
@@ -20,17 +23,21 @@
  * points, see {@link pointLinesOf}.
  * Every day has its note, made at its start with both headings empty, see {@link notesStart}, whether I write
  * into it or not; a section keeps its heading when I empty it, and every other line of a note stays as it is.
+ * Its empty lines are those of my Markdown, see `markdownFormOf` in `markdown.ts`, so two headings without points
+ * have two empty lines between them, the one below the first and the one before the second together.
  *
  * - `node:fs`: Works with files and folders on the disk.
  * - `node:path`: Builds file paths for the operating system.
  * - `./sources.ts`: Names the folder of the daily notes and tells which files the reader may write.
  * - `./calendar.ts`: Gives today in Berlin time and the moment its next day starts.
+ * - `./markdown.ts`: Gives a note the empty lines of my Markdown.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { diaryRoot, writeAllowed } from "./sources.ts";
 import { berlinDateOf, berlinInstantOf, dayAdd } from "./calendar.ts";
+import { markdownFormOf } from "./markdown.ts";
 
 
 /**
@@ -83,9 +90,10 @@ const emptyForm: RegExp = /^[ \t⠀]*(?:(?:[-*+]|\d+[.)])[ \t⠀]*)?$/;
 const headingForm: RegExp = /^#{1,6} /;
 
 /**
- * A daily note as each day starts: both headings, empty.
+ * A daily note as each day starts: both headings, empty, with the empty lines of my Markdown,
+ * `## Gratitude`, two empty lines, `## About`.
  */
-const emptyNote: string = titles.map((title: SectionTitle): string => `## ${title}\n`).join("");
+const emptyNote: string = markdownFormOf(titles.map((title: SectionTitle): string => `## ${title}`).join("\n"));
 
 
 /**
@@ -185,11 +193,12 @@ function pointLinesOf(text: string): string[] {
 }
 
 /**
- * Puts the new points of a section into the lines of a note, each section its heading and right below it its points,
- * parted from what follows by an empty line: in place of its old lines, without points only its heading; while the note has no such section, the section added, my gratitude before my points about the day
- * when the note has them already, else at the end of the note.
+ * Puts the new points of a section into the lines of a note, each section its heading and below it its points,
+ * without empty lines, which the note gets as it is written, see {@link sectionWrite}: in place of its old lines,
+ * without points only its heading; while the note has no such section, the section added, my gratitude before my points
+ * about the day when the note has them already, else at the end of the note.
  * - `found`: The section in the note, see {@link sectionFind}, `null` when the note has none.
- * - `block`: The section as written: its heading, and with points these and an empty line.
+ * - `block`: The section as written: its heading and its points.
  * - `next`: My points about the day, which my gratitude goes before, `null` for none and when they are added.
  *
  * @param lines - Lines of the note, changed in place
@@ -198,29 +207,21 @@ function pointLinesOf(text: string): string[] {
  */
 function sectionPut(lines: string[], title: SectionTitle, points: string[]): void {
     const found: [number, number] | null = sectionFind(lines, title);
-    const block: string[] = points.length === 0 ? [`## ${title}`] : [`## ${title}`, ...points, ""];
+    const block: string[] = [`## ${title}`, ...points];
     if (found !== null) {
         lines.splice(found[0], found[1] - found[0], ...block);
         return;
     }
 
     const next: [number, number] | null = title === "Gratitude" ? sectionFind(lines, "About") : null;
-    if (next !== null) {
-        lines.splice(next[0], 0, ...block);
-        return;
-    }
-    while (lines.length > 0 && lines[lines.length - 1].trim() === "")
-        lines.pop();
-    if (lines.length > 0 && !headingForm.test(lines[lines.length - 1]))
-        lines.push("");
-    lines.push(...block);
+    lines.splice(next?.[0] ?? lines.length, 0, ...block);
 }
 
 /**
  * Writes the text of a section into the daily note of its date, see {@link sectionPut}, both as points,
  * see {@link pointLinesOf}; an empty text leaves only its heading. A day without note, like one before
- * {@link notesStart}, gets one, with both headings. The note keeps no empty lines at its start and end, and ends
- * with a line break.
+ * {@link notesStart}, gets one, with both headings. The note is written with the empty lines of my Markdown,
+ * see `markdownFormOf` in `markdown.ts`, every other line as it is.
  * - `file`: The note of the date in the new system.
  * - `lines`: Lines of the note, those of {@link emptyNote} for a day without note.
  * - `points`: New point lines of the section, none for an empty text.
@@ -241,7 +242,7 @@ export function sectionWrite(section: SectionNew): void {
     const lines: string[] = (noteRead(date) ?? emptyNote).split("\n");
     sectionPut(lines, title, pointLinesOf(text));
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, `${lines.join("\n").trim()}\n`);
+    writeFileSync(file, markdownFormOf(lines.join("\n")));
 }
 
 /**
