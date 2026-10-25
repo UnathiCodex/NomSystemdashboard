@@ -1834,7 +1834,7 @@ export function examSet(change: ExamChange): void {
  * getting one, a box of a week it does not meet going, but every box a change may not change staying,
  * see {@link changeable}; a week before stays as it is, like this week's box at another group while the group meets
  * only from next week on. My own choices stay as they are, see {@link chosenIs}: those of another group besides,
- * a week I picked for one, where my group before met but holds no box of it, getting no box of the group either,
+ * a week that holds my own choices only, like one I picked for another group, getting no box of the group either,
  * and those of the group, each its box of its week from then on, its session in that week getting no second box.
  * With no series yet, its sessions to come become one. Then the boxes of the type are numbered anew,
  * see {@link numbersOf}, from 1 for a new series, and the group is pinned, see {@link pinPut}.
@@ -1852,9 +1852,8 @@ export function examSet(change: ExamChange): void {
  * - `own`: My boxes of the group already, my own choices so far.
  * - `chosen`: My own choices of other groups.
  * - `regular`: The boxes that follow the pin.
- * - `before`: The sessions of my group before, none for none.
- * - `picked`: The weeks I picked for another group: each holds a box of my own choice, and my group before met in it,
- *   but no box that follows the pin stands there.
+ * - `picked`: The weeks that hold my own choices only: each holds a box of my own choice, but no box that follows
+ *   the pin, like a week I picked for another group, also after I took my group back.
  * - `targets`: Its sessions not over, as the dates of the series, but those of a week picked or of a box of `own`.
  * - `week`, `taken`: The sessions of the week of such a box, and the one it stands for: on its day, else the first.
  * - `weeks`: The weeks of the group and of the boxes from that week on.
@@ -1894,11 +1893,8 @@ export function groupMine(change: MineChange): Planned[] {
     const own: Box[] = typed.filter((box: Box): boolean => box.group === change.group);
     const chosen: Box[] = typed.filter((box: Box): boolean => box.group !== change.group && chosenIs(box, pinned));
     const regular: Box[] = typed.filter((box: Box): boolean => !own.includes(box) && !chosen.includes(box));
-    const before: Session[] = groups.find((one: Group): boolean => one.rule.type === change.type
-        && one.rule.group === pinned)?.sessions ?? [];
     const picked: Set<string> = new Set(chosen.map(weekOf).filter((week: string): boolean =>
-        !regular.some((box: Box): boolean => weekOf(box) === week)
-        && before.some((session: Session): boolean => mondayOf(dayOfStart(session.start)) === week)));
+        !regular.some((box: Box): boolean => weekOf(box) === week)));
     let targets: Target[] = coming.map((session: Session): Target => targetOf(group, session))
         .filter((target: Target): boolean => !picked.has(mondayOf(target.day)));
     own.forEach((box: Box): void => {
