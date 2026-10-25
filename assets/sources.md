@@ -1,8 +1,10 @@
 ## Font
 
-Noto Sans, the variable font, unchanged: every weight in one file, upright and italic, in the three parts the page uses, Latin, Latin Extended and Greek.
+Noto Sans, the variable font, unchanged: every weight in one file,
+upright and italic, in the three parts the page uses, Latin, Latin Extended and Greek.
 
-- Project: [Noto Sans](https://github.com/notofonts/latin-greek-cyrillic), the files from [Fontsource](https://fontsource.org/fonts/noto-sans) 5.3.0
+- Project: [Noto Sans](https://github.com/notofonts/latin-greek-cyrillic),
+  the files from [Fontsource](https://fontsource.org/fonts/noto-sans) 5.3.0
 - License: [SIL OFL 1.1](fonts/NotoSans-OFL.txt)
 - Local files: [fonts](fonts/), read by `src/base.css`
 
@@ -15,7 +17,8 @@ Lucide 1.55.0, unchanged, only the icons the page uses.
 - License: [ISC](icons/LICENSE), the icons derived from Feather under MIT, see there
 - Local files: [icons](icons/), copies
 
-The page draws them from the npm package `lucide`, see `src/icons.ts`; the five areas stand written into `index.html`, so they show at once.
+The page draws them from the npm package `lucide`, see `src/icons.ts`;
+the five areas stand written into `index.html`, so they show at once.
 
 | Icon | Where |
 |---|---|
