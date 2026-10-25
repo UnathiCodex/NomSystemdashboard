@@ -451,7 +451,7 @@ fieldset.entry-times {
 
 /* Start and end in one row, the range dash between them as in the boxes,
    like `14.10.2026 (Wed) 10:15 – 10:45` or `18:00 – 19:30`, `--range-gap` on each side of the dash,
-   half an em, as every range written as text has it,
+   the width of a space in Noto Sans, as every range written as text has it,
    see `rangeDash` in `times.ts`, the dash going with the end;
    where the row is too narrow, like on a phone, the end with its dash goes on below */
 .entry-range {

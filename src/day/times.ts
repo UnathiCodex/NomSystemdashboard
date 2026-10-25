@@ -42,21 +42,12 @@ export const boxMinutes: number = 30;
 
 /**
  * The dash between the start and the end of a range written as text,
- * like `14:00 – 16:00`, with an en space, half an em, on each side,
- * clearly more than a space between words,
- * so a range of days like `29.10.2026 (Thu) – 04.02.2027 (Thu)` reads as two ends,
+ * like `14:00 – 16:00`, with a space on each side, as the dot between two parts of a line has it,
+ * in the plan, in the log and everywhere else,
  * and as far as the dash between two fields stands from them,
- * see `--range-gap` in `../variants.css`;
- * the dash of every range of the page but the times of a box, see {@link boxRangeDash}.
+ * see `--range-gap` in `../variants.css`.
  */
-export const rangeDash: string = "\u2002–\u2002";
-
-/**
- * The dash of the times of a box in the plan,
- * like `14:00 – 16:00`, with only a thin space on each side,
- * so the short line of a box keeps its times together.
- */
-export const boxRangeDash: string = "\u2009–\u2009";
+export const rangeDash: string = " – ";
 
 /**
  * Writes the time of a date as `HH:MM`, the value of a time field.
