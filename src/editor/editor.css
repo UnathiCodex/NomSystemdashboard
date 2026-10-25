@@ -212,7 +212,7 @@
    and an empty line, half as high, is the air between two;
    a line with a tall formula grows by it, a formula on a line of its own keeps its height */
 .editor-text.markdown {
-    --reading-line-height: 1.55;
+    --reading-line-height: 1.8;
 }
 
 /* No space of their own around headings, only the empty lines of the file above and below them;
