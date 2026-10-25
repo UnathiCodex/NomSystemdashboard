@@ -6,6 +6,7 @@ Noto Sans, the variable font, unchanged: every weight in one file, upright and i
 - License: [SIL OFL 1.1](fonts/NotoSans-OFL.txt)
 - Local files: [fonts](fonts/), read by `src/base.css`
 
+
 ## Icons
 
 Lucide 1.55.0, unchanged, only the icons the page uses.
