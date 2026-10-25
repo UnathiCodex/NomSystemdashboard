@@ -1854,7 +1854,8 @@ export function examSet(change: ExamChange): void {
  * from the week of its next session that is not over on, the boxes that follow the pin, those of my group before
  * and those without group, go to its sessions, its day, time, length, room, tutor and group, a session without box
  * getting one, a box of a week it does not meet going, but every box a change may not change staying,
- * see {@link changeable}; a week before stays as it is, like this week's box at another group while the group meets
+ * see {@link changeable}, and every box of a day over, see {@link ahead}, as the past never changes by a pin, its
+ * session then getting no box either; a week before stays as it is, like this week's box at another group while the group meets
  * only from next week on. My own choices stay as they are, see {@link chosenIs}: those of another group besides,
  * a week that holds my own choices only, like one I picked for another group, getting no box of the group either,
  * and those of the group, each its box of its week from then on, its session in that week getting no second box.
@@ -1927,7 +1928,7 @@ export function groupMine(change: MineChange): Planned[] {
     const weeks: string[] = [from, ...targets.map((target: Target): string => mondayOf(target.day)),
         ...regular.map(weekOf)].filter((week: string): boolean => week >= from).sort();
     const drafts: Draft[] = [...draftsOf(regular, targets, [from, weeks[weeks.length - 1]],
-        (box: Box): boolean => changeable(box)), ...[...own, ...chosen].map(draftOf)];
+        (box: Box): boolean => changeable(box) && ahead(box)), ...[...own, ...chosen].map(draftOf)];
     drafts.filter((draft: Draft): boolean => draft.number === "NONE" && draft.box !== null
         && draft.group !== draft.box.group).forEach((draft: Draft): void => {
         draft.number = "";
