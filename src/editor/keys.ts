@@ -13,7 +13,7 @@
  * - Enter and Shift+Enter in a quote write its next `> ` line, see {@link quoteContinue}.
  * - Shift+Enter goes on in the same paragraph or point on the next line, a single line break;
  *   twice it leaves an empty line, see {@link pointContinue}.
- * - Text typed first on a full empty line becomes a paragraph of its own,
+ * - Text typed first on an empty line below another becomes a paragraph of its own,
  *   see {@link paragraphTyping}.
  * - Backspace takes away one line or one step, and nothing else moves:
  *   at the start of a line an empty line above it, then the line break,
@@ -51,7 +51,7 @@
  * - `@codemirror/lang-markdown`: Continues a list on Enter and takes its markup away on Backspace.
  */
 
-import { EditorSelection, EditorState, Prec, Transaction } from "@codemirror/state";
+import { EditorSelection, EditorState, Prec, StateField, Transaction } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import {
     cursorLineBoundaryForward,
@@ -86,8 +86,7 @@ import type { Command } from "@codemirror/view";
 import type { SyntaxNode, SyntaxNodeRef } from "@lezer/common";
 
 /**
- * Tells an empty line: nothing or only blanks, in a quote only its `>`,
- * drawn with the empty lines in a row with it, see `spaceLook` in `./preview.ts`;
+ * Tells an empty line: nothing or only blanks, in a quote only its `>`;
  * a line of code, of an HTML block or of a formula is none.
  * - `node`: A piece of syntax at the start of the line, from the innermost outwards.
  *
@@ -512,19 +511,16 @@ const markupForward: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Writes the first text typed on a full empty line as a paragraph of its own, as Word does:
- * on an empty line of two or more in a row, which shows as a full line,
- * see `spaceLook` in `./preview.ts`,
- * it writes the empty lines around the text it lacks, one above it, one below it before text
- * or a list, two before a heading, none at the end of the note,
- * so the text stands apart from both sides, an empty line left above it showing as a small gap;
- * below a quote too, so text typed where Backspace took a `>` away stays out of the quote.
+ * Writes the first text typed on an empty line right below another empty line
+ * as a paragraph of its own, as Word does:
+ * it writes the empty lines below the text it lacks, one before text or a list,
+ * two before a heading, none at the end of the note,
+ * so the text stands apart from both sides.
+ * On a single empty line between two paragraphs it writes nothing more.
  * - `line`: The line typed on.
- * - `above`: Whether the line above it is empty.
  * - `below`: Empty lines right below it.
  * - `next`: The first line with text below it, `null` for none.
  * - `wanted`: Empty lines it wants below it.
- * - `before`: What it writes before the text.
  *
  * @returns Handler of typed text
  */
@@ -536,11 +532,11 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
             line.length > 0 ||
             line.number === 1 ||
             /[\r\n]/.test(text) ||
-            !emptyIs(view.state, line)
+            !emptyIs(view.state, line) ||
+            !emptyIs(view.state, view.state.doc.line(line.number - 1))
         )
             return false;
 
-        const above: boolean = emptyIs(view.state, view.state.doc.line(line.number - 1));
         let below: number = 0;
         let next: Line | null = null;
         for (let number: number = line.number + 1; number <= view.state.doc.lines; number++) {
@@ -550,14 +546,10 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
             next = null;
         }
         const wanted: number = next === null ? 0 : /^#{1,6}(?:[ \t]|$)/.test(next.text) ? 2 : 1;
-        if ((!above && (below === 0 || next === null)) || (above && below >= wanted)) return false;
-        const before: string = above ? "" : view.state.lineBreak;
+        if (below >= wanted) return false;
         view.dispatch({
-            changes: {
-                from: from,
-                insert: before + text + view.state.lineBreak.repeat(Math.max(wanted - below, 0)),
-            },
-            selection: { anchor: from + before.length + text.length },
+            changes: { from: from, insert: text + view.state.lineBreak.repeat(wanted - below) },
+            selection: { anchor: from + text.length },
             scrollIntoView: true,
             userEvent: "input.type",
         });
@@ -568,14 +560,15 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
 /**
  * Starts a new paragraph with Enter in plain text and in a heading, outside lists and quotes,
  * as a word processor does: one empty line more wherever the cursor stands,
- * the text below moved down by it; a single empty line shows as a small gap,
- * two as one full empty line, see `spaceLook` in `./preview.ts`;
+ * the text below moved down by it, each empty line drawn as half a line, see `./preview.ts`,
+ * so one is a small gap and two are the air of a line, the cursor on the line to write on,
+ * see {@link typingLine};
  * Shift+Enter stays in the paragraph on the next line, see {@link pointContinue}.
  * Within or at the end of a line a line break and an empty line, the cursor on the line after it,
  * where Markdown begins the next paragraph, with the rest of the line,
  * at the end of a line with an empty line below it, not the last line of the note,
  * only the empty line,
- * the cursor on the empty line that was there, so the cursor stands on a full empty line;
+ * the cursor on the empty line that was there, ready for the next paragraph;
  * before the text of a line, at the start of a paragraph or heading too, the empty line above it;
  * on an empty line one more, as many as I press, in a list and in code too.
  * On a line of a list, a quote, a table, code or an HTML block,
@@ -1032,14 +1025,36 @@ function lineEnd(command: Command): Command {
 }
 
 /**
+ * The empty line a key just put the cursor on to write, like the new line of Enter or Shift+Enter
+ * or the `> ` line of a quote: drawn as high as a line of text, not as the half line of an empty
+ * line, see `spaceLook` in `./preview.ts`, so the cursor stands on the next line of text,
+ * not in the air between paragraphs; while the cursor stays on it and it is empty,
+ * also after Backspace took its `>` away. An empty line clicked into stays a half line.
+ * - `line`: The line of the cursor after the change.
+ *
+ * @returns The start of that line, `null` for none
+ */
+export const typingLine: StateField<number | null> = StateField.define<number | null>({
+    create: (): number | null => null,
+    update: (start: number | null, transaction: Transaction): number | null => {
+        const line: Line = transaction.newDoc.lineAt(transaction.newSelection.main.head);
+        if (!/^[ \t>]*$/.test(line.text)) return null;
+        if (transaction.docChanged && transaction.isUserEvent("input")) return line.from;
+        return start !== null && transaction.changes.mapPos(start) === line.from ? line.from : null;
+    },
+});
+
+/**
  * Keys of a Markdown file, see the top of this file;
  * Enter, Tab and Shift+Tab, Alt+Up and Alt+Down try the list item first,
  * Enter then the next line of a quote, a new paragraph and CodeMirror's list,
  * Backspace an empty line above a heading before CodeMirror's markup, Delete the markup below,
  * then the key goes on to the next command, CodeMirror's own;
- * and the first text typed on a full empty line, see {@link paragraphTyping}.
+ * and the first text typed on an empty line below another, see {@link paragraphTyping};
+ * and the empty line a key put the cursor on to write, see {@link typingLine}.
  */
 export const markdownKeys: Extension = [
+    typingLine,
     paragraphTyping,
     Prec.high(
         keymap.of([

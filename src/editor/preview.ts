@@ -17,12 +17,12 @@
  *   on the line of the cursor the `##` and `>` show left of the text,
  *   and the `-` or number of an item shows in place of its bullet
  *   or number, so the text never moves.
- * - Empty lines as Word draws empty paragraphs: a single one, where a new paragraph begins,
- *   a small gap, less than a line; two or more in a row as many lines less one,
- *   so the two before a heading show as one empty line;
- *   each shown one a line the cursor stands on, see {@link spaceLook};
- *   a point right after the sub-points of the point before it the same small gap above it,
- *   see {@link itemLook}; no room of their own around headings and paragraphs.
+ * - Every line of the file one line on the page, in the tighter lines of the editor,
+ *   see `./editor.css`; an empty line half as high, a small gap, see {@link spaceLook},
+ *   so one empty line is the air between two paragraphs and two are the air of a line;
+ *   no room of their own around headings and paragraphs;
+ *   a point right after the sub-points of the point before it the half line of an empty line
+ *   above it, see {@link itemLook}.
  * - The type word of a block of a section at the start of a heading `##`,
  *   like `Definition. `, a small grey box before the name,
  *   as in the tree, hanging left of the page where the file has room, see `./editor.css`,
@@ -110,7 +110,7 @@
  *   `Tutor` and `Head` of a table into links to their rows,
  *   and gives the people, a person by its name
  *   and the address of its row for the names under `## Modulverantwortliche`.
- * - `./keys.ts`: Tells an empty line, for the gaps between paragraphs and points.
+ * - `./keys.ts`: Tells an empty line and the empty line a key just put the cursor on to write.
  * - `./round.ts`: Shows a block of a section alone, for a link to its heading.
  * - `./table.ts`: Opens a table over the file, to edit as a spreadsheet.
  * - `./steps.ts`: Tells whether a section is folded.
@@ -143,7 +143,7 @@ import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
 import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
-import { emptyIs } from "./keys.ts";
+import { emptyIs, typingLine } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
 import { foldedAt } from "./steps.ts";
 import { cellTitleShow, tableOpen } from "./table.ts";
@@ -358,16 +358,15 @@ const computerOnly: Decoration = Decoration.mark({
 });
 
 /**
- * Single empty line, where a new paragraph begins, drawn as a small gap,
- * see {@link spaceLook} and `./editor.css`.
+ * Empty line, drawn half as high as a line of text, see {@link spaceLook} and `./editor.css`.
  */
 const gap: Decoration = Decoration.line({ class: "cm-gap" });
 
 /**
- * First of two or more empty lines in a row, drawn without height,
- * so the others show as full empty lines, see {@link spaceLook} and `./editor.css`.
+ * Empty line right below another, a place to write, see {@link gapIs}:
+ * half as high, its cursor a whole line high over both, see {@link spaceLook} and `./editor.css`.
  */
-const absorbed: Decoration = Decoration.line({ class: "cm-absorbed" });
+const stop: Decoration = Decoration.line({ class: "cm-gap cm-stop" });
 
 /**
  * Formula with the punctuation right after it, kept on one line,
@@ -1623,7 +1622,7 @@ function listLook(look: Look, node: SyntaxNode): boolean {
  * its fold arrow left of its bullet when it has sub-points,
  * which folds them with its further lines.
  * Right after the sub-points of the point before it, where a nesting ends,
- * like `2.` below the sub-points of `1.`, the small gap of an empty line above it,
+ * like `2.` below the sub-points of `1.`, the half line of an empty line above it,
  * so every return from a nesting stands apart alike, see {@link spaceLook};
  * none where an empty line stands already, and none between points of one level;
  * `./editor.css` draws the gap by the class `cm-nest-end`.
@@ -1736,40 +1735,95 @@ function hiddenStartOf(state: EditorState, line: Line): number {
 }
 
 /**
+/**
+ * Tells the gap between two paragraphs: the first empty line after a line of text,
+ * see `emptyIs` in `./keys.ts`, no place to write, see {@link caretPlace};
+ * not the empty line a key just put the cursor on to write, see `typingLine` in `./keys.ts`.
+ *
+ * @param state - Text, cursor and syntax tree
+ * @param line - The line
+ * @returns Whether it is such a gap
+ */
+function gapIs(state: EditorState, line: Line): boolean {
+    return (
+        line.number > 1 &&
+        line.from !== (state.field(typingLine, false) ?? null) &&
+        emptyIs(state, line) &&
+        !emptyIs(state, state.doc.line(line.number - 1))
+    );
+}
+
+/**
  * Keeps the cursor off what the look hides, so every key moves it where I see it:
  * put into the hidden start of a line,
  * see {@link hiddenStartOf}, by a click, Home or an arrow up or down,
  * it goes to where the text begins;
  * moved left out of the text of a line it goes on to the end of the line above,
  * as from the start of any line.
- * Only for a cursor moved alone, never while text is picked or changed.
+ * Never on the gap between two paragraphs, see {@link gapIs}:
+ * a click on it or an arrow down goes on to the line below it, an empty line or text,
+ * an arrow up to the end of the line above;
+ * an arrow that went past empty lines stops on the first of them that is no gap,
+ * so each further empty line is a place to write, the lower of two empty lines too.
+ * Only for a cursor moved alone, never while text is changed;
+ * picking by Shift and an arrow it stops on the first empty line it went past, a gap too,
+ * so a selection takes one line a step, and the mouse picks as it likes.
+ * - `pointer`: Whether the mouse moved the cursor.
  * - `state`: Text and cursor before the move, the same text after it.
+ * - `range`: The cursor or what is picked after the move.
  * - `head`: Where the cursor was put.
  * - `before`: Where it stood.
+ * - `down`: Whether it went down, or by a click.
+ * - `step`: `1` for down, `-1` for up.
  * - `place`: Where it goes instead, the same for no change.
- * - `line`: The line of the place.
+ * - `line`: A line passed, then the line of the place.
  * - `start`: Where the text of that line begins.
  *
  * @returns Filter of the changes of the editor
  */
 const caretPlace: Extension = EditorState.transactionFilter.of(
     (transaction: Transaction): TransactionSpec | readonly TransactionSpec[] => {
+        const pointer: boolean = transaction.isUserEvent("select.pointer");
         if (
             transaction.docChanged ||
             transaction.selection === undefined ||
             transaction.selection.ranges.length > 1 ||
-            !transaction.selection.main.empty ||
-            !transaction.isUserEvent("select")
+            !transaction.isUserEvent("select") ||
+            (pointer && !transaction.selection.main.empty)
         )
             return transaction;
 
         const state: EditorState = transaction.startState;
-        const head: number = transaction.selection.main.head;
+        const range: SelectionRange = transaction.selection.main;
+        const head: number = range.head;
         const before: number = state.selection.main.head;
+        const down: boolean = pointer || head > before;
+        const step: number = down ? 1 : -1;
         let place: number = head;
+        for (
+            let number: number = state.doc.lineAt(before).number + step;
+            !pointer && (number - state.doc.lineAt(head).number) * step < 0;
+            number += step
+        ) {
+            const line: Line = state.doc.line(number);
+            if (!emptyIs(state, line)) break;
+            if (range.empty && gapIs(state, line)) continue;
+            place = line.from;
+            break;
+        }
+        if (!range.empty)
+            return place === head
+                ? transaction
+                : [
+                      transaction,
+                      { selection: { anchor: range.anchor, head: place }, sequential: true },
+                  ];
         for (let line: Line = state.doc.lineAt(place); ; line = state.doc.lineAt(place)) {
             const start: number = line.from + hiddenStartOf(state, line);
-            if (place < start && before >= start && before <= line.to && line.number > 1)
+            if (gapIs(state, line) && down && line.number < state.doc.lines)
+                place = state.doc.line(line.number + 1).from;
+            else if (gapIs(state, line)) place = state.doc.line(line.number - 1).to;
+            else if (place < start && before >= start && before <= line.to && line.number > 1)
                 place = state.doc.line(line.number - 1).to;
             else if (place < start) place = start;
             else break;
@@ -1860,8 +1914,8 @@ function quoteMarkLook(look: Look, node: SyntaxNode): boolean {
  * Table, callout, code block or HTML block, with those right below it:
  * their whole lines rendered as one while the cursor is on none of them,
  * so the space between them is that of the scripts view;
- * above and below them only the empty lines around them,
- * as around any block, see {@link spaceLook}.
+ * above and below them only the empty lines around them, as around any block,
+ * see {@link spaceLook}.
  *
  * @param look - Look being built
  * @param node - `Table`, `FencedCode`, `HTMLBlock`, or a callout, `Blockquote`
@@ -1950,47 +2004,29 @@ const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
 };
 
 /**
- * Empty lines, see `emptyIs` in `./keys.ts`, as Word draws empty paragraphs:
- * a single one, where Enter began a new paragraph, see `paragraphBreak` in `./keys.ts`,
- * a small gap, a third of a line, see {@link gap};
- * two or more in a row as many full lines less one, the first without height, see {@link absorbed},
- * so two show as one empty line, the lower of them, before a heading too, three as two;
- * while the cursor stands on the first, the last goes without height instead,
- * so the cursor shows and nothing moves;
- * each shown line one the cursor stands on, by a click or an arrow key,
- * typed into a line of text, the empty lines around it drawn anew.
- * The empty last line after the last line break of the note is that line break,
- * so it shows without height and counts with no run.
- * - `run`: The empty lines in a row found so far.
- * - `last`: The last line of the note.
- * - `line`: The line looked at, `null` for the last.
- * - `first`: The first line of the run.
+ * Draws every empty line, see `emptyIs` in `./keys.ts`, half as high as a line of text,
+ * every one alike and every one a line the cursor stands on, by a click or an arrow key,
+ * as the small gap between two paragraphs, two of them as the air of a line,
+ * see {@link gap}; one right below another, a place to write, see {@link gapIs},
+ * with a cursor a whole line high over the two half lines, as on one line of air,
+ * see {@link stop}; only the empty line a key just put the cursor on to write
+ * is as high as a line of text, see `typingLine` in `./keys.ts`.
+ * - `typing`: Start of that line, `null` for none.
+ * - `line`: One line of the note.
  *
  * @param look - Look being built
  */
 function spaceLook(look: Look): void {
-    let run: Line[] = [];
-    const last: Line = look.state.doc.line(look.state.doc.lines);
-    if (last.length === 0 && last.number > 1) look.decorations.push(absorbed.range(last.from));
+    const typing: number | null = look.state.field(typingLine, false) ?? null;
     for (let number: number = 1; number <= look.state.doc.lines; number++) {
-        const line: Line | null =
-            number < look.state.doc.lines ? look.state.doc.line(number) : null;
-        if (line !== null && emptyIs(look.state, line)) {
-            run.push(line);
-            continue;
-        }
-        const first: Line | undefined = run[0];
-        if (first !== undefined)
+        const line: Line = look.state.doc.line(number);
+        if (line.from !== typing && emptyIs(look.state, line))
             look.decorations.push(
-                run.length === 1
-                    ? gap.range(first.from)
-                    : absorbed.range(
-                          touched(look, first.from, first.to)
-                              ? run[run.length - 1].from
-                              : first.from,
-                      ),
+                (number > 1 && emptyIs(look.state, look.state.doc.line(number - 1))
+                    ? stop
+                    : gap
+                ).range(line.from),
             );
-        run = [];
     }
 }
 
