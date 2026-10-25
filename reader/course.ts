@@ -26,9 +26,9 @@
  * I took from that group by hand besides the box of its week or a week I go to that group instead, which never moves
  * the pin and which no pin moves; taking my group back removes my open boxes of it from today on and the pin,
  * see {@link groupMine}.
- * A box of my tutorials is numbered by its week of the semester, the n-th week its type's groups meet in, see
- * {@link tutorialWeeksOf}, so a second tutorial in a week takes the number of that week too, and a week the university
- * cancelled keeps its place.
+ * A box of my tutorials is numbered by its week of the semester, the n-th week from the week of the first day
+ * of lectures, see {@link tutorialWeeksOf}, so groups that begin in the second week begin with `2`, a second tutorial
+ * in a week takes the number of that week too, and a week the university cancelled keeps its place.
  *
  * The groups of the tutorials of a module lie in its plan, `Modules/<module folder>_Plan.ics`, beside my boxes,
  * one weekly to-do per group as TUMonline lists it, see {@link groupPut}, since a plan holds only to-dos:
@@ -959,10 +959,30 @@ function pinPut(module: string, type: string, semester: string, group: string): 
 }
 
 /**
- * Gives the weeks of a type with groups, see the top of this file, by their Mondays: every week from the first session
- * of its groups to the last that is not wholly free of lectures, see {@link lectureFreeOf}, so a week the university
- * cancelled one session of keeps its place; none for a type without groups.
+ * Gives the first day of lectures of a semester, `Vorlesungsbeginn 2026W` of `University.ics`, see `holidays`
+ * in `sources.ts`.
+ * - `begin`: The first day of the semester.
+ *
+ * @param semester - The semester, like `2026W`
+ * @returns Day like `2026-10-12`, `undefined` while the file names none
+ */
+function lecturesBeginOf(semester: string): string | undefined {
+    const begin: string = semesterBeginOf(semester);
+    return entriesRead(holidays, berlinDayStartOf(begin), berlinDayStartOf(dayAdd(begin, 183)))
+        .find((entry: Entry): boolean => entry.allDay && entry.category === "University"
+            && entry.title === `Vorlesungsbeginn ${semester}`)?.start;
+}
+
+/**
+ * Gives the weeks of a type with groups, see the top of this file, by their Mondays: every week from the week of the
+ * first day of lectures of its semester, see {@link lecturesBeginOf}, or of the first session of its groups while that
+ * lies before or no first day is known, to the last session, that is not wholly free of lectures,
+ * see {@link lectureFreeOf}, so a week the university cancelled one session of keeps its place, and a group added
+ * or changed numbers no week anew; none for a type without groups.
+ * - `typed`: Its groups.
  * - `starts`: The days of the sessions of its groups, the earliest first.
+ * - `begin`: The first day of lectures of its semester, `undefined` for none.
+ * - `first`: Monday of the first week.
  * - `free`: The days the university does not teach between them.
  * - `weeks`: The weeks.
  *
@@ -971,15 +991,17 @@ function pinPut(module: string, type: string, semester: string, group: string): 
  * @returns The Mondays of its weeks, the earliest first
  */
 function tutorialWeeksOf(groups: Group[], type: string): string[] {
-    const starts: string[] = groups.filter((group: Group): boolean => group.rule.type === type)
-        .flatMap((group: Group): string[] => group.sessions
-            .map((session: Session): string => dayOfStart(session.start))).sort();
+    const typed: Group[] = groups.filter((group: Group): boolean => group.rule.type === type);
+    const starts: string[] = typed.flatMap((group: Group): string[] => group.sessions
+        .map((session: Session): string => dayOfStart(session.start))).sort();
     if (starts.length === 0)
         return [];
+    const begin: string | undefined = lecturesBeginOf(typed[0].rule.semester);
+    const first: string = mondayOf(begin !== undefined && begin < starts[0] ? begin : starts[0]);
     const last: string = mondayOf(starts[starts.length - 1]);
-    const free: Set<string> = lectureFreeOf(mondayOf(starts[0]), dayAdd(last, 4));
+    const free: Set<string> = lectureFreeOf(first, dayAdd(last, 4));
     const weeks: string[] = [];
-    for (let week: string = mondayOf(starts[0]); week <= last; week = dayAdd(week, 7))
+    for (let week: string = first; week <= last; week = dayAdd(week, 7))
         if ([0, 1, 2, 3, 4].some((day: number): boolean => !free.has(dayAdd(week, day))))
             weeks.push(week);
     return weeks;
