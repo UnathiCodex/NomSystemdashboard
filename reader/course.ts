@@ -2101,13 +2101,17 @@ function groupWrite(module: string, rule: Rule, days: string[]): string {
 
 /**
  * Moves my boxes that go to a group to its sessions anew, once the group changed, see the top of this file: each open
- * box of its type from today on that goes to it, one a change may change, see {@link changeable}, takes the session
- * of the group in its week, the one on its weekday, else its first, all of it, see {@link targetOf}, like a new room;
- * a box of a week the group no longer meets in stays as it is.
+ * box of its type from today on that goes to it, one a change may change, see {@link changeable}, takes a session
+ * of the group in its week no other box of mine at it holds, the one on its weekday, else the first left, all of it,
+ * see {@link targetOf}, like a new room, so two boxes of a week never take one session; a box of a week the group no
+ * longer meets in stays as it is.
  * - `found`: The group as written, `undefined` for none.
- * - `drafts`: The boxes that move.
- * - `week`: The sessions of the group in the week of a box.
- * - `session`: The one the box takes, `undefined` for none.
+ * - `typed`: My boxes of its type that go to it.
+ * - `moving`: Those a change may move.
+ * - `free`: The sessions of each week no box took yet, by its Monday.
+ * - `takeOf`: Takes out of the free sessions of the week of a box the one on its weekday, else, with `any`, the first.
+ * - `taken`: The session on its weekday each box that moves takes, `undefined` for none.
+ * - `session`: The one a box takes, `undefined` for none.
  * - `draft`: The box as it moves, `undefined` for none.
  *
  * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
@@ -2121,18 +2125,27 @@ function groupBoxesMove(module: string, type: string, group: string, semester: s
         .find((one: Group): boolean => one.rule.type === type && one.rule.group === group);
     if (found === undefined)
         return;
-    const drafts: Draft[] = courseBoxesRead(codeOf(module), semester)
-        .filter((box: Box): boolean => box.type === type && box.group === group && box.state === "open"
-            && changeable(box) && ahead(box))
-        .flatMap((box: Box): Draft[] => {
-            const week: Session[] = found.sessions.filter((one: Session): boolean =>
-                mondayOf(berlinDateOf(new Date(one.start))) === weekOf(box));
-            const session: Session | undefined = week.find((one: Session): boolean =>
-                weekdayOf(berlinDateOf(new Date(one.start))) === weekdayOf(box.day)) ?? week[0];
-            const draft: Draft | undefined =
-                session === undefined ? undefined : draftSet(draftOf(box), targetOf(found, session));
-            return draft !== undefined && draftMoved(draft, box) ? [draft] : [];
-        });
+    const typed: Box[] = courseBoxesRead(codeOf(module), semester)
+        .filter((box: Box): boolean => box.type === type && box.group === group);
+    const moving: Box[] = typed.filter((box: Box): boolean => box.state === "open" && changeable(box) && ahead(box));
+    const free: Map<string, Session[]> = new Map();
+    found.sessions.forEach((one: Session): void => {
+        const week: string = mondayOf(dayOfStart(one.start));
+        free.set(week, [...free.get(week) ?? [], one]);
+    });
+    const takeOf: (box: Box, any: boolean) => Session | undefined = (box: Box, any: boolean): Session | undefined =>
+        weekTake(free.get(weekOf(box)) ?? [], weekdayOf(datedOf(box).day), any,
+            (one: Session): string => dayOfStart(one.start));
+    typed.filter((box: Box): boolean => !moving.includes(box)).forEach((box: Box): void => {
+        takeOf(box, false);
+    });
+    const taken: (Session | undefined)[] = moving.map((box: Box): Session | undefined => takeOf(box, false));
+    const drafts: Draft[] = moving.flatMap((box: Box, index: number): Draft[] => {
+        const session: Session | undefined = taken[index] ?? takeOf(box, true);
+        const draft: Draft | undefined =
+            session === undefined ? undefined : draftSet(draftOf(box), targetOf(found, session));
+        return draft !== undefined && draftMoved(draft, box) ? [draft] : [];
+    });
     draftsWrite(module, type, semester, drafts);
 }
 
