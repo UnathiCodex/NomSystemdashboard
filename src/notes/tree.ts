@@ -676,7 +676,7 @@ export type BlockMark = "done" | "wrong" | "current" | "round" | "other" | "open
  * like `Definition. ` of `Definition. Population and Sample`,
  * see `.claude/modules/learning-system.md`.
  */
-export const kindRule: RegExp = /^(Definition|Lemma|Algorithm|Example|Task)\.[ \t]+/;
+export const kindRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm|Example|Task)\.[ \t]+/;
 
 /**
  * Type words as the tree writes them, short, so the names beside them keep their room,
@@ -684,6 +684,7 @@ export const kindRule: RegExp = /^(Definition|Lemma|Algorithm|Example|Task)\.[ \
  */
 const kindShorts: Map<string, string> = new Map([
     ["Definition", "Def"],
+    ["Theorem", "Thm"],
     ["Lemma", "Lem"],
     ["Algorithm", "Alg"],
     ["Example", "Ex"],
@@ -731,7 +732,7 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * see {@link blockNameOf}, that heading without an older `(cold)` whole as its tooltip:
  * an Example or a Task done with a check after it,
  * or with a cross, the one its heading line has, once its last result failed,
- * like `Food Truck` after Wrong; theory, a Definition, a Lemma or an Algorithm,
+ * like `Food Truck` after Wrong; theory, a Definition, a Theorem, a Lemma or an Algorithm,
  * which is never right or wrong, only done, with a check in a ring,
  * the close of a round in the head of the editor, small and faint;
  * the one shown in the light text of what is shown,

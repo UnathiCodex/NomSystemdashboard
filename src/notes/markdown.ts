@@ -19,7 +19,7 @@
  * like a theory block or a task, folds by a click on its heading, open at first,
  * and the section under a heading `#### Solution…` comes folded,
  * so I try a task before I see its solution;
- * so does the scene of a Definition, Lemma or Algorithm,
+ * so does the scene of a Definition, Theorem, Lemma or Algorithm,
  * its `####` heading like `#### Ice Cream Kiosk`, since a rendered note is looked up,
  * and a lookup reads the theory as a clean card.
  * Also beyond Obsidian, every empty line between two blocks stays one line high,
@@ -129,7 +129,7 @@ const solutionRule: RegExp = /^Solution\b/;
  * Text of a heading `##` whose block holds a scene under a heading `####`,
  * like `#### Ice Cream Kiosk`.
  */
-const sceneBlockRule: RegExp = /^(Definition|Lemma|Algorithm)\./;
+const sceneBlockRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm)\./;
 
 /**
  * Address with a scheme, like `https://…`: a link out of the module, opened as it is.
@@ -567,7 +567,8 @@ function sectionsFolded(
 
 /**
  * Folds the sections of a note, see {@link sectionsFolded}:
- * first each under a heading `#### Solution…` and each scene of a Definition, Lemma or Algorithm,
+ * first each under a heading `#### Solution…`
+ * and each scene of a Definition, Theorem, Lemma or Algorithm,
  * see {@link sceneBlockRule}, closed; then each under a heading `##`, open, those inside.
  *
  * @param tokens - Blocks of a note

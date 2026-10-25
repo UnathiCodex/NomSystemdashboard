@@ -45,7 +45,7 @@
  * A click on a block in the tree,
  * or on a link to its heading in the note, shows it alone, back or ahead,
  * see {@link roundHeadingShow}, and `Next` returns to the current step.
- * The scene of a Definition, Lemma or Algorithm,
+ * The scene of a Definition, Theorem, Lemma or Algorithm,
  * its section under a heading `####` like `#### Ice Cream Kiosk`,
  * stands open in the round that holds the block, so the first time I map it onto the theory;
  * a block looked up, by a link or from the tree outside that round, shows its scene folded,
@@ -166,7 +166,7 @@ type Alone = {
  * Heading `##` of a block whose sections under a heading `####` are scenes,
  * like `#### Ice Cream Kiosk`.
  */
-const sceneBlockRule: RegExp = /^(Definition|Lemma|Algorithm)\./;
+const sceneBlockRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm)\./;
 
 /**
  * Results that bring a block back: wrong, stuck, or right only with my tutor's help.
