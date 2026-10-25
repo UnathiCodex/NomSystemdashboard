@@ -43,7 +43,8 @@
  *   and cuts the name of a file in its middle.
  * - `./markdown.ts`, `./math.ts`:
  *   Render the headings of the outline, their formulas as in the note.
- * - `lucide`, `../icons.ts`: The check and the cross of a block done in its round,
+ * - `lucide`, `../icons.ts`: The check, the check in a ring and the cross
+ *   of a block done in its round, the fold of its line of a kind opened,
  *   and the search fields of my new system and of my modules.
  * - `../reader.ts`: Asks the reader for the tree.
  * - `../changes.ts`: Loads the tree of my new system anew after every change
@@ -54,8 +55,8 @@ import { matchesAll, wordsOf } from "../search.ts";
 import { breakableOf, middleCutPut } from "../day/choices.ts";
 import { inlineHtmlOf } from "./markdown.ts";
 import { mathRender } from "./math.ts";
-import { iconOf, searchFieldOf } from "../icons.ts";
-import { Check, X } from "lucide";
+import { iconOf, iconPut, searchFieldOf } from "../icons.ts";
+import { Check, ChevronsDownUp, CircleCheck, X } from "lucide";
 import { readerAsk } from "../reader.ts";
 import { changesFollow } from "../changes.ts";
 
@@ -728,9 +729,12 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * each linking to its heading by its heading as written,
  * named by its type word as a small grey box and its name,
  * see {@link blockNameOf}, that heading without an older `(cold)` whole as its tooltip:
- * a block done with a check after it,
+ * an Example or a Task done with a check after it,
  * or with a cross, the one its heading line has, once its last result failed,
- * like `Food Truck` after Wrong, the one shown in the light text of what is shown,
+ * like `Food Truck` after Wrong; theory, a Definition, a Lemma or an Algorithm,
+ * which is never right or wrong, only done, with a check in a ring,
+ * the close of a round in the head of the editor, small and faint;
+ * the one shown in the light text of what is shown,
  * a later one of the round grey, one outside the round fainter.
  * Every block of the section stands in it, never hidden without a trace:
  * once two or more blocks of one kind are outside the round,
@@ -740,18 +744,20 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * like `Task` boxed and `7 more`, the line of the Tasks with the day the next one comes,
  * like `Tomorrow`, which opens them on a click, as a folder,
  * below it in the list as the others, never a step in, only fainter,
- * the line then saying `Less` in place of how many, which folds them again on a click;
+ * the line then showing the fold, two arrows to each other, in place of how many,
+ * which folds them again on a click;
  * one alone stays a line of its own, since folding it saves no room.
  * A line I opened stays open while the list is built anew,
  * and the one holding the block shown opens.
  * - `list`: The list.
- * - `linkOf`: Makes the link to a block.
  * - `kindOf`: Gives the type word of a block, empty for none.
+ * - `linkOf`: Makes the link to a block.
+ * - `judged`: Whether the block has a result, an Example or a Task.
  * - `outside`: Whether a block is outside the round.
  * - `folded`: The type words whose blocks outside the round fold into one line.
  * - `inside`: The blocks of a type word outside the round.
  * - `fold`: The line of a type word with its blocks.
- * - `more`, `less`: The words of the line while it is closed and while it is open.
+ * - `more`, `less`: How many on the line while it is closed, the fold while it is open.
  *
  * @param path - Path of the note
  * @param blocks - Headings of its blocks in their order, each with its place
@@ -767,21 +773,24 @@ export function roundListOf(
     next: string,
 ): HTMLElement {
     const list: HTMLDivElement = document.createElement("div");
+    const kindOf: (block: [string, BlockMark]) => string = (block: [string, BlockMark]): string =>
+        kindRule.exec(block[0])?.[1] ?? "";
     const linkOf: (block: [string, BlockMark]) => HTMLAnchorElement = ([heading, mark]: [
         string,
         BlockMark,
     ]): HTMLAnchorElement => {
         const link: HTMLAnchorElement = document.createElement("a");
+        const judged: boolean = ["Example", "Task"].includes(kindOf([heading, mark]));
         link.className = `tree-file tree-${mark}`;
         link.href = noteAddressOf(path, heading);
         link.dataset.heading = heading;
         link.title = heading.replace(/[ \t]*\(cold\)$/, "");
         link.append(...blockNameOf(heading));
-        if (mark === "done" || mark === "wrong") link.append(iconOf(mark === "done" ? Check : X));
+        if (mark === "wrong") link.append(iconOf(X));
+        if (mark === "done") link.append(iconOf(judged ? Check : CircleCheck));
+        link.classList.toggle("tree-theory", !judged);
         return link;
     };
-    const kindOf: (block: [string, BlockMark]) => string = (block: [string, BlockMark]): string =>
-        kindRule.exec(block[0])?.[1] ?? "";
     const outside: (block: [string, BlockMark]) => boolean = (
         block: [string, BlockMark],
     ): boolean => block[1] === "other" || block[1] === "opened";
@@ -812,7 +821,7 @@ export function roundListOf(
         more.className = "tree-more";
         more.textContent = `${inside.length} more`;
         less.className = "tree-less";
-        less.textContent = "Less";
+        iconPut(less, ChevronsDownUp, "Less");
         fold.firstElementChild?.append(
             kindBoxOf(kind),
             more,

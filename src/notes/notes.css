@@ -289,7 +289,8 @@
 
 /* The blocks of a section in its round, see `roundListOf` in tree.ts:
    a block of the round in the grey of a note, one done too, with a small check after it,
-   or a cross once its last result failed, the one shown light as every entry shown,
+   or a cross once its last result failed, theory done with a check in a ring, fainter,
+   the one shown light as every entry shown,
    one outside the round faint; none folds, each a step in under the note;
    their type boxes close to the left edge of their row, 0.75rem in,
    so they have air around them and the names keep room at the right */
@@ -308,6 +309,10 @@
     vertical-align: -0.1em;
 }
 
+.tree-round .tree-theory > svg.lucide {
+    color: var(--reading-marker);
+}
+
 .tree-round .tree-other {
     color: var(--reading-marker);
 }
@@ -316,7 +321,8 @@
    like `Task` boxed and `7 more · Tomorrow`, grey as they are, its box as faint as theirs,
    a folder that opens them below it by a click, see `roundListOf` in `tree.ts`,
    in the list as the others, not a step in and without a guide line, only fainter,
-   the line then saying `Less` in place of `7 more`, which folds them again;
+   the line then showing the fold, two small arrows to each other, in place of `7 more`,
+   which folds them again;
    without the arrow of a folder, since its words already say what a click does,
    so its box stands in line with those of the blocks */
 .tree-round .tree-kind > summary {
@@ -336,6 +342,12 @@
 .tree-kind[open] .tree-more,
 .tree-kind:not([open]) .tree-less {
     display: none;
+}
+
+.tree-round .tree-less > svg.lucide {
+    width: 1.125em;
+    height: 1.125em;
+    vertical-align: -0.2em;
 }
 
 /* The type word of a block in the tree, short, like `Def`, see `kindShorts` in `tree.ts`,
