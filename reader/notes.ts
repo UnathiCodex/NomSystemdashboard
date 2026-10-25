@@ -529,7 +529,7 @@ export function moduleFoldersRead(): string[] {
  * like `IN2028_BusinessAnalyticsMachineLearning`
  * of `[BusinessAnalyticsMachineLearning](../../NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning)`,
  * and the semester its column `Semester` names,
- * the one I take it in now or the one of my last grade, like `2026S`, the newest of several;
+ * the newest one I seriously took it in, graded or not, like `2026S`, the newest of several;
  * its column `Registered`, every semester I was registered in, stays unread.
  * Each column found by its name in the head of the table, so the columns may move.
  * A row without such a link or without a semester stays out.

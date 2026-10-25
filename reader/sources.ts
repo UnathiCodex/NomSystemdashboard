@@ -222,7 +222,7 @@ export const modulesFolder: string = "NomSkillingmodules";
  * - `table`: The overview of my modules, `Modules.md` in {@link dataRoot},
  *   one Markdown table with one row per module:
  *   its column `Nom` links the folder of the module,
- *   its column `Semester` names the one semester I take it in now or the one of my last grade,
+ *   its column `Semester` names the newest semester I seriously took it in, graded or not,
  *   like `2026S`, by which the menu of the scripts view orders my modules
  *   and the reader finds the modules of the semester,
  *   see `menuRead` and `activeModulesRead` in `notes.ts`;
