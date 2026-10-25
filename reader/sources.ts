@@ -7,7 +7,7 @@
  * for my foods, places, workouts, videos and weight, {@link dataRoot}; my old system, `NomSystemprevious`, lies beside
  * them and is never read.
  * The reader reads only the new system, my modules, see {@link notes}, and the files the skill entries link,
- * in my modules and my projects, see {@link activeSkills} and `documents.ts`, and nothing that is not listed here;
+ * in my modules and my projects, see {@link activeProjects} and `documents.ts`, and nothing that is not listed here;
  * every file at its own place, none from a copy elsewhere, like a draft in `.claude`.
  * It writes only into the three folders of the new system and into what the dashboards share in `NomKommunikation`,
  * the mailbox between Vu and me, see {@link writeAllowed} and {@link kommunikationRoot}, the editor into the notes
@@ -189,8 +189,10 @@ export const modulesFolder: string = "NomSkillingmodules";
  *
  * - `modules`: My modules, `NomSkillingmodules`, one folder per module with its notes.
  * - `table`: The overview of my modules, `Modules.md` in {@link dataRoot}, one Markdown table with one row per module:
- *   its column `Nom` links the folder of the module, its column `Semester` names the semesters I took it in,
- *   like `2026S`, by which the menu of the scripts view orders my modules, see `menuRead` in `notes.ts`.
+ *   its column `Nom` links the folder of the module, its column `Semester` names the one semester I take it in now
+ *   or the one of my last grade, like `2026S`, by which the menu of the scripts view orders my modules and the reader
+ *   finds the modules of the semester, see `menuRead` and `activeModulesRead` in `notes.ts`; its column `Registered`
+ *   names every semester I was registered in for it on TUMonline, like `2025S, 2026S`, which the reader does not read.
  */
 export type NotesSources = {
     modules: string;
@@ -250,53 +252,35 @@ export const systemFiles: SystemFilesSources = {
 };
 
 /**
- * Skills of the semester, 2026W, of each of us by {@link myName}, each by its folder from `NomWorkspace`,
- * written with `/`: my modules in `NomSkillingmodules`, the pilot first, then my projects,
- * like `NomProgramprojects/AsiaWok_Wokflow_2026`, and the time I spend logging, planning and
- * thinking about my day, `NomFrequencediary`, linking the folder of my diary.
- * Sopha's are her modules of LMU, each in the folder of its module like the material of LMU in it, like `LMU_2026W`:
- * Betriebssysteme, Juristisches IT-Projektmanagement, the SEP Trustworthy Machine Learning with Python,
- * Digitale Medien and Mensch-Maschine-Interaktion, which she takes again, as one of the semester like the others.
- * Changed on request, when the semester's skills change.
+ * Skills of the semester of each of us by {@link myName} that are no modules, each by its folder from `NomWorkspace`,
+ * written with `/`: my projects, like `NomProgramprojects/AsiaWok_Wokflow_2026`, and the time I spend logging,
+ * planning and thinking about my day, `NomFrequencediary`, linking the folder of my diary.
+ * The modules of the semester come from `Modules.md`, see `activeModulesRead` in `notes.ts`; Sopha's will come from her
+ * own `Modules.md`, so her list holds no module either, and until she has one her reader has no modules of the semester.
+ * Changed on request, when the semester's projects change.
  */
 const skillsOf: { [name: string]: string[] } = {
     Vu: [
-        "NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning",
-        "NomSkillingmodules/WI1059_FinancialAccounting",
-        "NomSkillingmodules/WI0219_InvestitionFinanzmanagement",
-        "NomSkillingmodules/WI1057_CostAccounting",
-        "NomSkillingmodules/MGT1373_AppliedEconometrics",
-        "NomSkillingmodules/IN0004_EinfuehrungRechnerarchitektur",
-        "NomSkillingmodules/MGT1372_EntrepreneurialBusiness",
         "NomProgramprojects/AsiaWok_Wokflow_2026",
         "NomSystemdashboard",
         "NomManageplannings/NomFrequencediary",
     ],
     Sopha: [
-        "NomSkillingmodules/IN0009_BetriebssystemeSystemsoftware",
-        "NomSkillingmodules/IN9049_JuristischesItProjektmanagement",
-        "NomSkillingmodules/CIT43317_TrustworthyMachineLearning",
-        "NomSkillingmodules/EI05381_DigitaleMedien",
-        "NomSkillingmodules/IN0033_MenschMaschineInteraktion",
         "NomSystemdashboard",
         "NomManageplannings/NomFrequencediary",
     ],
 };
 
 /**
- * Skills of the semester of this reader, see {@link skillsOf}, Vu's when {@link myName} names none of us there,
- * like a reader without `NOM_NAME`.
- * The Skill picker offers them first, in this order, a module by its code, the part of its folder name before `_`,
- * like `IN2028`, a project by its folder name, like `WokFlow`; the menu of the scripts view shows the modules first,
- * see {@link activeModules}, and no project, since a project has no chapters and no tasks.
- * Each skill entry names the folder of its skill in its `SUMMARY` and links it by this path, for a type on into
- * the folder of its material, see `skillLinkOf` in `documents.ts`.
- * A link in a note still opens a note of any module.
+ * Projects of the semester of this reader, see {@link skillsOf}, Vu's when {@link myName} names none of us there,
+ * like a reader without `NOM_NAME`; after the modules of the semester the rest of its skills,
+ * see `activeSkillsRead` in `notes.ts`.
  */
-export const activeSkills: string[] = skillsOf[myName] ?? skillsOf.Vu;
+export const activeProjects: string[] = skillsOf[myName] ?? skillsOf.Vu;
 
 /**
- * Tells whether a skill of {@link activeSkills} is a module, a folder in `NomSkillingmodules`, else a project.
+ * Tells whether a skill of the semester is a module, a folder in `NomSkillingmodules`, else a project,
+ * see `activeSkillsRead` in `notes.ts`.
  *
  * @param skill - Folder from `NomWorkspace`, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`
  * @returns Whether it is a module
@@ -327,17 +311,8 @@ export function skillNameOf(skill: string): string {
  *   `undefined` when no project of the semester has the name
  */
 export function projectOf(name: string): string | undefined {
-    return activeSkills.find((skill: string): boolean => !moduleIs(skill) && skillNameOf(skill) === name);
+    return activeProjects.find((skill: string): boolean => skillNameOf(skill) === name);
 }
-
-/**
- * Modules of the semester among the {@link activeSkills}, by their folders in `NomSkillingmodules`, in their order,
- * like `IN2028_BusinessAnalyticsMachineLearning`: only these have tasks, see `skill.ts`, and the menu of the scripts
- * view shows them first, in this order, under the semester of today, see `menuRead` in `notes.ts`.
- */
-export const activeModules: string[] = activeSkills
-    .filter(moduleIs)
-    .map((skill: string): string => skill.slice(modulesFolder.length + 1));
 
 /**
  * Sources of the day area, all in the new system; the daily notes lie in {@link diaryRoot}, see `note.ts`.
@@ -403,7 +378,7 @@ export const holidays: CalendarSource[] = [
 /**
  * Skill log: the log of the new system, where each block of learning is an entry of the category `Skill`
  * in the log of its skill in `Skilling/`, holding the attempts made in it. The tasks lie in the chapter notes
- * of the {@link activeModules}.
+ * of the modules of the semester, see `activeModulesRead` in `notes.ts`.
  */
 export const skillLog: CalendarSource[] = [{ folder: calendarRoot, ending: logEnding }];
 

@@ -48,8 +48,8 @@
  * - `./calendar.ts`: Reads the log, finds an entry's event, puts new values into it or changes its fields,
  *   writes its start and the days in Berlin time, and names the category of skill entries.
  * - `./notes.ts`: Finds the folder of a module by its code and of a chapter by its name, lists the documents
- *   of a module, names a folder to read, and gives the content type of a file.
- * - `./sources.ts`: Names `NomWorkspace`, the folder of my modules, the skills of the semester
+ *   of a module, names a folder to read, gives the content type of a file, and reads the modules of the semester.
+ * - `./sources.ts`: Names `NomWorkspace`, the folder of my modules, the projects of the semester
  *   and the skill log, and builds the paths of the files of plan and log of a year and of a skill.
  */
 
@@ -60,10 +60,10 @@ import {
     berlinDateOf, berlinInstantOf, berlinTimeOf, dayAdd, entriesRead, entryChange, entryFind, propertiesPut, skillName,
 } from "./calendar.ts";
 import {
-    chapterNameOf, codeOf, contentTypeOf, moduleContentsRead, moduleFolderOf, semesterFoldersRead,
+    activeModulesRead, chapterNameOf, codeOf, contentTypeOf, moduleContentsRead, moduleFolderOf, semesterFoldersRead,
 } from "./notes.ts";
 import {
-    activeModules, moduleIs, modulesFolder, projectOf, skillFileOf, skillLog, vault, livingFileOf,
+    moduleIs, modulesFolder, projectOf, skillFileOf, skillLog, vault, livingFileOf,
 } from "./sources.ts";
 
 import type { Stats } from "node:fs";
@@ -151,7 +151,7 @@ function fingerprintOf(file: string): string {
  */
 export function skillFolderOf(code: string): string | undefined {
     const module: string | undefined = moduleFolderOf(code)
-        ?? activeModules.find((name: string): boolean => codeOf(name) === code);
+        ?? activeModulesRead().find((name: string): boolean => codeOf(name) === code);
     return projectOf(code) ?? (module === undefined ? undefined : `${modulesFolder}/${module}`);
 }
 

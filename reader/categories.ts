@@ -36,7 +36,7 @@
  * `Skill` has only the fields `Place`, like the room of a lecture, and `With`: in plan and log a skill, a module
  * by its code or a project by its name, and a type or none, which the dialog picks itself, written as the folder
  * of its skill with the type in brackets, like `IN2028_BusinessAnalyticsMachineLearning (VO)` or `WokFlow`,
- * see `activeSkills` in `sources.ts` and {@link skillTypes};
+ * see `activeSkillsRead` in `notes.ts` and {@link skillTypes};
  * in the log also its documents and its attempts, which only `skill.ts` writes.
  * A box of the plan takes every category, like `Sleep`, since I plan all of my day.
  * `Drink` is no category I pick: water has its own tracker, whose counter writes each glass as an entry `Drink`

@@ -4,7 +4,7 @@
  * Reads the tasks of my chapter notes and my attempts at them, tells when each task is due,
  * and writes the skill entries of the log: the one writer of their chapters, documents and attempts,
  * for the scripts view and the entry by category alike.
- * Only the modules of the semester have tasks, see `activeModules`; their chapters and tasks are read live
+ * Only the modules of the semester have tasks, see `activeModulesRead` in `notes.ts`; their chapters and tasks are read live
  * from the folders every time, so a changed chapter changes the views too, and no list of them is kept anywhere.
  * A task is a block of a note of a chapter folder like `01_RegressionAnalysis` in my modules,
  * its kind by the type word of its heading: `## Example. <name>` with `Given:` and `Missing:` lines is faded,
@@ -26,7 +26,7 @@
  * of the folder of its module with its type in round brackets, linking the folder, for a type on into that of its
  * material, as `ALTREP`, which names its module and type,
  * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_…/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
- * see `documents.ts`; or a block of work on a project of the semester, see `activeSkills` in `sources.ts`,
+ * see `documents.ts`; or a block of work on a project of the semester, see `activeSkillsRead` in `notes.ts`,
  * which behaves like a module without chapters and tasks, linking its folder,
  * like `SUMMARY;ALTREP="NomSystemdashboard":NomSystemdashboard`;
  * the type may stay empty for any skill, like my own learning. Below them, each only when there is one:
@@ -89,10 +89,10 @@
  * - `./day.ts`: Gives the log an entry belongs into, the log of its skill.
  * - `./documents.ts`: Builds the links of a skill entry, to the folder of its skill, to its documents
  *   with their fingerprints and to the folders of its chapters.
- * - `./notes.ts`: Reads the modules of the semester with their chapters and notes, and every module folder.
+ * - `./notes.ts`: Reads the modules and the skills of the semester, the modules with their chapters and notes,
+ *   and every module folder.
  * - `./places.ts`: Gives the link of the place of a skill entry.
- * - `./sources.ts`: Names the skill log and the skills of the semester, its modules and its projects,
- *   and the folder of my modules.
+ * - `./sources.ts`: Names the skill log and the projects of the semester, and the folder of my modules.
  */
 
 import { boxDone, boxOpenFind, skillBoxesRead, skillBoxOf, studyBoxOf } from "./boxes.ts";
@@ -106,11 +106,12 @@ import {
     chaptersOf, documentLinksOf, linksOf, skillFolderOf, skillTitleOf, titleOf,
 } from "./documents.ts";
 import {
-    codeOf, fileRead, moduleContentsRead, moduleFolderOf, moduleFoldersRead, modulesRead,
+    activeModulesRead, activeSkillsRead, codeOf, fileRead, moduleContentsRead, moduleFolderOf, moduleFoldersRead,
+    modulesRead,
 } from "./notes.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
 import {
-    activeModules, activeSkills, modulesFolder, projectOf, skillLog, skillNameOf,
+    modulesFolder, projectOf, skillLog, skillNameOf,
 } from "./sources.ts";
 import { settings } from "./trackers.ts";
 
@@ -1255,9 +1256,10 @@ export function skillingRead(): Skilling {
         };
     });
 
-    const skills: string[] = activeSkills.map(skillNameOf);
+    const active: string[] = activeModulesRead();
+    const skills: string[] = activeSkillsRead().map(skillNameOf);
     const others: string[] =
-        moduleFoldersRead().filter((name: string): boolean => !activeModules.includes(name)).map(codeOf);
+        moduleFoldersRead().filter((name: string): boolean => !active.includes(name)).map(codeOf);
     return {
         modules: modules, skills: skills, otherModules: others,
         folders: Object.fromEntries([...skills, ...others].map((name: string): [string, string] =>
@@ -1278,7 +1280,7 @@ export function skillingRead(): Skilling {
  */
 function folderOf(code: string): string {
     const folder: string | undefined = moduleFolderOf(code)
-        ?? activeModules.find((name: string): boolean => codeOf(name) === code);
+        ?? activeModulesRead().find((name: string): boolean => codeOf(name) === code);
     if (folder === undefined)
         throw new Error(`No module ${code}`);
     return folder;

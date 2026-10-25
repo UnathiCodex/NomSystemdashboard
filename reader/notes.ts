@@ -21,7 +21,7 @@
  * - `node:fs`: Reads files and folders on the disk, streams a file and makes a folder.
  * - `node:path`: Builds file paths, `posix` with `/` for paths inside the modules.
  * - `./sources.ts`: Names the folder of my modules for the scripts view, the overview of my modules, `Modules.md`,
- *   and the modules of the semester.
+ *   and the projects of the semester.
  * - `./calendar.ts`, `./categories.ts`: Give the day of today in Berlin time and its semester, for the menu.
  */
 
@@ -31,7 +31,7 @@ import {
 import { extname, join, posix, sep } from "node:path";
 import { berlinDateOf, writtenFollow } from "./calendar.ts";
 import { semesterOf } from "./categories.ts";
-import { activeModules, modulesFolder, notes } from "./sources.ts";
+import { activeProjects, modulesFolder, notes } from "./sources.ts";
 
 import type { Dirent, ReadStream } from "node:fs";
 
@@ -434,14 +434,14 @@ function chaptersRead(module: string): Chapter[] {
 }
 
 /**
- * Reads the modules of the semester, see {@link activeModules}, each with its chapters and their notes,
+ * Reads the modules of the semester, see {@link activeModulesRead}, each with its chapters and their notes,
  * see {@link chaptersRead}, for their tasks, see `skill.ts`, and the links that lead nowhere,
  * see {@link brokenLinksRead}.
  *
  * @returns Modules in the order of the list, a module whose folder is missing without chapters
  */
 export function modulesRead(): NotesModule[] {
-    return activeModules.map((module: string): NotesModule =>
+    return activeModulesRead().map((module: string): NotesModule =>
         ({ name: module, title: module, chapters: chaptersRead(module) }));
 }
 
@@ -459,18 +459,21 @@ export function moduleFoldersRead(): string[] {
 }
 
 /**
- * Reads the last semester I took each module in, from the overview of my modules, `Modules.md`, see {@link notes}:
+ * Reads the semester of each module from the overview of my modules, `Modules.md`, see {@link notes}:
  * of each row the folder its column `Nom` links, the last part of the link,
  * like `IN2028_BusinessAnalyticsMachineLearning`
  * of `[BusinessAnalyticsMachineLearning](../../NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning)`,
- * and the newest semester its column `Semester` names, like `2026S` of `2025S, 2026S`; each column found by its name
- * in the head of the table, so the columns may move. A row without such a link or without a semester stays out.
+ * and the semester its column `Semester` names, the one I take it in now or the one of my last grade, like `2026S`,
+ * the newest of several; its column `Registered`, every semester I was registered in, stays unread.
+ * Each column found by its name in the head of the table, so the columns may move.
+ * A row without such a link or without a semester stays out.
  * - `rows`: The rows of the table, the head first, each cut into its cells.
  * - `head`: Names of the columns.
  * - `folder`: The folder a row links, `undefined` for none.
  * - `last`: The newest semester of a row, `undefined` for none.
  *
- * @returns The last semester of each module, like `2026S`, by its folder, none while `Modules.md` does not exist
+ * @returns The semester of each module, like `2026S`, by its folder, in the order of the rows,
+ *   none while `Modules.md` does not exist
  */
 function semestersRead(): Map<string, string> {
     if (!existsSync(notes.table))
@@ -489,24 +492,59 @@ function semestersRead(): Map<string, string> {
 }
 
 /**
+ * Reads the modules of the semester, by their folders in `NomSkillingmodules`, like
+ * `IN2028_BusinessAnalyticsMachineLearning`: those whose column `Semester` in `Modules.md` names the semester of today
+ * in Berlin time, see {@link semestersRead} and `semesterOf` in `categories.ts`, also one whose folder is missing yet,
+ * in the order of the rows; read anew each time, so a changed `Modules.md` changes them at once.
+ * Only these have tasks, see `skill.ts`, and the menu of the scripts view shows them first, in this order,
+ * under the semester of today, see {@link menuRead}.
+ * - `today`: The semester of today, like `2026W`.
+ *
+ * @returns Names of their folders, none while `Modules.md` does not exist
+ */
+export function activeModulesRead(): string[] {
+    const today: string = semesterOf(berlinDateOf(new Date()));
+    return [...semestersRead()]
+        .filter(([, semester]: [string, string]): boolean => semester === today)
+        .map(([module]: [string, string]): string => module);
+}
+
+/**
+ * Reads the skills of the semester of this reader, each by its folder from `NomWorkspace`, written with `/`:
+ * the modules of the semester first, see {@link activeModulesRead}, like
+ * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`, then its projects, see `activeProjects` in `sources.ts`.
+ * The Skill picker offers them first, in this order, a module by its code, the part of its folder name before `_`,
+ * like `IN2028`, a project by its folder name, like `WokFlow`; the menu of the scripts view shows the modules first,
+ * and no project, since a project has no chapters and no tasks.
+ * Each skill entry names the folder of its skill in its `SUMMARY` and links it by this path, for a type on into
+ * the folder of its material, see `skillLinkOf` in `documents.ts`.
+ * A link in a note still opens a note of any module.
+ *
+ * @returns Folders of the skills
+ */
+export function activeSkillsRead(): string[] {
+    return [...activeModulesRead().map((module: string): string => `${modulesFolder}/${module}`), ...activeProjects];
+}
+
+/**
  * Reads every module for the menu of the scripts view, each with its chapters and their notes, see
  * {@link chaptersRead}, and the semester it stands under, see {@link MenuModule}: the modules of the semester,
- * see {@link activeModules}, also one whose folder is missing yet, then every other module folder,
- * see {@link moduleFoldersRead}, with the last semester I took it in, see {@link semestersRead}.
+ * see {@link activeModulesRead}, also one whose folder is missing yet, then every other module folder,
+ * see {@link moduleFoldersRead}, each with its semester, see {@link semestersRead}.
  * In the order of the menu: the modules under the semester of today first, in the order of their list, then those
  * of the other semesters, the newest first, then those without a semester, each group else in the order
  * of its folders, as Obsidian's file explorer sorts them, since a sort keeps the order of what it ranks the same.
  * - `today`: The semester of today in Berlin time, like `2026W`, see `semesterOf` in `categories.ts`.
- * - `taken`: The last semester I took each module in, by its folder.
+ * - `taken`: The semester of each module, by its folder.
  *
  * @returns Modules in the order of the menu
  */
 export function menuRead(): MenuModule[] {
     const today: string = semesterOf(berlinDateOf(new Date()));
     const taken: Map<string, string> = semestersRead();
-    return [...new Set([...activeModules, ...moduleFoldersRead()])]
+    return [...new Set([...activeModulesRead(), ...moduleFoldersRead()])]
         .map((module: string): MenuModule => ({
-            name: module, title: module, semester: activeModules.includes(module) ? today : taken.get(module) ?? "",
+            name: module, title: module, semester: taken.get(module) ?? "",
             chapters: chaptersRead(module),
         }))
         .sort((first: MenuModule, second: MenuModule): number =>
