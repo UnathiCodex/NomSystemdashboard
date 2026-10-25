@@ -678,9 +678,21 @@ export type BlockMark = "done" | "wrong" | "current" | "round" | "other" | "open
 export const kindRule: RegExp = /^(Definition|Lemma|Algorithm|Example|Task)\.[ \t]+/;
 
 /**
+ * Type words as the tree writes them, short, so the names beside them keep their room,
+ * like `Def` for `Definition`; the note writes them out.
+ */
+const kindShorts: Map<string, string> = new Map([
+    ["Definition", "Def"],
+    ["Lemma", "Lem"],
+    ["Algorithm", "Alg"],
+    ["Example", "Ex"],
+    ["Task", "Task"],
+]);
+
+/**
  * Builds the name of a block for the list of its section: its type word as a small grey box,
  * then its name, rendered, without an older `(cold)`,
- * like `Definition` boxed and then `Population and Sample`.
+ * like `Def` boxed and then `Population and Sample`.
  * - `kind`: The type word with the dot and space after it, `null` for a heading without one.
  * - `name`: The name, rendered.
  * - `box`: The box of the type word.
@@ -698,15 +710,16 @@ function blockNameOf(heading: string): Node[] {
 }
 
 /**
- * Builds the small grey box of a type word, like `Definition`, see `.block-kind` in `../base.css`.
+ * Builds the small grey box of a type word, short, like `Def` for `Definition`,
+ * see {@link kindShorts} and `.block-kind` in `../base.css`.
  *
- * @param kind - Type word
+ * @param kind - Type word, like `Definition`
  * @returns The box
  */
 function kindBoxOf(kind: string): HTMLSpanElement {
     const box: HTMLSpanElement = document.createElement("span");
     box.className = "block-kind";
-    box.textContent = kind;
+    box.textContent = kindShorts.get(kind) ?? kind;
     return box;
 }
 
@@ -725,7 +738,9 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * they fold into one grey line of their kind after its last block,
  * its type word boxed as on their lines and how many,
  * like `Task` boxed and `7 more`, the line of the Tasks with the day the next one comes,
- * like `Tomorrow`, which opens them on a click, as a folder;
+ * like `Tomorrow`, which opens them on a click, as a folder,
+ * below it in the list as the others, never a step in, only fainter,
+ * the line then saying `Less` in place of how many, which folds them again on a click;
  * one alone stays a line of its own, since folding it saves no room.
  * A line I opened stays open while the list is built anew,
  * and the one holding the block shown opens.
@@ -736,6 +751,7 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * - `folded`: The type words whose blocks outside the round fold into one line.
  * - `inside`: The blocks of a type word outside the round.
  * - `fold`: The line of a type word with its blocks.
+ * - `more`, `less`: The words of the line while it is closed and while it is open.
  *
  * @param path - Path of the note
  * @param blocks - Headings of its blocks in their order, each with its place
@@ -791,9 +807,17 @@ export function roundListOf(
             (other: [string, BlockMark]): boolean => kindOf(other) === kind && outside(other),
         );
         const fold: HTMLDetailsElement = folderOf("");
+        const more: HTMLSpanElement = document.createElement("span");
+        const less: HTMLSpanElement = document.createElement("span");
+        more.className = "tree-more";
+        more.textContent = `${inside.length} more`;
+        less.className = "tree-less";
+        less.textContent = "Less";
         fold.firstElementChild?.append(
             kindBoxOf(kind),
-            `${inside.length} more${kind === "Task" && next !== "" ? ` · ${next}` : ""}`,
+            more,
+            less,
+            ...(kind === "Task" && next !== "" ? [` · ${next}`] : []),
         );
         fold.classList.add("tree-kind");
         fold.dataset.kind = kind;

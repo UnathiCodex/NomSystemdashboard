@@ -383,7 +383,8 @@ textarea {
 
 /* Type word of a block of a section,
    like `Definition`, a small grey box before its name,
-   in the tree and on the line of its heading in the note,
+   in the tree short, like `Def`, and on the line of its heading in the note,
+   as the round in the status line of the editor, see `editor/editor.css`,
    see `blockNameOf` in `notes/tree.ts` and `headingLook` in `editor/preview.ts`,
    and the number of a box of a series in its list, see `day/series.ts`, so both look alike:
    filled in the soft grey of a card, its word in the grey of quiet text and the text's weight,

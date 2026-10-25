@@ -314,8 +314,10 @@
 
 /* The line of a kind whose blocks lie outside the round,
    like `Task` boxed and `7 more · Tomorrow`, grey as they are, its box as faint as theirs,
-   a folder that opens them below it by a click, see `roundListOf` in `tree.ts`;
-   without the arrow of a folder, since `7 more` already says that something is folded,
+   a folder that opens them below it by a click, see `roundListOf` in `tree.ts`,
+   in the list as the others, not a step in and without a guide line, only fainter,
+   the line then saying `Less` in place of `7 more`, which folds them again;
+   without the arrow of a folder, since its words already say what a click does,
    so its box stands in line with those of the blocks */
 .tree-round .tree-kind > summary {
     color: var(--reading-marker);
@@ -325,15 +327,26 @@
     display: none;
 }
 
-/* The type word of a block in the tree,
-   see `.block-kind` in `../base.css`, a step smaller than the name,
-   every box as wide as the widest word, `Algorithm`, its word in the middle,
+.tree-round .tree-kind > .tree-children {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+}
+
+.tree-kind[open] .tree-more,
+.tree-kind:not([open]) .tree-less {
+    display: none;
+}
+
+/* The type word of a block in the tree, short, like `Def`, see `kindShorts` in `tree.ts`,
+   and `.block-kind` in `../base.css`, a step smaller than the name,
+   every box as wide as the widest word, `Task`, its word in the middle,
    so the names after them start in one line;
    in the grey of a card, as in the note, the same under the pointer,
    since the box itself is nothing to click;
    on a block outside the round as faint as its name */
 .tree-round .block-kind {
-    min-width: 6.25em;
+    min-width: 3.75em;
     font-size: 0.8em;
     text-align: center;
 }
