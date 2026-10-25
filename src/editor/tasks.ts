@@ -5,7 +5,8 @@
  * as the scripts view showed them under their headings, see `../skill/task.ts`:
  * under the heading `##` of each task of the semester its row,
  * when it is due, its history, the menu for the next attempt,
- * which goes into the skill entry of the moment, Right and Wrong once its solution is unfolded,
+ * which goes into the skill entry of the moment, Right and Wrong once its solution is open,
+ * a Task's unfolded, an Example's with a step shown, see `./steps.ts`,
  * Wrong with my short comment; after each attempt the rows load again.
  * A cold task, its heading ending with `(cold)`, shows a grey label in place of `(cold)`,
  * like `cold · 2 done · 1 right`, while the cursor is not on its heading.
@@ -20,7 +21,8 @@
  * - `@codemirror/state`, `@codemirror/view`:
  *   Hold the tasks of the note and draw the rows as widgets between its lines.
  * - `@codemirror/language`: Tells when something folds or unfolds.
- * - `./steps.ts`: The heading of a solution, and whether it is folded.
+ * - `./steps.ts`: The heading of a solution, whether it is folded,
+ *   and whether an Example shows a step.
  * - `../skill/attempts.ts`: Loads the tasks with when they are due.
  * - `../today.ts`: Gives today's calendar date, for when a task is due.
  * - `../skill/task.ts`: Builds the row of a task, the check and the cross of a task of a section,
@@ -30,7 +32,7 @@
 import { StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import { foldedRanges } from "@codemirror/language";
-import { foldedAt, solutionRule } from "./steps.ts";
+import { exampleOpenOf, foldedAt, solutionRule, stepsMoreIs } from "./steps.ts";
 import { skillingLoad } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
 import { coldLabelOf, judgeOf, taskRowOf } from "../skill/task.ts";
@@ -131,7 +133,7 @@ abstract class TaskWidget<Open extends boolean | null> extends WidgetType {
     readonly loaded: NoteTasks;
 
     /**
-     * Whether its solution is unfolded; for a row `null` for a task without a solution.
+     * Whether its solution is open; for a row `null` for a task without a solution.
      */
     readonly open: Open;
 
@@ -164,7 +166,8 @@ abstract class TaskWidget<Open extends boolean | null> extends WidgetType {
 
 /**
  * Row of a task under its heading, see `taskRowOf` in `../skill/task.ts`;
- * Right and Wrong show while its solution is unfolded, so a fold or an unfold draws the row anew.
+ * Right and Wrong show while its solution is open,
+ * so a fold, an unfold or a step shown draws the row anew.
  */
 class RowWidget extends TaskWidget<boolean | null> {
     /**
@@ -183,8 +186,8 @@ class RowWidget extends TaskWidget<boolean | null> {
 
 /**
  * Check and cross of a task of a section at the right end of the line of its heading, see `judgeOf`
- * in `../skill/task.ts`; they work while its solution is unfolded,
- * so a fold or an unfold draws them anew.
+ * in `../skill/task.ts`; they work while its solution is open,
+ * so a fold, an unfold or a step shown draws them anew.
  */
 class JudgeWidget extends TaskWidget<boolean> {
     /**
@@ -232,15 +235,19 @@ class ColdWidget extends WidgetType {
 }
 
 /**
- * Tells whether the solution of a task is unfolded:
- * the first heading `#### Solution…` of its block, from its heading to the next heading `##`.
+ * Tells whether the solution of a task is open: that of an Example once a step of it shows,
+ * see `exampleOpenOf` in `./steps.ts`; else the first heading `#### Solution…` of its block,
+ * from its heading to the next heading `##`, unfolded.
+ * - `example`: Whether the solution of an Example is open, `null` for a task of no Example.
  * - `line`: A line of the block.
  *
- * @param state - Text and folds of the note
+ * @param state - Text, folds and steps of the note
  * @param heading - Line of the heading of the task
- * @returns Whether its solution is unfolded, `null` for a task without one
+ * @returns Whether its solution is open, `null` for a task without one
  */
 function solutionOpenOf(state: EditorState, heading: Line): boolean | null {
+    const example: boolean | null = exampleOpenOf(state, heading);
+    if (example !== null) return example;
     for (let number: number = heading.number + 1; number <= state.doc.lines; number++) {
         const line: Line = state.doc.line(number);
         if (blockRule.test(line.text)) return null;
@@ -374,7 +381,8 @@ export async function tasksLoad(view: EditorView, path: string): Promise<void> {
 
 /**
  * The rows of the tasks of a note, see the top of this file:
- * built again when the tasks load, the text or the cursor changes, or something folds or unfolds;
+ * built again when the tasks load, the text or the cursor changes, something folds or unfolds,
+ * or more steps show;
  * none until {@link tasksLoad} has loaded the tasks.
  * - {@link StateField}: Holds the rows; only a field may draw widgets between the lines.
  */
@@ -387,7 +395,8 @@ export const taskRows: Extension = StateField.define<Rows>({
             loaded === rows.loaded &&
             !transaction.docChanged &&
             transaction.selection === undefined &&
-            foldedRanges(transaction.state) === foldedRanges(transaction.startState)
+            foldedRanges(transaction.state) === foldedRanges(transaction.startState) &&
+            !stepsMoreIs(transaction)
         )
             return rows;
         return { loaded: loaded, decorations: decorationsOf(transaction.state, loaded) };

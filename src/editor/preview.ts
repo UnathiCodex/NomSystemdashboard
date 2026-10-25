@@ -64,7 +64,7 @@
  *   and its further lines by its arrow left of its bullet, shown under the pointer, as in Obsidian;
  *   one click folds, one click unfolds, see {@link FoldWidget};
  *   a solution, the section under `#### Solution`, comes folded, see {@link solutionsFold},
- *   so I try a task before I see its solution, but that of a worked Example, which I study whole;
+ *   so I try a task before I see its solution;
  *   folded headings of a level stand close below each other as a list, see {@link spaceLook}.
  * A click on a rendered piece puts the cursor there,
  * so it shows as text, on a rendered table a double click, so a single one leaves it to scroll,
@@ -115,8 +115,7 @@
  *   and the indentation of the text of a list item, for where the item ends.
  * - `./round.ts`: Shows a block of a section alone, for a link to its heading.
  * - `./table.ts`: Opens a table over the file, to edit as a spreadsheet.
- * - `./steps.ts`: Tells a worked Example, whose solution comes unfolded,
- *   and whether a section is folded.
+ * - `./steps.ts`: Tells whether a section is folded.
  */
 
 import { EditorState, Facet, RangeSet, StateEffect, StateField } from "@codemirror/state";
@@ -148,7 +147,7 @@ import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/t
 import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
 import { columnsOf, spacerRule, textIndentationOf } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
-import { foldedAt, workedIs } from "./steps.ts";
+import { foldedAt } from "./steps.ts";
 import { cellTitleShow, tableOpen } from "./table.ts";
 
 import type {
@@ -2303,8 +2302,7 @@ function foldToggle(view: EditorView, pos: number): void {
 
 /**
  * Folds every solution of the note, the section under each heading `#### Solution…`,
- * as the scripts view shows it at first, so I try a task before I see its solution,
- * but that of a worked Example;
+ * as the scripts view shows it at first, so I try a task before I see its solution;
  * the whole note read first, as the editor reads at first only what it shows.
  * - {@link forceParsing}: Reads the syntax of the note up to its end, for at most a second.
  * - `ranges`: The sections of the solutions.
@@ -2316,10 +2314,9 @@ export function solutionsFold(view: EditorView): void {
     const ranges: { from: number; to: number }[] = [];
     for (let number: number = 1; number <= view.state.doc.lines; number++) {
         const line: Line = view.state.doc.line(number);
-        const range: { from: number; to: number } | null =
-            solutionRule.test(line.text) && !workedIs(view.state, line)
-                ? foldable(view.state, line.from, line.to)
-                : null;
+        const range: { from: number; to: number } | null = solutionRule.test(line.text)
+            ? foldable(view.state, line.from, line.to)
+            : null;
         if (range !== null) ranges.push(range);
     }
     view.dispatch({

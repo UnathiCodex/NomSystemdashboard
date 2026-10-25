@@ -64,8 +64,8 @@ export type Attempt = {
  * - `note`: Path of its note, as the scripts view takes it.
  * - `chapter`: Name of its chapter, like `01_RegressionAnalysis`.
  * - `section`: Name of its section, its note, like `01_01_SampleMeanStandardError`.
- * - `kind`: Its kind by the type word of its heading: faded, an Example with gaps,
- *   or an older Completion; worked, an older Example with only a solution; or cold, a Task.
+ * - `kind`: Its kind by the type word of its heading: example, an Example, its steps predicted
+ *   one by one, or an older Completion; or cold, a Task.
  * - `parts`: Numbers of the parts of a cold task, like `1`, `2` and `3`, none for any other task.
  */
 export type Task = {
@@ -76,7 +76,7 @@ export type Task = {
     note: string;
     chapter: string;
     section: string;
-    kind: "worked" | "faded" | "cold";
+    kind: "example" | "cold";
     parts: string[];
 };
 

@@ -22,11 +22,12 @@
  * - round 0, while the section learns the ladder,
  *   until a cold Task first comes back on a later day:
  *   every theory block in the order of the note, the Algorithm among them,
- *   and an older note's worked Examples, then one Example with gaps, the first,
- *   which gives almost every step, then one Task alone;
+ *   then one Example, the first, its steps predicted one by one, see `./steps.ts`,
+ *   then one Task alone;
  *   that it is the first Example was Claude's choice, not mine;
  * - later: only the Task of today, once it is due.
- * A failure brings back one Example easier, the same day, see {@link fallbacksOf}:
+ * A failure brings back one Example, the one before in the note, the same day,
+ * see {@link fallbacksOf}:
  * a wrong Task the last Example, a wrong Example the one before it,
  * a wrong first Example the Algorithm, read again;
  * one Task per round decides when the next round comes, see `reader/skill.ts`.
@@ -402,15 +403,12 @@ function failedAt(task: SkillTask | null, after: string, day: string): string | 
 }
 
 /**
- * Gives what a failure of a task brings back the same day, one Example easier each,
+ * Gives what a failure of a task brings back the same day, one Example back each,
  * see the top of this file:
- * the ladder from the bottom up is the Algorithm,
- * in an older note without one its last worked Example,
- * then the Examples with gaps, faded, in the order of the note;
+ * the ladder from the bottom up is the Algorithm, then the Examples in the order of the note;
  * a failed Task brings back the last of them, a failed Example the one below it,
  * each next one only once the one before failed too, down to the bottom, which is read again;
  * each by its first attempt, see {@link failedAt}.
- * - `worked`: The last worked Example, the bottom of an older note without an Algorithm.
  * - `rungOf`: The rung of a task.
  * - `rungs`: The ladder from the bottom up.
  * - `index`: Place in the ladder of the block that failed last, above the top for a Task.
@@ -429,20 +427,13 @@ export function fallbacksOf(
     from: SkillTask,
     day: string,
 ): Fallback[] {
-    const worked: SkillTask | undefined = tasks
-        .filter((task: SkillTask): boolean => task.kind === "worked")
-        .at(-1);
     const rungOf: (task: SkillTask) => Rung = (task: SkillTask): Rung => ({
         heading: task.heading,
         task: task,
     });
     const rungs: Rung[] = [
-        ...(algorithm !== ""
-            ? [{ heading: algorithm, task: null }]
-            : worked !== undefined
-              ? [rungOf(worked)]
-              : []),
-        ...tasks.filter((task: SkillTask): boolean => task.kind === "faded").map(rungOf),
+        ...(algorithm !== "" ? [{ heading: algorithm, task: null }] : []),
+        ...tasks.filter((task: SkillTask): boolean => task.kind === "example").map(rungOf),
     ];
     const fallbacks: Fallback[] = [];
     let index: number =
@@ -469,7 +460,7 @@ export function fallbacksOf(
  * - `step`: A step of a block itself.
  * - `back`: The steps a failure of a block brings back, see {@link fallbacksOf}.
  * - `cold`: The Task of today, `null` for none, with its steps.
- * - `first`: The first Example with gaps, the one of round 0.
+ * - `first`: The first Example, the one of round 0.
  *
  * @param blocks - Blocks of the note
  * @param section - Its section
@@ -514,14 +505,13 @@ function stepsOf(
             : [];
     }
     const first: Block | undefined = blocks.find(
-        (block: Block): boolean => block.task?.kind === "faded",
+        (block: Block): boolean => block.task?.kind === "example",
     );
     return [
         ...blocks
-            .filter((block: Block): boolean =>
-                block.task === null
-                    ? !/^(Task|Completion)\./.test(block.heading)
-                    : block.task.kind === "worked",
+            .filter(
+                (block: Block): boolean =>
+                    block.task === null && !/^(Task|Completion)\./.test(block.heading),
             )
             .map(step),
         ...(first === undefined ? [] : [step(first), ...back(first, "")]),
@@ -542,14 +532,13 @@ function keyOf(step: Step): string {
 }
 
 /**
- * Tells whether a step has no result of its own, theory like the Algorithm,
- * or a worked Example brought back, so `Next` passes it.
+ * Tells whether a step has no result of its own, theory like the Algorithm, so `Next` passes it.
  *
  * @param step - Step
  * @returns Whether it has no result
  */
 function resultlessIs(step: Step): boolean {
-    return step.block.task === null || (step.after !== "" && step.block.task.kind === "worked");
+    return step.block.task === null;
 }
 
 /**
@@ -582,7 +571,7 @@ function passedOf(steps: Step[], at: string): string[] {
 
 /**
  * Tells whether a step is done:
- * theory, the Algorithm and a worked Example brought back once passed with `Next`;
+ * theory and the Algorithm, also brought back, once passed with `Next`;
  * an Example brought back once tried after the failure that brought it;
  * the Task of the ladder once tried, also on an earlier day of it,
  * a later Task once nothing of it is due today, by its attempts of today;
@@ -596,7 +585,7 @@ function passedOf(steps: Step[], at: string): string[] {
 function doneIs(shown: Round, step: Step): boolean {
     const task: SkillTask | null = step.block.task;
     const today: string = shown.loaded.today;
-    if (task === null || resultlessIs(step)) return shown.seen.includes(keyOf(step));
+    if (task === null) return shown.seen.includes(keyOf(step));
     if (step.after !== "")
         return task.attempts.some((attempt: Attempt): boolean => timeOf(attempt) > step.since);
     if (task.kind === "cold" && shown.section.ladder) return task.attempts.length > 0;

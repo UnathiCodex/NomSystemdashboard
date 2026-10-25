@@ -14,7 +14,7 @@
  * which Enter writes with it, also empty, and Escape closes without writing;
  * only in a session of its module, which the dialog of a new entry starts while none runs,
  * see `../editor/session.ts`.
- * Right and Wrong work only once the solution of the task is open,
+ * Right and Wrong work only once the solution of the task is open, an Example's once a step shows,
  * so I judge against it, not by feeling, since self-grading runs generous (León 2023);
  * a task without a solution takes them always. A broken task I tell my tutor in the chat.
  * A card keeps the row quiet, as quiet as a box of the day:

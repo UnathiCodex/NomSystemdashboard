@@ -10,15 +10,14 @@
  * so a changed chapter changes the views too, and no list of them is kept anywhere.
  * A task is a block of a note of a chapter folder like `01_RegressionAnalysis` in my modules,
  * its kind by the type word of its heading:
- * `## Example. <name>` with `Given:` and `Missing:` lines is faded, an example with gaps,
- * those lines saying what it gives and what I fill in;
+ * `## Example. <name>` is an example, its scene and question, then its steps `1.`, `2.`, …,
+ * which I predict one by one;
  * `## Task. <name>` is cold, the one I solve alone, one of its variants due per round;
  * a `## Definition.` and the `## Algorithm.`, the one worked example, are theory.
  * An older note keeps its meaning:
- * an Example with only a `#### Solution` is worked, one without it theory,
- * and `## Completion. <name>` faded;
+ * `## Completion. <name>` is an example;
  * a heading `## Task. <name> (cold)` is cold, `(cold)` no part of its name,
- * and each plain `## Task. <name>` there faded with `Given:` and `Missing:` lines, else worked.
+ * and each plain `## Task. <name>` there an example.
  * Its sources are the `>` lines right below its heading, one per source,
  * each starting with its mode word, `Original:` or `Generated:`, which is left out,
  * like `> Generated: [[VO_UniversityLectureLessons/TUM_2025W/01_CourseOverview.pdf#page=45|VO 2025W 01 CourseOverview (45)]]`.
@@ -182,10 +181,10 @@ export type Result = "right" | "guided" | "wrong" | "stuck" | "skipped";
 export type Effort = "low" | "medium" | "high";
 
 /**
- * Kind of a task, see the top of this file: worked, its solution one step at a time;
- * faded, with what is given and what is missing; or cold, solved alone.
+ * Kind of a task, see the top of this file: an example, its steps predicted one by one,
+ * or cold, solved alone.
  */
-export type Kind = "worked" | "faded" | "cold";
+export type Kind = "example" | "cold";
 
 /**
  * A task as a chapter note holds it.
@@ -293,8 +292,7 @@ export type SkillTask = Task & {
  * - `tried`: Number of its tasks I tried, skips not counted.
  * - `round`: Its round, the runs of its cold task done before today, so it stays the whole day:
  *   round 0 until the first right run, round 1 until the second, and so on; a failed run leaves it.
- * - `ladder`: Whether it still learns the ladder, its theory,
- *   worked and faded tasks before the cold task:
+ * - `ladder`: Whether it still learns the ladder, its theory and Examples before the cold task:
  *   while no cold task has an attempt on a day before today, see {@link attemptDaysOf}.
  * - `rightDue`: Day the cold task comes back after a right run today,
  *   by the spacing, see {@link dueAfter};
@@ -762,54 +760,17 @@ function sourceOf(lines: string[], index: number): string {
 }
 
 /**
- * Gives the lines of a block, from below its heading `##` to the next heading `##` or higher.
- *
- * @param lines - Lines of the note
- * @param index - Line of the heading of the block
- * @returns Its lines
- */
-function blockOf(lines: string[], index: number): string[] {
-    const end: number = lines.findIndex(
-        (line: string, at: number): boolean => at > index && /^#{1,2}[ \t]/.test(line),
-    );
-    return lines.slice(index + 1, end === -1 ? lines.length : end);
-}
-
-/**
  * Tells the kind of a task by the type word of its heading, see the top of this file:
- * an Example with gaps faded, an older one with only a solution worked, one without it theory;
- * a note written the older way makes `(cold)` cold,
- * and a plain `Task.` faded or worked by its lines.
- * - `block`: Lines of the block.
- * - `gapped`: Whether it has `Given:` and `Missing:` lines.
+ * a `Task.` cold, any other an example;
+ * in a note written the older way only a `Task.` with `(cold)` cold.
  *
  * @param word - Type word of the heading, like `Example`
  * @param cold - Whether the heading ends with `(cold)`
  * @param older - Whether the note is written the older way
- * @param lines - Lines of the note
- * @param index - Line of the heading
- * @returns Its kind, `null` for theory
+ * @returns Its kind
  */
-function kindOf(
-    word: string,
-    cold: boolean,
-    older: boolean,
-    lines: string[],
-    index: number,
-): Kind | null {
-    const block: string[] = blockOf(lines, index);
-    const gapped: boolean =
-        block.some((line: string): boolean => line.startsWith("Given:")) &&
-        block.some((line: string): boolean => line.startsWith("Missing:"));
-    if (word === "Example")
-        return gapped
-            ? "faded"
-            : block.some((line: string): boolean => /^####[ \t]+Solution\b/.test(line))
-              ? "worked"
-              : null;
-    if (word === "Completion") return "faded";
-    if (!older || cold) return "cold";
-    return gapped ? "faded" : "worked";
+function kindOf(word: string, cold: boolean, older: boolean): Kind {
+    return word === "Task" && (!older || cold) ? "cold" : "example";
 }
 
 /**
@@ -849,11 +810,8 @@ function noteTasksRead(code: string, chapter: string, note: string): Task[] {
     const older: boolean = lines.some((line: string): boolean => olderCold.test(line));
     return lines.flatMap((line: string, index: number): Task[] => {
         const heading: RegExpExecArray | null = taskHeading.exec(line);
-        const kind: Kind | null =
-            heading === null
-                ? null
-                : kindOf(heading[2], heading[4] !== undefined, older, lines, index);
-        if (heading === null || kind === null) return [];
+        if (heading === null) return [];
+        const kind: Kind = kindOf(heading[2], heading[4] !== undefined, older);
         return [
             {
                 id: `${code}/${heading[3]}`,

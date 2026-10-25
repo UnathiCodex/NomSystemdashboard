@@ -810,7 +810,7 @@ export function roundListOf(
 /**
  * Puts the outline of the note shown under its entry in the tree, as Obsidian's outline:
  * each heading `##` in order, linking to it, its name as written whole as its tooltip,
- * each worked or faded task under the block above it that is no task, like
+ * each Example under the block above it that is no task, like
  * `Definition. Standard Error of the Mean`,
  * which then folds its tasks by its arrow and still links to its heading by its name;
  * tasks named without their type word, `Example.`, `Completion.` or `Task.`,
@@ -819,7 +819,7 @@ export function roundListOf(
  * and so does a task without such a block above it;
  * a cold task, a `Task.`, in a note written the older way `Task. … (cold)`,
  * named also without `(cold)`, stands alone, at the end of its section;
- * there a plain `Task.` is worked or faded. An Example without a solution is theory.
+ * there a plain `Task.` and a `Completion.` stand as an Example.
  * The outline put before goes; a block I folded in it stays folded.
  * A section shows the blocks of its round instead,
  * see {@link roundListOf}, a line of a kind I opened staying open.
@@ -830,8 +830,7 @@ export function roundListOf(
  * - `outline`: The outline.
  * - `lines`: Lines of the note.
  * - `older`: Whether the note is written the older way.
- * - `end`, `solved`: Where the block of a heading ends, and whether it has a solution.
- * - `cold`, `ladder`: Whether a heading is that of a cold task, or of a worked or faded one.
+ * - `cold`, `ladder`: Whether a heading is that of a cold task, or of an Example.
  * - `block`: Link of the last block that is no task, until its first task makes it a folder.
  * - `tasks`: Place of the tasks below that block, the outline itself before the first block.
  * - `heading`: Text of a heading `##` as written, `undefined` for a line that is none.
@@ -881,23 +880,17 @@ export function outlineShow(
     let block: HTMLAnchorElement | null = null;
     let tasks: HTMLElement = outline;
     outline.className = "tree-children tree-outline";
-    lines.forEach((line: string, index: number): void => {
+    lines.forEach((line: string): void => {
         const heading: string | undefined = /^##[ \t]+(.+?)[ \t]*$/.exec(line)?.[1];
         if (heading === undefined) return;
-        const end: number = lines.findIndex(
-            (next: string, at: number): boolean => at > index && /^#{1,2}[ \t]/.test(next),
-        );
-        const solved: boolean = lines
-            .slice(index + 1, end === -1 ? undefined : end)
-            .some((next: string): boolean => /^####[ \t]+Solution\b/.test(next));
         const cold: boolean = older
             ? /^Task\..*\(cold\)$/.test(heading)
             : heading.startsWith("Task. ");
         const ladder: boolean =
             !cold &&
-            (heading.startsWith("Completion. ") ||
-                (older && heading.startsWith("Task. ")) ||
-                (heading.startsWith("Example. ") && solved));
+            (heading.startsWith("Example. ") ||
+                heading.startsWith("Completion. ") ||
+                (older && heading.startsWith("Task. ")));
         const name: string =
             cold || ladder
                 ? heading

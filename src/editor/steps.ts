@@ -1,20 +1,18 @@
 /**
  * ## Steps
  *
- * The solutions of a note in the editor one step at a time:
- * once a solution, the section under `#### Solution…`, is unfolded, its first step shows,
- * and below the solution `Next step` shows the next one and `Show all` the rest.
+ * The solutions of a note in the editor one step at a time, so I predict each step before I see it:
+ * an Example, `## Example. …`, shows its scene and question and none of its steps,
+ * its solution from its first numbered line, like `1. Find the weights $a_i$`, to its end;
+ * a solution of a Task, the section under `#### Solution…`, shows its first step once unfolded.
+ * Below a solution `Next step` shows the next one and `Show all` the rest.
  * Its steps are the items of its lists in the order of the text, a parent before its own items,
- * and its other blocks, like a formula of its own;
+ * and its other blocks, like a formula of its own or the answer in words;
  * an empty line between two steps goes with the step after it.
  * Hiding is only for reading:
  * the text stays as it is, the cursor stays at the end of the last step shown, also after End,
  * and the cursor going into a hidden step,
  * like by the arrow keys or a new line, shows the whole solution, so I edit it as before.
- * The solution of a worked Example, `## Example. …` in an older note,
- * without `Given:` and `Missing:` lines, shows whole, spread out,
- * since studying it whole is its point, see {@link workedIs};
- * an Example with gaps folds its solution like a Task.
  *
  * - `@codemirror/state`, `@codemirror/view`:
  *   Hold how many steps of each solution show, hide the others,
@@ -40,13 +38,16 @@ import type { DecorationSet } from "@codemirror/view";
 import type { SyntaxNodeRef } from "@lezer/common";
 
 /**
- * An unfolded solution of the note.
+ * A solution of the note shown, that of an Example or the unfolded one of a Task.
  *
- * - `heading`: Start of its heading, which names it while the text around it changes.
+ * - `heading`: Start of its heading, `## Example. …` or `#### Solution…`,
+ *   which names it while the text around it changes.
  * - `to`: End of its section, below which its buttons stand.
- * - `first`: Number of its first line below its heading.
+ * - `first`: Number of its first line.
  * - `steps`: For each of its lines from the first, the number of the step it belongs to, from 0.
  * - `count`: Number of its steps.
+ * - `initial`: How many of its steps show at first: none of an Example, one of a Task,
+ *   whose unfolding asked for it.
  */
 type Solution = {
     heading: number;
@@ -54,13 +55,14 @@ type Solution = {
     first: number;
     steps: number[];
     count: number;
+    initial: number;
 };
 
 /**
  * The steps of the note.
  *
  * - `shown`: How many steps of each solution show, by the start of its heading;
- *   one for a solution not in it.
+ *   its `initial` for a solution not in it.
  * - `decorations`: The hidden steps and the buttons below each solution with steps hidden.
  */
 type Steps = {
@@ -83,14 +85,15 @@ type More = {
 export const solutionRule: RegExp = /^####[ \t]+Solution\b/;
 
 /**
- * Heading of a block, `##`.
- */
-const blockRule: RegExp = /^##[ \t]/;
-
-/**
- * Heading of a worked Example, `## Example.`, whose solution shows whole.
+ * Heading of an Example, `## Example.`.
  */
 const exampleRule: RegExp = /^##[ \t]+Example\./;
+
+/**
+ * First line of the solution of an Example, its first numbered line,
+ * like `1. Find the weights $a_i$`.
+ */
+const stepRule: RegExp = /^\d+\.\s/;
 
 /**
  * Lists, whose items are steps of their own.
@@ -159,20 +162,28 @@ class StepsWidget extends WidgetType {
  *
  * @param state - Text and syntax tree of the note
  * @param heading - Line of its heading
+ * @param start - Its first line
  * @param to - End of its section
+ * @param initial - How many of its steps show at first
  * @returns The solution
  */
-function solutionOf(state: EditorState, heading: Line, to: number): Solution {
-    const first: number = heading.number + 1;
+function solutionOf(
+    state: EditorState,
+    heading: Line,
+    start: Line,
+    to: number,
+    initial: number,
+): Solution {
+    const first: number = start.number;
     const last: number = state.doc.lineAt(to).number;
     const steps: number[] = Array<number>(last - first + 1).fill(-1);
     let count: number = 0;
     syntaxTree(state).iterate({
-        from: heading.to + 1,
+        from: start.from,
         to: to,
         enter: (node: SyntaxNodeRef): boolean => {
             if (
-                node.from > heading.to &&
+                node.from >= start.from &&
                 (node.name === "ListItem" ||
                     (node.node.parent?.name === "Document" && !lists.includes(node.name)))
             ) {
@@ -191,7 +202,14 @@ function solutionOf(state: EditorState, heading: Line, to: number): Solution {
         if (steps[index] === -1) steps[index] = next;
         next = steps[index];
     }
-    return { heading: heading.from, to: to, first: first, steps: steps, count: count };
+    return {
+        heading: heading.from,
+        to: to,
+        first: first,
+        steps: steps,
+        count: count,
+        initial: initial,
+    };
 }
 
 /**
@@ -211,9 +229,29 @@ export function foldedAt(state: EditorState, from: number): boolean {
 }
 
 /**
- * Finds the unfolded solutions of the note with their steps.
- * - `line`: A line of the note, the heading of a solution.
+ * Gives the first line of the solution of an Example, its first numbered line,
+ * see {@link stepRule}.
+ *
+ * @param state - Text of the note
+ * @param heading - Line of its heading
+ * @param to - End of its section
+ * @returns The line, `null` for an Example without steps
+ */
+function exampleStartOf(state: EditorState, heading: Line, to: number): Line | null {
+    for (let number: number = heading.number + 1; number <= state.doc.lineAt(to).number; number++) {
+        const line: Line = state.doc.line(number);
+        if (stepRule.test(line.text)) return line;
+    }
+    return null;
+}
+
+/**
+ * Finds the solutions of the note shown with their steps:
+ * that of each Example and of each Task unfolded, see the top of this file.
+ * - `line`: A line of the note, the heading of an Example or a solution.
+ * - `example`: Whether it is that of an Example.
  * - `section`: Its section, from the end of its heading, `null` for none.
+ * - `start`: The first line of the solution, `null` for an Example without steps.
  *
  * @param state - Text, syntax tree and folds of the note
  * @returns The solutions
@@ -222,38 +260,50 @@ function solutionsOf(state: EditorState): Solution[] {
     const solutions: Solution[] = [];
     for (let number: number = 1; number <= state.doc.lines; number++) {
         const line: Line = state.doc.line(number);
+        const example: boolean = exampleRule.test(line.text);
         const section: { from: number; to: number } | null =
-            solutionRule.test(line.text) && !workedIs(state, line)
-                ? foldable(state, line.from, line.to)
-                : null;
-        if (section !== null && !foldedAt(state, line.to))
-            solutions.push(solutionOf(state, line, section.to));
+            example || solutionRule.test(line.text) ? foldable(state, line.from, line.to) : null;
+        if (section === null || foldedAt(state, line.to)) continue;
+        const start: Line | null = example
+            ? exampleStartOf(state, line, section.to)
+            : state.doc.line(number + 1);
+        if (start !== null)
+            solutions.push(solutionOf(state, line, start, section.to, example ? 0 : 1));
     }
     return solutions;
 }
 
 /**
- * Tells whether a line stands in a worked Example,
- * the block under the nearest heading `##` above it being `## Example. …` without `Given:`
- * and `Missing:` lines above the line, whose solution shows whole.
- * - `given`, `missing`: Whether a line `Given:`
- *   or `Missing:` stands between the heading and the line.
- * - `number`: A line above it.
+ * Tells whether the solution of an Example is open, once a step of it shows,
+ * as that of a Task once unfolded, so I judge it against its steps, see `./tasks.ts`.
+ * - `section`: Its section, `null` for none.
  *
- * @param state - Text of the note
- * @param line - The line, like the heading of a solution
- * @returns Whether it stands in a worked Example
+ * @param state - Text and steps of the note
+ * @param heading - Line of the heading of a task
+ * @returns Whether it is open, also for an Example without steps;
+ *   `null` for a heading of no Example
  */
-export function workedIs(state: EditorState, line: Line): boolean {
-    let given: boolean = false;
-    let missing: boolean = false;
-    for (let number: number = line.number; number >= 1; number--) {
-        const text: string = state.doc.line(number).text;
-        if (blockRule.test(text)) return exampleRule.test(text) && !(given && missing);
-        given ||= text.startsWith("Given:");
-        missing ||= text.startsWith("Missing:");
-    }
-    return false;
+export function exampleOpenOf(state: EditorState, heading: Line): boolean | null {
+    if (!exampleRule.test(heading.text)) return null;
+    const section: { from: number; to: number } | null = foldable(state, heading.from, heading.to);
+    return (
+        section === null ||
+        exampleStartOf(state, heading, section.to) === null ||
+        (state.field(hiddenSteps, false)?.shown.get(heading.from) ?? 0) > 0
+    );
+}
+
+/**
+ * Tells whether a transaction shows more steps, by `Next step` or `Show all`,
+ * see {@link stepsMore}.
+ *
+ * @param transaction - Transaction
+ * @returns Whether it does
+ */
+export function stepsMoreIs(transaction: Transaction): boolean {
+    return transaction.effects.some((effect: StateEffect<unknown>): boolean =>
+        effect.is(stepsMore),
+    );
 }
 
 /**
@@ -306,7 +356,7 @@ function decorationsOf(
         const ranges: { from: number; to: number }[] = hiddenOf(
             state,
             solution,
-            shown.get(solution.heading) ?? 1,
+            shown.get(solution.heading) ?? solution.initial,
         );
         if (ranges.length === 0) return;
         decorations.push(
@@ -366,7 +416,7 @@ function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
         if (solution !== undefined)
             shown.set(
                 solution.heading,
-                click.value.all ? Infinity : (shown.get(solution.heading) ?? 1) + 1,
+                click.value.all ? Infinity : (shown.get(solution.heading) ?? solution.initial) + 1,
             );
     });
     const head: number = state.selection.main.head;
@@ -374,7 +424,7 @@ function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
         transaction.selection === undefined
             ? undefined
             : solutions.find((solution: Solution): boolean =>
-                  hiddenOf(state, solution, shown.get(solution.heading) ?? 1).some(
+                  hiddenOf(state, solution, shown.get(solution.heading) ?? solution.initial).some(
                       (range: { from: number; to: number }): boolean =>
                           range.from < head && head <= range.to,
                   ),
@@ -443,7 +493,7 @@ function endAvoid(transaction: Transaction): TransactionSpec | readonly Transact
 }
 
 /**
- * The steps of the solutions of a note,
+ * The steps of the solutions of a note, those of its Examples and its Tasks,
  * see the top of this file,
  * with the cursor kept at the end of the last step shown, see {@link endAvoid}.
  * - {@link EditorState.transactionFilter}: Changes a transaction before it is applied.
