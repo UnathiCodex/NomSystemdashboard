@@ -23,7 +23,8 @@
  * any other file shows in the tree, faint, and opens not.
  * A note of my modules shows the rows of its tasks under their headings, see `./tasks.ts`.
  * A section, a note with tasks of the semester, shows its round in the same view:
- * its name in words, its round below it, like `Round 1`, then only the block due, `Next` below it,
+ * its name in words, its round below it, like `Round 1`, then only the block due,
+ * `Next` and the close of the round in the head beside the save button,
  * and in the tree, in place of the outline, its blocks with their places,
  * a click opening one, see `./round.ts`.
  * While no note is open, the page asks to choose one, since the plan of the day says what is due;
@@ -51,7 +52,7 @@
  * a section opens where its round stands,
  * a block it shows from the tree or a link staying out of the address, so a reload returns there.
  * Saves only with its button, the plain floppy disk of saving,
- * so the round's check is the only check, its tooltip `Save`,
+ * so no check stands for saving, its tooltip `Save`,
  * or Ctrl+S, never by itself, refused when the file changed on the disk since it was read,
  * and asks before leaving with changes unsaved, also for another file of the tree;
  * the button faint while nothing is to save, its full grey while there are changes,
@@ -97,12 +98,19 @@ import { markdownSupport } from "./syntax.ts";
 import { headingShow, linksSet, livePreview, rowShow, solutionsFold } from "./preview.ts";
 import { solutionSteps } from "./steps.ts";
 import { taskRows, tasksLoad } from "./tasks.ts";
-import { roundBlocksOf, roundClose, roundHeadingShow, roundNextOf, roundStart } from "./round.ts";
+import {
+    roundBlocksOf,
+    roundClose,
+    roundGo,
+    roundHeadingShow,
+    roundNextOf,
+    roundStart,
+} from "./round.ts";
 import { outlineShow, treeShow } from "../notes/tree.ts";
 import { overviewShow, overviewTreeShow } from "./overview.ts";
 import { folderShow } from "./folder.ts";
 import { timeOf } from "../day/times.ts";
-import { Check, Save, SaveOff } from "lucide";
+import { ArrowRight, CircleCheck, Save, SaveOff } from "lucide";
 import { iconPut } from "../icons.ts";
 import "../notes/notes.css";
 import "../day/day.css";
@@ -203,7 +211,7 @@ let outlineWait: number = 0;
 /**
  * Shows whether the file has changes not yet saved:
  * the save button in its full grey while it has, else faint, in a section too,
- * above the round check, and in the status line at the bottom a notice, like `Saved 20:41`,
+ * before the close of the round, and in the status line a notice, like `Saved 20:41`,
  * or when something went wrong, like `Not saved`.
  * - {@link EditorState#sliceDoc}: Gives the text, its lines joined by the line break of the file.
  *
@@ -448,6 +456,7 @@ function treeClick(event: MouseEvent): void {
  * - `plannings`: Whether the editor shows my new system,
  *   for one of its files or at `/plannings`; else my modules.
  * - `tree`: Place of the tree, and `shown` the tree once it is shown.
+ * - `close`, `next`: The close of a round and `Next` in the head, see `./round.ts`.
  * - `opened`: The file read.
  * - `text`: Element of the text, with the look of the notes for Markdown, else of plain text.
  * - `beforeunload`: Comes before the page closes or loads again, also for another file of the tree;
@@ -471,8 +480,11 @@ export async function editorStart(): Promise<void> {
     );
     shown.catch((error: unknown): void => console.error(error));
     const close: HTMLButtonElement = document.getElementById("editor-close") as HTMLButtonElement;
-    iconPut(close, Check, "Close the round");
+    const next: HTMLButtonElement = document.getElementById("editor-next") as HTMLButtonElement;
+    iconPut(close, CircleCheck, "Close the round");
     close.addEventListener("click", roundClose);
+    iconPut(next, ArrowRight, "Next");
+    next.addEventListener("click", (): void => roundGo(view));
     if (path === "" && !plannings && folder !== "") {
         save.hidden = true;
         (document.getElementById("editor") as HTMLElement).classList.add("editor-on-overview");

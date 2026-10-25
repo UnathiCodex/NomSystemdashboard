@@ -12,7 +12,7 @@
    notes in the greys of my Obsidian's dark theme with my accent #969696,
    a page of one width on every computer, `--reading-width`,
    as wide as my laptop holds beside the tree, with the same room at its left and its right,
-   that of the save button, see `--edge-room` in `editor/editor.css`,
+   `--edge-room` in `editor/editor.css`,
    so I write on the same page on the laptop and on the 4K monitor,
    in the middle where the screen has room,
    the titles of callouts and the fold arrows of headings in Obsidian's grey
@@ -116,7 +116,7 @@
     --chip-radius: 0.5rem;
     --note-width: 18rem;
     --tree-width: 22.5rem;
-    --reading-width: 48rem;
+    --reading-width: 46rem;
     color-scheme: dark;
 }
 

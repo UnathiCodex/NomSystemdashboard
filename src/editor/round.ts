@@ -7,13 +7,14 @@
  * only the current step stands on the page, the text before and after it hidden,
  * see {@link aloneOf}; every other block folded,
  * the cold Task variants not due this round like the Examples.
- * Under the current step stands `Next`: it checks a block without a result off, like theory,
+ * In the head, at the right end of the status line, stands `Next`, an arrow, see {@link roundDraw}:
+ * it checks a block without a result off, like theory,
  * and opens the next; a task stays unchecked until my result,
  * which only its check and cross on the line of its heading write,
  * the check going on as `Next` does, see `../skill/task.ts`,
- * so `Next` stays off below an Example or a Task until it has my result,
+ * so `Next` stays off on an Example or a Task until it has my result,
  * and no block passes without one.
- * In the status line at the bottom stands the round, like `Round 1`, see {@link roundLineOf},
+ * In the status line above the text stands the round, like `Round 1`, see {@link roundLineOf},
  * and beside it the session it writes into, see {@link sessionShow};
  * the tree lists every block with its place, see `roundListOf` in `../notes/tree.ts`,
  * and a click there shows a block alone, see {@link roundHeadingShow}.
@@ -49,20 +50,19 @@
  * stands open in the round that holds the block, so the first time I map it onto the theory;
  * a block looked up, by a link or from the tree outside that round, shows its scene folded,
  * the theory a clean card, its arrow opening it, see {@link blockOpen};
- * the last step has no `Next`, since a round closes only by hand, with the round check in the head,
+ * on the last step `Next` stays off, since a round closes only by hand, with the close in the head,
  * see {@link roundClose}, once its Task has a result and what a failure of it brought back is done,
  * see {@link closeShow}; the close writes `done` where the step stood, and Today follows;
- * once closed, a block opened has no `Next`, with no step to return to.
+ * once closed, neither shows, with no step to return to.
  * Reading a round needs no session,
- * but `Next` and the round check write only in a session of the module,
+ * but `Next` and the close write only in a session of the module,
  * which the dialog of a new entry starts while none runs, see `./session.ts`;
  * cancelled, I stay where I was.
  * I write only in the block shown, see {@link changesKeep} and {@link selectionKeep},
- * so no key, cut or drag takes `Next` or the hidden text around the block away.
+ * so no key, cut or drag takes the hidden text around the block away.
  *
  * - `@codemirror/state`, `@codemirror/view`:
- *   Hold the block shown, keep what I write and select inside it,
- *   and draw `Next` as a widget below it.
+ *   Hold the block shown, and keep what I write and select inside it.
  * - `@codemirror/language`: Folds and unfolds the blocks, as their arrows do.
  * - `./steps.ts`: Tells whether a block is folded.
  * - `../skill/attempts.ts`: Writes the days of the round line out,
@@ -70,12 +70,12 @@
  * - `./tasks.ts`: Reads the blocks of the note with their tasks,
  *   and hears each load of the tasks, with its section, and each Right.
  * - `./session.ts`: Makes sure a session of the module runs before `Next`
- *   or the round check writes, and gives the session running, with its day and times written out.
+ *   or the close writes, and gives the session running, with its day and times written out.
  * - `../notes/tree.ts`: The places of the blocks the tree shows.
  */
 
 import { EditorSelection, EditorState, Prec, StateEffect, StateField } from "@codemirror/state";
-import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import { Decoration, EditorView } from "@codemirror/view";
 import { foldable, foldEffect, unfoldEffect } from "@codemirror/language";
 import { blocksOf, tasksFollow } from "./tasks.ts";
 import { foldedAt } from "./steps.ts";
@@ -154,8 +154,7 @@ type Round = {
  *
  * - `from`: Start of its heading line.
  * - `to`: Where it ends, see {@link endOf}.
- * - `decorations`: What is drawn:
- *   the text around it hidden, its heading marked as the first, `Next` below it.
+ * - `decorations`: What is drawn: the text around it hidden, its heading marked as the first.
  */
 type Alone = {
     from: number;
@@ -175,10 +174,12 @@ const sceneBlockRule: RegExp = /^(Definition|Lemma|Algorithm)\./;
 const failed: Result[] = ["wrong", "stuck", "guided"];
 
 /**
- * Effect of `Next` moving, to the end of a block, `null` for none.
+ * Effect of `Next` moving, or a click in the tree, to the end of a block, `null` for none.
  */
-const nextMoved: StateEffectType<{ block: Block; end: number; next: boolean } | null> =
-    StateEffect.define<{ block: Block; end: number; next: boolean } | null>();
+const nextMoved: StateEffectType<{ block: Block; end: number } | null> = StateEffect.define<{
+    block: Block;
+    end: number;
+} | null>();
 
 /**
  * The round shown, `null` for a note that is no section.
@@ -198,43 +199,10 @@ let opened: string = "";
 const todayAddress: string = "/scripts";
 
 /**
- * Button `Next` below the current block, see {@link roundNext}.
- */
-class NextWidget extends WidgetType {
-    /**
-     * Any `Next` is the same, so the drawn one stays.
-     */
-    override eq(): boolean {
-        return true;
-    }
-
-    /**
-     * Builds the button.
-     */
-    toDOM(view: EditorView): HTMLElement {
-        const next: HTMLButtonElement = document.createElement("button");
-        next.type = "button";
-        next.className = "round-next";
-        next.textContent = "Next";
-        next.addEventListener("click", (): void => {
-            roundNext(view).catch(failShow);
-        });
-        return next;
-    }
-
-    /**
-     * Keeps its click from the editor.
-     */
-    override ignoreEvent(): boolean {
-        return true;
-    }
-}
-
-/**
- * The block shown alone with `Next` below it, `null` for none:
+ * The block shown alone, `null` for none:
  * built anew when `Next` moves, carried along when the text changes,
  * its start before what I type at it and its end after, so what I type at either belongs to it.
- * - {@link StateField}: Only a field may draw a widget between the lines.
+ * - {@link StateField}: Only a field may hide whole lines, like the text around the block.
  */
 const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
     create: (): Alone | null => null,
@@ -243,12 +211,7 @@ const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
             if (effect.is(nextMoved))
                 return effect.value === null
                     ? null
-                    : aloneOf(
-                          transaction.state,
-                          effect.value.block,
-                          effect.value.end,
-                          effect.value.next,
-                      );
+                    : aloneOf(transaction.state, effect.value.block, effect.value.end);
         if (alone === null || !transaction.docChanged) return alone;
         return {
             from: transaction.changes.mapPos(alone.from, -1),
@@ -266,8 +229,8 @@ const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
 /**
  * Keeps what I type and delete inside the block shown alone:
  * a change reaching beyond it is left out whole, never half, like Delete at its end,
- * which took the line break `Next` stands on and pulled the hidden text after it into the block,
- * Backspace at the start of its heading, or a cut over a selection reaching past `Next`;
+ * which took the line break after it and pulled the hidden text after it into the block,
+ * Backspace at the start of its heading, or a cut over a selection reaching past its end;
  * undo and redo, which CodeMirror never filters, only take back what was allowed.
  * - `alone`: The block shown alone before the change.
  * - `inside`: Whether every change lies inside it.
@@ -288,7 +251,7 @@ function changesKeep(transaction: Transaction): boolean {
 /**
  * Keeps the cursor and what I select inside the block shown alone,
  * so neither reaches the hidden text,
- * like Shift+Down on its last line, Ctrl+A or a drag past `Next`:
+ * like Shift+Down on its last line, Ctrl+A or a drag past its end:
  * a place beyond the block goes to its start or its end.
  * Only where a key, a click or a drag puts them:
  * the cursor left in the block before when `Next` moves on stays there,
@@ -341,32 +304,23 @@ function endOf(state: EditorState, block: Block): number {
 
 /**
  * Shows one block alone, as a card of Today asks:
- * the text before it and after it hidden whole, `Next` below it unless it is the last step,
- * at the start of the line after it, so it never stands inside a folded solution at its end;
+ * the text before it and after it hidden whole;
  * its heading marked as the first on the page,
  * without the room above a heading, see `./editor.css`.
  * - `start`: Start of its heading line.
- * - `last`: Whether the block ends the note.
  *
  * @param state - Text of the note
  * @param block - The block shown
  * @param end - Where it ends
- * @param next - Whether `Next` stands below it
  * @returns The block shown alone
  */
-function aloneOf(state: EditorState, block: Block, end: number, next: boolean): Alone {
+function aloneOf(state: EditorState, block: Block, end: number): Alone {
     const start: number = state.doc.line(block.line).from;
-    const last: boolean = end >= state.doc.length;
     const marks: Range<Decoration>[] = [];
     if (start > 0) marks.push(Decoration.replace({ block: true }).range(0, start - 1));
     marks.push(Decoration.line({ class: "round-first" }).range(start));
-    if (next)
-        marks.push(
-            Decoration.widget({ widget: new NextWidget(), block: true, side: last ? 1 : -1 }).range(
-                last ? end : end + 1,
-            ),
-        );
-    if (!last) marks.push(Decoration.replace({ block: true }).range(end + 1, state.doc.length));
+    if (end < state.doc.length)
+        marks.push(Decoration.replace({ block: true }).range(end + 1, state.doc.length));
     return { from: start, to: end, decorations: Decoration.set(marks) };
 }
 
@@ -543,7 +497,7 @@ function resultlessIs(step: Step): boolean {
 
 /**
  * Tells whether a step waits for my result: an Example or a Task not done yet, see {@link doneIs},
- * so `Next` stays off below it, and its check, Right, or its cross, Wrong, is the way on,
+ * so `Next` stays off on it, and its check, Right, or its cross, Wrong, is the way on,
  * see `judgeOf` in `../skill/task.ts`.
  *
  * @param shown - The round
@@ -747,15 +701,19 @@ function sessionShow(shown: Round): void {
 
 /**
  * Shows the round as it stands:
- * the round line with the session beside it, `Next` below the current block, none after the last,
- * off while the step waits for my result,
- * see {@link waitingIs} and `.round-waiting` in `./editor.css`,
+ * the round line with the session beside it, the block shown alone,
+ * `Next` in the head, an arrow, see {@link roundNext}, and the close beside it, see {@link closeShow},
  * and the places of the blocks in the tree.
+ * `Next` is on while it goes somewhere:
+ * from a block shown from the tree back to the current step, else on from the current step;
+ * off and faint on the last step, and on an Example or a Task until it has my result,
+ * see {@link waitingIs}, as the close before the round may close;
+ * hidden once the round is closed or for a round without steps, as the close.
  * - `steps`: The steps of the round.
  * - `current`: The current step.
  * - `line`: The round line.
+ * - `next`: `Next` in the head.
  * - `blocks`, `alone`: The blocks of the note and the one shown.
- * - `next`: Whether `Next` stands below it.
  *
  * @param view - The editor
  * @param shown - The round
@@ -764,26 +722,23 @@ function roundDraw(view: EditorView, shown: Round): void {
     const steps: Step[] = roundStepsOf(view, shown);
     const current: Step | undefined = currentOf(shown, steps);
     const line: HTMLElement = document.getElementById("editor-round") as HTMLElement;
+    const next: HTMLButtonElement = document.getElementById("editor-next") as HTMLButtonElement;
     (document.getElementById("editor-round-label") as HTMLElement).textContent = roundLineOf(shown);
     line.hidden = false;
     sessionShow(shown);
     const blocks: Block[] = blocksOf(view.state, shown.loaded.tasks);
     const alone: Block | undefined =
         blocks.find((block: Block): boolean => block.heading === opened) ?? current?.block;
-    const next: boolean =
-        current !== undefined &&
-        (alone !== current.block || steps.indexOf(current) < steps.length - 1);
     view.dispatch({
         effects: nextMoved.of(
-            alone === undefined
-                ? null
-                : { block: alone, end: endOf(view.state, alone), next: next },
+            alone === undefined ? null : { block: alone, end: endOf(view.state, alone) },
         ),
     });
-    (document.getElementById("editor-text") as HTMLElement).classList.toggle(
-        "round-waiting",
-        current !== undefined && alone === current.block && waitingIs(shown, current),
-    );
+    next.hidden = current === undefined;
+    next.disabled =
+        current === undefined ||
+        (alone === current.block &&
+            (steps.indexOf(current) === steps.length - 1 || waitingIs(shown, current)));
     closeShow(shown, steps);
     shown.changed();
 }
@@ -819,7 +774,7 @@ function blockOpen(view: EditorView, block: Block, lookup: boolean): void {
  * from an Example or a Task without my result not at all, see {@link waitingIs};
  * else, once a session of the module runs,
  * see `sessionEnsure` in `./session.ts`, writes into the log which step comes next,
- * so a step without a result before it counts as passed, and shows it; the last step has no `Next`.
+ * so a step without a result before it counts as passed, and shows it; from the last step not at all.
  * Where I am moves at once;
  * a line the reader does not take shows in the status line, see {@link failShow};
  * without a session, or once the round was shown anew meanwhile, as after a result, nothing moves.
@@ -864,16 +819,17 @@ function failShow(error: unknown): void {
 }
 
 /**
- * Shows the round check in the head, see {@link roundClose}: a loose icon,
- * as the save button above it;
+ * Shows the close of the round in the head, see {@link roundClose}:
+ * a loose icon, a check in a ring, so it never looks like the check of a block,
+ * between the save button and `Next`, its tooltip only `Close the round`;
  * on once the round's Task has a result and the way down its failure brings back has ended,
  * see {@link fallbacksOf}, in its full grey then, as the save button with changes; off and faint
  * before; hidden once the round is closed or for a round without steps.
  * The way down has ended once its last Example is right,
  * or once it reached the bottom, the Algorithm,
- * which as the last step has no `Next` and passes by the round check itself,
+ * on which as the last step `Next` stays off and which passes by the close itself,
  * so I close the round standing on it:
- * after Wrong on `Task. Food Truck` the check stays off until `Example. Kiosk Half Trend` is right,
+ * after Wrong on `Task. Food Truck` the close stays off until `Example. Kiosk Half Trend` is right,
  * or, wrong on down, until the Algorithm stands.
  * - `cold`: Place of the Task of the round, the steps after it those its failure brings back.
  *
@@ -894,13 +850,10 @@ function closeShow(shown: Round, steps: Step[]): void {
                 (step: Step): boolean =>
                     doneIs(shown, step) || (resultlessIs(step) && keyOf(step) === shown.at),
             );
-    close.title = close.disabled
-        ? "Close the round once its Task and what a failure brings back are done"
-        : "Close the round";
 }
 
 /**
- * Closes the round shown by hand, the round check in the head, once a session of the module runs,
+ * Closes the round shown by hand, the close in the head, once a session of the module runs,
  * see `sessionEnsure` in `./session.ts`: writes `done` where I stand into the log,
  * then shows Today, where the round stands done.
  * - `shown`: The round.
@@ -1037,7 +990,7 @@ export function roundNextOf(): string {
  * Shows a block by its heading alone,
  * as its line in the tree or a link to it in the note asks, back or ahead,
  * see the top of this file;
- * `Next` below it returns to the current step, which stays where it was, marked in the tree.
+ * `Next` returns from it to the current step, which stays where it was, marked in the tree.
  * Its scenes fold for a link, or for a block outside the round.
  * - `block`: The block asked for.
  * - `steps`, `current`: The steps of the round and the current one.
@@ -1067,23 +1020,31 @@ export function roundHeadingShow(view: EditorView, heading: string, linked: bool
 }
 
 /**
+ * Goes on, see {@link roundNext}, as `Next` in the head and the check of a Right ask;
+ * a line the reader does not take shows in the status line, see {@link failShow}.
+ *
+ * @param view - The editor
+ */
+export function roundGo(view: EditorView): void {
+    roundNext(view).catch(failShow);
+}
+
+/**
  * Starts the round of the notes the editor shows: it hears each load of their tasks,
- * see {@link roundTake}, and goes on after a Right as `Next` does, see {@link roundNext}.
+ * see {@link roundTake}, and goes on after a Right as `Next` does, see {@link roundGo}.
  * - {@link EditorState.changeFilter}: Leaves changes out before they are applied.
  * - {@link EditorState.transactionFilter}: Changes a transaction before it is applied;
  *   {@link Prec.highest} runs {@link selectionKeep} after the other filters,
  *   which move the cursor too, so it has the last word.
  *
  * @param changed - Shows the places of the blocks anew in the tree
- * @returns Extension for the editor: the block shown with `Next`,
+ * @returns Extension for the editor: the block shown alone,
  *   and what I write and select kept inside it
  */
 export function roundStart(changed: () => void): Extension {
     tasksFollow(
         (view: EditorView, loaded: NoteTasks): void => roundTake(view, loaded, changed),
-        (view: EditorView): void => {
-            roundNext(view).catch(failShow);
-        },
+        roundGo,
     );
     return [
         alonePlace,

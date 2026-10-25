@@ -51,10 +51,9 @@
    filled in the soft grey of a card without a frame,
    as on the phone, with a quarter more room beside their words, their words grey,
    light under the pointer, as of every button with words, never a lighter box;
-   Next of the round of a section and the button of the history the same;
+   the button of the history the same;
    each keeps its size, its frame there but clear */
 .steps-buttons button,
-.round-next,
 .task-history > summary {
     min-height: var(--chip-height);
     padding: 0 calc(1.25 * var(--control-padding));
@@ -66,7 +65,6 @@
 }
 
 .steps-buttons button:hover,
-.round-next:hover,
 .task-history > summary:hover {
     color: var(--text-main);
 }
@@ -155,7 +153,7 @@ details.task-history a {
    the room for them kept free beside the text, see `.task-heading` in `../editor/editor.css`;
    small icon buttons, see `.chip-button` in `../base.css`,
    the result of today pressed told apart only by its icon light instead of grey,
-   as the round check once on */
+   as the area of the rail shown */
 .task-judge {
     position: absolute;
     right: 0;

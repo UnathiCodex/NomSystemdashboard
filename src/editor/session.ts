@@ -2,7 +2,7 @@
  * ## Session
  *
  * No learning recorded without a session: before the learning view records something,
- * where I stand with `Next`, a result or the round check, a session of the module runs,
+ * where I stand with `Next`, a result or the close of the round, a session of the module runs,
  * its skill entry of the moment, into which the record goes, see `reader/skill.ts`;
  * reading a section needs none.
  * While none runs, the day view's own dialog of a new entry opens over the page,

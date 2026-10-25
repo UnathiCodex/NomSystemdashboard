@@ -10,16 +10,14 @@
 
 /* The file: the page of it in the middle, scrolls alone,
    the same room at its left and at its right on every page, a note, a file of my new system,
-   an `.ics` file and the page of a module alike, `--edge-room`,
-   just the room of the save button at its right, see `.editor-head`,
-   and of the dashes of an `.ics` file at its left, see `.ics-overview`,
-   so neither ever covers the text;
+   an `.ics` file and the page of a module alike, `--edge-room`, 4rem,
+   so the check and the cross at the right end of a heading keep air to the edge of the screen,
+   and the dashes of an `.ics` file at its left never cover the text, see `.ics-overview`;
    where the screen has room, as on my PC, the page stays in the middle;
    the room of the scrollbar kept also for a file too short to scroll,
-   so the page stands at the same place in every file;
-   page and head in one cell, the head at its right */
+   so the page stands at the same place in every file */
 .editor-file {
-    --edge-room: 3rem;
+    --edge-room: 4rem;
     display: grid;
     grid-template-columns: minmax(var(--edge-room), 1fr) minmax(0, var(--reading-width)) minmax(
             var(--edge-room),
@@ -45,25 +43,6 @@
     color: var(--reading-text);
 }
 
-/* Head beside the page, at the right edge of the screen:
-   the save button, below it for a section the round check,
-   level with the areas of the rail and as close below each other,
-   a quarter rem from the right edge,
-   so it fits the room beside the page, `--edge-room`, with a little room left to the text;
-   stays in the corner while the page scrolls */
-.editor-head {
-    grid-area: 1 / 3;
-    position: sticky;
-    top: calc(var(--top-room) + 0.25rem);
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    align-self: start;
-    justify-self: end;
-    margin-right: 0.25rem;
-}
-
 /* Status line above the text, quiet, a gap above and below it,
    its middle level with the save button and the first area of the rail: for a section its round,
    like `Round 1`, in a small grey box as the type word of a block,
@@ -74,7 +53,8 @@
    then the session the round writes into, like `· 17.10.2026 (Sat) · 21:40 – 22:40`,
    see `sessionShow` in `round.ts`, after a middle dot as a part of an entry of the day,
    see `.entry-parted` in `../day/day.css`;
-   at the right, a gap apart, whether the changes are saved, like `Saved 20:41` or `Not saved`;
+   at the right, a gap apart, whether the changes are saved, like `Saved 20:41` or `Not saved`,
+   then the head, see `.editor-head`;
    all in the grey of quiet text, as big as the text of
    the tree, on one line, one chip high also while only the name stands,
    so the text never moves when a notice comes, going on below only where the page is narrow,
@@ -113,13 +93,6 @@
     overflow-wrap: anywhere;
 }
 
-/* The round as big as the type word of a block on its heading,
-   see `.editor-text h2 .block-kind` below: 0.55 of a heading of 1.4 of the text,
-   see `.markdown h2` in `../notes/notes.css`, so both boxes have one size and room */
-.editor-title .block-kind {
-    font-size: calc(0.55 * 1.4rem);
-}
-
 .editor-title > :empty {
     display: none;
 }
@@ -131,21 +104,20 @@
     text-align: right;
 }
 
-/* Next below the current block of a section, like Next step of a solution,
-   see `../skill/task.css`, at the right,
-   as every button of a block,
-   under the check and cross of its heading and the round check and save button above */
-.round-next {
-    display: block;
-    margin: 1.5rem 0 0.5rem auto;
-}
-
-/* Next off and faint below an Example or a Task without my result,
-   as the round check before its Task has one,
-   so only the check or the cross of its heading goes on, see `waitingIs` in `round.ts` */
-.round-waiting .round-next {
-    opacity: 0.4;
-    pointer-events: none;
+/* Head at the right end of the status line, a gap after the notice:
+   the save button, for a section then the close of its round and `Next`, an arrow, see `round.ts`,
+   so the arrow forward stands last, at the right, where a way forward points,
+   the round's two controls side by side and the save button, of the file, before them;
+   its right edge that of the page, of the check and cross of a heading and of `Next step`;
+   the buttons taking no height of the line, so it stays one chip high,
+   their middle in its middle, level with the first area of the rail */
+.editor-head {
+    display: flex;
+    flex: none;
+    gap: 0.25rem;
+    align-self: center;
+    margin-block: calc((var(--control-height) - 0.5rem) / -2);
+    padding-top: 0;
 }
 
 /* The line of the heading of a task of a section,
@@ -156,28 +128,31 @@
     padding-right: calc(2 * var(--chip-height) + 1.25rem);
 }
 
-/* The type word of a block on the line of its heading,
+/* The type word of a block on the line of its heading, and the round in the status line alike,
+   like `Round 1`, so both boxes are one:
    see `.block-kind` in `../base.css`, about as big as the text of the tree,
-   whatever the size of the heading:
-   every box as wide as the widest word, `Algorithm`, its word in the middle, as in the tree,
+   0.55 of a heading of 1.4 of the text, see `.markdown h2` in `../notes/notes.css`:
+   every box as wide as the widest word, `Algorithm`, its word in the middle,
    so the names after them start in one line, a clear gap before the name;
    on every screen at the left edge of the page, where the text starts, never hanging beside it */
-.editor-text h2 .block-kind {
+.editor-text h2 .block-kind,
+.editor-title .block-kind {
     box-sizing: border-box;
     width: 7.25em;
     margin-right: 1.25em;
-    font-size: 0.55em;
+    font-size: calc(0.55 * 1.4rem);
     text-align: center;
     cursor: default;
 }
 
 /* Buttons of the head, icon buttons as the areas of the rail,
    see `.icon-button` and `.areas` in `../base.css`: as big;
-   faint while off, the save button while nothing is to save, the round check of a section,
+   faint while off, the save button while nothing is to save, the close of a round,
    see `round.ts`, before the round's Task has a result
-   and the way down its failure brings back has ended */
+   and the way down its failure brings back has ended, `Next` while it cannot go on */
 .editor-save,
-.editor-close {
+.editor-close,
+.editor-next {
     width: calc(var(--control-height) - 0.5rem);
     height: calc(var(--control-height) - 0.5rem);
 }
@@ -186,10 +161,10 @@
     opacity: 0.4;
 }
 
-/* Over the page of a module or of a chapter and over a folder of my modules no head
-   and no status line, the first card,
+/* Over the page of a module or of a chapter and over a folder of my modules
+   no status line with its head, the first card,
    the name of the chapter or of the folder standing where the text of a note starts */
-.editor-on-overview :is(.editor-head, .editor-status) {
+.editor-on-overview .editor-status {
     display: none;
 }
 

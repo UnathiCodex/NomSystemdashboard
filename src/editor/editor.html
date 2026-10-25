@@ -10,13 +10,19 @@
         <!-- Page of the file as wide as the room beside the tree, with little room left and right -->
         <div class="editor-page">
             <!-- Status line above the text, quiet: for a section its round in a small grey box, see round.ts, then
-                 the session the round writes into, the file named only by the tree; at the right whether the changes are saved; stays on top while
-                 scrolling -->
+                 the session the round writes into, the file named only by the tree; at the right whether the changes are saved,
+                 then the head; stays on top while scrolling -->
             <div class="editor-status" id="editor-status">
                 <p class="editor-title"><span class="block-kind" id="editor-round" hidden><span
                         id="editor-round-label"></span></span><span class="entry-parted"
                         id="editor-session"></span></p>
                 <span class="editor-state" id="editor-state"></span>
+                <!-- Head: the save button, and for a section the close of its round and Next, see round.ts -->
+                <div class="editor-head" id="editor-head">
+                    <button type="button" class="editor-save" id="editor-save"></button>
+                    <button type="button" class="editor-close" id="editor-close" hidden></button>
+                    <button type="button" class="editor-next" id="editor-next" hidden></button>
+                </div>
             </div>
 
             <!-- Page of a module or of one of its chapters, once its name in the tree is picked: of the module on top
@@ -45,14 +51,6 @@
             <!-- Text of the file, CodeMirror inside; `markdown` gives the rendered pieces of a Markdown file the look
                  of the scripts view, `editor-plain` shows any other file as its plain text -->
             <div class="editor-text markdown" id="editor-text"></div>
-        </div>
-
-        <!-- Head: the save button at the right edge of the screen, beside the page, and below it for a section
-             the round check, see round.ts; stays in the corner while scrolling -->
-        <div class="editor-head" id="editor-head">
-            <button type="button" class="editor-save" id="editor-save"></button>
-            <!-- A section only: closes its round by hand, see round.ts -->
-            <button type="button" class="editor-close" id="editor-close" hidden></button>
         </div>
     </div>
 </div>
