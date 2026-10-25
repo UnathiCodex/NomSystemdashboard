@@ -1,6 +1,8 @@
-/* Lists of the fields of the entry by category: the line of a field, its list as a menu over the dialog with its
-   search field, its values and their groups, a value picked in its own row, the parts of a field below it and the
-   results of the tasks of a session; on a phone a list rising from the bottom */
+/* Lists of the fields of the entry by category:
+   the line of a field, its list as a menu over the dialog with its search field,
+   its values and their groups, a value picked in its own row,
+   the parts of a field below it and the results of the tasks of a session;
+   on a phone a list rising from the bottom */
 /* Picker: the line of its field, with what stands beside and below it, then its list */
 .picker {
     min-width: 0;
@@ -13,9 +15,9 @@
     min-width: 0;
 }
 
-/* Line of a field: its value as plain text, going on below where it is wider than its row, never cut,
-   or grey what it is while nothing is picked, like `No type`; the whole row opens its list,
-   see `rowOf` in `choices.ts` */
+/* Line of a field: its value as plain text, going on below where it is wider than its row,
+   never cut, or grey what it is while nothing is picked, like `No type`;
+   the whole row opens its list, see `rowOf` in `choices.ts` */
 .picker-line {
     flex: 0 1 auto;
     min-width: 0;
@@ -29,16 +31,18 @@
     cursor: pointer;
 }
 
-/* Line of a value that stays as planned, see `locked` in `choices.ts`: in the colour of any value, opening nothing */
+/* Line of a value that stays as planned, see `locked` in `choices.ts`:
+   in the colour of any value, opening nothing */
 .picker-line:disabled {
     color: var(--text-main);
     cursor: default;
 }
 
-/* An empty line shows nothing, but still takes the width left and one line of height, so a click on it opens
-   its list, like the type beside a skill; a space of no width in it gives it the baseline of a line of text,
-   so the name of its row stands on the same line as in a row with a value, in the middle of its frame,
-   not at the bottom of the empty line */
+/* An empty line shows nothing, but still takes the width left and one line of height,
+   so a click on it opens its list, like the type beside a skill;
+   a space of no width in it gives it the baseline of a line of text,
+   so the name of its row stands on the same line as in a row with a value,
+   in the middle of its frame, not at the bottom of the empty line */
 .picker-line.picker-empty {
     flex: 1 1 auto;
     min-height: 1lh;
@@ -49,17 +53,18 @@
     content: "\200b";
 }
 
-/* A row without a value, like `Cooked +`, `Chapter +` or `Series +` with its plus beside its name, or the summary
-   of a Food without foods, holds one empty line of a value, a space of no width, as an empty line does, so it is
-   as high as a row with a value, its name on the same line, and all rows stand equally apart; but on a phone, see
-   the end of this file */
+/* A row without a value, like `Cooked +`, `Chapter +` or `Series +` with its plus beside its name,
+   or the summary of a Food without foods, holds one empty line of a value, a space of no width,
+   as an empty line does, so it is as high as a row with a value, its name on the same line,
+   and all rows stand equally apart; but on a phone, see the end of this file */
 .picker-head:empty::before,
 .meal-summary:empty::before,
 .meal:has(> .meal-rows:empty)::before {
     content: "\200b";
 }
 
-/* The line that opened the open list and its row, the anchors of its menu, see `listOf` in `choices.ts` */
+/* The line that opened the open list and its row, the anchors of its menu,
+   see `listOf` in `choices.ts` */
 .list-line {
     anchor-name: --list-line;
 }
@@ -68,13 +73,17 @@
     anchor-name: --list-field;
 }
 
-/* List of a field as a menu of its own over the dialog, a popover of the browser, see `listOf` in `choices.ts`:
-   its search field first, then its values, and at its end the plus with the text typed while no value has it,
-   see `.picker-new` in `base.css`; with the dialog's background and line and a soft shadow; right under the line
-   that opened it, never covering it, as wide as the value of its row: the texts of its search field and its values
-   start where the value above starts, their 0.75rem of padding and the menu's own left of it, and it ends where its row
-   ends; the rows of the dialog staying where they are; above the line instead where there is more room above, as low
-   in a long dialog; its values scrolling where the room is short, the search field staying in sight */
+/* List of a field as a menu of its own over the dialog, a popover of the browser,
+   see `listOf` in `choices.ts`:
+   its search field first, then its values,
+   and at its end the plus with the text typed while no value has it,
+   see `.picker-new` in `base.css`; with the dialog's background and line and a soft shadow;
+   right under the line that opened it, never covering it, as wide as the value of its row:
+   the texts of its search field and its values start where the value above starts,
+   their 0.75rem of padding and the menu's own left of it, and it ends where its row ends;
+   the rows of the dialog staying where they are;
+   above the line instead where there is more room above, as low in a long dialog;
+   its values scrolling where the room is short, the search field staying in sight */
 .picker-box {
     --menu-padding: 0.5rem;
     position: fixed;
@@ -82,7 +91,9 @@
     inset: auto;
     top: calc(anchor(bottom) + 0.375rem);
     bottom: var(--gap);
-    left: calc(anchor(--list-field left) + var(--value-start) - 0.75rem - var(--menu-padding) - 1px);
+    left: calc(
+        anchor(--list-field left) + var(--value-start) - 0.75rem - var(--menu-padding) - 1px
+    );
     right: anchor(--list-field right);
     width: auto;
     height: fit-content;
@@ -106,7 +117,8 @@
     gap: 0.375rem;
 }
 
-/* Values of a menu scroll inside it where it has no room for all, its search field and the plus at its end staying */
+/* Values of a menu scroll inside it where it has no room for all,
+   its search field and the plus at its end staying */
 .picker-box > .picker-list,
 .picker-box .food-search,
 .picker-box .food-results {
@@ -118,17 +130,20 @@
     flex: 0 1 auto;
 }
 
-/* Search field of a list, like `Search or add a place`, and the food search of a meal, see `../day/meal.css`:
-   the one search field of the page, see `.search-field` in `../base.css`, only one chip high, with less room above
-   and below it and its magnifier as far in as the values; in a dialog and in a picker of the course of a module,
-   see `../editor/course.css` */
+/* Search field of a list, like `Search or add a place`,
+   and the food search of a meal, see `../day/meal.css`:
+   the one search field of the page,
+   see `.search-field` in `../base.css`, only one chip high,
+   with less room above and below it and its magnifier as far in as the values;
+   in a dialog and in a picker of the course of a module, see `../editor/course.css` */
 .picker-box .search-field {
     height: var(--chip-height);
     margin: 0.375rem 0;
     padding: 0 0.75rem;
 }
 
-/* Values of a list, many or few, like places, tasks or Night and Day, one whole name per row, never as chips,
+/* Values of a list, many or few,
+   like places, tasks or Night and Day, one whole name per row, never as chips,
    each row `--picker-row` high, a little higher than a chip, for my 4K monitor */
 .picker-list {
     --picker-row: 2.125rem;
@@ -159,8 +174,9 @@
 }
 
 /* Detail of a value grey beside it, like the address of a place */
-/* The star after a value starred in a list, like my default place, see `valueButtonOf` in `choices.ts`: as small and
-   filled as the star of the place itself, see `.place-star`, a little apart from its text */
+/* The star after a value starred in a list, like my default place,
+   see `valueButtonOf` in `choices.ts`: as small and filled as the star of the place itself,
+   see `.place-star`, a little apart from its text */
 .picker-star svg.lucide {
     width: 0.9375rem;
     height: 0.9375rem;
@@ -175,9 +191,10 @@
     color: var(--text-muted);
 }
 
-/* Rows inside the value above them, like the documents of a chapter, see `nested` in `choices.ts`: as the foods
-   of a meal, see `.meal-parts` in `day.css`, indented under its text with the grey guide line, `--guide`, at their
-   left, close together, in the white of every value, the one plus last, so a chapter and its documents read as one;
+/* Rows inside the value above them, like the documents of a chapter, see `nested` in `choices.ts`:
+   as the foods of a meal, see `.meal-parts` in `day.css`,
+   indented under its text with the grey guide line, `--guide`, at their left, close together,
+   in the white of every value, the one plus last, so a chapter and its documents read as one;
    the line reaching over the room between two rows and their frames, 2 px, so it runs through */
 .panel-nested {
     position: relative;
@@ -199,17 +216,18 @@
     margin-left: 1.75rem;
 }
 
-/* A line that adds, like a document to its chapter, the next chapter, a type or a meal: the one plus of every list,
-   see `.plus-quiet` in `base.css`, in the middle of its row; its grey written again here only because a line
-   otherwise takes the colour of a value */
+/* A line that adds, like a document to its chapter, the next chapter, a type or a meal:
+   the one plus of every list, see `.plus-quiet` in `base.css`, in the middle of its row;
+   its grey written again here only because a line otherwise takes the colour of a value */
 .picker-line.plus-quiet {
     align-self: center;
     color: var(--text-muted);
 }
 
-/* A value picked of a field of several values in its own row below the field, like a chapter or the name of the file
-   of a document, see `addedRowsOf` in `choices.ts`: its text going on below where it is wider than its row,
-   the small grey × at the right, see `.cross-quiet` in `base.css`, which takes it back */
+/* A value picked of a field of several values in its own row below the field,
+   like a chapter or the name of the file of a document, see `addedRowsOf` in `choices.ts`:
+   its text going on below where it is wider than its row, the small grey × at the right,
+   see `.cross-quiet` in `base.css`, which takes it back */
 .picker-added {
     display: flex;
     align-items: baseline;
@@ -223,8 +241,9 @@
     overflow-wrap: anywhere;
 }
 
-/* The text of a value picked that opens what it names, like a chapter in the scripts view, in the colour of every
-   value, lighter under the pointer, never underlined, as the folder of a skill below it, see `.entry-address` in `day.css` */
+/* The text of a value picked that opens what it names,
+   like a chapter in the scripts view, in the colour of every value, lighter under the pointer,
+   never underlined, as the folder of a skill below it, see `.entry-address` in `day.css` */
 .picker-added-text > a {
     color: inherit;
     text-decoration: none;
@@ -234,10 +253,12 @@
     color: var(--text-main);
 }
 
-/* A value in the line that opens what it names, like a person of `Persons.md` in `With`, see `lineValueOf`
-   in `choices.ts`: in the colour of every value, as a chapter that opens the scripts view, see `.picker-added-text`,
-   never underlined, only its text lighter under the pointer, softly as every hover, see `--hover-in`
-   in `../variants.css`; any other value of the line stays plain text */
+/* A value in the line that opens what it names, like a person of `Persons.md` in `With`,
+   see `lineValueOf` in `choices.ts`: in the colour of every value,
+   as a chapter that opens the scripts view,
+   see `.picker-added-text`, never underlined, only its text lighter under the pointer,
+   softly as every hover, see `--hover-in` in `../variants.css`;
+   any other value of the line stays plain text */
 .picker-link {
     color: inherit;
     transition: color var(--hover-out);
@@ -248,8 +269,9 @@
     transition: color var(--hover-in);
 }
 
-/* The × of a value picked, which has no text of its own, on the line of its text, its icon level with the small
-   letters, as an icon beside a word stands and as the × of a food, see `.meal-row` in `meal.css`, not above them */
+/* The × of a value picked, which has no text of its own, on the line of its text,
+   its icon level with the small letters, as an icon beside a word stands and as the × of a food,
+   see `.meal-row` in `meal.css`, not above them */
 .picker-added > .cross-quiet {
     display: block;
     line-height: inherit;
@@ -260,15 +282,16 @@
     vertical-align: middle;
 }
 
-/* The pencil beside a name a little smaller than the icons of buttons, so it stays quiet beside its text,
-   as the cross of a value picked */
+/* The pencil beside a name a little smaller than the icons of buttons,
+   so it stays quiet beside its text, as the cross of a value picked */
 .entry-pencil svg.lucide {
     width: 0.9375rem;
     height: 0.9375rem;
 }
 
 /* Results of the tasks picked for a session, below their list, in two columns:
-   the name of a task grey, the line of its result, and below that line the field of my comment on a wrong one */
+   the name of a task grey, the line of its result,
+   and below that line the field of my comment on a wrong one */
 .skill-results {
     display: flex;
     flex-direction: column;
@@ -307,11 +330,14 @@
     width: 100%;
 }
 
-/* The one plus right after what it adds to, never on a line of its own: beside the name of a field, like `Foods +`
-   or `Chapter +`, or after a value, like `Chili con Carne +` or a chapter's plus that adds a document to it, a little
-   apart, see `lineMove` in `choices.ts`; its box one line of its text high and at the top of its line, so its icon stands
-   exactly in the middle of the line, also after a name going on over two lines; its padding above and below,
-   taken back by its margins, makes it easier to hit without moving the line */
+/* The one plus right after what it adds to, never on a line of its own: beside the name of a field,
+   like `Foods +` or `Chapter +`, or after a value,
+   like `Chili con Carne +` or a chapter's plus that adds a document to it, a little apart,
+   see `lineMove` in `choices.ts`;
+   its box one line of its text high and at the top of its line,
+   so its icon stands exactly in the middle of the line, also after a name going on over two lines;
+   its padding above and below, taken back by its margins,
+   makes it easier to hit without moving the line */
 .entry-name .picker-line,
 .entry-name .plus-quiet,
 .picker-added-text .picker-line,
@@ -323,8 +349,8 @@
     vertical-align: top;
 }
 
-/* A row that keeps only the list of a plus moved away, see `lineMove` in `choices.ts`: no room of the dialog,
-   since the list opens as a menu over it, see `.picker-box` */
+/* A row that keeps only the list of a plus moved away, see `lineMove` in `choices.ts`:
+   no room of the dialog, since the list opens as a menu over it, see `.picker-box` */
 .panel-list,
 .panel-list > .picker {
     display: contents;
@@ -335,14 +361,17 @@
     display: none;
 }
 
-/* Nor the thin line of the parts, should the row stand among them, like the list of the documents of a chapter */
+/* Nor the thin line of the parts, should the row stand among them,
+   like the list of the documents of a chapter */
 .panel-list::before {
     content: none;
 }
 
-/* Parts of a field in two columns, each its name small and grey, then its value, the values one below the other;
-   a little room above them, below the place's address; the line saying a part was not saved across both; none
-   while closed, like the link of a summary until its pencil opens it */
+/* Parts of a field in two columns, each its name small and grey,
+   then its value, the values one below the other;
+   a little room above them, below the place's address;
+   the line saying a part was not saved across both;
+   none while closed, like the link of a summary until its pencil opens it */
 .field-parts {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
@@ -355,9 +384,10 @@
     display: none;
 }
 
-/* The parts of the people of `With`, one block of parts per person, see `withPartsOf` in `categories.ts`, each with
-   its own thin grey line, a little more room between two blocks than between the parts of one, so two lecturers
-   read as two people */
+/* The parts of the people of `With`, one block of parts per person,
+   see `withPartsOf` in `categories.ts`, each with its own thin grey line,
+   a little more room between two blocks than between the parts of one,
+   so two lecturers read as two people */
 .people-parts {
     display: flex;
     flex-direction: column;
@@ -372,8 +402,9 @@
     display: contents;
 }
 
-/* Name of a part, like `Code` or `Passcode`, with a little more room to its right than the gap of the columns alone,
-   the same for every part, so a short name never sits close to its value */
+/* Name of a part, like `Code` or `Passcode`,
+   with a little more room to its right than the gap of the columns alone, the same for every part,
+   so a short name never sits close to its value */
 .field-part > .entry-name {
     padding-right: 0.5rem;
 }
@@ -383,11 +414,13 @@
     margin: 0;
 }
 
-/* Group of choices, like Due today, small and grey above its first one, a row of its own, as far from its first line
-   and from the line between two groups as the head of a section of the food search, see `.food-columns`
-   and `.food-divider` in `../food/search.css`, so it stands farther from its first line than two lines from each other,
-   and that line as long as there, from where the names start to where the numbers end; a phone spaces the values
-   of its lists by rules of its own, see the end of this file */
+/* Group of choices, like Due today, small and grey above its first one, a row of its own,
+   as far from its first line and from the line between two groups
+   as the head of a section of the food search,
+   see `.food-columns` and `.food-divider` in `../food/search.css`,
+   so it stands farther from its first line than two lines from each other,
+   and that line as long as there, from where the names start to where the numbers end;
+   a phone spaces the values of its lists by rules of its own, see the end of this file */
 .picker-group {
     margin: 0 0.75rem;
     padding: 0.25rem 0 1rem;
@@ -395,20 +428,22 @@
     color: var(--text-muted);
 }
 
-/* A group after another stands apart from it by a thin line above its head, like my modules and my projects in the
-   list of a skill, as the sections of the food search, see `.food-divider` in `../food/search.css` */
+/* A group after another stands apart from it by a thin line above its head,
+   like my modules and my projects in the list of a skill, as the sections of the food search,
+   see `.food-divider` in `../food/search.css` */
 .picker-list > * + .picker-group {
     margin-top: 0.75rem;
     padding-top: 1.375rem;
     border-top: 1px solid var(--line);
 }
 
-/* Phone: the result of a task below it, no empty line in a row without a value, a list rising from the bottom,
-   its groups closer and its values with room above and below */
+/* Phone: the result of a task below it, no empty line in a row without a value,
+   a list rising from the bottom, its groups closer and its values with room above and below */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    /* The result of a task picked for a session on a phone below the task, as the value of a row stands below its
-       name, so the name of the task keeps the whole width instead of two fifths, like `Unbiased Mean Check` on one
-       line, and the field of my comment below the result */
+    /* The result of a task picked for a session on a phone below the task,
+       as the value of a row stands below its name,
+       so the name of the task keeps the whole width instead of two fifths,
+       like `Unbiased Mean Check` on one line, and the field of my comment below the result */
     .skill-result {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -417,16 +452,17 @@
         grid-column: 1;
     }
 
-    /* A row without a value on a phone holds no empty line of a value, since its value stands below its name, where
-       an empty line would only take room */
+    /* A row without a value on a phone holds no empty line of a value,
+       since its value stands below its name, where an empty line would only take room */
     .picker-head:empty::before,
     .meal-summary:empty::before,
     .meal:has(> .meal-rows:empty)::before {
         content: none;
     }
 
-    /* The head of a group of a list on a phone over the whole width of the list, its name as far in as the values,
-       as close to its first line as two lines to each other, and the line between two groups closer too */
+    /* The head of a group of a list on a phone over the whole width of the list,
+       its name as far in as the values, as close to its first line as two lines to each other,
+       and the line between two groups closer too */
     .picker-group {
         width: 100%;
         margin-inline: 0;
@@ -438,8 +474,9 @@
         padding-top: 0.75rem;
     }
 
-    /* A list on a phone rises from the bottom over the whole width, like the dialog itself, as round, never higher than
-       the screen leaves room for, above the keyboard while one is open, see `interactive-widget` in `index.html` */
+    /* A list on a phone rises from the bottom over the whole width, like the dialog itself,
+       as round, never higher than the screen leaves room for, above the keyboard while one is open,
+       see `interactive-widget` in `index.html` */
     .picker-box {
         position-try-fallbacks: none;
         top: auto;
@@ -451,10 +488,11 @@
         border-radius: 1.5rem 1.5rem 0 0;
     }
 
-    /* A value of a list on a phone with room above and below it, so a value going on over two lines stands apart
-       from the next one; its detail, like the address of a place, small and grey on a line of its own below
-       its name, as a place's address stands below it in the dialog, instead of beside it going on below; with
-       the round corners of every button on a phone, see `../variants.css` */
+    /* A value of a list on a phone with room above and below it,
+       so a value going on over two lines stands apart from the next one;
+       its detail, like the address of a place, small and grey on a line of its own below its name,
+       as a place's address stands below it in the dialog, instead of beside it going on below;
+       with the round corners of every button on a phone, see `../variants.css` */
     .picker-list button {
         padding-block: 0.375rem;
         border-radius: var(--chip-radius);
@@ -466,8 +504,9 @@
     }
 }
 
-/* Label of a place with its star at its right, see `standardStarOf` in `places.ts`: the field as wide as the star
-   leaves it; the star as large as the pencil of a place, filled while the place is my default place */
+/* Label of a place with its star at its right, see `standardStarOf` in `places.ts`:
+   the field as wide as the star leaves it;
+   the star as large as the pencil of a place, filled while the place is my default place */
 .place-label {
     display: flex;
     align-items: center;

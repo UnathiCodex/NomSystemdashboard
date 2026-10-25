@@ -1,54 +1,75 @@
 /**
  * ## Round
  *
- * The round of a section in the editor, the one view of a note: a section, a note with tasks of the semester, shows its
- * blocks, each `##` block, as the round holds them, never changing the text: only the current step stands on the page,
- * the text before and after it hidden, see {@link aloneOf}; every other block folded, the cold Task variants not due
- * this round like the Examples. Under the current step stands `Next`: it checks a block without a result off, like
- * theory, and opens the next; a task stays unchecked until my result, which only its check and cross on the line of its
- * heading write, the check going on as `Next` does, see `../skill/task.ts`, so `Next` stays off below an Example or a
- * Task until it has my result, and no block passes without one. In the status line at the bottom stands the round, like
- * `Round 1`, see {@link roundLineOf}, and beside it the session it writes into, see {@link sessionShow}; the tree lists
- * every block with its place, see `roundListOf` in `../notes/tree.ts`, and a click there shows a block alone, see
- * {@link roundHeadingShow}.
- * What a round holds, only what it needs; the other blocks wait, grey in the tree, those of one kind folded into one
- * line there:
- * - round 0, while the section learns the ladder, until a cold Task first comes back on a later day: every theory
- *   block in the order of the note, the Algorithm among them, and an older note's worked Examples, then one Example
- *   with gaps, the first, which gives almost every step, then one Task alone;
+ * The round of a section in the editor, the one view of a note:
+ * a section, a note with tasks of the semester, shows its blocks, each `##` block,
+ * as the round holds them, never changing the text:
+ * only the current step stands on the page, the text before and after it hidden,
+ * see {@link aloneOf}; every other block folded,
+ * the cold Task variants not due this round like the Examples.
+ * Under the current step stands `Next`: it checks a block without a result off, like theory,
+ * and opens the next; a task stays unchecked until my result,
+ * which only its check and cross on the line of its heading write,
+ * the check going on as `Next` does, see `../skill/task.ts`,
+ * so `Next` stays off below an Example or a Task until it has my result,
+ * and no block passes without one.
+ * In the status line at the bottom stands the round, like `Round 1`, see {@link roundLineOf},
+ * and beside it the session it writes into, see {@link sessionShow};
+ * the tree lists every block with its place, see `roundListOf` in `../notes/tree.ts`,
+ * and a click there shows a block alone, see {@link roundHeadingShow}.
+ * What a round holds, only what it needs;
+ * the other blocks wait, grey in the tree, those of one kind folded into one line there:
+ * - round 0, while the section learns the ladder,
+ *   until a cold Task first comes back on a later day:
+ *   every theory block in the order of the note, the Algorithm among them,
+ *   and an older note's worked Examples, then one Example with gaps, the first,
+ *   which gives almost every step, then one Task alone;
  *   that it is the first Example was Claude's choice, not mine;
  * - later: only the Task of today, once it is due.
- * A failure brings back one Example easier, the same day, see {@link fallbacksOf}: a wrong Task the last Example,
- * a wrong Example the one before it, a wrong first Example the Algorithm, read again; one Task per round decides when
- * the next round comes, see `reader/skill.ts`.
- * Where I am lives in the log alone, never in the browser or the note: `Next` writes the step it goes on to, where
- * I stand, into the one line `X-ROUND` of the section in the skill entry of the moment, written anew in its place,
- * and the reader gives it back with the section, see `RoundLine` in `reader/skill.ts`, so a round goes on where I left
- * it, in another sitting or on another day; the steps without a result before it, like theory, count as passed,
+ * A failure brings back one Example easier, the same day, see {@link fallbacksOf}:
+ * a wrong Task the last Example, a wrong Example the one before it,
+ * a wrong first Example the Algorithm, read again;
+ * one Task per round decides when the next round comes, see `reader/skill.ts`.
+ * Where I am lives in the log alone, never in the browser or the note:
+ * `Next` writes the step it goes on to,
+ * where I stand, into the one line `X-ROUND` of the section in the skill entry of the moment,
+ * written anew in its place, and the reader gives it back with the section,
+ * see `RoundLine` in `reader/skill.ts`,
+ * so a round goes on where I left it, in another sitting or on another day;
+ * the steps without a result before it, like theory, count as passed,
  * as do those an older line `seen` names.
- * A task counts as done by the log: in the ladder by any attempt, a Task once nothing of it is due today.
- * A click on a block in the tree, or on a link to its heading in the note, shows it alone, back or ahead, see
- * {@link roundHeadingShow}, and `Next` returns to the current step. The scene of a Definition, Lemma or Algorithm, its section
- * under a heading `####` like `#### Ice Cream Kiosk`, stands open in the round that holds the block, so the first time
- * I map it onto the theory; a block looked up, by a link or from the tree outside that round, shows its scene folded,
- * the theory a clean card, its arrow opening it, see {@link blockOpen}; the last step has no `Next`, since a round closes
- * only by hand, with the round check in the head, see {@link roundClose}, once its Task has a result and what a failure
- * of it brought back is done, see {@link closeShow}; the close writes `done` where the step stood, and Today follows;
+ * A task counts as done by the log:
+ * in the ladder by any attempt, a Task once nothing of it is due today.
+ * A click on a block in the tree,
+ * or on a link to its heading in the note, shows it alone, back or ahead,
+ * see {@link roundHeadingShow}, and `Next` returns to the current step.
+ * The scene of a Definition, Lemma or Algorithm,
+ * its section under a heading `####` like `#### Ice Cream Kiosk`,
+ * stands open in the round that holds the block, so the first time I map it onto the theory;
+ * a block looked up, by a link or from the tree outside that round, shows its scene folded,
+ * the theory a clean card, its arrow opening it, see {@link blockOpen};
+ * the last step has no `Next`, since a round closes only by hand, with the round check in the head,
+ * see {@link roundClose}, once its Task has a result and what a failure of it brought back is done,
+ * see {@link closeShow}; the close writes `done` where the step stood, and Today follows;
  * once closed, a block opened has no `Next`, with no step to return to.
- * Reading a round needs no session, but `Next` and the round check write only in a session of the module, which
- * the dialog of a new entry starts while none runs, see `./session.ts`; cancelled, I stay where I was.
- * I write only in the block shown, see {@link changesKeep} and {@link selectionKeep}, so no key, cut or drag takes
- * `Next` or the hidden text around the block away.
+ * Reading a round needs no session,
+ * but `Next` and the round check write only in a session of the module,
+ * which the dialog of a new entry starts while none runs, see `./session.ts`;
+ * cancelled, I stay where I was.
+ * I write only in the block shown, see {@link changesKeep} and {@link selectionKeep},
+ * so no key, cut or drag takes `Next` or the hidden text around the block away.
  *
- * - `@codemirror/state`, `@codemirror/view`: Hold the block shown, keep what I write and select inside it,
+ * - `@codemirror/state`, `@codemirror/view`:
+ *   Hold the block shown, keep what I write and select inside it,
  *   and draw `Next` as a widget below it.
  * - `@codemirror/language`: Folds and unfolds the blocks, as their arrows do.
  * - `./steps.ts`: Tells whether a block is folded.
- * - `../skill/attempts.ts`: Writes the days of the round line out, and the day of the next Task for the tree.
- * - `./tasks.ts`: Reads the blocks of the note with their tasks, and hears each load of the tasks, with its section,
- *   and each Right.
- * - `./session.ts`: Makes sure a session of the module runs before `Next` or the round check writes, and gives the
- *   session running, with its day and times written out.
+ * - `../skill/attempts.ts`: Writes the days of the round line out,
+ *   and the day of the next Task for the tree.
+ * - `./tasks.ts`: Reads the blocks of the note with their tasks,
+ *   and hears each load of the tasks, with its section, and each Right.
+ * - `./session.ts`: Makes sure a session of the module runs before `Next`
+ *   or the round check writes, and gives the session running, with its day and times written out.
  * - `../notes/tree.ts`: The places of the blocks the tree shows.
  */
 
@@ -60,17 +81,25 @@ import { foldedAt } from "./steps.ts";
 import { sessionEnsure, sessionOf, sessionTextOf } from "./session.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
 
-import type { Extension, Line, Range, SelectionRange, StateEffectType, Transaction, TransactionSpec } from "@codemirror/state";
+import type {
+    Extension,
+    Line,
+    Range,
+    SelectionRange,
+    StateEffectType,
+    Transaction,
+    TransactionSpec,
+} from "@codemirror/state";
 import type { DecorationSet } from "@codemirror/view";
 import type { Attempt, Result, SkillSection, SkillTask } from "../skill/attempts.ts";
 import type { Block, NoteTasks } from "./tasks.ts";
 import type { BlockMark } from "../notes/tree.ts";
 import type { Session } from "./session.ts";
 
-
 /**
- * A step of the round: its block, and for one a failure brought back the heading of the block whose failure began
- * the way down, like the Task, and when the failure right before it was, see {@link timeOf}, both empty for none.
+ * A step of the round: its block,
+ * and for one a failure brought back the heading of the block whose failure began the way down,
+ * like the Task, and when the failure right before it was, see {@link timeOf}, both empty for none.
  */
 type Step = {
     block: Block;
@@ -79,7 +108,8 @@ type Step = {
 };
 
 /**
- * A block of the ladder, see {@link fallbacksOf}: its heading as written, and its task, `null` for the Algorithm.
+ * A block of the ladder, see {@link fallbacksOf}: its heading as written,
+ * and its task, `null` for the Algorithm.
  */
 type Rung = {
     heading: string;
@@ -87,9 +117,10 @@ type Rung = {
 };
 
 /**
- * A block a failure brings back, see {@link fallbacksOf}: its heading as written, its task, `null` for the Algorithm,
- * the heading of the block whose failure began the way down, like the Task, and when the failure right before it was,
- * the one that brought it, see {@link timeOf}.
+ * A block a failure brings back, see {@link fallbacksOf}:
+ * its heading as written, its task, `null` for the Algorithm,
+ * the heading of the block whose failure began the way down, like the Task,
+ * and when the failure right before it was, the one that brought it, see {@link timeOf}.
  */
 export type Fallback = {
     heading: string;
@@ -103,9 +134,10 @@ export type Fallback = {
  *
  * - `loaded`: The tasks of the note with its section, as loaded last.
  * - `section`: Its section.
- * - `seen`: Keys of the steps without a result passed with `Next`: those before where I stand by the log, and those
- *   an older line names, with those passed since.
- * - `at`: Key of the current step, pinned while the page shows, so a result moves nothing, only `Next`; empty for none.
+ * - `seen`: Keys of the steps without a result passed with `Next`:
+ *   those before where I stand by the log, and those an older line names, with those passed since.
+ * - `at`: Key of the current step, pinned while the page shows,
+ *   so a result moves nothing, only `Next`; empty for none.
  * - `changed`: Shows the places of the blocks anew in the tree.
  */
 type Round = {
@@ -121,7 +153,8 @@ type Round = {
  *
  * - `from`: Start of its heading line.
  * - `to`: Where it ends, see {@link endOf}.
- * - `decorations`: What is drawn: the text around it hidden, its heading marked as the first, `Next` below it.
+ * - `decorations`: What is drawn:
+ *   the text around it hidden, its heading marked as the first, `Next` below it.
  */
 type Alone = {
     from: number;
@@ -130,7 +163,8 @@ type Alone = {
 };
 
 /**
- * Heading `##` of a block whose sections under a heading `####` are scenes, like `#### Ice Cream Kiosk`.
+ * Heading `##` of a block whose sections under a heading `####` are scenes,
+ * like `#### Ice Cream Kiosk`.
  */
 const sceneBlockRule: RegExp = /^(Definition|Lemma|Algorithm)\./;
 
@@ -151,7 +185,8 @@ const nextMoved: StateEffectType<{ block: Block; end: number; next: boolean } | 
 let round: Round | null = null;
 
 /**
- * Heading of a block opened from the tree that is not the current step, shown alone in its place until `Next`;
+ * Heading of a block opened from the tree that is not the current step,
+ * shown alone in its place until `Next`;
  * empty for none.
  */
 let opened: string = "";
@@ -160,7 +195,6 @@ let opened: string = "";
  * Where to go once the round of today is done: back to Today, see `./today.ts`.
  */
 const todayAddress: string = "/scripts";
-
 
 /**
  * Button `Next` below the current block, see {@link roundNext}.
@@ -196,8 +230,9 @@ class NextWidget extends WidgetType {
 }
 
 /**
- * The block shown alone with `Next` below it, `null` for none: built anew when `Next` moves, carried along when
- * the text changes, its start before what I type at it and its end after, so what I type at either belongs to it.
+ * The block shown alone with `Next` below it, `null` for none:
+ * built anew when `Next` moves, carried along when the text changes,
+ * its start before what I type at it and its end after, so what I type at either belongs to it.
  * - {@link StateField}: Only a field may draw a widget between the lines.
  */
 const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
@@ -205,21 +240,33 @@ const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
     update: (alone: Alone | null, transaction: Transaction): Alone | null => {
         for (const effect of transaction.effects)
             if (effect.is(nextMoved))
-                return effect.value === null ? null : aloneOf(transaction.state, effect.value.block, effect.value.end,
-                    effect.value.next);
-        if (alone === null || !transaction.docChanged)
-            return alone;
-        return { from: transaction.changes.mapPos(alone.from, -1), to: transaction.changes.mapPos(alone.to, 1),
-            decorations: alone.decorations.map(transaction.changes) };
+                return effect.value === null
+                    ? null
+                    : aloneOf(
+                          transaction.state,
+                          effect.value.block,
+                          effect.value.end,
+                          effect.value.next,
+                      );
+        if (alone === null || !transaction.docChanged) return alone;
+        return {
+            from: transaction.changes.mapPos(alone.from, -1),
+            to: transaction.changes.mapPos(alone.to, 1),
+            decorations: alone.decorations.map(transaction.changes),
+        };
     },
     provide: (field: StateField<Alone | null>): Extension =>
-        EditorView.decorations.from(field, (alone: Alone | null): DecorationSet => alone?.decorations ?? Decoration.none),
+        EditorView.decorations.from(
+            field,
+            (alone: Alone | null): DecorationSet => alone?.decorations ?? Decoration.none,
+        ),
 });
 
 /**
- * Keeps what I type and delete inside the block shown alone: a change reaching beyond it is left out whole,
- * never half, like Delete at its end, which took the line break `Next` stands on and pulled the hidden text after
- * it into the block, Backspace at the start of its heading, or a cut over a selection reaching past `Next`;
+ * Keeps what I type and delete inside the block shown alone:
+ * a change reaching beyond it is left out whole, never half, like Delete at its end,
+ * which took the line break `Next` stands on and pulled the hidden text after it into the block,
+ * Backspace at the start of its heading, or a cut over a selection reaching past `Next`;
  * undo and redo, which CodeMirror never filters, only take back what was allowed.
  * - `alone`: The block shown alone before the change.
  * - `inside`: Whether every change lies inside it.
@@ -238,37 +285,50 @@ function changesKeep(transaction: Transaction): boolean {
 }
 
 /**
- * Keeps the cursor and what I select inside the block shown alone, so neither reaches the hidden text,
- * like Shift+Down on its last line, Ctrl+A or a drag past `Next`: a place beyond the block goes to its start or its
- * end. Only where a key, a click or a drag puts them: the cursor left in the block before when `Next` moves on stays
- * there, unseen and without the focus, until I click or move it, so the heading of the next block shows as before.
+ * Keeps the cursor and what I select inside the block shown alone,
+ * so neither reaches the hidden text,
+ * like Shift+Down on its last line, Ctrl+A or a drag past `Next`:
+ * a place beyond the block goes to its start or its end.
+ * Only where a key, a click or a drag puts them:
+ * the cursor left in the block before when `Next` moves on stays there,
+ * unseen and without the focus, until I click or move it,
+ * so the heading of the next block shows as before.
  * - `alone`: The block shown alone after the transaction.
  * - `selection`: The cursors and selections the transaction puts.
  * - `inside`: A place kept inside the block.
  * - `kept`: Each cursor or selection inside the block, the same where it already lies inside.
  *
  * @param transaction - Transaction
- * @returns The transaction, and after it the selection kept inside, when it reached beyond the block
+ * @returns The transaction, and after it the selection kept inside,
+ *   when it reached beyond the block
  */
 function selectionKeep(transaction: Transaction): TransactionSpec | readonly TransactionSpec[] {
-    if (transaction.selection === undefined)
-        return transaction;
+    if (transaction.selection === undefined) return transaction;
     const alone: Alone | null = transaction.state.field(alonePlace);
-    if (alone === null)
-        return transaction;
+    if (alone === null) return transaction;
     const selection: EditorSelection = transaction.selection;
-    const inside: (place: number) => number = (place: number): number => Math.min(Math.max(place, alone.from), alone.to);
+    const inside: (place: number) => number = (place: number): number =>
+        Math.min(Math.max(place, alone.from), alone.to);
     const kept: SelectionRange[] = selection.ranges.map((range: SelectionRange): SelectionRange =>
-        range.anchor === inside(range.anchor) && range.head === inside(range.head) ? range
-            : EditorSelection.range(inside(range.anchor), inside(range.head)));
-    if (kept.every((range: SelectionRange, index: number): boolean => range === selection.ranges[index]))
+        range.anchor === inside(range.anchor) && range.head === inside(range.head)
+            ? range
+            : EditorSelection.range(inside(range.anchor), inside(range.head)),
+    );
+    if (
+        kept.every(
+            (range: SelectionRange, index: number): boolean => range === selection.ranges[index],
+        )
+    )
         return transaction;
-    return [transaction, { selection: EditorSelection.create(kept, selection.mainIndex), sequential: true }];
+    return [
+        transaction,
+        { selection: EditorSelection.create(kept, selection.mainIndex), sequential: true },
+    ];
 }
 
-
 /**
- * Gives where a block ends: the end of its section, or of its heading line for a block with nothing below it.
+ * Gives where a block ends: the end of its section,
+ * or of its heading line for a block with nothing below it.
  *
  * @param state - Text of the note
  * @param block - Block
@@ -279,9 +339,11 @@ function endOf(state: EditorState, block: Block): number {
 }
 
 /**
- * Shows one block alone, as a card of Today asks: the text before it and after it hidden whole, `Next` below it unless
- * it is the last step, at the start of the line after it, so it never stands inside a folded solution at its end;
- * its heading marked as the first on the page, without the room above a heading, see `./editor.css`.
+ * Shows one block alone, as a card of Today asks:
+ * the text before it and after it hidden whole, `Next` below it unless it is the last step,
+ * at the start of the line after it, so it never stands inside a folded solution at its end;
+ * its heading marked as the first on the page,
+ * without the room above a heading, see `./editor.css`.
  * - `start`: Start of its heading line.
  * - `last`: Whether the block ends the note.
  *
@@ -295,19 +357,22 @@ function aloneOf(state: EditorState, block: Block, end: number, next: boolean): 
     const start: number = state.doc.line(block.line).from;
     const last: boolean = end >= state.doc.length;
     const marks: Range<Decoration>[] = [];
-    if (start > 0)
-        marks.push(Decoration.replace({ block: true }).range(0, start - 1));
+    if (start > 0) marks.push(Decoration.replace({ block: true }).range(0, start - 1));
     marks.push(Decoration.line({ class: "round-first" }).range(start));
     if (next)
-        marks.push(Decoration.widget({ widget: new NextWidget(), block: true, side: last ? 1 : -1 }).range(last ? end : end + 1));
-    if (!last)
-        marks.push(Decoration.replace({ block: true }).range(end + 1, state.doc.length));
+        marks.push(
+            Decoration.widget({ widget: new NextWidget(), block: true, side: last ? 1 : -1 }).range(
+                last ? end : end + 1,
+            ),
+        );
+    if (!last) marks.push(Decoration.replace({ block: true }).range(end + 1, state.doc.length));
     return { from: start, to: end, decorations: Decoration.set(marks) };
 }
 
 /**
  * Gives when an attempt was made, to compare, by its place among all my attempts, see `Attempt` in
- * `../skill/attempts.ts`, so attempts of one day compare by the order I made them in, also without a time.
+ * `../skill/attempts.ts`, so attempts of one day compare
+ * by the order I made them in, also without a time.
  *
  * @param attempt - Attempt
  * @returns Its place, written with nine digits, like `000000042`
@@ -317,8 +382,8 @@ export function timeOf(attempt: Attempt): string {
 }
 
 /**
- * Gives the first attempt at a task after a time when it failed, wrong, stuck or guided: the first attempt decides,
- * skips left out.
+ * Gives the first attempt at a task after a time when it failed, wrong, stuck or guided:
+ * the first attempt decides, skips left out.
  * - `attempt`: The first attempt.
  *
  * @param task - Task, `null` for none
@@ -327,16 +392,23 @@ export function timeOf(attempt: Attempt): string {
  * @returns Its time, see {@link timeOf}, `null` for none or one not failed
  */
 function failedAt(task: SkillTask | null, after: string, day: string): string | null {
-    const attempt: Attempt | undefined = task?.attempts.find((candidate: Attempt): boolean =>
-        candidate.result !== "skipped" && timeOf(candidate) > after && (day === "" || candidate.day === day));
+    const attempt: Attempt | undefined = task?.attempts.find(
+        (candidate: Attempt): boolean =>
+            candidate.result !== "skipped" &&
+            timeOf(candidate) > after &&
+            (day === "" || candidate.day === day),
+    );
     return attempt !== undefined && failed.includes(attempt.result) ? timeOf(attempt) : null;
 }
 
 /**
- * Gives what a failure of a task brings back the same day, one Example easier each, see the top of this file:
- * the ladder from the bottom up is the Algorithm, in an older note without one its last worked Example, then the
- * Examples with gaps, faded, in the order of the note; a failed Task brings back the last of them, a failed Example
- * the one below it, each next one only once the one before failed too, down to the bottom, which is read again;
+ * Gives what a failure of a task brings back the same day, one Example easier each,
+ * see the top of this file:
+ * the ladder from the bottom up is the Algorithm,
+ * in an older note without one its last worked Example,
+ * then the Examples with gaps, faded, in the order of the note;
+ * a failed Task brings back the last of them, a failed Example the one below it,
+ * each next one only once the one before failed too, down to the bottom, which is read again;
  * each by its first attempt, see {@link failedAt}.
  * - `worked`: The last worked Example, the bottom of an older note without an Algorithm.
  * - `rungOf`: The rung of a task.
@@ -345,25 +417,47 @@ function failedAt(task: SkillTask | null, after: string, day: string): string | 
  * - `since`: When the block that failed last failed, `null` once nothing failed.
  *
  * @param tasks - Tasks of the section
- * @param algorithm - Heading of its Algorithm, empty for none, see `SkillSection` in `../skill/attempts.ts`
+ * @param algorithm - Heading of its Algorithm, empty for none,
+ *   see `SkillSection` in `../skill/attempts.ts`
  * @param from - The task that failed
  * @param day - Only a failure of this day counts, empty for any
  * @returns What comes back, in order; none without a failure
  */
-export function fallbacksOf(tasks: SkillTask[], algorithm: string, from: SkillTask, day: string): Fallback[] {
-    const worked: SkillTask | undefined = tasks.filter((task: SkillTask): boolean => task.kind === "worked").at(-1);
-    const rungOf: (task: SkillTask) => Rung = (task: SkillTask): Rung => ({ heading: task.heading, task: task });
+export function fallbacksOf(
+    tasks: SkillTask[],
+    algorithm: string,
+    from: SkillTask,
+    day: string,
+): Fallback[] {
+    const worked: SkillTask | undefined = tasks
+        .filter((task: SkillTask): boolean => task.kind === "worked")
+        .at(-1);
+    const rungOf: (task: SkillTask) => Rung = (task: SkillTask): Rung => ({
+        heading: task.heading,
+        task: task,
+    });
     const rungs: Rung[] = [
-        ...(algorithm !== "" ? [{ heading: algorithm, task: null }] : worked !== undefined ? [rungOf(worked)] : []),
+        ...(algorithm !== ""
+            ? [{ heading: algorithm, task: null }]
+            : worked !== undefined
+              ? [rungOf(worked)]
+              : []),
         ...tasks.filter((task: SkillTask): boolean => task.kind === "faded").map(rungOf),
     ];
     const fallbacks: Fallback[] = [];
-    let index: number = from.kind === "cold" ? rungs.length
-        : rungs.findIndex((rung: Rung): boolean => rung.task?.id === from.id);
+    let index: number =
+        from.kind === "cold"
+            ? rungs.length
+            : rungs.findIndex((rung: Rung): boolean => rung.task?.id === from.id);
     let since: string | null = failedAt(from, "", day);
     while (index > 0 && since !== null) {
         const rung: Rung = rungs[index - 1];
-        fallbacks.push({ heading: rung.heading, task: rung.task, after: from.heading, since: since });
+        fallbacks.push({
+            heading: rung.heading,
+            task: rung.task,
+            after: from.heading,
+            since: since,
+        });
         index--;
         since = index === 0 ? null : failedAt(rung.task, since, "");
     }
@@ -383,33 +477,62 @@ export function fallbacksOf(tasks: SkillTask[], algorithm: string, from: SkillTa
  * @param today - Today like `2026-10-17`
  * @returns Steps in order
  */
-function stepsOf(blocks: Block[], section: SkillSection, tasks: SkillTask[], today: string): Step[] {
-    const step: (block: Block) => Step = (block: Block): Step => ({ block: block, after: "", since: "" });
-    const back: (from: Block, day: string) => Step[] = (from: Block, day: string): Step[] => from.task === null ? []
-        : fallbacksOf(tasks, section.algorithm, from.task, day).flatMap((fallback: Fallback): Step[] => {
-            const block: Block | undefined = blocks.find((candidate: Block): boolean =>
-                candidate.heading === fallback.heading);
-            return block === undefined ? [] : [{ block: block, after: fallback.after, since: fallback.since }];
-        });
-    const cold: Block | null = blocks.find((block: Block): boolean => block.task?.id === section.cold) ?? null;
-    const coldSteps: Step[] = cold === null ? [] : [step(cold), ...back(cold, section.ladder ? "" : today)];
+function stepsOf(
+    blocks: Block[],
+    section: SkillSection,
+    tasks: SkillTask[],
+    today: string,
+): Step[] {
+    const step: (block: Block) => Step = (block: Block): Step => ({
+        block: block,
+        after: "",
+        since: "",
+    });
+    const back: (from: Block, day: string) => Step[] = (from: Block, day: string): Step[] =>
+        from.task === null
+            ? []
+            : fallbacksOf(tasks, section.algorithm, from.task, day).flatMap(
+                  (fallback: Fallback): Step[] => {
+                      const block: Block | undefined = blocks.find(
+                          (candidate: Block): boolean => candidate.heading === fallback.heading,
+                      );
+                      return block === undefined
+                          ? []
+                          : [{ block: block, after: fallback.after, since: fallback.since }];
+                  },
+              );
+    const cold: Block | null =
+        blocks.find((block: Block): boolean => block.task?.id === section.cold) ?? null;
+    const coldSteps: Step[] =
+        cold === null ? [] : [step(cold), ...back(cold, section.ladder ? "" : today)];
     if (!section.ladder) {
         const task: SkillTask | null = cold?.task ?? null;
-        return task !== null && (task.attempts.some((attempt: Attempt): boolean => attempt.day === today)
-            || (task.due !== "" && task.due <= today)) ? coldSteps : [];
+        return task !== null &&
+            (task.attempts.some((attempt: Attempt): boolean => attempt.day === today) ||
+                (task.due !== "" && task.due <= today))
+            ? coldSteps
+            : [];
     }
-    const first: Block | undefined = blocks.find((block: Block): boolean => block.task?.kind === "faded");
+    const first: Block | undefined = blocks.find(
+        (block: Block): boolean => block.task?.kind === "faded",
+    );
     return [
-        ...blocks.filter((block: Block): boolean => block.task === null ? !/^(Task|Completion)\./.test(block.heading)
-            : block.task.kind === "worked").map(step),
+        ...blocks
+            .filter((block: Block): boolean =>
+                block.task === null
+                    ? !/^(Task|Completion)\./.test(block.heading)
+                    : block.task.kind === "worked",
+            )
+            .map(step),
         ...(first === undefined ? [] : [step(first), ...back(first, "")]),
         ...coldSteps,
     ];
 }
 
 /**
- * Gives the key of a step, which names it while the note changes: its heading, and for a step a failure brought back
- * the heading of the block whose failure began the way down, so each key is once in a round.
+ * Gives the key of a step, which names it while the note changes: its heading,
+ * and for a step a failure brought back the heading of the block whose failure began the way down,
+ * so each key is once in a round.
  *
  * @param step - Step
  * @returns Key like `Example. Kiosk Half Trend after Task. Juice Bar`
@@ -419,8 +542,8 @@ function keyOf(step: Step): string {
 }
 
 /**
- * Tells whether a step has no result of its own, theory like the Algorithm, or a worked Example brought back,
- * so `Next` passes it.
+ * Tells whether a step has no result of its own, theory like the Algorithm,
+ * or a worked Example brought back, so `Next` passes it.
  *
  * @param step - Step
  * @returns Whether it has no result
@@ -430,8 +553,9 @@ function resultlessIs(step: Step): boolean {
 }
 
 /**
- * Tells whether a step waits for my result: an Example or a Task not done yet, see {@link doneIs}, so `Next` stays off
- * below it, and its check, Right, or its cross, Wrong, is the way on, see `judgeOf` in `../skill/task.ts`.
+ * Tells whether a step waits for my result: an Example or a Task not done yet, see {@link doneIs},
+ * so `Next` stays off below it, and its check, Right, or its cross, Wrong, is the way on,
+ * see `judgeOf` in `../skill/task.ts`.
  *
  * @param shown - The round
  * @param step - Step
@@ -442,8 +566,10 @@ function waitingIs(shown: Round, step: Step): boolean {
 }
 
 /**
- * Gives the steps without a result before where I stand, which count as passed, see {@link resultlessIs}.
- * - `index`: Place of the step I stand at, none before the first step and for one no longer in the round.
+ * Gives the steps without a result before where I stand, which count as passed,
+ * see {@link resultlessIs}.
+ * - `index`: Place of the step I stand at,
+ *   none before the first step and for one no longer in the round.
  *
  * @param steps - Steps of the round
  * @param at - Key of the step I stand at by the log, empty for none
@@ -455,10 +581,12 @@ function passedOf(steps: Step[], at: string): string[] {
 }
 
 /**
- * Tells whether a step is done: theory, the Algorithm and a worked Example brought back once passed with `Next`;
- * an Example brought back once tried after the failure that brought it; the Task of the ladder once tried, also on
- * an earlier day of it, a later Task once nothing of it is due today, by its attempts of today; any other task
- * of the ladder once tried, on any day of it.
+ * Tells whether a step is done:
+ * theory, the Algorithm and a worked Example brought back once passed with `Next`;
+ * an Example brought back once tried after the failure that brought it;
+ * the Task of the ladder once tried, also on an earlier day of it,
+ * a later Task once nothing of it is due today, by its attempts of today;
+ * any other task of the ladder once tried, on any day of it.
  * - `task`: Its task.
  *
  * @param shown - The round
@@ -468,15 +596,15 @@ function passedOf(steps: Step[], at: string): string[] {
 function doneIs(shown: Round, step: Step): boolean {
     const task: SkillTask | null = step.block.task;
     const today: string = shown.loaded.today;
-    if (task === null || resultlessIs(step))
-        return shown.seen.includes(keyOf(step));
+    if (task === null || resultlessIs(step)) return shown.seen.includes(keyOf(step));
     if (step.after !== "")
         return task.attempts.some((attempt: Attempt): boolean => timeOf(attempt) > step.since);
-    if (task.kind === "cold" && shown.section.ladder)
-        return task.attempts.length > 0;
+    if (task.kind === "cold" && shown.section.ladder) return task.attempts.length > 0;
     if (task.kind === "cold")
-        return task.attempts.some((attempt: Attempt): boolean => attempt.day === today)
-            && (task.skipped || task.due === "" || task.due > today);
+        return (
+            task.attempts.some((attempt: Attempt): boolean => attempt.day === today) &&
+            (task.skipped || task.due === "" || task.due > today)
+        );
     return task.attempts.length > 0;
 }
 
@@ -488,7 +616,12 @@ function doneIs(shown: Round, step: Step): boolean {
  * @returns Steps in order
  */
 function roundStepsOf(view: EditorView, shown: Round): Step[] {
-    return stepsOf(blocksOf(view.state, shown.loaded.tasks), shown.section, shown.loaded.tasks, shown.loaded.today);
+    return stepsOf(
+        blocksOf(view.state, shown.loaded.tasks),
+        shown.section,
+        shown.loaded.tasks,
+        shown.loaded.today,
+    );
 }
 
 /**
@@ -499,14 +632,14 @@ function roundStepsOf(view: EditorView, shown: Round): Step[] {
  * @returns The step, `undefined` for none
  */
 function currentOf(shown: Round, steps: Step[]): Step | undefined {
-    if (shown.section.closed)
-        return undefined;
+    if (shown.section.closed) return undefined;
     return steps.find((step: Step): boolean => keyOf(step) === shown.at) ?? steps[0];
 }
 
 /**
- * Gives where the round goes on when the page opens, from the log alone: from the step of the last `Next`, the first
- * step not done, else that step itself; without a `Next` yet, the first step not done, else the last step.
+ * Gives where the round goes on when the page opens, from the log alone:
+ * from the step of the last `Next`, the first step not done, else that step itself;
+ * without a `Next` yet, the first step not done, else the last step.
  * - `from`: Index of the step of the last `Next`, 0 for none or one no longer in the note.
  *
  * @param shown - The round
@@ -514,9 +647,14 @@ function currentOf(shown: Round, steps: Step[]): Step | undefined {
  * @returns Key of the step, empty for a round without steps
  */
 function resumedOf(shown: Round, steps: Step[]): string {
-    const from: number = Math.max(0, steps.findIndex((step: Step): boolean => keyOf(step) === shown.section.at));
-    const step: Step | undefined = steps.slice(from).find((candidate: Step): boolean => !doneIs(shown, candidate))
-        ?? steps[from] ?? steps.at(-1);
+    const from: number = Math.max(
+        0,
+        steps.findIndex((step: Step): boolean => keyOf(step) === shown.section.at),
+    );
+    const step: Step | undefined =
+        steps.slice(from).find((candidate: Step): boolean => !doneIs(shown, candidate)) ??
+        steps[from] ??
+        steps.at(-1);
     return step === undefined ? "" : keyOf(step);
 }
 
@@ -531,7 +669,8 @@ function moduleOf(shown: Round): string {
 }
 
 /**
- * Writes where I stand in the round shown into the log, its line `X-ROUND`, see `RoundLine` in `reader/skill.ts`.
+ * Writes where I stand in the round shown into the log, its line `X-ROUND`,
+ * see `RoundLine` in `reader/skill.ts`.
  *
  * @param shown - The round
  * @param step - Key of the step I went on to, or `done` once I closed the round
@@ -542,11 +681,13 @@ async function lineWrite(shown: Round, step: string): Promise<void> {
     const response: Response = await fetch("/api/skill/round", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section: `${moduleOf(shown)}/${shown.section.title}`,
-            round: shown.section.round, step: step }),
+        body: JSON.stringify({
+            section: `${moduleOf(shown)}/${shown.section.title}`,
+            round: shown.section.round,
+            step: step,
+        }),
     });
-    if (!response.ok)
-        throw new Error("The reader did not write the round");
+    if (!response.ok) throw new Error("The reader did not write the round");
 }
 
 /**
@@ -562,7 +703,8 @@ function bodyOf(state: EditorState, block: Block): { from: number; to: number } 
 }
 
 /**
- * Gives what the scenes of a block fold, see {@link sceneBlockRule}: each section under a heading `####`.
+ * Gives what the scenes of a block fold, see {@link sceneBlockRule}:
+ * each section under a heading `####`.
  * - `body`: What the block folds.
  *
  * @param state - Text of the note
@@ -571,15 +713,18 @@ function bodyOf(state: EditorState, block: Block): { from: number; to: number } 
  */
 function scenesOf(state: EditorState, block: Block): { from: number; to: number }[] {
     const body: { from: number; to: number } | null = bodyOf(state, block);
-    if (body === null || !sceneBlockRule.test(block.heading))
-        return [];
+    if (body === null || !sceneBlockRule.test(block.heading)) return [];
     const scenes: { from: number; to: number }[] = [];
-    for (let number: number = block.line + 1; number <= state.doc.lineAt(body.to).number; number++) {
+    for (
+        let number: number = block.line + 1;
+        number <= state.doc.lineAt(body.to).number;
+        number++
+    ) {
         const line: Line = state.doc.line(number);
-        const scene: { from: number; to: number } | null =
-            /^####[ \t]/.test(line.text) ? foldable(state, line.from, line.to) : null;
-        if (scene !== null)
-            scenes.push(scene);
+        const scene: { from: number; to: number } | null = /^####[ \t]/.test(line.text)
+            ? foldable(state, line.from, line.to)
+            : null;
+        if (scene !== null) scenes.push(scene);
     }
     return scenes;
 }
@@ -595,22 +740,27 @@ function roundLineOf(shown: Round): string {
 }
 
 /**
- * Shows beside the round line the session the round writes into, smaller, as the calendar shows an entry: its day
- * and its times, like `17.10.2026 (Sat) · 21:40 – 22:40`; nothing while no session of the module runs, since reading
- * needs none, see `./session.ts`. What it showed stays until the reader answers, so nothing flickers.
+ * Shows beside the round line the session the round writes into, smaller,
+ * as the calendar shows an entry: its day and its times, like `17.10.2026 (Sat) · 21:40 – 22:40`;
+ * nothing while no session of the module runs, since reading needs none, see `./session.ts`.
+ * What it showed stays until the reader answers, so nothing flickers.
  *
  * @param shown - The round
  */
 function sessionShow(shown: Round): void {
-    sessionOf(moduleOf(shown)).then((session: Session | null): void => {
-        (document.getElementById("editor-session") as HTMLElement).textContent =
-            session === null ? "" : sessionTextOf(session);
-    }).catch((error: unknown): void => console.error(error));
+    sessionOf(moduleOf(shown))
+        .then((session: Session | null): void => {
+            (document.getElementById("editor-session") as HTMLElement).textContent =
+                session === null ? "" : sessionTextOf(session);
+        })
+        .catch((error: unknown): void => console.error(error));
 }
 
 /**
- * Shows the round as it stands: the round line with the session beside it, `Next` below the current block, none after
- * the last, off while the step waits for my result, see {@link waitingIs} and `.round-waiting` in `./editor.css`,
+ * Shows the round as it stands:
+ * the round line with the session beside it, `Next` below the current block, none after the last,
+ * off while the step waits for my result,
+ * see {@link waitingIs} and `.round-waiting` in `./editor.css`,
  * and the places of the blocks in the tree.
  * - `steps`: The steps of the round.
  * - `current`: The current step.
@@ -629,19 +779,30 @@ function roundDraw(view: EditorView, shown: Round): void {
     line.hidden = false;
     sessionShow(shown);
     const blocks: Block[] = blocksOf(view.state, shown.loaded.tasks);
-    const alone: Block | undefined = blocks.find((block: Block): boolean => block.heading === opened) ?? current?.block;
-    const next: boolean = current !== undefined && (alone !== current.block || steps.indexOf(current) < steps.length - 1);
-    view.dispatch({ effects: nextMoved.of(alone === undefined ? null
-        : { block: alone, end: endOf(view.state, alone), next: next }) });
-    (document.getElementById("editor-text") as HTMLElement).classList.toggle("round-waiting",
-        current !== undefined && alone === current.block && waitingIs(shown, current));
+    const alone: Block | undefined =
+        blocks.find((block: Block): boolean => block.heading === opened) ?? current?.block;
+    const next: boolean =
+        current !== undefined &&
+        (alone !== current.block || steps.indexOf(current) < steps.length - 1);
+    view.dispatch({
+        effects: nextMoved.of(
+            alone === undefined
+                ? null
+                : { block: alone, end: endOf(view.state, alone), next: next },
+        ),
+    });
+    (document.getElementById("editor-text") as HTMLElement).classList.toggle(
+        "round-waiting",
+        current !== undefined && alone === current.block && waitingIs(shown, current),
+    );
     closeShow(shown, steps);
     shown.changed();
 }
 
 /**
- * Opens a block, which then stands alone on the page, its scenes open, or folded for a lookup, see the top of this file,
- * and scrolls the page to its top, so the block starts at the top of the screen, once the page is drawn anew.
+ * Opens a block, which then stands alone on the page, its scenes open, or folded for a lookup,
+ * see the top of this file, and scrolls the page to its top,
+ * so the block starts at the top of the screen, once the page is drawn anew.
  * - {@link requestAnimationFrame}: Waits until the page is drawn next.
  * - `effects`: Unfolding the block, and folding or unfolding its scenes.
  *
@@ -652,8 +813,7 @@ function roundDraw(view: EditorView, shown: Round): void {
 function blockOpen(view: EditorView, block: Block, lookup: boolean): void {
     const body: { from: number; to: number } | null = bodyOf(view.state, block);
     const effects: StateEffect<{ from: number; to: number }>[] = [];
-    if (body !== null && foldedAt(view.state, body.from))
-        effects.push(unfoldEffect.of(body));
+    if (body !== null && foldedAt(view.state, body.from)) effects.push(unfoldEffect.of(body));
     scenesOf(view.state, block).forEach((scene: { from: number; to: number }): void => {
         if (foldedAt(view.state, scene.from) !== lookup)
             effects.push((lookup ? foldEffect : unfoldEffect).of(scene));
@@ -665,12 +825,15 @@ function blockOpen(view: EditorView, block: Block, lookup: boolean): void {
 }
 
 /**
- * Goes on from the current step, see the top of this file: from a block shown from the tree, back to the current step;
+ * Goes on from the current step, see the top of this file:
+ * from a block shown from the tree, back to the current step;
  * from an Example or a Task without my result not at all, see {@link waitingIs};
- * else, once a session of the module runs, see `sessionEnsure` in `./session.ts`, writes into the log which step comes
- * next, so a step without a result before it counts as passed, and shows it; the last step has no `Next`. Where I am
- * moves at once; a line the reader does not take shows in the status line, see {@link failShow}; without a session, or once
- * the round was shown anew meanwhile, as after a result, nothing moves.
+ * else, once a session of the module runs,
+ * see `sessionEnsure` in `./session.ts`, writes into the log which step comes next,
+ * so a step without a result before it counts as passed, and shows it; the last step has no `Next`.
+ * Where I am moves at once;
+ * a line the reader does not take shows in the status line, see {@link failShow};
+ * without a session, or once the round was shown anew meanwhile, as after a result, nothing moves.
  * - `steps`, `current`: The steps of the round and the current one.
  * - `following`: The step after it.
  *
@@ -678,13 +841,11 @@ function blockOpen(view: EditorView, block: Block, lookup: boolean): void {
  * @throws {Error} - When the reader cannot say whether a session runs
  */
 async function roundNext(view: EditorView): Promise<void> {
-    if (round === null)
-        return;
+    if (round === null) return;
     const shown: Round = round;
     const steps: Step[] = roundStepsOf(view, shown);
     const current: Step | undefined = currentOf(shown, steps);
-    if (current === undefined)
-        return;
+    if (current === undefined) return;
     if (opened !== "" && opened !== current.block.heading) {
         opened = "";
         blockOpen(view, current.block, false);
@@ -693,13 +854,10 @@ async function roundNext(view: EditorView): Promise<void> {
     }
     opened = "";
     const following: Step | undefined = steps[steps.indexOf(current) + 1];
-    if (following === undefined || waitingIs(shown, current))
-        return;
-    if (!await sessionEnsure(moduleOf(shown)) || round !== shown)
-        return;
+    if (following === undefined || waitingIs(shown, current)) return;
+    if (!(await sessionEnsure(moduleOf(shown))) || round !== shown) return;
     const passed: boolean = resultlessIs(current) && !shown.seen.includes(keyOf(current));
-    if (passed)
-        shown.seen.push(keyOf(current));
+    if (passed) shown.seen.push(keyOf(current));
     shown.at = keyOf(following);
     lineWrite(shown, keyOf(following)).catch(failShow);
     blockOpen(view, following.block, false);
@@ -717,13 +875,17 @@ function failShow(error: unknown): void {
 }
 
 /**
- * Shows the round check in the head, see {@link roundClose}: a loose icon, as the save button above it;
+ * Shows the round check in the head, see {@link roundClose}: a loose icon,
+ * as the save button above it;
  * on once the round's Task has a result and the way down its failure brings back has ended,
  * see {@link fallbacksOf}, in its full grey then, as the save button with changes; off and faint
- * before; hidden once the round is closed or for a round without steps. The way down has ended once its last Example
- * is right, or once it reached the bottom, the Algorithm, which as the last step has no `Next` and passes by the round
- * check itself, so I close the round standing on it: after Wrong on `Task. Food Truck` the check stays off until
- * `Example. Kiosk Half Trend` is right, or, wrong on down, until the Algorithm stands.
+ * before; hidden once the round is closed or for a round without steps.
+ * The way down has ended once its last Example is right,
+ * or once it reached the bottom, the Algorithm,
+ * which as the last step has no `Next` and passes by the round check itself,
+ * so I close the round standing on it:
+ * after Wrong on `Task. Food Truck` the check stays off until `Example. Kiosk Half Trend` is right,
+ * or, wrong on down, until the Algorithm stands.
  * - `cold`: Place of the Task of the round, the steps after it those its failure brings back.
  *
  * @param shown - The round
@@ -731,37 +893,48 @@ function failShow(error: unknown): void {
  */
 function closeShow(shown: Round, steps: Step[]): void {
     const close: HTMLButtonElement = document.getElementById("editor-close") as HTMLButtonElement;
-    const cold: number = steps.findIndex((step: Step): boolean => step.block.task?.kind === "cold" && step.after === "");
+    const cold: number = steps.findIndex(
+        (step: Step): boolean => step.block.task?.kind === "cold" && step.after === "",
+    );
     close.hidden = shown.section.closed || steps.length === 0;
-    close.disabled = cold === -1 || !steps.slice(cold).every((step: Step): boolean => doneIs(shown, step)
-        || (resultlessIs(step) && keyOf(step) === shown.at));
-    close.title = close.disabled ? "Close the round once its Task and what a failure brings back are done"
+    close.disabled =
+        cold === -1 ||
+        !steps
+            .slice(cold)
+            .every(
+                (step: Step): boolean =>
+                    doneIs(shown, step) || (resultlessIs(step) && keyOf(step) === shown.at),
+            );
+    close.title = close.disabled
+        ? "Close the round once its Task and what a failure brings back are done"
         : "Close the round";
 }
 
 /**
- * Closes the round shown by hand, the round check in the head, once a session of the module runs, see
- * `sessionEnsure` in `./session.ts`: writes `done` where I stand into the log, then shows Today, where the round
- * stands done.
+ * Closes the round shown by hand, the round check in the head, once a session of the module runs,
+ * see `sessionEnsure` in `./session.ts`: writes `done` where I stand into the log,
+ * then shows Today, where the round stands done.
  * - `shown`: The round.
  */
 export function roundClose(): void {
-    if (round === null)
-        return;
+    if (round === null) return;
     const shown: Round = round;
-    sessionEnsure(moduleOf(shown)).then(async (running: boolean): Promise<void> => {
-        if (!running)
-            return;
-        await lineWrite(shown, "done");
-        location.href = todayAddress;
-    }).catch(failShow);
+    sessionEnsure(moduleOf(shown))
+        .then(async (running: boolean): Promise<void> => {
+            if (!running) return;
+            await lineWrite(shown, "done");
+            location.href = todayAddress;
+        })
+        .catch(failShow);
 }
 
 /**
- * Takes the tasks of the note as they load, see `tasksFollow` in `./tasks.ts`: for a section, the first time its round
- * from the log, where it goes on, see {@link resumedOf}, the blocks done and the current one open, the others folded,
- * the Task variants not due among them, and where I am pinned to the current step, so a result moves nothing, only
- * `Next`, a click and the check of a Right; each time after, like after a result, the round as it now stands.
+ * Takes the tasks of the note as they load, see `tasksFollow` in `./tasks.ts`:
+ * for a section, the first time its round from the log, where it goes on,
+ * see {@link resumedOf}, the blocks done and the current one open, the others folded,
+ * the Task variants not due among them, and where I am pinned to the current step,
+ * so a result moves nothing, only `Next`, a click and the check of a Right;
+ * each time after, like after a result, the round as it now stands.
  * - `fresh`: Whether the round of this note shows for the first time.
  * - `blocks`, `steps`, `current`: Blocks of the note, steps of the round and the current one.
  * - `open`: Whether a block stays open.
@@ -781,17 +954,19 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
     const blocks: Block[] = blocksOf(view.state, loaded.tasks);
     const steps: Step[] = stepsOf(blocks, section, loaded.tasks, loaded.today);
     round = {
-        loaded: loaded, section: section, changed: changed,
-        seen: fresh ? [...section.seen, ...passedOf(steps, section.at)] : round?.seen ?? [],
-        at: fresh ? "" : round?.at ?? "",
+        loaded: loaded,
+        section: section,
+        changed: changed,
+        seen: fresh ? [...section.seen, ...passedOf(steps, section.at)] : (round?.seen ?? []),
+        at: fresh ? "" : (round?.at ?? ""),
     };
-    if (fresh)
-        round.at = resumedOf(round, steps);
+    if (fresh) round.at = resumedOf(round, steps);
     if (fresh) {
         const shown: Round = round;
         const current: Step | undefined = currentOf(shown, steps);
-        const open: (block: Block) => boolean = (block: Block): boolean => block === current?.block
-            || steps.some((step: Step): boolean => step.block === block && doneIs(shown, step));
+        const open: (block: Block) => boolean = (block: Block): boolean =>
+            block === current?.block ||
+            steps.some((step: Step): boolean => step.block === block && doneIs(shown, step));
         const effects: StateEffect<{ from: number; to: number }>[] = [];
         blocks.forEach((block: Block): void => {
             const body: { from: number; to: number } | null = bodyOf(view.state, block);
@@ -806,43 +981,50 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
 }
 
 /**
- * Gives the places of the blocks of the round shown in their order, every block of the note, for the tree: done,
- * wrong once its last result failed, like `Task. Food Truck` after Wrong, so the tree shows the cross its heading
- * line shows, the current step, also while I look at another block, which keeps its own place, its check or cross
- * too, later in the round, or outside it, like a Task variant not due, also when opened from the tree and shown.
+ * Gives the places of the blocks of the round shown in their order, every block of the note,
+ * for the tree: done, wrong once its last result failed, like `Task. Food Truck` after Wrong,
+ * so the tree shows the cross its heading line shows, the current step,
+ * also while I look at another block,
+ * which keeps its own place, its check or cross too, later in the round, or outside it,
+ * like a Task variant not due, also when opened from the tree and shown.
  * - `steps`, `current`: Steps of the round and the current one.
  * - `own`: The steps of a block.
- * - `last`: The last attempt at a block done, skips left out, `undefined` for none, like for theory.
+ * - `last`: The last attempt at a block done, skips left out,
+ *   `undefined` for none, like for theory.
  *
  * @param view - The editor
  * @returns Headings with their places, `null` for a note that is no section
  */
 export function roundBlocksOf(view: EditorView): [string, BlockMark][] | null {
-    if (round === null)
-        return null;
+    if (round === null) return null;
     const shown: Round = round;
     const steps: Step[] = roundStepsOf(view, shown);
     const current: Step | undefined = currentOf(shown, steps);
-    return blocksOf(view.state, shown.loaded.tasks)
-        .map((block: Block): [string, BlockMark] => {
-            const own: Step[] = steps.filter((step: Step): boolean => step.block.heading === block.heading);
-            if (own.length === 0)
-                return [block.heading, opened === block.heading ? "opened" : "other"];
-            if (current?.block.heading === block.heading)
-                return [block.heading, "current"];
-            if (!own.every((step: Step): boolean => doneIs(shown, step)))
-                return [block.heading, "round"];
-            const last: Attempt | undefined = block.task?.attempts.findLast((attempt: Attempt): boolean =>
-                attempt.result !== "skipped");
-            return [block.heading, last !== undefined && failed.includes(last.result) ? "wrong" : "done"];
-        });
+    return blocksOf(view.state, shown.loaded.tasks).map((block: Block): [string, BlockMark] => {
+        const own: Step[] = steps.filter(
+            (step: Step): boolean => step.block.heading === block.heading,
+        );
+        if (own.length === 0) return [block.heading, opened === block.heading ? "opened" : "other"];
+        if (current?.block.heading === block.heading) return [block.heading, "current"];
+        if (!own.every((step: Step): boolean => doneIs(shown, step)))
+            return [block.heading, "round"];
+        const last: Attempt | undefined = block.task?.attempts.findLast(
+            (attempt: Attempt): boolean => attempt.result !== "skipped",
+        );
+        return [
+            block.heading,
+            last !== undefined && failed.includes(last.result) ? "wrong" : "done",
+        ];
+    });
 }
 
 /**
- * Tells when the section shown has its next Task, for the line of its Tasks outside the round in the tree, see
- * `roundListOf` in `../notes/tree.ts`: the day its Task comes back, by the rule of the overview, see `stateOf`
- * in `./overview.ts`, `Tomorrow` for the day after today, else like `19.10.2026 (Mon)`; nothing while its Task is due
- * today, since its result decides the day, or no day is known.
+ * Tells when the section shown has its next Task,
+ * for the line of its Tasks outside the round in the tree, see `roundListOf` in `../notes/tree.ts`:
+ * the day its Task comes back, by the rule of the overview,
+ * see `stateOf` in `./overview.ts`, `Tomorrow` for the day after today,
+ * else like `19.10.2026 (Mon)`;
+ * nothing while its Task is due today, since its result decides the day, or no day is known.
  * - `today`, `due`: Today and the day its Task comes back, empty for none.
  * - `year`, `month`, `day`: Today in numbers.
  * - `tomorrow`: The day after today.
@@ -850,20 +1032,23 @@ export function roundBlocksOf(view: EditorView): [string, BlockMark][] | null {
  * @returns The day, empty for none
  */
 export function roundNextOf(): string {
-    if (round === null)
-        return "";
+    if (round === null) return "";
     const today: string = round.loaded.today;
-    const due: string = round.loaded.tasks.find((task: SkillTask): boolean => task.kind === "cold" && task.due !== "")?.due ?? "";
+    const due: string =
+        round.loaded.tasks.find(
+            (task: SkillTask): boolean => task.kind === "cold" && task.due !== "",
+        )?.due ?? "";
     const [year, month, day]: number[] = today.split("-").map(Number);
     const tomorrow: string = dayOf(new Date(year, month - 1, day + 1));
-    if (due <= today)
-        return "";
+    if (due <= today) return "";
     return due === tomorrow ? "Tomorrow" : dayTextOf(due, true);
 }
 
 /**
- * Shows a block by its heading alone, as its line in the tree or a link to it in the note asks, back or ahead, see the
- * top of this file; `Next` below it returns to the current step, which stays where it was, marked in the tree.
+ * Shows a block by its heading alone,
+ * as its line in the tree or a link to it in the note asks, back or ahead,
+ * see the top of this file;
+ * `Next` below it returns to the current step, which stays where it was, marked in the tree.
  * Its scenes fold for a link, or for a block outside the round.
  * - `block`: The block asked for.
  * - `steps`, `current`: The steps of the round and the current one.
@@ -874,36 +1059,46 @@ export function roundNextOf(): string {
  * @returns Whether the round took it, not for a note that is no section
  */
 export function roundHeadingShow(view: EditorView, heading: string, linked: boolean): boolean {
-    if (round === null)
-        return false;
+    if (round === null) return false;
     const shown: Round = round;
-    const block: Block | undefined = blocksOf(view.state, shown.loaded.tasks)
-        .find((candidate: Block): boolean => candidate.heading === heading);
-    if (block === undefined)
-        return false;
+    const block: Block | undefined = blocksOf(view.state, shown.loaded.tasks).find(
+        (candidate: Block): boolean => candidate.heading === heading,
+    );
+    if (block === undefined) return false;
     const steps: Step[] = roundStepsOf(view, shown);
     const current: Step | undefined = currentOf(shown, steps);
     opened = current?.block.heading === heading ? "" : heading;
-    blockOpen(view, block, linked || !steps.some((step: Step): boolean => step.block.heading === heading));
+    blockOpen(
+        view,
+        block,
+        linked || !steps.some((step: Step): boolean => step.block.heading === heading),
+    );
     roundDraw(view, shown);
     return true;
 }
 
 /**
- * Starts the round of the notes the editor shows: it hears each load of their tasks, see {@link roundTake}, and goes on
- * after a Right as `Next` does, see {@link roundNext}.
+ * Starts the round of the notes the editor shows: it hears each load of their tasks,
+ * see {@link roundTake}, and goes on after a Right as `Next` does, see {@link roundNext}.
  * - {@link EditorState.changeFilter}: Leaves changes out before they are applied.
- * - {@link EditorState.transactionFilter}: Changes a transaction before it is applied; {@link Prec.highest} runs
- *   {@link selectionKeep} after the other filters, which move the cursor too, so it has the last word.
+ * - {@link EditorState.transactionFilter}: Changes a transaction before it is applied;
+ *   {@link Prec.highest} runs {@link selectionKeep} after the other filters,
+ *   which move the cursor too, so it has the last word.
  *
  * @param changed - Shows the places of the blocks anew in the tree
- * @returns Extension for the editor: the block shown with `Next`, and what I write and select kept inside it
+ * @returns Extension for the editor: the block shown with `Next`,
+ *   and what I write and select kept inside it
  */
 export function roundStart(changed: () => void): Extension {
-    tasksFollow((view: EditorView, loaded: NoteTasks): void => roundTake(view, loaded, changed),
+    tasksFollow(
+        (view: EditorView, loaded: NoteTasks): void => roundTake(view, loaded, changed),
         (view: EditorView): void => {
             roundNext(view).catch(failShow);
-        });
-    return [alonePlace, EditorState.changeFilter.of(changesKeep),
-        Prec.highest(EditorState.transactionFilter.of(selectionKeep))];
+        },
+    );
+    return [
+        alonePlace,
+        EditorState.changeFilter.of(changesKeep),
+        Prec.highest(EditorState.transactionFilter.of(selectionKeep)),
+    ];
 }

@@ -1,11 +1,12 @@
 /**
  * ## Mine
  *
- * Loads the sessions of a day with what they took through the reader, and my workouts, exercises and videos,
- * sends new and changed ones and removes them, sends my weight of a day, and asks YouTube through the reader for the title and the channel
- * of a link, see `reader/sport.ts`.
+ * Loads the sessions of a day with what they took through the reader,
+ * and my workouts, exercises and videos, sends new and changed ones and removes them,
+ * sends my weight of a day,
+ * and asks YouTube through the reader for the title
+ * and the channel of a link, see `reader/sport.ts`.
  */
-
 
 /**
  * A session of a day, as the reader sends it.
@@ -14,10 +15,11 @@
  * - `start`, `end`: Its start and end as ISO instants.
  * - `kind`: Its kind, like `Gym`.
  * - `minutes`: Minutes from its start to its end.
- * - `kcal`: kcal it burned above rest, `null` while no weight is known or for a kind the reader does not know.
+ * - `kcal`: kcal it burned above rest,
+ *   `null` while no weight is known or for a kind the reader does not know.
  * - `workout`: The workouts it did, parted by `, `, empty for none.
- * - `exercises`: Its exercises in order, each its name, sets, repetitions, like `10` or `60s`, kilograms and workout,
- *   empty where none are written.
+ * - `exercises`: Its exercises in order, each its name, sets, repetitions,
+ *   like `10` or `60s`, kilograms and workout, empty where none are written.
  * - `videos`: Its videos in order, each its title, channel, minutes, link and workout.
  */
 export type Session = {
@@ -29,7 +31,13 @@ export type Session = {
     kcal: number | null;
     workout: string;
     exercises: { name: string; sets: string; reps: string; kg: string; workout: string }[];
-    videos: { title: string; channel: string; minutes: number | null; link: string; workout: string }[];
+    videos: {
+        title: string;
+        channel: string;
+        minutes: number | null;
+        link: string;
+        workout: string;
+    }[];
 };
 
 /**
@@ -53,8 +61,9 @@ export type SportDay = {
  * - `kind`: `Exercise` or `Video`.
  * - `name`: Name of the exercise, like `Bench press`, or title of the video.
  * - `link`: Link of a video, empty for an exercise and for a video added by hand.
- * - `sets`, `reps`, `kg`: What an exercise brings, the values of the variant of mine it was picked as, like `3`, `10`
- *   and empty; left out or empty for a video.
+ * - `sets`, `reps`, `kg`: What an exercise brings,
+ *   the values of the variant of mine it was picked as, like `3`, `10` and empty;
+ *   left out or empty for a video.
  */
 export type Part = {
     kind: "Exercise" | "Video";
@@ -83,7 +92,8 @@ export type Workout = {
  *
  * - `name`: Its name, like `Bench press`.
  * - `sets`: Its sets as a rule, like `3`, empty for none.
- * - `reps`: Its repetitions per set as a rule, like `10`, or its seconds, like `60s`, empty for none.
+ * - `reps`: Its repetitions per set as a rule, like `10`, or its seconds,
+ *   like `60s`, empty for none.
  * - `kg`: Its kilograms as a rule, like `40`, empty for none.
  * - `workouts`: Names of the workouts that hold it.
  */
@@ -122,9 +132,10 @@ export type Video = {
  * - `videos`: My videos.
  * - `basics`: Names of the basic exercises of a gym that are not mine, found as I search.
  * - `kinds`: Names of the kinds of a video, like `HIIT`.
- * - `last`: What I did of each exercise the last time, its line `X-EXERCISE`, by its name in small letters,
- *   like `Bench press;3;10;40;`, which the dialog brings again for one without values, see `exerciseLastOf`
- *   in `../day/sport.ts`.
+ * - `last`: What I did of each exercise the last time, its line `X-EXERCISE`,
+ *   by its name in small letters, like `Bench press;3;10;40;`,
+ *   which the dialog brings again for one without values,
+ *   see `exerciseLastOf` in `../day/sport.ts`.
  */
 export type Mine = {
     workouts: Workout[];
@@ -148,7 +159,6 @@ export type VideoFound = {
     link: string;
 };
 
-
 /**
  * Reads the answer of the reader.
  *
@@ -157,9 +167,8 @@ export type VideoFound = {
  * @throws {Error} - When the reader did not take the request
  */
 async function answerOf<Sent>(response: Response): Promise<Sent> {
-    if (!response.ok)
-        throw new Error(`Reader answered ${response.status}`);
-    return await response.json() as Sent;
+    if (!response.ok) throw new Error(`Reader answered ${response.status}`);
+    return (await response.json()) as Sent;
 }
 
 /**
@@ -174,7 +183,8 @@ export async function sportDayLoad(day: string): Promise<SportDay> {
 }
 
 /**
- * Sends my weight of a day to the reader, which writes it into `Weights.md` in place of the one of that day.
+ * Sends my weight of a day to the reader,
+ * which writes it into `Weights.md` in place of the one of that day.
  *
  * @param day - Day like `2026-10-17`
  * @param kg - Kilograms as typed, like `60,5`
@@ -182,9 +192,12 @@ export async function sportDayLoad(day: string): Promise<SportDay> {
  * @throws {Error} - When the reader does not take it, like kilograms that are no number
  */
 export async function weightSend(day: string, kg: string): Promise<SportDay> {
-    return await answerOf<SportDay>(await fetch("/api/sport/weight", {
-        method: "POST", body: JSON.stringify({ day: day, kg: kg }),
-    }));
+    return await answerOf<SportDay>(
+        await fetch("/api/sport/weight", {
+            method: "POST",
+            body: JSON.stringify({ day: day, kg: kg }),
+        }),
+    );
 }
 
 /**
@@ -204,12 +217,16 @@ export async function mineLoad(): Promise<Mine> {
  * @param parts - Its parts in their order
  * @param old - Name it had, for a workout renamed; left out for none
  * @returns All of mine after
- * @throws {Error} - When the reader does not take it, like one without parts or with the name of another
+ * @throws {Error} - When the reader does not take it,
+ *   like one without parts or with the name of another
  */
 export async function workoutSend(name: string, parts: Part[], old?: string): Promise<Mine> {
-    return await answerOf<Mine>(await fetch("/api/sport/workouts", {
-        method: "POST", body: JSON.stringify({ old: old, name: name, parts: parts }),
-    }));
+    return await answerOf<Mine>(
+        await fetch("/api/sport/workouts", {
+            method: "POST",
+            body: JSON.stringify({ old: old, name: name, parts: parts }),
+        }),
+    );
 }
 
 /**
@@ -220,8 +237,9 @@ export async function workoutSend(name: string, parts: Part[], old?: string): Pr
  * @throws {Error} - When the reader does not remove it
  */
 export async function workoutDelete(name: string): Promise<Mine> {
-    return await answerOf<Mine>(await fetch(`/api/sport/workouts?name=${encodeURIComponent(name)}`,
-        { method: "DELETE" }));
+    return await answerOf<Mine>(
+        await fetch(`/api/sport/workouts?name=${encodeURIComponent(name)}`, { method: "DELETE" }),
+    );
 }
 
 /**
@@ -232,7 +250,9 @@ export async function workoutDelete(name: string): Promise<Mine> {
  * @throws {Error} - When the text is no link to a video or YouTube does not answer
  */
 export async function videoLookup(link: string): Promise<VideoFound> {
-    return await answerOf<VideoFound>(await fetch(`/api/sport/video?link=${encodeURIComponent(link)}`));
+    return await answerOf<VideoFound>(
+        await fetch(`/api/sport/video?link=${encodeURIComponent(link)}`),
+    );
 }
 
 /**
@@ -243,57 +263,80 @@ export async function videoLookup(link: string): Promise<VideoFound> {
  * @returns All of mine after
  * @throws {Error} - When the reader does not take it, like one without title
  */
-export async function videoSend(video: Omit<Video, "kcal">, before?: { title: string; link: string }):
-    Promise<Mine> {
-    return await answerOf<Mine>(await fetch("/api/sport/videos", {
-        method: "POST",
-        body: JSON.stringify({ ...video, oldTitle: before?.title, oldLink: before?.link }),
-    }));
+export async function videoSend(
+    video: Omit<Video, "kcal">,
+    before?: { title: string; link: string },
+): Promise<Mine> {
+    return await answerOf<Mine>(
+        await fetch("/api/sport/videos", {
+            method: "POST",
+            body: JSON.stringify({ ...video, oldTitle: before?.title, oldLink: before?.link }),
+        }),
+    );
 }
 
 /**
- * Sends a new exercise to the reader, which adds it to `Exercises.md` as a variant of its own, empty, beside those
- * of the same name.
+ * Sends a new exercise to the reader,
+ * which adds it to `Exercises.md` as a variant of its own, empty, beside those of the same name.
  *
  * @param name - Its name as typed
  * @returns All of mine after
  * @throws {Error} - When the reader does not take it, like one without name
  */
 export async function exerciseSend(name: string): Promise<Mine> {
-    return await answerOf<Mine>(await fetch("/api/sport/exercises", {
-        method: "POST", body: JSON.stringify({ name: name }),
-    }));
+    return await answerOf<Mine>(
+        await fetch("/api/sport/exercises", {
+            method: "POST",
+            body: JSON.stringify({ name: name }),
+        }),
+    );
 }
 
 /**
- * Sends what I do of a variant of an exercise as a rule to the reader, which writes it into `Exercises.md` in place
- * of the variant as it was, and into the workouts that hold it.
+ * Sends what I do of a variant of an exercise as a rule to the reader,
+ * which writes it into `Exercises.md` in place of the variant as it was,
+ * and into the workouts that hold it.
  *
  * @param old - The variant as it was, its name, sets, repetitions and kilograms
  * @param values - Its new sets, repetitions, like `10` or `60s`, and kilograms, each empty for none
  * @returns All of mine after
  * @throws {Error} - When the reader does not take it, like sets that are no whole number
  */
-export async function exerciseChangeSend(old: { name: string; sets: string; reps: string; kg: string },
-                                         values: { sets: string; reps: string; kg: string }): Promise<Mine> {
-    return await answerOf<Mine>(await fetch("/api/sport/exercises", {
-        method: "PATCH",
-        body: JSON.stringify({ old: { name: old.name, sets: old.sets, reps: old.reps, kg: old.kg }, ...values }),
-    }));
+export async function exerciseChangeSend(
+    old: { name: string; sets: string; reps: string; kg: string },
+    values: { sets: string; reps: string; kg: string },
+): Promise<Mine> {
+    return await answerOf<Mine>(
+        await fetch("/api/sport/exercises", {
+            method: "PATCH",
+            body: JSON.stringify({
+                old: { name: old.name, sets: old.sets, reps: old.reps, kg: old.kg },
+                ...values,
+            }),
+        }),
+    );
 }
 
 /**
- * Removes a variant of an exercise through the reader from `Exercises.md` and from every workout that holds it.
+ * Removes a variant of an exercise through the reader from `Exercises.md`
+ * and from every workout that holds it.
  * - `query`: The variant, its name, sets, repetitions and kilograms.
  *
  * @param exercise - The variant
  * @returns All of mine after
  * @throws {Error} - When the reader does not remove it
  */
-export async function exerciseDelete(exercise: { name: string; sets: string; reps: string; kg: string }):
-    Promise<Mine> {
+export async function exerciseDelete(exercise: {
+    name: string;
+    sets: string;
+    reps: string;
+    kg: string;
+}): Promise<Mine> {
     const query: URLSearchParams = new URLSearchParams({
-        name: exercise.name, sets: exercise.sets, reps: exercise.reps, kg: exercise.kg,
+        name: exercise.name,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        kg: exercise.kg,
     });
     return await answerOf<Mine>(await fetch(`/api/sport/exercises?${query}`, { method: "DELETE" }));
 }

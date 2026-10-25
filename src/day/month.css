@@ -1,9 +1,14 @@
-/* Month to pick a day from: its days, the shown day in the calm grey of what is picked and today framed, and above
-   them its month and year at the left and its arrows at the right; on a phone its days a finger high */
-/* Days of the month with their number in the middle in the size of the page, a grey under the pointer, softly as
-   every hover, see `--hover-in` in `../variants.css`, those of the months before and after grey; the shown day in the
-   calm grey of what is picked, today framed by a calm line and in bold; below the number the places of entries, which the month has none of,
-   take no room, against the theme, so the number stands in the middle from top to bottom too */
+/* Month to pick a day from:
+   its days, the shown day in the calm grey of what is picked and today framed,
+   and above them its month and year at the left and its arrows at the right;
+   on a phone its days a finger high */
+/* Days of the month with their number in the middle in the size of the page,
+   a grey under the pointer, softly as every hover,
+   see `--hover-in` in `../variants.css`, those of the months before and after grey;
+   the shown day in the calm grey of what is picked, today framed by a calm line and in bold;
+   below the number the places of entries,
+   which the month has none of, take no room, against the theme,
+   so the number stands in the middle from top to bottom too */
 .month-day {
     justify-content: center;
     cursor: pointer;
@@ -35,8 +40,9 @@
     font-size: var(--text-size);
 }
 
-/* Today: a calm line around its whole cell, as large as the shown day's grey, its number in bold, without the small
-   grey square the theme puts behind the number of today */
+/* Today: a calm line around its whole cell,
+   as large as the shown day's grey, its number in bold,
+   without the small grey square the theme puts behind the number of today */
 .month-day[aria-current="date"] {
     box-shadow: inset 0 0 0 1px var(--text-muted);
 }
@@ -46,7 +52,8 @@
     font-weight: 700;
 }
 
-/* Head of the month: its month and year at the left, its arrows at the right, a little apart from its days */
+/* Head of the month: its month and year at the left, its arrows at the right,
+   a little apart from its days */
 .month-head {
     display: flex;
     align-items: center;
@@ -67,15 +74,18 @@
 }
 
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    /* The month on a phone with its days a finger high, its six weeks and the names of the days 15rem high,
-       in place of a grid 1.8 times as wide as high, see `aspectRatio` in `month.ts`, whose days were hardly higher
-       than their number; its arrows as small as they look, but taking a tap 0.5rem above and below them */
+    /* The month on a phone with its days a finger high,
+       its six weeks and the names of the days 15rem high,
+       in place of a grid 1.8 times as wide as high, see `aspectRatio` in `month.ts`,
+       whose days were hardly higher than their number;
+       its arrows as small as they look, but taking a tap 0.5rem above and below them */
     .month-calendar > div {
         height: 15rem;
     }
 
-    /* The month and year above the days on a phone in the size of the date above plan and log, and its arrows half
-       a gap from them and a little closer together, their icons still well apart inside their buttons, so the longest,
+    /* The month and year above the days on a phone in the size of the date above plan and log,
+       and its arrows half a gap from them and a little closer together,
+       their icons still well apart inside their buttons, so the longest,
        like `September 2026`, keeps one line beside its four arrows */
     .month-head {
         gap: 0.5rem;

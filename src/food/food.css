@@ -1,8 +1,11 @@
-/* Food, in the scheme of the day: the bar of the shown day over the whole width, then the day and my meals and foods
-   side by side where both fit, else one below the other, beside the areas at the left edge; the day 31rem wide,
-   each food with its brand and store on its line, the numbers close to the names, its times above its meals;
+/* Food, in the scheme of the day: the bar of the shown day over the whole width,
+   then the day and my meals and foods side by side where both fit, else one below the other,
+   beside the areas at the left edge;
+   the day 31rem wide, each food with its brand and store on its line,
+   the numbers close to the names, its times above its meals;
    my meals and foods all the rest, each row flat, its name and its kcal;
-   the page itself scrolls, no box of its own, so the wheel, a swipe, the keys and the scrollbar all scroll it */
+   the page itself scrolls, no box of its own,
+   so the wheel, a swipe, the keys and the scrollbar all scroll it */
 .food {
     display: flex;
     flex-wrap: wrap;
@@ -24,8 +27,9 @@
     min-width: 0;
 }
 
-/* My meals and foods apart from the day by a thin grey line and a little more room, as the tree of Scripts stands apart
-   from its note, where both stand side by side; one below the other they need none */
+/* My meals and foods apart from the day by a thin grey line and a little more room,
+   as the tree of Scripts stands apart from its note, where both stand side by side;
+   one below the other they need none */
 @media (min-width: 1200px) {
     .food-foods {
         padding-left: calc(1.5 * var(--gap));
@@ -33,7 +37,8 @@
     }
 }
 
-/* The page of the food view grows with its content instead of being one screen high, see `body` in `base.css` */
+/* The page of the food view grows with its content instead of being one screen high,
+   see `body` in `base.css` */
 body:has(> .food) {
     height: auto;
     min-height: 100dvh;
@@ -44,10 +49,12 @@ body:has(> .food) {
     flex: 1 1 100%;
 }
 
-/* The date on one line, exactly where and as wide as the date of the day, see `.day-title-button` and
-   `.day-bar .day-title .day-date` in `day/day.css`: the same room around it and the same width, as wide as the widest,
-   like `30.12.2026 (Wed)`, every digit equally wide, so the date, the icon back to today and the arrow after it stand
-   at the same place in the day, the food and the sport view, from day to day */
+/* The date on one line, exactly where and as wide as the date of the day,
+   see `.day-title-button` and `.day-bar .day-title .day-date` in `day/day.css`:
+   the same room around it and the same width, as wide as the widest,
+   like `30.12.2026 (Wed)`, every digit equally wide,
+   so the date, the icon back to today and the arrow after it stand at the same place in the day,
+   the food and the sport view, from day to day */
 .food-day-title {
     white-space: nowrap;
     padding: 0.25rem 0.5rem 0.25rem 1.5rem;
@@ -60,9 +67,9 @@ body:has(> .food) {
     min-width: 8.25em;
 }
 
-/* Name of my meals and of my foods, in the text of controls, the one plus right after it, which adds one,
-   as beside Plan and Log, one line high and at the top of its line, so it stands exactly in the middle,
-   as beside the name of a field, see `day/choices.css` */
+/* Name of my meals and of my foods, in the text of controls, the one plus right after it,
+   which adds one, as beside Plan and Log, one line high and at the top of its line,
+   so it stands exactly in the middle, as beside the name of a field, see `day/choices.css` */
 .food-heading {
     font-size: var(--control-text);
     line-height: var(--chip-height);
@@ -108,11 +115,14 @@ body:has(> .food) {
     line-height: 1.25;
 }
 
-/* The day's entries below the totals, each its start small and grey above it, so no column of times takes room
-   beside the names; then every line in the same three columns: what, then two columns of numbers at the right,
-   the grams of a food grey in brackets and the kcal last, of each food, of each meal and, on the line of its start,
-   of each entry, like `(230 g) 363 kcal`; the kcal with the room of `9.999 kcal`, wider only on a line of more,
-   so the grams stand in one column too; the foods of a meal indented under its name, so each meal reads as one block;
+/* The day's entries below the totals, each its start small and grey above it,
+   so no column of times takes room beside the names;
+   then every line in the same three columns: what,
+   then two columns of numbers at the right, the grams of a food grey in brackets and the kcal last,
+   of each food, of each meal and, on the line of its start, of each entry, like `(230 g) 363 kcal`;
+   the kcal with the room of `9.999 kcal`, wider only on a line of more,
+   so the grams stand in one column too;
+   the foods of a meal indented under its name, so each meal reads as one block;
    every number at the right of its column, see `.food-value` in `search.css` */
 #food-meals {
     margin-top: var(--gap);
@@ -126,8 +136,9 @@ body:has(> .food) {
     padding: 0.125rem 0;
 }
 
-/* The grams grey, with more room before the kcal than between the other columns, so they stand well left of the kcal
-   of the meal and of the entry above them, even of `9.999 kcal` */
+/* The grams grey, with more room before the kcal than between the other columns,
+   so they stand well left of the kcal of the meal
+   and of the entry above them, even of `9.999 kcal` */
 .food-bracket {
     margin-right: 1.25rem;
     color: var(--text-muted);
@@ -139,8 +150,10 @@ body:has(> .food) {
     padding-left: 1.75rem;
 }
 
-/* The grey guide line, `--guide`, at the left of the foods of a meal, as at the parts of a meal or a chapter in the dialog,
-   see `.meal-parts` in `day/day.css`, reaching over the room between two lines, so it runs through */
+/* The grey guide line, `--guide`, at the left of the foods of a meal,
+   as at the parts of a meal or a chapter in the dialog,
+   see `.meal-parts` in `day/day.css`,
+   reaching over the room between two lines, so it runs through */
 .food-line:not(.food-meal) > .food-what::before,
 .food-line:not(.food-meal) > .food-place::before {
     content: "";
@@ -151,9 +164,10 @@ body:has(> .food) {
     border-left: 2px solid var(--guide);
 }
 
-/* Start of an entry in grey and its place after it, a grey line above it, apart from the entry before; in the last
-   column, that of kcal, white and bold, what the whole entry gives, the sum of its lines, as the totals of the day
-   are bold; in the text of the lines below */
+/* Start of an entry in grey and its place after it, a grey line above it,
+   apart from the entry before;
+   in the last column, that of kcal, white and bold, what the whole entry gives,
+   the sum of its lines, as the totals of the day are bold; in the text of the lines below */
 .food-entry {
     display: grid;
     grid-template-columns: minmax(0, 1fr) max-content minmax(4.5rem, max-content);
@@ -171,15 +185,17 @@ body:has(> .food) {
     font-weight: 600;
 }
 
-/* What an entry holds at its top in the text of controls: a meal of mine, or a food eaten by itself */
+/* What an entry holds at its top in the text of controls: a meal of mine,
+   or a food eaten by itself */
 .food-meal {
     font-size: var(--control-text);
 }
 
-/* An entry, its lines one block, which a click opens in the dialog of the day; under the pointer no grey box,
-   only its place lighter, softly after a moment, as the icon buttons, see `.icon-button` in `../base.css`, its grams
-   in brackets staying grey; its start is a button of its own, so under the pointer only the start lights up,
-   not the block around it */
+/* An entry, its lines one block, which a click opens in the dialog of the day;
+   under the pointer no grey box, only its place lighter, softly after a moment,
+   as the icon buttons, see `.icon-button` in `../base.css`, its grams in brackets staying grey;
+   its start is a button of its own,
+   so under the pointer only the start lights up, not the block around it */
 .food-eaten {
     padding-bottom: 0.25rem;
     cursor: pointer;
@@ -216,7 +232,6 @@ body:has(> .food) {
 .food-place {
     color: var(--text-muted);
 }
-
 
 /* Hint for a day without meals, or when the meals cannot be read */
 .food-none {

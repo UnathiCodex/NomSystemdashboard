@@ -1,9 +1,11 @@
-/* Page of a module where a note stands, or of one of its chapters, see `overview.ts`, laid out as the day without its
-   bar, the tree naming the module: its course, or the sections of the chapter, as the plan below the bar of the day;
-   its text in the size and white of the day and its dialogs, not those of a note, so a card of the course reads as
-   the list of a series in its dialog; without the browser's scroll anchoring, as the dialogs of a series,
-   see `series.css`: the cards of the course are built anew as a list opens or closes, so the browser would pick
-   another row to hold still each time and move the page by itself */
+/* Page of a module where a note stands, or of one of its chapters,
+   see `overview.ts`, laid out as the day without its bar, the tree naming the module: its course,
+   or the sections of the chapter, as the plan below the bar of the day;
+   its text in the size and white of the day and its dialogs, not those of a note,
+   so a card of the course reads as the list of a series in its dialog;
+   without the browser's scroll anchoring, as the dialogs of a series, see `series.css`:
+   the cards of the course are built anew as a list opens or closes,
+   so the browser would pick another row to hold still each time and move the page by itself */
 .editor-overview {
     display: flex;
     flex-direction: column;
@@ -18,7 +20,8 @@
     min-height: var(--control-height);
 }
 
-/* The chapter, its line of names above its card, its name as high as the name of the first card of the course,
+/* The chapter, its line of names above its card,
+   its name as high as the name of the first card of the course,
    see `.overview-course` in `course.css` */
 .overview-list {
     margin-top: 0.75rem;
@@ -30,8 +33,8 @@
     gap: 0.75rem;
 }
 
-/* A row and the line of its chapter's name on one grid: the name taking the room left, then the round, as wide as
-   `Ready`, so the rounds of every row stand in line */
+/* A row and the line of its chapter's name on one grid: the name taking the room left,
+   then the round, as wide as `Ready`, so the rounds of every row stand in line */
 .overview-row,
 .overview-head {
     display: grid;
@@ -40,10 +43,11 @@
     align-items: baseline;
 }
 
-/* The rows of a chapter without a grey box around them, as the rows of the course above, see `.course-list`
-   in `course.css`, and of the tree, see `.tree-file` in `../notes/notes.css`: each as high as a row of the tree,
-   `--tree-row-height`, and as far apart, its name in line with the name of its chapter; grey below the white name
-   of the chapter, white under the pointer, as a note of the tree */
+/* The rows of a chapter without a grey box around them, as the rows of the course above,
+   see `.course-list` in `course.css`, and of the tree, see `.tree-file` in `../notes/notes.css`:
+   each as high as a row of the tree, `--tree-row-height`,
+   and as far apart, its name in line with the name of its chapter;
+   grey below the white name of the chapter, white under the pointer, as a note of the tree */
 .overview-card {
     display: flex;
     flex-direction: column;
@@ -87,10 +91,11 @@
     white-space: nowrap;
 }
 
-/* A folder of my modules, see `folder.ts`, laid out as the overview of a module: its name where the name of a module
-   stands, the path to it above it as the weekday above the date of the day, each folder on the way a link in the grey
-   of a link of the page, never underlined, lighter under the pointer, softly as every hover, see `--hover-in`
-   in `../variants.css` */
+/* A folder of my modules, see `folder.ts`, laid out as the overview of a module:
+   its name where the name of a module stands,
+   the path to it above it as the weekday above the date of the day,
+   each folder on the way a link in the grey of a link of the page, never underlined,
+   lighter under the pointer, softly as every hover, see `--hover-in` in `../variants.css` */
 .folder-path a {
     color: var(--text-muted);
     text-decoration: none;
@@ -102,8 +107,9 @@
     transition: color var(--hover-in);
 }
 
-/* Its folders and files as the sections of a chapter, see `.overview-card`, as far below the path as the chapter
-   below the top of its page; `Empty` where the first of them would stand */
+/* Its folders and files as the sections of a chapter, see `.overview-card`,
+   as far below the path as the chapter below the top of its page;
+   `Empty` where the first of them would stand */
 .folder-list {
     margin-top: 0.75rem;
 }

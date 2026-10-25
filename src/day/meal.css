@@ -1,15 +1,18 @@
-/* A meal of the entry by category: its summary with its kcal, its meals and foods below it, each a row of its name
-   with its brand and store, the grams of a food and its kcal, and the food search of their list; on a phone
-   the grams of a food before its name */
-/* A meal of the log in its rows: its summary as plain text, its kcal beside it; then its foods, its line beside
-   its name, the meals and foods picked below it, a bit smaller than the fields, and its list under them;
+/* A meal of the entry by category:
+   its summary with its kcal, its meals and foods below it,
+   each a row of its name with its brand and store, the grams of a food and its kcal,
+   and the food search of their list; on a phone the grams of a food before its name */
+/* A meal of the log in its rows: its summary as plain text, its kcal beside it;
+   then its foods, its line beside its name, the meals and foods picked below it,
+   a bit smaller than the fields, and its list under them;
    no room taken while nothing is picked */
 .meal-summary {
     overflow-wrap: anywhere;
 }
 
-/* kcal of the whole meal in brackets after its summary, like `Chili con Carne, Weißbrot (660 kcal)`, as a type stands
-   after its skill; white and as big as the summary, like the kcal of every meal and food */
+/* kcal of the whole meal in brackets after its summary,
+   like `Chili con Carne, Weißbrot (660 kcal)`, as a type stands after its skill;
+   white and as big as the summary, like the kcal of every meal and food */
 .meal-total {
     font-variant-numeric: tabular-nums;
 }
@@ -29,11 +32,15 @@
     display: none;
 }
 
-/* Row of a meal or a food: its name, the grams of a food, its kcal and its small grey `×`, see `.cross-quiet`
-   in `base.css`; grams, kcal and × on the line of the name, also while its brand and store stand on a line below it,
-   see `bracketsWatch` in `../food/foods.ts`, never between the two lines; the kcal with the room of four digits and
-   their unit, like `1.250 kcal`, a clear gap to the grams before them and to the × after them; the ×, which has no
-   text of its own, on the line of the name, its icon level with the small letters, as an icon beside a word stands */
+/* Row of a meal or a food: its name, the grams of a food, its kcal and its small grey `×`,
+   see `.cross-quiet` in `base.css`;
+   grams, kcal and × on the line of the name,
+   also while its brand and store stand on a line below it,
+   see `bracketsWatch` in `../food/foods.ts`, never between the two lines;
+   the kcal with the room of four digits and their unit,
+   like `1.250 kcal`, a clear gap to the grams before them and to the × after them;
+   the ×, which has no text of its own, on the line of the name,
+   its icon level with the small letters, as an icon beside a word stands */
 .meal-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 6.5rem 6rem auto;
@@ -54,18 +61,20 @@
     vertical-align: middle;
 }
 
-/* Name of a meal or a food with its brand and store, going on below where the row has no room, never cut */
+/* Name of a meal or a food with its brand and store,
+   going on below where the row has no room, never cut */
 .meal-name {
     overflow-wrap: break-word;
 }
 
-/* Mark of a food `Foods.md` does not hold, grey after its name with its brand and store, a hint, not a name */
+/* Mark of a food `Foods.md` does not hold,
+   grey after its name with its brand and store, a hint, not a name */
 .meal-unknown {
     color: var(--text-muted);
 }
 
-/* Grams of a food: a small field with `g` after it, a space apart as `313 kcal` writes its unit, white as the kcal,
-   like every fact, which I type */
+/* Grams of a food: a small field with `g` after it, a space apart as `313 kcal` writes its unit,
+   white as the kcal, like every fact, which I type */
 .meal-grams {
     display: flex;
     align-items: center;
@@ -81,29 +90,35 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* kcal of a meal or a food at the right of their column, in the colour of the name, every digit equally wide */
+/* kcal of a meal or a food at the right of their column, in the colour of the name,
+   every digit equally wide */
 .meal-kcal {
     text-align: right;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
 
-/* Food search in the list of the foods or of a meal, see `.picker-box`: its field one chip high, as the search
-   of every list, see `.picker-box .search-field` in `choices.css`, its results below it */
+/* Food search in the list of the foods or of a meal, see `.picker-box`: its field one chip high,
+   as the search of every list,
+   see `.picker-box .search-field` in `choices.css`, its results below it */
 .meal-box .food-search {
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
 }
 
-/* Phone: a meal or a food on one line, its grams first, its foods indented less, the field of its grams narrower */
+/* Phone: a meal or a food on one line, its grams first, its foods indented less,
+   the field of its grams narrower */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    /* A meal or a food of the entry by category on a phone on one line, its grams first, as a recipe writes them,
-       like `125 g Hackfleisch`, so grams and kcal stand apart, at both ends of the name: its grams, its name,
-       its kcal and ×; a name too long goes on below, never cut; the foods of a meal indented less,
-       the field of the grams narrower, just wide enough for four digits, and the kcal only as wide as their own
-       text, like `48 kcal`, since standing right before the × they line up at the right anyway, so the name keeps
-       all the rest and a word like `Tomatenmark` or `Kidneybohnen` stays whole on its line */
+    /* A meal or a food of the entry by category on a phone on one line, its grams first,
+       as a recipe writes them, like `125 g Hackfleisch`,
+       so grams and kcal stand apart, at both ends of the name: its grams, its name, its kcal and ×;
+       a name too long goes on below, never cut;
+       the foods of a meal indented less, the field of the grams narrower,
+       just wide enough for four digits, and the kcal only as wide as their own text,
+       like `48 kcal`, since standing right before the × they line up at the right anyway,
+       so the name keeps all the rest and a word like `Tomatenmark`
+       or `Kidneybohnen` stays whole on its line */
     .meal-row {
         grid-template-columns: auto minmax(0, 1fr) auto auto;
         gap: 0.375rem;

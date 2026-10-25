@@ -1,27 +1,35 @@
 /**
  * ## Trackers
  *
- * Reads the trackers of a day from the log: my sleep against my goals, my glasses of water against my goal,
- * my neck sessions against my goal, and what my meals gave, see `food.ts`.
+ * Reads the trackers of a day from the log:
+ * my sleep against my goals, my glasses of water against my goal, my neck sessions against my goal,
+ * and what my meals gave, see `food.ts`.
  * My goals stand here, in one place, and so do the numbers of my learning, see {@link settings}.
- * Sleep is an entry of the category `Sleep`, written by the entry by category with its start and end,
+ * Sleep is an entry of the category `Sleep`,
+ * written by the entry by category with its start and end,
  * and its what, `Night` or `Day` for a nap, see `categories.ts`.
- * The night of a day is the longest sleep of at least 3 hours that ends on it in Berlin time, the sleep I wake up from
- * that morning, so a nap never becomes the night, and a sleep `Day` never, whatever its length; an old entry
- * without what counts like a `Night`. What I slept on a day is every sleep that ends on it, the night and the naps,
+ * The night of a day is the longest sleep of at least 3 hours that ends on it in Berlin time,
+ * the sleep I wake up from that morning, so a nap never becomes the night,
+ * and a sleep `Day` never, whatever its length; an old entry without what counts like a `Night`.
+ * What I slept on a day is every sleep that ends on it, the night and the naps,
  * so a sleep from 22:00 to 05:00 counts for the day it ends on, never for the day it began on.
  * The week holds the nights of the day and the six days before it,
  * those logged: how long I slept on average, and how regular I was, how much my bedtime varied.
- * Glasses, meals and neck sessions count for the calendar day of their start in Berlin time, from 00:00 to 00:00,
- * like a glass of water at 01:00 on 14.10.2026 for 14.10.2026.
- * A glass of water is an entry of the category `Drink` with the what `Water`, which the counter of the day writes,
- * one per glass at the moment of the tap, five minutes long; such an entry from the entry by category counts too.
- * Every other drink, like `Kaffee`, counts as one glass as well, since the reference of 2.5 litres a day counts
- * the water of all drinks (EFSA 2010); the counter takes back only glasses of water.
- * A neck session is an entry of the category `Body` with a neck routine as its what, `Neck short` or `Neck long`,
- * see `categories.ts`; the trackers count the two parts of the routine apart over the day and the six days before it:
- * on how many of my study days I did one, short or long, since long holds short, and on how many days a long one.
- * A long session carries my neck pain from 0 to 10, its `X-PAIN`, the outcome the routine is judged by:
+ * Glasses, meals and neck sessions count for the calendar day of their start in Berlin time,
+ * from 00:00 to 00:00, like a glass of water at 01:00 on 14.10.2026 for 14.10.2026.
+ * A glass of water is an entry of the category `Drink` with the what `Water`,
+ * which the counter of the day writes, one per glass at the moment of the tap, five minutes long;
+ * such an entry from the entry by category counts too.
+ * Every other drink, like `Kaffee`, counts as one glass as well,
+ * since the reference of 2.5 litres a day counts the water of all drinks (EFSA 2010);
+ * the counter takes back only glasses of water.
+ * A neck session is an entry of the category `Body` with a neck routine as its what,
+ * `Neck short` or `Neck long`, see `categories.ts`;
+ * the trackers count the two parts of the routine apart over the day and the six days before it:
+ * on how many of my study days I did one, short or long, since long holds short,
+ * and on how many days a long one.
+ * A long session carries my neck pain from 0 to 10, its `X-PAIN`,
+ * the outcome the routine is judged by:
  * the mean of my first four weeks of pain against that of the last four, up to the day.
  * A study day is a day with an entry `Skill` in the log, like a lecture or a study session.
  *
@@ -39,7 +47,6 @@ import { trackerLog } from "./sources.ts";
 import type { Entry } from "./calendar.ts";
 import type { FoodDay, Totals } from "./food.ts";
 
-
 /**
  * My goals for the trackers, the size of a glass, and the numbers of my learning.
  *
@@ -48,14 +55,18 @@ import type { FoodDay, Totals } from "./food.ts";
  * - `glassMl`: Millilitres of one glass of water.
  * - `waterMl`: Millilitres of water I want a day.
  * - `bedtimeVaried`: Minutes my bedtime may vary over the week, up or down, for its check.
- * - `neckLongWeek`: Long neck sessions I want in seven days; a short one, or a long, on every study day.
+ * - `neckLongWeek`: Long neck sessions I want in seven days;
+ *   a short one, or a long, on every study day.
  * - `sessionMinutes`: Minutes of one study session, as a session the learning view opens.
- * - `taskMinutes`: Minutes of one Task, which every section due today brings to the box of its chapter in the plan
+ * - `taskMinutes`: Minutes of one Task,
+ *   which every section due today brings to the box of its chapter in the plan
  *   of today, see `suggestions.ts`.
- * - `theoryMinutes`: Minutes of the Definitions, the Algorithm and the Example of a section on round 0,
+ * - `theoryMinutes`: Minutes of the Definitions,
+ *   the Algorithm and the Example of a section on round 0,
  *   which it brings to that box besides its Task.
- * - `learningStart`: First day anything of my learning is due, like `2026-10-25`: before it, nothing is due today,
- *   so the plan gets no learning box and Learn lists nothing, see `todayMarked` in `skill.ts`.
+ * - `learningStart`: First day anything of my learning is due, like `2026-10-25`:
+ *   before it, nothing is due today, so the plan gets no learning box and Learn lists nothing,
+ *   see `todayMarked` in `skill.ts`.
  */
 export type TrackerSettings = {
     sleepHours: number;
@@ -87,9 +98,11 @@ export type Night = {
  * My sleep on a day.
  *
  * - `night`: The night that ended on the day, `null` when none is logged.
- * - `slept`: Minutes of every sleep that ended on the day, the night and the naps, 0 when none is logged.
+ * - `slept`: Minutes of every sleep that ended on the day,
+ *   the night and the naps, 0 when none is logged.
  * - `minutes`: Average minutes of the nights of the week, `null` when none is logged.
- * - `varied`: How much my bedtime varied over the nights of the week, its standard deviation in minutes;
+ * - `varied`: How much my bedtime varied over the nights of the week,
+ *   its standard deviation in minutes;
  *   `null` for fewer than two nights.
  * - `nights`: Number of nights of the week logged.
  */
@@ -107,7 +120,8 @@ export type SleepDay = {
  * - `id`: Identifier of its entry.
  * - `start`: When I drank it, as ISO instant.
  * - `water`: Whether it is a glass of water, which the counter wrote and may take back.
- * - `editable`: Whether its entry can be changed, see `calendar.ts`, so the counter may take it back.
+ * - `editable`: Whether its entry can be changed, see `calendar.ts`,
+ *   so the counter may take it back.
  */
 export type Glass = {
     id: string;
@@ -122,8 +136,10 @@ export type Glass = {
  * - `short`: My study days on which I did a neck routine, short or long.
  * - `studyDays`: My study days, days with an entry `Skill` in the log.
  * - `long`: Days with a long neck session.
- * - `painFirst`: Mean of my pain in the first four weeks I rated it, `null` before the first rating.
- * - `painLast`: Mean of my pain in the last four weeks up to the day, `null` while those still are the first four.
+ * - `painFirst`: Mean of my pain in the first four weeks I rated it,
+ *   `null` before the first rating.
+ * - `painLast`: Mean of my pain in the last four weeks up to the day,
+ *   `null` while those still are the first four.
  */
 export type NeckWeek = {
     short: number;
@@ -154,18 +170,31 @@ export type Trackers = {
  * {@link TrackerSettings} as I set them, the one place to change them:
  * 8 hours of sleep a night, within the healthy band of 7 to 9 hours for adults,
  * and 2.5 litres of water a day, 10 glasses of 250 ml.
- * There is no goal for when to fall asleep: the trackers show how much my bedtime varies, with a check
- * within 30 minutes up or down, since regular sleep over weeks goes with better grades (Phillips 2017, Okano 2019)
+ * There is no goal for when to fall asleep:
+ * the trackers show how much my bedtime varies, with a check within 30 minutes up or down,
+ * since regular sleep over weeks goes with better grades (Phillips 2017, Okano 2019)
  * and the regularity of sleep with lower mortality, more than its length (Windred 2024).
- * A short neck session, or a long one, on every study day, and 3 long ones in seven days, since regular strengthening
- * eased neck pain after 10 to 20 weeks (Gross 2015) and about once a week did nothing (Jones 2024).
- * My learning: study sessions of 60 minutes, 30 for a Task and 30 more for the theory of a new section,
- * my choice, not a finding (`.claude/studies/science.md`, point 9); it starts on Saturday, 24.10.2026, since until then
- * I set up my skills, their series and tutor groups (`.claude/life/decisions.md`, 22 October 2026).
+ * A short neck session, or a long one, on every study day, and 3 long ones in seven days,
+ * since regular strengthening eased neck pain after 10 to 20 weeks (Gross 2015) and about
+ * once a week did nothing (Jones 2024).
+ * My learning: study sessions of 60 minutes,
+ * 30 for a Task and 30 more for the theory of a new section, my choice,
+ * not a finding (`.claude/studies/science.md`, point 9);
+ * it starts on Saturday, 24.10.2026,
+ * since until then I set up my skills,
+ * their series and tutor groups (`.claude/life/decisions.md`, 22 October 2026).
  */
 export const settings: TrackerSettings = {
-    sleepHours: 8, sleepBand: [7, 9], glassMl: 250, waterMl: 2500, bedtimeVaried: 30, neckLongWeek: 3,
-    sessionMinutes: 60, taskMinutes: 30, theoryMinutes: 30, learningStart: "2026-10-25",
+    sleepHours: 8,
+    sleepBand: [7, 9],
+    glassMl: 250,
+    waterMl: 2500,
+    bedtimeVaried: 30,
+    neckLongWeek: 3,
+    sessionMinutes: 60,
+    taskMinutes: 30,
+    theoryMinutes: 30,
+    learningStart: "2026-10-25",
 };
 
 /**
@@ -228,7 +257,6 @@ const dayMinutes: number = 24 * 60;
  */
 const dayLength: number = dayMinutes * 60 * 1000;
 
-
 /**
  * Turns a time of day into minutes after midnight.
  *
@@ -274,19 +302,30 @@ function nightOf(sleep: Entry): Night {
  * @returns Minutes, `null` for fewer than two nights
  */
 function variedOf(nights: Night[]): number | null {
-    if (nights.length < 2)
-        return null;
-    const bedtimes: number[] = nights.map((night: Night): number =>
-        (minutesOf(night.asleep) - dayMinutes / 2 + dayMinutes) % dayMinutes);
-    const mean: number = bedtimes.reduce((sum: number, bedtime: number): number => sum + bedtime, 0) / bedtimes.length;
-    return Math.round(Math.sqrt(bedtimes
-        .reduce((sum: number, bedtime: number): number => sum + (bedtime - mean) ** 2, 0) / bedtimes.length));
+    if (nights.length < 2) return null;
+    const bedtimes: number[] = nights.map(
+        (night: Night): number =>
+            (minutesOf(night.asleep) - dayMinutes / 2 + dayMinutes) % dayMinutes,
+    );
+    const mean: number =
+        bedtimes.reduce((sum: number, bedtime: number): number => sum + bedtime, 0) /
+        bedtimes.length;
+    return Math.round(
+        Math.sqrt(
+            bedtimes.reduce(
+                (sum: number, bedtime: number): number => sum + (bedtime - mean) ** 2,
+                0,
+            ) / bedtimes.length,
+        ),
+    );
 }
 
 /**
- * Reads my sleep on a day, see the top of this file: the sleeps of the log from noon eight days before
- * to noon the day after, which hold every night of the week; the night of each day the longest that ends on it,
- * without the naps, and what I slept on the day all that end on it, the naps too.
+ * Reads my sleep on a day, see the top of this file:
+ * the sleeps of the log from noon eight days before to noon the day after,
+ * which hold every night of the week;
+ * the night of each day the longest that ends on it, without the naps,
+ * and what I slept on the day all that end on it, the naps too.
  * - `noon`: Noon of the day in UTC, in milliseconds.
  * - `sleeps`: Sleeps of the range.
  * - `longs`: Those that are no `Day`, at least {@link nightMinutes} long.
@@ -299,44 +338,64 @@ function variedOf(nights: Night[]): number | null {
  */
 function sleepRead(date: string): SleepDay {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
-    const sleeps: Entry[] = entriesRead(trackerLog,
-        new Date(noon - (weekDays + 1) * dayLength).toISOString(), new Date(noon + dayLength).toISOString())
-        .filter((entry: Entry): boolean => entry.category === sleepName && !entry.allDay);
-    const longs: Entry[] = sleeps.filter((sleep: Entry): boolean =>
-        sleep.title !== napName && lengthOf(sleep) >= nightMinutes * 60 * 1000);
-    const nights: (Night | null)[] = Array.from({ length: weekDays }, (_: unknown, back: number): Night | null => {
-        const day: string = new Date(noon - back * dayLength).toISOString().slice(0, 10);
-        const night: Entry | undefined = longs
-            .filter((sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === day)
-            .sort((first: Entry, second: Entry): number => lengthOf(second) - lengthOf(first))[0];
-        return night === undefined ? null : nightOf(night);
-    });
+    const sleeps: Entry[] = entriesRead(
+        trackerLog,
+        new Date(noon - (weekDays + 1) * dayLength).toISOString(),
+        new Date(noon + dayLength).toISOString(),
+    ).filter((entry: Entry): boolean => entry.category === sleepName && !entry.allDay);
+    const longs: Entry[] = sleeps.filter(
+        (sleep: Entry): boolean =>
+            sleep.title !== napName && lengthOf(sleep) >= nightMinutes * 60 * 1000,
+    );
+    const nights: (Night | null)[] = Array.from(
+        { length: weekDays },
+        (_: unknown, back: number): Night | null => {
+            const day: string = new Date(noon - back * dayLength).toISOString().slice(0, 10);
+            const night: Entry | undefined = longs
+                .filter((sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === day)
+                .sort(
+                    (first: Entry, second: Entry): number => lengthOf(second) - lengthOf(first),
+                )[0];
+            return night === undefined ? null : nightOf(night);
+        },
+    );
     const logged: Night[] = nights.filter((night: Night | null): night is Night => night !== null);
     return {
         night: nights[0],
-        slept: Math.round(sleeps.filter((sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === date)
-            .reduce((sum: number, sleep: Entry): number => sum + lengthOf(sleep), 0) / 60000),
-        minutes: logged.length === 0
-            ? null
-            : Math.round(logged.reduce((sum: number, night: Night): number => sum + night.minutes, 0) / logged.length),
+        slept: Math.round(
+            sleeps
+                .filter((sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === date)
+                .reduce((sum: number, sleep: Entry): number => sum + lengthOf(sleep), 0) / 60000,
+        ),
+        minutes:
+            logged.length === 0
+                ? null
+                : Math.round(
+                      logged.reduce((sum: number, night: Night): number => sum + night.minutes, 0) /
+                          logged.length,
+                  ),
         varied: variedOf(logged),
         nights: logged.length,
     };
 }
 
 /**
- * Tells whether an entry is a glass of water: of the category `Drink`, with the what `Water`, ignoring case.
+ * Tells whether an entry is a glass of water:
+ * of the category `Drink`, with the what `Water`, ignoring case.
  *
  * @param entry - Entry of the log
  * @returns Whether it is a glass of water
  */
 export function glassIs(entry: Entry): boolean {
-    return entry.category === drinkName && entry.title.trim().toLowerCase() === waterName.toLowerCase();
+    return (
+        entry.category === drinkName && entry.title.trim().toLowerCase() === waterName.toLowerCase()
+    );
 }
 
 /**
- * Reads my glasses on a day, of water and of every other drink: the entries `Drink` that start on it,
- * read from noon the day before to noon the day after, which holds the whole day and its night.
+ * Reads my glasses on a day, of water and of every other drink:
+ * the entries `Drink` that start on it, read from noon the day before to noon the day after,
+ * which holds the whole day and its night.
  * - `noon`: Noon of the day in UTC, in milliseconds.
  *
  * @param date - Day like `2026-10-10`
@@ -344,17 +403,32 @@ export function glassIs(entry: Entry): boolean {
  */
 function glassesRead(date: string): Glass[] {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
-    return entriesRead(trackerLog, new Date(noon - dayLength).toISOString(), new Date(noon + dayLength).toISOString())
-        .filter((entry: Entry): boolean => entry.category === drinkName && !entry.allDay
-            && berlinDateOf(new Date(entry.start)) === date)
+    return entriesRead(
+        trackerLog,
+        new Date(noon - dayLength).toISOString(),
+        new Date(noon + dayLength).toISOString(),
+    )
+        .filter(
+            (entry: Entry): boolean =>
+                entry.category === drinkName &&
+                !entry.allDay &&
+                berlinDateOf(new Date(entry.start)) === date,
+        )
         .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
-        .map((entry: Entry): Glass => ({ id: entry.id, start: entry.start, water: glassIs(entry), editable: entry.editable }));
+        .map((entry: Entry): Glass => ({
+            id: entry.id,
+            start: entry.start,
+            water: glassIs(entry),
+            editable: entry.editable,
+        }));
 }
 
 /**
- * Reads my neck routine in the seven days up to a day, see {@link NeckWeek}: from the entries that start on the day
- * or on one of the six days before it, read from noon eight days before to noon the day after,
- * which holds all seven days, my neck sessions, the entries `Body` with a neck routine as their what,
+ * Reads my neck routine in the seven days up to a day, see {@link NeckWeek}:
+ * from the entries that start on the day or on one of the six days before it,
+ * read from noon eight days before to noon the day after,
+ * which holds all seven days, my neck sessions,
+ * the entries `Body` with a neck routine as their what,
  * and my study days, the days with an entry `Skill`.
  * - `noon`: Noon of the day in UTC, in milliseconds.
  * - `first`: The first of the seven days, like `2026-10-04`.
@@ -370,21 +444,28 @@ function glassesRead(date: string): Glass[] {
 function neckRead(date: string): NeckWeek {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
     const first: string = new Date(noon - (weekDays - 1) * dayLength).toISOString().slice(0, 10);
-    const dayOf: (entry: Entry) => string = (entry: Entry): string => berlinDateOf(new Date(entry.start));
-    const entries: Entry[] = entriesRead(trackerLog, new Date(noon - (weekDays + 1) * dayLength).toISOString(),
-        new Date(noon + dayLength).toISOString())
-        .filter((entry: Entry): boolean => dayOf(entry) >= first && dayOf(entry) <= date);
-    const necks: Entry[] = entries.filter((entry: Entry): boolean =>
-        entry.category === bodyName && Object.keys(neckRoutines).includes(entry.title));
+    const dayOf: (entry: Entry) => string = (entry: Entry): string =>
+        berlinDateOf(new Date(entry.start));
+    const entries: Entry[] = entriesRead(
+        trackerLog,
+        new Date(noon - (weekDays + 1) * dayLength).toISOString(),
+        new Date(noon + dayLength).toISOString(),
+    ).filter((entry: Entry): boolean => dayOf(entry) >= first && dayOf(entry) <= date);
+    const necks: Entry[] = entries.filter(
+        (entry: Entry): boolean =>
+            entry.category === bodyName && Object.keys(neckRoutines).includes(entry.title),
+    );
     const neckDays: Set<string> = new Set(necks.map(dayOf));
-    const studyDays: Set<string> = new Set(entries
-        .filter((entry: Entry): boolean => entry.category === skillName)
-        .map(dayOf));
+    const studyDays: Set<string> = new Set(
+        entries.filter((entry: Entry): boolean => entry.category === skillName).map(dayOf),
+    );
     const [painFirst, painLast]: [number | null, number | null] = painRead(date);
     return {
         short: [...studyDays].filter((day: string): boolean => neckDays.has(day)).length,
         studyDays: studyDays.size,
-        long: new Set(necks.filter((entry: Entry): boolean => entry.title === neckLongName).map(dayOf)).size,
+        long: new Set(
+            necks.filter((entry: Entry): boolean => entry.title === neckLongName).map(dayOf),
+        ).size,
         painFirst: painFirst,
         painLast: painLast,
     };
@@ -397,8 +478,13 @@ function neckRead(date: string): NeckWeek {
  * @returns Mean, like 5.2, `null` for none
  */
 function meanOf(numbers: number[]): number | null {
-    return numbers.length === 0 ? null
-        : Math.round(numbers.reduce((sum: number, number: number): number => sum + number, 0) / numbers.length * 10) / 10;
+    return numbers.length === 0
+        ? null
+        : Math.round(
+              (numbers.reduce((sum: number, number: number): number => sum + number, 0) /
+                  numbers.length) *
+                  10,
+          ) / 10;
 }
 
 /**
@@ -417,19 +503,38 @@ function meanOf(numbers: number[]): number | null {
  */
 function painRead(date: string): [number | null, number | null] {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
-    const rated: [string, number][] = entriesRead(trackerLog, newSystemStart, new Date(noon + dayLength).toISOString())
-        .filter((entry: Entry): boolean => entry.category === bodyName && entry.title === neckLongName
-            && entry.pain !== "" && berlinDateOf(new Date(entry.start)) <= date)
-        .map((entry: Entry): [string, number] => [berlinDateOf(new Date(entry.start)), Number(entry.pain)]);
-    if (rated.length === 0)
-        return [null, null];
+    const rated: [string, number][] = entriesRead(
+        trackerLog,
+        newSystemStart,
+        new Date(noon + dayLength).toISOString(),
+    )
+        .filter(
+            (entry: Entry): boolean =>
+                entry.category === bodyName &&
+                entry.title === neckLongName &&
+                entry.pain !== "" &&
+                berlinDateOf(new Date(entry.start)) <= date,
+        )
+        .map((entry: Entry): [string, number] => [
+            berlinDateOf(new Date(entry.start)),
+            Number(entry.pain),
+        ]);
+    if (rated.length === 0) return [null, null];
     const first: string = rated.map(([day]: [string, number]): string => day).sort()[0];
-    const firstEnd: string = new Date(Date.parse(`${first}T12:00:00Z`) + painDays * dayLength).toISOString().slice(0, 10);
-    const lastStart: string = new Date(noon - (painDays - 1) * dayLength).toISOString().slice(0, 10);
-    const painsOf: (from: string, to: string) => number[] = (from: string, to: string): number[] => rated
-        .filter(([day]: [string, number]): boolean => day >= from && day < to)
-        .map(([, pain]: [string, number]): number => pain);
-    return [meanOf(painsOf(first, firstEnd)), date < firstEnd ? null : meanOf(painsOf(lastStart, "9999-12-31"))];
+    const firstEnd: string = new Date(Date.parse(`${first}T12:00:00Z`) + painDays * dayLength)
+        .toISOString()
+        .slice(0, 10);
+    const lastStart: string = new Date(noon - (painDays - 1) * dayLength)
+        .toISOString()
+        .slice(0, 10);
+    const painsOf: (from: string, to: string) => number[] = (from: string, to: string): number[] =>
+        rated
+            .filter(([day]: [string, number]): boolean => day >= from && day < to)
+            .map(([, pain]: [string, number]): number => pain);
+    return [
+        meanOf(painsOf(first, firstEnd)),
+        date < firstEnd ? null : meanOf(painsOf(lastStart, "9999-12-31")),
+    ];
 }
 
 /**
@@ -441,8 +546,7 @@ function painRead(date: string): [number | null, number | null] {
  * @throws {Error} - When the date is not written like `2026-10-10`
  */
 export function trackersRead(date: string): Trackers {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
-        throw new Error(`No date ${date}`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`No date ${date}`);
 
     const food: FoodDay = foodDayRead(date);
     return {
@@ -451,7 +555,11 @@ export function trackersRead(date: string): Trackers {
         glasses: glassesRead(date),
         neck: neckRead(date),
         food: {
-            kcal: food.kcal, protein: food.protein, carbs: food.carbs, fat: food.fat, estimate: food.estimate,
+            kcal: food.kcal,
+            protein: food.protein,
+            carbs: food.carbs,
+            fat: food.fat,
+            estimate: food.estimate,
         },
     };
 }

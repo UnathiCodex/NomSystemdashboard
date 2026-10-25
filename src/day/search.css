@@ -1,7 +1,8 @@
-/* Search of the log: its dialog, always as high, its row to type in and below it its results, each what it was
-   and small and grey its day, time, place and people; none on a phone */
-/* Search of the log: as wide as the entry by category, always 40rem high or as high as the screen with a gap around,
-   so it never jumps while I type; its row to type in on top, its results below it, scrolling alone */
+/* Search of the log: its dialog, always as high, its row to type in and below it its results,
+   each what it was and small and grey its day, time, place and people; none on a phone */
+/* Search of the log: as wide as the entry by category,
+   always 40rem high or as high as the screen with a gap around, so it never jumps while I type;
+   its row to type in on top, its results below it, scrolling alone */
 .search-panel[open] {
     display: flex;
     flex-direction: column;
@@ -13,8 +14,9 @@
     min-height: 0;
 }
 
-/* Its search field the one of the page, see `.search-field` in `../base.css`, at the top of the dialog without room
-   above it, as far from the frame of the dialog as from its sides */
+/* Its search field the one of the page,
+   see `.search-field` in `../base.css`, at the top of the dialog without room above it,
+   as far from the frame of the dialog as from its sides */
 .search-panel .search-field {
     margin-top: 0;
 }
@@ -27,8 +29,9 @@
     list-style: none;
 }
 
-/* A result: what it was in the bold of the log, and below it, small and grey, its day, its time, its place and
-   who I was with, flat as a box of the plan, a grey under the pointer */
+/* A result: what it was in the bold of the log,
+   and below it, small and grey, its day, its time, its place and who I was with,
+   flat as a box of the plan, a grey under the pointer */
 .search-result {
     display: flex;
     flex-direction: column;

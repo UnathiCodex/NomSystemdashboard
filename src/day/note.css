@@ -1,7 +1,9 @@
-/* Daily note below plan and log: my gratitude and my points about the day as lists of points, their names
-   folding them, and the rest of the note below them, read only; none on a phone */
-/* Rest of the daily note below my gratitude and my points about the day, read only, over the whole width,
-   scrolling alone when it is longer than a fifth of the screen; nothing for a note that holds only them */
+/* Daily note below plan and log:
+   my gratitude and my points about the day as lists of points, their names folding them,
+   and the rest of the note below them, read only; none on a phone */
+/* Rest of the daily note below my gratitude and my points about the day, read only,
+   over the whole width, scrolling alone when it is longer than a fifth of the screen;
+   nothing for a note that holds only them */
 .day-note {
     grid-column: 1 / -1;
     max-height: 20dvh;
@@ -12,8 +14,9 @@
     display: none;
 }
 
-/* My gratitude below the plan and my points about the day below the log, as wide as them, each its name small
-   and grey above its list of points like them, see `.note-points`; the rest of the note below both;
+/* My gratitude below the plan and my points about the day below the log,
+   as wide as them, each its name small and grey above its list of points like them,
+   see `.note-points`; the rest of the note below both;
    all of it but the names hidden while folded, see `.note-fold` */
 .note-boxes {
     display: grid;
@@ -26,10 +29,11 @@
     grid-column: 1 / -1;
 }
 
-/* Name of a list as a button looking like the names of plan and log, the grey fold arrow of a chapter of a skill
-   before it, pointing down while open, the arrow light under the pointer, softly, as everything turns lighter, see
-   `base.css`, since the name is light already; a click on either name folds both lists and the note, see `foldToggle`
-   in `evening.ts` */
+/* Name of a list as a button looking like the names of plan and log,
+   the grey fold arrow of a chapter of a skill before it, pointing down while open,
+   the arrow light under the pointer, softly, as everything turns lighter, see `base.css`,
+   since the name is light already;
+   a click on either name folds both lists and the note, see `foldToggle` in `evening.ts` */
 .note-fold {
     display: inline-flex;
     align-items: center;
@@ -48,12 +52,16 @@
     margin-right: 0.25rem;
     background: var(--text-muted);
     mask: var(--fold-icon) center / 0.875em no-repeat;
-    transition: rotate 100ms ease-in-out, background-color var(--hover-out);
+    transition:
+        rotate 100ms ease-in-out,
+        background-color var(--hover-out);
 }
 
 .note-fold:hover::before {
     background: var(--text-main);
-    transition: rotate 100ms ease-in-out, background-color var(--hover-in);
+    transition:
+        rotate 100ms ease-in-out,
+        background-color var(--hover-in);
 }
 
 .note-folded .note-fold::before {
@@ -65,10 +73,11 @@
     display: none;
 }
 
-/* A list of points of the note in the editor of my files, see `points.ts`, a card filled in the soft grey of a card
-   like a box of the plan, its frame transparent: its points as the editor draws them, see `../editor/editor.css`,
-   in the lines of the page, not the higher ones of a note; both lists equally high, scrolling alone when longer than
-   a third of the screen */
+/* A list of points of the note in the editor of my files,
+   see `points.ts`, a card filled in the soft grey of a card like a box of the plan,
+   its frame transparent: its points as the editor draws them,
+   see `../editor/editor.css`, in the lines of the page, not the higher ones of a note;
+   both lists equally high, scrolling alone when longer than a third of the screen */
 .note-points {
     flex: 1;
     max-height: 33dvh;

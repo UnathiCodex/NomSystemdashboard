@@ -1,12 +1,16 @@
 /**
  * ## Evening
  *
- * What I write into the daily note of the shown day, any time of the day, at the top of the note, each a list
- * of points in the editor of my files, see `points.ts`: my gratitude into the section `## Gratitude`, and my points
- * about the day overall into the section `## About`, both apart, though they go hand in hand.
- * Both are saved into the day's note a moment after I stop typing, and when I leave a list or the day;
+ * What I write into the daily note of the shown day, any time of the day, at the top of the note,
+ * each a list of points in the editor of my files, see `points.ts`:
+ * my gratitude into the section `## Gratitude`,
+ * and my points about the day overall into the section `## About`, both apart,
+ * though they go hand in hand.
+ * Both are saved into the day's note a moment after I stop typing,
+ * and when I leave a list or the day;
  * the note below leaves both sections out.
- * It is all that is left of the evening panel: what happened is my log and the boxes for tomorrow are plan entries,
+ * It is all that is left of the evening panel:
+ * what happened is my log and the boxes for tomorrow are plan entries,
  * so neither is written any more, and the notes keep what they hold.
  *
  * - `./note.ts`: Loads and writes the sections of a daily note and shows the note.
@@ -17,7 +21,6 @@ import { noteShow, sectionsLoad, sectionSend } from "./note.ts";
 import { pointsRead, pointsShow, pointsStart } from "./points.ts";
 
 import type { SectionTitle } from "./note.ts";
-
 
 /**
  * A list of points of the daily note I write.
@@ -49,7 +52,8 @@ const pause: number = 1000;
 let shown: string = "";
 
 /**
- * Texts of the lists as last shown or saved, as their sections hold them, by the titles of the sections.
+ * Texts of the lists as last shown or saved,
+ * as their sections hold them, by the titles of the sections.
  */
 let saved: Map<SectionTitle, string> = new Map();
 
@@ -57,7 +61,6 @@ let saved: Map<SectionTitle, string> = new Map();
  * Timer of the save waiting for the pause, 0 for none.
  */
 let waiting: number = 0;
-
 
 /**
  * Gives the list of points of a box.
@@ -100,9 +103,10 @@ function errorShow(error: unknown): void {
 async function boxesSave(): Promise<void> {
     clearTimeout(waiting);
     const day: string = shown;
-    const changed: Box[] = boxes.filter((box: Box): boolean => textOf(box) !== (saved.get(box.title) ?? ""));
-    if (day === "" || changed.length === 0)
-        return;
+    const changed: Box[] = boxes.filter(
+        (box: Box): boolean => textOf(box) !== (saved.get(box.title) ?? ""),
+    );
+    if (day === "" || changed.length === 0) return;
 
     for (const box of changed) {
         const text: string = textOf(box);
@@ -110,13 +114,14 @@ async function boxesSave(): Promise<void> {
         saved.set(box.title, text);
     }
     document.getElementById("note-boxes-error")?.setAttribute("hidden", "");
-    if (day === shown)
-        await noteShow(day);
+    if (day === shown) await noteShow(day);
 }
 
 /**
- * Shows my gratitude and my points about a day, after saving what was typed for the day shown before;
- * its texts count as saved as the points show them, so only what I type saves, never a list only shown,
+ * Shows my gratitude and my points about a day,
+ * after saving what was typed for the day shown before;
+ * its texts count as saved as the points show them,
+ * so only what I type saves, never a list only shown,
  * like the empty point of a section without points, see `points.ts`.
  * - `sections`: Sections of the day's note.
  *
@@ -127,44 +132,52 @@ export async function eveningShow(day: string): Promise<void> {
     await boxesSave().catch(errorShow);
     shown = day;
     const sections: { [title in SectionTitle]: string } = await sectionsLoad(day);
-    if (day !== shown)
-        return;
+    if (day !== shown) return;
     boxes.forEach((box: Box): void => pointsShow(listOf(box), sections[box.title]));
     saved = new Map(boxes.map((box: Box): [SectionTitle, string] => [box.title, textOf(box)]));
     document.getElementById("note-boxes-error")?.setAttribute("hidden", "");
 }
 
 /**
- * Hides both lists and the note below them, or shows them again, after a click on the name of either list,
- * so plan and log take their height; folded at every start, see `.note-fold` in `note.css`.
+ * Hides both lists and the note below them,
+ * or shows them again, after a click on the name of either list, so plan and log take their height;
+ * folded at every start, see `.note-fold` in `note.css`.
  * - `folded`: Whether they are hidden now.
  */
 function foldToggle(): void {
-    const folded: boolean = (document.querySelector(".note-boxes") as HTMLElement).classList.toggle("note-folded");
-    document.querySelectorAll(".note-fold").forEach((fold: Element): void =>
-        fold.setAttribute("aria-expanded", String(!folded)));
+    const folded: boolean = (document.querySelector(".note-boxes") as HTMLElement).classList.toggle(
+        "note-folded",
+    );
+    document
+        .querySelectorAll(".note-fold")
+        .forEach((fold: Element): void => fold.setAttribute("aria-expanded", String(!folded)));
 }
 
 /**
- * Starts the lists after the router has put their HTML into the page, each a list of points, see `points.ts`,
- * saved a moment after the typing pauses, when the focus leaves the list, and when the page goes out of sight,
- * like when I close it or switch to another app, so nothing typed gets lost; their names fold them, see {@link foldToggle}.
+ * Starts the lists after the router has put their HTML into the page, each a list of points,
+ * see `points.ts`, saved a moment after the typing pauses, when the focus leaves the list,
+ * and when the page goes out of sight, like when I close it or switch to another app,
+ * so nothing typed gets lost; their names fold them, see {@link foldToggle}.
  */
 export function eveningStart(): void {
-    document.querySelectorAll(".note-fold").forEach((fold: Element): void =>
-        fold.addEventListener("click", foldToggle));
+    document
+        .querySelectorAll(".note-fold")
+        .forEach((fold: Element): void => fold.addEventListener("click", foldToggle));
     document.addEventListener("visibilitychange", (): void => {
-        if (document.visibilityState === "hidden")
-            boxesSave().catch(errorShow);
+        if (document.visibilityState === "hidden") boxesSave().catch(errorShow);
     });
     boxes.forEach((box: Box): void => {
-        pointsStart(listOf(box), (): void => {
-            clearTimeout(waiting);
-            waiting = window.setTimeout((): void => {
+        pointsStart(
+            listOf(box),
+            (): void => {
+                clearTimeout(waiting);
+                waiting = window.setTimeout((): void => {
+                    boxesSave().catch(errorShow);
+                }, pause);
+            },
+            (): void => {
                 boxesSave().catch(errorShow);
-            }, pause);
-        }, (): void => {
-            boxesSave().catch(errorShow);
-        });
+            },
+        );
     });
 }

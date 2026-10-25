@@ -1,11 +1,13 @@
 /* One plain button `⋯` and its menu, see `menu.ts`, on the computer as on a phone */
-/* The button `⋯`: an icon button, see `.icon-button` in `base.css`, so it lies on what it belongs to */
+/* The button `⋯`: an icon button, see `.icon-button` in `base.css`,
+   so it lies on what it belongs to */
 .menu-more {
     width: 2.125rem;
     height: 2rem;
 }
 
-/* An item of its menu under the pointer calm: on the faint grey of a row of the tree under the pointer, `--row-over`,
+/* An item of its menu under the pointer calm:
+   on the faint grey of a row of the tree under the pointer, `--row-over`,
    never the grey of what is picked */
 .menu-item:hover {
     background: var(--row-over);
@@ -16,10 +18,11 @@
     height: 0.875rem;
 }
 
-/* The menu: right under its button, its left edge under the button's, inside the dialog it opens in, see `menuAnchor`
-   in `menu.ts`, with the background, line and soft shadow of every menu of a list, see `.picker-box`; each item a row
-   one control high, its icon and then its words, like `Move`; never higher or wider than the window, scrolling a long
-   list, like the groups of a week */
+/* The menu: right under its button, its left edge under the button's,
+   inside the dialog it opens in,
+   see `menuAnchor` in `menu.ts`, with the background, line and soft shadow of every menu of a list,
+   see `.picker-box`; each item a row one control high, its icon and then its words, like `Move`;
+   never higher or wider than the window, scrolling a long list, like the groups of a week */
 .menu {
     position: fixed;
     inset: auto;
@@ -56,7 +59,8 @@
     cursor: pointer;
 }
 
-/* An item of a list without mark, its own icon kept invisible, so its words start where those of the marked one do,
+/* An item of a list without mark, its own icon kept invisible,
+   so its words start where those of the marked one do,
    like the groups of a week beside the one checked, see `groupMenuOf` in `day/groups.ts` */
 .menu-item-blank > svg.lucide {
     visibility: hidden;
@@ -70,9 +74,10 @@
     background: var(--line);
 }
 
-/* Phone: the button `⋯` as it looks, but a finger's width to hit, its own width and 0.5rem above and below;
-   the items, a finger high already, only themselves, so no tap reaches beside them; both with the round corners
-   of every button on a phone, `--chip-radius`, see `variants.css` */
+/* Phone: the button `⋯` as it looks,
+   but a finger's width to hit, its own width and 0.5rem above and below;
+   the items, a finger high already, only themselves, so no tap reaches beside them;
+   both with the round corners of every button on a phone, `--chip-radius`, see `variants.css` */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .menu-more {
         position: relative;

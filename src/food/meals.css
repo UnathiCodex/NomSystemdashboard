@@ -1,14 +1,19 @@
-/* Meals: the section of my meals in the food view, built as the list of my foods, see `search.css` */
+/* Meals: the section of my meals in the food view,
+   built as the list of my foods, see `search.css` */
 
-/* Section of my meals above my foods: its name, its search field, then its head and its meals, apart from my foods */
+/* Section of my meals above my foods: its name, its search field,
+   then its head and its meals, apart from my foods */
 .food-dishes {
     margin-bottom: calc(1.5 * var(--gap));
 }
 
-/* Name of a meal with its short title grey in brackets, see `dishNameOf` in `meals.ts`, wherever a meal stands:
-   always one line, the brackets one piece beside the name, keeping the space before them, never going below, whatever
-   the brackets of the foods in the same list do, see `bracketsWatch` in `foods.ts`; the name cut with a white …
-   only where it alone has no room, like `Pasta mit Ricotta Tomaten und P…` on a phone, the brackets then left out,
+/* Name of a meal with its short title grey in brackets,
+   see `dishNameOf` in `meals.ts`, wherever a meal stands:
+   always one line, the brackets one piece beside the name, keeping the space before them,
+   never going below, whatever the brackets of the foods in the same list do,
+   see `bracketsWatch` in `foods.ts`;
+   the name cut with a white … only where it alone has no room,
+   like `Pasta mit Ricotta Tomaten und P…` on a phone, the brackets then left out,
    see `dishFit` in `meals.ts` */
 .dish-name {
     display: flex;
@@ -26,9 +31,10 @@
     white-space: pre;
 }
 
-/* The plus right after the name of the meal opened, which adds one more of my foods, a little apart from it, one line
-   high and at the top of its line, so it stands exactly in the middle, as after the name of a meal in the entry
-   by category, see `day/choices.css` */
+/* The plus right after the name of the meal opened,
+   which adds one more of my foods, a little apart from it,
+   one line high and at the top of its line, so it stands exactly in the middle,
+   as after the name of a meal in the entry by category, see `day/choices.css` */
 .dish-list .food-name .plus-quiet {
     height: calc(1lh + 0.5rem);
     margin: -0.25rem 0 -0.25rem 0.5rem;
@@ -37,8 +43,9 @@
     vertical-align: top;
 }
 
-/* A meal opened in the look of a food of mine opened, see `.food-facts` in `search.css`: its name, its short title
-   and its foods, each name small and grey at the left; its foods taking the rest of the width, one below the other */
+/* A meal opened in the look of a food of mine opened, see `.food-facts` in `search.css`:
+   its name, its short title and its foods, each name small and grey at the left;
+   its foods taking the rest of the width, one below the other */
 .dish-list .food-facts {
     grid-template-columns: max-content minmax(0, 1fr);
 }
@@ -50,9 +57,9 @@
     min-width: 0;
 }
 
-/* The name of a food of a meal opened, a link to the food among my foods: as plain as every name, a grey line below
-   it under the pointer, softly as every hover, see `--hover-in` in `../variants.css`, so it shows that it leads
-   somewhere */
+/* The name of a food of a meal opened, a link to the food among my foods:
+   as plain as every name, a grey line below it under the pointer, softly as every hover,
+   see `--hover-in` in `../variants.css`, so it shows that it leads somewhere */
 .food-link {
     min-width: 0;
     padding: 0;

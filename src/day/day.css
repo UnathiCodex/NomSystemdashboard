@@ -1,4 +1,5 @@
-/* Day: plan and log over the whole width, filling the screen; the date and the trackers in the bar above them,
+/* Day: plan and log over the whole width, filling the screen;
+   the date and the trackers in the bar above them,
    my gratitude and my points about the day below them */
 .day {
     display: grid;
@@ -9,8 +10,8 @@
     padding: var(--top-room) var(--side-room);
 }
 
-/* The bar of the shown day above its plan and its log, side by side, equally wide and equally high, since the plan
-   counts as much as the log, both filling the height above the daily note */
+/* The bar of the shown day above its plan and its log, side by side, equally wide and equally high,
+   since the plan counts as much as the log, both filling the height above the daily note */
 .day-main {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -19,10 +20,12 @@
     min-height: 0;
 }
 
-/* Strips of the days before and after while an entry is dragged, see `turnShow` in `day.ts`: one over the times
-   at the left of the time grid, one at its right edge, each its arrow and the weekday it leads to, dashed and calm
-   over what lies below, lit like what is picked while the pointer is in it; the arrows of the date outlined then,
-   since they take an entry too; a box dragged outlines the arrow of the day after, which pushes it there */
+/* Strips of the days before and after while an entry is dragged, see `turnShow` in `day.ts`:
+   one over the times at the left of the time grid, one at its right edge,
+   each its arrow and the weekday it leads to, dashed and calm over what lies below,
+   lit like what is picked while the pointer is in it;
+   the arrows of the date outlined then, since they take an entry too;
+   a box dragged outlines the arrow of the day after, which pushes it there */
 .day-turn {
     position: fixed;
     z-index: 10;
@@ -54,16 +57,17 @@
     border-color: var(--chosen-line);
 }
 
-/* Bar of the day over the whole width, see `.day-bar` in `../base.css`: the date with the arrows left and right of it
-   at its left end, above the plan, the icon back to today beside the date; the trackers at its right end, above
-   the log; where the bar has no room for all, as on a small laptop, the trackers go onto a line below, never over
-   the edge */
+/* Bar of the day over the whole width, see `.day-bar` in `../base.css`:
+   the date with the arrows left and right of it at its left end, above the plan,
+   the icon back to today beside the date; the trackers at its right end, above the log;
+   where the bar has no room for all,
+   as on a small laptop, the trackers go onto a line below, never over the edge */
 .day-nav {
     grid-column: 1 / -1;
 }
 
-/* Plan and log, each its name above it, bold as the names of my meals and foods in the food view, with the one plus
-   right after it, the boxes and the time grid filling the height below it */
+/* Plan and log, each its name above it, bold as the names of my meals and foods in the food view,
+   with the one plus right after it, the boxes and the time grid filling the height below it */
 .day-column {
     display: flex;
     flex-direction: column;
@@ -87,14 +91,17 @@
     font-size: var(--control-text);
 }
 
-/* Buttons that switch between plan and log, with their +, only on a phone, see the end of this file */
+/* Buttons that switch between plan and log, with their +, only on a phone,
+   see the end of this file */
 .day-switch {
     display: none;
 }
 
 /* Calendar in the greys of the page, its text in the size of the page, which the theme sets in px;
-   the month to pick a day from in the same greys; a range being selected shows as an entry in front of the others,
-   see `.entry-selection` in `log.css`, so the theme's grey for it, which lay behind the entries, stays transparent */
+   the month to pick a day from in the same greys;
+   a range being selected shows as an entry in front of the others,
+   see `.entry-selection` in `log.css`, so the theme's grey for it,
+   which lay behind the entries, stays transparent */
 .day-calendar {
     flex: 1;
     min-height: 0;
@@ -121,11 +128,13 @@
     --fc-forma-strongest: color-mix(in oklab, var(--text-main) 18%, transparent);
 }
 
-/* Date of the day as a button, which opens the month to pick a day from: no frame, no ground, its weekday light
-   under a pointer that hovers, as the word of every button, since the date is light already; more room left of it
-   than right of it, where the icon back to today follows; in the day as wide as its date,
-   like `22.10.2026`, every digit equally wide, wider than the small weekday above it, even `Wednesday`, so the arrow
-   after it stays in place from day to day */
+/* Date of the day as a button, which opens the month to pick a day from:
+   no frame, no ground, its weekday light under a pointer that hovers, as the word of every button,
+   since the date is light already;
+   more room left of it than right of it, where the icon back to today follows;
+   in the day as wide as its date,
+   like `22.10.2026`, every digit equally wide, wider than the small weekday above it,
+   even `Wednesday`, so the arrow after it stays in place from day to day */
 .day-title-button {
     padding: 0.25rem 0.5rem 0.25rem 1.5rem;
     border: none;
@@ -150,20 +159,24 @@
     text-align: left;
 }
 
-/* The date with its weekday, like `24.10.2026 (Sat)`, as wide on every day as the widest, `30.12.2026 (Wed)`,
-   so the icon back to today, the arrow after it and the trackers never move from day to day; the same in the food
-   and the sport view */
+/* The date with its weekday, like `24.10.2026 (Sat)`,
+   as wide on every day as the widest, `30.12.2026 (Wed)`,
+   so the icon back to today, the arrow after it and the trackers never move from day to day;
+   the same in the food and the sport view */
 .day-bar .day-title .day-date {
     min-width: 8.25em;
     font-variant-numeric: tabular-nums;
 }
 
-/* Panel: card over the page, for the entry by category, the gift idea, a place and the month, as sketched:
-   one column of rows, each its name grey at the left, `--name-width` wide, about 96 pixels, so every value starts
-   at the same place, `--value-start` from the edge of the card's content; 52rem wide, so whole names, addresses
-   and links fit, and a food of a meal with its brand and store, its grams and its kcal on one line, like
-   `Hackfleisch gemischt zum Braten (GUT&GÜNSTIG, Edeka)`, on the PC as on the laptop; the entry by category
-   and the dialog of a series wider, see `.entry-panel`; the month smaller, see `.month-panel` */
+/* Panel: card over the page, for the entry by category, the gift idea,
+   a place and the month, as sketched:
+   one column of rows, each its name grey at the left, `--name-width` wide, about 96 pixels,
+   so every value starts at the same place, `--value-start` from the edge of the card's content;
+   52rem wide, so whole names, addresses and links fit,
+   and a food of a meal with its brand and store, its grams and its kcal on one line,
+   like `Hackfleisch gemischt zum Braten (GUT&GÜNSTIG, Edeka)`, on the PC as on the laptop;
+   the entry by category and the dialog of a series wider, see `.entry-panel`;
+   the month smaller, see `.month-panel` */
 .panel {
     --row-padding: 0.75rem;
     --value-start: calc(var(--row-padding) + 1px + var(--name-width) + var(--control-gap));
@@ -180,8 +193,9 @@
     background: rgb(0 0 0 / 0.6);
 }
 
-/* Parts of a panel from top to bottom, its rows close below each other, each with its own room; a part without rows,
-   like the fields of a category not yet picked, takes no room, so the space between two rows stays the same */
+/* Parts of a panel from top to bottom, its rows close below each other, each with its own room;
+   a part without rows, like the fields of a category not yet picked, takes no room,
+   so the space between two rows stays the same */
 .panel-form {
     display: flex;
     flex-direction: column;
@@ -192,8 +206,8 @@
     display: none;
 }
 
-/* Fields of a panel as plain values in their rows, without a frame of their own: the row shows its faint frame
-   under the pointer and while I type in it, see `.panel-field` */
+/* Fields of a panel as plain values in their rows, without a frame of their own:
+   the row shows its faint frame under the pointer and while I type in it, see `.panel-field` */
 .panel input,
 .panel textarea {
     min-width: 0;
@@ -205,10 +219,12 @@
     font: inherit;
 }
 
-/* Row of a panel, the same for every field: its name small and grey at the left, its value at the right,
-   like the place, or its day and time, or the note, the name on the line of the value's first text;
-   generous room around both, and a faint frame under the pointer, softly as every hover, see `--hover-in`
-   in `../variants.css`, while I type in it and while a list opened from it is open, see `listOf` in `choices.ts` */
+/* Row of a panel, the same for every field:
+   its name small and grey at the left, its value at the right, like the place, or its day and time,
+   or the note, the name on the line of the value's first text;
+   generous room around both, and a faint frame under the pointer, softly as every hover,
+   see `--hover-in` in `../variants.css`,
+   while I type in it and while a list opened from it is open, see `listOf` in `choices.ts` */
 .panel-field {
     display: grid;
     grid-template-columns: var(--name-width) minmax(0, 1fr);
@@ -231,23 +247,28 @@
     border-color: var(--line);
 }
 
-/* A row written by itself, never typed, like the summary of a meal: no frame under the pointer, so it does not look
-   as if a click did something */
+/* A row written by itself, never typed, like the summary of a meal: no frame under the pointer,
+   so it does not look as if a click did something */
 .panel-field.panel-fixed:hover {
     border-color: transparent;
 }
 
-/* A row whose list has no value yet, like With or Tasks, no frame under the pointer either, so no empty box lights up;
+/* A row whose list has no value yet, like With or Tasks, no frame under the pointer either,
+   so no empty box lights up;
    its frame comes once its list is open or I type in it */
-.panel-field:hover:not(:focus-within, .list-field):has(> .picker > .picker-head > .picker-line.picker-empty:first-child) {
+.panel-field:hover:not(:focus-within, .list-field):has(
+        > .picker > .picker-head > .picker-line.picker-empty:first-child
+    ) {
     border-color: transparent;
 }
 
-/* Two pickers side by side in one row, like the skill and the type of a skill entry in its summary, read as the file
-   writes it, `MGT1372_EntrepreneurialBusiness (VO)`: each only as wide as its value, the type one space after the
-   name and in its brackets, a small grey plus while it has none, as far after the name as a pencil, see
-   `.entry-pencil`; where the row has no room for both, as on a phone, the type goes below the name; the list
-   of either opens as a menu under its line, see `.picker-box` */
+/* Two pickers side by side in one row,
+   like the skill and the type of a skill entry in its summary, read as the file writes it,
+   `MGT1372_EntrepreneurialBusiness (VO)`:
+   each only as wide as its value, the type one space after the name and in its brackets,
+   a small grey plus while it has none, as far after the name as a pencil, see `.entry-pencil`;
+   where the row has no room for both, as on a phone, the type goes below the name;
+   the list of either opens as a menu under its line, see `.picker-box` */
 .panel-pair {
     display: flex;
     flex-wrap: wrap;
@@ -271,8 +292,9 @@
     min-width: 5rem;
 }
 
-/* The second picker a line of text too, even while it holds only its plus or a pencil, which have no text, so it
-   stands on the baseline of the first and the plus as high in every dialog, with a pencil beside it or without */
+/* The second picker a line of text too, even while it holds only its plus or a pencil,
+   which have no text, so it stands on the baseline of the first and the plus
+   as high in every dialog, with a pencil beside it or without */
 .panel-pair > .picker:last-child .picker-head::before {
     content: "\200b";
 }
@@ -285,8 +307,9 @@
     content: ")";
 }
 
-/* The link of the summary of a skill entry on a line of its own below skill and type, the folder of its skill,
-   as close below them as an address below its place, see `skillPathShow` in `skill.ts` */
+/* The link of the summary of a skill entry on a line of its own below skill and type,
+   the folder of its skill, as close below them as an address below its place,
+   see `skillPathShow` in `skill.ts` */
 .panel-pair .entry-address {
     order: 1;
     flex-basis: 100%;
@@ -298,9 +321,11 @@
     flex-basis: 100%;
 }
 
-/* The file of the entry of a dialog, small and grey at the left of its buttons, which all stand at the right,
-   a link that opens it in the editor of my new system, light under the pointer, see `fileShow` in `choices.ts`;
-   it takes the room the buttons leave and breaks there onto a second line, so the buttons always keep one row */
+/* The file of the entry of a dialog, small and grey at the left of its buttons,
+   which all stand at the right, a link that opens it in the editor of my new system,
+   light under the pointer, see `fileShow` in `choices.ts`;
+   it takes the room the buttons leave and breaks there onto a second line,
+   so the buttons always keep one row */
 .panel-file {
     flex: 1 1 0;
     min-width: 0;
@@ -322,9 +347,12 @@
     padding: 0 var(--row-padding);
 }
 
-/* Cancel and Save at the bottom right, with room above them, always in sight at the bottom of a dialog whose rows
-   scroll, like a long entry by category: on the background of the dialog, so a row scrolled under them hides behind
-   them, their room above and the dialog's room below them their own; where the row has no room for all buttons,
+/* Cancel and Save at the bottom right, with room above them,
+   always in sight at the bottom of a dialog whose rows scroll, like a long entry by category:
+   on the background of the dialog,
+   so a row scrolled under them hides behind them,
+   their room above and the dialog's room below them their own;
+   where the row has no room for all buttons,
    as on a phone, the first ones go onto a line above, each button on one line */
 .panel-buttons {
     position: sticky;
@@ -338,8 +366,8 @@
     background: var(--background);
 }
 
-/* Buttons of a panel, one control high, their word in the middle, like `Edit plan`: loose as every button, without
-   frame or ground, their word grey */
+/* Buttons of a panel, one control high, their word in the middle, like `Edit plan`:
+   loose as every button, without frame or ground, their word grey */
 .panel-buttons button {
     display: inline-flex;
     align-items: center;
@@ -354,15 +382,15 @@
     cursor: pointer;
 }
 
-/* A button of a panel with an icon in place of its word, like the copy, the bin, Cancel and Save: an icon button
-   one control square, see `.icon-button` in `../base.css` */
+/* A button of a panel with an icon in place of its word, like the copy, the bin, Cancel and Save:
+   an icon button one control square, see `.icon-button` in `../base.css` */
 .panel-buttons button:has(svg) {
     width: var(--control-height);
     padding: 0;
 }
 
-/* Main button, `Save`, loose as the others, told apart only by its check light instead of grey, so a dialog reads
-   at a glance */
+/* Main button, `Save`, loose as the others, told apart only by its check light instead of grey,
+   so a dialog reads at a glance */
 .panel-buttons .panel-main {
     color: var(--text-main);
 }
@@ -373,27 +401,33 @@
     cursor: default;
 }
 
-/* Under a pointer that hovers, the word of a button of a panel turns light, never on a grey box, an icon light on
-   its faint circle, like the cross, the bin or `Save`; not on a phone, where a tap would leave a button lit */
+/* Under a pointer that hovers, the word of a button of a panel turns light, never on a grey box,
+   an icon light on its faint circle, like the cross, the bin or `Save`;
+   not on a phone, where a tap would leave a button lit */
 @media (hover: hover) {
     .panel-buttons button:not(.panel-main):hover {
         color: var(--text-main);
     }
 }
 
-/* Month to pick a day from: 34rem wide, so its days are easy to hit; here and not in `month.css`, before the panel
-   on a phone, so there it is as wide as the screen as every panel, see the end of this file */
+/* Month to pick a day from: 34rem wide, so its days are easy to hit;
+   here and not in `month.css`, before the panel on a phone,
+   so there it is as wide as the screen as every panel, see the end of this file */
 .month-panel {
     width: min(34rem, calc(100vw - 2 * var(--gap)));
 }
 
-/* Entry by category and the dialog of a series: one column of rows, `--panel-top` below the top of the screen and
-   at most as high as the rest of it but a gap, then its rows scrolling, its buttons always in sight,
+/* Entry by category and the dialog of a series:
+   one column of rows, `--panel-top` below the top of the screen and at most as high
+   as the rest of it but a gap, then its rows scrolling, its buttons always in sight,
    see `.panel-buttons`; both one width, 60rem, wider than a panel, so a long name like
-   `IN2028_BusinessAnalyticsMachineLearning (VO)` and the folder a skill box links fit on their lines, and the same
-   whatever they show, never growing with a line: a longer value goes on below, the folder is cut in its middle,
-   see `.entry-address`; never wider than the screen but a gap on both sides, on a phone the whole width, see the end
-   of this file; the lists of its fields open as menus over it, see `.picker-box`, so its rows never move */
+   `IN2028_BusinessAnalyticsMachineLearning (VO)`
+   and the folder a skill box links fit on their lines,
+   and the same whatever they show, never growing with a line:
+   a longer value goes on below, the folder is cut in its middle, see `.entry-address`;
+   never wider than the screen but a gap on both sides, on a phone the whole width,
+   see the end of this file;
+   the lists of its fields open as menus over it, see `.picker-box`, so its rows never move */
 .entry-panel {
     --panel-top: max(var(--gap), 6dvh);
     width: min(60rem, calc(100vw - 2 * var(--gap)));
@@ -403,8 +437,8 @@
     overflow-wrap: anywhere;
 }
 
-/* Start and end, and the deadline of a box, rows like the others, without the frame a group of fields has
-   in the browser */
+/* Start and end, and the deadline of a box, rows like the others,
+   without the frame a group of fields has in the browser */
 fieldset.entry-times {
     display: flex;
     flex-direction: column;
@@ -415,10 +449,11 @@ fieldset.entry-times {
     border: 0;
 }
 
-/* Start and end in one row, the range dash between them as in the boxes, like `14.10.2026 (Wed) 10:15 – 10:45`
-   or `18:00 – 19:30`, `--range-gap` on each side of the dash, half an em, as every range written as text has it,
-   see `rangeDash` in `times.ts`, the dash going with the end; where the row is too narrow, like on a phone, the end
-   with its dash goes on below */
+/* Start and end in one row, the range dash between them as in the boxes,
+   like `14.10.2026 (Wed) 10:15 – 10:45` or `18:00 – 19:30`, `--range-gap` on each side of the dash,
+   half an em, as every range written as text has it,
+   see `rangeDash` in `times.ts`, the dash going with the end;
+   where the row is too narrow, like on a phone, the end with its dash goes on below */
 .entry-range {
     display: flex;
     flex-wrap: wrap;
@@ -427,7 +462,8 @@ fieldset.entry-times {
     row-gap: 0.25rem;
 }
 
-/* Day and time side by side, like `13.10.2026 01:45`, about two spaces apart, each field as wide as what it holds,
+/* Day and time side by side,
+   like `13.10.2026 01:45`, about two spaces apart, each field as wide as what it holds,
    so start and end each read as one */
 .entry-moment {
     display: flex;
@@ -438,8 +474,9 @@ fieldset.entry-times {
     margin-left: 0.6em;
 }
 
-/* The day of the end while it is that of the start, see `endDayShow` in `categories.ts`: hidden, so the row reads
-   `24.10.2026 (Sat) 10:00 – 12:00`; it shows once the end lies on another day, like a night of sleep */
+/* The day of the end while it is that of the start, see `endDayShow` in `categories.ts`: hidden,
+   so the row reads `24.10.2026 (Sat) 10:00 – 12:00`;
+   it shows once the end lies on another day, like a night of sleep */
 #entry-end-day.entry-same-day {
     display: none;
 }
@@ -448,8 +485,9 @@ fieldset.entry-times {
     margin-left: 0;
 }
 
-/* A box of the plan that lasts only so long, its day and its length, like `24.10.2026 (Sat)  08:00`, see `lengthShow`
-   in `categories.ts`: without the time of its start, the dash and its end, the icon of its series still after it;
+/* A box of the plan that lasts only so long, its day and its length,
+   like `24.10.2026 (Sat)  08:00`, see `lengthShow` in `categories.ts`:
+   without the time of its start, the dash and its end, the icon of its series still after it;
    any other box and entry without length */
 .entry-length-only :is(#entry-start, .entry-dash, #entry-end-day, #entry-end),
 .entry-times:not(.entry-length-only) #entry-length {
@@ -461,9 +499,11 @@ fieldset.entry-times {
     margin-right: var(--range-gap);
 }
 
-/* The icon of the series of a box right after its times, as far from them as the pencil from a summary or a place,
-   see `.entry-pencil`, in the unit of the end, so they never break apart; then the group of a box of my course,
-   without brackets, a wider space before it doing the separating, like `10:00 – 12:00 ⟳    05 ⌄`,
+/* The icon of the series of a box right after its times,
+   as far from them as the pencil from a summary or a place,
+   see `.entry-pencil`, in the unit of the end, so they never break apart;
+   then the group of a box of my course, without brackets,
+   a wider space before it doing the separating, like `10:00 – 12:00 ⟳    05 ⌄`,
    see `seriesShow` in `categories.ts` and `groups.css` */
 .entry-of-series {
     display: inline-flex;
@@ -479,8 +519,8 @@ fieldset.entry-times {
     margin-inline-start: 1.2em;
 }
 
-/* The box a log entry comes from, small and grey below the fields, in line with the names of the rows,
-   the pencil that changes it centred beside it */
+/* The box a log entry comes from, small and grey below the fields,
+   in line with the names of the rows, the pencil that changes it centred beside it */
 .entry-from-plan {
     display: flex;
     align-items: center;
@@ -494,13 +534,15 @@ fieldset.entry-times {
     display: none;
 }
 
-/* Hint in place of a picker, calm and grey, like No chapters yet for a module without chapter notes */
+/* Hint in place of a picker, calm and grey,
+   like No chapters yet for a module without chapter notes */
 .entry-none {
     margin: 0;
     color: var(--text-muted);
 }
 
-/* Steps of a value picked, like the exercises of my neck routine: one per line, grey, below its value */
+/* Steps of a value picked, like the exercises of my neck routine:
+   one per line, grey, below its value */
 .entry-steps {
     display: flex;
     flex-direction: column;
@@ -515,10 +557,12 @@ fieldset.entry-times {
     display: none;
 }
 
-/* Address of the place picked below its name, small and grey, like `Burg-Eltz-Weg, 81375 München, Deutschland`,
-   going on below where it is wider than its row, and so the folder of the skill picked, see `skillPathOf`
-   in `skill.ts`, but that on one line, cut in its middle, see `folderLinkShow` in `../skill/links.ts`, never wider
-   than its row; a click opens its link, lighter under the pointer, never underlined, when it has one */
+/* Address of the place picked below its name, small and grey,
+   like `Burg-Eltz-Weg, 81375 München, Deutschland`, going on below where it is wider than its row,
+   and so the folder of the skill picked, see `skillPathOf` in `skill.ts`,
+   but that on one line, cut in its middle,
+   see `folderLinkShow` in `../skill/links.ts`, never wider than its row;
+   a click opens its link, lighter under the pointer, never underlined, when it has one */
 .entry-address {
     display: block;
     min-width: 0;
@@ -544,11 +588,12 @@ fieldset.entry-times {
     color: var(--text-main);
 }
 
-/* Pencil beside a name, of a place or a summary, a little apart from its text, so it never sticks to it,
-   and so the plus of the type beside a skill, like `IN2028_BusinessAnalyticsMachineLearning + ✎`: the same space
-   before both, the same width, see `.panel-pair`; the Lucide pencil a small icon button, see `.icon-button`
-   in `../base.css`; wherever it stands after a text, its middle at the middle of the text's capital letters, half
-   the cap height of its font above the baseline, so lowered by half its height less that */
+/* Pencil beside a name, of a place or a summary, a little apart from its text,
+   so it never sticks to it, and so the plus of the type beside a skill,
+   like `IN2028_BusinessAnalyticsMachineLearning + ✎`: the same space before both, the same width,
+   see `.panel-pair`; the Lucide pencil a small icon button, see `.icon-button` in `../base.css`;
+   wherever it stands after a text, its middle at the middle of the text's capital letters,
+   half the cap height of its font above the baseline, so lowered by half its height less that */
 .entry-pencil,
 .panel-pair .picker-line.plus-quiet {
     margin-inline-start: 0.375rem;
@@ -567,11 +612,15 @@ fieldset.entry-times {
     color: var(--text-muted);
 }
 
-/* Parts of a meal below its row, as the documents of a chapter, see `.panel-nested` in `choices.css`: its foods,
-   indented under its name with the grey guide line, `--guide`, at their left, so they read as its parts; the same
-   for the parts of a field below it: of a place my place's label, address and link, those of `Online`, see `partsOf`
-   and `onlineRowOf` in `categories.ts`, and of a summary its text, see `summaryPartsOf`; here and not in `meal.css`
-   or `choices.css`, before both, since the foods of a meal indented less on a phone, at the end of `meal.css`,
+/* Parts of a meal below its row, as the documents of a chapter,
+   see `.panel-nested` in `choices.css`:
+   its foods, indented under its name with the grey guide line, `--guide`, at their left,
+   so they read as its parts;
+   the same for the parts of a field below it:
+   of a place my place's label, address and link, those of `Online`,
+   see `partsOf` and `onlineRowOf` in `categories.ts`, and of a summary its text,
+   see `summaryPartsOf`; here and not in `meal.css` or `choices.css`, before both,
+   since the foods of a meal indented less on a phone, at the end of `meal.css`,
    and the parts of a field in two columns, see `.field-parts` in `choices.css`, build on it */
 .meal-parts,
 .field-parts {
@@ -589,24 +638,28 @@ fieldset.entry-times {
     color: var(--text-muted);
 }
 
-/* Part of a line after a middle dot, like `· 05:15 – 05:45` or `· Home Munich` in the log, or `· 90 min` in a box:
-   the dot drawn before it with half a letter of space on both sides, which a line in parts would drop as spaces
-   at the start of a part */
+/* Part of a line after a middle dot,
+   like `· 05:15 – 05:45` or `· Home Munich` in the log, or `· 90 min` in a box:
+   the dot drawn before it with half a letter of space on both sides,
+   which a line in parts would drop as spaces at the start of a part */
 .entry-parted::before {
     content: "·";
     margin-inline: 0.5em;
 }
 
 /* Middle dot between two people on one line, like `Durmann, Julius · Ewert, Markus`, see `peopleOf`
-   in `../persons.ts`: an en space on each side, as far as the dot of `.entry-parted` and the dash of a range; after
-   the pencil of a person, see `withRowOf` in `categories.ts`, as far from the pencil drawn as from the next name,
-   so the room the pencil keeps right of its line, its padding and the white of its icon, taken back */
+   in `../persons.ts`: an en space on each side,
+   as far as the dot of `.entry-parted` and the dash of a range;
+   after the pencil of a person, see `withRowOf` in `categories.ts`,
+   as far from the pencil drawn as from the next name,
+   so the room the pencil keeps right of its line,
+   its padding and the white of its icon, taken back */
 :has(> .entry-pencil:last-child) + .people-dot {
     margin-left: -0.37em;
 }
 
-/* Time field as wide as what it holds, a time like 14:00 or, while empty, its grey `hh:mm`, see the rule above,
-   so the room on both sides of the dash is the same */
+/* Time field as wide as what it holds, a time like 14:00 or, while empty, its grey `hh:mm`,
+   see the rule above, so the room on both sides of the dash is the same */
 .time-field {
     width: 6ch;
 }
@@ -618,8 +671,8 @@ fieldset.entry-times {
     }
 }
 
-/* Date field as wide as what it holds, a day like `23.10.2026 (Fri)` or, while empty, its grey `dd.mm.yyyy`,
-   see `dateFieldStart` in `times.ts` */
+/* Date field as wide as what it holds, a day like `23.10.2026 (Fri)` or,
+   while empty, its grey `dd.mm.yyyy`, see `dateFieldStart` in `times.ts` */
 .date-field {
     width: 17ch;
 }
@@ -632,8 +685,9 @@ fieldset.entry-times {
     }
 }
 
-/* A time and a day while empty, like the day of a deadline or of a series, saying grey what they take, hh:mm
-   and dd.mm.yyyy, see `times.ts`, and so does any part of a field that says it */
+/* A time and a day while empty,
+   like the day of a deadline or of a series, saying grey what they take, hh:mm and dd.mm.yyyy,
+   see `times.ts`, and so does any part of a field that says it */
 .time-field::placeholder,
 .date-field::placeholder,
 .field-part input::placeholder {
@@ -647,8 +701,10 @@ fieldset.entry-times {
     opacity: 0.4;
 }
 
-/* Note of an entry, my diary of the unit: `Note` grey while empty, three lines high, full width beside its name,
-   growing with its text in height, never widening the dialog, since its lines go on below, see `.entry-panel` */
+/* Note of an entry, my diary of the unit:
+   `Note` grey while empty, three lines high, full width beside its name,
+   growing with its text in height, never widening the dialog,
+   since its lines go on below, see `.entry-panel` */
 #entry-note {
     min-height: 3lh;
     field-sizing: content;
@@ -659,10 +715,11 @@ fieldset.entry-times {
 /* Phone: plan or log, one at a time, one screen high, switched at the bottom, panels from below,
    the entry by category scrolling as a whole */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    /* The day on a phone one screen high: its bar on top, then plan or log, one at a time, filling the rest,
-       the switch between them with its + at the bottom, under the thumb; the names of plan and log stand
-       in the switch, so not above them; a gap from both edges of the screen, not `--side-room`, since a phone
-       has no rail */
+    /* The day on a phone one screen high: its bar on top,
+       then plan or log, one at a time, filling the rest,
+       the switch between them with its + at the bottom, under the thumb;
+       the names of plan and log stand in the switch, so not above them;
+       a gap from both edges of the screen, not `--side-room`, since a phone has no rail */
     .day {
         grid-template-rows: minmax(0, 1fr);
         padding: var(--gap);
@@ -676,10 +733,11 @@ fieldset.entry-times {
         display: none;
     }
 
-    /* Plan or log on a phone follow the finger while a swipe sideways changes the day, see `swipe.ts`: moved
-       sideways by `--swipe`, sliding out and back, but right under the finger while it moves; the day cuts them
-       at the edges of the screen, and the time grid and the plan scroll only up and down, so a move sideways is
-       the swipe's */
+    /* Plan or log on a phone follow the finger while a swipe sideways changes the day,
+       see `swipe.ts`: moved sideways by `--swipe`, sliding out and back,
+       but right under the finger while it moves;
+       the day cuts them at the edges of the screen,
+       and the time grid and the plan scroll only up and down, so a move sideways is the swipe's */
     .day {
         overflow: clip;
     }
@@ -699,11 +757,13 @@ fieldset.entry-times {
         display: none;
     }
 
-    /* Switch between plan and log at the bottom, under the thumb: one bar one control high, filled in the soft grey
-       of a card, the two side by side inside it, equally wide, grey, the shown one light on the calm grey of what
-       is picked; right of it the + of the shown plan or log, a loose icon one control square, light as the main
-       button of a dialog, so a thumb finds it at once; all of them rectangles with the round corners of every button on a phone, `--chip-radius`, see
-       `../variants.css` */
+    /* Switch between plan and log at the bottom, under the thumb:
+       one bar one control high, filled in the soft grey of a card, the two side by side inside it,
+       equally wide, grey, the shown one light on the calm grey of what is picked;
+       right of it the + of the shown plan or log, a loose icon one control square,
+       light as the main button of a dialog, so a thumb finds it at once;
+       all of them rectangles with the round corners of every button on a phone,
+       `--chip-radius`, see `../variants.css` */
     .day-switch {
         display: flex;
         align-items: center;
@@ -745,20 +805,23 @@ fieldset.entry-times {
         display: none;
     }
 
-    /* The date of the day on a phone at the left of its bar, see `.day-bar` in `../base.css`, with the round corners
-       of every button there */
+    /* The date of the day on a phone at the left of its bar,
+       see `.day-bar` in `../base.css`, with the round corners of every button there */
     #day-title {
         border-radius: var(--chip-radius);
         padding-left: 0;
         text-align: left;
     }
 
-    /* Buttons of a panel in one row across, with the round corners of every button on a phone, the icon ones beside
-       those with words, which share the rest equally, each its word on one line, a little smaller, so `Edit plan`
-       keeps room inside its frame; always in sight at the bottom of the dialog, under the thumb, while its rows
-       scroll above them, like the foods of a long meal: on the background of the dialog, so a row scrolled under
-       them hides behind them, 0.5rem of it above the buttons, the rest of their room above them as before, and
-       the dialog's own room below them */
+    /* Buttons of a panel in one row across, with the round corners of every button on a phone,
+       the icon ones beside those with words,
+       which share the rest equally, each its word on one line, a little smaller,
+       so `Edit plan` keeps room inside its frame;
+       always in sight at the bottom of the dialog, under the thumb,
+       while its rows scroll above them, like the foods of a long meal:
+       on the background of the dialog,
+       so a row scrolled under them hides behind them, 0.5rem of it above the buttons,
+       the rest of their room above them as before, and the dialog's own room below them */
     .panel-buttons {
         position: sticky;
         bottom: -0.5rem;
@@ -779,8 +842,8 @@ fieldset.entry-times {
         font-size: 0.875rem;
     }
 
-    /* The file of the entry on a line of its own above the buttons, across the whole width, so the buttons keep
-       their row and it its few lines, see `.panel-file` */
+    /* The file of the entry on a line of its own above the buttons, across the whole width,
+       so the buttons keep their row and it its few lines, see `.panel-file` */
     .panel-buttons:has(> .panel-file:not([hidden])) {
         flex-wrap: wrap;
     }
@@ -790,13 +853,16 @@ fieldset.entry-times {
         padding: 0 var(--row-padding);
     }
 
-    /* A panel on a phone rises from the bottom over the whole width as a sheet, its top corners round, a little
-       closer to the screen's edges; its rows, in every dialog alike, each a card filled in the soft grey of a card,
-       a little apart, its name small and grey above its value, so the value takes the whole width instead of two
-       thirds beside the name, the row I type in or whose list is open outlined; a field I type in, like the note
-       at the bottom, stays above its buttons when the keyboard opens and the panel scrolls it into sight: the height
-       of the buttons, one control and their room above and below, kept free at its bottom for what it scrolls to,
-       see `.panel-buttons` */
+    /* A panel on a phone rises from the bottom over the whole width as a sheet,
+       its top corners round, a little closer to the screen's edges;
+       its rows, in every dialog alike, each a card filled in the soft grey of a card,
+       a little apart, its name small and grey above its value,
+       so the value takes the whole width instead of two thirds beside the name,
+       the row I type in or whose list is open outlined;
+       a field I type in, like the note at the bottom,
+       stays above its buttons when the keyboard opens and the panel scrolls it into sight:
+       the height of the buttons, one control and their room above and below,
+       kept free at its bottom for what it scrolls to, see `.panel-buttons` */
     .panel {
         --value-start: calc(var(--row-padding) + 1px);
         --panel-top: var(--gap);
@@ -833,10 +899,12 @@ fieldset.entry-times {
         row-gap: 0.25rem;
     }
 
-    /* A row of a dialog on a phone whose list has no value yet, like With or an empty Summary, one line high,
-       its empty value beside its name in place of a line of its own below it, so a tap on the line still opens its
-       list; the deadline of a box stacks its name above its fields as every row of fields does; the note
-       one line high while empty, growing with its text, see `#entry-note` */
+    /* A row of a dialog on a phone whose list has no value yet,
+       like With or an empty Summary, one line high,
+       its empty value beside its name in place of a line of its own below it,
+       so a tap on the line still opens its list;
+       the deadline of a box stacks its name above its fields as every row of fields does;
+       the note one line high while empty, growing with its text, see `#entry-note` */
     .panel-field:has(> .picker > .picker-head > .picker-line.picker-empty:first-child) {
         grid-template-columns: auto minmax(0, 1fr);
     }
@@ -845,20 +913,23 @@ fieldset.entry-times {
         min-height: 1lh;
     }
 
-    /* The days and times of a dialog on a phone where they stand, but a finger high to hit: each field takes a tap
-       0.375rem above and below its text, which takes no room of the row, so the end below the start keeps its place
-       and a tap between the two goes to the end */
+    /* The days and times of a dialog on a phone where they stand, but a finger high to hit:
+       each field takes a tap 0.375rem above and below its text, which takes no room of the row,
+       so the end below the start keeps its place and a tap between the two goes to the end */
     .entry-moment input {
         padding-block: 0.375rem;
         margin-block: -0.375rem;
     }
 
-    /* Skill and type on a phone while the type is still its plus: the plus on the first line of the skill, right after
-       it, or at the right end of that line where a long name, like `IN2028_BusinessAnalyticsMachineLearning`,
-       goes on below, never on a line of its own; the link of the summary and the part to type it below both,
-       as before, over a third column that takes the rest of the row, so they span the whole row without widening
-       the column of the type, and a long web address leaves the pencil right after the plus. A type picked,
-       like `(VO)`, still goes below the name where the line has no room for both */
+    /* Skill and type on a phone while the type is still its plus:
+       the plus on the first line of the skill, right after it,
+       or at the right end of that line where a long name,
+       like `IN2028_BusinessAnalyticsMachineLearning`, goes on below, never on a line of its own;
+       the link of the summary and the part to type it below both,
+       as before, over a third column that takes the rest of the row,
+       so they span the whole row without widening the column of the type,
+       and a long web address leaves the pencil right after the plus.
+       A type picked, like `(VO)`, still goes below the name where the line has no room for both */
     .panel-pair:has(> .picker:last-child .picker-empty) {
         display: grid;
         grid-template-columns: minmax(0, max-content) auto 1fr;
@@ -869,9 +940,9 @@ fieldset.entry-times {
         grid-column: 1 / -1;
     }
 
-    /* The pencil of a dialog on a phone as small and quiet as it looks, like the plus and the ×, see `../base.css`,
-       but a finger's width to hit, beside a place only at its right and above and below it, so its name keeps
-       its own tap */
+    /* The pencil of a dialog on a phone as small and quiet as it looks, like the plus and the ×,
+       see `../base.css`, but a finger's width to hit,
+       beside a place only at its right and above and below it, so its name keeps its own tap */
     .panel .entry-pencil {
         position: relative;
     }

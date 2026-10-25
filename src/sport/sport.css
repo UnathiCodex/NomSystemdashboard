@@ -1,14 +1,16 @@
-/* Sport: what the sport view adds to the look of the food view, which it takes, see `../food/food.css`,
-   `../food/search.css` and `../food/meals.css` */
+/* Sport: what the sport view adds to the look of the food view, which it takes,
+   see `../food/food.css`, `../food/search.css` and `../food/meals.css` */
 
-/* The sessions of the day below the totals, as the meals of the food view, see `#food-meals` in `food.css` */
+/* The sessions of the day below the totals, as the meals of the food view,
+   see `#food-meals` in `food.css` */
 .sport-sessions {
     margin-top: var(--gap);
 }
 
-/* Name of a workout, an exercise or a video in a list with what stands grey in brackets after it, its parts,
-   its workouts or its channel, see `nameOf` in `lists.ts`: always one line, the name whole, the brackets cut with …
-   where they have no room, like `Push (Bench press, Shoulder press, Di…)`, as the short title of a meal */
+/* Name of a workout, an exercise or a video in a list with what stands grey in brackets after it,
+   its parts, its workouts or its channel, see `nameOf` in `lists.ts`:
+   always one line, the name whole, the brackets cut with … where they have no room,
+   like `Push (Bench press, Shoulder press, Di…)`, as the short title of a meal */
 .sport-name {
     display: flex;
     min-width: 0;
@@ -29,8 +31,8 @@
     text-overflow: ellipsis;
 }
 
-/* The plus right after the name of a workout opened, which adds an exercise or a video, as after the name of a meal
-   opened, see `.dish-list .food-name .plus-quiet` in `meals.css` */
+/* The plus right after the name of a workout opened, which adds an exercise or a video,
+   as after the name of a meal opened, see `.dish-list .food-name .plus-quiet` in `meals.css` */
 .dish-list .sport-name .plus-quiet {
     height: calc(1lh + 0.5rem);
     margin: -0.25rem 0 -0.25rem 0.5rem;
@@ -39,7 +41,8 @@
     vertical-align: top;
 }
 
-/* A video in its list: its title with its channel, then its kind and its minutes, close to its kcal */
+/* A video in its list: its title with its channel,
+   then its kind and its minutes, close to its kcal */
 .sport-video {
     display: flex;
     align-items: baseline;
@@ -70,8 +73,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* The kinds of a video opened or new side by side as plain words, see `kindsOf` in `lists.ts`: the one picked white,
-   the others grey, lighter under the pointer */
+/* The kinds of a video opened or new side by side as plain words, see `kindsOf` in `lists.ts`:
+   the one picked white, the others grey, lighter under the pointer */
 .sport-kinds {
     display: flex;
     flex-wrap: wrap;
@@ -97,9 +100,10 @@
     overflow-wrap: anywhere;
 }
 
-/* My weight among the totals, see `weightOf` in `sport.ts`: its kilograms as plain as the other totals, a button
-   without frame, the small grey pencil after them, lighter under the pointer; as a field the same size, a thin line
-   below it while I type, as wide as what is typed */
+/* My weight among the totals, see `weightOf` in `sport.ts`:
+   its kilograms as plain as the other totals, a button without frame,
+   the small grey pencil after them, lighter under the pointer;
+   as a field the same size, a thin line below it while I type, as wide as what is typed */
 .sport-weight-amount {
     display: inline-flex;
     align-items: center;
@@ -148,14 +152,16 @@ button.sport-weight-amount:hover svg.lucide {
     outline: none;
 }
 
-/* The sessions of the day in one column of values with the room of their longest, like `3 × 10 · 12.5 kg`
-   of an exercise, where the food view keeps two, grams and kcal; every value still at the right of its column */
+/* The sessions of the day in one column of values with the room of their longest,
+   like `3 × 10 · 12.5 kg` of an exercise, where the food view keeps two, grams and kcal;
+   every value still at the right of its column */
 .sport-sessions .food-line,
 .sport-sessions .food-entry {
     grid-template-columns: minmax(0, 1fr) 8.5rem;
 }
 
-/* My exercises each with what I do of it as a rule at the right, like `3 × 10 · 40 kg`, as wide as its text */
+/* My exercises each with what I do of it as a rule at the right,
+   like `3 × 10 · 40 kg`, as wide as its text */
 .sport-exercises .food-row {
     grid-template-columns: minmax(0, 1fr) auto;
 }

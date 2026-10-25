@@ -2,10 +2,13 @@
  * ## Gifts
  *
  * My gift ideas for the birthdays and holidays at the top of the plan, see `reader/gifts.ts`,
- * written only when I have one: a click on a birthday or holiday opens a small dialog with one field, my gift idea for it,
- * which `Enter` or `Save` saves as its `DESCRIPTION` in its file, `Birthdays.ics` or `Holidays.ics`, for every year
- * of it; an empty field, or `Remove`, takes the idea out again.
- * The plan shows each idea beside its birthday or holiday, see `boxes.ts`, and loads again when the dialog closes.
+ * written only when I have one:
+ * a click on a birthday or holiday opens a small dialog with one field, my gift idea for it,
+ * which `Enter` or `Save` saves as its `DESCRIPTION` in its file,
+ * `Birthdays.ics` or `Holidays.ics`, for every year of it;
+ * an empty field, or `Remove`, takes the idea out again.
+ * The plan shows each idea beside its birthday or holiday, see `boxes.ts`,
+ * and loads again when the dialog closes.
  *
  * - `lucide`: The icons of the bin, Cancel and Save.
  * - `../icons.ts`: Shows them in their buttons.
@@ -17,12 +20,10 @@ import { iconPut } from "../icons.ts";
 import { fileShow } from "./choices.ts";
 import type { Occasion } from "./boxes.ts";
 
-
 /**
  * The birthday or holiday the dialog writes the gift idea of.
  */
 let opened: Occasion = { id: "", category: "", title: "", gift: "", file: "" };
-
 
 /**
  * Sends my gift idea for a birthday or holiday to the reader, an empty one to take it out again.
@@ -37,8 +38,7 @@ async function giftSend(id: string, gift: string): Promise<void> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: id, gift: gift }),
     });
-    if (!response.ok)
-        throw new Error(`Reader answered ${response.status}`);
+    if (!response.ok) throw new Error(`Reader answered ${response.status}`);
 }
 
 /**
@@ -57,9 +57,11 @@ function giftSave(gift: string): void {
 }
 
 /**
- * Opens the dialog of the gift idea for a birthday or holiday, its category and name small and grey above the field,
- * like `Birthday: Karlbauer Florian`, the field holding the idea I have, focused; the bin shows only when there is one
- * to take out; at the left of the buttons its file, see `fileShow` in `choices.ts`.
+ * Opens the dialog of the gift idea for a birthday or holiday,
+ * its category and name small and grey above the field,
+ * like `Birthday: Karlbauer Florian`, the field holding the idea I have, focused;
+ * the bin shows only when there is one to take out;
+ * at the left of the buttons its file, see `fileShow` in `choices.ts`.
  * - {@link HTMLDialogElement#showModal}: Shows the dialog over the page, `Esc` closes it.
  *
  * @param occasion - The birthday or holiday with my gift idea for it
@@ -78,15 +80,18 @@ export function giftOpen(occasion: Occasion): void {
 }
 
 /**
- * Starts the dialog after the router has put its HTML into the page: `Cancel` closes it, `Remove` takes the idea out,
- * `Enter` and `Save` save it.
+ * Starts the dialog after the router has put its HTML into the page:
+ * `Cancel` closes it, `Remove` takes the idea out, `Enter` and `Save` save it.
  */
 export function giftsStart(): void {
     iconPut(document.getElementById("gift-remove") as HTMLElement, Trash, "Remove");
     iconPut(document.getElementById("gift-cancel") as HTMLElement, X, "Cancel");
     iconPut(document.getElementById("gift-save") as HTMLElement, Check, "Save");
-    document.getElementById("gift-cancel")?.addEventListener("click", (): void =>
-        (document.getElementById("gift") as HTMLDialogElement).close());
+    document
+        .getElementById("gift-cancel")
+        ?.addEventListener("click", (): void =>
+            (document.getElementById("gift") as HTMLDialogElement).close(),
+        );
     document.getElementById("gift-remove")?.addEventListener("click", (): void => giftSave(""));
     document.getElementById("gift-form")?.addEventListener("submit", (event: SubmitEvent): void => {
         event.preventDefault();

@@ -1,11 +1,11 @@
 /**
  * ## Markdown
  *
- * Gives the Markdown the reader writes the empty lines of my system, see {@link markdownFormOf}: two empty lines
- * before a heading, one below it and one between paragraphs; none at the start of a file, one after its front matter,
- * and none at its end, which is one line break. Only empty lines change, every other line stays as it is.
+ * Gives the Markdown the reader writes the empty lines of my system, see {@link markdownFormOf}:
+ * two empty lines before a heading, one below it and one between paragraphs;
+ * none at the start of a file, one after its front matter, and none at its end,
+ * which is one line break. Only empty lines change, every other line stays as it is.
  */
-
 
 /**
  * A heading, of any level, like `## Gratitude`.
@@ -22,25 +22,29 @@ const emptyForm: RegExp = /^[ \t]*$/;
  */
 const fenceForm: RegExp = /^ {0,3}(?:```|~~~)/;
 
-
 /**
- * Gives a Markdown text with the empty lines of my system, see the top of this file: before each line of text as many
- * empty lines as the line before it and the line itself ask, however many there were: none before the first line,
- * one after the front matter, two before a heading, also right below another heading, one below a heading, else one
- * where there was any and none where there was none. Its front matter, `---` on the first line up to the next `---`,
+ * Gives a Markdown text with the empty lines of my system, see the top of this file:
+ * before each line of text as many empty lines as the line before it and the line itself ask,
+ * however many there were: none before the first line, one after the front matter,
+ * two before a heading, also right below another heading, one below a heading,
+ * else one where there was any and none where there was none.
+ * Its front matter, `---` on the first line up to the next `---`,
  * and the lines inside a fenced block of code stay as they are.
  * - `lines`: Lines of the text.
- * - `close`: Index of the line that closes the front matter among the lines after the first, -1 for none.
+ * - `close`: Index of the line that closes the front matter among the lines
+ *   after the first, -1 for none.
  * - `matter`: Number of lines of the front matter, 0 for none.
  * - `written`: The lines as written so far.
  * - `empty`: Empty lines met since the last line of text.
- * - `before`: What the last line of text was: none yet, the end of the front matter, a heading or other text.
+ * - `before`: What the last line of text was:
+ *   none yet, the end of the front matter, a heading or other text.
  * - `fenced`: Whether the line stands inside a fenced block of code.
  * - `heading`: Whether the line is a heading.
  * - `count`: The empty lines written before it.
  *
  * @param text - Markdown text
- * @returns The text with the empty lines of my system, ending with one line break, empty for a text without text
+ * @returns The text with the empty lines of my system, ending with one line break,
+ *   empty for a text without text
  */
 export function markdownFormOf(text: string): string {
     const lines: string[] = text.split("\n");
@@ -61,14 +65,21 @@ export function markdownFormOf(text: string): string {
             return;
         }
         const heading: boolean = headingForm.test(line);
-        const count: number = before === "none" ? 0 : before === "matter" ? 1 : heading ? 2
-            : before === "heading" ? 1 : Math.min(empty, 1);
+        const count: number =
+            before === "none"
+                ? 0
+                : before === "matter"
+                  ? 1
+                  : heading
+                    ? 2
+                    : before === "heading"
+                      ? 1
+                      : Math.min(empty, 1);
         written.push(...Array.from({ length: count }, (): string => ""), line);
         empty = 0;
         before = heading ? "heading" : "text";
         fenced = fenceForm.test(line);
     });
-    while (written.length > matter && emptyForm.test(written[written.length - 1]))
-        written.pop();
+    while (written.length > matter && emptyForm.test(written[written.length - 1])) written.pop();
     return written.length === 0 ? "" : `${written.join("\n")}\n`;
 }

@@ -14,15 +14,17 @@ import { createServer } from "vite";
 import type { Server } from "node:http";
 import type { ViteDevServer } from "vite";
 
-
 /**
  * Starts Vite inside the server of the reader, so page and data share one address.
  * - `root`: Folder of `index.html`, one up from this file.
- * - `publicDir`: Folder of the files given out as they are, like the logo `icon.svg`, named `assets` as in WokFlow.
+ * - `publicDir`: Folder of the files given out as they are,
+ *   like the logo `icon.svg`, named `assets` as in WokFlow.
  * - `middlewareMode`: Answers only the requests the reader hands over, without a server of its own.
  * - `hmr.server`: Sends its reload messages through the server of the reader.
- * - `allowedHosts`: Answers my devices too, which reach skriptum through Tailscale by a name ending in `.ts.net`,
- *   like `skriptum.tail1234.ts.net`; Vite refuses every other name but `localhost` and addresses like `127.0.0.1`.
+ * - `allowedHosts`: Answers my devices too,
+ *   which reach skriptum through Tailscale by a name ending in `.ts.net`,
+ *   like `skriptum.tail1234.ts.net`;
+ *   Vite refuses every other name but `localhost` and addresses like `127.0.0.1`.
  * - `watch.ignored`: Leaves out `.claude/`, where Claude sessions write files of their own:
  *   every new `.html` there reloaded every open page.
  * - `appType`: Answers unknown addresses with `index.html`, as for a single page.
