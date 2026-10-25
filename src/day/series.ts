@@ -39,8 +39,9 @@
  * see {@link groupWaits} and {@link keptOf}; the first group
  * made while none is mine becomes mine as it is saved. So I make the groups of my tutorials by hand as the university lists them, with the same rows: what
  * it is, its place, what it does online, its days, each a weekday with its times, its weeks, its sessions, of which
- * `⋯` cancels one, and its tutors in `With`; saved, the reader writes it as one weekly to-do per weekday, and my boxes
- * that go to it take its sessions anew, see `groupApply` in `reader/course.ts`. A group there opens in the same form,
+ * `⋯` cancels one and whose pencil changes one alone, another room or time that day, see {@link sessionRowOf},
+ * and its tutors in `With`; saved, the reader writes it as one weekly to-do per weekday, its past kept and a change
+ * going on from today, and my open boxes that go to it take its sessions anew, see `groupApply` in `reader/course.ts`. A group there opens in the same form,
  * see {@link groupOpen}, from the menu of the groups, see `./groups.ts`, its group fixed, a bin at the left of Cancel,
  * see {@link seriesBinOf}. Which group is mine I pick in the menu beside the semester or on the page of the module.
  * Enter confirms only its field, Ctrl+Enter saves, Escape and a click beside it cancel.
@@ -113,7 +114,7 @@ import {
 } from "./choices.ts";
 import {
     boxTimesOf, dateFieldStart, dateParse, lengthSwapOf, lengthTextOf, minutesOf, rangeDash, timeFieldRead,
-    timeFieldStart, weekdayDateTextOf,
+    timeFieldStart, timeOf, weekdayDateTextOf,
 } from "./times.ts";
 import {
     addressOf, labelOf, lineOf, placeAddressOf, placeChoiceOf, placeEditOf, placeOf, renameSend, standardFirst,
@@ -212,7 +213,8 @@ export type Days = {
  * its number, like `2`, `NONE` for one the university cancelled, of an exam its kind, like `Endterm`, empty for none,
  * its state, `new` for a new one, `university` for a new one I cancelled, whether I pushed it, whether I may skip it
  * or mark it cancelled, whether I may give it other times, what the change does to it, who I am with, like a tutor
- * or the lecturers, and of a plain series whether it is a day of another series of its chain, only shown.
+ * or the lecturers, of a plain series whether it is a day of another series of its chain, only shown, and of a session
+ * of a group the university changed alone its own room with its link.
  */
 export type Planned = {
     id: string;
@@ -227,6 +229,8 @@ export type Planned = {
     change: "new" | "changed" | "renumbered" | "removed" | "";
     attendees: Attendee[];
     chained?: boolean;
+    location?: string;
+    locationLink?: string;
 };
 
 /**
@@ -289,11 +293,16 @@ export type Series = {
 };
 
 /**
- * A session of a group, as the reader sends it: its start as ISO instant and its length in minutes.
+ * A session of a group, as the reader sends it, see `Session` in `reader/course.ts`: its identifier, its start as ISO
+ * instant, its length in minutes, its room with its link, and whether the university changed it alone.
  */
 export type Session = {
+    id: string;
     start: string;
     minutes: number;
+    location: string;
+    locationLink: string;
+    changed: boolean;
 };
 
 /**
@@ -483,6 +492,12 @@ let boxesKnown: Map<string, Box> = new Map();
  * The extra being typed below the list of the boxes, see {@link draftRowOf}, `null` while none is.
  */
 let extraTyped: Extra | null = null;
+
+/**
+ * The session of the group of the form being changed alone, see {@link sessionRowOf}: its identifier, see
+ * {@link Session}, its day, and its times and its room as typed; `null` while none is.
+ */
+let sessionTyped: (Pick<Session, "id" | "location"> & Pick<Slot, "start" | "end"> & { day: string }) | null = null;
 
 /**
  * Of the exams, the kind I gave the date being typed, see {@link draftRowOf}, empty while I gave none.
@@ -1000,6 +1015,7 @@ export function previewForget(): void {
     previewShown = [];
     listOpened = false;
     extraTyped = null;
+    sessionTyped = null;
     kindAsked = "";
 }
 
@@ -1255,13 +1271,16 @@ function knownEndOf(box: Box): HTMLElement {
  * a session of a group, which the reader makes cancelled, see `seriesApply` and `groupApply` in `reader/course.ts`,
  * `Remove` for an extra from today on, which takes it back, and of a session of a group there already, of the days
  * over too, so a tutorial I went to is added afterwards and then logged, `+`, which makes it a box of mine besides the
- * box of its week, see {@link extraAdd}, but not where a box of mine stands already, see {@link mineAt}; a state given so its icon, which takes it back; of a day
+ * box of its week, see {@link extraAdd}, but not where a box of mine stands already, see {@link mineAt}, and a pencil,
+ * which opens it to change alone, as the university changed it, see {@link sessionRowOf}; a state given so its icon,
+ * which takes it back; of a day
  * of another series of the chain of a plain series, see `chained` of {@link Planned}, and of one the change removes
  * only the icon of its state, or nothing.
  * - `today`: Today's date.
  * - `extra`: The extra on its day, `undefined` for none.
  * - `stated`: Gives the state to a box, a new one by its day, until I save.
  * - `shown`: Whether it is only shown.
+ * - `session`: Of a group there already its session, `undefined` for none, see {@link sessionOf}.
  * - `buttons`: Its actions.
  * - `actions`: Its actions in their row.
  *
@@ -1286,6 +1305,7 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
         return markOf(CalendarOff, "Cancelled", box.editable && !shown ? stated("open") : null);
     if (shown)
         return elementOf("span", "series-end", "");
+    const session: Session | undefined = sessionOf(box);
     const buttons: HTMLButtonElement[] = [
         ...box.editable && (/^\d+$/.test(box.number) || grouped !== null)
             ? [pendingActionOf(CalendarOff, "Cancel", stated("university"))] : [],
@@ -1298,12 +1318,97 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
             ? [pendingActionOf(Plus, "Add as a box of mine", (): void => {
                 extraAdd(box.time).catch((error: unknown): void => console.error(error));
             })] : [],
+        ...session !== undefined ? [pendingActionOf(Pencil, "Change this session alone", (): void => {
+            sessionTyped = {
+                id: session.id, day: box.day, start: timeOf(new Date(session.start)),
+                end: timeOf(new Date(Date.parse(session.start) + session.minutes * 60 * 1000)),
+                location: session.location,
+            };
+            preview.filled();
+        })] : [],
     ];
     if (box.pushed && buttons.length === 0)
         return markOf(ArrowRight, "Pushed", null);
     const actions: HTMLElement = elementOf("div", buttons.length === 0 ? "series-end" : "box-actions", "");
     actions.append(...buttons);
     return actions;
+}
+
+/**
+ * Gives the session of the group there already of the form a row of its list stands for, at its time, which its pencil
+ * changes alone, see {@link sessionRowOf}: none of a new group, of one without times, of one cancelled or removed,
+ * and none while the form moved the row from its session.
+ * - `group`: The group of the form, `null` for none.
+ *
+ * @param box - The row
+ * @returns The session, `undefined` for none
+ */
+function sessionOf(box: Planned): Session | undefined {
+    const group: { group: string; made: boolean; was: string } | null = grouped;
+    return group === null || group.made || typing === null || box.time === "" || box.state === "university"
+        || box.change === "removed" ? undefined : groupsOf(typing.type)
+        .find((one: Group): boolean => one.rule.group === group.was)?.sessions
+        .find((one: Session): boolean => Date.parse(one.start) === Date.parse(box.time));
+}
+
+/**
+ * Makes the row of a session of the group of the form being changed alone, in its place in the list, as the university
+ * changed it that day, see `sessionApply` in `reader/course.ts`: nothing where the numbers stand, its day, its times
+ * to type and its room to pick as in the row `Place`, see {@link placeSearchOf}, and at its right edge Save, which
+ * writes it at once, my box at that session following it, the list then shown anew, see {@link sessionSave}, and `×`,
+ * which leaves it as it is.
+ * - `row`: The row.
+ * - `fields`: Its times and its room.
+ * - `actions`: Save and `×`.
+ *
+ * @param session - The session as typed
+ * @param redraw - Shows the list anew
+ * @returns The row
+ */
+function sessionRowOf(session: NonNullable<typeof sessionTyped>, redraw: () => void): HTMLElement {
+    const row: HTMLElement = elementOf("div", "series-row series-session", "");
+    const fields: HTMLElement = elementOf("div", "", "");
+    const actions: HTMLElement = elementOf("div", "box-actions", "");
+    fields.append(timesRangeOf(session, (): void => {}), choicesOf({
+        search: placeSearchOf(session.location, labelOf), picked: session.location === "" ? [] : [session.location],
+        many: false, adding: false, noun: "place", textOf: labelOf,
+        pick: (values: string[]): void => {
+            session.location = values[0] ?? "";
+        },
+    }));
+    actions.append(pendingActionOf(Check, "Save this session", (): void => {
+        sessionSave(session).catch((error: unknown): void => console.error(error));
+    }), removeOf("Keep the session as it is", (): void => {
+        sessionTyped = null;
+        redraw();
+    }));
+    row.append(elementOf("span", "series-number", ""), elementOf("span", "", weekdayDateTextOf(session.day)), fields,
+        actions);
+    return row;
+}
+
+/**
+ * Writes the session being changed alone, see {@link sessionRowOf}, while its start lies before its end, then shows
+ * the list anew, see {@link seriesRefresh}; the hint of the form shows when the reader does not take it.
+ *
+ * @param session - The session as typed
+ * @throws {Error} - When the reader cannot answer
+ */
+async function sessionSave(session: NonNullable<typeof sessionTyped>): Promise<void> {
+    if (course === null || typing === null || grouped === null || !timesReady(session))
+        return;
+    try {
+        await courseSend<null>("/api/course/session", {
+            module: course.module, type: typing.type, group: grouped.was, semester: course.semester, id: session.id,
+            start: session.start, end: session.end, location: session.location,
+        });
+    } catch (error: unknown) {
+        console.error(error);
+        formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
+        return;
+    }
+    sessionTyped = null;
+    await seriesRefresh();
 }
 
 /**
@@ -1426,6 +1531,8 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
     let word: string = box.change === "renumbered" || (box.change === "new" && !had) ? "" : box.change;
     if (word === "" && box.pushed && box.editable && box.state === "open")
         word = "pushed";
+    if (word === "" && box.location !== undefined)
+        word = "changed";
     if (preview.days.extras.some((extra: Extra): boolean => extra.day === box.day))
         word = word === "" ? "extra" : `${word} extra`;
     const number: HTMLElement = kinds === undefined
@@ -1439,8 +1546,8 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
         });
     const place: (string | Node)[] = known !== undefined ? whereLinkedOf(known.category, known.from,
         roomOf(known.location), known.locationLink, known.online, known.onlineLink)
-        : whereLinkedOf(plain?.category ?? skillName, "", roomOf(typing?.location ?? ""), typing?.locationLink ?? "",
-            typing?.online ?? "", typing?.onlineLink ?? "");
+        : whereLinkedOf(plain?.category ?? skillName, "", roomOf(box.location ?? typing?.location ?? ""),
+            box.locationLink ?? typing?.locationLink ?? "", typing?.online ?? "", typing?.onlineLink ?? "");
     const opening: (() => void) | null = known === undefined || kinds !== undefined || box.number !== "" ? null
         : (): void => {
             boxShow(known).catch((error: unknown): void => console.error(error));
@@ -1620,7 +1727,8 @@ function boxListOf(planned: Planned[], preview: Preview, redraw: () => void): HT
         return { ...box, number: box.state === "university" ? "NONE" : String(count) };
     });
     const items: [string, HTMLElement][] = numbered.map((box: Planned): [string, HTMLElement] =>
-        [box.time || box.day, boxRowOf(box, had, preview)]);
+        [box.time || box.day, sessionTyped !== null && sessionOf(box)?.id === sessionTyped.id
+            ? sessionRowOf(sessionTyped, redraw) : boxRowOf(box, had, preview)]);
     const list: HTMLElement = monthListOf(items);
     if (grouped === null && (typing === null || !groupWaits(typing)))
         list.append(extraTyped === null ? addRowOf(preview, redraw) : draftRowOf(extraTyped, preview, redraw));
@@ -2125,6 +2233,30 @@ function seriesRowOf(form: Form): HTMLElement {
 }
 
 /**
+ * Gives the search of a place of the form, see {@link placeRowOf}, and of a session changed alone, see
+ * {@link sessionRowOf}: while nothing is typed my places and the place there already, my default place first,
+ * as I type the rooms of the university too, each with its address grey beside it, see `placeChoiceOf`
+ * in `./places.ts`.
+ * - `field`: The field of the place of `Skill`, `undefined` while the categories are not loaded.
+ * - `values`: The places offered.
+ * - `places`: My places and rooms, by their lines.
+ *
+ * @param current - The place there already, empty for none
+ * @param nameShown - Gives the name a place shows
+ * @returns The search
+ */
+function placeSearchOf(current: string, nameShown: (line: string) => string): (text: string) => Promise<Choice[]> {
+    const field: Field | undefined = skillFieldOf("location");
+    return async (text: string): Promise<Choice[]> => {
+        const values: string[] = text.trim() === "" ? [...field?.values ?? [], ...(current === "" ? [] : [current])]
+            : [...field?.values ?? [], ...field?.rooms ?? []];
+        const places: { [line: string]: Place } = field?.places ?? {};
+        return await searchOf(standardFirst([...new Set(values)], places).map((value: string): Choice =>
+            placeChoiceOf(value, nameShown(value), places)))(text);
+    };
+}
+
+/**
  * Makes the row of the place of the form, picked as in the dialog, see `placeSearchOf` in `./categories.ts`:
  * my default place first, with its star, then my places, the most used first, and as I type the rooms of the university too, each with its address
  * grey beside it, see `placeChoiceOf` in `./places.ts`, the place of the series among them; below it its address,
@@ -2161,14 +2293,7 @@ function placeRowOf(form: Form): HTMLElement {
     iconPut(pencil, Pencil, "Change the place");
     parts.hidden = !placeOpen;
     const row: HTMLElement = rowOf("Place", choicesOf({
-        search: async (text: string): Promise<Choice[]> => {
-            const values: string[] = text.trim() === ""
-                ? [...field?.values ?? [], ...(form.location === "" ? [] : [form.location])]
-                : [...field?.values ?? [], ...field?.rooms ?? []];
-            const places: { [line: string]: Place } = field?.places ?? {};
-            return await searchOf(standardFirst([...new Set(values)], places).map((value: string): Choice =>
-                placeChoiceOf(value, nameShown(value), places)))(text);
-        },
+        search: placeSearchOf(form.location, nameShown),
         picked: form.location === "" ? [] : [form.location], many: false, adding: false, noun: "place",
         textOf: nameShown,
         aside: [pencil],
