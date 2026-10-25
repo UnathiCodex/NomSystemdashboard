@@ -42,9 +42,13 @@
  * of mine, see `groupIs` in `boxes.ts`, while a box of my tutorials that goes to a group has `X-GROUP`
  * and its `X-NUMBER`. A group meeting on two weekdays is one such to-do per weekday, each with its own times,
  * all of the same `X-GROUP`, read as one group, see {@link groupsRead}.
+ * A group is the notice of the university, so a change by the university goes into the group, never into my box:
  * I make and change a group by hand in the form of a series, by its row `Group`, see {@link groupApply}: its days,
- * room, platform, tutors and weeks as typed, a date I mark cancelled one more `EXDATE`; my boxes that go to it
- * take its sessions anew, see {@link groupBoxesMove}.
+ * room, platform, tutors and weeks as typed, its past kept as it was, the change going on from today as a to-do
+ * of its own with the same `X-GROUP`, a date I mark cancelled one more `EXDATE`; one session changed alone, another
+ * room or time that day, its component of its own with its `RECURRENCE-ID`, see {@link sessionApply}. My open boxes
+ * that go to it take its sessions anew, see {@link groupBoxesMove}; a box I pushed, done or skipped is mine and
+ * follows no change of its group, so a session I catch up on another day or online stays where I put it.
  *
  * Three changes write the boxes of a series, week by week, see {@link draftsOf}, each leaving every box done,
  * cancelled by me or pushed where it is, since those are mine, see {@link changeable}, and each numbering the boxes
@@ -79,8 +83,8 @@
  * - `node:path`: Names the folder and the file of the plan of a module, which holds its groups.
  * - `./boxes.ts`: Reads the skill boxes with their states, finds a box, removes one, adds boxes and takes back one
  *   I skipped, names the numbered types, and tells a group from a box.
- * - `./calendar.ts`: Reads the groups and the holidays, writes boxes and groups, and calculates with days and times
- *   in Berlin time.
+ * - `./calendar.ts`: Reads the groups and the holidays, writes boxes and groups, ends a group, changes one session
+ *   of it alone, cancels one and gives it back, and calculates with days and times in Berlin time.
  * - `./categories.ts`: Gives the semester of a day and tells well-formed people.
  * - `./documents.ts`: Writes what a box or a group is, linking the folder of its material.
  * - `./notes.ts`: Lists the folders of my modules and of their material, and gives the code of a module.
@@ -93,8 +97,9 @@ import { existsSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import { boxDelete, boxDrop, boxesAdd, boxFind, boxUniversity, groupIs, numberedTypes, skillBoxesRead } from "./boxes.ts";
 import {
-    berlinDateOf, berlinDayStartOf, berlinInstantOf, berlinTimeOf, dayAdd, entriesRead, entryRemove,
-    fileEntriesRead, groupPropertyOf, icsTextOf, propertiesPut, skillName, todoAppend, todoChange,
+    berlinDateOf, berlinDayStartOf, berlinInstantOf, berlinTimeOf, dayAdd, entriesRead, entryIdOf, entryRemove,
+    fileEntriesRead, groupPropertyOf, icsTextOf, occurrenceLookup, occurrenceOwn, occurrencesTidy, propertiesPut,
+    seriesCut, seriesDayRemove, seriesDayRestore, skillName, todoAppend, todoChange,
 } from "./calendar.ts";
 import { attendeesAllow, semesterOf, skillTypes } from "./categories.ts";
 import { skillLinkOf, titleOf } from "./documents.ts";
@@ -105,6 +110,7 @@ import { holidays, logEnding, planEnding, skillFileOf, skillLog, vaultPathOf } f
 import type { Box, BoxNew, BoxState } from "./boxes.ts";
 import type { Attendee, Entry, Online, Push, TodoFields } from "./calendar.ts";
 import type { MaterialFolder } from "./notes.ts";
+import type { CalendarSource } from "./sources.ts";
 
 
 /**
@@ -194,21 +200,31 @@ export type Series = {
 /**
  * A session of a group, as the page shows it.
  *
+ * - `id`: Its identifier, the `UID` of its to-do and its start in it, see `entryIdOf` in `calendar.ts`,
+ *   like `5f0c…@nomsystem#2026-10-27T09:00:00.000Z`.
  * - `start`: Its start as ISO instant, like `2026-10-27T09:00:00.000Z`, of a group without times its day,
  *   like `2026-10-27`.
  * - `minutes`: Its length in minutes, like 120.
+ * - `location`, `locationLink`, `online`, `onlineLink`, `passcode`, `attendees`: Its room with its link, what it does
+ *   online and its tutors, those of its to-do, or its own once the university changed it alone.
+ * - `changed`: Whether the university changed it alone, a component of its own with its `RECURRENCE-ID`,
+ *   see {@link sessionApply}.
  */
-export type Session = {
+export type Session = Online & Pick<Entry, "location" | "locationLink" | "attendees"> & {
+    id: string;
     start: string;
     minutes: number;
+    changed: boolean;
 };
 
 /**
  * A group of the tutorials of a module, see the top of this file, as the page shows it.
  *
- * - `ids`: The identifiers of its to-dos in the plan of its module, their `UID`s, one per weekday it meets on.
- * - `rule`: Its rule, read back from its sessions, see {@link ruleOf}: its type, its slots, mostly one, its room,
- *   its tutor, its first and last day, its group, like `03`, and its semester.
+ * - `ids`: The identifiers of its to-dos in the plan of its module, their `UID`s, one per weekday it meets on and per
+ *   part a change from a day on left, see {@link groupApply}, and of each session changed alone, see {@link Session}.
+ * - `rule`: Its rule, read back from its sessions from today on, else from all, see {@link ruleOf}, so a group changed
+ *   from today on shows its change: its type, its slots, mostly one, its room, its tutor, its first and last day,
+ *   its group, like `03`, and its semester.
  * - `sessions`: Its sessions, the earliest first.
  * - `pinned`: Whether it is the group I pinned, see {@link pinnedOf}.
  */
@@ -362,6 +378,26 @@ export type GroupChange = {
 };
 
 /**
+ * One session of a group the university changed alone, as the form of the group sends it, see {@link sessionApply}.
+ *
+ * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `type`, `group`, `semester`: Its group, like `TU`, `03` and `2026W`.
+ * - `id`: Its identifier, see `id` of {@link Session}.
+ * - `start`, `end`: Its times in Berlin time that day, like `12:00` and `14:00`.
+ * - `location`: Its room as an entry writes it, see `lineOf` in `places.ts`, empty for none.
+ */
+export type SessionChange = {
+    module: string;
+    type: string;
+    group: string;
+    semester: string;
+    id: string;
+    start: string;
+    end: string;
+    location: string;
+};
+
+/**
  * A group to remove, see {@link groupRemove}.
  *
  * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
@@ -434,6 +470,8 @@ export type ExamChange = {
  * - `attendees`: Who I am with after the change, like a tutor or the lecturers; none for nobody.
  * - `chained`: Of a plain series, whether it is a day of another series of its chain, like the one it went on from,
  *   only shown, see `plannedOf` in `rules.ts`; false when left out.
+ * - `location`, `locationLink`: Of a session of a group the university changed alone, see {@link Session}, its own
+ *   room with its link; left out for any other.
  */
 export type Planned = {
     id: string;
@@ -448,6 +486,8 @@ export type Planned = {
     change: "new" | "changed" | "renumbered" | "removed" | "";
     attendees: Attendee[];
     chained?: boolean;
+    location?: string;
+    locationLink?: string;
 };
 
 /**
@@ -1002,11 +1042,14 @@ function learnedRead(code: string, semester: string): Learned[] {
  * the plan is missing.
  * - `file`: The plan of the module.
  * - `begin`: The first day of the semester.
+ * - `today`: Today in Berlin time.
  * - `sessions`: The sessions of every group of the semester, each an entry, see `Entry` in `calendar.ts`, the earliest
  *   first.
+ * - `changed`: The identifiers of the sessions changed alone, the components of their own of the plan.
  * - `keyOf`: Gives the type and the group of a session, like `TU 03`.
  * - `own`: The sessions of one group.
  * - `dated`: Them as what its rule is read back from.
+ * - `ahead`: Those from today on.
  *
  * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
  * @param semester - Semester, like `2026W`
@@ -1015,11 +1058,14 @@ function learnedRead(code: string, semester: string): Learned[] {
 function groupsRead(module: string, semester: string): Group[] {
     const file: string = skillFileOf(module, planEnding);
     const begin: string = semesterBeginOf(semester);
+    const today: string = berlinDateOf(new Date());
     const sessions: Entry[] = entriesRead([{ folder: dirname(file), ending: basename(file) }],
         berlinDayStartOf(begin), berlinDayStartOf(dayAdd(begin, 366)))
         .filter((entry: Entry): boolean => groupIs(entry) && entry.category === skillName
             && (entry.semester === "" ? semesterOf(dayOfStart(entry.start)) : entry.semester) === semester)
         .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
+    const changed: Set<string> = new Set(existsSync(file) ? fileEntriesRead(file)
+        .filter((entry: Entry): boolean => entry.recurrence !== "").map(entryIdOf) : []);
     const keyOf: (entry: Entry) => string = (entry: Entry): string => `${entry.type} ${entry.group}`;
     return [...new Set(sessions.map(keyOf))].map((key: string): Group => {
         const own: Entry[] = sessions.filter((entry: Entry): boolean => keyOf(entry) === key);
@@ -1029,10 +1075,16 @@ function groupsRead(module: string, semester: string): Group[] {
             locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink, passcode: entry.passcode,
             attendees: entry.attendees,
         }));
+        const ahead: Dated[] = dated.filter((item: Dated): boolean => item.day >= today);
         return {
-            ids: [...new Set(own.map((entry: Entry): string => entry.id))],
-            rule: ruleOf(own[0].type, dated, dated, own[0].group, semester),
-            sessions: dated.map((item: Dated): Session => ({ start: item.time || item.day, minutes: item.minutes ?? 0 })),
+            ids: [...new Set(own.flatMap((entry: Entry): string[] =>
+                changed.has(entryIdOf(entry)) ? [entry.id, entryIdOf(entry)] : [entry.id]))],
+            rule: ruleOf(own[0].type, ahead.length > 0 ? ahead : dated, dated, own[0].group, semester),
+            sessions: own.map((entry: Entry): Session => ({
+                id: entryIdOf(entry), start: entry.start, minutes: entry.minutes ?? 0, location: entry.location,
+                locationLink: entry.locationLink, online: entry.online, onlineLink: entry.onlineLink,
+                passcode: entry.passcode, attendees: entry.attendees, changed: changed.has(entryIdOf(entry)),
+            })),
             pinned: own.some((entry: Entry): boolean => entry.pinned),
         };
     }).sort((first: Group, second: Group): number => first.rule.type.localeCompare(second.rule.type)
@@ -1296,7 +1348,8 @@ function madeDraftOf(target: Target): Draft {
 
 /**
  * Gives the date a session of a group sets the box of its week to, see {@link draftSet}: all of it, its day, its time,
- * its length, the room, what it does online, the tutor and the group.
+ * its length, its room, what it does online, its tutor, its own once the university changed it alone, see
+ * {@link Session}, and the group.
  * - `day`: The day of the session.
  *
  * @param group - The group
@@ -1307,8 +1360,8 @@ function targetOf(group: Group, session: Session): Target {
     const day: string = dayOfStart(session.start);
     return {
         day: day, start: session.start === day ? "" : berlinTimeOf(new Date(session.start)), minutes: session.minutes,
-        location: group.rule.location, locationLink: group.rule.locationLink, online: group.rule.online,
-        onlineLink: group.rule.onlineLink, passcode: group.rule.passcode, attendees: group.rule.attendees,
+        location: session.location, locationLink: session.locationLink, online: session.online,
+        onlineLink: session.onlineLink, passcode: session.passcode, attendees: session.attendees,
         group: group.rule.group, before: weekdayOf(day), fields: allFields, made: true, added: false,
         retimed: false,
     };
@@ -1958,7 +2011,7 @@ export function weekPick(change: PickChange): void {
 
 /**
  * Removes the groups of a type and a group of a semester from the plan of a module, each to-do of them
- * with every line of it; a session of it changed alone, which the dashboard never writes, stays.
+ * with every line of it, each session of it changed alone too, see `ids` of {@link Group}.
  * - `file`: The plan of the module.
  * - `found`: The groups to remove.
  *
@@ -2091,23 +2144,46 @@ export function groupPut(change: GroupNew): string {
  * make, for the preview of the form: its sessions are the dates of its slots in its weeks, see {@link datesOf}, the days
  * the university does not teach left out, each a session but those I marked cancelled, see `states`
  * of {@link GroupChange}, and, of a group there already, the dates of its weeks it did not meet on, as its `EXDATE`s
- * said, while not marked open again. Written, it takes the place of the group of its type, group and semester, one
- * to-do per slot, see {@link groupWrite}, pinned still while it was, see {@link pinPut}, and my boxes that go to it
- * take its sessions anew, see {@link groupBoxesMove}, an open one on a session I marked cancelled cancelled by the
- * university too, see `boxUniversity` in `boxes.ts`.
- * - `off`: The days of the sessions cancelled.
+ * said, while not marked open again.
+ * A group there already whose dates I only mark cancelled or open again, or rename, changes in place: a session
+ * cancelled one more `EXDATE`, its component of its own gone, see `seriesDayRemove` in `calendar.ts`, one open again
+ * without its `EXDATE`, see `seriesDayRestore` there. Any other change, its days, times, weeks, room, platform
+ * or tutors, is a new notice of the university, whose past stays true, as that of a plain series, see `plainApply`
+ * in `rules.ts`: a group with a session before today ends there, each of its to-dos at its last session before today,
+ * see `seriesCut` in `calendar.ts`, one without such gone, and goes on from today, one to-do per slot with the same
+ * `X-GROUP`, see {@link groupWrite}; a group wholly ahead is written anew in place of the group of its type, group
+ * and semester; either way its sessions changed alone from today on go, the change taking their place, and it stays
+ * pinned while it was. Then my boxes that go to it take its sessions anew, see {@link groupBoxesMove}, an open one
+ * on a session I marked cancelled cancelled by the university too, see `boxUniversity` in `boxes.ts`, and one
+ * cancelled on a session I marked open again open again, numbered by its week again, see {@link numbersRenew}.
+ * The preview shows a session changed alone with its own times and room while the group changes in place, and
+ * of a group going on from today its sessions before today as they are.
  * - `rule`: The rule as sent, without extras and times of their own.
+ * - `file`: The plan of the module.
+ * - `today`: Today in Berlin time.
  * - `old`: The group there already, `undefined` for none.
  * - `met`: The days it met on.
  * - `skipped`: The dates of its weeks it did not meet on.
  * - `dates`: The dates of the rule.
  * - `cancelled`: Tells whether a date is cancelled.
  * - `shared`: Whether its place, what it does online or its tutors changed.
+ * - `whenOf`: Gives the slots of a rule, each its weekday, start and length, with its first and last day.
+ * - `sessionOn`: Gives the session of the group there already on a day, `undefined` for none.
+ * - `opened`: Of each date I marked open again, its identifier in the to-do of the sessions of its weekday before and
+ *   after it, see `id` of {@link Session}, `undefined` while no such to-do is found.
+ * - `near`, `before`, `uid`: The sessions on its weekday not changed alone, the last of them before it, and its to-do.
+ * - `whole`: Whether it is written anew, not changed in place.
+ * - `begun`: Whether it is written anew from today on, a group there already with a session before today.
+ * - `kept`: Tells whether a day stays as it is, of a group going on from today a day before today.
  * - `planned`: Its sessions after the change, cancelled ones too, and those of the group there already it loses.
  * - `time`, `minutes`: The start and the length of a date.
  * - `was`: The session of the group there already on its day, `undefined` for none.
+ * - `own`: Whether it keeps its own times and room, see {@link Session}.
  * - `had`: Whether the group there already had the date, as a session or cancelled.
- * - `days`: The days of the sessions of a slot.
+ * - `days`: The days of the sessions of each slot it writes.
+ * - `last`: The last session before today of a to-do of the group there already, `undefined` for none.
+ * - `written`: The identifiers of its to-dos written.
+ * - `off`, `back`: The days of the sessions cancelled, and of those I marked open again.
  *
  * @param change - The group, as the form sends it
  * @returns Its sessions after the change as the boxes of a series, cancelled and removed ones too, by their days
@@ -2119,6 +2195,8 @@ export function groupApply(change: GroupChange): Planned[] {
     folderCheck(change.module);
     const rule: Rule = { ...change.rule, extras: [], times: {} };
     ruleCheck(rule);
+    const file: string = skillFileOf(change.module, planEnding);
+    const today: string = berlinDateOf(new Date());
     const was: string = change.was || rule.group;
     const groups: Group[] = groupsRead(change.module, rule.semester)
         .filter((group: Group): boolean => group.rule.type === rule.type);
@@ -2137,12 +2215,32 @@ export function groupApply(change: GroupChange): Planned[] {
     const shared: boolean = old !== undefined
         && JSON.stringify([old.rule.location, old.rule.online, old.rule.onlineLink, old.rule.passcode, old.rule.attendees])
         !== JSON.stringify([rule.location, rule.online, rule.onlineLink, rule.passcode, rule.attendees]);
+    const whenOf: (one: Rule) => string = (one: Rule): string => JSON.stringify([one.slots.map((slot: Slot): string =>
+        `${slot.weekday} ${slot.start} ${slotLengthOf(slot)}`), one.first, one.last]);
+    const sessionOn: (day: string) => Session | undefined = (day: string): Session | undefined =>
+        old?.sessions.find((session: Session): boolean => dayOfStart(session.start) === day);
+    const opened: (string | undefined)[] = dates.filter((date: RuleDate): boolean =>
+        !cancelled(date) && skipped.has(date.day)).map((date: RuleDate): string | undefined => {
+        const near: Session[] = (old?.sessions ?? []).filter((session: Session): boolean => !session.changed
+            && weekdayOf(dayOfStart(session.start)) === weekdayOf(date.day));
+        const before: Session | undefined = near.filter((session: Session): boolean =>
+            dayOfStart(session.start) < date.day).pop();
+        const uid: string = before?.id.slice(0, before.id.lastIndexOf("#")) ?? "";
+        return before === undefined || !near.some((session: Session): boolean => dayOfStart(session.start) > date.day
+            && session.id.startsWith(`${uid}#`)) ? undefined : `${uid}#${date.start === "" ? date.day
+            : instantOf(date.day, berlinTimeOf(new Date(before.start))).toISOString()}`;
+    });
+    const whole: boolean = old === undefined || shared || whenOf(old.rule) !== whenOf(rule)
+        || opened.includes(undefined);
+    const begun: boolean = whole && (old?.sessions ?? []).some((session: Session): boolean =>
+        dayOfStart(session.start) < today);
+    const kept: (day: string) => boolean = (day: string): boolean => begun && day < today;
     const planned: Planned[] = [
-        ...dates.map((date: RuleDate): Planned => {
-            const time: string = slotMomentOf(date.day, date.start);
-            const minutes: number | null = slotLengthOf(date);
-            const was: Session | undefined = old?.sessions
-                .find((session: Session): boolean => dayOfStart(session.start) === date.day);
+        ...dates.filter((date: RuleDate): boolean => !kept(date.day)).map((date: RuleDate): Planned => {
+            const was: Session | undefined = sessionOn(date.day);
+            const own: boolean = was !== undefined && was.changed && !whole;
+            const time: string = own && was !== undefined ? was.start : slotMomentOf(date.day, date.start);
+            const minutes: number | null = own && was !== undefined ? was.minutes : slotLengthOf(date);
             const had: boolean = was !== undefined || skipped.has(date.day);
             return {
                 id: "", day: date.day, time: time, minutes: minutes, number: "",
@@ -2151,41 +2249,119 @@ export function groupApply(change: GroupChange): Planned[] {
                 change: !had ? "new" : shared || (was === undefined) !== cancelled(date)
                     || (was !== undefined && (was.start !== (time || date.day) || was.minutes !== minutes))
                     ? "changed" : "",
+                ...own && was !== undefined ? { location: was.location, locationLink: was.locationLink } : {},
             };
         }),
+        ...(old === undefined ? [] : datesOf(old.rule)).filter((date: RuleDate): boolean =>
+            kept(date.day) && skipped.has(date.day)).map((date: RuleDate): Planned => ({
+            id: "", day: date.day, time: slotMomentOf(date.day, date.start), minutes: slotLengthOf(date), number: "",
+            state: "university", pushed: false, editable: false, retimable: false, change: "",
+            attendees: old?.rule.attendees ?? [],
+        })),
         ...(old?.sessions ?? [])
-            .filter((session: Session): boolean => !dates.some((date: RuleDate): boolean =>
-                date.day === dayOfStart(session.start)))
+            .filter((session: Session): boolean => kept(dayOfStart(session.start))
+                || !dates.some((date: RuleDate): boolean => date.day === dayOfStart(session.start)))
             .map((session: Session): Planned => ({
                 id: "", day: dayOfStart(session.start), time: session.start === dayOfStart(session.start) ? ""
                     : session.start, minutes: session.minutes,
-                number: "", state: "open", pushed: false, editable: false, retimable: false, change: "removed",
-                attendees: old?.rule.attendees ?? [],
+                number: "", state: "open", pushed: false, editable: false, retimable: false,
+                change: kept(dayOfStart(session.start)) ? "" : "removed", attendees: session.attendees,
+                ...session.changed ? { location: session.location, locationLink: session.locationLink } : {},
             })),
     ].sort((first: Planned, second: Planned): number =>
         (first.time || first.day).localeCompare(second.time || second.day));
     if (change.dry)
         return planned;
-    if (dates.every(cancelled))
+    const days: string[][] = rule.slots.map((_: Slot, index: number): string[] => dates
+        .filter((date: RuleDate): boolean => date.slot === index && !cancelled(date) && !kept(date.day))
+        .map((date: RuleDate): string => date.day));
+    if (days.every((one: string[]): boolean => one.length === 0)
+        && !(old?.sessions ?? []).some((session: Session): boolean => kept(dayOfStart(session.start))))
         throw new Error(`No session of group ${rule.type} ${rule.group} of ${change.module}`);
     if (was !== rule.group)
         groupRename(change.module, rule.type, rule.semester, was, rule.group);
-    groupsTake({ module: change.module, type: rule.type, group: rule.group, semester: rule.semester });
-    rule.slots.forEach((slot: Slot, index: number): void => {
-        const days: string[] = dates.filter((date: RuleDate): boolean => date.slot === index && !cancelled(date))
-            .map((date: RuleDate): string => date.day);
-        if (days.length > 0)
-            groupWrite(change.module, { ...rule, slots: [slot] }, days);
-    });
-    if (old?.pinned === true)
-        pinPut(change.module, rule.type, rule.semester, rule.group);
+    if (!whole) {
+        dates.filter((date: RuleDate): boolean => cancelled(date) && met.has(date.day))
+            .forEach((date: RuleDate): void => {
+                const id: string = sessionOn(date.day)?.id ?? "";
+                seriesDayRemove(file, id.slice(0, id.lastIndexOf("#")), id.slice(id.lastIndexOf("#") + 1));
+            });
+        opened.forEach((id: string | undefined): void => {
+            if (id !== undefined)
+                seriesDayRestore(file, id.slice(0, id.lastIndexOf("#")), id.slice(id.lastIndexOf("#") + 1));
+        });
+    }
+    else {
+        (old?.ids ?? []).filter((id: string): boolean => !id.includes("#")).forEach((uid: string): void => {
+            const last: Session | undefined = (old?.sessions ?? []).filter((session: Session): boolean =>
+                session.id.startsWith(`${uid}#`) && kept(dayOfStart(session.start))).pop();
+            if (last !== undefined)
+                seriesCut(file, uid, last.id.slice(uid.length + 1));
+            else
+                (old?.ids ?? []).filter((id: string): boolean => id === uid || id.startsWith(`${uid}#`))
+                    .forEach((id: string): void => entryRemove(file, id));
+        });
+        const written: string[] = rule.slots.flatMap((slot: Slot, index: number): string[] => days[index].length === 0
+            ? [] : [groupWrite(change.module, { ...rule, slots: [slot] }, days[index])]);
+        if (old?.pinned === true)
+            written.forEach((id: string): void =>
+                propertiesPut(file, id, [["x-group", [groupPropertyOf(rule.group, true)]]]));
+    }
     groupBoxesMove(change.module, rule.type, rule.group, rule.semester);
     const off: string[] = dates.filter(cancelled).map((date: RuleDate): string => date.day);
+    const back: string[] = dates.filter((date: RuleDate): boolean => change.states?.[date.day] === "open"
+        && skipped.has(date.day)).map((date: RuleDate): string => date.day);
     courseBoxesRead(codeOf(change.module), rule.semester)
-        .filter((box: Box): boolean => box.type === rule.type && box.group === rule.group && box.state === "open"
-            && changeable(box) && off.includes(box.day))
-        .forEach((box: Box): void => boxUniversity(box.id, true));
+        .filter((box: Box): boolean => box.type === rule.type && box.group === rule.group && changeable(box))
+        .forEach((box: Box): void => {
+            if (box.state === "open" && off.includes(box.day))
+                boxUniversity(box.id, true);
+            else if (box.state === "university" && back.includes(box.day))
+                boxUniversity(box.id, false);
+        });
+    if (back.length > 0)
+        numbersRenew(change.module, rule.type, rule.semester);
     return planned;
+}
+
+/**
+ * Changes one session of a group as the university changed it alone, as the form of the group sends it, see
+ * `src/day/series.ts`: the way the standard changes one occurrence, a component of its own with the same `UID`
+ * and its start in its to-do as `RECURRENCE-ID`, see `occurrenceOwn` in `calendar.ts`, its rule untouched, with
+ * the times and the room typed, given back to its to-do once they are its own again, see `occurrencesTidy` there;
+ * then my boxes that go to the group take its sessions anew, see {@link groupBoxesMove}, so my box at that session
+ * follows it, one I pushed, done or skipped staying as it is.
+ * - `file`, `sources`: The plan of the module, and it as the calendar read.
+ * - `group`, `session`: The group and its session, `undefined` for none.
+ * - `at`: Place of the last `#` of its identifier.
+ * - `found`: Its file and its entry, `undefined` for none.
+ * - `day`: Its day.
+ *
+ * @param change - The session, as the form sends it
+ * @throws {Error} - When there is no such module folder, group or session, its times are not well formed, or the plan
+ *   cannot be written
+ */
+export function sessionApply(change: SessionChange): void {
+    folderCheck(change.module);
+    const file: string = skillFileOf(change.module, planEnding);
+    const sources: CalendarSource[] = [{ folder: dirname(file), ending: basename(file) }];
+    const group: Group | undefined = groupsRead(change.module, change.semester)
+        .find((one: Group): boolean => one.rule.type === change.type && one.rule.group === change.group);
+    const session: Session | undefined = group?.sessions.find((one: Session): boolean => one.id === change.id);
+    const at: number = change.id.lastIndexOf("#");
+    const found: [string, Entry] | undefined = session === undefined ? undefined
+        : occurrenceLookup(sources, change.id.slice(0, at), change.id.slice(at + 1));
+    if (found === undefined || !timesRight(change))
+        throw new Error(`No session ${change.id} of group ${change.type} ${change.group} in ${change.module}`);
+    const day: string = dayOfStart(found[1].start);
+    occurrenceOwn(file, found[1]);
+    todoChange(file, found[1], {
+        ...found[1], location: change.location, locationLink: placeLinkOf(change.location, found[1]),
+        day: day, time: instantOf(day, change.start), minutes: minutesOf(change.end) - minutesOf(change.start),
+        deadline: "",
+    }, file);
+    occurrencesTidy(file, found[1].id);
+    groupBoxesMove(change.module, change.type, change.group, change.semester);
 }
 
 /**

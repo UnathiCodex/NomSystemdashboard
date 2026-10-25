@@ -69,7 +69,7 @@ import {
 } from "./boxes.ts";
 import {
     courseRead, courseSeriesRemove, examSet, groupApply, groupMine, groupPut, groupRemove, numbersRenew, repeatApply,
-    seriesApply, weekPick,
+    seriesApply, sessionApply, weekPick,
 } from "./course.ts";
 import { giftWrite } from "./gifts.ts";
 import { noteRead, notesStart, sectionsRead, sectionWrite } from "./note.ts";
@@ -109,7 +109,7 @@ import type { Box, BoxChange, BoxNew } from "./boxes.ts";
 import type { Attendee } from "./calendar.ts";
 import type { PersonRenamed } from "./persons.ts";
 import type {
-    ExamChange, GroupChange, GroupNew, MineChange, PickChange, Planned, RepeatChange, SeriesChange,
+    ExamChange, GroupChange, GroupNew, MineChange, PickChange, Planned, RepeatChange, SeriesChange, SessionChange,
 } from "./course.ts";
 import type { Gift } from "./gifts.ts";
 import type { PlainChange } from "./rules.ts";
@@ -282,6 +282,8 @@ async function fileStream(response: ServerResponse, file: NotesStream, name: str
  * - `POST /api/course/groups`: Makes or changes the group of the body as the form of a series typed it, its slots,
  *   place, tutors, weeks and the dates I cancelled, and sends its sessions after it, see `groupApply` in `course.ts`;
  *   when the body says `dry: true` only sends what it would make, writing nothing, for the preview of the form.
+ * - `POST /api/course/session`: Changes the session of a group of the body alone, as the university changed it,
+ *   its times and its room, see `sessionApply` in `course.ts`.
  * - `DELETE /api/course/groups?module=…&type=…&group=…&semester=…`: Removes the group from the plan of the module.
  * - `DELETE /api/course/series?module=…&type=…&semester=…`: Removes my series of the type from the plan of the module,
  *   but its boxes done, and sends how many of them stay, see `courseSeriesRemove` in `course.ts`.
@@ -563,6 +565,10 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage,
 
     } else if (request.method === "POST" && url.pathname === "/api/course/groups") {
         responseSend(response, 200, groupApply(await json(request) as GroupChange));
+
+    } else if (request.method === "POST" && url.pathname === "/api/course/session") {
+        sessionApply(await json(request) as SessionChange);
+        responseSend(response, 200, null);
 
     } else if (request.method === "DELETE" && url.pathname === "/api/course/groups") {
         groupRemove({

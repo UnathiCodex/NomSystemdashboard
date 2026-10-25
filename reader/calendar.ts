@@ -2354,6 +2354,82 @@ export function seriesDayRemove(file: string, uid: string, recurrence: string): 
 }
 
 /**
+ * Gives a day back to a series that left it out, its `EXDATE` at that start taken out, as a session of a group
+ * marked cancelled is open again, see `groupApply` in `course.ts`; every other line of the file stays as it is.
+ * - `series`: The series in the file, `undefined` for none.
+ * - `excluded`: Its `EXDATE`s.
+ * - `kept`: Those at another start.
+ * - `text`: Lines of the file.
+ * - `place`: Index of the first line of the series and of the line after its last.
+ * - `component`: Lines of the series.
+ *
+ * @param file - Path of the `.ics` file of the series
+ * @param uid - The `UID` of the series
+ * @param recurrence - Start of the day in the series, see {@link Entry}, like `2026-11-10T09:00:00.000Z`
+ * @throws {Error} - When the file lies outside the new system, or holds no such series or day left out
+ */
+export function seriesDayRestore(file: string, uid: string, recurrence: string): void {
+    writeCheck(file);
+    const series: ICAL.Event | undefined =
+        calendarOf(file).series.find((candidate: ICAL.Event): boolean => candidate.uid === uid);
+    const excluded: ICAL.Property[] = series?.component.getAllProperties("exdate") ?? [];
+    const kept: ICAL.Property[] = excluded
+        .filter((property: ICAL.Property): boolean => textOf(property.getFirstValue() as ICAL.Time) !== recurrence);
+    if (kept.length === excluded.length)
+        throw new Error(`No day ${recurrence} left out of the series ${uid}`);
+    const text: FileLines = linesRead(file);
+    const place: [number, number] = componentFind(text.lines, uid);
+    const component: string[] = text.lines.slice(...place);
+    propertyPut(component, "exdate", kept.map((property: ICAL.Property): ICAL.Property =>
+        ICAL.Property.fromString(property.toICALString())));
+    text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(component));
+    linesWrite(file, text);
+}
+
+/**
+ * Ends a series at one of its starts, as a group of the tutorials of a module changed from today on ends at its last
+ * session before today, see `groupApply` in `course.ts`: its rule with `UNTIL` that start, in UTC for a series with
+ * times, as the standard wants it beside a time zone, its `EXDATE`s after it and every occurrence of it changed alone
+ * after it taken out, so nothing of it stays after its end; every other line of the file stays as it is.
+ * - `series`: The series in the file, `undefined` for none.
+ * - `end`: The start it ends at, `undefined` when the series has none such.
+ * - `rule`: Its rule ending there.
+ * - `text`: Lines of the file.
+ * - `place`: Index of the first line of the series and of the line after its last.
+ * - `component`: Lines of the series.
+ *
+ * @param file - Path of the `.ics` file of the series
+ * @param uid - The `UID` of the series
+ * @param last - Start of its last day in the series, see {@link Entry}, like `2026-10-20T08:00:00.000Z`
+ * @throws {Error} - When the file lies outside the new system, or holds no such series or start
+ */
+export function seriesCut(file: string, uid: string, last: string): void {
+    writeCheck(file);
+    const series: ICAL.Event | undefined =
+        calendarOf(file).series.find((candidate: ICAL.Event): boolean => candidate.uid === uid);
+    const end: ICAL.Time | undefined = series === undefined ? undefined : seriesStartOf(series, last);
+    if (series === undefined || end === undefined)
+        throw new Error(`No start ${last} of the series ${uid}`);
+    const rule: ICAL.Recur = (series.component.getFirstPropertyValue("rrule") as ICAL.Recur).clone();
+    rule.until = end.isDate ? end : ICAL.Time.fromJSDate(end.toJSDate(), true);
+    const text: FileLines = linesRead(file);
+    calendarOf(file).entries.filter((entry: Entry): boolean => entry.id === uid && entry.recurrence > last)
+        .flatMap((entry: Entry): [number, number][] => componentsOf(text.lines, entryIdOf(entry)))
+        .sort((first: [number, number], second: [number, number]): number => second[0] - first[0])
+        .forEach(([first, after]: [number, number]): void => {
+            text.lines.splice(first, after - first);
+        });
+    const place: [number, number] = componentFind(text.lines, uid);
+    const component: string[] = text.lines.slice(...place);
+    propertyPut(component, "rrule", [ownPropertyOf("rrule", rule.toString())]);
+    propertyPut(component, "exdate", series.component.getAllProperties("exdate")
+        .filter((property: ICAL.Property): boolean => (property.getFirstValue() as ICAL.Time).compare(end) < 0)
+        .map((property: ICAL.Property): ICAL.Property => ICAL.Property.fromString(property.toICALString())));
+    text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(component));
+    linesWrite(file, text);
+}
+
+/**
  * Gives the single dates of a series besides its rule, its `RDATE`s, each value of each line, the earliest first;
  * a period, `VALUE=PERIOD`, left out, since `ical.js` cannot give its occurrence.
  *
