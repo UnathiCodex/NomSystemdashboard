@@ -50,9 +50,8 @@
    see `.editor-title .block-kind`;
    then the name of the file, like `Foods.md`, its whole path from `NomWorkspace` on as its title,
    as the dialogs show the file of an entry, see `fileShow` in `../day/choices.ts`;
-   then the session the round writes into, like `· 17.10.2026 (Sat) · 21:40 – 22:40`,
-   see `sessionShow` in `round.ts`, after a middle dot as a part of an entry of the day,
-   see `.entry-parted` in `../day/day.css`;
+   then the session the round writes into, like `17.10.2026 (Sat) · 21:40 – 22:40`,
+   see `sessionShow` in `round.ts`, right after the type word, without a dot before it;
    at the right, a gap apart, whether the changes are saved, like `Saved 20:41` or `Not saved`,
    then the head, see `.editor-head`;
    all in the grey of quiet text, as big as the text of
