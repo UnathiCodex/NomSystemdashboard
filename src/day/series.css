@@ -133,7 +133,7 @@
 /* A row of a box, see `rows.ts`, the same in the list of a series and in a card of the course, see
    `../editor/course.css`: on its first line its number, or of an exam its kind, in a column as wide in every row
    as `Endterm`, so numbers and kinds take one width, its day with its weekday, as wide in every row as
-   `30.12.2026 (Wed)`, grey its group, like `05 ⌄`, its times and place and what more there is to say, and at its
+   `30.12.2026 (Wed)` and a little more, so its group stands clearly apart, grey its group, like `05 ⌄`, its times and place and what more there is to say, and at its
    right edge its actions or its state, a quarter rem apart as on a box, packed at the right of a column as wide in every
    row as four actions; all on
    one line, room below it, so two rows stand apart.
@@ -141,7 +141,7 @@
 .series-row {
     --series-number: 2.75rem;
     display: grid;
-    grid-template-columns: var(--series-number) 7.25rem minmax(0, 1fr) 7rem;
+    grid-template-columns: var(--series-number) 8rem minmax(0, 1fr) 7rem;
     column-gap: 0.625rem;
     align-items: baseline;
     padding-bottom: 1.125rem;
