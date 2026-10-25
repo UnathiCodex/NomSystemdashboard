@@ -84,6 +84,21 @@ button.group-name:is(:hover, :has(+ .menu:popover-open)) {
     color: var(--text-muted);
 }
 
+/* The pin of the group pinned, which takes it back, see `groupMenuOf` in `groups.ts`: lighter under the pointer,
+   softly as every hover, see `--hover-in` in `../variants.css` */
+.group-unpin {
+    cursor: pointer;
+}
+
+.group-unpin > svg.lucide {
+    transition: color var(--hover-out);
+}
+
+.group-unpin:hover > svg.lucide {
+    color: var(--text-main);
+    transition: color var(--hover-in);
+}
+
 .group-pin + span,
 .group-detail:has(+ .group-tutors) {
     margin-right: 1.25rem;

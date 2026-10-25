@@ -119,10 +119,10 @@
     grid-column: -2;
 }
 
-/* The list in the dialog, of my series and of a group alike, a breath of room below its last line, so it stands
-   apart from the buttons */
+/* The list in the dialog, of my series and of a group alike, below its last line as much room as below a row, see
+   `.series-row`, so the frame of `Entries` closes as far below its last line as the rows stand apart */
 #series .series-list {
-    margin-bottom: 2.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .series-boxes {

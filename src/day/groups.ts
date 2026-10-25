@@ -15,7 +15,7 @@
  * and nothing in the menu opens the box of its row or a person.
  * The menu of the heading, see {@link pinnedMenuOf}, names the group pinned with the pin before it, like `Group 06`,
  * `No group yet` while none is, and holds every group of the type, the one pinned checked: a pick pins the group, see
- * {@link pinPick}; while one is pinned, `Unpin` below them takes it back, see {@link unpinPick}. The dialog of a box and its row name its group, see {@link boxGroupOf}: one that may still go
+ * {@link pinPick}; while one is pinned, a click on its pin takes it back, see {@link unpinPick}. The dialog of a box and its row name its group, see {@link boxGroupOf}: one that may still go
  * to another group, see {@link pickable}, in the menu of the session of each group in its week not over yet, the group
  * of the box checked, a pick moving only that week's box, see {@link weekPick}; any other box its group grey,
  * like `Group 03`, without menu. At the right end of every group the series icon ⟳, the same as after the times
@@ -47,7 +47,7 @@ import { elementOf } from "../food/foods.ts";
 import { iconOf } from "../icons.ts";
 import { menuAnchor, menuItemOf } from "../menu.ts";
 import { peopleOf } from "../persons.ts";
-import { Check, ChevronDown, Pin, PinOff, Repeat } from "lucide";
+import { Check, ChevronDown, Pin, Repeat } from "lucide";
 import "./groups.css";
 
 import type { Box } from "./boxes.ts";
@@ -291,13 +291,14 @@ function groupPartsOf(group: Group, times: string): [string, HTMLElement, HTMLEl
  * of its own, so the groups stand one below the other; a click on a group closes the menu and picks it, but for the
  * one checked; at the right end of each group its series icon, which opens the group to change it, see
  * {@link seriesIconOf}; nothing in it opens the box of its row; while it has a way to take the group pinned back,
- * `Unpin` with the pin crossed out below the groups.
+ * a click on that pin does so, `Unpin` its tooltip.
  * - `place`: The button with its menu.
  * - `button`: The button.
  * - `menu`: The menu.
  * - `day`: The day of the groups so far, empty before the first.
  * - `line`: The item of a group.
  * - `mark`: The pin of the one pinned, empty for the others.
+ * - `release`: Takes the group pinned back by its pin, the group itself not picked.
  *
  * @param words - What the button names, like `Group 06` or `No group yet`, the pin before the group pinned
  * @param items - The groups, by day and time
@@ -327,6 +328,24 @@ function groupMenuOf(words: (string | Node)[], items: Item[], pinned: string,
         const mark: HTMLElement = elementOf("span", "group-pin", "");
         if (item.group.rule.group === pinned)
             mark.append(iconOf(Pin));
+        if (item.group.rule.group === pinned && unpin !== undefined) {
+            const release: (event: Event) => void = (event: Event): void => {
+                event.stopPropagation();
+                event.preventDefault();
+                menu.hidePopover();
+                unpin();
+            };
+            mark.classList.add("group-unpin");
+            mark.title = "Unpin";
+            mark.setAttribute("role", "button");
+            mark.setAttribute("aria-label", "Unpin");
+            mark.tabIndex = 0;
+            mark.addEventListener("click", release);
+            mark.addEventListener("keydown", (event: KeyboardEvent): void => {
+                if (event.key === "Enter" || event.key === " ")
+                    release(event);
+            });
+        }
         line.classList.add("group-item");
         line.classList.toggle("menu-item-blank", !item.checked);
         line.append(mark, elementOf("span", "", name), details, tutors ?? elementOf("span", "", ""),
@@ -339,11 +358,6 @@ function groupMenuOf(words: (string | Node)[], items: Item[], pinned: string,
         day = item.day;
         menu.append(line);
     });
-    if (unpin !== undefined)
-        menu.append(menuItemOf(PinOff, "Unpin", (): void => {
-            menu.hidePopover();
-            unpin();
-        }));
     place.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
     place.append(button, menu);
     return place;
@@ -354,7 +368,7 @@ function groupMenuOf(words: (string | Node)[], items: Item[], pinned: string,
  * the group pinned with the pin before it, like `Group 06`, `No group yet` while none is, its items every group
  * of the type by the weekday and times of its first slot, below its weekday, like `Tue` and `10:00 – 12:00`, the one
  * pinned marked by its pin alone, no check, since a series is no one week, a pick of another pinning it,
- * see {@link pinPick}, and while one is pinned `Unpin` below them, see {@link unpinPick}; each with its series icon, which opens it to change
+ * see {@link pinPick}, and while one is pinned its pin takes it back, see {@link unpinPick}; each with its series icon, which opens it to change
  * it, see {@link groupOpenOf}, or as the form of a series asks, see `groupPickOf` in `./series.ts`.
  * - `pinned`: The group pinned, empty for none.
  * - `keyOf`: Gives the weekday and start of a group, which order the groups, like `2 10:00`, `8` for one without slot.
