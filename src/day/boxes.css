@@ -209,14 +209,12 @@
 }
 
 /* Cancelled box, skipped by me or cancelled by the university,
-   like a lecture that does not take place, and a box on a day it was pushed from,
-   and an open one whose day is over, which counts as skipped, see `boxElementOf` in `boxes.ts`:
+   like a lecture that does not take place, and a box on a day it was pushed from:
    only faded, never struck through, all alike;
    its icon says which, see `.box-state` */
 .box-dropped,
 .box-university,
-.box-pushed,
-.box-over {
+.box-pushed {
     opacity: 0.55;
 }
 

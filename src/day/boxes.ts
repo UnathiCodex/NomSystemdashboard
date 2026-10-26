@@ -877,9 +877,8 @@ function tutorialIs(box: Box): boolean {
  * in the list carried along with its own day and without how near its deadline is,
  * since its deadline line names it.
  * An open box without deadline whose day is over counts as skipped, as in the list of a module,
- * see `overIs` in `../editor/course.ts`:
- * not carried along, greyed as `box-over`, the cross of a skipped box in place of its actions,
- * nothing written, its dialog still logging it;
+ * see `overIs` in `../editor/course.ts`, and is not carried along, nothing written,
+ * yet keeps its actions, so I still log or skip it, see `boxActionsOf` in `actions.ts`;
  * moving it by its dialog to today or later carries it along again,
  * see `carriedOf` in `reader/boxes.ts`.
  * One carried along stands open on its own day instead, with its actions,
@@ -892,7 +891,6 @@ function tutorialIs(box: Box): boolean {
  * so its actions or its state stand in the middle of all of them,
  * see `.box-actions` in `boxes.css`.
  * - `element`: The box.
- * - `over`: Whether it is open, without deadline, its day over and not carried along, so skipped.
  * - `body`: Its lines.
  * - `end`: Its actions or its state at its right.
  *
@@ -904,12 +902,6 @@ function tutorialIs(box: Box): boolean {
  */
 function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTMLElement {
     const element: HTMLElement = entryPartOf("div", `box box-${box.state}`, []);
-    const over: boolean =
-        box.state === "open" &&
-        box.deadline === "" &&
-        box.day < calendarTodayOf() &&
-        box.moved === null;
-    element.classList.toggle("box-over", over);
     const body: HTMLElement = entryPartOf(
         "div",
         "box-body",
@@ -926,7 +918,7 @@ function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTML
             boxClick(calendar, box).catch((error: unknown): void => console.error(error));
     });
     const end: HTMLElement =
-        box.state === "open" && !over ? actionsOf(calendar, box) : stateOf(calendar, box);
+        box.state === "open" ? actionsOf(calendar, box) : stateOf(calendar, box);
     element.append(body, end);
     return element;
 }
