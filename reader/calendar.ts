@@ -47,7 +47,7 @@ import { createHash, randomUUID } from "node:crypto";
 import ICAL from "ical.js";
 import { mailOf } from "./persons.ts";
 import { labelOf, linkForm, platformOfLink } from "./places.ts";
-import { modulesRoot, vaultPathOf, writeAllowed } from "./sources.ts";
+import { calendarRoot, modulesRoot, vaultPathOf, writeAllowed } from "./sources.ts";
 
 import type { CalendarSource } from "./sources.ts";
 
@@ -1486,13 +1486,125 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
 }
 
 /**
+ * A summary of an event or a to-do of a file, see {@link summariesOf}.
+ *
+ * - `index`: Index of its line `SUMMARY` in the lines of the file.
+ * - `category`: Category of the event or the to-do, its `CATEGORIES`, empty for none.
+ * - `base`: The summary without what stands in round brackets at its end,
+ *   like `IN2028_BusinessAnalyticsMachineLearning` of `IN2028_BusinessAnalyticsMachineLearning (VO)`.
+ * - `link`: Its link, the `ALTREP`, empty for none.
+ */
+type Summed = {
+    index: number;
+    category: string;
+    base: string;
+    link: string;
+};
+
+/**
+ * Whether {@link linesWrite} spreads a link now, so the files it writes for that spread no further.
+ */
+let spreading: boolean = false;
+
+/**
+ * Gives a summary without what stands in round brackets at its end, which a link is shared by,
+ * see {@link linesWrite}.
+ *
+ * @param summary - Summary, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
+ * @returns Summary like `IN2028_BusinessAnalyticsMachineLearning`
+ */
+function summaryBaseOf(summary: string): string {
+    return summary.replace(/\s*\([^()]*\)\s*$/, "").trim();
+}
+
+/**
+ * Gives the summaries of the events and to-dos of the lines of a file, see {@link Summed}.
+ * - `found`: The summaries found so far.
+ * - `category`, `index`, `depth`: Category and line `SUMMARY` of the event being read,
+ *   and how many components the line is in.
+ * - `property`: The line `SUMMARY` read.
+ *
+ * @param lines - Lines of the file, unfolded
+ * @returns Its summaries
+ */
+function summariesOf(lines: string[]): Summed[] {
+    const found: Summed[] = [];
+    let category: string = "";
+    let index: number = -1;
+    let depth: number = 0;
+    lines.forEach((line: string, at: number): void => {
+        if (line.startsWith("BEGIN:")) depth++;
+        if (depth === 2 && (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO"))
+            [category, index] = ["", -1];
+        else if (depth === 2 && line.startsWith("CATEGORIES:"))
+            category = line.slice("CATEGORIES:".length);
+        else if (depth === 2 && /^SUMMARY[;:]/.test(line)) index = at;
+        else if (depth === 2 && (line === "END:VEVENT" || line === "END:VTODO") && index >= 0) {
+            const property: ICAL.Property = ICAL.Property.fromString(lines[index]);
+            found.push({
+                index: index,
+                category: category,
+                base: summaryBaseOf(String(property.getFirstValue() ?? "")),
+                link: String(property.getParameter("altrep") ?? ""),
+            });
+        }
+        if (line.startsWith("END:")) depth--;
+    });
+    return found;
+}
+
+/**
+ * Gives every `.ics` file of plan and log, all in {@link calendarRoot}.
+ *
+ * @returns Their paths
+ */
+function calendarFilesOf(): string[] {
+    return readdirSync(calendarRoot, { recursive: true, encoding: "utf8" })
+        .filter((path: string): boolean => path.endsWith(".ics"))
+        .map((path: string): string => join(calendarRoot, path));
+}
+
+/**
+ * Gives the link every entry and box of a category with the same summary shares,
+ * the summary counted without what stands in round brackets at its end, see {@link linesWrite};
+ * never the link of a platform online of an older entry, see {@link onlineOf}.
+ *
+ * @param category - Category, like `Event`
+ * @param summary - Summary, like `TUM Speaker Series`
+ * @returns The link, `undefined` when none of them has one
+ */
+export function sharedLinkOf(category: string, summary: string): string | undefined {
+    const base: string = summaryBaseOf(summary);
+    for (const file of calendarFilesOf()) {
+        const found: Summed | undefined = summariesOf(linesRead(file).lines).find(
+            (summed: Summed): boolean =>
+                summed.category === category &&
+                summed.base === base &&
+                summed.link !== "" &&
+                !(linkForm.test(summed.link) && platformOfLink(summed.link) !== undefined),
+        );
+        if (found !== undefined) return found.link;
+    }
+    return undefined;
+}
+
+/**
  * Writes {@link FileLines} into an `.ics` file, creating its folders when missing,
  * its events and to-dos in their order, see {@link componentsSorted}.
+ * A summary written anew in plan or log, with a link or another one,
+ * gives its link to every entry and box of its category with the same summary,
+ * counted without what stands in round brackets at its end,
+ * like `IN2028_BusinessAnalyticsMachineLearning (VO)` and `… (TU)`, in every file,
+ * so one summary has one link everywhere and a link changed once changes for all;
+ * a summary without link or with the link of a platform online gives none, see {@link onlineOf}.
+ * - `before`: The lines of the file before, none for a new file.
+ * - `changed`: Its summaries written anew.
  *
  * @param file - Path of the `.ics` file
  * @param text - Lines with their line break
  */
 function linesWrite(file: string, text: FileLines): void {
+    const before: string[] = existsSync(file) ? linesRead(file).lines : [];
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(
         file,
@@ -1503,6 +1615,48 @@ function linesWrite(file: string, text: FileLines): void {
             (follower: (module: string, kinds: [string, string][]) => void): void =>
                 follower(basename(file).replace(/_(Plan|Log)\.ics$/, ""), kindsOf(text.lines)),
         );
+    if (spreading || !file.startsWith(`${calendarRoot}/`)) return;
+    const changed: Summed[] = summariesOf(text.lines).filter(
+        (summed: Summed): boolean =>
+            summed.category !== "" &&
+            summed.link !== "" &&
+            !before.includes(text.lines[summed.index]) &&
+            !(linkForm.test(summed.link) && platformOfLink(summed.link) !== undefined),
+    );
+    if (changed.length === 0) return;
+    spreading = true;
+    try {
+        calendarFilesOf().forEach((path: string): void => linkSpread(path, changed));
+    } finally {
+        spreading = false;
+    }
+}
+
+/**
+ * Gives the summaries of a file the links of summaries written anew, see {@link linesWrite},
+ * each to those of its category with the same summary, counted without its brackets;
+ * writes the file only when one of them changed, and only where the reader may write.
+ * - `text`: Lines of the file.
+ * - `spread`: Whether a link changed.
+ *
+ * @param file - Path of the `.ics` file
+ * @param changed - The summaries written anew
+ */
+function linkSpread(file: string, changed: Summed[]): void {
+    if (!writeAllowed(file)) return;
+    const text: FileLines = linesRead(file);
+    let spread: boolean = false;
+    summariesOf(text.lines).forEach((summed: Summed): void => {
+        const rule: Summed | undefined = changed.find(
+            (one: Summed): boolean => one.category === summed.category && one.base === summed.base,
+        );
+        if (rule === undefined || rule.link === summed.link) return;
+        const property: ICAL.Property = ICAL.Property.fromString(text.lines[summed.index]);
+        property.setParameter("altrep", rule.link);
+        text.lines[summed.index] = property.toICALString();
+        spread = true;
+    });
+    if (spread) linesWrite(file, text);
 }
 
 /**

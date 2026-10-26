@@ -218,6 +218,7 @@ let skilling: Skilling = {
     otherModules: [],
     folders: {},
     paths: {},
+    links: {},
     types: [],
 };
 
@@ -390,7 +391,7 @@ function documentPathsOf(links: Link[]): string[] {
  * @returns The link, empty while no skill is picked
  */
 export function skillPathOf(): string {
-    return skilling.paths[picks.module] ?? "";
+    return skilling.links[picks.module] ?? "";
 }
 
 /**
@@ -563,6 +564,7 @@ async function moduleAdd(text: string): Promise<string | null> {
         otherModules: [...skilling.otherModules, code],
         folders: { ...skilling.folders, [code]: folder },
         paths: { ...skilling.paths, [code]: `${modulesFolder}/${folder}` },
+        links: { ...skilling.links, [code]: `${modulesFolder}/${folder}` },
     };
     return code;
 }
@@ -1315,9 +1317,8 @@ export async function skillPairOf(
 /**
  * Gives what a skill and a type are as the reader writes them, see `skillTitleOf` and `skillLinkOf`
  * in `reader/documents.ts`: the title they give,
- * like `IN2028_BusinessAnalyticsMachineLearning (VO)`, the folder they link,
- * the folder of the skill and of the material of the type in the semester, like
- * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`, and the plan their boxes go into, like
+ * like `IN2028_BusinessAnalyticsMachineLearning (VO)`, the link of the skill, whatever the type,
+ * like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`, and the plan their boxes go into, like
  * `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
  * - `path`: The folder of the skill, empty for none.
  * - `name`: Its last part, the skill by its name without folder.
@@ -1331,17 +1332,7 @@ export function skillNamesOf(picked: ModuleType): { title: string; link: string;
     if (name === "") return { title: "", link: "", file: "" };
     return {
         title: picked.type === "" ? name : `${name} (${picked.type})`,
-        link: [
-            path,
-            ...(picked.type === ""
-                ? []
-                : [
-                      materialFolders[picked.type] ?? "",
-                      `TUM_${skillSemesterOf(semesterDay || calendarTodayOf())}`,
-                  ]),
-        ]
-            .filter((part: string): boolean => part !== "")
-            .join("/"),
+        link: skilling.links[picked.module] ?? path,
         file: `NomManageplannings/NomManagecalendar/${/^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
     };
 }
@@ -1480,6 +1471,7 @@ export async function skillSave(
         id,
         {
             title: fields.title,
+            titleLink: fields.titleLink,
             type: picks.type,
             module: picks.module,
             semester: fields.semester,

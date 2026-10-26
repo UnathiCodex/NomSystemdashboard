@@ -146,6 +146,7 @@ import {
     documentLinksOf,
     linksOf,
     skillFolderOf,
+    skillLinkOf,
     skillTitleOf,
     titleOf,
 } from "./documents.ts";
@@ -431,11 +432,11 @@ export type SkillModule = {
  * - `folders`: The whole name of the folder of each of them by its name,
  *   which the Skill picker shows, like `IN2028_BusinessAnalyticsMachineLearning` for `IN2028`,
  *   or `WokFlow` for a project, see `skillTitleOf` in `documents.ts`.
- * - `paths`: The folder of each of them from `NomWorkspace` by its name,
- *   which a skill entry links as the `ALTREP` of its `SUMMARY`
- *   and the dialog shows grey below the skill picked, like
+ * - `paths`: The folder of each of them from `NomWorkspace` by its name, like
  *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
  *   see `skillFolderOf` in `documents.ts`.
+ * - `links`: The link of each of them by its name, one for all its entries and boxes,
+ *   which the dialog fills in below the skill picked, see `skillLinkOf` in `documents.ts`.
  * - `types`: Types of a skill entry, like `VO`.
  */
 export type Skilling = {
@@ -444,6 +445,7 @@ export type Skilling = {
     otherModules: string[];
     folders: { [name: string]: string };
     paths: { [name: string]: string };
+    links: { [name: string]: string };
     types: string[];
 };
 
@@ -467,6 +469,8 @@ export type AttemptNew = {
  *
  * - `title`: Its title, `SUMMARY`, always the one its skill and type give it,
  *   see `titleOf` in `documents.ts`.
+ * - `titleLink`: Its link, typed, one for all entries of its skill;
+ *   left out or empty, the one they share, see `titleOf` in `documents.ts`.
  * - `type`: Its type, one of the types of `categories.ts`, like `VO`, empty for none.
  * - `module`: Name of its skill: the code of any module folder, like `IN2028`,
  *   or a project of the semester, like `WokFlow`.
@@ -493,6 +497,7 @@ export type AttemptNew = {
  */
 export type SkillEntryNew = Partial<Online> & {
     title: string;
+    titleLink?: string;
     type: string;
     module: string;
     semester: string;
@@ -1566,6 +1571,12 @@ export function skillingRead(): Skilling {
             [...skills, ...others].map((name: string): [string, string] => [
                 name,
                 skillFolderOf(name) ?? "",
+            ]),
+        ),
+        links: Object.fromEntries(
+            [...skills, ...others].map((name: string): [string, string] => [
+                name,
+                skillLinkOf(name),
             ]),
         ),
         types: skillTypes,

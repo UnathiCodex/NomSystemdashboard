@@ -191,8 +191,9 @@ export type SkillModule = {
  * - `folders`: The whole name of the folder of each of them by its name,
  *   which the Skill picker shows, like `IN2028_BusinessAnalyticsMachineLearning` for `IN2028`.
  * - `paths`: The folder of each of them from `NomWorkspace`,
- *   which a skill entry links, shown grey below the skill picked,
  *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`.
+ * - `links`: The link of each of them, one for all its entries and boxes,
+ *   shown below the skill picked, like `NomManageplannings` of `NomMasterplannings`.
  * - `types`: Types of a skill entry, like `VO`.
  */
 export type Skilling = {
@@ -201,6 +202,7 @@ export type Skilling = {
     otherModules: string[];
     folders: { [name: string]: string };
     paths: { [name: string]: string };
+    links: { [name: string]: string };
     types: string[];
 };
 
@@ -257,6 +259,8 @@ export type AttemptNew = {
  * A new skill entry of the log to send from the entry by category; an empty field is not written.
  *
  * - `title`: Its title, always the one its skill and type give it.
+ * - `titleLink`: Its link, typed, one for all entries of its skill;
+ *   left out or empty, the one they share, see `titleOf` in `documents.ts`.
  * - `type`: Its type, like `VO`, empty for none.
  * - `module`: Name of its skill, a module code like `IN2028` or a project like `WokFlow`.
  * - `semester`: Its semester, like `2026W`:
@@ -276,6 +280,7 @@ export type AttemptNew = {
  */
 export type SkillEntryNew = Partial<Online> & {
     title: string;
+    titleLink?: string;
     type: string;
     module: string;
     semester: string;

@@ -1473,10 +1473,7 @@ export function courseRead(module: string, named: string): Course {
         groups: groups,
         folders: semesterFoldersRead(folder, semester),
         links: Object.fromEntries(
-            skillTypes.map((type: string): [string, string] => [
-                type,
-                skillLinkOf(codeOf(folder), type, semester),
-            ]),
+            skillTypes.map((type: string): [string, string] => [type, skillLinkOf(codeOf(folder))]),
         ),
         file: vaultPathOf(skillFileOf(folder, planEnding)),
     };

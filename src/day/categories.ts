@@ -189,6 +189,7 @@ import {
     skillFolderNameOf,
     skillLinksRead,
     skillModuleType,
+    skillPathOf,
     skillPathShow,
     skillSave,
     skillSemesterOf,
@@ -511,11 +512,12 @@ let summaryOpen: boolean = false;
 let skillGiven: string = "";
 
 /**
- * Pencil beside the summary, its link below it and the field of its text as shown,
- * see {@link summaryPartsOf};
+ * Pencil beside the summary, its link below it, the field of its text and that of its link
+ * as shown, see {@link summaryPartsOf};
  * `null` while no summary shows them.
  */
-let summaryShown: [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement] | null = null;
+let summaryShown:
+    [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement, HTMLInputElement] | null = null;
 
 /**
  * Category picked, `null` before picking.
@@ -1199,14 +1201,22 @@ function partsOf(field: Field): HTMLElement {
  * which opens in this window, being NomSystem's own, see `skillPathShow` in `skill.ts`;
  * nothing while it has none;
  * the pencil beside the summary while it names something, see {@link titleRead};
- * the field of its text the summary picked, while I don't type in it.
- * - `pencil`, `link`, `text`: Pencil, link and text of the summary as shown.
+ * the field of its text the summary picked, and that of its link the link shown,
+ * filled in already for a skill, while I don't type in them.
+ * - `pencil`, `link`, `text`, `address`: Pencil, link, text and field of the link as shown.
  */
 function summaryPartsShow(): void {
     if (summaryShown === null) return;
-    const [pencil, link, text]: [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement] =
-        summaryShown;
+    const [pencil, link, text, address]: [
+        HTMLButtonElement,
+        HTMLAnchorElement,
+        HTMLInputElement,
+        HTMLInputElement,
+    ] = summaryShown;
     if (text !== document.activeElement) text.value = values.title;
+    if (address !== document.activeElement)
+        address.value =
+            summaryLink === "" && chosen?.name === skillName ? skillPathOf() : summaryLink;
     pencil.hidden = titleRead(valuesRead().title) === "";
     if (chosen?.name === skillName && summaryLink === "") {
         skillPathShow(link);
@@ -1303,7 +1313,7 @@ function summaryPartsOf(
     pencil.addEventListener("click", (): void => {
         summaryChange(parts);
     });
-    summaryShown = [pencil, link, text];
+    summaryShown = [pencil, link, text, address];
     summaryPartsShow();
     return [pencil, link, parts];
 }

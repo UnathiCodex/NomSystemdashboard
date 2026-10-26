@@ -82,6 +82,7 @@ import {
     entryChange,
     entryFind,
     propertiesPut,
+    sharedLinkOf,
     skillName,
 } from "./calendar.ts";
 import {
@@ -91,7 +92,6 @@ import {
     contentTypeOf,
     moduleContentsRead,
     moduleFolderOf,
-    semesterFoldersRead,
 } from "./notes.ts";
 import {
     moduleIs,
@@ -105,7 +105,7 @@ import {
 
 import type { Stats } from "node:fs";
 import type { Entry, EntryFields, Link } from "./calendar.ts";
-import type { MaterialFolder, ModuleContents, NotesFile } from "./notes.ts";
+import type { NotesFile } from "./notes.ts";
 
 /**
  * A fingerprint as computed, with what tells whether its file changed since.
@@ -229,51 +229,17 @@ export function skillTitleOf(code: string, type: string): string {
 }
 
 /**
- * Gives the link of a skill entry, the `ALTREP` of its `SUMMARY`,
- * which names its skill and its type, see `skillPartsOf` in `calendar.ts`: the folder of its skill,
- * see {@link skillFolderOf},
- * for a module with a type on into the folder of the material of that type,
- * also while the module has none yet, see `materialFoldersOf` in `notes.ts`,
- * and in it into the folder of the semester of the entry while it is there, also empty,
- * see `semesterFoldersRead` in `notes.ts`, else as far as the module holds files there,
- * see `moduleContentsRead` in `notes.ts`,
- * like `NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W` for a lecture
- * of `2026W`, or `NomSkillingmodules/MGT1372_…/VO_UniversityLectureLessons`
- * while that module has no folder of `2026W` there;
- * a project its folder alone, without type;
- * the same link the dialog shows below the skill, see `skillPathOf` in `src/day/skill.ts`.
- * - `folder`: Folder of the skill, empty for none.
- * - `contents`: What the module folder holds.
- * - `material`: Folder of the material of the type, like `VO_UniversityLectureLessons`.
- * - `inSemester`: Path of a file in the folder of the semester there,
- *   parted by `/`, `undefined` for none.
+ * Gives the link of a skill, the `ALTREP` of the `SUMMARY` of each of its entries and boxes:
+ * the one they share, see `sharedLinkOf` in `calendar.ts`, else the folder of the skill,
+ * see {@link skillFolderOf}, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`;
+ * the same link the dialog fills in below the skill, see `skillPathOf` in `src/day/skill.ts`.
  *
  * @param code - Name of the skill, like `IN2028` or `WokFlow`
- * @param type - Its type, like `VO`, empty for none, like my own learning
- * @param semester - Its semester, like `2026W`, empty for none
- * @returns Path like `NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W`
- *   or `NomProgramprojects/…/WokFlow`, empty for no skill
+ * @returns Link like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`
+ *   or `NomManageplannings`, empty for no skill
  */
-export function skillLinkOf(code: string, type: string, semester: string): string {
-    const folder: string = skillFolderOf(code) ?? "";
-    if (type === "" || !moduleIs(folder)) return folder;
-    const inner: MaterialFolder | undefined =
-        semester === ""
-            ? undefined
-            : semesterFoldersRead(folder.slice(modulesFolder.length + 1), semester)[type];
-    if (inner?.exists === true) return `${folder}/${inner.path}`;
-    const contents: ModuleContents = moduleContentsRead(folder.slice(modulesFolder.length + 1));
-    const material: string = contents.materials[type];
-    const inSemester: string[] | undefined = contents.documents
-        .map((path: string): string[] => path.split("/"))
-        .find(
-            (parts: string[]): boolean =>
-                semester !== "" &&
-                parts.length > 2 &&
-                parts[0] === material &&
-                /\d{4}[WS]/.exec(parts[1])?.[0] === semester,
-        );
-    return [folder, material, ...(inSemester?.slice(1, 2) ?? [])].join("/");
+export function skillLinkOf(code: string): string {
+    return sharedLinkOf(skillName, skillTitleOf(code, "")) ?? skillFolderOf(code) ?? "";
 }
 
 /**
@@ -316,9 +282,9 @@ export function titleOf(
     )
         .replace(/[\r\n]+/g, " ")
         .trim();
-    if (link === "" && fields.category === skillName)
-        return [title, skillLinkOf(fields.module, fields.type, fields.semester)];
-    return [title, link];
+    if (link !== "") return [title, link];
+    if (fields.category === skillName) return [title, skillLinkOf(fields.module)];
+    return [title, sharedLinkOf(fields.category, title) ?? ""];
 }
 
 /**
@@ -581,7 +547,7 @@ function folderRepair(file: string, entry: Entry): void {
     const fields: EntryFields = {
         ...entry,
         title: entry.title === given ? skillTitleOf(entry.module, entry.type) : entry.title,
-        titleLink: skillLinkOf(entry.module, entry.type, entry.semester),
+        titleLink: skillFolderOf(entry.module) ?? entry.titleLink,
         start: new Date(entry.start),
         end: new Date(entry.end),
     };
