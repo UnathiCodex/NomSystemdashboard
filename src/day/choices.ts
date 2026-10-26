@@ -1023,8 +1023,8 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
 /**
  * Shows the file of the entry of a dialog, the box of a plan, the entry of a log,
  * a series or a birthday, at the left of its buttons, small and grey,
- * see `.panel-file` in `day.css`: only its name after `…/`, since it is no whole path,
- * like `…/WI1059_FinancialAccounting_Plan.ics`,
+ * see `.panel-file` in `day.css`: only its folder and its name after `…/`,
+ * since it is no whole path, like `…/Modules/WI1059_FinancialAccounting_Plan.ics`,
  * so it stays on one line beside the buttons, its whole path from `NomWorkspace` on as its title,
  * like `NomManageplannings/NomManagecalendar/Modules/WI1059_FinancialAccounting_Plan.ics`;
  * a link that opens it in the editor of my new system,
@@ -1038,7 +1038,7 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
  * @param file - Path of the file from `NomWorkspace` on, empty while not known
  */
 export function fileShow(link: HTMLAnchorElement, file: string): void {
-    link.textContent = pathBreakableOf(`…/${file.slice(file.lastIndexOf("/") + 1)}`);
+    link.textContent = pathBreakableOf(`…/${file.split("/").slice(-2).join("/")}`);
     link.title = file;
     link.href = `/edit?file=${encodeURIComponent(file.replace(/^NomManageplannings\//, ""))}`;
     link.hidden = file === "";
