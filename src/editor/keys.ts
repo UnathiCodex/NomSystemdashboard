@@ -1110,6 +1110,48 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
 );
 
 /**
+ * Takes back the empty lines typing wrote below a paragraph of its own, see {@link paragraphTyping},
+ * when Backspace leaves its line empty below an empty line, its text gone,
+ * not only the `-` of a point or the `>` of a quote, see {@link markerBackward}:
+ * the empty lines right below it go, up to the next line with text,
+ * so the air stands as before the typing, two empty lines, the cursor on the lower one.
+ * - `line`: The line of the cursor before the change.
+ * - `doc`: Text after the change.
+ * - `now`: The line of the cursor after it.
+ * - `next`: A line below it, at last the first one with text, `null` for none.
+ *
+ * @returns Filter of the changes of the editor
+ */
+const paragraphUntyped: Extension = EditorState.transactionFilter.of(
+    (transaction: Transaction): TransactionSpec | readonly TransactionSpec[] => {
+        if (!transaction.docChanged || !transaction.isUserEvent("delete.backward"))
+            return transaction;
+        const line: Line = transaction.startState.doc.lineAt(
+            transaction.startState.selection.main.head,
+        );
+        const doc: Text = transaction.newDoc;
+        const now: Line = doc.lineAt(transaction.newSelection.main.head);
+        if (
+            /^[ \t>]*$/.test(line.text) ||
+            emptyPointRule.test(line.text) ||
+            codeIs(transaction.startState, line) ||
+            !/^[ \t]*$/.test(now.text) ||
+            now.number === 1 ||
+            !/^[ \t]*$/.test(doc.line(now.number - 1).text)
+        )
+            return transaction;
+        let next: Line | null = null;
+        for (let number: number = now.number + 1; number <= doc.lines; number++) {
+            next = doc.line(number);
+            if (!/^[ \t]*$/.test(next.text)) break;
+            next = null;
+        }
+        if (next === null || next.number === now.number + 1) return transaction;
+        return [transaction, { changes: { from: now.to, to: next.from - 1 }, sequential: true }];
+    },
+);
+
+/**
  * Finds the point an empty line between two points of a list is the air of,
  * as `./preview.ts` draws it, see `itemLook` there: the innermost point of the nearest line
  * with text above it whose `li` reaches on over the empty lines up to its next point,
@@ -1687,6 +1729,7 @@ const blanksLeft: Extension = Prec.high(
 export const markdownKeys: Extension = [
     typingLine,
     paragraphTyping,
+    paragraphUntyped,
     blanksLeft,
     Prec.high(
         keymap.of([
