@@ -65,6 +65,7 @@
  * - `./shared.ts`: Sends an entry I log with Vu and every change of my foods,
  *   meals and places to Vu's server by SSH, and takes in what Vu's server sends me
  * - `./page.ts`: Gives out the files of the page through Vite
+ * - `./theme.ts`: Reads the colors of my code blocks from the theme of my editor
  */
 
 import { createServer } from "node:http";
@@ -177,6 +178,7 @@ import { deviceReport } from "./devices.ts";
 import { changesSend, changesWatch } from "./changes.ts";
 import { attendeesRead, entryShare, listShare, sharedStart } from "./shared.ts";
 import { pageCreate } from "./page.ts";
+import { codeColorsRead } from "./theme.ts";
 
 import type { IncomingMessage, ServerResponse, Server } from "node:http";
 import type { ViteDevServer } from "vite";
@@ -432,6 +434,8 @@ async function fileStream(
  *   Sends every module with its chapters and notes and the semester it stands under,
  *   in the order of the menu of the scripts view, those of the semester first.
  * - `GET /api/notes/note?path=…`: Sends a note with the files its links lead to.
+ * - `GET /api/theme`: Sends the colors of my code blocks from the theme of my editor,
+ *   see `codeColorsRead` in `theme.ts`.
  * - `GET /api/notes/file?path=…`: Sends a file of my modules, like an image of a note.
  * - `GET /api/notes/stream?path=…`: Streams a file of my modules,
  *   like a PDF of a folder, piece by piece as it is read, read only, see `fileOpen` in `notes.ts`.
@@ -740,6 +744,8 @@ async function requestHandle(
         responseSend(response, 200, menuRead());
     } else if (request.method === "GET" && url.pathname === "/api/notes/note") {
         responseSend(response, 200, linkedNoteRead(path));
+    } else if (request.method === "GET" && url.pathname === "/api/theme") {
+        responseSend(response, 200, codeColorsRead());
     } else if (request.method === "GET" && url.pathname === "/api/notes/file") {
         fileSend(response, fileRead(path), path.split("/").at(-1) ?? path);
     } else if (request.method === "GET" && url.pathname === "/api/notes/stream") {

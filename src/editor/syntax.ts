@@ -16,9 +16,12 @@
  * - `@lezer/markdown`: CodeMirror's Markdown parser, extended here, with GitHub's tables,
  *   task lists and strikethrough.
  * - `@lezer/highlight`: Tags wiki links as links, for their look.
+ * - `../notes/code.ts`: The languages of my code blocks, read within them.
  */
 
 import { markdown } from "@codemirror/lang-markdown";
+
+import { codeLanguageOf } from "../notes/code.ts";
 import { GFM } from "@lezer/markdown";
 import { tags } from "@lezer/highlight";
 
@@ -148,7 +151,8 @@ const obsidianSyntax: MarkdownConfig = {
  * CommonMark with GitHub's tables, task lists, strikethrough and links,
  * and the Obsidian syntax of this file;
  * a URL pasted over selected text makes it a link, as in Obsidian.
- * Its keys are those of `./keys.ts`, and it completes no HTML tags.
+ * Its keys are those of `./keys.ts`, and it completes no HTML tags;
+ * a code block of a language of my list is read in it, see `../notes/code.ts`.
  * The editor of my files takes it, see `./editor.ts`,
  * and so do my gratitude and my points about the day, see `../day/points.ts`.
  */
@@ -156,4 +160,5 @@ export const markdownSupport: LanguageSupport = markdown({
     extensions: [GFM, obsidianSyntax],
     addKeymap: false,
     completeHTMLTags: false,
+    codeLanguages: codeLanguageOf,
 });

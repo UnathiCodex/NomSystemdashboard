@@ -435,6 +435,12 @@
     border-radius: 0.25rem;
 }
 
+/* The code of a code block, between its ```, indented as the code of a block rendered,
+   see `.markdown pre` in `../notes/notes.css` */
+.editor-text .cm-editor .cm-line.cm-code-text {
+    padding-left: 1rem;
+}
+
 .editor-text .cm-code-block .cm-monospace {
     padding: 0;
     background: none;

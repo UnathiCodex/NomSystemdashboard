@@ -76,6 +76,7 @@
  * - `./overview.ts`: Shows the page of a module, its course, or of a chapter, its sections,
  *   and its chapter in the tree.
  * - `./folder.ts`: Shows a folder of my modules with its folders and files.
+ * - `../notes/code.ts`: Gives my code blocks the colors of my theme.
  * - `../notes/tree.ts`: Shows the tree of one root, the file shown marked,
  *   and the outline of a note or the blocks of a section with their places.
  * - `lucide`, `../icons.ts`:
@@ -107,6 +108,7 @@ import {
     roundStart,
 } from "./round.ts";
 import { outlineShow, treeShow } from "../notes/tree.ts";
+import { codeColorsSet } from "../notes/code.ts";
 import { overviewShow, overviewTreeShow } from "./overview.ts";
 import { folderShow } from "./folder.ts";
 import { timeOf } from "../day/times.ts";
@@ -426,6 +428,7 @@ function treeClick(event: MouseEvent): void {
 
 /**
  * Starts the editor after the router has put its HTML into the page:
+ * gives my code blocks the colors of my theme, see `../notes/code.ts`;
  * shows the tree on the left, that of my new system for one of its files and at `/plannings`,
  * else that of my modules, the module of the address picked while no note is shown,
  * like `/scripts?module=IN2028_BusinessAnalyticsMachineLearning` from a skill entry,
@@ -464,6 +467,7 @@ function treeClick(event: MouseEvent): void {
  * - `popstate`: Comes when the back or forward button of the browser changes the address.
  */
 export async function editorStart(): Promise<void> {
+    void codeColorsSet();
     const address: URLSearchParams = new URLSearchParams(location.search);
     const file: string = address.get("file") ?? "";
     const folder: string = address.get("folder") ?? "";

@@ -33,12 +33,16 @@
  * The HTML comes cleaned of scripts, as in Obsidian,
  * because some notes in my modules come from the internet.
  *
+ * Code blocks of a language of my list show in the colors of my theme, see `./code.ts`.
+ *
  * - `marked`: Turns Markdown into HTML, with extensions for the syntax above.
  * - `dompurify`: Cleans HTML of scripts, event handlers and the like.
  */
 
 import { Marked } from "marked";
 import DOMPurify from "dompurify";
+
+import { codeHtmlOf } from "./code.ts";
 
 import type {
     Renderer,
@@ -627,6 +631,21 @@ function linkOf(this: Renderer, token: Tokens.Link): string | false {
 }
 
 /**
+ * Code block of a language of my list, like ```python: its pieces in the colors of my theme,
+ * see `./code.ts`.
+ * - `html`: The code with a class for each piece, `null` for no language of my list.
+ *
+ * @param token - Code block
+ * @returns HTML of the block, or `false` for marked's own
+ */
+function codeOf(token: Tokens.Code): string | false {
+    const html: string | null = codeHtmlOf(token.text, token.lang ?? "");
+    return html === null
+        ? false
+        : `<pre><code class="language-${escaped(token.lang ?? "")}">${html}</code></pre>\n`;
+}
+
+/**
  * Markdown image like `![Singleton](./img/Singleton.png)`:
  * inside the module with its link in `data-link`, outside,
  * like `https://…`, an image as marked writes it.
@@ -663,7 +682,7 @@ const markdown: Marked = new Marked({
     breaks: true,
     extensions: [mathBlock, mathInline, callout, wikiLink, emptyLines, fold],
     tokenizer: { html: htmlBlockOf },
-    renderer: { heading: headingOf, link: linkOf, image: imageOf },
+    renderer: { heading: headingOf, link: linkOf, image: imageOf, code: codeOf },
     hooks: { preprocess: preprocess, emStrongMask: emStrongMask, processAllTokens: blocksMade },
 });
 

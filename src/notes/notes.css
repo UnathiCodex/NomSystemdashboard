@@ -1006,6 +1006,105 @@
     background: none;
 }
 
+/* Code of a language of my list in the colors of the theme of my editor,
+   see `code.ts` and `reader/theme.ts`, set as `--code-…`;
+   every other word and every other code block in the color of text, the ``` too */
+:is(.markdown pre code, .cm-code-block) .code-keyword:not(.cm-mark) {
+    color: var(--code-keyword);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-atom:not(.cm-mark) {
+    color: var(--code-atom);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-bool:not(.cm-mark) {
+    color: var(--code-bool);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-number:not(.cm-mark) {
+    color: var(--code-number);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-string:not(.cm-mark) {
+    color: var(--code-string);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-string2:not(.cm-mark) {
+    color: var(--code-string2);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-comment:not(.cm-mark) {
+    color: var(--code-comment);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-definition:not(.cm-mark) {
+    color: var(--code-definition);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-builtin:not(.cm-mark) {
+    color: var(--code-builtin);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-typeName:not(.cm-mark) {
+    color: var(--code-typeName);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-className:not(.cm-mark) {
+    color: var(--code-className);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-propertyName:not(.cm-mark) {
+    color: var(--code-propertyName);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-operator:not(.cm-mark) {
+    color: var(--code-operator);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-meta:not(.cm-mark) {
+    color: var(--code-meta);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-tagName:not(.cm-mark) {
+    color: var(--code-tagName);
+}
+
+:is(.markdown pre code, .cm-code-block) .code-attributeName:not(.cm-mark) {
+    color: var(--code-attributeName);
+}
+
+/* Language of a code block in the editor, picked from my list, see `code.ts`:
+   small and grey at the top right of the block, like the button of a table, see `.table-open`,
+   shown while the pointer is over the block or the keyboard is on it, always on a phone */
+.code-frame {
+    position: relative;
+}
+
+.code-language {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    border: none;
+    background: var(--background);
+    color: var(--reading-marker);
+    font: inherit;
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity var(--hover-out);
+}
+
+.code-frame:hover > .code-language,
+.code-language:focus-visible {
+    opacity: 1;
+    transition: opacity var(--hover-in);
+}
+
+@media (hover: none) {
+    .code-language {
+        opacity: 1;
+    }
+}
+
 /* Images no wider than the page */
 .markdown img {
     max-width: 100%;

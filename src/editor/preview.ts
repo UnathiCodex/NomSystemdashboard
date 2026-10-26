@@ -140,6 +140,7 @@ import {
 import { tagHighlighter, tags } from "@lezer/highlight";
 import { Maximize2 } from "lucide";
 import { iconPut } from "../icons.ts";
+import { codeHighlighter, codeLanguages } from "../notes/code.ts";
 import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
@@ -382,6 +383,12 @@ const unbroken: Decoration = Decoration.mark({ class: "math-unbroken", inclusive
  * Line of a code block being edited.
  */
 const codeLine: Decoration = Decoration.line({ class: "cm-code-block" });
+
+/**
+ * Line of the code of a code block being edited, between its ```,
+ * indented as the code of a block rendered, see `./editor.css`.
+ */
+const codeText: Decoration = Decoration.line({ class: "cm-code-text" });
 
 /**
  * Effect of the editor getting the focus, `true`, or losing it, `false`.
@@ -881,6 +888,8 @@ class BlockWidget extends WidgetType {
      * A table of them wider than the page, like that of `Foods.md`, scrolls sideways on its own,
      * see {@link tableMeasure}, measured again whenever its size changes,
      * like when the window narrows, and the editor measures its lines again;
+     * every code block of them names its language by the list at its top right, see {@link fencesOf},
+     * the languages of `../notes/code.ts`, picking one writes it after its ```, `–` takes it away;
      * every table of them opens whole over the file by the button at its top right,
      * to edit as a spreadsheet,
      * see {@link tableOpen}, the button standing in a frame around the table, `table-frame`.
@@ -895,9 +904,12 @@ class BlockWidget extends WidgetType {
      * and only a double click or double tap on it puts the cursor there.
      * - {@link ResizeObserver}: Calls back once a table is laid out and whenever its size changes.
      * - `runs`: First line of each table of them, see {@link tableRunsOf}.
+     * - `fences`: The ``` of each code block of them, in the order of its `pre`.
+     * - `frame`: Frame around a code block and its list, `code-frame`.
+     * - `pick`: The list of the languages, `code-language`, the one written picked.
      * - `place`: Puts the cursor at the place of their text pressed.
      * - `mousedown`: Its default, focusing the editor with the cursor beside them,
-     *   so they show as text, prevented;
+     *   so they show as text, prevented, but on the list of a code block, which then opens;
      *   a scrollbar still drags. Puts the cursor there, not on a scrollbar,
      *   see {@link scrollbarHit},
      *   nor on a link, the title of a callout, the button of a table or a table.
@@ -957,6 +969,37 @@ class BlockWidget extends WidgetType {
                     view.requestMeasure();
                 }).observe(table);
             });
+        const fences: Fence[] = fencesOf(this.markdown);
+        block
+            .querySelectorAll<HTMLPreElement>("pre")
+            .forEach((pre: HTMLPreElement, index: number): void => {
+                const fence: Fence | undefined = fences[index];
+                if (fence === undefined) return;
+                const frame: HTMLDivElement = document.createElement("div");
+                const pick: HTMLSelectElement = document.createElement("select");
+                frame.className = "code-frame";
+                pick.className = "code-language";
+                pick.title = "Language";
+                for (const name of new Set(["", ...Object.keys(codeLanguages), fence.info])) {
+                    const option: HTMLOptionElement = document.createElement("option");
+                    option.value = name;
+                    option.textContent = name === "" ? "–" : name;
+                    pick.append(option);
+                }
+                pick.value = fence.info;
+                pick.addEventListener("change", (): void => {
+                    const from: number = view.posAtDOM(block);
+                    view.dispatch({
+                        changes: {
+                            from: from + fence.from,
+                            to: from + fence.to,
+                            insert: pick.value,
+                        },
+                    });
+                });
+                pre.replaceWith(frame);
+                frame.append(pre, pick);
+            });
         const place: (event: MouseEvent) => void = (event: MouseEvent): void => {
             const from: number = view.posAtDOM(block);
             view.focus();
@@ -965,7 +1008,7 @@ class BlockWidget extends WidgetType {
             });
         };
         block.addEventListener("mousedown", (event: MouseEvent): void => {
-            if (event.button !== 0) return;
+            if (event.button !== 0 || (event.target as Element).closest("select") !== null) return;
             event.preventDefault();
             if (
                 !scrollbarHit(event) &&
@@ -997,6 +1040,51 @@ class BlockWidget extends WidgetType {
     override ignoreEvent(): boolean {
         return true;
     }
+}
+
+/**
+ * The ``` that opens a code block: where what follows it on its line begins and ends,
+ * from the start of the blocks of a {@link BlockWidget}, and that text, its language.
+ */
+type Fence = { from: number; to: number; info: string };
+
+/**
+ * Finds the ``` or `~~~` that open the code blocks of Markdown, in a quote too,
+ * each closed by the next of the same kind, at least as long, with nothing after it.
+ * - `fences`: Those found.
+ * - `open`: The ``` of the block open, `null` outside a block.
+ * - `at`: Start of the line.
+ * - `fence`: The `>` and blanks before it, it and what follows it, `null` for a line without one.
+ *
+ * @param markdown - Markdown of whole lines, like that of a {@link BlockWidget}
+ * @returns The ``` that open, in the order of the blocks
+ */
+function fencesOf(markdown: string): Fence[] {
+    const fences: Fence[] = [];
+    let open: string | null = null;
+    let at: number = 0;
+    for (const line of markdown.split("\n")) {
+        const fence: RegExpExecArray | null = /^((?:[ \t]*>[ \t]?)*[ \t]*)(`{3,}|~{3,})(.*)$/.exec(
+            line,
+        );
+        if (fence !== null && open === null) {
+            open = fence[2];
+            fences.push({
+                from: at + fence[1].length + fence[2].length,
+                to: at + line.length,
+                info: fence[3].trim(),
+            });
+        } else if (
+            fence !== null &&
+            open !== null &&
+            fence[2][0] === open[0] &&
+            fence[2].length >= open.length &&
+            fence[3].trim() === ""
+        )
+            open = null;
+        at += line.length + 1;
+    }
+    return fences;
 }
 
 /**
@@ -2181,7 +2269,10 @@ function blockLook(look: Look, node: SyntaxNode): boolean {
 
 /**
  * Code block: rendered as in the scripts view while the cursor is on none of its lines,
- * else each of its lines on grey, in a font of fixed width.
+ * else each of its lines on grey, in a font of fixed width,
+ * its code between its ``` indented as rendered, see {@link codeText}.
+ * - `first`, `last`: Its first line, the ``` that opens it, and its last.
+ * - `end`: The last line of its code, before the ``` that closes it.
  *
  * @param look - Look being built
  * @param node - Code block, `FencedCode`
@@ -2191,6 +2282,19 @@ function codeLook(look: Look, node: SyntaxNode): boolean {
     if (!blockLook(look, node)) return false;
 
     linesMark(look, node.from, node.to, codeLine);
+    const first: Line = look.state.doc.lineAt(node.from);
+    const last: Line = look.state.doc.lineAt(node.to);
+    const end: number =
+        last.number > first.number && /^[ \t>]*(?:`{3,}|~{3,})[ \t]*$/.test(last.text)
+            ? last.number - 1
+            : last.number;
+    if (end > first.number)
+        linesMark(
+            look,
+            look.state.doc.line(first.number + 1).from,
+            look.state.doc.line(end).to,
+            codeText,
+        );
     return true;
 }
 
@@ -2860,6 +2964,8 @@ export function linksSet(view: EditorView, links: Links): void {
  *   and lets a drag take the hidden start of a line, see {@link marginSelect}.
  * - {@link EditorView.domEventHandlers}: Follow a link clicked,
  *   see {@link linkClicked}, before the editor puts the cursor there.
+ * - {@link syntaxHighlighting}: Gives the pieces of syntax their classes, see {@link highlighter},
+ *   those of code their colors of my theme, see `codeHighlighter` in `../notes/code.ts`.
  * - {@link codeFolding}: Holds what is folded, without the `…` CodeMirror puts in place of it,
  *   since the arrow turned right tells it;
  *   {@link foldKeymap} folds and unfolds by keys too, like Ctrl+Shift+[ and Ctrl+Shift+].
@@ -2917,5 +3023,6 @@ export function livePreview(links: Links, place: string): Extension {
         EditorView.domEventHandlers({ mousedown: personClicked, click: personClicked }),
         EditorView.domEventHandlers({ mousedown: linkClicked, click: linkClicked }),
         syntaxHighlighting(highlighter),
+        syntaxHighlighting(codeHighlighter),
     ];
 }
