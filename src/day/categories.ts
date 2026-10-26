@@ -1729,13 +1729,17 @@ function withPartsOf(
 
 /**
  * Builds the search of the list of `With`:
- * while nothing is typed the names my entries wrote, the most used first,
+ * while nothing is typed only my own people, those of `Persons.md` named `Family, …` or `Group, …`,
+ * like `Family, Sopha` or `Group, Kicktipp`, the most used first,
+ * not the lecturers an imported lecture names;
+ * as I type every name my entries wrote, the most used first,
  * each as `Persons.md` names its person, like `Zimmer, Philip` for an older `Philip Zimmer`,
- * see `personOf` in `../persons.ts`;
- * as I type every person of `Persons.md` too, after them, like `bich` finding `Bichler, Martin`,
+ * see `personOf` in `../persons.ts`, and every person of `Persons.md` after them,
+ * like `bich` finding `Bichler, Martin`,
  * as a field of a place offers the rooms, see {@link placeSearchOf}.
  * - `used`: The names my entries wrote, as `Persons.md` names their people.
- * - `shown`: Names the search looks through, each once.
+ * - `all`: Those and every person of `Persons.md`, each once.
+ * - `shown`: Names the search looks through.
  *
  * @param field - The field `With`
  * @param people - The people of `Persons.md`
@@ -1746,13 +1750,13 @@ function withSearchOf(field: Field, people: Person[]): (text: string) => Promise
         const used: string[] = field.values.map(
             (name: string): string => personOf(people, name)?.name ?? name,
         );
-        const shown: string[] = [
-            ...new Set(
-                text.trim() !== ""
-                    ? [...used, ...people.map((person: Person): string => person.name)]
-                    : used,
-            ),
+        const all: string[] = [
+            ...new Set([...used, ...people.map((person: Person): string => person.name)]),
         ];
+        const shown: string[] =
+            text.trim() !== ""
+                ? all
+                : all.filter((name: string): boolean => /^(Family|Group), /.test(name));
         return await searchOf(shown.map(choiceOf))(text);
     };
 }
@@ -1761,8 +1765,8 @@ function withSearchOf(field: Field, people: Person[]): (text: string) => Promise
  * Gives how the list of `With` works,
  * see {@link withRowOf}, the one list of who I am with,
  * in its row and after the times of an exam added in the dialog of a series,
- * see `examinersOf` in `./series.ts`: the names my entries wrote, the most used first,
- * as I type every person of `Persons.md`,
+ * see `examinersOf` in `./series.ts`: my own people, `Family, …` and `Group, …`,
+ * as I type every name my entries wrote and every person of `Persons.md`,
  * see {@link withSearchOf}, several of them, a typed name added as `Persons.md` names it,
  * but none with `;`, and each name of a person there a link to its row.
  * - `person`: The person of `Persons.md` a name names, `undefined` for none.
@@ -1800,8 +1804,8 @@ export function withChoicesOf(
  * a name of a person there, also an older
  * one spoken, like `Philip Zimmer`, is a link in the line to its row there,
  * see `personOf` in `../persons.ts`, any other name plain text.
- * Its list offers the names my earlier entries wrote, the most used first,
- * and as I type every person of `Persons.md`,
+ * Its list offers my own people, `Family, …` and `Group, …` of `Persons.md`,
+ * and as I type every name my earlier entries wrote and every person of `Persons.md`,
  * see {@link withSearchOf}, takes a name or takes it back by a click and stays open for the next,
  * and adds a typed name, `Search or add a person`, a person as `Persons.md` names it,
  * like `Bichler, Martin` for a typed `Martin Bichler`, but none with `;`, which parts names;
