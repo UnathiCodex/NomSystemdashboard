@@ -247,6 +247,21 @@
     line-height: var(--empty-line);
 }
 
+/* The guide line of sub-points, see `../notes/notes.css`, on through the empty lines right below
+   them up to the next line with text, as the air of the point above:
+   within the point by the guide lines of those empty lines,
+   below the point by its own, as long as they are, see `listLook` in `preview.ts`;
+   never beside a line with text after them, like a paragraph of the point,
+   nor beside the line the cursor stands on to write, nor below either */
+.editor-text.markdown li > :is(ul, ol)::before {
+    bottom: calc(var(--air-below, 0) * var(--empty-line) / -2);
+}
+
+.editor-text.markdown li > :is(ul, ol) ~ :not(.cm-gap, ul, ol)::before,
+.editor-text.markdown li > :is(ul, ol) ~ :not(.cm-gap, ul, ol) ~ .cm-gap::before {
+    content: none;
+}
+
 /* Markup shown, like `##` and `**`, and the markers of lists in the faint grey of list markers */
 .editor-text .cm-mark {
     color: var(--reading-marker);

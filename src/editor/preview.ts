@@ -1305,6 +1305,8 @@ function linesMark(look: Look, from: number, to: number, line: Decoration): void
  * @param to - Where the lines put into it end, the end of the piece unless told:
  *   a heading's right after the start of its line, so the row of a task after it,
  *   see `./tasks.ts`, stands outside it, in the text of the note
+ * @param from - Where they begin, the start of the piece unless told,
+ *   like the part of a list below the line of the cursor, see {@link listLook}
  */
 function wrap(
     look: Look,
@@ -1312,13 +1314,14 @@ function wrap(
     tagName: string,
     attributes: { [name: string]: string } = {},
     to: number = node.to,
+    from: number = node.from,
 ): void {
     let depth: number = 0;
     for (let parent: SyntaxNode | null = node.parent; parent !== null; parent = parent.parent)
         if (wrapped.includes(parent.name)) depth++;
     look.wrappers.push(
         BlockWrapper.create({ tagName: tagName, attributes: attributes, rank: 100 - depth }).range(
-            look.state.doc.lineAt(node.from).from,
+            look.state.doc.lineAt(from).from,
             to,
         ),
     );
@@ -1605,21 +1608,122 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
 
 /**
  * List: its lines in a `ul` or `ol`, up to where its last item ends, see {@link itemEndOf},
- * as the scripts view draws them.
+ * as the scripts view draws them;
+ * in two around the empty line a key just put the cursor on left of the text of its points,
+ * see {@link typingCutOf}, so that line stands outside it at once.
+ * A list within a point, whose guide line `../notes/notes.css` draws,
+ * tells the empty lines right below it that stand outside that point, see {@link airBelowOf},
+ * so `./editor.css` draws its guide line on through them, as through the air within the point.
+ * - `tagName`: Its element, `ul` or `ol`.
+ * - `end`: Where its lines end.
+ * - `parent`: The point it stands in, `null` for none.
+ * - `air`: Empty lines right below it outside that point, the air its guide line runs through.
+ * - `attributes`: Attributes of its element: those empty lines.
+ * - `cut`: The empty line the cursor stands on left of the text of its points, `null` for none.
+ * - `after`: Its first point below that line, `null` for none.
  *
  * @param look - Look being built
  * @param node - `BulletList` or `OrderedList`
  * @returns `true`, to look into its items
  */
 function listLook(look: Look, node: SyntaxNode): boolean {
-    wrap(
-        look,
-        node,
-        node.name === "BulletList" ? "ul" : "ol",
-        {},
-        node.lastChild !== null ? itemEndOf(look, node.lastChild) : node.to,
-    );
+    const tagName: string = node.name === "BulletList" ? "ul" : "ol";
+    const end: number = node.lastChild !== null ? itemEndOf(look, node.lastChild) : node.to;
+    const parent: SyntaxNode | null = node.parent?.name === "ListItem" ? node.parent : null;
+    const air: number =
+        parent !== null &&
+        look.state.doc.lineAt(itemDrawEndOf(look, parent)).number ===
+            look.state.doc.lineAt(end).number
+            ? airBelowOf(look, end)
+            : 0;
+    const attributes: { [name: string]: string } = { style: `--air-below: ${air}` };
+    const cut: Line | null = typingCutOf(look, node, end);
+    if (cut === null) {
+        wrap(look, node, tagName, attributes, end);
+        return true;
+    }
+    wrap(look, node, tagName, attributes, cut.from - 1);
+    const after: SyntaxNode | undefined = node
+        .getChildren("ListItem")
+        .find((item: SyntaxNode): boolean => item.from > cut.to);
+    if (after !== undefined) wrap(look, node, tagName, attributes, end, after.from);
     return true;
+}
+
+/**
+ * Counts the empty lines right below a line up to the next line with text,
+ * see `emptyIs` in `./keys.ts`, through which the guide line of a list ending there runs,
+ * see {@link listLook}; the empty line a key just put the cursor on ends them too,
+ * see `typingLine` in `./keys.ts`.
+ * - `typing`: Start of that line, `null` for none.
+ *
+ * @param look - Look being built
+ * @param end - End of the line
+ * @returns Number of those empty lines, none where the note ends below them
+ */
+function airBelowOf(look: Look, end: number): number {
+    const typing: number | null = look.state.field(typingLine, false) ?? null;
+    for (
+        let number: number = look.state.doc.lineAt(end).number + 1;
+        number <= look.state.doc.lines;
+        number++
+    ) {
+        const line: Line = look.state.doc.line(number);
+        if (line.from === typing || !emptyIs(look.state, line))
+            return number - look.state.doc.lineAt(end).number - 1;
+    }
+    return 0;
+}
+
+/**
+ * Finds the empty line a key just put the cursor on, see `typingLine` in `./keys.ts`,
+ * below the first line of a point or list and up to where it ends,
+ * when its blanks stand left of the text of the point or of the points of the list,
+ * like a paragraph of a point outside, where Shift+Tab moved it:
+ * the point or list then ends right before it, see {@link itemDrawEndOf} and {@link listLook}.
+ * - `typing`: Start of that line, `null` for none.
+ * - `item`: The point, or the first point of the list.
+ * - `indentation`: The indentation of its text, `null` for a point not indented by tabs.
+ * - `line`: That line.
+ *
+ * @param look - Look being built
+ * @param node - `ListItem`, `BulletList` or `OrderedList`
+ * @param end - Where its lines end
+ * @returns That line, `null` for none
+ */
+function typingCutOf(look: Look, node: SyntaxNode, end: number): Line | null {
+    const typing: number | null = look.state.field(typingLine, false) ?? null;
+    const item: SyntaxNode | null = node.name === "ListItem" ? node : node.firstChild;
+    const indentation: string | null =
+        item === null ? null : textIndentationOf(look.state.doc.lineAt(item.from).text);
+    if (
+        typing === null ||
+        indentation === null ||
+        typing <= look.state.doc.lineAt(node.from).to ||
+        typing > end
+    )
+        return null;
+    const line: Line = look.state.doc.lineAt(typing);
+    return columnsOf(line.text) < columnsOf(indentation) ? line : null;
+}
+
+/**
+ * Gives where the lines of a point end on the page: up to the next point of its list,
+ * over the empty lines between, see {@link itemLook}, the last point of a list where it ends,
+ * see {@link itemEndOf}; right before the empty line the cursor stands on left of its text,
+ * see {@link typingCutOf}.
+ * - `next`: The next point of its list, `null` for none.
+ * - `end`: Where its lines end, that line aside.
+ *
+ * @param look - Look being built
+ * @param node - `ListItem`
+ * @returns End of its last line
+ */
+function itemDrawEndOf(look: Look, node: SyntaxNode): number {
+    const next: SyntaxNode | null = node.nextSibling?.name === "ListItem" ? node.nextSibling : null;
+    const end: number =
+        next === null ? itemEndOf(look, node) : look.state.doc.lineAt(next.from).from - 1;
+    return (typingCutOf(look, node, end)?.from ?? end + 1) - 1;
 }
 
 /**
@@ -1690,8 +1794,8 @@ function listBlankIs(state: EditorState, line: Line): boolean {
  * The `li` reaches on over the empty lines up to the next point of its list,
  * so the guide line of its sub-points runs on through that air, see `../notes/notes.css`,
  * and a list with air stays one list on the page, as in the file;
- * the last point of a list over the lines of blanks that reach its text, see {@link itemEndOf}.
- * - `next`: The next point of its list, `null` for none.
+ * the last point of a list over the lines of blanks that reach its text,
+ * never over the empty line the cursor stands on left of its text, see {@link itemDrawEndOf}.
  * - `mark`: Its `-` or number, `ListMark`.
  * - `attributes`: Attributes of its `li`: its classes and its number.
  *
@@ -1701,19 +1805,12 @@ function listBlankIs(state: EditorState, line: Line): boolean {
  */
 function itemLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
-    const next: SyntaxNode | null = node.nextSibling?.name === "ListItem" ? node.nextSibling : null;
     const mark: SyntaxNode | null = node.getChild("ListMark");
     const attributes: { [name: string]: string } = {};
     if (touched(look, line.from, line.to)) attributes.class = "cm-source";
     if (node.parent?.name === "OrderedList" && mark !== null)
         attributes.value = String(parseInt(look.state.sliceDoc(mark.from, mark.to)));
-    wrap(
-        look,
-        node,
-        "li",
-        attributes,
-        next === null ? itemEndOf(look, node) : look.state.doc.lineAt(next.from).from - 1,
-    );
+    wrap(look, node, "li", attributes, itemDrawEndOf(look, node));
     if (node.getChild("BulletList") !== null || node.getChild("OrderedList") !== null)
         foldLook(look, line, true);
     return true;
@@ -1813,7 +1910,7 @@ function hiddenStartOf(state: EditorState, line: Line): number {
 function gapIs(state: EditorState, line: Line): boolean {
     return (
         line.number > 1 &&
-        line.from !== state.field(typingLine, false)?.from &&
+        line.from !== (state.field(typingLine, false) ?? null) &&
         emptyIs(state, line) &&
         !emptyIs(state, state.doc.line(line.number - 1))
     );
@@ -2077,19 +2174,15 @@ const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
  * below the half line above it, with a cursor a whole line high from its top,
  * where text typed on it stands, see {@link stop};
  * only the empty line a key just put the cursor on to write is as high as a line of text,
- * see `typingLine` in `./keys.ts`,
- * not the air a `-` taken away left within a list, a half line as every empty line;
+ * see `typingLine` in `./keys.ts`;
  * the blanks of a line within a list hidden, see {@link listBlankIs}.
- * - `typing`: Start of that line, `null` for none or air.
+ * - `typing`: Start of that line, `null` for none.
  * - `line`: One line of the note.
  *
  * @param look - Look being built
  */
 function spaceLook(look: Look): void {
-    const typing: number | null =
-        look.state.field(typingLine, false)?.air === false
-            ? (look.state.field(typingLine, false)?.from ?? null)
-            : null;
+    const typing: number | null = look.state.field(typingLine, false) ?? null;
     for (let number: number = 1; number <= look.state.doc.lines; number++) {
         const line: Line = look.state.doc.line(number);
         if (listBlankIs(look.state, line)) hide(look, line.from, line.to);
