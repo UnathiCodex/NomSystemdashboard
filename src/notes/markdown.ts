@@ -8,7 +8,7 @@
  *   as in Obsidian, `$$…$$` within a line stands on a line of its own;
  * - callouts `> [!note] Title`, folded with `-` after the type, foldable with `+`;
  *   their lines without `>` and one space are read by the same rules as the rest of the note;
- * - wiki links `[[Note#Heading|Text]]`, embeds `![[Image.svg|300]]` and `![[Note]]`;
+ * - wiki links `[[Note#Heading|Text]]` and embeds `![[Note]]`, images only in Markdown's form;
  * - a single line break as a break, as with Obsidian's strict line breaks off;
  * - a lazy line, one that goes on with the text of a list item without being indented,
  *   like the spacer `⠀` under a sub-bullet, as part of that item, as CommonMark reads it;
@@ -89,7 +89,7 @@ const calloutRule: RegExp =
     /^ {0,3}>[ \t]?\[!([^\]]+)\]([+-]?)[ \t]*(.*)(?:\n|$)((?: {0,3}>.*(?:\n|$))*)/;
 
 /**
- * Wiki link `[[Note#Heading|Text]]` or embed `![[Image.svg|300]]`, `!` for an embed.
+ * Wiki link `[[Note#Heading|Text]]` or embed `![[Note]]`, `!` for an embed.
  */
 const wikiLinkRule: RegExp = /^(!?)\[\[([^\]]+)\]\]/;
 
@@ -107,7 +107,7 @@ const htmlBlockRule: RegExp =
 const frontMatterRule: RegExp = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/;
 
 /**
- * Row of a table, like `| ![[Tangens.svg|300]] | … |`, also inside a quote.
+ * Row of a table, like `| ![tangent](Visualizations/Tangens.svg) | … |`, also inside a quote.
  */
 const tableRowRule: RegExp = /^[ \t>]*\|.*$/gm;
 
@@ -139,11 +139,6 @@ const sceneBlockRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm)\./;
  * Address with a scheme, like `https://…`: a link out of the module, opened as it is.
  */
 const externalRule: RegExp = /^[a-z][a-z\d+.-]*:/i;
-
-/**
- * Endings of images Obsidian shows when embedded.
- */
-const imageEndings: string[] = ["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp", "avif"];
 
 /**
  * Escapes text for HTML, also inside attributes in `"…"`.
@@ -413,10 +408,9 @@ const callout: TokenizerAndRendererExtension = {
  * Wiki link or embed, see {@link wikiLinkRule}; `\|` counts as `|`.
  * A link renders as `<a class="internal-link">` with its text,
  * else its target and heading like `Note > Heading`.
- * An embedded image renders as `<img>`,
- * with a width from `|300` or width and height from `|300x200`;
- * an embedded note as an empty `<div class="markdown-embed">` the scripts view fills;
- * any other file as a link.
+ * An embedded note renders as an empty `<div class="markdown-embed">` the scripts view fills;
+ * any other file as a link, an image too, which is written in Markdown's form,
+ * see {@link imageOf}.
  */
 const wikiLink: TokenizerAndRendererExtension = {
     name: "wikiLink",
@@ -440,16 +434,10 @@ const wikiLink: TokenizerAndRendererExtension = {
     renderer: (token: Tokens.Generic): string => {
         const data: string = `data-link="${escaped(token.target)}" data-heading="${escaped(token.heading)}"`;
         const ending: string = /\.([a-z\d]+)$/i.exec(token.target)?.[1].toLowerCase() ?? "md";
-        const size: RegExpExecArray | null = /^(\d+)(?:x(\d+))?$/.exec(token.text);
         const name: string = [token.target, token.heading]
             .filter((part: string): boolean => part !== "")
             .join(" > ");
 
-        if (token.embed && imageEndings.includes(ending))
-            return (
-                `<img class="internal-embed" ${data} alt="${escaped(size === null && token.text !== "" ? token.text : token.target)}"` +
-                `${size === null ? "" : ` width="${size[1]}"`}${size?.[2] === undefined ? "" : ` height="${size[2]}"`}>`
-            );
         if (token.embed && ending === "md") return `<div class="markdown-embed" ${data}></div>`;
         return `<a class="internal-link" ${data}>${escaped(token.text === "" ? name : token.text)}</a>`;
     },

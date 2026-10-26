@@ -39,7 +39,7 @@
  *   with the punctuation right after one on its line, see {@link mathLook};
  *   as their TeX while the cursor touches them;
  *   a formula `$$…$$` being edited shows rendered below its TeX, as in Obsidian.
- * - Images `![[Image.svg|300]]` shown;
+ * - Images `![kiosk mean bell](Visualizations/KioskMeanBell.svg)` shown, see {@link imageLook};
  *   tables, callouts `> [!note] Title`,
  *   code blocks and HTML blocks like `<table>` rendered as in the scripts view,
  *   those right below each other as one, as their text while the cursor is on one of their lines,
@@ -639,7 +639,7 @@ class MathWidget extends WidgetType {
 }
 
 /**
- * Embedded image, as the scripts view shows it.
+ * Image, as the scripts view shows it, at its own size.
  */
 class ImageWidget extends WidgetType {
     /**
@@ -647,32 +647,16 @@ class ImageWidget extends WidgetType {
      */
     readonly address: string;
 
-    /**
-     * Width, like `300` from `|300` or `|300x200`, empty for the image's own.
-     */
-    readonly width: string;
-
-    /**
-     * Height, like `200` from `|300x200`, empty for the image's own.
-     */
-    readonly height: string;
-
-    constructor(address: string, width: string, height: string) {
+    constructor(address: string) {
         super();
         this.address = address;
-        this.width = width;
-        this.height = height;
     }
 
     /**
      * Tells whether another image looks the same, so the shown one stays.
      */
     override eq(other: ImageWidget): boolean {
-        return (
-            other.address === this.address &&
-            other.width === this.width &&
-            other.height === this.height
-        );
+        return other.address === this.address;
     }
 
     /**
@@ -682,8 +666,6 @@ class ImageWidget extends WidgetType {
         const image: HTMLImageElement = document.createElement("img");
         image.className = "internal-embed";
         image.src = this.address;
-        if (this.width !== "") image.setAttribute("width", this.width);
-        if (this.height !== "") image.setAttribute("height", this.height);
         image.addEventListener("load", (): void => view.requestMeasure());
         return image;
     }
@@ -1545,14 +1527,41 @@ function urlLook(look: Look, node: SyntaxNode): boolean {
 }
 
 /**
- * Wiki link or embed, while the cursor does not touch it: an embedded image shown,
- * else only its text after `|`, or its target without one,
- * which a click follows, faded when it leads nowhere
+ * Markdown image while the cursor does not touch it,
+ * like `![kiosk mean bell](Visualizations/KioskMeanBell.svg)`:
+ * shown at its own size when the reader found its file, else left as its text.
+ * Its target is the link before `#`, as the reader lists it.
+ *
+ * @param look - Look being built
+ * @param node - Image
+ * @returns `false`, as it has nothing inside to look into
+ */
+function imageLook(look: Look, node: SyntaxNode): boolean {
+    const url: SyntaxNode | null = node.getChild("URL");
+    if (url === null || touched(look, node.from, node.to)) return false;
+
+    const address: string = look.state.sliceDoc(url.from, url.to).replace(/^<|>$/g, "");
+    const target: string = address.split("#")[0].trim();
+    const path: string | null | undefined = look.links[target];
+    const ending: string = /\.([a-z\d]+)$/i.exec(target)?.[1].toLowerCase() ?? "";
+    if (imageEndings.includes(ending) && typeof path === "string")
+        look.decorations.push(
+            Decoration.replace({ widget: new ImageWidget(fileAddressOf(path)) }).range(
+                node.from,
+                node.to,
+            ),
+        );
+    return false;
+}
+
+/**
+ * Wiki link or embed, while the cursor does not touch it: only its text after `|`,
+ * or its target without one, which a click follows, faded when it leads nowhere
  * or opens only on the computer, see {@link linkMarkOf}.
  * Its target is the link before `#`, `|` or the `\|` written in tables, as the reader lists it.
  *
  * @param look - Look being built
- * @param node - `WikiLink` like `[[Note#Heading|Text]]` or `WikiEmbed` like `![[Image.svg|300]]`
+ * @param node - `WikiLink` like `[[Note#Heading|Text]]` or `WikiEmbed` like `![[Note]]`
  * @returns `false`, as it has nothing inside to look into
  */
 function wikiLinkLook(look: Look, node: SyntaxNode): boolean {
@@ -1564,21 +1573,7 @@ function wikiLinkLook(look: Look, node: SyntaxNode): boolean {
     const shownFrom: number = node.from + (bar === null ? open : bar.index + bar[0].length);
     const shownTo: number = node.to - 2;
     const target: string = /^!?\[\[([^\]#|\\]*)/.exec(text)?.[1].trim() ?? "";
-    const path: string | null | undefined = look.links[target];
-    const ending: string = /\.([a-z\d]+)$/i.exec(target)?.[1].toLowerCase() ?? "md";
-    const size: RegExpExecArray | null = /^(\d+)(?:x(\d+))?$/.exec(
-        look.state.sliceDoc(shownFrom, shownTo),
-    );
 
-    if (node.name === "WikiEmbed" && imageEndings.includes(ending) && typeof path === "string") {
-        const image: ImageWidget = new ImageWidget(
-            fileAddressOf(path),
-            size?.[1] ?? "",
-            size?.[2] ?? "",
-        );
-        look.decorations.push(Decoration.replace({ widget: image }).range(node.from, node.to));
-        return false;
-    }
     hide(look, node.from, shownFrom);
     hide(look, shownTo, node.to);
     if (shownFrom < shownTo)
@@ -2314,6 +2309,7 @@ const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
     Strikethrough: markupLook,
     InlineCode: markupLook,
     Link: linkLook,
+    Image: imageLook,
     URL: urlLook,
     WikiLink: wikiLinkLook,
     WikiEmbed: wikiLinkLook,
