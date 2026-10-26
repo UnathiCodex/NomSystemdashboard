@@ -7,7 +7,8 @@
  * and `With`, who I was with, its `ATTENDEE`s,
  * like `Way` with `Summary`, `From`, `Place`, `Online` and `With`.
  * Each field of a what offers its values from the log itself,
- * the what of its entries of the category, the most used first, equal ones alphabetical.
+ * the what of its entries of the category, after those the code offers, in their order,
+ * the most used first, equal ones alphabetical.
  * Places are one list for every field of a place, the place of an entry and where a way starts:
  * only my places of `Places.md`, each as a line with its address,
  * like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
@@ -28,7 +29,8 @@
  * A value offered in the code may come with steps, which the dialog shows while it is picked,
  * and below them the note of the last entry of it,
  * like `Last time: band red · 3×10`, so the load can rise.
- * `Body` is my body care, showering and any care, offering `Caring` and `Shower` before any use,
+ * `Body` is my body care, showering and any care, offering `Caring` and `Shower` first,
+ * in that order, then the rest by use, as every summary offers the values of the code first,
  * and takes several, parted by `, `,
  * like `Caring, Shower`, its list offering each once; my neck routine,
  * `Neck short` and `Neck long`, is no what of it any more, also where the log holds it,
@@ -87,7 +89,8 @@ export type FieldKey = "title" | "from" | "location" | "online" | "with";
  *
  * - `name`: Name shown, like `Summary`.
  * - `key`: Field of the entry it writes into.
- * - `values`: Values to pick, the most used first; in the code only those offered before any use.
+ * - `values`: Values to pick, those of the code first, then the most used;
+ *   in the code only those it offers first.
  * - `steps`: Steps of a value offered in the code, by the value,
  *   which the dialog shows while it is picked, like the exercises of `Neck short`;
  *   none for the other values.
@@ -610,10 +613,15 @@ export function categoriesRead(now: string): CategoryShown[] {
                             ? places
                             : field.fixed
                               ? field.values
-                              : valuesOrder(
-                                    titleUsesOf(logs, category.name, field.many === true),
-                                    field.values,
-                                ).filter(
+                              : [
+                                    ...field.values,
+                                    ...valuesOrder(
+                                        titleUsesOf(logs, category.name, field.many === true),
+                                        [],
+                                    ).filter(
+                                        (value: string): boolean => !field.values.includes(value),
+                                    ),
+                                ].filter(
                                     (value: string): boolean =>
                                         !(retiredWhats[category.name] ?? []).includes(value),
                                 ),
