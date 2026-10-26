@@ -557,6 +557,7 @@ function timesOf(parts: string[], start: string): HTMLElement | null {
  * see {@link tutorialIs}; then its deadline on a line of its own in the grey of a time,
  * see {@link deadlinePartsOf};
  * then its chapters on a line of their own in the same grey, apart by a middle dot,
+ * on today each with its rounds due, like `01_StatisticsFoundations · Round 0`,
  * see {@link chaptersOf}; then its documents, one per line with a bullet,
  * see {@link topicsOf}, each cut in its middle where it is too long, so its ending stays,
  * like `.pdf`, see `middleCutPut` in `choices.ts`; a line without anything to say is left out.
@@ -653,13 +654,16 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
  * the chapter picked in the tree, never a second one,
  * like `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`,
  * instead of the box, as the place opens its link;
- * plain on a phone, which has no scripts view, and for a box whose summary names no module.
+ * plain on a phone, which has no scripts view, and for a box whose summary names no module;
+ * on today each chapter with something due followed by its rounds, like `Round 0`,
+ * see {@link roundsToday}.
  * - `module`: Name of the folder of its skill, its summary before its type in brackets,
  *   like `IN2028_BusinessAnalyticsMachineLearning`.
- * - `anchor`: The link of a chapter.
+ * - `round`: Rounds of the chapter due today, `undefined` for none or another day.
  *
  * @param box - The box
- * @returns Its chapters, in order, none for none
+ * @param day - Day the box shows on, like `2026-10-20`
+ * @returns Its chapters with their rounds, in order, none for none
  */
 function chaptersOf(box: Box, day: string): Node[] {
     const module: string = box.title.replace(/\s*\(.*$/, "");
@@ -681,15 +685,13 @@ function chaptersOf(box: Box, day: string): Node[] {
  * @returns The chapter, a link, or plain text on a phone or for no module
  */
 function chapterNodeOf(module: string, chapter: string): Node {
-    {
-        if (phone || !/^[A-Z]+\d+_/.test(module)) return document.createTextNode(chapter);
-        const anchor: HTMLAnchorElement = document.createElement("a");
-        anchor.className = "chapter-link";
-        anchor.href = `/scripts?module=${encodeURIComponent(module)}&chapter=${encodeURIComponent(chapter)}`;
-        anchor.textContent = chapter;
-        anchor.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
-        return anchor;
-    }
+    if (phone || !/^[A-Z]+\d+_/.test(module)) return document.createTextNode(chapter);
+    const anchor: HTMLAnchorElement = document.createElement("a");
+    anchor.className = "chapter-link";
+    anchor.href = `/scripts?module=${encodeURIComponent(module)}&chapter=${encodeURIComponent(chapter)}`;
+    anchor.textContent = chapter;
+    anchor.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
+    return anchor;
 }
 
 /**
