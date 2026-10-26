@@ -64,9 +64,6 @@ import type { FoodDay, Totals } from "./food.ts";
  * - `theoryMinutes`: Minutes of the Definitions,
  *   the Algorithm and the Example of a section on round 0,
  *   which it brings to that box besides its Task.
- * - `learningStart`: First day anything of my learning is due, like `2026-10-25`:
- *   before it, nothing is due today, so the plan gets no learning box and Learn lists nothing,
- *   see `todayMarked` in `skill.ts`.
  */
 export type TrackerSettings = {
     sleepHours: number;
@@ -78,7 +75,6 @@ export type TrackerSettings = {
     sessionMinutes: number;
     taskMinutes: number;
     theoryMinutes: number;
-    learningStart: string;
 };
 
 /**
@@ -180,9 +176,7 @@ export type Trackers = {
  * My learning: study sessions of 60 minutes,
  * 30 for a Task and 30 more for the theory of a new section, my choice,
  * not a finding (`.claude/studies/science.md`, point 9);
- * it starts on Saturday, 24.10.2026,
- * since until then I set up my skills,
- * their series and tutor groups (`.claude/life/decisions.md`, 22 October 2026).
+ * each chapter starts by a skill box of my plan, see `openedOf` in `skill.ts`.
  */
 export const settings: TrackerSettings = {
     sleepHours: 8,
@@ -194,7 +188,6 @@ export const settings: TrackerSettings = {
     sessionMinutes: 60,
     taskMinutes: 30,
     theoryMinutes: 30,
-    learningStart: "2026-10-25",
 };
 
 /**

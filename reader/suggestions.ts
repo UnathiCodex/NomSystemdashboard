@@ -4,7 +4,7 @@
  * Puts what I learn today into the plan of today as real boxes, without asking:
  * one box per chapter with something due today, a Task by its spacing or a section on round 0,
  * see `today` of `SkillSection` in `skill.ts`, the same chapters the module overview shows;
- * none before the day my learning starts, see `learningStart` in `trackers.ts`.
+ * a section on round 0 only in a chapter a box of my plan opened, see `openedOf` in `skill.ts`.
  * A box of my own learning, without type and without time,
  * like a to-do, since only its length matters, not when:
  * 30 minutes for the Task of each section with something due,
