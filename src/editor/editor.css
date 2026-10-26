@@ -249,18 +249,10 @@
     line-height: var(--empty-line);
 }
 
-/* A point right after the sub-points of the point before it with the half line of an empty line
-   above it, its bullet moved down with its text, see `itemLook` in `preview.ts` */
-.editor-text.markdown li.cm-nest-end {
-    --nest-end: calc(var(--empty-line) / 2);
-}
-
-.editor-text.markdown li.cm-nest-end > .cm-line:first-child {
-    padding-top: calc(var(--nest-end) + 0.075em);
-}
-
-.editor-text.markdown ul > li.cm-nest-end::before {
-    top: calc(var(--nest-end) + 0.075em + 0.5lh - 0.15em);
+/* The guide line of sub-points on through an empty line right below another,
+   whose text stands half a line higher, see `.cm-stop` above */
+.editor-text.markdown li > :is(ul, ol) ~ .cm-line.cm-stop::before {
+    bottom: calc(var(--empty-line) / -2);
 }
 
 /* Markup shown, like `##` and `**`, and the markers of lists in the faint grey of list markers */

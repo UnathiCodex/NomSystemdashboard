@@ -20,9 +20,9 @@
  * - Every line of the file one line on the page, in the tighter lines of the editor,
  *   see `./editor.css`; an empty line half as high, a small gap, see {@link spaceLook},
  *   so one empty line is the air between two paragraphs and two are the air of a line;
- *   no room of their own around headings and paragraphs;
- *   a point right after the sub-points of the point before it the half line of an empty line
- *   above it, see {@link itemLook}.
+ *   no room of their own around headings and paragraphs, nor in a list,
+ *   where the guide line of sub-points runs on through the empty lines to the next point,
+ *   see {@link itemLook}.
  * - The type word of a block of a section at the start of a heading `##`,
  *   like `Definition. `, a small grey box before the name,
  *   as in the tree, hanging left of the page where the file has room, see `./editor.css`,
@@ -1621,12 +1621,10 @@ function listLook(look: Look, node: SyntaxNode): boolean {
  * see {@link listMarkLook};
  * its fold arrow left of its bullet when it has sub-points,
  * which folds them with its further lines.
- * Right after the sub-points of the point before it, where a nesting ends,
- * like `2.` below the sub-points of `1.`, the half line of an empty line above it,
- * so every return from a nesting stands apart alike, see {@link spaceLook};
- * none where an empty line stands already, and none between points of one level;
- * `./editor.css` draws the gap by the class `cm-nest-end`.
- * - `before`: The last piece of the point before it, a list for sub-points.
+ * The `li` reaches on over the empty lines up to the next point of its list,
+ * so the guide line of its sub-points runs on through that air, see `../notes/notes.css`,
+ * and a list with air stays one list on the page, as in the file.
+ * - `next`: The next point of its list, `null` for none.
  * - `mark`: Its `-` or number, `ListMark`.
  * - `attributes`: Attributes of its `li`: its classes and its number.
  *
@@ -1636,19 +1634,19 @@ function listLook(look: Look, node: SyntaxNode): boolean {
  */
 function itemLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
-    const before: SyntaxNode | null =
-        node.prevSibling?.name === "ListItem" ? node.prevSibling.lastChild : null;
+    const next: SyntaxNode | null = node.nextSibling?.name === "ListItem" ? node.nextSibling : null;
     const mark: SyntaxNode | null = node.getChild("ListMark");
     const attributes: { [name: string]: string } = {};
     if (touched(look, line.from, line.to)) attributes.class = "cm-source";
-    if (
-        /^(?:BulletList|OrderedList)$/.test(before?.name ?? "") &&
-        !emptyIs(look.state, look.state.doc.line(line.number - 1))
-    )
-        attributes.class = `${attributes.class ?? ""} cm-nest-end`.trim();
     if (node.parent?.name === "OrderedList" && mark !== null)
         attributes.value = String(parseInt(look.state.sliceDoc(mark.from, mark.to)));
-    wrap(look, node, "li", attributes);
+    wrap(
+        look,
+        node,
+        "li",
+        attributes,
+        next === null ? node.to : look.state.doc.lineAt(next.from).from - 1,
+    );
     if (node.getChild("BulletList") !== null || node.getChild("OrderedList") !== null)
         foldLook(look, line, true);
     return true;
@@ -1747,7 +1745,7 @@ function hiddenStartOf(state: EditorState, line: Line): number {
 function gapIs(state: EditorState, line: Line): boolean {
     return (
         line.number > 1 &&
-        line.from !== (state.field(typingLine, false) ?? null) &&
+        line.from !== state.field(typingLine, false)?.from &&
         emptyIs(state, line) &&
         !emptyIs(state, state.doc.line(line.number - 1))
     );
@@ -2010,14 +2008,18 @@ const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
  * see {@link gap}; one right below another, a place to write, see {@link gapIs},
  * with a cursor a whole line high over the two half lines, as on one line of air,
  * see {@link stop}; only the empty line a key just put the cursor on to write
- * is as high as a line of text, see `typingLine` in `./keys.ts`.
- * - `typing`: Start of that line, `null` for none.
+ * is as high as a line of text, see `typingLine` in `./keys.ts`,
+ * not the air a `-` taken away left within a list, a half line as every empty line.
+ * - `typing`: Start of that line, `null` for none or air.
  * - `line`: One line of the note.
  *
  * @param look - Look being built
  */
 function spaceLook(look: Look): void {
-    const typing: number | null = look.state.field(typingLine, false) ?? null;
+    const typing: number | null =
+        look.state.field(typingLine, false)?.air === false
+            ? (look.state.field(typingLine, false)?.from ?? null)
+            : null;
     for (let number: number = 1; number <= look.state.doc.lines; number++) {
         const line: Line = look.state.doc.line(number);
         if (line.from !== typing && emptyIs(look.state, line))
