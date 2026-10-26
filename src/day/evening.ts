@@ -7,7 +7,7 @@
  * and my points about the day overall into the section `## About`, both apart,
  * though they go hand in hand.
  * Both are saved into the day's note a moment after I stop typing,
- * and when I leave a list or the day;
+ * at once by `Ctrl+S` in a list, and when I leave a list or the day;
  * the note below leaves both sections out.
  * It is all that is left of the evening panel:
  * what happened is my log and the boxes for tomorrow are plan entries,
@@ -155,7 +155,8 @@ function foldToggle(): void {
 
 /**
  * Starts the lists after the router has put their HTML into the page, each a list of points,
- * see `points.ts`, saved a moment after the typing pauses, when the focus leaves the list,
+ * see `points.ts`, saved a moment after the typing pauses, at once by `Ctrl+S`,
+ * which then saves no web page, when the focus leaves the list,
  * and when the page goes out of sight, like when I close it or switch to another app,
  * so nothing typed gets lost; their names fold them, see {@link foldToggle}.
  */
@@ -167,6 +168,11 @@ export function eveningStart(): void {
         if (document.visibilityState === "hidden") boxesSave().catch(errorShow);
     });
     boxes.forEach((box: Box): void => {
+        listOf(box).addEventListener("keydown", (event: KeyboardEvent): void => {
+            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s") return;
+            event.preventDefault();
+            boxesSave().catch(errorShow);
+        });
         pointsStart(
             listOf(box),
             (): void => {
