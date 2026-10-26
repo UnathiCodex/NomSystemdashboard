@@ -7,6 +7,7 @@
  * the text after it carried along, the blanks at a break gone:
  * - In plain text and in a heading Enter writes one empty line more, wherever the cursor stands,
  *   before a new paragraph a line break and an empty line, see {@link paragraphBreak}.
+ * - The air of a line, two empty lines, is the most air any key writes, see {@link airMost}.
  * - Enter continues a list or a task list with the next point, without air;
  *   right after the `-` of a point, a still empty one or one with text after the cursor,
  *   it puts two empty lines above it, the air of a whole line,
@@ -535,7 +536,7 @@ const quoteBreak: Command = (view: EditorView): boolean => {
  * Puts air above a point with the cursor right after its `-` or number, see {@link markEndIs},
  * a still empty point or one with its text after the cursor, the point staying where it is:
  * Enter at the end of a point writes the next point, Enter on it then the air of a whole line,
- * two empty lines above it, as Enter twice in plain text, once air stands there one line more;
+ * two empty lines above it, as Enter twice in plain text, never more, see {@link airMost};
  * Ctrl+Enter one empty line, the air of a half line, see {@link airBreak}.
  * A `-` goes only by Backspace, see {@link markerBackward}.
  * - `range`: The cursor.
@@ -1110,7 +1111,45 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
 );
 
 /**
- * Takes back the empty lines typing wrote below a paragraph of its own, see {@link paragraphTyping},
+ * Keeps the air a key writes at the air of a line, two empty lines, the most there is:
+ * more empty lines right above the line of the cursor, see {@link emptyIs},
+ * as Enter, Ctrl+Enter or Shift+Enter on an empty line would write them, go again,
+ * so a key there writes nothing; lines of code and air already in the note stay.
+ * - `broken`: Whether the change wrote a line break.
+ * - `state`: Text and syntax tree after the change.
+ * - `line`: The line of the cursor.
+ * - `top`: The first of the empty lines right above it.
+ *
+ * @returns Filter of the changes of the editor
+ */
+const airMost: Extension = EditorState.transactionFilter.of(
+    (transaction: Transaction): TransactionSpec | readonly TransactionSpec[] => {
+        let broken: boolean = false;
+        transaction.changes.iterChanges(
+            (fromA: number, toA: number, fromB: number, toB: number, inserted: Text): void => {
+                broken ||= inserted.lines > 1;
+            },
+        );
+        if (!broken || !transaction.isUserEvent("input")) return transaction;
+        const state: EditorState = transaction.state;
+        const line: Line = state.doc.lineAt(state.selection.main.head);
+        let top: Line = line;
+        while (top.number > 1 && emptyIs(state, state.doc.line(top.number - 1)))
+            top = state.doc.line(top.number - 1);
+        if (line.number - top.number <= 2) return transaction;
+        return [
+            transaction,
+            {
+                changes: { from: top.from, to: state.doc.line(line.number - 2).from },
+                sequential: true,
+            },
+        ];
+    },
+);
+
+/**
+ * Takes back the empty lines typing wrote below a paragraph of its own,
+ * see {@link paragraphTyping},
  * when Backspace leaves its line empty below an empty line, its text gone,
  * not only the `-` of a point or the `>` of a quote, see {@link markerBackward}:
  * the empty lines right below it go, up to the next line with text,
@@ -1186,7 +1225,8 @@ function airPointOf(state: EditorState, line: Line): SyntaxNode | null {
  * where Markdown begins the next paragraph, with the rest of the line,
  * also with an empty line below it, which stays the air below the new paragraph;
  * before the text of a line, at the start of a paragraph or heading too, the empty line above it;
- * on an empty line one more, as many as I press, in a list and in code too,
+ * on an empty line one more, up to the air of a line, see {@link airMost}, in a list too,
+ * in code as many as I press,
  * and on a line of only blanks outside code, like the paragraph of a point
  * Backspace left, see {@link markerBackward}, one more above it, the cursor staying where its text
  * will begin, so Enter, Backspace, Enter on a point gives what Enter, Enter, Backspace gives;
@@ -1730,6 +1770,7 @@ export const markdownKeys: Extension = [
     typingLine,
     paragraphTyping,
     paragraphUntyped,
+    airMost,
     blanksLeft,
     Prec.high(
         keymap.of([
