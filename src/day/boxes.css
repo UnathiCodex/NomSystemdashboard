@@ -203,20 +203,20 @@
     height: 1.0625rem;
 }
 
-/* Done box: its lines as when it was open, only greyed, its what grey too */
-.box-done .box-what {
+/* Done box: its lines as when it was open, only greyed, its what grey too;
+   so is an open one whose day is over, which keeps its actions, see `boxElementOf` in `boxes.ts` */
+.box-done .box-what,
+.box-over .box-what {
     color: var(--text-muted);
 }
 
 /* Cancelled box, skipped by me or cancelled by the university,
-   like a lecture that does not take place, and a box on a day it was pushed from,
-   and an open one whose day is over, which keeps its actions, see `boxElementOf` in `boxes.ts`:
+   like a lecture that does not take place, and a box on a day it was pushed from:
    only faded, never struck through, all alike;
    its icon says which, see `.box-state` */
 .box-dropped,
 .box-university,
-.box-pushed,
-.box-over {
+.box-pushed {
     opacity: 0.55;
 }
 
