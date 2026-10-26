@@ -1014,7 +1014,6 @@
     color: var(--code-text);
 }
 
-
 :is(.markdown pre code, .cm-code-block) .code-keyword:not(.cm-mark) {
     color: var(--code-keyword);
 }
