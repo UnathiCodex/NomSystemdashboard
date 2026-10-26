@@ -928,25 +928,25 @@ function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTML
 }
 
 /**
- * Sections of the plan, in order, my projects, my modules and my living,
+ * Sections of the plan, in order, my projects, my modules, my living and my health,
  * named as the Skill picker names its groups;
  * their plans lie in `Skilling`,
- * `Modules` and `Living` of `NomManagecalendar`, see `reader/sources.ts`.
+ * `Modules`, `Living` and `Health` of `NomManagecalendar`, see `reader/sources.ts`.
  */
-const sections: string[] = ["Projects", "Modules", "Living"];
+const sections: string[] = ["Projects", "Modules", "Living", "Health"];
 
 /**
  * Gives the section of the plan a box stands in, by the folder of the plan it lies in,
- * see `calendarFileOf` in `reader/documents.ts`: a box of another category than a skill `Living`,
- * like sleep, a skill box of a module, whose skill is a code like `IN2028`, `Modules`,
- * any other skill box `Projects`.
+ * see `calendarFileOf` in `reader/documents.ts`: `Projects` for `Skilling`,
+ * else the name of the folder, like `Health` for my sleep.
+ * - `folder`: Name of the folder of its plan, like `Health`.
  *
  * @param box - The box
  * @returns Name of its section, like `Modules`
  */
 function sectionOf(box: Box): string {
-    if (box.category !== skillName) return "Living";
-    return /^[A-Z]+\d+$/.test(box.module) ? "Modules" : "Projects";
+    const folder: string = box.file.split("/").at(-2) ?? "";
+    return folder === "Skilling" ? "Projects" : folder;
 }
 
 /**

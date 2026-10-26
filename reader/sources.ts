@@ -56,23 +56,14 @@ export const manageRoot: string = join(vault, "NomManageplannings");
 
 /**
  * Folder of plan and log of my new system, `NomManagecalendar`:
- * three folders of the same depth, no month folders,
- * {@link livingRoot} for the plan and the log of every category but `Skill`,
+ * folders of the same depth, no month folders,
+ * `Health/` and `Living/` for the plan and the log of every category but `Skill`, see {@link topics},
  * {@link skillingRoot} for those of my skills and {@link metaRoot} for my birthdays,
  * the holidays and the semester dates of TUM.
  * Every view reads all their plans and logs,
  * the Food view its meals from the logs as the Day view its entries, see {@link day}.
  */
 export const calendarRoot: string = join(manageRoot, "NomManagecalendar");
-
-/**
- * Folder `Living/` in {@link calendarRoot}:
- * for every category but `Skill` one plan and one log per topic and year,
- * like `Sleep_2026_Plan.ics` and `Sleep_2026_Log.ics`, the topic by its category,
- * see {@link livingTopics}, an entry by the year of its start in Berlin time,
- * a box by the year of its day, see {@link livingFileOf}.
- */
-export const livingRoot: string = join(calendarRoot, "Living");
 
 /**
  * Folder `Skilling/` in {@link calendarRoot}:
@@ -439,7 +430,7 @@ export const skillLog: CalendarSource[] = [{ folder: calendarRoot, ending: logEn
 /**
  * Log of the trackers of the day, sleep and water: the log of the new system,
  * where they are entries of the categories `Sleep` and `Drink` in the logs of their topic
- * and year in `Living/`, like `Sleep_2026_Log.ics`.
+ * and year, like `Health/Sleep_2026_Log.ics`.
  */
 export const trackerLog: CalendarSource[] = [{ folder: calendarRoot, ending: logEnding }];
 
@@ -521,28 +512,32 @@ export const sport: SportSources = {
 };
 
 /**
- * Topics of the files in {@link livingRoot}, by category: my sleep,
- * and my food with my cooking, each in files of its own,
- * any other category in those of the topic `Living`, see {@link livingFileOf}.
+ * Folders and topics of the files of every category but `Skill` in {@link calendarRoot}:
+ * my sleep in `Health/`, my food with my cooking in `Living/`, each in files of its own,
+ * any other category in those of the topic `Living` in `Living/`, see {@link topicFileOf}.
  */
-export const livingTopics: { [category: string]: string } = {
-    Sleep: "Sleep",
-    Food: "Food",
-    Cook: "Food",
+export const topics: { [category: string]: string } = {
+    Sleep: "Health/Sleep",
+    Food: "Living/Food",
+    Cook: "Living/Food",
 };
 
 /**
- * Builds the path of a file of a topic and a year in {@link livingRoot}:
- * the log or the plan of the topic of a category, see {@link livingTopics}, in the year of a day.
+ * Builds the path of a file of a topic and a year in {@link calendarRoot}:
+ * the log or the plan of the topic of a category, see {@link topics}, in the year of a day,
+ * an entry by the year of its start in Berlin time, a box by the year of its day.
  *
  * @param category - Category of the entry or the box, like `Cook`
  * @param date - Day like `2026-10-13`
  * @param ending - End of the name, {@link logEnding} or {@link planEnding}
- * @returns Path like `Living/Food_2026_Log.ics`
+ * @returns Path like `Health/Sleep_2026_Log.ics`
  *   or `Living/Living_2026_Plan.ics` in {@link calendarRoot}
  */
-export function livingFileOf(category: string, date: string, ending: string): string {
-    return join(livingRoot, `${livingTopics[category] ?? "Living"}_${date.slice(0, 4)}${ending}`);
+export function topicFileOf(category: string, date: string, ending: string): string {
+    return join(
+        calendarRoot,
+        `${topics[category] ?? "Living/Living"}_${date.slice(0, 4)}${ending}`,
+    );
 }
 
 /**

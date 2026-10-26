@@ -111,7 +111,7 @@ import type { Extra, Planned } from "./course.ts";
  *   its own `ESTIMATED-DURATION` with the start as `RECURRENCE-ID`,
  *   since `ical.js` gives no occurrence of an `RDATE` of a period, `VALUE=PERIOD`.
  * - `file`: Its plan from `NomWorkspace` on,
- *   like `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`.
+ *   like `NomManageplannings/NomManagecalendar/Health/Sleep_2026_Plan.ics`.
  * - `series`: The `X-SERIES` its parts share, empty for a series of one time,
  *   see the top of this file.
  * - `parts`: Its parts going on, itself among them, each a part as this one,

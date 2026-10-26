@@ -11,7 +11,7 @@
  * written exactly as sent, without a diff, since only the notes of my modules keep diffs,
  * see `edit.ts`; an `.ics` file only to read.
  * Paths are written from `NomManageplannings` with `/`,
- * like `NomManagecalendar/Living/Sleep_2026_Log.ics`.
+ * like `NomManagecalendar/Health/Sleep_2026_Log.ics`.
  *
  * - `node:fs`: Lists folders, reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
@@ -200,7 +200,7 @@ function systemFileOf(path: string, endings: string[]): string {
  * Reads a file of my new system for the editor:
  * a Markdown file to edit, an `.ics` file to read only.
  *
- * @param path - Path like `NomManagecalendar/Living/Sleep_2026_Log.ics`
+ * @param path - Path like `NomManagecalendar/Health/Sleep_2026_Log.ics`
  * @returns The file with its text
  * @throws {Error} - When it is no such file, see {@link systemFileOf}
  */

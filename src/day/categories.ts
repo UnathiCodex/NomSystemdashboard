@@ -250,12 +250,16 @@ const placeKeys: FieldKey[] = ["from", "location"];
 const withParting: string = "; ";
 
 /**
- * Topics of the files of plan and log in `Living/`, by category,
- * as `livingTopics` in `reader/sources.ts` names them:
- * my sleep, and my food with my cooking, each in files of its own,
- * any other category in those of the topic `Living`, see {@link entryFileOf}.
+ * Folders and topics of the files of plan and log, by category,
+ * as `topics` in `reader/sources.ts` names them:
+ * my sleep in `Health/`, my food with my cooking in `Living/`, each in files of its own,
+ * any other category in those of the topic `Living` in `Living/`, see {@link entryFileOf}.
  */
-const livingTopics: { [category: string]: string } = { Sleep: "Sleep", Food: "Food", Cook: "Food" };
+const topics: { [category: string]: string } = {
+    Sleep: "Health/Sleep",
+    Food: "Living/Food",
+    Cook: "Living/Food",
+};
 
 /**
  * A field of a category, as the reader gives it.
@@ -719,8 +723,7 @@ function saveAllow(): void {
  * as `calendarFileOf` in `reader/documents.ts` names it:
  * for `Skill` the log or the plan of its skill,
  * in `Modules/` for a module and in `Skilling/` for a project, none while no skill is picked;
- * for any other category those of its topic in the year of its day in `Living/`,
- * see {@link livingTopics}; nothing while no category is picked.
+ * for any other category those of its topic in the year of its day, see {@link topics}; nothing while no category is picked.
  * - `folder`: The folder of plan and log from `NomWorkspace` on.
  * - `ending`: End of the name of the file, as `logEnding` and `planEnding` in `reader/sources.ts`.
  * - `name`: Name of the folder of the skill picked, empty for none,
@@ -731,7 +734,7 @@ function saveAllow(): void {
  * - `file`: The file, empty for none.
  *
  * @returns Path of the file from `NomWorkspace` on, like
- *   `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`, empty while not known
+ *   `NomManageplannings/NomManagecalendar/Health/Sleep_2026_Plan.ics`, empty while not known
  */
 function entryFileOf(): string {
     const folder: string = "NomManageplannings/NomManagecalendar";
@@ -742,15 +745,15 @@ function entryFileOf(): string {
     let file: string = opened.entry?.extendedProps.file ?? opened.box?.file ?? "";
     if (fresh && chosen?.name === skillName)
         file = name === "" ? "" : `${folder}/${skills}/${name}${ending}`;
-    else if (fresh && chosen !== null) file = livingFileOf(chosen.name, dayRead(), ending);
+    else if (fresh && chosen !== null) file = topicFileOf(chosen.name, dayRead(), ending);
     return file;
 }
 
 /**
- * Gives the file of plan or log in `Living/` of an entry or a box of a category other than `Skill`,
- * as the reader names it, see `livingFileOf` in `reader/sources.ts`:
- * that of its topic in the year of its day, see {@link livingTopics},
- * like `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`;
+ * Gives the file of plan or log of an entry or a box of a category other than `Skill`,
+ * as the reader names it, see `topicFileOf` in `reader/sources.ts`:
+ * that of its topic in the year of its day, see {@link topics},
+ * like `NomManageplannings/NomManagecalendar/Health/Sleep_2026_Plan.ics`;
  * for the dialog of an entry and that of a new series, see `series.ts`.
  *
  * @param category - Its category, like `Sleep`
@@ -758,8 +761,8 @@ function entryFileOf(): string {
  * @param ending - End of the name of the file, `_Plan.ics` or `_Log.ics`
  * @returns Path of the file from `NomWorkspace` on
  */
-export function livingFileOf(category: string, day: string, ending: string): string {
-    return `NomManageplannings/NomManagecalendar/Living/${livingTopics[category] ?? "Living"}_${day.slice(0, 4)}${ending}`;
+export function topicFileOf(category: string, day: string, ending: string): string {
+    return `NomManageplannings/NomManagecalendar/${topics[category] ?? "Living/Living"}_${day.slice(0, 4)}${ending}`;
 }
 
 /**

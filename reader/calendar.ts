@@ -179,7 +179,7 @@ import type { CalendarSource } from "./sources.ts";
  *   or `2026-10-13` for a series of whole days, for a changed occurrence its `RECURRENCE-ID`;
  *   empty for an entry that happens once.
  * - `file`: Its `.ics` file from `NomWorkspace` on, see `vaultPathOf` in `sources.ts`,
- *   which its dialog shows, like `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Log.ics`.
+ *   which its dialog shows, like `NomManageplannings/NomManagecalendar/Health/Sleep_2026_Log.ics`.
  */
 export type Entry = {
     id: string;

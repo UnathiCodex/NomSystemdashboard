@@ -202,7 +202,7 @@ import {
     dayCalendarOf,
     entryBoxOf,
     entryOpenFromBox,
-    livingFileOf,
+    topicFileOf,
     onlineRowOf,
     withRowOf,
 } from "./categories.ts";
@@ -2285,13 +2285,13 @@ function standardLineOf(): string {
  * Gives the plan a plain series lies in or goes into, shown at the left of the buttons of its form:
  * of one there its file, of a new one as soon as it is known, the plan of its skill,
  * see `skillNamesOf` in `./skill.ts`,
- * or the plan of its topic in the year of its first day in `Living/`,
- * see `livingFileOf` in `./categories.ts`.
+ * or the plan of its topic in the year of its first day,
+ * see `topicFileOf` in `./categories.ts`.
  *
  * @param series - The plain series
  * @param form - The form, which holds its first day
  * @returns Path from `NomWorkspace` on,
- *   like `NomManageplannings/NomManagecalendar/Living/Sleep_2026_Plan.ics`, empty while not known
+ *   like `NomManageplannings/NomManagecalendar/Health/Sleep_2026_Plan.ics`, empty while not known
  */
 function plainFileOf(series: Plain, form: Form): string {
     if (series.file !== "") return series.file;
@@ -2299,7 +2299,7 @@ function plainFileOf(series: Plain, form: Form): string {
         return skillNamesOf({ module: series.module, type: series.type }).file;
     return series.category === "" || form.first === ""
         ? ""
-        : livingFileOf(series.category, form.first, "_Plan.ics");
+        : topicFileOf(series.category, form.first, "_Plan.ics");
 }
 
 /**

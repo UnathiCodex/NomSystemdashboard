@@ -51,7 +51,7 @@
  * see `repeatApply` in `course.ts`.
  *
  * A box of the new system is a to-do of iCalendar, a `VTODO`, in the plan of its topic and year,
- * like `Living/Sleep_2026_Plan.ics`, or a skill box in the plan of its skill,
+ * like `Health/Sleep_2026_Plan.ics`, or a skill box in the plan of its skill,
  * like `Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`, both in `NomManagecalendar`,
  * see `sources.ts` and `calendar.ts`;
  * a box moves into the plan it belongs into when its day moves into another year
@@ -381,7 +381,7 @@ const deadlineDays: number = 4;
  * @param box - Category and skill of the box, like `Skill` and `IN2028`, or `Talk` and no skill
  * @param date - Its day, like `2026-10-13`
  * @returns Path like `Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`
- *   or `Living/Sleep_2026_Plan.ics` in `NomManagecalendar`
+ *   or `Health/Sleep_2026_Plan.ics` in `NomManagecalendar`
  */
 function planFileOf(box: { category: string; module: string }, date: string): string {
     return calendarFileOf(box, date, planEnding);

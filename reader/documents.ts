@@ -100,7 +100,7 @@ import {
     skillFileOf,
     skillLog,
     vault,
-    livingFileOf,
+    topicFileOf,
 } from "./sources.ts";
 
 import type { Stats } from "node:fs";
@@ -294,8 +294,8 @@ export function titleOf(
  * and in `Skilling/` for a project, named like the folder of the skill,
  * see {@link skillFolderNameOf}, never one without skill, which no entry is,
  * see `categoryAllows` in `categories.ts`;
- * for any other the log or the plan of its topic in the year of its day in `Living/`,
- * see `livingFileOf` in `sources.ts`.
+ * for any other the log or the plan of its topic in the year of its day in `Health/` or `Living/`,
+ * see `topicFileOf` in `sources.ts`.
  * - `name`: Name of the folder of the skill, empty for none.
  *
  * @param fields - Category and skill of the entry or the box,
@@ -311,7 +311,7 @@ export function calendarFileOf(
     date: string,
     ending: string,
 ): string {
-    if (fields.category !== skillName) return livingFileOf(fields.category, date, ending);
+    if (fields.category !== skillName) return topicFileOf(fields.category, date, ending);
     const name: string = skillFolderNameOf(fields.module);
     if (name === "") throw new Error("A skill entry needs its skill");
     return skillFileOf(name, ending);

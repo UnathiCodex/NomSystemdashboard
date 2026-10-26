@@ -8,7 +8,7 @@
  * a skill entry into the log of its skill,
  * like `Modules/IN2028_BusinessAnalyticsMachineLearning_Log.ics`,
  * any other into the log of its topic in the year of its start in Berlin time,
- * like `Living/Sleep_2026_Log.ics`, see `livingFileOf` in `sources.ts`;
+ * like `Health/Sleep_2026_Log.ics`, see `topicFileOf` in `sources.ts`;
  * an entry whose start moves into another year,
  * or that changes its category or its skill, moves into the log it belongs into then.
  * A skill entry names its skill and its type in its `SUMMARY`, its link one I set:
@@ -232,7 +232,7 @@ const cookName: string = "Cook";
  * @param fields - Category, skill and start of the entry,
  *   like `Skill`, `IN2028` and 2026-10-13 10:00
  * @returns Path like `Modules/IN2028_BusinessAnalyticsMachineLearning_Log.ics`
- *   or `Living/Sleep_2026_Log.ics` in `NomManagecalendar`
+ *   or `Health/Sleep_2026_Log.ics` in `NomManagecalendar`
  */
 export function logFileOf(fields: { category: string; module: string; start: Date }): string {
     return calendarFileOf(fields, berlinDateOf(fields.start), logEnding);
