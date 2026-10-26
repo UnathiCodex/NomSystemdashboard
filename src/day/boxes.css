@@ -221,15 +221,25 @@
 }
 
 /* Name of a section of the plan above its boxes, like `Modules`:
-   small and grey like the heads of plan and log, on a thin grey line over the whole width,
+   small and grey like the heads of plan and log, in one line with a thin grey line
+   from its end over the rest of the width,
    the boxes of the section close below it, see `sectionOf` in `boxes.ts` */
 .plan-section {
+    display: flex;
+    align-items: center;
+    gap: var(--plan-space);
     margin: 0;
-    padding-top: var(--plan-space);
-    border-top: 1px solid var(--line);
     font-size: var(--day-text);
     font-weight: 400;
+    line-height: 1;
     color: var(--text-muted);
+}
+
+/* The thin grey line after the name of a section */
+.plan-section::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--line);
 }
 
 .plan-section:first-child {
