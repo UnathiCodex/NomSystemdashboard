@@ -878,7 +878,8 @@ function tutorialIs(box: Box): boolean {
  * since its deadline line names it.
  * An open box without deadline whose day is over counts as skipped, as in the list of a module,
  * see `overIs` in `../editor/course.ts`, and is not carried along, nothing written,
- * yet keeps its actions, so I still log or skip it, see `boxActionsOf` in `actions.ts`;
+ * greyed as `box-over`, yet keeps its actions, so I still log or skip it,
+ * see `boxActionsOf` in `actions.ts`;
  * moving it by its dialog to today or later carries it along again,
  * see `carriedOf` in `reader/boxes.ts`.
  * One carried along stands open on its own day instead, with its actions,
@@ -906,6 +907,13 @@ function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTML
         "div",
         "box-body",
         boxContentOf(box, shown.day, !carriedShown),
+    );
+    element.classList.toggle(
+        "box-over",
+        box.state === "open" &&
+            box.deadline === "" &&
+            box.day < calendarTodayOf() &&
+            box.moved === null,
     );
     element.classList.toggle("box-draggable", box.state === "open");
     element.dataset.id = box.id;

@@ -218,6 +218,7 @@ import {
     personsRename,
 } from "../persons.ts";
 import { dayOf, semesterOf, skillName } from "../skill/attempts.ts";
+import { folderLinkShow } from "../skill/links.ts";
 import { iconPut, QuestionMark } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { changesKept } from "../changes.ts";
@@ -1195,7 +1196,8 @@ function partsOf(field: Field): HTMLElement {
 /**
  * Shows the link of what the entry or the box was below its summary, small and grey,
  * as a link that opens in a new tab, like the address of a place, see {@link placePartsShow}:
- * the link typed, like the page of an event;
+ * the link typed, like the page of an event, a path of mine as a folder of a skill shows,
+ * see `folderLinkShow` in `../skill/links.ts`;
  * for a skill entry without one the folder of its skill,
  * which opens in this window, being NomSystem's own, see `skillPathShow` in `skill.ts`;
  * nothing while it has none;
@@ -1211,6 +1213,10 @@ function summaryPartsShow(): void {
     pencil.hidden = titleRead(valuesRead().title) === "";
     if (chosen?.name === skillName && summaryLink === "") {
         skillPathShow(link);
+        return;
+    }
+    if (summaryLink !== "" && !linkForm.test(summaryLink)) {
+        folderLinkShow(link, summaryLink);
         return;
     }
     link.textContent = summaryLink;

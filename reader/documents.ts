@@ -278,6 +278,13 @@ export function skillLinkOf(code: string, type: string, semester: string): strin
 }
 
 /**
+ * Form of a link of mine into `NomWorkspace`, typed as the link of a summary,
+ * like `NomManageplannings/NomFrequencediary/2026/2026_10/2026_10_26.md`:
+ * a path from `NomWorkspace` on, on one line, never starting with `/` and without `..`.
+ */
+const pathForm: RegExp = /^(?!\/)(?!.*(^|\/)\.\.(\/|$))[^\r\n]+$/;
+
+/**
  * Gives what an entry or a box was as it is written, its `SUMMARY` and the `ALTREP` of it:
  * its what as sent, with the link it had in the entry or box it comes from
  * while it is the same what, like a web address an older entry typed;
@@ -285,7 +292,8 @@ export function skillLinkOf(code: string, type: string, semester: string): strin
  * while none is sent the one its skill and type give it, see {@link skillTitleOf},
  * and always the link to the folder of its skill and of its material,
  * which names both, see {@link skillLinkOf}.
- * The link of what it was I type for any other entry, like the page of an event;
+ * The link of what it was I type for any other entry, a web address, like the page of an event,
+ * or a path of mine, see {@link pathForm};
  * a sender that knows none, like the calendar after a drag, keeps the one it comes from.
  *
  * @param fields - Category, what, skill, type, semester and link of the entry or the box,
@@ -295,7 +303,7 @@ export function skillLinkOf(code: string, type: string, semester: string): strin
  * @returns `SUMMARY` and `ALTREP`, like `IN2028 Lecture 3 recap`
  *   and `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`,
  *   or `Planungen` and an empty link
- * @throws {Error} - When the link typed is no web address
+ * @throws {Error} - When the link typed is neither a web address nor a path of mine
  */
 export function titleOf(
     fields: {
@@ -318,7 +326,8 @@ export function titleOf(
     if (fields.titleLink === undefined)
         return [fields.title, from !== null && from.title === fields.title ? from.titleLink : ""];
     const link: string = fields.titleLink.trim();
-    if (link !== "" && !linkForm.test(link)) throw new Error(`No link of ${fields.title}: ${link}`);
+    if (link !== "" && !linkForm.test(link) && !pathForm.test(link))
+        throw new Error(`No link of ${fields.title}: ${link}`);
     return [fields.title, link];
 }
 
