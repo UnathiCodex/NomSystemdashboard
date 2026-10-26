@@ -169,9 +169,9 @@ const nameOrder: Intl.Collator = new Intl.Collator("de");
 const platformHead: string[] = [
     "# Online",
     "",
-    "Link is the platform's web app; an entry carries its own meeting link and passcode.",
+    "Link is the platform's web app; an entry carries its own channel, title and link.",
     "",
-    "| Platform | Provider | Link |",
+    "| Label | Provider | Link |",
     "|---|---|---|",
 ];
 
@@ -734,8 +734,8 @@ export function platformAdd(sent: Platform): Platform {
 
 /**
  * Gives what an entry or a box did online as it is written, see `Online` in `calendar.ts`:
- * as sent, its platform, the link of its meeting or video and its passcode cleaned,
- * see {@link cellOf}, all three empty without a platform;
+ * as sent, its platform, the link of its meeting or video, its channel and its title cleaned,
+ * see {@link cellOf}, all four empty without a platform;
  * from a sender that knows none, like the calendar after a drag,
  * as the entry or box it comes from has it,
  * like the box a log entry is logged from or the entry being changed.
@@ -748,14 +748,15 @@ export function platformAdd(sent: Platform): Platform {
  * @throws {Error} - When the link is no web address
  */
 export function onlineFor(
-    sent: { online?: string; onlineLink?: string; passcode?: string },
+    sent: { online?: string; onlineLink?: string; onlineChannel?: string; onlineTitle?: string },
     from: Online | null,
 ): Online {
     if (sent.online === undefined)
         return {
             online: from?.online ?? "",
             onlineLink: from?.onlineLink ?? "",
-            passcode: from?.passcode ?? "",
+            onlineChannel: from?.onlineChannel ?? "",
+            onlineTitle: from?.onlineTitle ?? "",
         };
     const online: string = cellOf(String(sent.online));
     const link: string = online === "" ? "" : cellOf(String(sent.onlineLink ?? ""));
@@ -763,7 +764,8 @@ export function onlineFor(
     return {
         online: online,
         onlineLink: link,
-        passcode: online === "" ? "" : cellOf(String(sent.passcode ?? "")),
+        onlineChannel: online === "" ? "" : cellOf(String(sent.onlineChannel ?? "")),
+        onlineTitle: online === "" ? "" : cellOf(String(sent.onlineTitle ?? "")),
     };
 }
 

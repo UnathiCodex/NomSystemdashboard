@@ -77,7 +77,7 @@ import type { CalendarSource } from "./sources.ts";
  *   empty when the event has none and for an older place online, which reads as its {@link Online}.
  * - `locationLink`: Link of its place, the standard parameter `ALTREP` of its `LOCATION`,
  *   like `https://nav.tum.de/room/0509.EG.980`, empty when it has none.
- * - `online`, `onlineLink`, `passcode`: What I did online, see {@link Online}.
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`: What I did online, see {@link Online}.
  * - `from`: Where a way starts, its `X-FROM`, empty when the event has none.
  * - `attendees`: Who I was with, its `ATTENDEE`s in order,
  *   see {@link Attendee}, none when the event has none.
@@ -191,7 +191,8 @@ export type Entry = {
     locationLink: string;
     online: string;
     onlineLink: string;
-    passcode: string;
+    onlineChannel: string;
+    onlineTitle: string;
     from: string;
     attendees: Attendee[];
     module: string;
@@ -232,9 +233,10 @@ export type Entry = {
  * What an entry or a box did online, apart from where I physically was, its place:
  * one `X-ONLINE`, its platform as value, a row of `Online.md`,
  * see `Platform` in `places.ts`,
- * the link of its own meeting or video as the standard parameter `ALTREP` and its passcode
- * as the parameter `X-PASSCODE`, both left out while empty,
- * like `X-ONLINE;ALTREP="https://zoom.us/j/123";X-PASSCODE=4f9K2:Zoom`, see {@link textPropertyOf}.
+ * the link of its own meeting or video as the standard parameter `ALTREP`,
+ * its channel as the parameter `X-CHANNEL` and its title as `X-TITLE`, each left out while empty,
+ * like `X-ONLINE;ALTREP="https://zoom.us/j/123";X-CHANNEL=1234567890;X-TITLE=4f9K2:Zoom`,
+ * see {@link textPropertyOf}.
  * An older entry wrote it as its place, which reads so, see {@link onlineOf}:
  * `LOCATION:Online, Zoom` or `Online, Teams, Microsoft` with the link as `ALTREP`,
  * or as a place named after its platform with `Online` among its parts,
@@ -244,12 +246,16 @@ export type Entry = {
  *
  * - `online`: The platform, like `Zoom`, empty for none.
  * - `onlineLink`: The link of its meeting or video, a web address, empty for none.
- * - `passcode`: The passcode of its meeting, empty for none.
+ * - `onlineChannel`: Its channel, like the channel of a video on YouTube
+ *   or the ID of a meeting, empty for none.
+ * - `onlineTitle`: Its title, like the title of a video
+ *   or the passcode of a meeting, empty for none.
  */
 export type Online = {
     online: string;
     onlineLink: string;
-    passcode: string;
+    onlineChannel: string;
+    onlineTitle: string;
 };
 
 /**
@@ -320,7 +326,7 @@ export type Link = {
  * - `location`: Place, `LOCATION`.
  * - `locationLink`: Link of the place, the parameter `ALTREP` of `LOCATION`,
  *   written only with its place, empty for none.
- * - `online`, `onlineLink`, `passcode`:
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
  *   What it did online, `X-ONLINE`, written only with its platform, see {@link Online}.
  * - `from`: Where a way starts, `X-FROM`.
  * - `attendees`: Who I was with, one `ATTENDEE` each, see {@link Attendee}; none for nobody.
@@ -898,21 +904,24 @@ function onlineOf(component: ICAL.Component): Placed {
             ? {
                   online: String(own.getFirstValue() ?? ""),
                   onlineLink: String(own.getParameter("altrep") ?? ""),
-                  passcode: String(own.getParameter("x-passcode") ?? ""),
+                  onlineChannel: String(own.getParameter("x-channel") ?? ""),
+                  onlineTitle: String(own.getParameter("x-title") ?? ""),
               }
             : placed
               ? {
                     online: parts[0] === "Online" ? (parts[1] ?? "Online") : labelOf(line),
                     onlineLink: lineLink,
-                    passcode: "",
+                    onlineChannel: "",
+                    onlineTitle: "",
                 }
               : linked
                 ? {
                       online: platformOfLink(summaryLink)?.name ?? "",
                       onlineLink: summaryLink,
-                      passcode: "",
+                      onlineChannel: "",
+                      onlineTitle: "",
                   }
-                : { online: "", onlineLink: "", passcode: "" };
+                : { online: "", onlineLink: "", onlineChannel: "", onlineTitle: "" };
     return {
         ...online,
         titleLink: linked ? "" : summaryLink,
@@ -2100,7 +2109,8 @@ function propertyOf(name: string, value: string | ICAL.Time | Link): ICAL.Proper
  * `LOCATION;ALTREP="https://nav.tum.de/room/0509.EG.980":Audimax 0509.EG.980\, Arcisstraße 21\, 80333 München…`,
  * and its `SUMMARY` with its link the same way, like the folder of a skill,
  * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…":IN2028_BusinessAnalyticsMachineLearning (VO)`,
- * and its `X-ONLINE` with the link of its meeting and its passcode, see {@link Online};
+ * and its `X-ONLINE` with the link, the channel and the title of its meeting or video,
+ * see {@link Online};
  * every other one as its text.
  *
  * @param name - Name of the property, like `location`
@@ -2116,8 +2126,10 @@ function textPropertyOf(name: string, value: string, fields: EntryTexts): ICAL.P
         property.setParameter("altrep", [fields.titleLink]);
     if (name === "x-online" && fields.onlineLink !== "")
         property.setParameter("altrep", [fields.onlineLink]);
-    if (name === "x-online" && fields.passcode !== "")
-        property.setParameter("x-passcode", fields.passcode);
+    if (name === "x-online" && fields.onlineChannel !== "")
+        property.setParameter("x-channel", fields.onlineChannel);
+    if (name === "x-online" && fields.onlineTitle !== "")
+        property.setParameter("x-title", fields.onlineTitle);
     return property;
 }
 
@@ -2416,12 +2428,12 @@ export function todoAppend(
  * A `SUMMARY` whose link alone changed is written anew too,
  * like that of a skill entry moved to another semester,
  * whose link names the folder of its semester, see `skillLinkOf` in `documents.ts`,
- * and so is an `X-ONLINE` whose link or passcode alone changed;
+ * and so is an `X-ONLINE` whose link, channel or title alone changed;
  * once what it did online changes, its `LOCATION` and its `SUMMARY` are written anew too,
  * since an older entry wrote it there, see {@link onlineOf}.
  * - `textsOld`: Its text fields as read, with the names of their properties.
  * - `relinked`: Whether the link of its `SUMMARY` changed.
- * - `reonline`: Whether what it did online changed, its platform, link or passcode.
+ * - `reonline`: Whether what it did online changed, its platform, link, channel or title.
  *
  * @param component - Lines of the event or the to-do, changed in place
  * @param entry - Its entry as read
@@ -2433,7 +2445,8 @@ function textsPut(component: string[], entry: Entry, fields: EntryTexts): void {
     const reonline: boolean =
         fields.online !== entry.online ||
         fields.onlineLink !== entry.onlineLink ||
-        fields.passcode !== entry.passcode;
+        fields.onlineChannel !== entry.onlineChannel ||
+        fields.onlineTitle !== entry.onlineTitle;
     textsOf(fields).forEach(([name, value]: [string, string], index: number): void => {
         if (
             value !== textsOld[index][1] ||

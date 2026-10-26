@@ -207,9 +207,9 @@ export const numberedTypes: string[] = ["VO", "UE", "ZU", "TU", "HU"];
  * - `id`: Identifier of its to-do or event, its `UID`,
  *   for an occurrence of a series with its start, see `entryIdOf` in `calendar.ts`.
  * - `category`, `title`, `titleLink`, `location`, `locationLink`, `online`, `onlineLink`,
- *   `passcode`, `from`, `module`, `type`, `semester`, `note`: As those of an entry,
- *   see `calendar.ts`, like the room of a lecture of my plan in `Skilling/`
- *   with its link as `ALTREP`.
+ *   `onlineChannel`, `onlineTitle`, `from`, `module`, `type`, `semester`, `note`:
+ *   As those of an entry, see `calendar.ts`,
+ *   like the room of a lecture of my plan in `Skilling/` with its link as `ALTREP`.
  * - `day`: Its day, like `2026-10-13`; for a box with a deadline the day of its deadline.
  * - `time`: Expected time as ISO instant, empty for none.
  * - `minutes`: Expected duration in minutes, `null` for none.
@@ -319,8 +319,8 @@ export type PlanDay = {
  *   As those of an entry of the log;
  *   the link of its place the reader finds, see `placeLinkOf` in `places.ts`,
  *   and what a skill box is it writes from its skill and type, see `titleOf` in `documents.ts`.
- * - `online`, `onlineLink`, `passcode`: What I will do online, as for an entry of the log,
- *   see `EntryNew` in `day.ts`;
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
+ *   What I will do online, as for an entry of the log, see `EntryNew` in `day.ts`;
  *   left out by a sender that does not know them, like an accepted suggestion,
  *   so a changed box keeps them.
  * - `attendees`: Who I will be with, one `ATTENDEE` each;
@@ -598,7 +598,8 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
             locationLink: entry.locationLink,
             online: entry.online,
             onlineLink: entry.onlineLink,
-            passcode: entry.passcode,
+            onlineChannel: entry.onlineChannel,
+            onlineTitle: entry.onlineTitle,
             from: entry.from,
             attendees: entry.attendees,
             module: entry.module,
@@ -1347,7 +1348,8 @@ function textsOf(entry: Entry): EntryTexts {
         locationLink: entry.locationLink,
         online: entry.online,
         onlineLink: entry.onlineLink,
-        passcode: entry.passcode,
+        onlineChannel: entry.onlineChannel,
+        onlineTitle: entry.onlineTitle,
         from: entry.from,
         attendees: entry.attendees,
         module: entry.module,

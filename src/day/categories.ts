@@ -80,7 +80,7 @@
  * its parts showing below it at once, so I type them next, see {@link placeAdd}.
  * A place is only where I physically am;
  * below it every category has `Online`, what I did online: its platform of `Online.md`,
- * like `Zoom`, and below it the link of its own meeting or video and its passcode,
+ * like `Zoom`, and below it the channel, the title and the link of its own meeting or video,
  * typed per entry, see {@link onlineRowOf}.
  * A new entry, also one logged from a box, starts where the last way before it ended,
  * else at my default place, the place I starred, like `Home Munich`, and a new box always there:
@@ -334,7 +334,8 @@ type EntryTarget = "log" | "box";
  *   or a web address an older entry kept; empty for none.
  * - `locationLink`: Link of its place, its `ALTREP`,
  *   as the entry, the box or the box to log has it, or the one it is a copy of; empty for none.
- * - `onlineLink`, `passcode`: The link of its meeting or video and its passcode online,
+ * - `onlineLink`, `onlineChannel`, `onlineTitle`:
+ *   The link, the channel and the title of its meeting or video online,
  *   as the entry, the box or the box to log has them, or the one it is a copy of,
  *   see `Online` in `entries.ts`; empty for none.
  * - `note`: Note of the entry.
@@ -358,7 +359,8 @@ type EntryOpening = {
     titleLink: string;
     locationLink: string;
     onlineLink: string;
-    passcode: string;
+    onlineChannel: string;
+    onlineTitle: string;
     note: string;
     foods: string[];
     skill: SkillValues;
@@ -419,7 +421,8 @@ let opened: EntryOpening = {
     titleLink: "",
     locationLink: "",
     onlineLink: "",
-    passcode: "",
+    onlineChannel: "",
+    onlineTitle: "",
     note: "",
     foods: [],
     skill: skillNone,
@@ -436,13 +439,21 @@ let opened: EntryOpening = {
 let onlineLink: string = "";
 
 /**
- * Passcode of the meeting of the platform picked in `Online`, as typed, see {@link onlineRowOf};
- * empty for none, and once another platform is picked.
+ * Channel of the meeting or video of the platform picked in `Online`,
+ * like the channel of a video on YouTube or the ID of a meeting, as typed,
+ * see {@link onlineRowOf}; empty for none, and once another platform is picked.
  */
-let passcode: string = "";
+let onlineChannel: string = "";
 
 /**
- * Whether `Online` shows its parts below it to type, its provider, link and passcode,
+ * Title of the meeting or video of the platform picked in `Online`,
+ * like the title of a video or the passcode of a meeting, as typed, see {@link onlineRowOf};
+ * empty for none, and once another platform is picked.
+ */
+let onlineTitle: string = "";
+
+/**
+ * Whether `Online` shows its parts below it to type, its provider, channel, title and link,
  * opened and closed by its pencil, see {@link onlineRowOf}, and opened as a new platform is added.
  */
 let onlineOpen: boolean = false;
@@ -1450,7 +1461,12 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             onlineRowOf({
                 field: field,
                 categories: categories,
-                online: { online: values.online, onlineLink: onlineLink, passcode: passcode },
+                online: {
+                    online: values.online,
+                    onlineLink: onlineLink,
+                    onlineChannel: onlineChannel,
+                    onlineTitle: onlineTitle,
+                },
                 open: onlineOpen,
                 opened: (open: boolean): void => {
                     onlineOpen = open;
@@ -1458,7 +1474,8 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                 pick: (online: Online): void => {
                     values.online = online.online;
                     onlineLink = online.onlineLink;
-                    passcode = online.passcode;
+                    onlineChannel = online.onlineChannel;
+                    onlineTitle = online.onlineTitle;
                     saveAllow();
                 },
             }),
@@ -1851,12 +1868,12 @@ export function withRowOf(setup: WithSetup): HTMLElement {
  *   the most used first, with the row of each.
  * - `categories`: The categories whose fields `Online` take a platform as the reader wrote it,
  *   see {@link platformTake}.
- * - `online`: The platform picked, the link of its meeting or video and its passcode.
+ * - `online`: The platform picked, the link, the channel and the title of its meeting or video.
  * - `open`: Whether its parts show below it.
  * - `opened`: Takes whether its parts show, as its pencil opens or closes them,
  *   or a new platform opens them.
- * - `pick`: Takes the platform, the link and the passcode, after each platform picked,
- *   added or renamed and each link and passcode typed.
+ * - `pick`: Takes the platform, the channel, the title and the link, after each platform picked,
+ *   added or renamed and each channel, title and link typed.
  */
 export type OnlineSetup = {
     field: Field;
@@ -1876,21 +1893,22 @@ export type OnlineSetup = {
  * and adds a typed name as a new platform, see `platformSend` in `places.ts`, its parts then open;
  * beside it the pencil while a platform is picked, which shows and hides its parts;
  * below it, as a place shows its address, small and grey, its parts that have a value:
- * who offers it, from `Online.md`,
- * and the passcode of its meeting, a link that opens the link of its meeting or video,
+ * who offers it, from `Online.md`, and the channel and the title of its meeting or video,
+ * joined by commas, a link that opens the link of its meeting or video,
  * else the web app of its row, never the link itself as text, `Link` while nothing else shows.
  * Its parts, indented as those of a place, see {@link partOf}, the link last, as in every field,
  * since a click on what shows opens it: `Label`, its name, which renames it, and `Provider`,
  * which change its row of `Online.md` as I leave them, a new name showing the row anew;
- * then the passcode and the link of the entry's own meeting,
+ * then the channel, the title and the link of the entry's own meeting or video,
  * the link holding the web app of its row, as the link of a place holds its own,
  * until I type the entry's own in its place, which alone is kept;
- * both go along when the entry is saved. Another platform picked empties both, as a new meeting.
+ * all three go along when the entry is saved.
+ * Another platform picked empties all three, as a new meeting.
  * - `online`, `open`: What is picked and whether its parts show.
  * - `pencil`: The pencil, `✎`.
  * - `line`: The parts with a value below the platform.
- * - `label`, `provider`, `link`, `pass`:
- *   Fields of the name, the provider, the link and the passcode.
+ * - `label`, `provider`, `channel`, `title`, `link`:
+ *   Fields of the name, the provider, the channel, the title and the link.
  * - `hint`: Line saying that the reader did not take the name or the provider.
  * - `parts`: The parts to type, shown while the pencil opened them.
  * - `show`: Shows the pencil, the line and the parts for the platform picked.
@@ -1909,8 +1927,9 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
     const line: HTMLAnchorElement = document.createElement("a");
     const label: HTMLInputElement = partFieldOf("text", online.online, "Label of the platform");
     const provider: HTMLInputElement = partFieldOf("text", "", "Provider of the platform");
+    const channel: HTMLInputElement = partFieldOf("text", online.onlineChannel, "Channel online");
+    const title: HTMLInputElement = partFieldOf("text", online.onlineTitle, "Title online");
     const link: HTMLInputElement = partFieldOf("url", online.onlineLink, "Link online");
-    const pass: HTMLInputElement = partFieldOf("text", online.passcode, "Passcode online");
     const hint: HTMLParagraphElement = document.createElement("p");
     const parts: HTMLElement = document.createElement("div");
     const show: () => void = (): void => {
@@ -1918,7 +1937,7 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
         const target: string =
             online.onlineLink !== "" ? online.onlineLink : (platform?.link ?? "");
         line.textContent =
-            [platform?.provider ?? "", online.passcode === "" ? "" : `Passcode ${online.passcode}`]
+            [platform?.provider ?? "", online.onlineChannel, online.onlineTitle]
                 .filter((part: string): boolean => part !== "")
                 .join(", ") || (target === "" ? "" : "Link");
         if (target !== "") line.href = target;
@@ -1955,7 +1974,8 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
     parts.append(
         partOf("Label", label),
         partOf("Provider", provider),
-        partOf("Passcode", pass),
+        partOf("Channel", channel),
+        partOf("Title", title),
         partOf("Link", link),
         hint,
     );
@@ -1988,8 +2008,11 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
                     : link.value.trim(),
         });
     });
-    pass.addEventListener("input", (): void => {
-        take({ ...online, passcode: pass.value.trim() });
+    channel.addEventListener("input", (): void => {
+        take({ ...online, onlineChannel: channel.value.trim() });
+    });
+    title.addEventListener("input", (): void => {
+        take({ ...online, onlineTitle: title.value.trim() });
     });
     show();
     const row: HTMLElement = rowOf(
@@ -2016,11 +2039,14 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
             },
             pick: (picked: string[]): void => {
                 const platform: string = picked[0] ?? "";
-                if (platform !== online.online) pass.value = "";
+                if (platform !== online.online) {
+                    channel.value = "";
+                    title.value = "";
+                }
                 take(
                     platform === online.online
                         ? online
-                        : { online: platform, onlineLink: "", passcode: "" },
+                        : { online: platform, onlineLink: "", onlineChannel: "", onlineTitle: "" },
                 );
             },
         }),
@@ -2379,7 +2405,7 @@ function titleRead(picked: string): string {
  * - `skill`: Skill and type of a skill entry, empty for any other entry.
  * - `links`: Chapters and documents of a skill entry, none for any other entry.
  *
- * @returns Category, what, place, what it did online with the link and the passcode typed,
+ * @returns Category, what, place, what it did online with the channel, title and link typed,
  *   see {@link onlineRowOf}, where a way starts, who I was with,
  *   see {@link peopleRead}, module, type, semester, note, chapters and documents,
  *   as a box of the day the dialog opened with, without time, duration and deadline;
@@ -2397,7 +2423,8 @@ function textsRead(): BoxFields {
         location: picked.location,
         online: picked.online,
         onlineLink: picked.online === "" ? "" : onlineLink,
-        passcode: picked.online === "" ? "" : passcode,
+        onlineChannel: picked.online === "" ? "" : onlineChannel,
+        onlineTitle: picked.online === "" ? "" : onlineTitle,
         from: picked.from,
         attendees: peopleRead(),
         module: skill.module,
@@ -2498,7 +2525,8 @@ function fieldsRead(): EntryFields {
         location: texts.location,
         online: texts.online,
         onlineLink: texts.onlineLink,
-        passcode: texts.passcode,
+        onlineChannel: texts.onlineChannel,
+        onlineTitle: texts.onlineTitle,
         from: texts.from,
         attendees: texts.attendees,
         module: texts.module,
@@ -3012,7 +3040,8 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     persons = await personsKept();
     opened = opening;
     onlineLink = opening.onlineLink;
-    passcode = opening.passcode;
+    onlineChannel = opening.onlineChannel;
+    onlineTitle = opening.onlineTitle;
     onlineOpen = false;
     summaryLink =
         opening.category === skillName && !linkForm.test(opening.titleLink)
@@ -3122,7 +3151,8 @@ export async function entryOpen(start: Date, end: Date): Promise<void> {
         titleLink: "",
         locationLink: "",
         onlineLink: "",
-        passcode: "",
+        onlineChannel: "",
+        onlineTitle: "",
         note: "",
         foods: [],
         skill: skillNone,
@@ -3173,7 +3203,8 @@ export async function entryOpenSkill(module: string, start: Date, end: Date): Pr
         titleLink: "",
         locationLink: "",
         onlineLink: "",
-        passcode: "",
+        onlineChannel: "",
+        onlineTitle: "",
         note: "",
         foods: [],
         skill: { ...skillNone, module: module },
@@ -3218,7 +3249,8 @@ export async function entryOpenFromBox(box: Box, start: Date, end: Date): Promis
         titleLink: planned ? box.titleLink : "",
         locationLink: planned ? box.locationLink : "",
         onlineLink: planned ? box.onlineLink : "",
-        passcode: planned ? box.passcode : "",
+        onlineChannel: planned ? box.onlineChannel : "",
+        onlineTitle: planned ? box.onlineTitle : "",
         note: "",
         foods: [],
         skill: {
@@ -3254,7 +3286,8 @@ export async function boxOpenNew(day: Date): Promise<void> {
         titleLink: "",
         locationLink: "",
         onlineLink: "",
-        passcode: "",
+        onlineChannel: "",
+        onlineTitle: "",
         note: "",
         foods: [],
         skill: skillNone,
@@ -3293,7 +3326,8 @@ export async function boxOpenEdit(box: Box): Promise<void> {
         titleLink: box.titleLink,
         locationLink: box.locationLink,
         onlineLink: box.onlineLink,
-        passcode: box.passcode,
+        onlineChannel: box.onlineChannel,
+        onlineTitle: box.onlineTitle,
         note: box.note,
         foods: [],
         skill: {
@@ -3340,7 +3374,8 @@ export async function entryOpenEdit(entry: EventApi): Promise<void> {
         titleLink: props.titleLink ?? "",
         locationLink: props.locationLink ?? "",
         onlineLink: props.onlineLink ?? "",
-        passcode: props.passcode ?? "",
+        onlineChannel: props.onlineChannel ?? "",
+        onlineTitle: props.onlineTitle ?? "",
         note: props.note ?? "",
         foods: entry.extendedProps.foods ?? [],
         skill: {

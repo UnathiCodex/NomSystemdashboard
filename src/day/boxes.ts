@@ -167,8 +167,8 @@ export type BoxState = "open" | "done" | "dropped" | "university" | "pushed";
  *   `TUM Innenstadt, Arcisstraße 21, 80333 München, Deutschland`, empty for none.
  * - `locationLink`: Link of its place, its `ALTREP`,
  *   like `https://nav.tum.de/room/0509.EG.980`, empty for none.
- * - `online`, `onlineLink`, `passcode`: What it does online,
- *   see `Online` in `entries.ts`, each empty for none.
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
+ *   What it does online, see `Online` in `entries.ts`, each empty for none.
  * - `from`: Where a way starts, empty for none.
  * - `attendees`: Who I will be with, see `Attendee` in `entries.ts`, none for nobody.
  * - `module`: Module of a skill box, like `WI1059`, empty for any other box.
@@ -215,7 +215,8 @@ export type Box = {
     locationLink: string;
     online: string;
     onlineLink: string;
-    passcode: string;
+    onlineChannel: string;
+    onlineTitle: string;
     from: string;
     attendees: Attendee[];
     module: string;

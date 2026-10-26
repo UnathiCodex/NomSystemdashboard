@@ -96,9 +96,10 @@ import type { Meal } from "./food.ts";
  * - `title`: What picked.
  * - `location`: Place picked, where I physically was, its link the reader finds itself,
  *   see `placeLinkOf` in `places.ts`.
- * - `online`, `onlineLink`, `passcode`:
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
  *   What I did online, its platform picked,
- *   the link of its meeting or video and its passcode as typed, see `Online` in `calendar.ts`;
+ *   the link of its meeting or video, its channel and its title as typed,
+ *   see `Online` in `calendar.ts`;
  *   left out by a sender that does not know them, like a drag, see {@link entryMove},
  *   so a changed entry keeps them and one logged from a box takes those of the box.
  * - `from`: Where a way starts.
@@ -675,7 +676,8 @@ export function boxLog(logged: BoxLogged): string {
         locationLink: box.locationLink,
         online: box.online,
         onlineLink: box.onlineLink,
-        passcode: box.passcode,
+        onlineChannel: box.onlineChannel,
+        onlineTitle: box.onlineTitle,
         from: box.from,
         attendees: box.attendees,
         module: box.module,

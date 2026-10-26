@@ -225,7 +225,7 @@ export type Times = { [day: string]: Pick<Slot, "start" | "end"> };
  *   like `https://nav.tum.de/room/5416.01.003`,
  *   the place keeping the link it has or taking that of `Places.md` or `Rooms.md`,
  *   see `placeLinkOf` in `places.ts`.
- * - `online`, `onlineLink`, `passcode`: What its boxes do online,
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`: What its boxes do online,
  *   like the stream of a lecture on `TUM-Live` with its link, see `Online` in `calendar.ts`.
  * - `attendees`: Who I am with, like a tutor, see `Attendee` in `calendar.ts`; none for nobody.
  * - `first`: The first day of its weeks, like `2026-10-19`; an extra may lie before it.
@@ -271,8 +271,8 @@ export type Series = {
  * - `start`: Its start as ISO instant,
  *   like `2026-10-27T09:00:00.000Z`, of a group without times its day, like `2026-10-27`.
  * - `minutes`: Its length in minutes, like 120.
- * - `location`, `locationLink`, `online`, `onlineLink`, `passcode`, `attendees`:
- *   Its room with its link, what it does online and its tutors, those of its to-do,
+ * - `location`, `locationLink`, `online`, `onlineLink`, `onlineChannel`, `onlineTitle`,
+ *   `attendees`: Its room with its link, what it does online and its tutors, those of its to-do,
  *   or its own once the university changed it alone.
  * - `changed`: Whether the university changed it alone,
  *   a component of its own with its `RECURRENCE-ID`, see {@link sessionApply}.
@@ -612,7 +612,7 @@ type Field = "day" | "time" | "location" | "online" | "attendees" | "group";
  * - `start`: Its time of start in Berlin time, like `14:00`, empty for none.
  * - `minutes`: Its length in minutes, `null` for none.
  * - `location`, `locationLink`: Its place with its link.
- * - `online`, `onlineLink`, `passcode`: What it does online.
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`: What it does online.
  * - `attendees`: Who I am with.
  * - `group`: The group it goes to, like `03`, empty for none.
  * - `before`: The weekday the box it takes fell on before the change, 1 for Monday to 7 for Sunday:
@@ -648,8 +648,9 @@ type Target = Online & {
  * see {@link draftsOf}, before anything is written.
  *
  * - `box`: The box as it stands, `null` for a new one.
- * - `day`, `time`, `minutes`, `location`, `locationLink`, `online`, `onlineLink`, `passcode`,
- *   `attendees`, `group`, `number`: As those of a box after the change, see `Box` in `boxes.ts`.
+ * - `day`, `time`, `minutes`, `location`, `locationLink`, `online`, `onlineLink`,
+ *   `onlineChannel`, `onlineTitle`, `attendees`, `group`, `number`:
+ *   As those of a box after the change, see `Box` in `boxes.ts`.
  * - `removed`: Whether the change removes it.
  */
 type Draft = Online & {
@@ -915,7 +916,7 @@ function lectureFreeOf(first: string, last: string): Set<string> {
  * - `timed`: Of a slot the one whose time and length most of it have,
  *   `undefined` while none has a time.
  * - `placed`: The one whose place most of them have.
- * - `met`: The one whose platform, link and passcode online most of them have.
+ * - `met`: The one whose platform, link, channel and title online most of them have.
  * - `people`: The one whose people most of them have.
  * - `sorted`: All, by their days.
  * - `onSlots`: The days of those on the weekday of a slot, in order, else of all.
@@ -983,7 +984,7 @@ function ruleOf(type: string, items: Dated[], all: Dated[], group: string, semes
     });
     const placed: Dated | undefined = modeOf(items, (item: Dated): string => item.location);
     const met: Dated | undefined = modeOf(items, (item: Dated): string =>
-        JSON.stringify([item.online, item.onlineLink, item.passcode]),
+        JSON.stringify([item.online, item.onlineLink, item.onlineChannel, item.onlineTitle]),
     );
     const people: Dated | undefined = modeOf(items, (item: Dated): string =>
         JSON.stringify(item.attendees),
@@ -1045,7 +1046,8 @@ function ruleOf(type: string, items: Dated[], all: Dated[], group: string, semes
         locationLink: placed?.locationLink ?? "",
         online: met?.online ?? "",
         onlineLink: met?.onlineLink ?? "",
-        passcode: met?.passcode ?? "",
+        onlineChannel: met?.onlineChannel ?? "",
+        onlineTitle: met?.onlineTitle ?? "",
         attendees: people?.attendees ?? [],
         first: days[0] ?? from,
         last: days[days.length - 1] ?? to,
@@ -1297,7 +1299,8 @@ function learnedRead(code: string, semester: string): Learned[] {
             locationLink: entry.locationLink,
             online: entry.online,
             onlineLink: entry.onlineLink,
-            passcode: entry.passcode,
+            onlineChannel: entry.onlineChannel,
+            onlineTitle: entry.onlineTitle,
             attendees: entry.attendees,
             note: entry.note,
         }))
@@ -1363,7 +1366,8 @@ function groupsRead(module: string, semester: string): Group[] {
                 locationLink: entry.locationLink,
                 online: entry.online,
                 onlineLink: entry.onlineLink,
-                passcode: entry.passcode,
+                onlineChannel: entry.onlineChannel,
+                onlineTitle: entry.onlineTitle,
                 attendees: entry.attendees,
             }));
             const ahead: Dated[] = dated.filter((item: Dated): boolean => item.day >= today);
@@ -1392,7 +1396,8 @@ function groupsRead(module: string, semester: string): Group[] {
                     locationLink: entry.locationLink,
                     online: entry.online,
                     onlineLink: entry.onlineLink,
-                    passcode: entry.passcode,
+                    onlineChannel: entry.onlineChannel,
+                    onlineTitle: entry.onlineTitle,
                     attendees: entry.attendees,
                     changed: changed.has(entryIdOf(entry)),
                 })),
@@ -1716,7 +1721,8 @@ function draftOf(box: Box): Draft {
         locationLink: box.locationLink,
         online: box.online,
         onlineLink: box.onlineLink,
-        passcode: box.passcode,
+        onlineChannel: box.onlineChannel,
+        onlineTitle: box.onlineTitle,
         attendees: box.attendees,
         group: box.group,
         number: box.number,
@@ -1741,7 +1747,8 @@ function madeDraftOf(target: Target): Draft {
         locationLink: target.locationLink,
         online: target.online,
         onlineLink: target.onlineLink,
-        passcode: target.passcode,
+        onlineChannel: target.onlineChannel,
+        onlineTitle: target.onlineTitle,
         attendees: target.attendees,
         group: target.group,
         number: "",
@@ -1769,7 +1776,8 @@ function targetOf(group: Group, session: Session): Target {
         locationLink: session.locationLink,
         online: session.online,
         onlineLink: session.onlineLink,
-        passcode: session.passcode,
+        onlineChannel: session.onlineChannel,
+        onlineTitle: session.onlineTitle,
         attendees: session.attendees,
         group: group.rule.group,
         before: weekdayOf(day),
@@ -1806,7 +1814,10 @@ function draftSet(draft: Draft, target: Target): Draft {
         locationLink: target.fields.includes("location") ? target.locationLink : draft.locationLink,
         online: target.fields.includes("online") ? target.online : draft.online,
         onlineLink: target.fields.includes("online") ? target.onlineLink : draft.onlineLink,
-        passcode: target.fields.includes("online") ? target.passcode : draft.passcode,
+        onlineChannel: target.fields.includes("online")
+            ? target.onlineChannel
+            : draft.onlineChannel,
+        onlineTitle: target.fields.includes("online") ? target.onlineTitle : draft.onlineTitle,
         attendees: target.fields.includes("attendees") ? target.attendees : draft.attendees,
         group: target.fields.includes("group") ? target.group : draft.group,
     };
@@ -1968,7 +1979,8 @@ function draftMoved(draft: Draft, box: Box): boolean {
         draft.locationLink !== box.locationLink ||
         draft.online !== box.online ||
         draft.onlineLink !== box.onlineLink ||
-        draft.passcode !== box.passcode ||
+        draft.onlineChannel !== box.onlineChannel ||
+        draft.onlineTitle !== box.onlineTitle ||
         JSON.stringify(draft.attendees) !== JSON.stringify(box.attendees)
     );
 }
@@ -2018,7 +2030,8 @@ function draftsWrite(module: string, type: string, semester: string, drafts: Dra
                 locationLink: draft.locationLink,
                 online: draft.online,
                 onlineLink: draft.onlineLink,
-                passcode: draft.passcode,
+                onlineChannel: draft.onlineChannel,
+                onlineTitle: draft.onlineTitle,
                 from: "",
                 attendees: draft.attendees,
                 module: code,
@@ -2053,7 +2066,8 @@ function draftsWrite(module: string, type: string, semester: string, drafts: Dra
                     locationLink: draft.locationLink,
                     online: draft.online,
                     onlineLink: draft.onlineLink,
-                    passcode: draft.passcode,
+                    onlineChannel: draft.onlineChannel,
+                    onlineTitle: draft.onlineTitle,
                     attendees: draft.attendees,
                     day: draft.day,
                     time: draft.time === "" ? null : new Date(draft.time),
@@ -2218,7 +2232,8 @@ export function seriesApply(change: SeriesChange): Planned[] {
                       "online",
                       old.online !== online.online ||
                           old.onlineLink !== online.onlineLink ||
-                          old.passcode !== online.passcode,
+                          old.onlineChannel !== online.onlineChannel ||
+                          old.onlineTitle !== online.onlineTitle,
                   ],
                   ["attendees", JSON.stringify(old.attendees) !== JSON.stringify(rule.attendees)],
               ];
@@ -2358,7 +2373,8 @@ export function repeatApply(change: RepeatChange): Planned[] | null {
         locationLink: "",
         online: box.online ?? "",
         onlineLink: box.onlineLink ?? "",
-        passcode: box.passcode ?? "",
+        onlineChannel: box.onlineChannel ?? "",
+        onlineTitle: box.onlineTitle ?? "",
         attendees: box.attendees ?? [],
         first: change.first,
         last: change.last,
@@ -3034,14 +3050,16 @@ export function groupApply(change: GroupChange): Planned[] {
             old.rule.location,
             old.rule.online,
             old.rule.onlineLink,
-            old.rule.passcode,
+            old.rule.onlineChannel,
+            old.rule.onlineTitle,
             old.rule.attendees,
         ]) !==
             JSON.stringify([
                 rule.location,
                 rule.online,
                 rule.onlineLink,
-                rule.passcode,
+                rule.onlineChannel,
+                rule.onlineTitle,
                 rule.attendees,
             ]);
     const whenOf: (one: Rule) => string = (one: Rule): string =>

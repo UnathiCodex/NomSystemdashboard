@@ -22,7 +22,7 @@
  * see {@link semesterRowOf};
  * then its place, picked as in the dialog, the rooms of the university among them as I type,
  * its parts changed by its pencil, see {@link placeRowOf};
- * what it does online, its platform with the link and the passcode of its meetings;
+ * what it does online, its platform with the channel, the title and the link of its meetings;
  * then when it meets: its days, its weekdays picked on one line, each with its times below,
  * see {@link slotRowsOf}, like a lecture on Mondays 14:00 – 16:00 and on Thursdays 10:00 – 12:00,
  * numbered across both; its first and last day;
@@ -485,7 +485,7 @@ export type Course = {
  * - `type`: Its type, like `VO`, empty while none is picked.
  * - `old`: The rule as read back when the form opened, `null` for a new series.
  * - `location`, `locationLink`: Its place with its link.
- * - `online`, `onlineLink`, `passcode`: What its boxes do online.
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`: What its boxes do online.
  * - `attendees`: Who I am with.
  * - `states`: The states I gave its boxes.
  * - `kinds`: Of the exams, the kinds I gave them.
@@ -656,7 +656,7 @@ let placeOpen: boolean = false;
 
 /**
  * Whether what the series does online shows its parts below it, its label, provider,
- * passcode and link, opened and closed by its pencil as in the dialog of an entry,
+ * channel, title and link, opened and closed by its pencil as in the dialog of an entry,
  * see {@link onlineRowsOf}.
  */
 let onlineOpen: boolean = false;
@@ -2387,7 +2387,8 @@ function examRuleOf(loaded: Course): Rule {
         locationLink: "",
         online: "",
         onlineLink: "",
-        passcode: "",
+        onlineChannel: "",
+        onlineTitle: "",
         attendees: [],
         first: days[0] ?? dayOf(new Date()),
         last: days[days.length - 1] ?? dayOf(new Date()),
@@ -2542,7 +2543,8 @@ async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
                 locationLink: form.locationLink,
                 online: form.online,
                 onlineLink: form.onlineLink,
-                passcode: form.passcode,
+                onlineChannel: form.onlineChannel,
+                onlineTitle: form.onlineTitle,
                 attendees: form.attendees,
                 first: form.first,
                 last: form.last,
@@ -2566,7 +2568,8 @@ async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
             locationLink: form.locationLink,
             online: form.online,
             onlineLink: form.onlineLink,
-            passcode: form.passcode,
+            onlineChannel: form.onlineChannel,
+            onlineTitle: form.onlineTitle,
             attendees: form.attendees,
             first: form.first,
             last: form.last,
@@ -2599,7 +2602,8 @@ async function repeatedSend(box: BoxFields, form: Form, dry: boolean): Promise<P
             location: form.location,
             online: form.online,
             onlineLink: form.onlineLink,
-            passcode: form.passcode,
+            onlineChannel: form.onlineChannel,
+            onlineTitle: form.onlineTitle,
             attendees: form.attendees,
         },
         form,
@@ -2656,7 +2660,8 @@ function waitingFill(form: Form): void {
         locationLink: "",
         online: "",
         onlineLink: "",
-        passcode: "",
+        onlineChannel: "",
+        onlineTitle: "",
         attendees: [],
         slots: [],
     });
@@ -2963,8 +2968,9 @@ function placeRowOf(form: Form): HTMLElement {
  * Makes the row of what the series does online in the form,
  * the row `Online` of the dialog of an entry,
  * see `onlineRowOf` in `./categories.ts`, its field that of `Skill`:
- * its platform, below it grey its provider and passcode, its pencil opening `Label`, `Provider`,
- * `Passcode` and `Link`; what I pick and type goes into the form, so into its boxes.
+ * its platform, below it grey its provider, channel and title,
+ * its pencil opening `Label`, `Provider`, `Channel`, `Title` and `Link`;
+ * what I pick and type goes into the form, so into its boxes.
  * - `field`: The field `Online` of `Skill`, `undefined` while the categories are not loaded.
  *
  * @param form - The form
@@ -2981,7 +2987,8 @@ function onlineRowsOf(form: Form): HTMLElement[] {
                   online: {
                       online: form.online,
                       onlineLink: form.onlineLink,
-                      passcode: form.passcode,
+                      onlineChannel: form.onlineChannel,
+                      onlineTitle: form.onlineTitle,
                   },
                   open: onlineOpen,
                   opened: (open: boolean): void => {
@@ -3232,7 +3239,8 @@ function groupStart(type: string, group: string): void {
             rule?.locationLink ?? skillFieldOf("location")?.places[standardLineOf()]?.link ?? "",
         online: rule?.online ?? "",
         onlineLink: rule?.onlineLink ?? "",
-        passcode: rule?.passcode ?? "",
+        onlineChannel: rule?.onlineChannel ?? "",
+        onlineTitle: rule?.onlineTitle ?? "",
         attendees: rule?.attendees ?? [],
         first: rule?.first ?? weeks?.first ?? "",
         last: rule?.last ?? weeks?.last ?? "",
@@ -3629,7 +3637,8 @@ export async function seriesOpen(
         locationLink: rule?.locationLink ?? "",
         online: rule?.online ?? "",
         onlineLink: rule?.onlineLink ?? "",
-        passcode: rule?.passcode ?? "",
+        onlineChannel: rule?.onlineChannel ?? "",
+        onlineTitle: rule?.onlineTitle ?? "",
         attendees: rule?.attendees ?? [],
         first: rule?.first ?? "",
         last: rule?.last ?? "",
@@ -3747,7 +3756,8 @@ async function seriesRepeat(from: Repeated, days: Days, saved: () => void): Prom
         locationLink: skillFieldOf("location")?.places[from.box.location]?.link ?? "",
         online: from.box.online ?? "",
         onlineLink: from.box.onlineLink ?? "",
-        passcode: from.box.passcode ?? "",
+        onlineChannel: from.box.onlineChannel ?? "",
+        onlineTitle: from.box.onlineTitle ?? "",
         attendees: from.box.attendees ?? [],
         states: {},
         kinds: {},
@@ -3821,7 +3831,8 @@ function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
         location: form.location,
         online: form.online,
         onlineLink: form.onlineLink,
-        passcode: form.passcode,
+        onlineChannel: form.onlineChannel,
+        onlineTitle: form.onlineTitle,
         attendees: form.attendees,
         first: form.first,
         last: form.last,
@@ -4276,7 +4287,8 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
         locationLink: skillFieldOf("location")?.places[series.location]?.link ?? "",
         online: series.online,
         onlineLink: series.onlineLink,
-        passcode: series.passcode,
+        onlineChannel: series.onlineChannel,
+        onlineTitle: series.onlineTitle,
         attendees: series.attendees,
         first: parts.map((part: Plain): string => part.first).sort()[0],
         last: series.last,
@@ -4336,7 +4348,8 @@ export async function learningOpen(module: string, semester: string, id: string)
             location: standardLineOf(),
             online: "",
             onlineLink: "",
-            passcode: "",
+            onlineChannel: "",
+            onlineTitle: "",
             attendees: [],
             weekdays: [weekdayOf(today)],
             start: "",
@@ -4571,7 +4584,8 @@ async function freshFollow(): Promise<void> {
             location: standardLineOf(),
             online: "",
             onlineLink: "",
-            passcode: "",
+            onlineChannel: "",
+            onlineTitle: "",
             attendees: [],
             weekdays: [weekdayOf(day)],
             start: "",
@@ -4638,7 +4652,8 @@ export async function seriesNew(day: string, saved: () => void): Promise<void> {
         locationLink: skillFieldOf("location")?.places[standardLineOf()]?.link ?? "",
         online: "",
         onlineLink: "",
-        passcode: "",
+        onlineChannel: "",
+        onlineTitle: "",
         attendees: [],
         first: day,
         last: "",

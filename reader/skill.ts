@@ -482,7 +482,8 @@ export type AttemptNew = {
  *   or the notes of a chapter, empty for none.
  * - `attempts`: Its attempts, in the order they were picked, none for none.
  * - `location`: Place, `LOCATION`, like the room of a lecture logged from its box.
- * - `online`, `onlineLink`, `passcode`: What I did online, like the stream of a lecture,
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
+ *   What I did online, like the stream of a lecture,
  *   as for any entry of the log, see `EntryNew` in `day.ts`;
  *   left out by a sender that does not know them, so it keeps them or takes those of its box.
  * - `attendees`: Who I was with, one `ATTENDEE` each;
@@ -1969,7 +1970,8 @@ function momentWrite(
             locationLink: plan?.locationLink ?? "",
             online: plan?.online ?? "",
             onlineLink: plan?.onlineLink ?? "",
-            passcode: plan?.passcode ?? "",
+            onlineChannel: plan?.onlineChannel ?? "",
+            onlineTitle: plan?.onlineTitle ?? "",
             from: "",
             attendees: plan?.attendees ?? [],
             module: module,

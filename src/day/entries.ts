@@ -50,12 +50,16 @@ export type Attendee = {
  *
  * - `online`: Its platform, a row of `Online.md`, like `Zoom`, empty for none.
  * - `onlineLink`: The link of its own meeting or video, its `ALTREP`, empty for none.
- * - `passcode`: The passcode of its meeting, its `X-PASSCODE`, empty for none.
+ * - `onlineChannel`: Its channel, its `X-CHANNEL`,
+ *   like the channel of a video on YouTube or the ID of a meeting, empty for none.
+ * - `onlineTitle`: Its title, its `X-TITLE`,
+ *   like the title of a video or the passcode of a meeting, empty for none.
  */
 export type Online = {
     online: string;
     onlineLink: string;
-    passcode: string;
+    onlineChannel: string;
+    onlineTitle: string;
 };
 
 /**
@@ -65,8 +69,8 @@ export type Online = {
  * - `title`: What picked, `SUMMARY`.
  * - `location`: Place picked, `LOCATION`, where I physically was,
  *   whose link the reader finds itself.
- * - `online`, `onlineLink`, `passcode`: What I did online,
- *   see {@link Online}; left out, it keeps them.
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
+ *   What I did online, see {@link Online}; left out, it keeps them.
  * - `from`: Where a way starts, `X-FROM`.
  * - `attendees`: Who I was with, one `ATTENDEE` each, none for nobody;
  *   left out, it keeps its people.
@@ -115,8 +119,8 @@ export type EntryFields = Partial<Online> & {
 /**
  * Fields of a box of the plan to send; an empty field is not written.
  *
- * - `category`, `title`, `location`, `online`, `onlineLink`, `passcode`, `from`, `attendees`,
- *   `module`, `type`, `semester`, `note`: As those of {@link EntryFields}.
+ * - `category`, `title`, `location`, `online`, `onlineLink`, `onlineChannel`, `onlineTitle`,
+ *   `from`, `attendees`, `module`, `type`, `semester`, `note`: As those of {@link EntryFields}.
  * - `day`: Day of the box, like `2026-10-13`; for a box with a deadline the day of its deadline.
  * - `time`: Expected time on its day, `null` for none and for a box with a deadline.
  * - `minutes`: Expected duration in minutes, `null` for none.

@@ -15,7 +15,7 @@
  * the most used by the entries of the log first, counted by their names.
  * `Online`, below the place in every category, offers my platforms of `Online.md`,
  * like `Zoom`, the most used first, with the link of each, see `Platform` in `places.ts`;
- * per entry I type the link of its meeting or video and its passcode,
+ * per entry I type the link of its meeting or video, its channel and its title,
  * see `Online` in `calendar.ts`.
  * `With` takes one or more people or groups, each by a name without `;`,
  * which parts them, mostly one group, like `Socials`, sometimes several,

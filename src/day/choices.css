@@ -402,7 +402,7 @@
     display: contents;
 }
 
-/* Name of a part, like `Code` or `Passcode`,
+/* Name of a part, like `Code` or `Provider`,
    with a little more room to its right than the gap of the columns alone, the same for every part,
    so a short name never sits close to its value */
 .field-part > .entry-name {

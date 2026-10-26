@@ -267,8 +267,8 @@ export type AttemptNew = {
  *   the reader links each with its fingerprint, see `reader/documents.ts`.
  * - `attempts`: Its attempts, none for none.
  * - `location`: Place, like the room of a lecture logged from the plan.
- * - `online`, `onlineLink`, `passcode`: What I did online, like the stream of a lecture,
- *   see `Online` in `../day/entries.ts`.
+ * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
+ *   What I did online, like the stream of a lecture, see `Online` in `../day/entries.ts`.
  * - `attendees`: Who I was with, see `Attendee` in `../day/entries.ts`, none for nobody.
  * - `planned`: Identifier of the plan entry it is logged from, empty for none.
  * - `note`: Free note.

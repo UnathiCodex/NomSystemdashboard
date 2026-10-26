@@ -344,7 +344,8 @@ function partRead(id: string, key: string): Plain {
         location: entry.location,
         online: entry.online,
         onlineLink: entry.onlineLink,
-        passcode: entry.passcode,
+        onlineChannel: entry.onlineChannel,
+        onlineTitle: entry.onlineTitle,
         attendees: entry.attendees,
         weekdays: weekdays,
         start: timed ? berlinTimeOf(new Date(entry.start)) : "",
@@ -862,7 +863,8 @@ function plainAdd(plain: Plain, sibling: string): string {
         note: "",
         online: plain.online,
         onlineLink: plain.onlineLink,
-        passcode: plain.passcode,
+        onlineChannel: plain.onlineChannel,
+        onlineTitle: plain.onlineTitle,
         attendees: plain.attendees,
         day: fields.day,
         time: fields.time === null ? "" : fields.time.toISOString(),
@@ -950,7 +952,8 @@ export function plainApply(change: PlainChange): Planned[] {
             change.location,
             change.online,
             change.onlineLink,
-            change.passcode,
+            change.onlineChannel,
+            change.onlineTitle,
             change.attendees,
         ]) !==
         JSON.stringify([
@@ -963,7 +966,8 @@ export function plainApply(change: PlainChange): Planned[] {
             old.location,
             old.online,
             old.onlineLink,
-            old.passcode,
+            old.onlineChannel,
+            old.onlineTitle,
             old.attendees,
         ]);
     const begun: boolean = firstOf(old) < today;

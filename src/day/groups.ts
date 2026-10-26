@@ -199,7 +199,8 @@ function boxMove(box: Box, group: Group, session: Session): void {
         locationLink: group.rule.locationLink,
         online: group.rule.online,
         onlineLink: group.rule.onlineLink,
-        passcode: group.rule.passcode,
+        onlineChannel: group.rule.onlineChannel,
+        onlineTitle: group.rule.onlineTitle,
         attendees: group.rule.attendees,
         group: group.rule.group,
     });
