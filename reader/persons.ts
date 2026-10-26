@@ -81,7 +81,8 @@ const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];
 
 /**
  * What follows the name of a head of a chair who leads it for now, kommissarisch,
- * like `Leutenegger, Stefan<br>Marin, … (komm.)` in `Schools.md`; renaming the person keeps it.
+ * like `Leutenegger, Stefan<br>Marin, Riccardo (komm.)` in `Schools.md`;
+ * renaming the person keeps it.
  */
 const actingMark: string = " (komm.)";
 
