@@ -763,9 +763,7 @@ function occasionsOf(occasions: Occasion[], open: (occasion: Occasion) => void):
  */
 async function boxTap(calendar: Calendar, box: Box): Promise<void> {
     const [start, end]: [Date, Date] = boxTimesOf(box, calendar.view.currentStart);
-    await (box.category === ""
-        ? entryOpenFromBox(box, start, end)
-        : boxLog(calendar, box.id, start, end));
+    await (box.category === "" ? entryOpenFromBox(box, start, end) : boxLog(box.id, start, end));
 }
 
 /**
@@ -1161,10 +1159,9 @@ export function boxReceive(calendar: Calendar, info: EventReceiveInfo): void {
     }
     const start: Date = info.event.start as Date;
     const end: Date = info.event.end as Date;
-    (box.category === ""
-        ? entryOpenFromBox(box, start, end)
-        : boxLog(calendar, box.id, start, end)
-    ).catch(logFailShow);
+    (box.category === "" ? entryOpenFromBox(box, start, end) : boxLog(box.id, start, end)).catch(
+        logFailShow,
+    );
 }
 
 /**

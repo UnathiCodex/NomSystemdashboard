@@ -321,7 +321,7 @@ async function boxOpen(box: Box): Promise<void> {
 function actionsOf(box: Box): HTMLElement {
     const log: () => Promise<void> = async (): Promise<void> => {
         const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
-        await boxLog((await dialogShow()).calendar, box.id, start, end);
+        await boxLog(box.id, start, end);
     };
     return boxActionsOf(box, (): void => act(log), act, true);
 }

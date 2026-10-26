@@ -1513,7 +1513,7 @@ function knownEndOf(box: Box): HTMLElement {
                         box,
                         new Date(`${box.day}T12:00:00`),
                     );
-                    if (calendar !== null) await boxLog(calendar, box.id, start, end);
+                    await boxLog(box.id, start, end);
                 }),
             seriesAct,
             true,
@@ -3459,6 +3459,7 @@ async function placeRename(form: Form, dry: boolean): Promise<void> {
  * since pinning is a choice of mine in the menu of the groups;
  * a group saved from my series goes back to it, see {@link groupReturn}.
  * - `exams`: Whether the form is that of the exams.
+ * - `picked`: Who its boxes are with, so a person `Persons.md` does not hold yet gets its row there.
  */
 async function formSave(): Promise<void> {
     if (typing === null) return;
@@ -3467,10 +3468,11 @@ async function formSave(): Promise<void> {
     if (!formReady(typing)) return;
     try {
         await placeRename(typing, true);
-        await personsRename(personEdits, persons, true);
+        const picked: string[] = typing.attendees.map((person: Attendee): string => person.name);
+        await personsRename(personEdits, persons, true, picked);
         await formSend(typing, false);
         await placeRename(typing, false);
-        await personsRename(personEdits, persons, false);
+        await personsRename(personEdits, persons, false, picked);
     } catch (error: unknown) {
         console.error(error);
         formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");

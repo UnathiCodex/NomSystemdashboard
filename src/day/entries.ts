@@ -322,22 +322,17 @@ export async function entryDelete(calendar: Calendar, id: string): Promise<void>
 
 /**
  * Logs a box at its real time, dropped into the log or tapped:
- * the reader writes a log entry like it, pointing to it, then the log of the shown day loads again,
- * and with it the boxes, so the box shows as done.
+ * the reader writes a log entry like it, pointing to it;
+ * the change of its file loads the log and the boxes again, so the box shows as done,
+ * see `changesFollow` in `../changes.ts`, once only, so the entry never shows twice for a moment.
  *
- * @param calendar - Calendar of the day
  * @param box - Identifier of the box
  * @param start - Real start
  * @param end - Real end
  * @throws {Error} - When the reader does not log it, like for a box done already
  */
-export async function boxLog(
-    calendar: Calendar,
-    box: string,
-    start: Date,
-    end: Date,
-): Promise<void> {
-    await logSend(calendar, "POST", "/api/day/logged", {
+export async function boxLog(box: string, start: Date, end: Date): Promise<void> {
+    await requestSend("POST", "/api/day/logged", {
         box: box,
         start: start.toISOString(),
         end: end.toISOString(),
