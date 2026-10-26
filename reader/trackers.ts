@@ -176,7 +176,7 @@ export type Trackers = {
  * My learning: study sessions of 60 minutes,
  * 30 for a Task and 30 more for the theory of a new section, my choice,
  * not a finding (`.claude/studies/science.md`, point 9);
- * each chapter starts by a skill box of my plan, see `openedOf` in `skill.ts`.
+ * a chapter opens by a skill box of my plan or by itself, see `todayMarked` in `skill.ts`.
  */
 export const settings: TrackerSettings = {
     sleepHours: 8,

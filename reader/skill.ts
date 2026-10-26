@@ -622,6 +622,12 @@ const examDays: number = 14;
 const keepUpDays: number = 42;
 
 /**
+ * Round every section of a chapter must stand in before the next chapter opens by itself,
+ * see {@link todayMarked}: 2, so each had its Task of round 0 and of round 1 right.
+ */
+const chapterOpenRound: number = 2;
+
+/**
  * Estimated exams of the modules of the semester
  * whose exam the university has not named yet, by their codes;
  * a named exam stands in the plan of its module as a box of the type `FA`, which wins,
@@ -1380,13 +1386,16 @@ function sectionsOf(
  * see `suggestions.ts`: `task` for a section past round 0 whose Task of today is due,
  * or which I tried today; `new` for a section on round 0 I began, by an attempt,
  * a `Next` or its close, and while there is none, for the first section not begun yet
- * of a chapter I opened, one at a time:
- * a chapter opens on the day of the first skill box of my plan that names it,
- * so I set the start of each chapter by hand, see {@link openedOf}.
+ * of an open chapter, one at a time:
+ * the first chapter opens by a skill box of my plan that names it, see {@link openedOf},
+ * a later one too, or by itself once every section of the chapter before
+ * stands in round {@link chapterOpenRound} or later.
  * - `cold`: The Task of today of a section, `undefined` for none.
  * - `begun`: Whether a section on round 0 is begun.
  * - `marked`: The sections with their Tasks and begun rounds 0 marked.
- * - `next`: The first section not begun yet of an opened chapter, `undefined` for none.
+ * - `chapters`: The chapters with sections, in order.
+ * - `open`: Whether a chapter is open.
+ * - `next`: The first section not begun yet of an open chapter, `undefined` for none.
  *
  * @param sections - Sections of a module in the order of their notes, nothing marked yet
  * @param tasks - Tasks of the module with when each is due
@@ -1419,9 +1428,26 @@ function todayMarked(
         return due || tried ? { ...section, today: "task" } : section;
     });
     if (marked.some((section: SkillSection): boolean => section.today === "new")) return marked;
+    const chapters: string[] = [
+        ...new Set(
+            marked
+                .filter((section: SkillSection): boolean => cold(section) !== undefined)
+                .map((section: SkillSection): string => section.chapter),
+        ),
+    ];
+    const open: (chapter: string) => boolean = (chapter: string): boolean =>
+        opened.includes(chapter) ||
+        (chapters.indexOf(chapter) > 0 &&
+            marked
+                .filter(
+                    (section: SkillSection): boolean =>
+                        cold(section) !== undefined &&
+                        section.chapter === chapters[chapters.indexOf(chapter) - 1],
+                )
+                .every((section: SkillSection): boolean => section.round >= chapterOpenRound));
     const next: SkillSection | undefined = marked.find(
         (section: SkillSection): boolean =>
-            cold(section) !== undefined && !begun(section) && opened.includes(section.chapter),
+            cold(section) !== undefined && !begun(section) && open(section.chapter),
     );
     return marked.map((section: SkillSection): SkillSection =>
         section === next ? { ...section, today: "new" } : section,
@@ -1429,7 +1455,7 @@ function todayMarked(
 }
 
 /**
- * Gives the chapters of a module I opened by now, see {@link todayMarked}:
+ * Gives the chapters of a module I opened by hand by now, see {@link todayMarked}:
  * those a skill box of my plan names, on today or a day before, neither dropped by me
  * nor cancelled by the university.
  *
