@@ -240,6 +240,12 @@
     line-height: calc(var(--empty-line) / 2);
 }
 
+/* The cursor on it half a line higher, over both empty lines, the air of a line,
+   as on a line of text there, see `stopCursorOf` in `preview.ts` */
+.cm-stop-cursor .cm-cursor {
+    transform: translateY(calc(var(--empty-line) / -2));
+}
+
 /* An empty line ending a point keeps the room below the point's last line too,
    so nothing below moves when the empty line leaves the list, as text typed below ends it */
 .editor-text.markdown li > .cm-line.cm-gap:last-child {

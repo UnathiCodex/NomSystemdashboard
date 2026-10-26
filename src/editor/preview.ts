@@ -2206,6 +2206,30 @@ function spaceLook(look: Look): void {
 }
 
 /**
+ * Marks the editor while the cursor stands on the lower of two empty lines, see {@link stop},
+ * so `./editor.css` draws it half a line higher, over both, the air of a line,
+ * as on a line of text standing there, never reaching into the text below;
+ * the click moves nothing, text typed there goes below the half line above it as before,
+ * a paragraph of its own, see `paragraphTyping` in `./keys.ts`.
+ * - `range`: The cursor.
+ * - `line`: Its line.
+ *
+ * @param view - The editor
+ * @returns The class, `null` elsewhere
+ */
+function stopCursorOf(view: EditorView): { class: string } | null {
+    const range: SelectionRange = view.state.selection.main;
+    const line: Line = view.state.doc.lineAt(range.head);
+    return range.empty &&
+        line.number > 1 &&
+        line.from !== (view.state.field(typingLine, false) ?? null) &&
+        emptyIs(view.state, line) &&
+        emptyIs(view.state, view.state.doc.line(line.number - 1))
+        ? { class: "cm-stop-cursor" }
+        : null;
+}
+
+/**
  * Keeps the invisible characters on the lines of the cursor invisible, see {@link invisibleRule}.
  *
  * @param look - Look being built
@@ -2773,6 +2797,8 @@ export function linksSet(view: EditorView, links: Links): void {
  *   only a field may hide line breaks, like those inside a table.
  * - {@link EditorView.decorations}, {@link EditorView.blockWrappers}:
  *   Take the decorations and elements of the look.
+ * - {@link EditorView.editorAttributes}: Marks the cursor on the lower of two empty lines,
+ *   see {@link stopCursorOf}.
  * - {@link EditorView.focusChangeEffect}:
  *   Tells {@link focused} when the editor gets or loses the focus.
  * - {@link EditorView.domEventObservers}: Holds the look while the mouse button is down,
@@ -2826,6 +2852,7 @@ export function livePreview(links: Links, place: string): Extension {
         keymap.of(foldKeymap),
         look,
         caretPlace,
+        EditorView.editorAttributes.of(stopCursorOf),
         EditorView.focusChangeEffect.of(
             (_state: EditorState, focusing: boolean): StateEffect<boolean> =>
                 focusChange.of(focusing),
