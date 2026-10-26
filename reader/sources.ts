@@ -294,16 +294,20 @@ export const systemFiles: SystemFilesSources = {
 /**
  * Skills of the semester of each of us by {@link myName} that are no modules,
  * each by its folder from `NomWorkspace`, written with `/`: my projects,
- * like `NomProgramprojects/AsiaWok_Wokflow_2026`;
- * my time logging, planning and thinking about my day is the category `Manage`,
- * Sopha's still her project `NomFrequencediary`.
+ * like `NomProgramprojects/AsiaWok_Wokflow_2026`,
+ * and the time I spend logging, planning and thinking about my day, `NomMasterplannings`,
+ * Sopha's `NomFrequencediary`, linking the folder of her diary.
  * The modules of the semester come from `Modules.md`, see `activeModulesRead` in `notes.ts`;
  * Sopha's will come from her own `Modules.md`, so her list holds no module either,
  * and until she has one her reader has no modules of the semester.
  * Changed on request, when the semester's projects change.
  */
 const skillsOf: { [name: string]: string[] } = {
-    Vu: ["NomProgramprojects/AsiaWok_Wokflow_2026", "NomSystemdashboard"],
+    Vu: [
+        "NomProgramprojects/AsiaWok_Wokflow_2026",
+        "NomSystemdashboard",
+        "NomManageplannings/NomMasterplannings",
+    ],
     Sopha: ["NomSystemdashboard", "NomManageplannings/NomFrequencediary"],
 };
 
