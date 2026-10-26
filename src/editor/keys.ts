@@ -6,8 +6,9 @@
  * - In plain text and in a heading Enter writes one empty line more, wherever the cursor stands,
  *   before a new paragraph a line break and an empty line, see {@link paragraphBreak}.
  * - Enter continues a list or a task list with the next point, without air;
- *   on a still empty point it puts an empty line above it, the air of a half line,
- *   then of a line, see {@link pointAir}; Ctrl+Enter writes the next point with that air at once,
+ *   on a still empty point it puts two empty lines above it, the air of a whole line,
+ *   see {@link pointAir}; Ctrl+Enter writes the next point with one empty line above it,
+ *   the air of a half line, on a still empty point one more,
  *   in plain text and in a quote it is Enter twice, see {@link airBreak};
  *   on a further line of a point it starts the next point too,
  *   on a line of blanks below a list the next point of the level they reach,
@@ -24,7 +25,8 @@
  *   on an empty line the line, the cursor at the end of the line above;
  *   right after the `-` of an item or the `>` of a quote the `-` or `>`, see {@link markerBackward},
  *   the `-` of an item below another one leaving the blanks of a further line of the point above,
- *   then the line, see {@link blankBackward}; Backspace never outdents.
+ *   an empty point below an empty line going whole, the cursor on that empty line,
+ *   then each empty line above, then the line, see {@link blankBackward}; never outdenting.
  *   Delete does the same forwards, at the end of a line with the next one,
  *   see {@link markupForward}.
  * - Tab moves a list item one step in, Shift+Tab one step out, an empty line of a list too,
@@ -444,36 +446,41 @@ const quoteBreak: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Puts air above a still empty point with Enter or Ctrl+Enter, an empty line,
- * the point staying where the cursor is, as Enter on an empty line in plain text:
- * Enter at the end of a point writes the next point, Enter on it then the air of a half line
- * above it, as Ctrl+Enter, see {@link airBreak}, and again the air of a line;
- * a `-` goes only by Backspace, see {@link markerBackward}.
+ * Puts air above a still empty point, the point staying where the cursor is:
+ * Enter at the end of a point writes the next point, Enter on it then the air of a whole line,
+ * two empty lines above it, as Enter twice in plain text, once air stands there one line more;
+ * Ctrl+Enter one empty line, the air of a half line, see {@link airBreak}.
+ * A `-` goes only by Backspace, see {@link markerBackward}.
  * - `range`: The cursor.
  * - `line`: Its line.
+ * - `lines`: Empty lines it writes.
  *
- * @param view - The editor
- * @returns Whether it took the key, on an empty point only
+ * @param full - Whether it is Enter, the air of a whole line, else Ctrl+Enter, of a half line
+ * @returns The command, which takes the key on an empty point only
  */
-const pointAir: Command = (view: EditorView): boolean => {
-    const range: SelectionRange = view.state.selection.main;
-    const line: Line = view.state.doc.lineAt(range.head);
-    if (
-        view.state.selection.ranges.length > 1 ||
-        !range.empty ||
-        range.head !== line.to ||
-        !emptyPointRule.test(line.text) ||
-        itemOf(view.state, line) === null ||
-        view.state.doc.lineAt(itemOf(view.state, line)?.from ?? 0).number !== line.number
-    )
-        return false;
-    view.dispatch({
-        changes: { from: line.from, insert: view.state.lineBreak },
-        scrollIntoView: true,
-        userEvent: "input",
-    });
-    return true;
-};
+function pointAir(full: boolean): Command {
+    return (view: EditorView): boolean => {
+        const range: SelectionRange = view.state.selection.main;
+        const line: Line = view.state.doc.lineAt(range.head);
+        if (
+            view.state.selection.ranges.length > 1 ||
+            !range.empty ||
+            range.head !== line.to ||
+            !emptyPointRule.test(line.text) ||
+            itemOf(view.state, line) === null ||
+            view.state.doc.lineAt(itemOf(view.state, line)?.from ?? 0).number !== line.number
+        )
+            return false;
+        const lines: number =
+            full && !emptyIs(view.state, view.state.doc.line(Math.max(line.number - 1, 1))) ? 2 : 1;
+        view.dispatch({
+            changes: { from: line.from, insert: view.state.lineBreak.repeat(lines) },
+            scrollIntoView: true,
+            userEvent: "input",
+        });
+        return true;
+    };
+}
 
 /**
  * Ctrl+Enter: a new block with the air of a half line above it, as Enter twice in plain text:
@@ -488,9 +495,9 @@ const pointAir: Command = (view: EditorView): boolean => {
  */
 const airBreak: Command = (view: EditorView): boolean => {
     const enter: () => boolean = (): boolean => quoteBreak(view) || paragraphBreak(view);
-    if (pointAir(view)) return true;
+    if (pointAir(false)(view)) return true;
     if (itemAt(view.state) !== null)
-        return (furtherContinue(view) || markupContinue(view)) && (pointAir(view) || true);
+        return (furtherContinue(view) || markupContinue(view)) && (pointAir(false)(view) || true);
     return enter() && (enter() || true);
 };
 
@@ -546,8 +553,9 @@ function codeIs(state: EditorState, line: Line): boolean {
 }
 
 /**
- * Backspace with nothing but blanks before the cursor, outside code, only deletes, never outdents:
- * it takes the line break before the line away with those blanks,
+ * Backspace with nothing but blanks before the cursor, outside code, only deletes, never outdents,
+ * one step back each: below an empty line it takes that empty line away, the line staying;
+ * below text it takes the line break before the line away with those blanks,
  * so a line of only blanks, like the one a `-` taken away left, goes whole,
  * the cursor at the end of the line above, and the text of a further line of a point
  * joins the line above. Before the `-` or number of a point it leaves the key to the next.
@@ -572,7 +580,9 @@ const blankBackward: Command = (view: EditorView): boolean => {
         return false;
     const above: Line = view.state.doc.line(line.number - 1);
     view.dispatch({
-        changes: { from: above.to, to: range.head },
+        changes: emptyIs(view.state, above)
+            ? { from: above.from, to: line.from }
+            : { from: above.to, to: range.head },
         scrollIntoView: true,
         userEvent: "delete.backward",
     });
@@ -669,16 +679,38 @@ const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]*$/;
  * see {@link blankBackward}, never a level of its blanks, the job of Shift+Tab.
  * An empty point so becomes an empty line within the list, the air of a half line,
  * see {@link typingLine}, and text typed on it a paragraph of its own,
- * see {@link paragraphTyping}.
- * - `point`: Whether the line is an empty point, see {@link emptyPointRule}.
+ * see {@link paragraphTyping}; right below an empty line it goes whole instead,
+ * the cursor on that empty line under the text of the point, as such air,
+ * so Backspace leaves one empty line after Enter as after Ctrl+Enter.
+ * - `line`: The line of the cursor.
+ * - `point`: Whether it is an empty point, see {@link emptyPointRule}.
+ * - `above`: The empty line above it.
+ * - `indentation`: The indentation of the point's text, which that empty line takes.
  *
  * @param view - The editor
  * @returns Whether it took the key
  */
 const markerBackward: Command = (view: EditorView): boolean => {
-    const point: boolean = emptyPointRule.test(
-        view.state.doc.lineAt(view.state.selection.main.head).text,
-    );
+    const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
+    const point: boolean = emptyPointRule.test(line.text);
+    if (
+        point &&
+        view.state.selection.main.empty &&
+        view.state.selection.main.head === line.to &&
+        line.number > 1 &&
+        emptyIs(view.state, view.state.doc.line(line.number - 1))
+    ) {
+        const above: Line = view.state.doc.line(line.number - 1);
+        const indentation: string = textIndentationOf(line.text) ?? "";
+        view.dispatch({
+            changes: { from: above.from, to: line.to, insert: indentation },
+            selection: { anchor: above.from + indentation.length },
+            effects: airSet.of(above.from),
+            scrollIntoView: true,
+            userEvent: "delete.backward",
+        });
+        return true;
+    }
     return deleteMarkupBackward({
         state: view.state,
         dispatch: (transaction: Transaction): void =>
@@ -752,9 +784,10 @@ const markupForward: Command = (view: EditorView): boolean => {
  * two before a heading, none at the end of the note,
  * so the text stands apart from both sides.
  * On a single empty line between two paragraphs it writes nothing more.
- * On the air a `-` taken away left right below a point, see {@link typingLine},
+ * On the air a `-` taken away left within a list, see {@link typingLine},
  * it writes the text on a line of its own below that air, with its blanks,
- * a new paragraph of the point above, and on an empty line at the left edge right below a list,
+ * a new paragraph of the point above, the air staying,
+ * and on an empty line at the left edge right below a list,
  * where Shift+Tab put it, see {@link blankIndent}, a paragraph after the list.
  * - `line`: The line typed on.
  * - `typing`: The line a key just put the cursor on to write, `null` for none.
@@ -772,13 +805,13 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
             ((typing?.air === true && typing.from === line.from) ||
                 (line.length === 0 &&
                     line.number > 1 &&
+                    !emptyIs(view.state, view.state.doc.line(line.number - 1)) &&
                     itemOf(view.state, view.state.doc.line(line.number - 1)) !== null)) &&
             from === to &&
             from === line.to &&
             line.number > 1 &&
             /^[ \t]*$/.test(line.text) &&
-            !/[\r\n]/.test(text) &&
-            !emptyIs(view.state, view.state.doc.line(line.number - 1))
+            !/[\r\n]/.test(text)
         ) {
             view.dispatch({
                 changes: {
@@ -1347,7 +1380,7 @@ export const markdownKeys: Extension = [
         keymap.of([
             { key: "Enter", run: furtherContinue },
             { key: "Enter", run: quoteBreak },
-            { key: "Enter", run: pointAir },
+            { key: "Enter", run: pointAir(true) },
             { key: "Enter", run: paragraphBreak },
             { key: "Enter", run: markupContinue },
             { key: "Shift-Enter", run: pointContinue },

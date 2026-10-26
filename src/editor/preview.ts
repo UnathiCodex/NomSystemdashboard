@@ -110,7 +110,8 @@
  *   `Tutor` and `Head` of a table into links to their rows,
  *   and gives the people, a person by its name
  *   and the address of its row for the names under `## Modulverantwortliche`.
- * - `./keys.ts`: Tells an empty line and the empty line a key just put the cursor on to write.
+ * - `./keys.ts`: Tells an empty line and the empty line a key just put the cursor on to write,
+ *   and the indentation of the text of a list item, for the lines of blanks below it.
  * - `./round.ts`: Shows a block of a section alone, for a link to its heading.
  * - `./table.ts`: Opens a table over the file, to edit as a spreadsheet.
  * - `./steps.ts`: Tells whether a section is folded.
@@ -143,7 +144,7 @@ import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
 import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
-import { emptyIs, typingLine } from "./keys.ts";
+import { columnsOf, emptyIs, textIndentationOf, typingLine } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
 import { foldedAt } from "./steps.ts";
 import { cellTitleShow, tableOpen } from "./table.ts";
@@ -1602,15 +1603,79 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
 }
 
 /**
- * List: its lines in a `ul` or `ol`, as the scripts view draws them.
+ * List: its lines in a `ul` or `ol`, up to where its last item ends, see {@link itemEndOf},
+ * as the scripts view draws them.
  *
  * @param look - Look being built
  * @param node - `BulletList` or `OrderedList`
  * @returns `true`, to look into its items
  */
 function listLook(look: Look, node: SyntaxNode): boolean {
-    wrap(look, node, node.name === "BulletList" ? "ul" : "ol");
+    wrap(
+        look,
+        node,
+        node.name === "BulletList" ? "ul" : "ol",
+        {},
+        node.lastChild !== null ? itemEndOf(look, node.lastChild) : node.to,
+    );
     return true;
+}
+
+/**
+ * Finds where a list item ends on the page: after its last line
+ * and the lines of blanks below it that reach its text, also past empty lines,
+ * like the one Shift+Enter writes below it or a `-` taken away leaves,
+ * which Markdown reads after it, so the cursor on them stands under its text,
+ * see {@link listBlankIs}; those that do not reach it belong to a point it stands in.
+ * - `indentation`: Indentation of its text, `null` for a point not indented by tabs.
+ * - `end`: Its last line so far.
+ * - `line`: A line below it.
+ *
+ * @param look - Look being built
+ * @param node - `ListItem`
+ * @returns End of its last line
+ */
+function itemEndOf(look: Look, node: SyntaxNode): number {
+    const indentation: string | null = textIndentationOf(look.state.doc.lineAt(node.from).text);
+    if (indentation === null) return node.to;
+    let end: Line = look.state.doc.lineAt(node.to);
+    for (let number: number = end.number + 1; number <= look.state.doc.lines; number++) {
+        const line: Line = look.state.doc.line(number);
+        if (!/^[ \t]*$/.test(line.text)) break;
+        if (line.length === 0) continue;
+        if (columnsOf(line.text) < columnsOf(indentation)) break;
+        end = line;
+    }
+    return end.to;
+}
+
+/**
+ * Tells a line of blanks within a list, like the one Shift+Enter writes below a point
+ * or a `-` taken away leaves: only blanks, below a line of a list item,
+ * maybe past other empty lines, not code; its blanks are hidden, so it stands under the text
+ * of its point, see {@link itemEndOf}, and the cursor on it where text typed will begin.
+ * - `above`: The nearest line with text above it.
+ * - `node`: A piece of syntax at the start of that line's text, from the innermost outwards.
+ *
+ * @param state - Text and syntax tree
+ * @param line - The line
+ * @returns Whether it is such a line
+ */
+function listBlankIs(state: EditorState, line: Line): boolean {
+    if (!/^[ \t]+$/.test(line.text) || !emptyIs(state, line)) return false;
+    let above: Line = line;
+    while (above.number > 1 && /^[ \t]*$/.test(above.text))
+        above = state.doc.line(above.number - 1);
+    for (
+        let node: SyntaxNode | null = syntaxTree(state).resolveInner(
+            above.from + (/^[ \t]*/.exec(above.text)?.[0].length ?? 0),
+            1,
+        );
+        node !== null;
+        node = node.parent
+    )
+        if (node.name === "ListItem") return true;
+    return false;
 }
 
 /**
@@ -1623,7 +1688,8 @@ function listLook(look: Look, node: SyntaxNode): boolean {
  * which folds them with its further lines.
  * The `li` reaches on over the empty lines up to the next point of its list,
  * so the guide line of its sub-points runs on through that air, see `../notes/notes.css`,
- * and a list with air stays one list on the page, as in the file.
+ * and a list with air stays one list on the page, as in the file;
+ * the last point of a list over the lines of blanks that reach its text, see {@link itemEndOf}.
  * - `next`: The next point of its list, `null` for none.
  * - `mark`: Its `-` or number, `ListMark`.
  * - `attributes`: Attributes of its `li`: its classes and its number.
@@ -1645,7 +1711,7 @@ function itemLook(look: Look, node: SyntaxNode): boolean {
         node,
         "li",
         attributes,
-        next === null ? node.to : look.state.doc.lineAt(next.from).from - 1,
+        next === null ? itemEndOf(look, node) : look.state.doc.lineAt(next.from).from - 1,
     );
     if (node.getChild("BulletList") !== null || node.getChild("OrderedList") !== null)
         foldLook(look, line, true);
@@ -1709,7 +1775,8 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
  * see {@link paragraphLook} and {@link listMarkLook}:
  * of a line of a paragraph its indentation;
  * of the line of a list item the indentation before its `-` or number;
- * nothing of a line of blanks, a code block, a table or a quote, whose blanks show.
+ * all of a line of blanks within a list, see {@link listBlankIs};
+ * nothing of any other line of blanks, a code block, a table or a quote, whose blanks show.
  * - `blanks`: Its indentation.
  * - `node`: A piece of syntax around the start of its text, from the innermost outwards.
  *
@@ -1719,7 +1786,7 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
  */
 function hiddenStartOf(state: EditorState, line: Line): number {
     const blanks: number = /^[ \t]*/.exec(line.text)?.[0].length ?? 0;
-    if (blanks === line.length) return 0;
+    if (blanks === line.length) return listBlankIs(state, line) ? blanks : 0;
     for (
         let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.from + blanks, 1);
         node !== null;
@@ -2009,7 +2076,8 @@ const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
  * with a cursor a whole line high over the two half lines, as on one line of air,
  * see {@link stop}; only the empty line a key just put the cursor on to write
  * is as high as a line of text, see `typingLine` in `./keys.ts`,
- * not the air a `-` taken away left within a list, a half line as every empty line.
+ * not the air a `-` taken away left within a list, a half line as every empty line;
+ * the blanks of a line within a list hidden, see {@link listBlankIs}.
  * - `typing`: Start of that line, `null` for none or air.
  * - `line`: One line of the note.
  *
@@ -2022,6 +2090,7 @@ function spaceLook(look: Look): void {
             : null;
     for (let number: number = 1; number <= look.state.doc.lines; number++) {
         const line: Line = look.state.doc.line(number);
+        if (listBlankIs(look.state, line)) hide(look, line.from, line.to);
         if (line.from !== typing && emptyIs(look.state, line))
             look.decorations.push(
                 (number > 1 && emptyIs(look.state, look.state.doc.line(number - 1))
