@@ -23,6 +23,9 @@
  * as if I had pushed it by hand, so it stands on today, greyed on each day it left,
  * and is shown, counted and moved the same, see {@link carriedOf};
  * one done on a later day counts as pushed to the day of its log entry.
+ * Only on its own day it stays open, see {@link leftBoxesOf},
+ * so I log it there when I log it later, like my diary of yesterday,
+ * and it counts as done on that day, never as pushed.
  * These pushes are not written while it is carried, only once I change it,
  * so its file then holds them as if I had pushed it, see {@link carryWrite}.
  * One I no longer mean to do I skip, see {@link boxDrop};
@@ -237,8 +240,9 @@ export const numberedTypes: string[] = ["VO", "UE", "ZU", "TU", "HU"];
  * - `group`: The group of a tutorial whose session it goes to, its `X-GROUP`,
  *   like `03`, see `course.ts`;
  *   empty for none.
- * - `moved`: For a box shown greyed on a day it was pushed from, where it went, see {@link Moved};
- *   `null` for any other.
+ * - `moved`: For a box shown greyed on a day it was pushed from,
+ *   or open on its own day while it is carried along, see {@link leftBoxesOf},
+ *   where it went, see {@link Moved}; `null` for any other.
  * - `file`: Its `.ics` file from `NomWorkspace` on,
  *   see `file` of `Entry` in `calendar.ts`, which its dialog shows.
  */
@@ -263,7 +267,8 @@ export type Box = EntryTexts & {
 };
 
 /**
- * Where a box went that shows greyed on a day it was pushed from, see {@link leftBoxesOf}.
+ * Where a box went that shows on a day it was pushed from, greyed,
+ * or open on its own day while it is carried along, see {@link leftBoxesOf}.
  *
  * - `day`: The day it stands on now, like `2026-10-17`.
  * - `went`: The day it went to from the day it shows on, by that push,
@@ -680,20 +685,24 @@ function carriedOf(box: Box, written: string): Box {
  * once per push, greyed like a skipped box, with the start and the length it had there,
  * see `Push` in `calendar.ts`, else the length it has now, without deadline,
  * since a box with one is never pushed, and with the pushes before that one;
+ * but an open box carried along stays open on its own day, the day its file holds,
+ * the first it is carried from, see {@link carriedOf},
+ * so I log it there, done then on that day and no longer carried;
  * each knows the day the box stands on now and the day it went to from there,
  * later or earlier, see {@link Moved}.
  *
  * @param box - The box as it stands now
- * @returns One greyed box per push, in the order of its pushes, none for a box never pushed
+ * @param written - How many of its pushes its file holds, those it is carried along by after them
+ * @returns One box per push, in the order of its pushes, none for a box never pushed
  */
-function leftBoxesOf(box: Box): Box[] {
+function leftBoxesOf(box: Box, written: number): Box[] {
     return box.pushed.map((push: Push, index: number): Box => ({
         ...box,
         day: push.day,
         time: push.time,
         minutes: push.minutes ?? box.minutes,
         deadline: "",
-        state: "pushed",
+        state: box.state === "open" && index === written ? "open" : "pushed",
         pushed: box.pushed.slice(0, index),
         log: null,
         moved: { day: box.day, went: box.pushed[index + 1]?.day ?? box.day },
@@ -766,17 +775,20 @@ function loggedDayOf(box: Box): string {
  * see {@link deadlineShows}, and a pushed box greyed to each day it was pushed from,
  * see {@link leftBoxesOf}, wherever it lies now, also one carried along, see {@link carriedOf},
  * like the box of 18.10 for 01 Regression Analysis that my session of 19.10 did,
- * done on 19.10 and greyed on 18.10.
+ * done on 19.10 and greyed on 18.10;
+ * one carried along and still open stays open on its own day too,
+ * like my diary of yesterday I log only today.
  * - `from`: Start of the first day, in Berlin time.
  * - `logs`: Log entries written from boxes, until {@link deadlineDays} days after the last day,
  *   or after today when it is later, see {@link logsOf} and {@link logsUntilOf}.
- * - `boxes`: Boxes of the plan up to {@link deadlineDays} days after the last day,
+ * - `entries`: Entries of the plan up to {@link deadlineDays} days after the last day,
  *   so a deadline after the range shows in it, from the first entry of the plan,
  *   so one carried along into the range shows in it, and those that happen once wherever they lie,
  *   so one pushed from a day of the range shows there,
  *   since one occurrence of a series becomes one of its own before it is pushed,
  *   see {@link boxOwn}; each once.
- * - `left`: Boxes as they stood on the days of the range they were pushed from.
+ * - `boxes`: The boxes of those entries, as they stand now.
+ * - `left`: Boxes as they stood on each day they were pushed from.
  * - `occasions`: Birthdays and holidays of the days of the range,
  *   none of a file while it is missing.
  * - `days`: The plans so far.
@@ -792,19 +804,18 @@ export function boxesRead(start: string, end: string): PlanDay[] {
     dateCheck(end);
     const from: string = berlinDayStartOf(start);
     const logs: Map<string, Entry> = logsOf(dayAdd(logsUntilOf(end), deadlineDays));
-    const boxes: Box[] = [
+    const entries: Entry[] = [
         ...new Map(
             [
                 ...planRead("1970-01-01T00:00:00Z", berlinDayStartOf(dayAdd(end, deadlineDays))),
                 ...planOnceRead(),
             ].map((entry: Entry): [string, Entry] => [entryIdOf(entry), entry]),
         ).values(),
-    ].map((entry: Entry): Box => boxOf(entry, logs));
-    const left: Box[] = boxes
-        .filter((box: Box): boolean =>
-            box.pushed.some((push: Push): boolean => start <= push.day && push.day < end),
-        )
-        .flatMap(leftBoxesOf);
+    ];
+    const boxes: Box[] = entries.map((entry: Entry): Box => boxOf(entry, logs));
+    const left: Box[] = boxes.flatMap((box: Box, index: number): Box[] =>
+        leftBoxesOf(box, entries[index].pushed.length),
+    );
     const occasions: Entry[] = entriesRead(day.system, from, berlinDayStartOf(end));
 
     const days: PlanDay[] = [];

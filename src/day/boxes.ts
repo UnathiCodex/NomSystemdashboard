@@ -78,6 +78,11 @@
  * as if I pushed it to the next day at the end of each day, see `carriedOf` in `reader/boxes.ts`:
  * it stands among the boxes of today, greyed on each day it left,
  * and shows, counts and moves as a box I pushed by hand;
+ * only on its own day it stays open, see `leftBoxesOf` in `reader/boxes.ts`,
+ * so I log it there when I log it later, like my diary of yesterday,
+ * dragged into the log of that day or with `Log`:
+ * it is done on that day then, counted so, never as pushed, and no longer stands on today;
+ * a click on it there leads to today, where it stands, as one I pushed does;
  * one I no longer mean to do I skip,
  * and one I add for a day that is over or move to one stays there, open, and counts as skipped.
  * A box with a deadline, which is never pushed, is carried along on today as it is: in its
@@ -194,7 +199,8 @@ export type BoxState = "open" | "done" | "dropped" | "university" | "pushed";
  *   like `3`, `NONE` for one the university cancelled, empty for none.
  * - `group`: The group of a tutorial whose session it goes to, like `03`,
  *   see `./groups.ts`; empty for none.
- * - `moved`: For a box shown greyed on a day it was pushed from, where it went, see {@link Moved};
+ * - `moved`: For a box shown greyed on a day it was pushed from,
+ *   or open on its own day while it is carried along, where it went, see {@link Moved};
  *   `null` for any other.
  * - `file`: Its `.ics` file from `NomWorkspace` on, which its dialog shows,
  *   see `fileShow` in `choices.ts`,
@@ -249,7 +255,8 @@ export type Push = {
 };
 
 /**
- * Where a box went that shows greyed on a day it was pushed from, as the reader sends it.
+ * Where a box went that shows on a day it was pushed from, greyed,
+ * or open on its own day while it is carried along, as the reader sends it.
  *
  * - `day`: The day it stands on now, like `2026-10-17`, where a click on its lines leads.
  * - `went`: The day it went to from the day it shows on, later or earlier,
@@ -706,7 +713,8 @@ async function boxTap(calendar: Calendar, box: Box): Promise<void> {
 
 /**
  * Acts on a click on what a box is:
- * a box greyed on a day it was pushed from leads to the day it stands on now;
+ * a box greyed on a day it was pushed from, or open on its own day while it is carried along,
+ * leads to the day it stands on now;
  * a box that can be changed, also one occurrence of a series, opens the entry
  * by category to change it, an open one that cannot,
  * like a lecture of a file outside the new system,
@@ -873,6 +881,8 @@ function tutorialIs(box: Box): boolean {
  * nothing written, its dialog still logging it;
  * moving it by its dialog to today or later carries it along again,
  * see `carriedOf` in `reader/boxes.ts`.
+ * One carried along stands open on its own day instead, with its actions,
+ * see `leftBoxesOf` in `reader/boxes.ts`.
  * An open box has the class `box-draggable`, so it can be dragged into the log,
  * see {@link boxesStart}, and keeps its identifier, which names it when it is dropped,
  * see {@link boxReceive}, its category,
@@ -881,7 +891,7 @@ function tutorialIs(box: Box): boolean {
  * so its actions or its state stand in the middle of all of them,
  * see `.box-actions` in `boxes.css`.
  * - `element`: The box.
- * - `over`: Whether it is open, without deadline, and its day over, so skipped.
+ * - `over`: Whether it is open, without deadline, its day over and not carried along, so skipped.
  * - `body`: Its lines.
  * - `end`: Its actions or its state at its right.
  *
@@ -894,7 +904,10 @@ function tutorialIs(box: Box): boolean {
 function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTMLElement {
     const element: HTMLElement = entryPartOf("div", `box box-${box.state}`, []);
     const over: boolean =
-        box.state === "open" && box.deadline === "" && box.day < calendarTodayOf();
+        box.state === "open" &&
+        box.deadline === "" &&
+        box.day < calendarTodayOf() &&
+        box.moved === null;
     element.classList.toggle("box-over", over);
     const body: HTMLElement = entryPartOf(
         "div",
