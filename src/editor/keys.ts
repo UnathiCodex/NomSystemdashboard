@@ -1734,9 +1734,17 @@ export const typingLine: StateField<number | null> = StateField.define<number | 
  * like the line of a point Backspace left, see {@link markerBackward}, or Shift+Enter wrote:
  * only the line of the cursor holds the blanks where its text will begin,
  * every other empty line of the note stays empty; a line of code keeps its blanks.
+ * Where the empty line it leaves stands among more than two, like the line Enter wrote above
+ * the air below a paragraph, that line goes, then the ones below it, then above it,
+ * down to two, the air of a line, the most there is, see {@link airMost}.
  * After the moves of the cursor, see `caretPlace` in `./preview.ts`.
  * - `cursor`: The cursor before the move.
+ * - `state`: Text and syntax tree.
  * - `line`: Its line.
+ * - `top`, `bottom`: The first and the last of the empty lines it stands among.
+ * - `excess`: How many of them go.
+ * - `down`: How many of them go from its line downwards, the rest right above it.
+ * - `first`, `last`: The first and the last line that go.
  *
  * @returns Filter of changes
  */
@@ -1744,16 +1752,42 @@ const blanksLeft: Extension = Prec.high(
     EditorState.transactionFilter.of(
         (transaction: Transaction): TransactionSpec | readonly TransactionSpec[] => {
             const cursor: SelectionRange = transaction.startState.selection.main;
-            const line: Line = transaction.startState.doc.lineAt(cursor.head);
+            const state: EditorState = transaction.startState;
+            const line: Line = state.doc.lineAt(cursor.head);
             if (
                 transaction.docChanged ||
                 transaction.selection === undefined ||
                 !cursor.empty ||
-                !/^[ \t]+$/.test(line.text) ||
-                !emptyIs(transaction.startState, line) ||
+                !emptyIs(state, line) ||
                 transaction.newDoc.lineAt(transaction.newSelection.main.head).number === line.number
             )
                 return transaction;
+            let top: Line = line;
+            while (top.number > 1 && emptyIs(state, state.doc.line(top.number - 1)))
+                top = state.doc.line(top.number - 1);
+            let bottom: Line = line;
+            while (
+                bottom.number < state.doc.lines &&
+                emptyIs(state, state.doc.line(bottom.number + 1))
+            )
+                bottom = state.doc.line(bottom.number + 1);
+            const excess: number = bottom.number - top.number - 1;
+            if (excess > 0) {
+                const down: number = Math.min(excess, bottom.number - line.number + 1);
+                const first: Line = state.doc.line(line.number - (excess - down));
+                const last: Line = state.doc.line(line.number + down - 1);
+                return [
+                    transaction,
+                    {
+                        changes:
+                            last.number < state.doc.lines
+                                ? { from: first.from, to: last.to + 1 }
+                                : { from: first.from - 1, to: last.to },
+                        sequential: true,
+                    },
+                ];
+            }
+            if (!/^[ \t]+$/.test(line.text)) return transaction;
             return [transaction, { changes: { from: line.from, to: line.to }, sequential: true }];
         },
     ),
