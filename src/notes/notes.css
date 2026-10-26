@@ -1006,9 +1006,15 @@
     background: none;
 }
 
-/* Code of a language of my list in the colors of the theme of my editor,
-   see `code.ts` and `reader/theme.ts`, set as `--code-…`;
-   every other word and every other code block in the color of text, the ``` too */
+/* Code in the colors of the theme of my editor, see `code.ts` and `reader/theme.ts`,
+   set as `--code-…`: every word of a language of my list by its kind,
+   every other word and every code block without one in the color of text of the theme,
+   the ``` in that of markup */
+:is(.markdown pre code, .cm-code-block) {
+    color: var(--code-text);
+}
+
+
 :is(.markdown pre code, .cm-code-block) .code-keyword:not(.cm-mark) {
     color: var(--code-keyword);
 }
