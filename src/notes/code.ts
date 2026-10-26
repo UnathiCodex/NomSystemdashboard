@@ -7,6 +7,8 @@
  * every other block in the color of text, white;
  * in the scripts view, see {@link codeHtmlOf}, and in the editor, see `../editor/syntax.ts`.
  * Make has no language of its own there, its lines take that of Bash.
+ * Built-in functions, like `print` and `len`, take a color of their own only in Python,
+ * as my theme gives it for Python alone, see {@link plain}.
  *
  * - `@codemirror/language`: Reads a language of CodeMirror's older modes, `StreamLanguage`.
  * - `@codemirror/legacy-modes`: The languages.
@@ -24,18 +26,36 @@ import { standardSQL } from "@codemirror/legacy-modes/mode/sql";
 import { xml } from "@codemirror/legacy-modes/mode/xml";
 import { highlightCode, tagHighlighter, tags } from "@lezer/highlight";
 
+import type { StreamParser, StringStream } from "@codemirror/language";
 import type { Highlighter } from "@lezer/highlight";
+
+/**
+ * A language whose built-in words read as any other word,
+ * as my theme colors built-in functions of Python alone.
+ *
+ * @param mode - The language as CodeMirror's old mode, like `r`
+ * @returns The language, its built-in words plain
+ */
+function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
+    return StreamLanguage.define({
+        ...mode,
+        token: (stream: StringStream, state: unknown): string | null => {
+            const style: string | null = mode.token(stream, state);
+            return style === "builtin" ? "variable" : style;
+        },
+    });
+}
 
 /**
  * The languages of my code blocks, as written after the ```, in the order of the list to pick.
  */
 export const codeLanguages: { [name: string]: StreamLanguage<unknown> } = {
     bash: StreamLanguage.define(shell),
-    c: StreamLanguage.define(c),
-    java: StreamLanguage.define(java),
+    c: plain(c),
+    java: plain(java),
     python: StreamLanguage.define(python),
-    r: StreamLanguage.define(r),
-    sql: StreamLanguage.define(standardSQL),
+    r: plain(r),
+    sql: plain(standardSQL),
     make: StreamLanguage.define(shell),
     json: StreamLanguage.define(json),
     xml: StreamLanguage.define(xml),
