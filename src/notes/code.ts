@@ -8,7 +8,8 @@
  * in the scripts view, see {@link codeHtmlOf}, and in the editor, see `../editor/syntax.ts`.
  * Make has no language of its own there, its lines take that of Bash.
  * Built-in functions, like `print` and `len`, take a color of their own only in Python,
- * as my theme gives it for Python alone, see {@link plain}, and so do `self` and `cls`.
+ * as my theme gives it for Python alone, see {@link plain}, and so do `self` and `cls`;
+ * simple types, like `int` and `void`, that of keywords.
  *
  * - `@codemirror/language`: Reads a language of CodeMirror's older modes, `StreamLanguage`.
  * - `@codemirror/legacy-modes`: The languages.
@@ -31,17 +32,21 @@ import type { Highlighter } from "@lezer/highlight";
 
 /**
  * A language whose built-in words read as any other word,
- * as my theme colors built-in functions of Python alone.
+ * as my theme colors built-in functions of Python alone;
+ * its simple types, written small like `void`, `int` and `boolean`, as keywords,
+ * as IntelliJ colors them, while types like `String` and `size_t` stay types.
+ * - `style`: The kind of the word the mode reads.
  *
- * @param mode - The language as CodeMirror's old mode, like `r`
- * @returns The language, its built-in words plain
+ * @param mode - The language as CodeMirror's old mode, like `java`
+ * @returns The language, its built-in words plain, its simple types keywords
  */
 function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
     return StreamLanguage.define({
         ...mode,
         token: (stream: StringStream, state: unknown): string | null => {
             const style: string | null = mode.token(stream, state);
-            return style === "builtin" ? "variable" : style;
+            if (style === "builtin") return "variable";
+            return style === "type" && /^[a-z]+$/.test(stream.current()) ? "keyword" : style;
         },
     });
 }
