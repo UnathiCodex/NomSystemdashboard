@@ -365,7 +365,8 @@ const gap: Decoration = Decoration.line({ class: "cm-gap" });
 
 /**
  * Empty line right below another, a place to write, see {@link gapIs}:
- * half as high, its cursor a whole line high over both, see {@link spaceLook} and `./editor.css`.
+ * half as high below the half line above it, its cursor a whole line high from its top,
+ * where text typed on it stands, see {@link spaceLook} and `./editor.css`.
  */
 const stop: Decoration = Decoration.line({ class: "cm-gap cm-stop" });
 
@@ -2073,9 +2074,10 @@ const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
  * every one alike and every one a line the cursor stands on, by a click or an arrow key,
  * as the small gap between two paragraphs, two of them as the air of a line,
  * see {@link gap}; one right below another, a place to write, see {@link gapIs},
- * with a cursor a whole line high over the two half lines, as on one line of air,
- * see {@link stop}; only the empty line a key just put the cursor on to write
- * is as high as a line of text, see `typingLine` in `./keys.ts`,
+ * below the half line above it, with a cursor a whole line high from its top,
+ * where text typed on it stands, see {@link stop};
+ * only the empty line a key just put the cursor on to write is as high as a line of text,
+ * see `typingLine` in `./keys.ts`,
  * not the air a `-` taken away left within a list, a half line as every empty line;
  * the blanks of a line within a list hidden, see {@link listBlankIs}.
  * - `typing`: Start of that line, `null` for none or air.

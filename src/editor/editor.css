@@ -240,19 +240,11 @@
     line-height: calc(var(--empty-line) / 2);
 }
 
-/* An empty line right below another, a place to write, still half as high,
-   but its text, and so its cursor, a whole line high over it and the half line above it,
-   as on one line of air, see `spaceLook` in `preview.ts` */
+/* An empty line right below another, a place to write, half as high below the half line above it,
+   so two stand as one line of air; its text, and so its cursor, a whole line high from its top,
+   where the text typed on it will stand, see `spaceLook` in `preview.ts` */
 .editor-text.markdown .cm-line.cm-gap.cm-stop {
-    position: relative;
-    top: calc(var(--empty-line) / -2);
     line-height: var(--empty-line);
-}
-
-/* The guide line of sub-points on through an empty line right below another,
-   whose text stands half a line higher, see `.cm-stop` above */
-.editor-text.markdown li > :is(ul, ol) ~ .cm-line.cm-stop::before {
-    bottom: calc(var(--empty-line) / -2);
 }
 
 /* Markup shown, like `##` and `**`, and the markers of lists in the faint grey of list markers */
