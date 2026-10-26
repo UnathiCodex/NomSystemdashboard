@@ -11,9 +11,9 @@
  * like `Living/Sleep_2026_Log.ics`, see `livingFileOf` in `sources.ts`;
  * an entry whose start moves into another year,
  * or that changes its category or its skill, moves into the log it belongs into then.
- * A skill entry names its skill and its type by the folder its `SUMMARY` links, its title free:
+ * A skill entry names its skill and its type in its `SUMMARY`, its link one I set:
  * `CATEGORIES:Skill`,
- * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons":IN2028 Lecture 3 recap`,
+ * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons":IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * also one logged from a box, which takes its title, see `titleOf` in `documents.ts`;
  * its chapters, document and attempts only `skill.ts` writes.
  * A change from the dialog is written only while the file holds the entry as the dialog opened it,

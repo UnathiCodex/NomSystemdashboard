@@ -6,14 +6,14 @@
  * each link only points to more, the entry states its facts itself, see `calendar.ts`,
  * like the chapters of my system it belongs to, one `X-CHAPTER` each,
  * like `X-CHAPTER:02_LogisticPoissonRegression`.
- * Its `SUMMARY` is its title, free,
- * like `IN2028 Lecture 3 recap`,
- * at first the name of the folder of its skill with its type in round brackets at the end
- * when it has one, see {@link skillTitleOf};
- * its skill and its type the `ALTREP` of its `SUMMARY` names, see `skillPartsOf` in `calendar.ts`:
- * the folder of the skill, for a module with a type on into the folder of the material of its type
+ * Its `SUMMARY` names its skill and its type: the name of the folder of its skill
+ * with its type in round brackets at the end when it has one, see {@link skillTitleOf},
+ * read by `skillPartsOf` in `calendar.ts`;
+ * its `ALTREP` a link I set, by default the folder of the skill,
+ * for a module with a type on into the folder of the material of its type
  * and of its semester, see {@link skillLinkOf},
- * like `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W":IN2028 Lecture 3 recap`, my own learning, without type, the module folder, a project its folder,
+ * like `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * my own learning, without type, the module folder, a project its folder,
  * like `SUMMARY;ALTREP="NomProgramprojects/AsiaWok_Wokflow_2026":AsiaWok_Wokflow_2026`.
  * Every real document a skill entry used is one `ATTACH` holding just its path,
  * see `Link` in `calendar.ts`, as many as it used, in the same form for every kind:
@@ -93,7 +93,6 @@ import {
     moduleFolderOf,
     semesterFoldersRead,
 } from "./notes.ts";
-import { linkForm } from "./places.ts";
 import {
     moduleIs,
     modulesFolder,
@@ -278,32 +277,26 @@ export function skillLinkOf(code: string, type: string, semester: string): strin
 }
 
 /**
- * Form of a link of mine into `NomWorkspace`, typed as the link of a summary,
- * like `NomManageplannings/NomFrequencediary/2026/2026_10/2026_10_26.md`:
- * a path from `NomWorkspace` on, on one line, never starting with `/` and without `..`.
- */
-const pathForm: RegExp = /^(?!\/)(?!.*(^|\/)\.\.(\/|$))[^\r\n]+$/;
-
-/**
  * Gives what an entry or a box was as it is written, its `SUMMARY` and the `ALTREP` of it:
- * its what as sent, with the link it had in the entry or box it comes from
- * while it is the same what, like a web address an older entry typed;
- * a skill entry its title as sent, free, like `IN2028 Lecture 3 recap`,
- * while none is sent the one its skill and type give it, see {@link skillTitleOf},
- * and always the link to the folder of its skill and of its material,
- * which names both, see {@link skillLinkOf}.
- * The link of what it was I type for any other entry, a web address, like the page of an event,
- * or a path of mine, see {@link pathForm};
- * a sender that knows none, like the calendar after a drag, keeps the one it comes from.
+ * its what as sent, a skill entry the one its skill and type give it, see {@link skillTitleOf},
+ * which names both, see `skillPartsOf` in `calendar.ts`;
+ * its link as I type it, on one line, a web address, like the page of an event,
+ * or a path from `NomWorkspace` on, like `NomManageplannings`, whatever it is,
+ * only a valid one opening on a click;
+ * a sender that knows none, like the calendar after a drag, keeps the one it comes from
+ * while it is the same what;
+ * a skill entry without one links the folder of its skill and of its material,
+ * see {@link skillLinkOf}.
+ * - `title`: Its `SUMMARY`.
+ * - `link`: Its link as typed or kept, empty for none.
  *
  * @param fields - Category, what, skill, type, semester and link of the entry or the box,
  *   as sent, the semester as it is written, see `semesterFor` in `categories.ts`
  * @param from - The entry or box it comes from,
  *   like the entry being changed or the box a log entry is logged from, `null` for none
- * @returns `SUMMARY` and `ALTREP`, like `IN2028 Lecture 3 recap`
+ * @returns `SUMMARY` and `ALTREP`, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
  *   and `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`,
  *   or `Planungen` and an empty link
- * @throws {Error} - When the link typed is neither a web address nor a path of mine
  */
 export function titleOf(
     fields: {
@@ -316,19 +309,16 @@ export function titleOf(
     },
     from: { title: string; titleLink: string } | null,
 ): [string, string] {
-    if (fields.category === skillName)
-        return [
-            fields.title.trim() === ""
-                ? skillTitleOf(fields.module, fields.type)
-                : fields.title.trim(),
-            skillLinkOf(fields.module, fields.type, fields.semester),
-        ];
-    if (fields.titleLink === undefined)
-        return [fields.title, from !== null && from.title === fields.title ? from.titleLink : ""];
-    const link: string = fields.titleLink.trim();
-    if (link !== "" && !linkForm.test(link) && !pathForm.test(link))
-        throw new Error(`No link of ${fields.title}: ${link}`);
-    return [fields.title, link];
+    const title: string =
+        fields.category === skillName ? skillTitleOf(fields.module, fields.type) : fields.title;
+    const link: string = (
+        fields.titleLink ?? (from !== null && from.title === title ? from.titleLink : "")
+    )
+        .replace(/[\r\n]+/g, " ")
+        .trim();
+    if (link === "" && fields.category === skillName)
+        return [title, skillLinkOf(fields.module, fields.type, fields.semester)];
+    return [title, link];
 }
 
 /**
@@ -567,8 +557,7 @@ function repairPrint(entry: Entry, old: string, path: string): void {
  * when the folder of its module is gone, like after a rename:
  * the folder found again by the code of the entry's module,
  * see `moduleFolderOf` in `notes.ts`, with the material of its type and semester as before,
- * see {@link skillLinkOf}; its title follows while it is the one its skill
- * and type gave it by the folder as it was, see {@link skillTitleOf}, a title I typed stays.
+ * see {@link skillLinkOf}; its title follows, see {@link skillTitleOf}.
  * The folder of a project stays as written,
  * and so does the folder of a material or a semester that is gone,
  * since the type stays named by it.

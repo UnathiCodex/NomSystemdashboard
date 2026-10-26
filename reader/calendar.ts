@@ -15,8 +15,8 @@
  * so a skill entry names its semester in its `X-SEMESTER`,
  * a place its label and address in its `LOCATION`,
  * what I did online its platform in its `X-ONLINE`.
- * Only the skill and the type of a skill entry stand in the `ALTREP` of its `SUMMARY` alone,
- * since its `SUMMARY` is a free title, see {@link skillPartsOf};
+ * A skill entry names its skill and its type in its `SUMMARY`, see {@link skillPartsOf},
+ * its `ALTREP` a link of mine, by default the folder of its skill;
  * a module folder renamed is found again by its code, see `folderRepair` in `documents.ts`.
  * Writes only into the three folders of the new system, with times in Berlin time,
  * those of the two hours around a change of the clocks in UTC,
@@ -47,7 +47,7 @@ import { createHash, randomUUID } from "node:crypto";
 import ICAL from "ical.js";
 import { mailOf } from "./persons.ts";
 import { labelOf, linkForm, platformOfLink } from "./places.ts";
-import { moduleIs, modulesRoot, skillNameOf, vaultPathOf, writeAllowed } from "./sources.ts";
+import { modulesRoot, vaultPathOf, writeAllowed } from "./sources.ts";
 
 import type { CalendarSource } from "./sources.ts";
 
@@ -59,9 +59,8 @@ import type { CalendarSource } from "./sources.ts";
  *   all occurrences of a series share it, like those of a birthday.
  * - `category`: Category of the entry, its `CATEGORIES`, like `Way`;
  *   empty for an entry without one, like a birthday.
- * - `title`: Summary of the entry, what it was, like `U-Bahn`, for a skill entry its title, free,
- *   like `IN2028 Lecture 3 recap`,
- *   at first the name of the folder of its skill with its type in round brackets,
+ * - `title`: Summary of the entry, what it was, like `U-Bahn`, for a skill entry
+ *   the name of the folder of its skill with its type in round brackets,
  *   like `IN2028_BusinessAnalyticsMachineLearning (VO)`, see `skillTitleOf` in `documents.ts`;
  *   empty for an entry without `SUMMARY`.
  * - `titleLink`: Link of what it was, the standard parameter `ALTREP` of its `SUMMARY`:
@@ -81,10 +80,10 @@ import type { CalendarSource } from "./sources.ts";
  * - `from`: Where a way starts, its `X-FROM`, empty when the event has none.
  * - `attendees`: Who I was with, its `ATTENDEE`s in order,
  *   see {@link Attendee}, none when the event has none.
- * - `module`: Skill of a skill entry from the `ALTREP` of its `SUMMARY`, the code of a module,
+ * - `module`: Skill of a skill entry from its `SUMMARY`, the code of a module,
  *   like `IN2028`, or a project, like `NomSystemdashboard`, see {@link skillPartsOf};
  *   empty for any other entry.
- * - `type`: Type of a skill entry from the `ALTREP` of its `SUMMARY`, like `VO`, empty for none,
+ * - `type`: Type of a skill entry from its `SUMMARY`, like `VO`, empty for none,
  *   like my own learning or a project, and for any other entry.
  * - `semester`: Semester of a skill entry, its `X-SEMESTER`, like `2026W`:
  *   from which semester the lecture or the material is, not when I did it,
@@ -600,28 +599,21 @@ function linesOf(component: ICAL.Component): string[] {
 export const skillName: string = "Skill";
 
 /**
- * Reads the skill and the type of a skill entry from the `ALTREP` of its `SUMMARY`, its link,
- * see `skillLinkOf` in `documents.ts`, since its `SUMMARY` is a free title:
- * a link into `NomSkillingmodules` names a module by the code of its folder,
- * the part before the first `_`, like `IN2028` of `NomSkillingmodules/IN2028_…`,
- * and its type by the folder of its material below it, the two capitals before `_`,
- * like `VO` of `…/VO_UniversityLectureLessons/TUM_2026W`, none without one, like my own learning;
- * any other folder names a project by its name, see `skillNameOf` in `sources.ts`,
- * like `NomSystemdashboard`, without type; no link or a web address names neither.
- * - `parts`: Parts of the link.
+ * Reads the skill and the type of a skill entry from its `SUMMARY`,
+ * as `skillTitleOf` in `documents.ts` writes it: the name of the folder of its skill,
+ * then its type in round brackets, like `IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * a module named by its code, the part before the first `_`, like `IN2028`,
+ * a project by its name, like `NomSystemdashboard`, without type, like my own learning.
+ * - `parts`: The name and the type.
+ * - `name`: The name.
  *
- * @param link - The `ALTREP`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_…/TUM_2026W`, empty for none
+ * @param summary - The `SUMMARY`, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
  * @returns Skill and type, like `IN2028` and `VO`, or `NomSystemdashboard` and an empty type
  */
-function skillPartsOf(link: string): [string, string] {
-    const parts: string[] = link.split("/");
-    if (link === "" || linkForm.test(link)) return ["", ""];
-    if (!moduleIs(link)) return [skillNameOf(link), ""];
-    return [
-        skillNameOf(parts.slice(0, 2).join("/")),
-        /^([A-Z]{2})_/.exec(parts[2] ?? "")?.[1] ?? "",
-    ];
+function skillPartsOf(summary: string): [string, string] {
+    const parts: RegExpExecArray | null = /^(.*?)\s*(?:\(([A-Z]{2})\))?$/.exec(summary.trim());
+    const name: string = parts?.[1] ?? "";
+    return [/^[A-Z]+\d+_/.test(name) ? name.split("_")[0] : name, parts?.[2] ?? ""];
 }
 
 /**
@@ -957,7 +949,7 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
     const category: string = String(event.component.getFirstPropertyValue("categories") ?? "");
     const online: Placed = onlineOf(event.component);
     const [module, type]: [string, string] =
-        category === skillName ? skillPartsOf(online.titleLink) : ["", ""];
+        category === skillName ? skillPartsOf(event.summary ?? "") : ["", ""];
     const stamp: unknown = event.component.getFirstPropertyValue("dtstamp");
     let recurrence: string = "";
     if (event.isRecurrenceException()) recurrence = textOf(event.recurrenceId);
@@ -1437,9 +1429,9 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
     };
     const typeOf: (component: string[]) => string = (component: string[]): string => {
         const summary: string = unfoldedOf(component, "SUMMARY");
-        const link: unknown =
-            summary === "" ? "" : ICAL.Property.fromString(summary).getParameter("altrep");
-        return skillPartsOf(String((Array.isArray(link) ? link[0] : link) ?? ""))[1];
+        return summary === ""
+            ? ""
+            : skillPartsOf(String(ICAL.Property.fromString(summary).getFirstValue() ?? ""))[1];
     };
     const starts: Map<string[], string> = new Map(
         blocks.map((component: string[]): [string[], string] => [
@@ -1529,7 +1521,7 @@ export function writtenFollow(follower: (module: string, kinds: [string, string]
 
 /**
  * Gives the type and the semester of each skill entry of the lines of a file,
- * the type from the folder its `SUMMARY` links,
+ * the type from its `SUMMARY`,
  * see {@link skillPartsOf}, its semester from its `X-SEMESTER`,
  * so the folders of their material are made, see `typeFoldersMake` in `notes.ts`.
  * - `kinds`: The type and the semester of each entry read so far.
@@ -1544,8 +1536,8 @@ function kindsOf(lines: string[]): [string, string][] {
     let semester: string = "";
     lines.forEach((line: string): void => {
         if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO") [type, semester] = ["", ""];
-        else if (line.startsWith("SUMMARY;"))
-            type = skillPartsOf(/ALTREP="([^"]*)"/.exec(line)?.[1] ?? "")[1];
+        else if (line.startsWith("SUMMARY"))
+            type = skillPartsOf(String(ICAL.Property.fromString(line).getFirstValue() ?? ""))[1];
         else if (line.startsWith("X-SEMESTER:")) semester = line.slice("X-SEMESTER:".length).trim();
         else if ((line === "END:VEVENT" || line === "END:VTODO") && type !== "" && semester !== "")
             kinds.push([type, semester]);

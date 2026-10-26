@@ -7,10 +7,10 @@
  * like `IN2028_BusinessAnalyticsMachineLearning` and `VO`, no type, the type empty,
  * for my own learning or a project, like `WokFlow`, which a click opens to pick another;
  * the reader links the folder of both, which names them, see `reader/documents.ts`.
- * Its title is free, like `IN2028 Lecture 3 recap`,
- * typed by the pencil of the summary as every summary is, see `summaryPartsOf` in `categories.ts`;
- * while I never typed it, it follows skill and type,
- * like `IN2028_BusinessAnalyticsMachineLearning (VO)`, see {@link skillTitleOf}.
+ * Its title follows skill and type,
+ * like `IN2028_BusinessAnalyticsMachineLearning (VO)`, see {@link skillTitleOf};
+ * its link I set by the pencil of the summary, as every summary's,
+ * see `summaryPartsOf` in `categories.ts`.
  * Then its place, its name with its pencil and its address below it, and its times,
  * see `categories.ts`, as every category has them;
  * below them who I was with, then in this order its semester,

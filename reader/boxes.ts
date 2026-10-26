@@ -1102,7 +1102,7 @@ function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
  * Reads the series of a skill box, see the top of this file:
  * the boxes of the plan of the same skill and type,
  * like `IN2028` and `VO`, by date, whatever their state, each with its plan file,
- * whatever its title, by the `ALTREP` of its `SUMMARY`, see `skillPartsOf` in `calendar.ts`;
+ * by its `SUMMARY`, see `skillPartsOf` in `calendar.ts`;
  * up to two years after today, so a daily box without end,
  * like that of my diary, is not walked through a century,
  * which took seconds for each lecture cancelled or added.

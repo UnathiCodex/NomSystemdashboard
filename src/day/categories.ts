@@ -31,7 +31,7 @@
  * `Skill` is a skill and a type or none side by side,
  * like `IN2028` and `VO` or the project `WokFlow`, in plan and log,
  * linked by the reader as the folder of its skill and its material,
- * which names both, with a free title, at first the folder of its skill with the type in brackets,
+ * its summary the folder of its skill with the type in brackets, which names both,
  * like `IN2028_BusinessAnalyticsMachineLearning (VO)`, its place and its semester; in the log also
  * its chapters, documents and attempts at tasks,
  * each with its result and my effort, see `skill.ts`.
@@ -52,17 +52,14 @@
  * like my sleep every night,
  * whose whole series changes only in the dialog of the series,
  * by the series icon ⟳ after its times, see {@link seriesShow}.
- * The pencil of a skill entry shows its title the same way, free, like `IN2028 Lecture 3 recap`,
- * which changes only this entry, also a box of a series of my course,
- * whose series opens by ⟳ after its times, never by this one, and shows it at once when I typed it,
+ * The pencil of a skill entry shows only its link, its title always the one skill and type give it,
  * see {@link categoryPick};
  * its skill and type a click on them picks, see `skill.ts`; that of a meal
  * of the log, which its foods write, the list of its foods.
- * I type no link of it, every link of mine goes with what I did online, see {@link onlineRowOf}.
- * The summary of `Skill` links the folder of its skill,
- * for a type on into the folder of its material,
- * which the reader writes, shown small and grey below it, see `skill.ts`,
- * and an older entry shows the link it kept there, like the page of an event.
+ * Every summary has its link below its text, typed, a web address or a path from `NomWorkspace`,
+ * shown small and grey below it, opening on a click only while it is valid;
+ * that of `Skill` by default the folder of its skill,
+ * for a type on into the folder of its material, which the reader writes, see `skill.ts`.
  * Places, the place of an entry and where a way starts, are only my places of `Places.md`,
  * the most used first, each by its name,
  * like `TUM Innenstadt`, its address grey beside it in the list;
@@ -1277,7 +1274,7 @@ function summaryPartsOf(
     link.rel = "noopener";
     parts.className = "field-parts";
     if (typed) parts.append(partOf("Text", text));
-    if (summary !== undefined) parts.append(partOf("Link", address));
+    if (summary !== undefined || chosen?.name === skillName) parts.append(partOf("Link", address));
     iconPut(pencil, Pencil, "Change the summary");
     parts.hidden = !summaryOpen;
     text.addEventListener("focusin", (): void => {
@@ -1346,15 +1343,16 @@ function mealLinkPut(row: HTMLElement): void {
 
 /**
  * Tells the dialog that what is picked for a skill entry changed:
- * its title follows its skill and type while it is the one they gave it,
- * see `skillTitleOf` in `skill.ts`, a title I typed staying;
+ * its title follows its skill and type, see `skillTitleOf` in `skill.ts`,
+ * and its link, once they change, the folder they give it;
  * shows the link of its summary anew, which follows its skill, type and semester,
  * see {@link summaryPartsShow}, and allows saving or not.
  * - `given`: The title the skill and type picked now give it.
  */
 function skillChanged(): void {
     const given: string = skillTitleOf();
-    if (values.title === skillGiven) values.title = given;
+    if (given !== skillGiven) summaryLink = "";
+    values.title = given;
     skillGiven = given;
     summaryPartsShow();
     saveAllow();
@@ -2308,7 +2306,7 @@ async function categoryPick(category: Category | null): Promise<void> {
     document.getElementById("entry-more")?.replaceChildren();
     if (category !== null) await wayEndFill(category);
     if (category?.name === skillName) {
-        const summary: HTMLElement[] = summaryPartsOf(undefined, true);
+        const summary: HTMLElement[] = summaryPartsOf(undefined, false);
         await skillFieldsShow(
             document.getElementById("entry-fields") as HTMLElement,
             document.getElementById("entry-more") as HTMLElement,
@@ -2320,8 +2318,7 @@ async function categoryPick(category: Category | null): Promise<void> {
             summary,
         );
         skillGiven = skillTitleOf();
-        if (values.title === "") values.title = skillGiven;
-        summaryOpen = values.title !== skillGiven;
+        values.title = skillGiven;
         summary[2].hidden = !summaryOpen;
         placesShow();
         skillChanged();
@@ -3061,10 +3058,7 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     onlineChannel = opening.onlineChannel;
     onlineTitle = opening.onlineTitle;
     onlineOpen = false;
-    summaryLink =
-        opening.category === skillName && !linkForm.test(opening.titleLink)
-            ? ""
-            : opening.titleLink;
+    summaryLink = opening.titleLink;
     summaryOpen = false;
     partsOpen = null;
     edits = { title: null, from: null, location: null, online: null, with: null };

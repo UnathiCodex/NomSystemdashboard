@@ -256,8 +256,7 @@ export type AttemptNew = {
 /**
  * A new skill entry of the log to send from the entry by category; an empty field is not written.
  *
- * - `title`: Its title, free,
- *   like `IN2028 Lecture 3 recap`, empty for the one its skill and type give it.
+ * - `title`: Its title, always the one its skill and type give it.
  * - `type`: Its type, like `VO`, empty for none.
  * - `module`: Name of its skill, a module code like `IN2028` or a project like `WokFlow`.
  * - `semester`: Its semester, like `2026W`:

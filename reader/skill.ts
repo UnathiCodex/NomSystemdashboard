@@ -28,10 +28,9 @@
  * a lecture or a tutorial I attended, a homework sheet I worked on,
  * or study, solving the tasks of my notes, of any module of `NomSkillingmodules`,
  * also one of another semester I attend:
- * `CATEGORIES:Skill`, its `SUMMARY` its title, free,
- * at first the name of the folder of its module with its type in round brackets,
- * linking the folder, for a type on into that of its material, as `ALTREP`,
- * which names its module and type,
+ * `CATEGORIES:Skill`, its `SUMMARY` the name of the folder of its module
+ * with its type in round brackets, which names both,
+ * by default linking the folder, for a type on into that of its material, as `ALTREP`,
  * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_…/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * see `documents.ts`; or a block of work on a project of the semester,
  * see `activeSkillsRead` in `notes.ts`,
@@ -466,8 +465,7 @@ export type AttemptNew = {
 /**
  * A new skill entry of the log, as the entry by category sends it; an empty field is not written.
  *
- * - `title`: Its title, `SUMMARY`, free,
- *   like `IN2028 Lecture 3 recap`, empty for the one its skill and type give it,
+ * - `title`: Its title, `SUMMARY`, always the one its skill and type give it,
  *   see `titleOf` in `documents.ts`.
  * - `type`: Its type, one of the types of `categories.ts`, like `VO`, empty for none.
  * - `module`: Name of its skill: the code of any module folder, like `IN2028`,
