@@ -495,8 +495,8 @@ h3 {
     font-weight: 600;
 }
 
-/* The round of a section, like `Round 0`, a small grey box after its chapter in a box of the plan
-   and after its note in the dialog, see `roundTagOf` in `day/choices.ts` */
+/* The round of a section, like `Round 0`, a small grey box after its note in the dialog,
+   see `roundTagOf` in `day/choices.ts`; a box of the plan writes it as plain text */
 .round-tag {
     display: inline-block;
     padding: 0 0.375rem;

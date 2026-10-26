@@ -823,7 +823,7 @@ export function addedRowOf(
 
 /**
  * Makes the grey box of a round, like `Round 0`, see `.round-tag` in `base.css`,
- * as a section in a box of the plan and in its dialog shows it.
+ * as the dialog of a box shows it after a note.
  *
  * @param text - The round, like `Round 0`
  * @returns The box

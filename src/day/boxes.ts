@@ -127,7 +127,7 @@ import { Draggable } from "fullcalendar/interaction";
 import { boxDrop, boxLog, boxPush, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
 import { boxOpenEdit, boxOpenNew, entryOpenFromBox } from "./categories.ts";
 import { giftOpen } from "./gifts.ts";
-import { middleCutPut, roundTagOf } from "./choices.ts";
+import { middleCutPut } from "./choices.ts";
 import { whereLinkedOf, whereOf } from "./places.ts";
 import { linkNameOf } from "../skill/links.ts";
 import { boxMinutes, boxTimesOf, lengthOf, nearOf, rangeDash, timeOf } from "./times.ts";
@@ -672,7 +672,7 @@ function chaptersOf(box: Box, day: string): Node[] {
             day === dayOf(new Date()) ? roundsToday.get(`${module}/${chapter}`) : undefined;
         return round === undefined
             ? [chapterNodeOf(module, chapter)]
-            : [chapterNodeOf(module, chapter), roundTagOf(round)];
+            : [chapterNodeOf(module, chapter), document.createTextNode(round)];
     });
 }
 
