@@ -43,6 +43,7 @@ const scopes: { [kind: string]: string } = {
     comment: "comment.line",
     definition: "entity.name.function",
     builtin: "support.function.builtin.python",
+    self: "variable.language.special.self.python",
     typeName: "entity.name.type",
     className: "entity.name.class",
     propertyName: "variable.other.property",

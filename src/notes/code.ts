@@ -8,7 +8,7 @@
  * in the scripts view, see {@link codeHtmlOf}, and in the editor, see `../editor/syntax.ts`.
  * Make has no language of its own there, its lines take that of Bash.
  * Built-in functions, like `print` and `len`, take a color of their own only in Python,
- * as my theme gives it for Python alone, see {@link plain}.
+ * as my theme gives it for Python alone, see {@link plain}, and so do `self` and `cls`.
  *
  * - `@codemirror/language`: Reads a language of CodeMirror's older modes, `StreamLanguage`.
  * - `@codemirror/legacy-modes`: The languages.
@@ -53,7 +53,7 @@ export const codeLanguages: { [name: string]: StreamLanguage<unknown> } = {
     bash: StreamLanguage.define(shell),
     c: plain(c),
     java: plain(java),
-    python: StreamLanguage.define(python),
+    python: StreamLanguage.define({ ...python, tokenTable: { self: tags.self } }),
     r: plain(r),
     sql: plain(standardSQL),
     make: StreamLanguage.define(shell),
@@ -67,6 +67,7 @@ export const codeLanguages: { [name: string]: StreamLanguage<unknown> } = {
  * every other word, like the name of a variable, in the color of text.
  */
 export const codeHighlighter: Highlighter = tagHighlighter([
+    { tag: tags.self, class: "code-self" },
     { tag: tags.keyword, class: "code-keyword" },
     { tag: tags.atom, class: "code-atom" },
     { tag: tags.bool, class: "code-bool" },
