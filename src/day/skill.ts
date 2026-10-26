@@ -120,6 +120,7 @@ import type {
     Link,
     ModuleContents,
     SkillModule,
+    SkillSection,
     SkillTask,
     Skilling,
 } from "../skill/attempts.ts";
@@ -381,58 +382,15 @@ function documentPathsOf(links: Link[]): string[] {
 }
 
 /**
- * Gives the folders of the material of the entry below the folder of its module,
- * which its link goes on into, as the reader writes it, see `skillLinkOf` in `reader/documents.ts`:
- * for a type the folder of its material, also while the module has none yet, see `ModuleContents`,
- * and in it the folder of the semester of the entry while it is there, also empty,
- * else as far as the module holds files there, else the folder of the semester it will have,
- * like `VO_UniversityLectureLessons` and `TUM_2026W`,
- * so the line below the summary always names the semester;
- * none for my own learning and for a project.
- * - `folder`: The folder of that semester there,
- *   like `VO_UniversityLectureLessons/TUM_2026W`, `undefined` for none.
- * - `material`: The folder of the material of the type, `undefined` for none.
- * - `semester`: Semester of the entry, like `2026W`.
- * - `inSemester`: Path of a document in the folder of the semester there,
- *   parted by `/`, `undefined` for none.
- *
- * @returns Names of the folders, like `VO_UniversityLectureLessons` and `TUM_2026W`, none for none
- */
-function materialOf(): string[] {
-    const material: string | undefined = contents.materials[picks.type];
-    const semester: string = skillSemesterOf(semesterDay);
-    const folder: string | undefined = contents.inner.find(
-        (path: string): boolean =>
-            path.split("/")[0] === material &&
-            /\d{4}[WS]/.exec(path.split("/")[1] ?? "")?.[0] === semester,
-    );
-    if (material !== undefined && folder !== undefined) return folder.split("/");
-    const inSemester: string[] | undefined = contents.documents
-        .map((path: string): string[] => path.split("/"))
-        .find(
-            (parts: string[]): boolean =>
-                parts.length > 2 &&
-                parts[0] === material &&
-                /\d{4}[WS]/.exec(parts[1])?.[0] === semester,
-        );
-    return material === undefined ? [] : [material, inSemester?.[1] ?? `TUM_${semester}`];
-}
-
-/**
- * Gives the folder of the skill picked,
+ * Gives the link of the skill picked, one for all its entries and boxes, whatever their type,
  * the path its entry links as the `ALTREP` of its `SUMMARY` while I type no link,
- * as the reader writes it, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
- * for a type on into the folders of its material, see {@link materialOf}, like
- * `NomSkillingmodules/MGT1372_EntrepreneurialBusiness/VO_UniversityLectureLessons/TUM_2026W`,
- * so it follows the type and the semester as I pick them;
- * a project its path alone, like `NomManageplannings/NomFrequencediary`.
- * - `path`: The folder of the skill picked, empty for none.
+ * as the reader gives it, see `skillLinkOf` in `reader/documents.ts`,
+ * like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning` or `NomManageplannings`.
  *
- * @returns The folder, empty while no skill is picked
+ * @returns The link, empty while no skill is picked
  */
 export function skillPathOf(): string {
-    const path: string = skilling.paths[picks.module] ?? "";
-    return path === "" ? "" : [path, ...materialOf()].join("/");
+    return skilling.paths[picks.module] ?? "";
 }
 
 /**
@@ -1116,6 +1074,26 @@ function chapterLinkOf(chapter: string): string {
 }
 
 /**
+ * Gives the round of a note of a chapter, its section's, like `Round 0`,
+ * as the scripts view shows it, see `round` of `SkillSection` in `../skill/attempts.ts`;
+ * empty for any other document, like a slide, or a module not of the semester.
+ * - `note`: Path of the note from `NomSkillingmodules`,
+ *   like `IN2028_BusinessAnalyticsMachineLearning/01_StatisticsFoundations/01_01_SampleMeanEstimator.md`.
+ * - `section`: Its section, `undefined` for none.
+ *
+ * @param path - Path of the document from the module folder,
+ *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ * @returns The round, empty for none
+ */
+function roundOfDocument(path: string): string {
+    const note: string = `${contents.folder.slice(modulesFolder.length + 1)}/${path}`;
+    const section: SkillSection | undefined = skilling.modules
+        .flatMap((module: SkillModule): SkillSection[] => module.sections)
+        .find((section: SkillSection): boolean => section.note === note);
+    return section === undefined ? "" : `Round ${section.round}`;
+}
+
+/**
  * Builds the rows of documents, see `addedRowsOf` in `choices.ts`:
  * the Documents list of what it offers, see {@link documentChoicesOf},
  * and a row per document picked of it, the name of its file, see {@link fileNameOf};
@@ -1145,6 +1123,7 @@ function documentRowsOf(
         grouped: true,
         noun: "document",
         nested: nested,
+        tagOf: roundOfDocument,
         change: (values: string[]): void => {
             picks.documents = [
                 ...picks.documents.filter((path: string): boolean => !shown.includes(path)),

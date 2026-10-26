@@ -246,11 +246,14 @@ export type ChoicesSetup = {
  *   then the list, whose plus, `Add a document` its tooltip,
  *   the one who builds the value above moves right after it,
  *   see {@link lineMove}; false when left out.
+ * - `tagOf`: Grey box after the text of a value picked, like `Round 0` of a section,
+ *   empty for none; none when left out.
  */
 export type AddedSetup = {
     choices: Choice[];
     picked: string[];
     textOf: (value: string) => string;
+    tagOf?: (value: string) => string;
     grouped: boolean;
     noun: string;
     hint?: HTMLElement;
@@ -789,6 +792,8 @@ export function pairOf(first: HTMLElement, second: HTMLElement): HTMLDivElement 
  * @param text - Text of the value, like `04_LogisticRegression.pdf`
  * @param remove - Takes the value back
  * @param link - Address the text opens, like `/scripts?path=…`, empty for none
+ * @param tag - Grey box after the text, like `Round 0`, see `.round-tag` in `base.css`,
+ *   empty for none
  * @returns Row
  */
 export function addedRowOf(
@@ -796,6 +801,7 @@ export function addedRowOf(
     text: string,
     remove: () => void,
     link: string,
+    tag: string = "",
 ): HTMLDivElement {
     const value: HTMLDivElement = document.createElement("div");
     const shown: HTMLSpanElement = document.createElement("span");
@@ -807,11 +813,26 @@ export function addedRowOf(
     opening.href = link;
     opening.textContent = breakableOf(text);
     shown.append(link === "" ? breakableOf(text) : opening);
+    if (tag !== "") shown.append(" ", roundTagOf(tag));
     button.type = "button";
     crossPut(button, `Remove ${text}`);
     button.addEventListener("click", remove);
     value.append(shown, button);
     return rowOf(name, value);
+}
+
+/**
+ * Makes the grey box of a round, like `Round 0`, see `.round-tag` in `base.css`,
+ * as a section in a box of the plan and in its dialog shows it.
+ *
+ * @param text - The round, like `Round 0`
+ * @returns The box
+ */
+export function roundTagOf(text: string): HTMLSpanElement {
+    const tag: HTMLSpanElement = document.createElement("span");
+    tag.className = "round-tag";
+    tag.textContent = text;
+    return tag;
 }
 
 /**
@@ -850,6 +871,7 @@ export function addedRowsOf(name: string, setup: AddedSetup): HTMLDivElement[] {
                 (): void =>
                     setup.change(setup.picked.filter((other: string): boolean => other !== value)),
                 "",
+                setup.tagOf?.(value) ?? "",
             ),
     );
     let last: HTMLDivElement[] =

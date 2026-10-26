@@ -495,6 +495,18 @@ h3 {
     font-weight: 600;
 }
 
+/* The round of a section, like `Round 0`, a small grey box after its chapter in a box of the plan
+   and after its note in the dialog, see `roundTagOf` in `day/choices.ts` */
+.round-tag {
+    display: inline-block;
+    padding: 0 0.375rem;
+    border-radius: 0.25rem;
+    background: var(--chosen);
+    color: var(--text-main);
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
 /* Phone: only plan and log of the day, see `main.ts`,
    so no areas at the left and the whole screen stays free */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
