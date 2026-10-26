@@ -2018,10 +2018,15 @@ function taskBoxLook(look: Look, node: SyntaxNode): boolean {
 
 /**
  * Quote: its lines in a `blockquote`, with the line of quotes beside them,
- * as the scripts view draws it.
+ * as the scripts view draws it, up to its last line with text:
+ * lines of only `>` at its end are air after it, as a list's is not,
+ * see {@link itemLook}, but the line a key just put the cursor on to write,
+ * see `typingLine` in `./keys.ts`.
  * A callout, a quote whose first line is like `> [!note] Title`,
  * renders whole as in the scripts view while the cursor is on none of its lines,
  * see {@link blockLook}, else shows as a quote.
+ * - `typing`: Start of that line, `null` for none.
+ * - `last`: The last line in the `blockquote`.
  *
  * @param look - Look being built
  * @param node - Quote, `Blockquote`
@@ -2029,7 +2034,11 @@ function taskBoxLook(look: Look, node: SyntaxNode): boolean {
  */
 function quoteLook(look: Look, node: SyntaxNode): boolean {
     if (calloutIs(look, node) && !blockLook(look, node)) return false;
-    wrap(look, node, "blockquote");
+    const typing: number | null = look.state.field(typingLine, false) ?? null;
+    let last: Line = look.state.doc.lineAt(node.to);
+    while (last.from > node.from && last.from !== typing && emptyIs(look.state, last))
+        last = look.state.doc.line(last.number - 1);
+    wrap(look, node, "blockquote", {}, last.to);
     return true;
 }
 
