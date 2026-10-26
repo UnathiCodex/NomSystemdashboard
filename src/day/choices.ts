@@ -813,7 +813,7 @@ export function addedRowOf(
     opening.href = link;
     opening.textContent = breakableOf(text);
     shown.append(link === "" ? breakableOf(text) : opening);
-    if (tag !== "") shown.append(" ", roundTagOf(tag));
+    if (tag !== "") shown.append(roundTagOf(tag));
     button.type = "button";
     crossPut(button, `Remove ${text}`);
     button.addEventListener("click", remove);
