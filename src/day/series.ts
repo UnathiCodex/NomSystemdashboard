@@ -832,7 +832,7 @@ export function slotTextOf(slot: Slot): string {
 
 /**
  * Writes the room of a place short,
- * as the plan, the log, the rule of a series and the row of a box name it: its name,
+ * as the plan, the rule of a series and the row of a box name it: its name,
  * see `labelOf` in `./places.ts`, without what stands in brackets, from the first `(` on,
  * which only its row in `Places.md` or `Rooms.md` and the dialog show,
  * like `5416.01.003` of `5416.01.003 (Hörsaal 2 "Interims II")` or `Home Munich`;

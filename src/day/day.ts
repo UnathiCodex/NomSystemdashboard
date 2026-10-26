@@ -96,8 +96,7 @@ import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
 import { searchStart } from "./search.ts";
 import { swipeStart } from "./swipe.ts";
-import { whereLinkedOf, whereOf } from "./places.ts";
-import { roomOf } from "./series.ts";
+import { labelOf, whereLinkedOf, whereOf } from "./places.ts";
 import { trackersSee } from "./trackers.ts";
 import { rangeDash, timeOf, timesStart } from "./times.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
@@ -528,7 +527,8 @@ function selectionIs(info: EventDisplayInfo): boolean {
  * a dish shows its summary, like `Pizza Salami, Pizza Margherita`, never its drinks,
  * which its summary leaves out.
  * Every entry shows its place by its label alone, its address hidden,
- * a room of the university by its code alone, like `0509.EG.980`,
+ * a room of the university with what its name holds in brackets,
+ * like `5416.01.003 (Hörsaal 2 "Interims II")`, which the plan leaves out,
  * see `roomOf` in `series.ts`, a way its route, see `whereOf` in `places.ts`;
  * a place with a link opens it on a click, see `whereLinkedOf`.
  * A route cut for room is cut where it starts, never at its goal,
@@ -574,8 +574,8 @@ function selectionIs(info: EventDisplayInfo): boolean {
  *   empty for none.
  * - `link`: Link of the place, its `ALTREP`,
  *   like `https://nav.tum.de/room/8120.01.101`, empty for none.
- * - `where`: Its place as shown, a room by its code,
- *   see `whereLinkedOf` in `places.ts` and `roomOf` in `series.ts`,
+ * - `where`: Its place as shown, a room with its brackets,
+ *   see `whereLinkedOf` and `labelOf` in `places.ts`,
  *   of a route its start in a part of its own, `.route-start`, which gives way first.
  * - `group`: The group of a tutorial, like `Group 23`, empty for none.
  * - `tail`: What follows the time on its line, after a middle dot: the place,
@@ -620,7 +620,7 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const route: (string | Node)[] = whereLinkedOf(
         category,
         from,
-        roomOf(location),
+        labelOf(location),
         link,
         online,
         onlineLink,
