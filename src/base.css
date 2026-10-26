@@ -497,7 +497,7 @@ h3 {
 
 /* The round of a section, like `Round 0`, a small grey box after its note in the dialog,
    in the grey and the corners of a note of the tree, see `.tree-file` in `notes/notes.css`,
-   see `roundTagOf` in `day/choices.ts`; a box of the plan writes it as plain text */
+   see `roundTagOf` in `day/choices.ts` */
 .round-tag {
     display: inline-block;
     margin-left: 0.5rem;

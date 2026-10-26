@@ -133,7 +133,7 @@ import { linkNameOf } from "../skill/links.ts";
 import { boxMinutes, boxTimesOf, lengthOf, nearOf, rangeDash, timeOf } from "./times.ts";
 import { boxActionsOf } from "./actions.ts";
 import { roomOf, seriesNew } from "./series.ts";
-import { dayOf, dayTextOf, skillName, skillingLoad } from "../skill/attempts.ts";
+import { dayOf, dayTextOf, skillName } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
 import { phone } from "../phone.ts";
@@ -143,7 +143,7 @@ import { ArrowLeft, ArrowRight, CalendarOff, Check, Gift, Repeat, X } from "luci
 import type { Calendar, EventApi, EventReceiveInfo } from "fullcalendar";
 import type { IconNode } from "lucide";
 import type { Attendee } from "./entries.ts";
-import type { Link, Skilling } from "../skill/attempts.ts";
+import type { Link } from "../skill/attempts.ts";
 
 /**
  * State of a box: open, done, since a log entry points to it, dropped,
@@ -396,45 +396,7 @@ export function shownWhatOf(category: string, title: string, module: string, typ
  * @throws {Error} - When the reader cannot answer
  */
 export async function boxesFetch(start: string, end: string): Promise<PlanDay[]> {
-    const [days, skilling]: [PlanDay[], Skilling] = await Promise.all([
-        readerAsk<PlanDay[]>(`/api/day/boxes?start=${start}&end=${end}`),
-        skillingLoad(),
-    ]);
-    roundsToday = roundsOf(skilling);
-    return days;
-}
-
-/**
- * Rounds of the chapters with something due today, by the folder of their module
- * and the chapter, like `IN2028_BusinessAnalyticsMachineLearning/01_StatisticsFoundations`,
- * which the box of a chapter shows beside it on today, see {@link chaptersOf};
- * loaded with the plan, see {@link boxesFetch}.
- */
-let roundsToday: Map<string, string> = new Map();
-
-/**
- * Gives the rounds of the chapters with something due today, see {@link roundsToday}:
- * per chapter the rounds of its sections due today, each once, the lowest first,
- * like `Round 0` or `Round 0, 2`.
- * - `due`: Rounds of the sections due today, by their chapter.
- *
- * @param skilling - Every module of the semester with its sections, see `skillingLoad`
- * @returns The rounds by module folder and chapter
- */
-function roundsOf(skilling: Skilling): Map<string, string> {
-    const due: Map<string, Set<number>> = new Map();
-    for (const module of skilling.modules)
-        for (const section of module.sections) {
-            if (section.today === "") continue;
-            const key: string = `${module.title}/${section.chapter}`;
-            due.set(key, (due.get(key) ?? new Set()).add(section.round));
-        }
-    return new Map(
-        [...due].map(([key, rounds]: [string, Set<number>]): [string, string] => [
-            key,
-            `Round ${[...rounds].sort((first: number, second: number): number => first - second).join(", ")}`,
-        ]),
-    );
+    return readerAsk<PlanDay[]>(`/api/day/boxes?start=${start}&end=${end}`);
 }
 
 /**
@@ -557,7 +519,6 @@ function timesOf(parts: string[], start: string): HTMLElement | null {
  * see {@link tutorialIs}; then its deadline on a line of its own in the grey of a time,
  * see {@link deadlinePartsOf};
  * then its chapters on a line of their own in the same grey, apart by a middle dot,
- * on today each with its rounds due, like `01_StatisticsFoundations · Round 0`,
  * see {@link chaptersOf}; then its documents, one per line with a bullet,
  * see {@link topicsOf}, each cut in its middle where it is too long, so its ending stays,
  * like `.pdf`, see `middleCutPut` in `choices.ts`; a line without anything to say is left out.
@@ -617,7 +578,7 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
         deadlinePartsOf(box, day, nearShown),
         "Deadline: ",
     );
-    const chapters: HTMLElement[] = chaptersOf(box, day).map(
+    const chapters: HTMLElement[] = chaptersOf(box).map(
         (chapter: Node, index: number): HTMLElement =>
             titledOf(
                 entryPartOf("span", index === 0 ? "box-part" : "box-part entry-parted", [chapter]),
@@ -654,44 +615,25 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
  * the chapter picked in the tree, never a second one,
  * like `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`,
  * instead of the box, as the place opens its link;
- * plain on a phone, which has no scripts view, and for a box whose summary names no module;
- * on today each chapter with something due followed by its rounds, like `Round 0`,
- * see {@link roundsToday}.
+ * plain on a phone, which has no scripts view, and for a box whose summary names no module.
  * - `module`: Name of the folder of its skill, its summary before its type in brackets,
  *   like `IN2028_BusinessAnalyticsMachineLearning`.
- * - `round`: Rounds of the chapter due today, `undefined` for none or another day.
+ * - `anchor`: The link of a chapter.
  *
  * @param box - The box
- * @param day - Day the box shows on, like `2026-10-20`
- * @returns Its chapters with their rounds, in order, none for none
+ * @returns Its chapters, in order, none for none
  */
-function chaptersOf(box: Box, day: string): Node[] {
+function chaptersOf(box: Box): Node[] {
     const module: string = box.title.replace(/\s*\(.*$/, "");
-    return box.chapters.flatMap((chapter: string): Node[] => {
-        const round: string | undefined =
-            day === dayOf(new Date()) ? roundsToday.get(`${module}/${chapter}`) : undefined;
-        return round === undefined
-            ? [chapterNodeOf(module, chapter)]
-            : [chapterNodeOf(module, chapter), document.createTextNode(round)];
+    return box.chapters.map((chapter: string): Node => {
+        if (phone || !/^[A-Z]+\d+_/.test(module)) return document.createTextNode(chapter);
+        const anchor: HTMLAnchorElement = document.createElement("a");
+        anchor.className = "chapter-link";
+        anchor.href = `/scripts?module=${encodeURIComponent(module)}&chapter=${encodeURIComponent(chapter)}`;
+        anchor.textContent = chapter;
+        anchor.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
+        return anchor;
     });
-}
-
-/**
- * Makes a chapter of a skill box, a link to it in the scripts view, see {@link chaptersOf}.
- * - `anchor`: The link of the chapter.
- *
- * @param module - Name of the folder of its module, like `IN2028_BusinessAnalyticsMachineLearning`
- * @param chapter - The chapter, like `01_RegressionAnalysis`
- * @returns The chapter, a link, or plain text on a phone or for no module
- */
-function chapterNodeOf(module: string, chapter: string): Node {
-    if (phone || !/^[A-Z]+\d+_/.test(module)) return document.createTextNode(chapter);
-    const anchor: HTMLAnchorElement = document.createElement("a");
-    anchor.className = "chapter-link";
-    anchor.href = `/scripts?module=${encodeURIComponent(module)}&chapter=${encodeURIComponent(chapter)}`;
-    anchor.textContent = chapter;
-    anchor.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
-    return anchor;
 }
 
 /**
