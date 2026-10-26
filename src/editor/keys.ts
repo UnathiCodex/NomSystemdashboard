@@ -8,8 +8,9 @@
  * - Enter continues a list or a task list with the next point, without air;
  *   on a still empty point it puts two empty lines above it, the air of a whole line,
  *   see {@link pointAir}; Ctrl+Enter writes the next point with one empty line above it,
- *   the air of a half line, on a still empty point one more,
- *   in plain text and in a quote it is Enter twice, see {@link airBreak};
+ *   the air of a half line, also with the text right of the cursor,
+ *   on a still empty point one more, in plain text and in a quote it is Enter twice,
+ *   see {@link airBreak};
  *   on a further line of a point it starts the next point too,
  *   on a line of blanks below a list the next point of the level they reach,
  *   an empty line above it, see {@link furtherContinue}.
@@ -483,10 +484,13 @@ function pointAir(full: boolean): Command {
 }
 
 /**
- * Ctrl+Enter: a new block with the air of a half line above it, as Enter twice in plain text:
- * in a list the next point of the same level with an empty line above it,
- * see {@link markupContinue}, and on a still empty point one more empty line above it,
- * a whole line of air; in plain text and in a quote Enter twice,
+ * Ctrl+Enter: a new block with air above it, as Enter twice in plain text:
+ * in a list the next point of the same level, see {@link furtherContinue}
+ * and {@link markupContinue}, with one empty line above it, the air of a half line,
+ * whatever text of the line it takes along, also within a line, from a further line
+ * and in a nested or numbered list, see {@link airAbove};
+ * on a still empty point one more empty line above it, see {@link pointAir};
+ * in plain text and in a quote Enter twice, within a line too,
  * see {@link paragraphBreak} and {@link quoteBreak}.
  * - `enter`: Enter once outside a list.
  *
@@ -497,9 +501,28 @@ const airBreak: Command = (view: EditorView): boolean => {
     const enter: () => boolean = (): boolean => quoteBreak(view) || paragraphBreak(view);
     if (pointAir(false)(view)) return true;
     if (itemAt(view.state) !== null)
-        return (furtherContinue(view) || markupContinue(view)) && (pointAir(false)(view) || true);
+        return (furtherContinue(view) || markupContinue(view)) && airAbove(view);
     return enter() && (enter() || true);
 };
+
+/**
+ * Puts one empty line above the line of the cursor, the new point Ctrl+Enter wrote,
+ * see {@link airBreak}, the cursor staying in its text; none where an empty line stands there.
+ * - `line`: The line of the cursor.
+ *
+ * @param view - The editor
+ * @returns `true`, as the key is taken
+ */
+function airAbove(view: EditorView): boolean {
+    const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
+    if (line.number > 1 && !emptyIs(view.state, view.state.doc.line(line.number - 1)))
+        view.dispatch({
+            changes: { from: line.from, insert: view.state.lineBreak },
+            scrollIntoView: true,
+            userEvent: "input",
+        });
+    return true;
+}
 
 /**
  * Continues a list on Enter by CodeMirror's Markdown with its next point,
