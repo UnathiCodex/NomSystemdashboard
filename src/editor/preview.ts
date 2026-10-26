@@ -1613,7 +1613,9 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
  * see {@link typingCutOf}, so that line stands outside it at once.
  * A list within a point, whose guide line `../notes/notes.css` draws,
  * tells the empty lines right below it that stand outside that point, see {@link airBelowOf},
- * so `./editor.css` draws its guide line on through them, as through the air within the point.
+ * so `./editor.css` draws its guide line on through them, as through the air within the point,
+ * while the list around it goes on below them, see {@link listOnIs},
+ * not before a heading or text after the list.
  * - `tagName`: Its element, `ul` or `ol`.
  * - `end`: Where its lines end.
  * - `parent`: The point it stands in, `null` for none.
@@ -1633,7 +1635,8 @@ function listLook(look: Look, node: SyntaxNode): boolean {
     const air: number =
         parent !== null &&
         look.state.doc.lineAt(itemDrawEndOf(look, parent)).number ===
-            look.state.doc.lineAt(end).number
+            look.state.doc.lineAt(end).number &&
+        listOnIs(look, node, end)
             ? airBelowOf(look, end)
             : 0;
     const attributes: { [name: string]: string } = { style: `--air-below: ${air}` };
@@ -1648,6 +1651,33 @@ function listLook(look: Look, node: SyntaxNode): boolean {
         .find((item: SyntaxNode): boolean => item.from > cut.to);
     if (after !== undefined) wrap(look, node, tagName, attributes, end, after.from);
     return true;
+}
+
+/**
+ * Tells whether the outermost list around a list goes on below the empty lines after a line,
+ * with a point or a paragraph of a point, not a heading or text after the list,
+ * see {@link listLook}.
+ * - `root`: The outermost list around it.
+ * - `line`: A line below, at last the first one with text.
+ *
+ * @param look - Look being built
+ * @param node - `BulletList` or `OrderedList`
+ * @param end - End of the line, the end of the list
+ * @returns Whether it goes on
+ */
+function listOnIs(look: Look, node: SyntaxNode, end: number): boolean {
+    let root: SyntaxNode = node;
+    for (let up: SyntaxNode | null = node.parent; up !== null; up = up.parent)
+        if (up.name === "BulletList" || up.name === "OrderedList") root = up;
+    for (
+        let number: number = look.state.doc.lineAt(end).number + 1;
+        number <= look.state.doc.lines;
+        number++
+    ) {
+        const line: Line = look.state.doc.line(number);
+        if (!emptyIs(look.state, line)) return line.from < root.to;
+    }
+    return false;
 }
 
 /**
