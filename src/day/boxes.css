@@ -223,12 +223,13 @@
 /* Name of a section of the plan above its boxes, like `Modules`:
    small and grey like the heads of plan and log, in one line with a thin grey line
    from its end over the rest of the width,
-   the boxes of the section close below it, see `sectionOf` in `boxes.ts` */
+   twice as far from what stands above it as from its boxes below it,
+   so it clearly heads those below, see `sectionOf` in `boxes.ts` */
 .plan-section {
     display: flex;
     align-items: center;
     gap: var(--plan-space);
-    margin: 0;
+    margin: calc(var(--plan-space) * 2) 0 calc(var(--plan-space) / 2);
     font-size: var(--day-text);
     font-weight: 400;
     line-height: 1;
@@ -240,10 +241,6 @@
     content: "";
     flex: 1;
     border-top: 1px solid var(--line);
-}
-
-.plan-section:first-child {
-    margin-top: 0;
 }
 
 /* Actions of an open box, see `actions.ts`, small icon buttons at its right in one row:
