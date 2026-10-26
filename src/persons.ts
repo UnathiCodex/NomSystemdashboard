@@ -46,14 +46,16 @@ export type Person = {
 
 /**
  * A person as I changed it by its parts below `With`, see `withRowOf` in `./day/categories.ts`:
- * its name, its mail and its link as typed.
+ * its name, its title, its mail and its link as typed.
  *
  * - `name`: Its name, like `Cuzic, Mihovil`.
+ * - `title`: Its title, like `Prof. Dr.` or `Speaker`, empty for none.
  * - `mail`: Its mail, like `mihovil.cuzic@tum.de`, empty for none.
  * - `link`: Its page, like `https://campus.tum.de/…`, empty for none.
  */
 export type PersonEdit = {
     name: string;
+    title: string;
     mail: string;
     link: string;
 };
@@ -264,6 +266,7 @@ export function personEditOf(persons: Person[], name: string, address: string): 
     const person: Person | undefined = personOf(persons, name);
     return {
         name: person?.name ?? name,
+        title: person?.title ?? "",
         link: person?.link ?? "",
         mail:
             person !== undefined && person.mail !== ""
@@ -280,11 +283,15 @@ export function personEditOf(persons: Person[], name: string, address: string): 
  * the columns that name people and every entry of my calendars,
  * see `personRename` in `reader/persons.ts`;
  * or which only checks that it would, writing nothing, so a dialog saves nothing it refuses.
- * A person as it was, see {@link personEditOf}, goes nowhere.
+ * A person as it was, see {@link personEditOf}, goes nowhere,
+ * but one `Persons.md` does not hold yet, also one picked without changing it,
+ * which then gets its row there, so its name links to it.
+ * - `was`: The person as it was.
  *
  * @param edits - Each person I changed, by its name as picked, with the address it had in the entry
  * @param persons - The people of `Persons.md`
  * @param dry - Whether only to check
+ * @param picked - Names picked in `With`, none when left out
  * @throws {Error} - When the reader does not take a person,
  *   like one without name or with a link that is none
  */
@@ -292,16 +299,35 @@ export async function personsRename(
     edits: { [old: string]: PersonEdit & { address: string } },
     persons: Person[],
     dry: boolean,
+    picked: string[] = [],
 ): Promise<void> {
-    for (const [old, edit] of Object.entries(edits)) {
+    const all: { [old: string]: PersonEdit & { address: string } } = {
+        ...Object.fromEntries(
+            picked
+                .filter((name: string): boolean => personOf(persons, name) === undefined)
+                .map((name: string): [string, PersonEdit & { address: string }] => [
+                    name,
+                    { name: name, title: "", mail: "", link: "", address: "" },
+                ]),
+        ),
+        ...edits,
+    };
+    for (const [old, edit] of Object.entries(all)) {
         const was: PersonEdit = personEditOf(persons, old, edit.address);
-        if (edit.name !== was.name || edit.mail !== was.mail || edit.link !== was.link)
+        if (
+            personOf(persons, old) === undefined ||
+            edit.name !== was.name ||
+            edit.title !== was.title ||
+            edit.mail !== was.mail ||
+            edit.link !== was.link
+        )
             await readerAsk<null>("/api/persons/renamed", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     old: old,
                     name: edit.name,
+                    title: edit.title,
                     mail: edit.mail,
                     link: edit.link,
                     dry: dry,

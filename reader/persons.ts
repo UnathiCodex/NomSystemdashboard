@@ -36,7 +36,7 @@ import { dataRoot, personsFile, universityRoot, writeAllowed } from "./sources.t
  * - `name`: Its name, the text of its link or its plain cell, like `Bichler, Martin`.
  * - `link`: Its page in TUMonline, the address of its link,
  *   like `https://campus.tum.de/…`; empty for none.
- * - `title`: Its title, like `Prof. Dr.`, empty for none; kept, never shown.
+ * - `title`: Its title, like `Prof. Dr.`, or what I typed, like `Speaker`, empty for none.
  * - `mail`: Its mail, like `m.bichler@tum.de`, empty for none; kept, never shown.
  */
 export type Person = {
@@ -49,10 +49,12 @@ export type Person = {
 /**
  * A person changed by the pencil beside the people of `With`, as the page sends it,
  * see {@link personRename}:
- * its name as the entries named it, like `Cuzic, Mihovil`, and its name, mail and link as typed.
+ * its name as the entries named it, like `Cuzic, Mihovil`, and its name, title, mail and link
+ * as typed.
  *
  * - `old`: Its name as it was.
  * - `name`: Its name as typed, like `Cuzic, Mihovil`.
+ * - `title`: Its title as typed, like `Speaker`; left out, it keeps its title.
  * - `mail`: Its mail as typed, like `mihovil.cuzic@tum.de`, empty for none.
  * - `link`: Its page as typed, like `https://campus.tum.de/…`, empty for none.
  * - `dry`: Whether only to check the change, writing nothing; false when left out.
@@ -60,6 +62,7 @@ export type Person = {
 export type PersonRenamed = {
     old: string;
     name: string;
+    title?: string;
     mail: string;
     link: string;
     dry?: boolean;
@@ -264,6 +267,7 @@ function personsTextOf(sent: PersonRenamed): [string, Person] {
                   .slice(1, -1)
                   .map((cell: string): string => cell.trim());
     cells[0] = nameCellOf(sent.name, sent.link);
+    if (sent.title !== undefined) cells[1] = sent.title;
     cells[2] = sent.mail;
     const written: string = `| ${cells.join(" | ")} |`;
     if (row === -1) lines.splice(last + 1, 0, written);
@@ -346,7 +350,7 @@ function peopleTextOf(file: string, old: string, name: string): string {
  * so nothing is written while one cannot be; with `dry` only checks.
  * - `clean`: Cleans a text: `|` and line breaks as spaces, spaces in a row one, none at the ends.
  * - `name`: The new name, cleaned.
- * - `mail`, `link`: The mail and the page, cleaned the same way.
+ * - `mail`, `link`: The mail and the page, cleaned the same way, and so is the title.
  * - `cleaned`: The person as sent, cleaned.
  * - `persons`: `Persons.md` as it would be, with the person as its row then holds it.
  * - `tables`: Each file that names the person in a column of people, with its text as it would be.
@@ -369,6 +373,7 @@ export function personRename(sent: PersonRenamed, attendees: AttendeesRename): v
     const cleaned: PersonRenamed = {
         old: String(sent.old ?? "").trim(),
         name: name,
+        ...(sent.title === undefined ? {} : { title: clean(sent.title) }),
         mail: mail,
         link: link,
     };

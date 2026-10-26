@@ -1676,7 +1676,8 @@ export type WithSetup = {
  * for each person picked whose pencil opened them a block of its own,
  * indented with its thin grey line, so several people never crowd one another,
  * like the two lecturers of Financial Accounting:
- * its `Name`, its `Mail` and its `Link`, its page in TUMonline, as `Persons.md` holds them,
+ * its `Name`, its `Title`, like `Prof. Dr.` or `Speaker`, its `Mail` and its `Link`,
+ * its page in TUMonline, as `Persons.md` holds them,
  * or as I changed them, see `personEditOf` in `../persons.ts`.
  * What I type goes into the edits of the dialog,
  * which writes the person everywhere once it saves, its row in `Persons.md`,
@@ -1684,7 +1685,7 @@ export type WithSetup = {
  * the mail is also the address of the person in this entry,
  * an empty one the name's standard address, see `standardAddressOf` in `./entries.ts`.
  * - `edit`: The person as it shows, as I changed it or as it is.
- * - `name`, `mail`, `link`: Fields of its parts.
+ * - `name`, `title`, `mail`, `link`: Fields of its parts.
  * - `take`: Takes what is typed into the edits and the address into the entry.
  * - `block`: The block of the person.
  *
@@ -1703,11 +1704,13 @@ function withPartsOf(
         const edit: PersonEdit =
             setup.edits[person.name] ?? personEditOf(setup.persons, person.name, person.address);
         const name: HTMLInputElement = partFieldOf("text", edit.name, `Name of ${person.name}`);
+        const title: HTMLInputElement = partFieldOf("text", edit.title, `Title of ${person.name}`);
         const mail: HTMLInputElement = partFieldOf("email", edit.mail, `Mail of ${person.name}`);
         const link: HTMLInputElement = partFieldOf("url", edit.link, `Link of ${person.name}`);
         const take: () => void = (): void => {
             setup.edits[person.name] = {
                 name: name.value.trim(),
+                title: title.value.trim(),
                 mail: mail.value.trim(),
                 link: link.value.trim(),
                 address: person.address,
@@ -1717,12 +1720,17 @@ function withPartsOf(
                 mail.value.trim() === "" ? standardAddressOf(person.name) : mail.value.trim(),
             );
         };
-        [name, mail, link].forEach((input: HTMLInputElement): void =>
+        [name, title, mail, link].forEach((input: HTMLInputElement): void =>
             input.addEventListener("input", take),
         );
         const block: HTMLElement = document.createElement("div");
         block.className = "field-parts";
-        block.append(partOf("Name", name), partOf("Mail", mail), partOf("Link", link));
+        block.append(
+            partOf("Name", name),
+            partOf("Title", title),
+            partOf("Mail", mail),
+            partOf("Link", link),
+        );
         return block;
     });
 }
@@ -2702,8 +2710,18 @@ async function boxSave(): Promise<void> {
     if (opened.box !== null) await boxChange(opened.box.id, boxFieldsRead());
     else await boxAdd(boxFieldsRead());
     await placesRename(false);
-    await personsRename(personEdits, persons, false);
+    await personsRename(personEdits, persons, false, pickedNames());
     (document.getElementById("entry") as HTMLDialogElement).close();
+}
+
+/**
+ * Gives the names picked in `With`, so a person `Persons.md` does not hold yet gets its row there,
+ * see `personsRename` in `../persons.ts`.
+ *
+ * @returns Names like `Marell, Susanne`
+ */
+function pickedNames(): string[] {
+    return peopleRead().map((person: Attendee): string => person.name);
 }
 
 /**
@@ -2732,7 +2750,7 @@ async function boxSave(): Promise<void> {
  */
 async function entrySave(calendar: Calendar): Promise<void> {
     await placesRename(true);
-    await personsRename(personEdits, persons, true);
+    await personsRename(personEdits, persons, true, pickedNames());
     if (opened.target === "box") {
         await boxSave();
         return;
@@ -2747,7 +2765,7 @@ async function entrySave(calendar: Calendar): Promise<void> {
     else await entryAdd(calendar, fields);
     if (saved) {
         await placesRename(false);
-        await personsRename(personEdits, persons, false);
+        await personsRename(personEdits, persons, false, pickedNames());
         (document.getElementById("entry") as HTMLDialogElement).close();
     } else hintShow("entry-changed");
 }
