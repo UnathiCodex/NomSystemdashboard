@@ -144,7 +144,7 @@ import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
 import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
-import { columnsOf, emptyIs, textIndentationOf, typingLine } from "./keys.ts";
+import { columnsOf, emptyIs, quotePrefixOf, textIndentationOf, typingLine } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
 import { foldedAt } from "./steps.ts";
 import { cellTitleShow, tableOpen } from "./table.ts";
@@ -1713,7 +1713,9 @@ function airBelowOf(look: Look, end: number): number {
  * the point or list then ends right before it, see {@link itemDrawEndOf} and {@link listLook}.
  * - `typing`: Start of that line, `null` for none.
  * - `item`: The point, or the first point of the list.
- * - `indentation`: The indentation of its text, `null` for a point not indented by tabs.
+ * - `text`: The line of that point.
+ * - `indentation`: The indentation of its text after the `>` of a quote around it,
+ *   `null` for a point not indented by tabs.
  * - `line`: That line.
  *
  * @param look - Look being built
@@ -1724,8 +1726,9 @@ function airBelowOf(look: Look, end: number): number {
 function typingCutOf(look: Look, node: SyntaxNode, end: number): Line | null {
     const typing: number | null = look.state.field(typingLine, false) ?? null;
     const item: SyntaxNode | null = node.name === "ListItem" ? node : node.firstChild;
+    const text: string = item === null ? "" : look.state.doc.lineAt(item.from).text;
     const indentation: string | null =
-        item === null ? null : textIndentationOf(look.state.doc.lineAt(item.from).text);
+        item === null ? null : textIndentationOf(text.slice(quotePrefixOf(text).length));
     if (
         typing === null ||
         indentation === null ||
@@ -1734,7 +1737,9 @@ function typingCutOf(look: Look, node: SyntaxNode, end: number): Line | null {
     )
         return null;
     const line: Line = look.state.doc.lineAt(typing);
-    return columnsOf(line.text) < columnsOf(indentation) ? line : null;
+    return columnsOf(line.text.slice(quotePrefixOf(line.text).length)) < columnsOf(indentation)
+        ? line
+        : null;
 }
 
 /**

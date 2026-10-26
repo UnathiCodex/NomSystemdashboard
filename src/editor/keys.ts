@@ -162,6 +162,48 @@ export function textIndentationOf(text: string): string | null {
 }
 
 /**
+ * Gives the `>` of the quote a line stands in, each with the blank after it, like `> `,
+ * so a line written within the quote begins with them; nothing outside a quote.
+ *
+ * @param text - Text of the line, like `> - Point`
+ * @returns Its `>` with their blanks
+ */
+export function quotePrefixOf(text: string): string {
+    return /^(?:[ \t]*>[ \t]?)*/.exec(text)?.[0] ?? "";
+}
+
+/**
+ * Gives what a further line of a point begins with, see {@link pointContinue}:
+ * the `>` of a quote around it, see {@link quotePrefixOf},
+ * then the indentation of its text, see {@link textIndentationOf}.
+ * - `prefix`: The `>` of the quote.
+ * - `indentation`: The indentation of the point's text after them.
+ *
+ * @param text - Text of the line of the point, like `> - Point`
+ * @returns What it begins with, like `>   `, `null` for a line that starts no point
+ */
+function pointStartOf(text: string): string | null {
+    const prefix: string = quotePrefixOf(text);
+    const indentation: string | null = textIndentationOf(text.slice(prefix.length));
+    return indentation === null ? null : prefix + indentation;
+}
+
+/**
+ * Gives empty lines to write above a line as its air, see {@link airMost}:
+ * line breaks, within a quote each after the `>` of the quote, like `>`, so the air stays in it.
+ * - `marks`: The `>` of the quote the line stands in, without the blank after the last.
+ *
+ * @param state - Text
+ * @param line - The line
+ * @param count - How many empty lines
+ * @returns Them
+ */
+function airOf(state: EditorState, line: Line, count: number): string {
+    const marks: string = quotePrefixOf(line.text).trimEnd();
+    return (marks + state.lineBreak).repeat(count);
+}
+
+/**
  * Counts the blanks right before a place on its line, which a line break there takes away
  * with those right after it, see {@link blanksAfter}, so the text keeps no blanks at a break,
  * within a line as at its end.
@@ -186,8 +228,8 @@ function blanksAfter(state: EditorState, pos: number): number {
 }
 
 /**
- * Tells a cursor right after the `-` or number of a point on its line, see {@link emptyPointRule}:
- * a still empty point, or one with its text after the cursor,
+ * Tells a cursor right after the `-` or number of a point on its line, see {@link emptyPointRule},
+ * within a quote too: a still empty point, or one with its text after the cursor,
  * so a key does the same at the end of a line and within it.
  *
  * @param state - Text
@@ -196,8 +238,9 @@ function blanksAfter(state: EditorState, pos: number): number {
  * @returns Whether it stands there
  */
 function markEndIs(state: EditorState, line: Line, head: number): boolean {
+    const before: string = state.sliceDoc(line.from, head);
     return (
-        emptyPointRule.test(state.sliceDoc(line.from, head)) &&
+        emptyPointRule.test(before.slice(quotePrefixOf(before).length)) &&
         !/^[ \t]/.test(state.sliceDoc(head, line.to))
     );
 }
@@ -213,8 +256,9 @@ function markEndIs(state: EditorState, line: Line, head: number): boolean {
  * @returns Whether it stands there
  */
 function furtherStartIs(state: EditorState, line: Line, head: number): boolean {
+    const before: string = state.sliceDoc(line.from, head);
     return (
-        /^[ \t]+$/.test(state.sliceDoc(line.from, head)) &&
+        /^[ \t]+$/.test(before.slice(quotePrefixOf(before).length)) &&
         !codeIs(state, line) &&
         state.doc.lineAt(itemOf(state, line)?.from ?? line.from).number !== line.number
     );
@@ -365,7 +409,7 @@ function quoteMarksOf(state: EditorState, pos: number): string | null {
  * see {@link paragraphBreak} and {@link furtherContinue}:
  * a single line break, the new line with the indentation of the point's text in a list,
  * see {@link textIndentationOf}, in a quote with its `> `, see {@link quoteMarksOf},
- * as I write source lines, else with the indentation of the line.
+ * as I write source lines, else with the `>` and the indentation of the line.
  * The blanks at the break go, see {@link blanksBefore};
  * a line left with nothing but blanks, like the one a Shift+Enter just wrote, becomes empty,
  * so Shift+Enter twice leaves an empty line, and the cursor goes on under the text of the point,
@@ -373,6 +417,7 @@ function quoteMarksOf(state: EditorState, pos: number): string | null {
  * - `range`: The cursor, or what is picked, which the line break replaces.
  * - `line`: Its line.
  * - `before`: The text of the line before the cursor without blanks at its end.
+ * - `own`: The `>` and the blanks the line begins with, kept by a further line of a point.
  * - `start`: What the new line begins with.
  *
  * @param view - The editor
@@ -382,11 +427,12 @@ const pointContinue: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.from);
     const before: string = view.state.sliceDoc(line.from, range.from).replace(/[ \t]+$/, "");
+    const own: string = /^(?:[ \t]*>[ \t]?)*[ \t]*/.exec(line.text)?.[0] ?? "";
     const start: string =
-        textIndentationOf(line.text) ??
+        pointStartOf(line.text) ??
+        (own.length > quotePrefixOf(line.text).length ? own : null) ??
         quoteMarksOf(view.state, range.from) ??
-        /^[ \t]*/.exec(line.text)?.[0] ??
-        "";
+        own;
     view.dispatch({
         changes: {
             from: line.from,
@@ -423,21 +469,25 @@ function itemsOf(state: EditorState, line: Line): SyntaxNode[] {
 }
 
 /**
- * Gives the start of the next point after a point: its indentation and its `-`,
- * or its number counted on, like `2. ` after `1. `.
- * - `point`: Its indentation, then its `-`, or its number and the `.` or `)` after it.
+ * Gives the start of the next point after a point: the `>` of a quote around it,
+ * its indentation and its `-`, or its number counted on, like `2. ` after `1. `,
+ * after a task an empty box, like `- [ ] `.
+ * - `point`: The `>` and the indentation, then its `-`, or its number and the `.` or `)` after it,
+ *   then its box.
+ * - `mark`: The `-` or the number counted on of the next point.
  *
  * @param state - Text
  * @param item - The point, `ListItem`
  * @returns The start of the next point, `null` for a point written otherwise
  */
 function nextPointOf(state: EditorState, item: SyntaxNode): string | null {
-    const point: RegExpExecArray | null = /^([ \t]*)(?:([-*+])|(\d+)([.)]))(?:[ \t]|$)/.exec(
-        state.doc.lineAt(item.from).text,
-    );
-    return point === null
-        ? null
-        : `${point[1]}${point[2] ?? `${Number(point[3]) + 1}${point[4]}`} `;
+    const point: RegExpExecArray | null =
+        /^((?:[ \t]*>[ \t]?)*[ \t]*)(?:([-*+])|(\d+)([.)]))(?:[ \t]+(\[[ xX]\]))?(?:[ \t]|$)/.exec(
+            state.doc.lineAt(item.from).text,
+        );
+    if (point === null) return null;
+    const mark: string = point[2] ?? `${Number(point[3]) + 1}${point[4]}`;
+    return `${point[1]}${mark} ${point[5] !== undefined ? "[ ] " : ""}`;
 }
 
 /**
@@ -464,7 +514,7 @@ const furtherContinue: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
     const item: SyntaxNode | null =
-        range.empty && !/^[ \t]*$/.test(view.state.sliceDoc(line.from, range.head))
+        range.empty && !/^[ \t>]*$/.test(view.state.sliceDoc(line.from, range.head))
             ? itemAt(view.state)
             : null;
     if (item === null || view.state.doc.lineAt(item.from).number === line.number) return false;
@@ -560,7 +610,7 @@ function pointAir(full: boolean): Command {
         const lines: number =
             full && !emptyIs(view.state, view.state.doc.line(Math.max(line.number - 1, 1))) ? 2 : 1;
         view.dispatch({
-            changes: { from: line.from, insert: view.state.lineBreak.repeat(lines) },
+            changes: { from: line.from, insert: airOf(view.state, line, lines) },
             scrollIntoView: true,
             userEvent: "input",
         });
@@ -589,7 +639,7 @@ const airBreak: Command = (view: EditorView): boolean => {
     const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
     if (
         itemAt(view.state) !== null &&
-        !/^[ \t]*$/.test(view.state.sliceDoc(line.from, view.state.selection.main.head))
+        !/^[ \t>]*$/.test(view.state.sliceDoc(line.from, view.state.selection.main.head))
     )
         return (furtherContinue(view) || markupContinue(view)) && airAbove(view);
     return enter() && (enter() || true);
@@ -607,7 +657,7 @@ function airAbove(view: EditorView): boolean {
     const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
     if (line.number > 1 && !emptyIs(view.state, view.state.doc.line(line.number - 1)))
         view.dispatch({
-            changes: { from: line.from, insert: view.state.lineBreak },
+            changes: { from: line.from, insert: airOf(view.state, line, 1) },
             scrollIntoView: true,
             userEvent: "input",
         });
@@ -689,7 +739,7 @@ const blankBackward: Command = (view: EditorView): boolean => {
     if (
         !range.empty ||
         line.number === 1 ||
-        !/^[ \t]+$/.test(view.state.sliceDoc(line.from, range.head)) ||
+        !/^(?:[ \t]*>[ \t]?)*[ \t]+$/.test(view.state.sliceDoc(line.from, range.head)) ||
         /^(?:[-*+]|\d+[.)])(?:[ \t]|$)/.test(view.state.sliceDoc(range.head, line.to)) ||
         codeIs(view.state, line)
     )
@@ -747,7 +797,10 @@ const textBackward: Command = (view: EditorView): boolean => {
  * as Markdown would take text typed there on into the line above,
  * so the cursor stands where text typed on it will stand, see {@link typingLine}.
  * - `line`: The line of the cursor.
+ * - `prefix`: The `>` of a quote around it, see {@link quotePrefixOf}, which it keeps.
+ * - `body`: The line after them.
  * - `above`: The nearest line with text above it.
+ * - `indentationOf`: Gives the indentation of the text of a point after the `>` of its quote.
  * - `levels`: Columns of the text of the points that line stands in, from the outermost.
  * - `column`: Column of the line's own blanks.
  * - `item`: The point whose text the line moves under, `null` for the left edge.
@@ -760,22 +813,28 @@ const textBackward: Command = (view: EditorView): boolean => {
 function blankIndent(inward: boolean): Command {
     return (view: EditorView): boolean => {
         const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
+        const prefix: string = quotePrefixOf(line.text);
+        const body: string = line.text.slice(prefix.length);
         if (
             !view.state.selection.main.empty ||
-            (!/^[ \t]*$/.test(line.text) &&
+            (!/^[ \t]*$/.test(body) &&
                 !furtherStartIs(view.state, line, view.state.selection.main.head))
         )
             return false;
         let above: Line = line;
-        while (above.number > 1 && (above.number === line.number || /^[ \t]*$/.test(above.text)))
+        while (above.number > 1 && (above.number === line.number || /^[ \t>]*$/.test(above.text)))
             above = view.state.doc.line(above.number - 1);
         const items: SyntaxNode[] = above.number === line.number ? [] : itemsOf(view.state, above);
         if (items.length === 0) return false;
 
+        const indentationOf = (point: SyntaxNode): string => {
+            const text: string = view.state.doc.lineAt(point.from).text;
+            return textIndentationOf(text.slice(quotePrefixOf(text).length)) ?? "";
+        };
         const levels: number[] = items.map((point: SyntaxNode): number =>
-            columnsOf(textIndentationOf(view.state.doc.lineAt(point.from).text) ?? ""),
+            columnsOf(indentationOf(point)),
         );
-        const column: number = columnsOf(line.text);
+        const column: number = columnsOf(body);
         const item: SyntaxNode | null = inward
             ? (items.find((point: SyntaxNode, index: number): boolean => levels[index] > column) ??
               null)
@@ -783,16 +842,15 @@ function blankIndent(inward: boolean): Command {
                   (point: SyntaxNode, index: number): boolean => levels[index] < column,
               ) ?? null);
         if (inward && item === null) return true;
-        const insert: string =
-            item === null ? "" : (textIndentationOf(view.state.doc.lineAt(item.from).text) ?? "");
+        const insert: string = prefix + (item === null ? "" : indentationOf(item));
         const air: string =
             !inward && !emptyIs(view.state, view.state.doc.line(line.number - 1))
-                ? view.state.lineBreak
+                ? airOf(view.state, line, 1)
                 : "";
         view.dispatch({
             changes: {
                 from: line.from,
-                to: line.from + (/^[ \t]*/.exec(line.text)?.[0].length ?? 0),
+                to: line.from + prefix.length + (/^[ \t]*/.exec(body)?.[0].length ?? 0),
                 insert: air + insert,
             },
             selection: { anchor: line.from + air.length + insert.length },
@@ -913,6 +971,83 @@ const quoteBackward: Command = (view: EditorView): boolean => {
 };
 
 /**
+ * Tells a line of a table, whose rows a line break would tear apart.
+ * - `node`: A piece of syntax at the start of the line, from the innermost outwards.
+ *
+ * @param state - Text and syntax tree
+ * @param line - The line
+ * @returns The table, `Table`, `null` for none
+ */
+function tableOf(state: EditorState, line: Line): SyntaxNode | null {
+    for (
+        let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.from, 1);
+        node !== null;
+        node = node.parent
+    )
+        if (node.name === "Table") return node;
+    return null;
+}
+
+/**
+ * Enter, Shift+Enter and Ctrl+Enter in a table, which its widget edits, see `./table.ts`:
+ * at the end of its last row a new paragraph after it, as Enter at the end of a paragraph,
+ * see {@link paragraphBreak}, Ctrl+Enter with the air of a line;
+ * anywhere else nothing, so no row is torn apart.
+ * - `range`: The cursor.
+ * - `line`: Its line.
+ * - `table`: The table it stands in.
+ *
+ * @param lines - Line breaks it writes at the end: 2 for Enter, 3 for Ctrl+Enter
+ * @returns The command, which takes the key in a table only
+ */
+function tableBreak(lines: number): Command {
+    return (view: EditorView): boolean => {
+        const range: SelectionRange = view.state.selection.main;
+        const line: Line = view.state.doc.lineAt(range.head);
+        const table: SyntaxNode | null = tableOf(view.state, line);
+        if (table === null) return false;
+        if (
+            range.empty &&
+            range.head === line.to &&
+            view.state.doc.lineAt(table.to).number === line.number
+        )
+            view.dispatch({
+                changes: { from: line.to, insert: view.state.lineBreak.repeat(lines) },
+                selection: { anchor: line.to + view.state.lineBreak.length * lines },
+                scrollIntoView: true,
+                userEvent: "input",
+            });
+        return true;
+    };
+}
+
+/**
+ * Backspace at the start of a row of a table below text, and Delete at the end of a row
+ * above text, do nothing, so no two rows are joined, see {@link tableBreak}.
+ * - `range`: The cursor.
+ * - `line`: Its line.
+ * - `next`: The line it would join.
+ *
+ * @param forward - Whether it is Delete, else Backspace
+ * @returns The command
+ */
+function tableJoin(forward: boolean): Command {
+    return (view: EditorView): boolean => {
+        const range: SelectionRange = view.state.selection.main;
+        const line: Line = view.state.doc.lineAt(range.head);
+        if (!range.empty || range.head !== (forward ? line.to : line.from)) return false;
+        const number: number = line.number + (forward ? 1 : -1);
+        if (number < 1 || number > view.state.doc.lines) return false;
+        const next: Line = view.state.doc.line(number);
+        return (
+            (tableOf(view.state, line) !== null || tableOf(view.state, next) !== null) &&
+            !emptyIs(view.state, next) &&
+            next.length > 0
+        );
+    };
+}
+
+/**
  * Tab outside a list, see {@link itemIndent}: a tab only in code, the lines picked one step in,
  * else nothing, as a tab in text would stand there as a stray blank or begin code.
  * - `line`: The line of the cursor.
@@ -926,9 +1061,9 @@ const tabWrite: Command = (view: EditorView): boolean => {
 };
 
 /**
- * An empty point: its indentation and its `-` or number, nothing after it.
+ * An empty point: its indentation and its `-` or number, of a task with its box, nothing after it.
  */
-const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]*$/;
+const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+\[[ xX]\])?[ \t]*$/;
 
 /**
  * Takes the `-` or number of a point below another point away with Backspace
@@ -950,7 +1085,8 @@ const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]*$/;
  * - `line`: Its line.
  * - `point`: Whether the cursor stands right after the `-` or number, see {@link markEndIs}.
  * - `item`: The point of the line, `ListItem`, `null` for none.
- * - `indentation`: The blanks of the point's text, which the line keeps.
+ * - `indentation`: The `>` of a quote and the blanks of the point's text, which the line keeps,
+ *   see {@link pointStartOf}.
  * - `above`: The line above it.
  * - `air`: The line break of the empty line it puts above, nothing but below a deeper point.
  *
@@ -967,13 +1103,15 @@ const markerBackward: Command = (view: EditorView): boolean => {
         range.empty &&
         item?.prevSibling?.name === "ListItem" &&
         view.state.doc.lineAt(item.from).number === line.number &&
-        textIndentationOf(line.text) !== null
+        pointStartOf(line.text) !== null
     ) {
-        const indentation: string = textIndentationOf(line.text) ?? "";
+        const indentation: string = pointStartOf(line.text) ?? "";
         const above: Line = view.state.doc.line(line.number - 1);
         const air: string =
-            !emptyIs(view.state, above) && columnsOf(above.text) > columnsOf(indentation)
-                ? view.state.lineBreak
+            !emptyIs(view.state, above) &&
+            columnsOf(above.text.slice(quotePrefixOf(above.text).length)) >
+                columnsOf(indentation.slice(quotePrefixOf(indentation).length))
+                ? airOf(view.state, line, 1)
                 : "";
         listChange(view, {
             changes: { from: line.from, to: range.head, insert: air + indentation },
@@ -1270,11 +1408,13 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
         furtherStartIs(view.state, line, range.head);
     if (line.length > 0 && !blank && !/^(?:Paragraph|ATXHeading\d)$/.test(node.name)) return false;
 
-    const textStart: boolean = (node.name === "Paragraph" ? /^[ \t]*$/ : /^[ \t]*#*[ \t]*$/).test(
-        view.state.sliceDoc(line.from, range.head),
-    );
+    const textStart: boolean =
+        blank ||
+        (node.name === "Paragraph" ? /^[ \t]*$/ : /^[ \t]*#*[ \t]*$/).test(
+            view.state.sliceDoc(line.from, range.head),
+        );
     const insert: string = textStart
-        ? view.state.lineBreak
+        ? airOf(view.state, line, 1)
         : view.state.lineBreak + view.state.lineBreak;
     const from: number = textStart ? line.from : range.head - blanksBefore(view.state, range.head);
     view.dispatch({
@@ -1292,7 +1432,7 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
 
 /**
  * Finds the list item a line stands in: the innermost item around the start of its text,
- * so a further line of a point or a sub-point is found too.
+ * after the `>` of a quote around it, so a further line of a point or a sub-point is found too.
  * - `node`: A piece of syntax around the start of the text, from the innermost outwards.
  *
  * @param state - Text
@@ -1302,7 +1442,7 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
 function itemOf(state: EditorState, line: Line): SyntaxNode | null {
     for (
         let node: SyntaxNode | null = syntaxTree(state).resolveInner(
-            line.from + (/^[ \t]*/.exec(line.text)?.[0].length ?? 0),
+            line.from + (/^(?:[ \t]*>[ \t]?)*[ \t]*/.exec(line.text)?.[0].length ?? 0),
             1,
         );
         node !== null;
@@ -1402,7 +1542,11 @@ function itemIndent(inward: boolean): Command {
         const further: ChangeSpec =
             mark === null || start === null
                 ? []
-                : { from: mark.from, to: mark.to, insert: start.trim() };
+                : {
+                      from: mark.from,
+                      to: mark.to,
+                      insert: /([-*+]|\d+[.)]) (?:\[ \] )?$/.exec(start)?.[1] ?? "",
+                  };
         if (inward && item.prevSibling?.name === "ListItem")
             itemLinesRun(view, item, indentMore, further);
         else if (!inward && parent !== null) itemLinesRun(view, item, indentLess, further);
@@ -1731,6 +1875,7 @@ export const typingLine: StateField<number | null> = StateField.define<number | 
 
 /**
  * Takes the blanks of a line of only blanks away when the cursor alone moves off it,
+ * of an empty line of a quote those after its `>`,
  * like the line of a point Backspace left, see {@link markerBackward}, or Shift+Enter wrote:
  * only the line of the cursor holds the blanks where its text will begin,
  * every other empty line of the note stays empty; a line of code keeps its blanks.
@@ -1787,8 +1932,14 @@ const blanksLeft: Extension = Prec.high(
                     },
                 ];
             }
-            if (!/^[ \t]+$/.test(line.text)) return transaction;
-            return [transaction, { changes: { from: line.from, to: line.to }, sequential: true }];
+            if (line.text === line.text.trimEnd()) return transaction;
+            return [
+                transaction,
+                {
+                    changes: { from: line.from + line.text.trimEnd().length, to: line.to },
+                    sequential: true,
+                },
+            ];
         },
     ),
 );
@@ -1813,6 +1964,10 @@ export const markdownKeys: Extension = [
     blanksLeft,
     Prec.high(
         keymap.of([
+            { key: "Enter", run: tableBreak(2), shift: tableBreak(2) },
+            { key: "Mod-Enter", run: tableBreak(3) },
+            { key: "Backspace", run: tableJoin(false) },
+            { key: "Delete", run: tableJoin(true) },
             { key: "Enter", run: furtherContinue },
             { key: "Enter", run: quoteBreak },
             { key: "Enter", run: pointAir(true) },
