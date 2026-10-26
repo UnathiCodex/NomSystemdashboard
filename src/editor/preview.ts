@@ -1917,12 +1917,25 @@ function gapIs(state: EditorState, line: Line): boolean {
 }
 
 /**
+ * Counts the characters of a point's line before its text:
+ * its indentation, its `-` or number with the blank after it, and a task box with its blank.
+ *
+ * @param text - Text of the line, like `\t- [ ] Task`
+ * @returns Their number, `0` for a line that starts no point
+ */
+function pointMarkOf(text: string): number {
+    return /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?/.exec(text)?.[0].length ?? 0;
+}
+
+/**
  * Keeps the cursor off what the look hides, so every key moves it where I see it:
  * put into the hidden start of a line,
  * see {@link hiddenStartOf}, by a click, Home or an arrow up or down,
  * it goes to where the text begins;
  * moved left out of the text of a line it goes on to the end of the line above,
- * as from the start of any line.
+ * as from the start of any line;
+ * moved up or down onto the line of a point before its text, like from the next line of a point
+ * below it, it goes to where its text begins, after its `-` or number, see {@link pointMarkOf}.
  * Never on the gap between two paragraphs, see {@link gapIs}:
  * a click on it or an arrow down goes on to the line below it, an empty line or text,
  * an arrow up to the end of the line above;
@@ -1938,9 +1951,11 @@ function gapIs(state: EditorState, line: Line): boolean {
  * - `before`: Where it stood.
  * - `down`: Whether it went down, or by a click.
  * - `step`: `1` for down, `-1` for up.
+ * - `vertical`: Whether an arrow up or down moved it to another line.
  * - `place`: Where it goes instead, the same for no change.
  * - `line`: A line passed, then the line of the place.
  * - `start`: Where the text of that line begins.
+ * - `text`: Where the text of a point on that line begins, after its `-` or number.
  *
  * @returns Filter of the changes of the editor
  */
@@ -1962,6 +1977,8 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
         const before: number = state.selection.main.head;
         const down: boolean = pointer || head > before;
         const step: number = down ? 1 : -1;
+        const vertical: boolean =
+            !pointer && state.doc.lineAt(head).number !== state.doc.lineAt(before).number;
         let place: number = head;
         for (
             let number: number = state.doc.lineAt(before).number + step;
@@ -1983,9 +2000,11 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
                   ];
         for (let line: Line = state.doc.lineAt(place); ; line = state.doc.lineAt(place)) {
             const start: number = line.from + hiddenStartOf(state, line);
+            const text: number = line.from + pointMarkOf(line.text);
             if (gapIs(state, line) && down && line.number < state.doc.lines)
                 place = state.doc.line(line.number + 1).from;
             else if (gapIs(state, line)) place = state.doc.line(line.number - 1).to;
+            else if (vertical && place < text) place = text;
             else if (place < start && before >= start && before <= line.to && line.number > 1)
                 place = state.doc.line(line.number - 1).to;
             else if (place < start) place = start;

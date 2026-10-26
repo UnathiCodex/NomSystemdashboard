@@ -89,9 +89,11 @@ export const peopleRoles: string[] = [
 
 /**
  * What parts names in a text besides a line break `<br>`:
- * `; ` with the spaces around it, as `With` parts them.
+ * `; ` with the spaces around it, as `With` parts them,
+ * and ` (komm.)` after the name of a head of a chair who leads it for now,
+ * see `actingMark` in `reader/persons.ts`.
  */
-const namesParting: RegExp = /(\s*;\s*)/;
+const namesParting: RegExp = /(\s*;\s*| \(komm\.\))/;
 
 /**
  * Gives the people of `Persons.md` as the reader last sent them,

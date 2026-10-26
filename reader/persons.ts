@@ -80,6 +80,12 @@ export type AttendeesRename = (old: string, name: string, mail: string, dry: boo
 const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];
 
 /**
+ * What follows the name of a head of a chair who leads it for now, kommissarisch,
+ * like `Leutenegger, Stefan<br>Marin, … (komm.)` in `Schools.md`; renaming the person keeps it.
+ */
+const actingMark: string = " (komm.)";
+
+/**
  * Roles a line of a list names a person by,
  * like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md` or `- Rector: Sieber, Volker`,
  * see `peopleRoles` in `src/persons.ts`.
@@ -281,12 +287,14 @@ function personsTextOf(sent: PersonRenamed): [string, Person] {
  * see {@link peopleRoles}, like `- Dean: Bungartz, Hans-Joachim`:
  * in each table of such a column, every name of the old name in its cells takes the new one,
  * a cell holding several names parted by `<br>`, a name it then holds twice once,
+ * a name followed by ` (komm.)` keeping it, see {@link actingMark},
  * and so does such a line of the old name, every other cell and line staying as it is.
  * - `role`: The role a line names the old name by, `undefined` for none.
  * - `lines`: Lines of the file.
  * - `named`: Indexes of the columns that name people in the table being read, none outside a table.
  * - `cells`: Cells of a row.
  * - `names`: The names of a cell.
+ * - `renamed`: The names of a cell, the old one renamed.
  *
  * @param file - Path of the file
  * @param old - Old name, like `Cuzic, Mihovil`
@@ -314,9 +322,11 @@ function peopleTextOf(file: string, old: string, name: string): string {
         }
         named.forEach((at: number): void => {
             const names: string[] = (cells[at] ?? "").trim().split("<br>");
-            if (names.includes(old))
-                cells[at] =
-                    ` ${[...new Set(names.map((one: string): string => (one === old ? name : one)))].join("<br>")} `;
+            const renamed: string[] = names.map((one: string): string =>
+                one.replace(actingMark, "") === old ? one.replace(old, name) : one,
+            );
+            if (renamed.join("<br>") !== names.join("<br>"))
+                cells[at] = ` ${[...new Set(renamed)].join("<br>")} `;
         });
         lines[index] = cells.join("|");
     });
