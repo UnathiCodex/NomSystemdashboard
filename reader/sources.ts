@@ -77,7 +77,7 @@ export const livingRoot: string = join(calendarRoot, "Living");
 /**
  * Folder `Skilling/` in {@link calendarRoot}:
  * per project a plan and a log, named like the folder of the project,
- * like `NomFrequencediary_Plan.ics` and `NomFrequencediary_Log.ics`, see {@link skillFileOf};
+ * like `NomSystemdashboard_Plan.ics` and `NomSystemdashboard_Log.ics`, see {@link skillFileOf};
  * a skill box or entry always has its skill.
  */
 export const skillingRoot: string = join(calendarRoot, "Skilling");
@@ -294,20 +294,16 @@ export const systemFiles: SystemFilesSources = {
 /**
  * Skills of the semester of each of us by {@link myName} that are no modules,
  * each by its folder from `NomWorkspace`, written with `/`: my projects,
- * like `NomProgramprojects/AsiaWok_Wokflow_2026`,
- * and the time I spend logging, planning and thinking about my day, `NomFrequencediary`,
- * linking the folder of my diary.
+ * like `NomProgramprojects/AsiaWok_Wokflow_2026`;
+ * my time logging, planning and thinking about my day is the category `Manage`,
+ * Sopha's still her project `NomFrequencediary`.
  * The modules of the semester come from `Modules.md`, see `activeModulesRead` in `notes.ts`;
  * Sopha's will come from her own `Modules.md`, so her list holds no module either,
  * and until she has one her reader has no modules of the semester.
  * Changed on request, when the semester's projects change.
  */
 const skillsOf: { [name: string]: string[] } = {
-    Vu: [
-        "NomProgramprojects/AsiaWok_Wokflow_2026",
-        "NomSystemdashboard",
-        "NomManageplannings/NomFrequencediary",
-    ],
+    Vu: ["NomProgramprojects/AsiaWok_Wokflow_2026", "NomSystemdashboard"],
     Sopha: ["NomSystemdashboard", "NomManageplannings/NomFrequencediary"],
 };
 

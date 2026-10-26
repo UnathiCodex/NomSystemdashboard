@@ -36,6 +36,8 @@
  * A dish, the what of `Food` and `Cook`, names its foods parted by `, `, like `Reis, Bohnen, Eier`.
  * `Shopping` is what I buy, its what as I type it, like `Brot, Milch`, its place the shop,
  * like `Edeka Center Hadern`.
+ * `Manage` is the time I spend logging, planning and thinking about my day,
+ * and takes several, parted by `, `, as `Body`, like `NomMasterplannings`.
  * `Event` is what I go to that is no skill,
  * like an evening at a company, its what as I type it, its place where it is,
  * which I add with its address and link like any place of mine.
@@ -329,6 +331,15 @@ const categories: Category[] = [
         ],
     },
     categoryOf("Meditate"),
+    {
+        name: "Manage",
+        fields: [
+            { name: "Summary", key: "title", values: [], steps: {}, fixed: false, many: true },
+            { name: "Place", key: "location", values: [], steps: {}, fixed: false },
+            onlineField,
+            withField,
+        ],
+    },
     {
         name: "Way",
         fields: [
