@@ -311,12 +311,10 @@ function entryDrag(calendar: Calendar, info: EventChangeInfo): void {
         info.revert();
         return;
     }
-    entryMove(calendar, entry.id, entry.start as Date, entry.end as Date).catch(
-        (error: unknown): void => {
-            console.error(error);
-            info.revert();
-        },
-    );
+    entryMove(entry.id, entry.start as Date, entry.end as Date).catch((error: unknown): void => {
+        console.error(error);
+        info.revert();
+    });
 }
 
 /**
@@ -450,7 +448,7 @@ function entryTurn(calendar: Calendar, info: EventDragStopInfo): void {
     start.setDate(start.getDate() + days);
     end.setDate(end.getDate() + days);
     turning = { id: entry.id, days: days };
-    entryMove(calendar, entry.id, start, end)
+    entryMove(entry.id, start, end)
         .then((): void => calendar.incrementDate({ days: days }))
         .catch((error: unknown): void => console.error(error));
 }

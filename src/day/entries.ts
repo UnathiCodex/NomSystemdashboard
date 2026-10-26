@@ -291,21 +291,18 @@ export async function entryChange(
 /**
  * Moves an entry of the log to a new start and end, after a drag: sends its new times alone,
  * and the reader keeps every other field as its file holds it, see `entryMove` in `reader/day.ts`.
+ * The log does not load again here, since FullCalendar shows it moved already
+ * and the change of its file loads it anyway, see `changesFollow` in `../changes.ts`:
+ * two loads at once showed the entry twice for a moment, at its old place and its new one.
  *
- * @param calendar - Calendar of the day
  * @param id - Identifier of the entry
  * @param start - Its new start
  * @param end - Its new end
  * @throws {Error} - When the reader does not move it,
  *   like a meal moved before the cooking it draws from
  */
-export async function entryMove(
-    calendar: Calendar,
-    id: string,
-    start: Date,
-    end: Date,
-): Promise<void> {
-    await logSend(calendar, "POST", "/api/day/moved", {
+export async function entryMove(id: string, start: Date, end: Date): Promise<void> {
+    await requestSend("POST", "/api/day/moved", {
         id: id,
         start: start.toISOString(),
         end: end.toISOString(),
