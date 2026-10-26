@@ -93,6 +93,7 @@ import {
     moduleFolderOf,
     semesterFoldersRead,
 } from "./notes.ts";
+import { linkForm } from "./places.ts";
 import {
     moduleIs,
     modulesFolder,
@@ -284,16 +285,17 @@ export function skillLinkOf(code: string, type: string, semester: string): strin
  * while none is sent the one its skill and type give it, see {@link skillTitleOf},
  * and always the link to the folder of its skill and of its material,
  * which names both, see {@link skillLinkOf}.
- * I type no link of what it was: a link of mine goes with what I did online,
- * see `Online` in `calendar.ts`.
+ * The link of what it was I type for any other entry, like the page of an event;
+ * a sender that knows none, like the calendar after a drag, keeps the one it comes from.
  *
- * @param fields - Category, what, skill, type and semester of the entry or the box,
+ * @param fields - Category, what, skill, type, semester and link of the entry or the box,
  *   as sent, the semester as it is written, see `semesterFor` in `categories.ts`
  * @param from - The entry or box it comes from,
  *   like the entry being changed or the box a log entry is logged from, `null` for none
  * @returns `SUMMARY` and `ALTREP`, like `IN2028 Lecture 3 recap`
  *   and `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`,
  *   or `Planungen` and an empty link
+ * @throws {Error} - When the link typed is no web address
  */
 export function titleOf(
     fields: {
@@ -302,6 +304,7 @@ export function titleOf(
         module: string;
         type: string;
         semester: string;
+        titleLink?: string;
     },
     from: { title: string; titleLink: string } | null,
 ): [string, string] {
@@ -312,7 +315,11 @@ export function titleOf(
                 : fields.title.trim(),
             skillLinkOf(fields.module, fields.type, fields.semester),
         ];
-    return [fields.title, from !== null && from.title === fields.title ? from.titleLink : ""];
+    if (fields.titleLink === undefined)
+        return [fields.title, from !== null && from.title === fields.title ? from.titleLink : ""];
+    const link: string = fields.titleLink.trim();
+    if (link !== "" && !linkForm.test(link)) throw new Error(`No link of ${fields.title}: ${link}`);
+    return [fields.title, link];
 }
 
 /**

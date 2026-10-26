@@ -319,6 +319,7 @@ export type PlanDay = {
  *   As those of an entry of the log;
  *   the link of its place the reader finds, see `placeLinkOf` in `places.ts`,
  *   and what a skill box is it writes from its skill and type, see `titleOf` in `documents.ts`.
+ * - `titleLink`: Link of what it is, as for an entry of the log, see `EntryNew` in `day.ts`.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
  *   What I will do online, as for an entry of the log, see `EntryNew` in `day.ts`;
  *   left out by a sender that does not know them, like an accepted suggestion,
@@ -341,6 +342,7 @@ export type PlanDay = {
  */
 export type BoxNew = Omit<EntryTexts, "locationLink" | "titleLink" | "attendees" | keyof Online> &
     Partial<Online> & {
+        titleLink?: string;
         attendees?: Attendee[];
         day: string;
         time: string;

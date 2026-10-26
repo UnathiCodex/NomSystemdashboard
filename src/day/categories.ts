@@ -492,8 +492,8 @@ const linkForm: RegExp = /^https?:\/\/\S+$/;
 
 /**
  * Link of what the entry or the box was as it kept it, the `ALTREP` of its `SUMMARY`,
- * shown below its summary, see {@link summaryPartsShow}: a web address an older entry kept,
- * like the page of an event;
+ * shown below its summary, see {@link summaryPartsShow}: a web address typed,
+ * see {@link summaryPartsOf}, like the page of an event;
  * empty for none, a skill entry then linking the folder of its skill
  * or of its material, which the reader writes.
  */
@@ -1195,7 +1195,7 @@ function partsOf(field: Field): HTMLElement {
 /**
  * Shows the link of what the entry or the box was below its summary, small and grey,
  * as a link that opens in a new tab, like the address of a place, see {@link placePartsShow}:
- * the link an older entry kept, like the page of an event;
+ * the link typed, like the page of an event;
  * for a skill entry without one the folder of its skill,
  * which opens in this window, being NomSystem's own, see `skillPathShow` in `skill.ts`;
  * nothing while it has none;
@@ -1238,10 +1238,14 @@ function summaryPartsShow(): void {
  * The title of a skill entry has the part `Text` too, taken as I type,
  * its skill and type staying as they show;
  * a summary written by itself, that of a meal, has no text to type.
+ * The summary of a field has the part `Link` below `Text`, its link as typed,
+ * like the page of an event, which shows below it as I type, see {@link summaryPartsShow};
+ * a skill entry links the folder of its skill, a meal nothing typed.
  * - `pencil`: The pencil, `✎`.
  * - `link`: The link below the summary.
  * - `text`: The field of the summary as written, the same as its line while I type elsewhere,
  *   see {@link summaryPartsShow}; in the parts only while it has its text to change.
+ * - `address`: The field of its link as typed, in the parts only for the summary of a field.
  * - `parts`: The parts holding it, shown while the pencil opened them, see {@link summaryOpen}.
  * - `shown`: The summary as its line shows it, taken as I enter `text`.
  *
@@ -1258,6 +1262,7 @@ function summaryPartsOf(
     const pencil: HTMLButtonElement = document.createElement("button");
     const link: HTMLAnchorElement = document.createElement("a");
     const text: HTMLInputElement = partFieldOf("text", values.title, "Text of the summary");
+    const address: HTMLInputElement = partFieldOf("url", summaryLink, "Link of the summary");
     const parts: HTMLElement = document.createElement("div");
     let shown: string = values.title;
     pencil.type = "button";
@@ -1266,6 +1271,7 @@ function summaryPartsOf(
     link.rel = "noopener";
     parts.className = "field-parts";
     if (typed) parts.append(partOf("Text", text));
+    if (summary !== undefined) parts.append(partOf("Link", address));
     iconPut(pencil, Pencil, "Change the summary");
     parts.hidden = !summaryOpen;
     text.addEventListener("focusin", (): void => {
@@ -1286,6 +1292,10 @@ function summaryPartsOf(
         document
             .querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)
             ?.focus();
+    });
+    address.addEventListener("input", (): void => {
+        summaryLink = address.value.trim();
+        summaryPartsShow();
     });
     pencil.addEventListener("click", (): void => {
         summaryChange(parts);
@@ -2420,6 +2430,7 @@ function textsRead(): BoxFields {
     return {
         category: chosen?.name ?? "",
         title: titleRead(picked.title),
+        titleLink: summaryLink,
         location: picked.location,
         online: picked.online,
         onlineLink: picked.online === "" ? "" : onlineLink,
@@ -2522,6 +2533,7 @@ function fieldsRead(): EntryFields {
     return {
         category: texts.category,
         title: texts.title,
+        titleLink: texts.titleLink,
         location: texts.location,
         online: texts.online,
         onlineLink: texts.onlineLink,

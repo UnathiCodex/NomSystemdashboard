@@ -94,6 +94,8 @@ import type { Meal } from "./food.ts";
  *
  * - `category`: Category picked.
  * - `title`: What picked.
+ * - `titleLink`: Link of what it was, like the page of an event, typed, empty for none;
+ *   left out, it keeps the one of the entry or box it comes from, see `titleOf` in `documents.ts`.
  * - `location`: Place picked, where I physically was, its link the reader finds itself,
  *   see `placeLinkOf` in `places.ts`.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
@@ -135,6 +137,7 @@ import type { Meal } from "./food.ts";
 export type EntryNew = Partial<Online> & {
     category: string;
     title: string;
+    titleLink?: string;
     location: string;
     from: string;
     attendees?: Attendee[];

@@ -67,6 +67,8 @@ export type Online = {
  *
  * - `category`: Category picked, `CATEGORIES`.
  * - `title`: What picked, `SUMMARY`.
+ * - `titleLink`: Link of what it was, typed, like the page of an event,
+ *   the `ALTREP` of its `SUMMARY`, empty for none; left out, it keeps its link.
  * - `location`: Place picked, `LOCATION`, where I physically was,
  *   whose link the reader finds itself.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
@@ -98,6 +100,7 @@ export type Online = {
 export type EntryFields = Partial<Online> & {
     category: string;
     title: string;
+    titleLink?: string;
     location: string;
     from: string;
     attendees?: Attendee[];
@@ -119,7 +122,8 @@ export type EntryFields = Partial<Online> & {
 /**
  * Fields of a box of the plan to send; an empty field is not written.
  *
- * - `category`, `title`, `location`, `online`, `onlineLink`, `onlineChannel`, `onlineTitle`,
+ * - `category`, `title`, `titleLink`, `location`,
+ *   `online`, `onlineLink`, `onlineChannel`, `onlineTitle`,
  *   `from`, `attendees`, `module`, `type`, `semester`, `note`: As those of {@link EntryFields}.
  * - `day`: Day of the box, like `2026-10-13`; for a box with a deadline the day of its deadline.
  * - `time`: Expected time on its day, `null` for none and for a box with a deadline.
@@ -133,6 +137,7 @@ export type EntryFields = Partial<Online> & {
 export type BoxFields = Partial<Online> & {
     category: string;
     title: string;
+    titleLink?: string;
     location: string;
     from: string;
     attendees?: Attendee[];
