@@ -21,7 +21,8 @@
  * ``01_01_SampleMeanEstimator.md:17: 2 lines, 1 character too long: - `import numpy as np` …``,
  * the characters guessed at half the size of the text each;
  * a file whose lines all fit gets one line that says so.
- * The command ends with 1 while a line does not fit, with 2 when the reader does not answer.
+ * The command ends with 1 while a line does not fit,
+ * with 2 when the reader does not answer with its editor, like when its page fails to load it.
  * The page asks the reader for nothing but itself: every request to its API is refused,
  * so nothing is written.
  *
@@ -279,8 +280,9 @@ async function wrapsPrint(): Promise<void> {
     await page.route("**/api/**", (route: Route): Promise<void> => route.abort());
     try {
         await page.goto(address, { waitUntil: "networkidle" });
+        await page.waitForSelector(".editor-file", { state: "attached" });
     } catch {
-        console.log(`The reader does not answer at ${address}, see reader.ts`);
+        console.log(`The reader does not answer at ${address} with its editor, see reader.ts`);
         process.exitCode = 2;
         await browser.close();
         return;
