@@ -35,7 +35,7 @@
  * every other line as it was, in a row only the cells changed,
  * see {@link rowsWritten}, a step of its own in the history of the editor,
  * so the editor below shows it and saves it as any change, by the save button or Ctrl+S,
- * never by itself, refused when the file changed on the disk since it was read,
+ * never by itself, merged with a change of the file on the disk since it was read,
  * see `noteSave` in `./editor.ts`: the save button of the table presses that of the editor,
  * and both show what the editor's shows.
  * A link in a cell opens by a click on it, as in Google Sheets:
@@ -107,7 +107,7 @@ type Sheet = WorksheetInstance & { selectedRow: number | false | null };
 /**
  * Opens a table of the note over the whole page, see the top of this file.
  * - `editorSave`, `editorState`: The save button of the editor and whether its changes are saved,
- *   like `Saved 20:41`, see `./editor.html`,
+ *   `Saved` or `Failed`, see `./editor.html`,
  *   which the save button and the state of the table repeat.
  * - `body`: Holds the spreadsheet, as high and wide as the page below the top row.
  * - `menu`: The menu of a row, over the page, which a click beside it or `Esc` closes,

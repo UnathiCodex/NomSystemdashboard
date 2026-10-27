@@ -53,11 +53,11 @@
  * a block it shows from the tree or a link staying out of the address, so a reload returns there.
  * Saves only with its button, the plain floppy disk of saving,
  * so no check stands for saving, its tooltip `Save`,
- * or Ctrl+S, never by itself, refused when the file changed on the disk since it was read,
+ * or Ctrl+S, never by itself, merged with a change of the file on the disk since it was read,
  * and asks before leaving with changes unsaved, also for another file of the tree;
  * the button faint while nothing is to save, its full grey while there are changes,
- * and the status line above the text says when it saved last, like `Saved 20:41`,
- * or what went wrong; at its left it shows the name of the file,
+ * and the status line above the text says only `Saved` or `Failed`;
+ * at its left it shows the name of the file,
  * which the tree may be too narrow to show whole, its path from `NomWorkspace` on as its title.
  *
  * - `@codemirror/state`, `@codemirror/view`:
@@ -113,7 +113,6 @@ import { outlineShow, treeShow } from "../notes/tree.ts";
 import { codeColorsSet } from "../notes/code.ts";
 import { overviewShow, overviewTreeShow } from "./overview.ts";
 import { folderShow } from "./folder.ts";
-import { timeOf } from "../day/times.ts";
 import { ArrowRight, CircleCheck, Save, SaveOff } from "lucide";
 import { iconPut } from "../icons.ts";
 import "../notes/notes.css";
@@ -225,11 +224,10 @@ let outlineWait: number = 0;
 /**
  * Shows whether the file has changes not yet saved:
  * the save button in its full grey while it has, else faint, in a section too,
- * before the close of the round, and in the status line a notice, like `Saved 20:41`,
- * or when something went wrong, like `Not saved`.
+ * before the close of the round, and in the status line a notice, `Saved` or `Failed`.
  * - {@link EditorState#sliceDoc}: Gives the text, its lines joined by the line break of the file.
  *
- * @param notice - Notice of the moment, like `Not saved`, empty for none
+ * @param notice - Notice of the moment, `Saved` or `Failed`, empty for none
  */
 function stateShow(notice: string): void {
     const unsaved: boolean = view.state.sliceDoc() !== saved;
@@ -245,9 +243,8 @@ function stateShow(notice: string): void {
  * a note of my modules with its change as a diff, see `reader/edit.ts`;
  * the editor takes that change in, never into Undo, while I typed nothing meanwhile,
  * else the next save merges it again;
- * then says so in the status line with the time, like `Saved 20:41`,
- * or `Saved 20:41 with the change on the disk`, until the next change,
- * and a note takes the files its links lead to anew,
+ * then the status line says only `Saved`, or `Failed` when the reader does not write it,
+ * until the next change, and a note takes the files its links lead to anew,
  * so a link written since works, see `./preview.ts`.
  * Does nothing while a save is on its way, when nothing changed, or for a file to read only.
  * - `written`: The file as the reader wrote it.
@@ -266,26 +263,23 @@ async function noteSave(): Promise<void> {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ path: path, base: saved, text: text }),
         });
-        if (response.ok) {
-            const written: Written = (await response.json()) as Written;
-            const merged: boolean = written.text !== text;
-            if (merged && view.state.sliceDoc() === text)
-                view.dispatch({
-                    changes: written.changes,
-                    filter: false,
-                    annotations: Transaction.addToHistory.of(false),
-                });
-            saved = view.state.sliceDoc() === written.text ? written.text : text;
-            stateShow(`Saved ${timeOf(new Date())}${merged ? " with the change on the disk" : ""}`);
-            const reread: Opened | null =
-                saveAddress === "/api/edit/note" ? await openedRead("") : null;
-            if (reread !== null) linksSet(view, reread.links);
-        } else {
-            stateShow("Not saved");
-        }
+        if (!response.ok) throw new Error(`The reader did not write ${path}`);
+        const written: Written = (await response.json()) as Written;
+        const merged: boolean = written.text !== text;
+        if (merged && view.state.sliceDoc() === text)
+            view.dispatch({
+                changes: written.changes,
+                filter: false,
+                annotations: Transaction.addToHistory.of(false),
+            });
+        saved = view.state.sliceDoc() === written.text ? written.text : text;
+        stateShow("Saved");
+        const reread: Opened | null =
+            saveAddress === "/api/edit/note" ? await openedRead("") : null;
+        if (reread !== null) linksSet(view, reread.links);
     } catch (error: unknown) {
         console.error(error);
-        stateShow("Not saved: the reader is not running");
+        stateShow("Failed");
     } finally {
         saving = false;
     }

@@ -880,13 +880,14 @@ async function roundNext(view: EditorView): Promise<void> {
 }
 
 /**
- * Says in the status line that the log did not take where I am, as a save that fails says so.
+ * Says `Failed` in the status line when the log did not take where I am,
+ * as a save that fails says so.
  *
  * @param error - Why, like a lost connection
  */
 function failShow(error: unknown): void {
     console.error(error);
-    (document.getElementById("editor-state") as HTMLElement).textContent = "Not saved";
+    (document.getElementById("editor-state") as HTMLElement).textContent = "Failed";
 }
 
 /**
