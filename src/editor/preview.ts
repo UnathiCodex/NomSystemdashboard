@@ -2814,7 +2814,7 @@ function addressFollow(view: EditorView, address: string): boolean {
     const heading: string = hash === -1 ? "" : address.slice(hash + 1).trim();
     const opened: string | null = linkAddressOf(view.state, target, heading);
     if (target === "") {
-        if (!roundHeadingShow(view, heading, true)) headingShow(view, heading);
+        if (!roundHeadingShow(view, heading)) headingShow(view, heading);
     } else if (opened !== null && opened !== "") {
         location.assign(opened);
     }

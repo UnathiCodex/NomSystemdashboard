@@ -447,7 +447,7 @@ function treeClick(event: MouseEvent): void {
     const address: URL = new URL(link.href);
     if (address.pathname !== "/scripts" || address.searchParams.get("path") !== path) return;
     event.preventDefault();
-    if (roundHeadingShow(view, decodeURIComponent(address.hash.slice(1)), false)) return;
+    if (roundHeadingShow(view, decodeURIComponent(address.hash.slice(1)))) return;
     window.history.pushState(null, "", address);
     addressHeadingShow();
 }
@@ -477,7 +477,7 @@ function treeClick(event: MouseEvent): void {
  * a section its round, see `./round.ts`, its text hidden until its tasks are loaded,
  * so its blocks fold before they show,
  * scrolled to its current block unless the address names a heading,
- * whose block it shows once as looked up, the heading then dropped from the address,
+ * whose block it shows once, the heading then dropped from the address,
  * see {@link History#replaceState}.
  * - `address`: The parameters of the address.
  * - `file`: Path of the file of my new system, empty for a note.
@@ -574,7 +574,7 @@ export async function editorStart(): Promise<void> {
             const sectionShown: boolean = roundBlocksOf(view) !== null;
             if (!sectionShown) addressHeadingShow();
             else if (location.hash !== "") {
-                roundHeadingShow(view, decodeURIComponent(location.hash.slice(1)), true);
+                roundHeadingShow(view, decodeURIComponent(location.hash.slice(1)));
                 window.history.replaceState(null, "", location.pathname + location.search);
             }
         });

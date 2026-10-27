@@ -18,10 +18,7 @@
  * Beyond Obsidian, the block under each heading `##`,
  * like a theory block or a task, folds by a click on its heading, open at first,
  * and the section under a heading `#### Solution…` comes folded,
- * so I try a task before I see its solution;
- * so does the scene of a Definition, Theorem, Lemma or Algorithm,
- * its `####` heading like `#### Ice Cream Kiosk`, since a rendered note is looked up,
- * and a lookup reads the theory as a clean card.
+ * so I try a task before I see its solution.
  * Also beyond Obsidian, every empty line between two blocks stays one line high,
  * as I wrote it and as the editor shows it,
  * so the space between two blocks shows how many empty lines I wrote between them,
@@ -128,12 +125,6 @@ const blockStartRule: RegExp = /^[ \t]*(?:#{1,6}(?:[ \t]|$)|>|```|~~~|\||<|(?:[-
  * Text of a heading that opens a solution, like `Solution` or `Solution (own, unchecked)`.
  */
 const solutionRule: RegExp = /^Solution\b/;
-
-/**
- * Text of a heading `##` whose block holds a scene under a heading `####`,
- * like `#### Ice Cream Kiosk`.
- */
-const sceneBlockRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm)\./;
 
 /**
  * Address with a scheme, like `https://…`: a link out of the module, opened as it is.
@@ -456,7 +447,7 @@ const emptyLines: TokenizerAndRendererExtension = {
 
 /**
  * Section under a heading that folds, see {@link foldsMade}:
- * renders as `<details class="fold">`, of a scene `<details class="fold scene">`, open or closed,
+ * renders as `<details class="fold">`, open or closed,
  * with the heading as its `<summary>`, the one place to click to fold it,
  * and the blocks of the section inside.
  */
@@ -465,7 +456,7 @@ const fold: TokenizerAndRendererExtension = {
     renderer(this: RendererThis, token: Tokens.Generic): string {
         const [heading, ...blocks]: Token[] = token.tokens ?? [];
         return (
-            `<details class="fold${token.scene ? " scene" : ""}"${token.open ? " open" : ""}>` +
+            `<details class="fold"${token.open ? " open" : ""}>` +
             `<summary>${this.parser.parse([heading])}</summary>` +
             `<div class="fold-content">${this.parser.parse(blocks)}</div></details>`
         );
@@ -517,31 +508,24 @@ function emptyLinesMade(tokens: Token[] | TokensList): Token[] | TokensList {
  * up to the next heading of the same or a higher level, into one {@link fold},
  * when the heading's text says so.
  * - `sectionEnds`: Tells whether a block ends the section, a heading of the same or a higher level.
- * - `above`: Text of the last heading of a higher level so far, empty for none.
  *
  * @param tokens - Blocks of a note
  * @param depth - Level of the headings, like 2 for `##`
- * @param folds - Tells by the text of a heading,
- *   and of the last heading of a higher level above it, whether its section folds
+ * @param folds - Tells by the text of a heading whether its section folds
  * @param open - Whether the sections are open at first
- * @param scene - Whether the sections are scenes, see {@link sceneBlockRule}
  * @returns The same blocks, each such section as one block
  */
 function sectionsFolded(
     tokens: Token[] | TokensList,
     depth: number,
-    folds: (text: string, above: string) => boolean,
+    folds: (text: string) => boolean,
     open: boolean,
-    scene: boolean,
 ): Token[] | TokensList {
     const sectionEnds: (block: Token) => boolean = (block: Token): boolean =>
         block.type === "heading" && block.depth <= depth;
-    let above: string = "";
     for (let start: number = 0; start < tokens.length; start++) {
         const heading: Token = tokens[start];
-        if (heading.type === "heading" && heading.depth < depth) above = heading.text;
-        if (heading.type !== "heading" || heading.depth !== depth || !folds(heading.text, above))
-            continue;
+        if (heading.type !== "heading" || heading.depth !== depth || !folds(heading.text)) continue;
 
         let end: number = start + 1;
         while (end < tokens.length && !sectionEnds(tokens[end])) end++;
@@ -551,7 +535,6 @@ function sectionsFolded(
             raw: section.map((block: Token): string => block.raw).join(""),
             tokens: section,
             open: open,
-            scene: scene,
         });
     }
     return tokens;
@@ -559,23 +542,16 @@ function sectionsFolded(
 
 /**
  * Folds the sections of a note, see {@link sectionsFolded}:
- * first each under a heading `#### Solution…`
- * and each scene of a Definition, Theorem, Lemma or Algorithm,
- * see {@link sceneBlockRule}, closed; then each under a heading `##`, open, those inside.
+ * first each under a heading `#### Solution…`, closed,
+ * so I try a task before I see its solution,
+ * then each under a heading `##`, open, its solutions inside.
  *
  * @param tokens - Blocks of a note
  * @returns The same blocks, with the sections folded
  */
 function foldsMade(tokens: Token[] | TokensList): Token[] | TokensList {
-    sectionsFolded(tokens, 4, (text: string): boolean => solutionRule.test(text), false, false);
-    sectionsFolded(
-        tokens,
-        4,
-        (_text: string, above: string): boolean => sceneBlockRule.test(above),
-        false,
-        true,
-    );
-    return sectionsFolded(tokens, 2, (): boolean => true, true, false);
+    sectionsFolded(tokens, 4, (text: string): boolean => solutionRule.test(text), false);
+    return sectionsFolded(tokens, 2, (): boolean => true, true);
 }
 
 /**
