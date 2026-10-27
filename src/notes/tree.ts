@@ -665,11 +665,10 @@ async function filesAgain(
 
 /**
  * Place of a block of a section in its round, see `../editor/round.ts`:
- * done, done with its last result failed,
- * like a Task after Wrong, the current one, later in the round, outside the round,
- * or outside it but opened from the tree and shown.
+ * done, done with its last result failed, like a Task after Wrong,
+ * still to do in the round, the current step among them, or outside the round.
  */
-export type BlockMark = "done" | "wrong" | "current" | "round" | "other" | "opened";
+export type BlockMark = "done" | "wrong" | "round" | "other";
 
 /**
  * Type word of a block of a section at the start of its heading, with the dot and space after it,
@@ -735,8 +734,9 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * like `Food Truck` after Wrong; theory, a Definition, a Theorem, a Lemma or an Algorithm,
  * which is never right or wrong, only done, with a check in a ring,
  * the close of a round in the head of the editor, small and faint;
- * the one shown in the light text of what is shown,
- * a later one of the round grey, one outside the round fainter.
+ * the one shown in the light text of what is shown, where I am, wherever it stands in the round,
+ * one still to do in the round grey, the current step too while another one is shown,
+ * one outside the round fainter.
  * Every block of the section stands in it, never hidden without a trace:
  * once two or more blocks of one kind are outside the round,
  * like the Examples and Tasks round 0 does not need,
@@ -762,6 +762,8 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  *
  * @param path - Path of the note
  * @param blocks - Headings of its blocks in their order, each with its place
+ * @param shown - Heading of the block shown, where I am, empty for none,
+ *   see `roundShownOf` in `../editor/round.ts`
  * @param opened - Type words whose lines were open in the list before
  * @param next - The day the next Task comes, like `Tomorrow`, empty for none,
  *   see `roundNextOf` in `../editor/round.ts`
@@ -770,6 +772,7 @@ function kindBoxOf(kind: string): HTMLSpanElement {
 export function roundListOf(
     path: string,
     blocks: [string, BlockMark][],
+    shown: string,
     opened: string[],
     next: string,
 ): HTMLElement {
@@ -783,6 +786,7 @@ export function roundListOf(
         const link: HTMLAnchorElement = document.createElement("a");
         const judged: boolean = ["Example", "Task"].includes(kindOf([heading, mark]));
         link.className = `tree-file tree-${mark}`;
+        link.classList.toggle("tree-current", heading === shown);
         link.href = noteAddressOf(path, heading);
         link.dataset.heading = heading;
         link.title = heading.replace(/[ \t]*\(cold\)$/, "");
@@ -794,7 +798,7 @@ export function roundListOf(
     };
     const outside: (block: [string, BlockMark]) => boolean = (
         block: [string, BlockMark],
-    ): boolean => block[1] === "other" || block[1] === "opened";
+    ): boolean => block[1] === "other";
     const folded: string[] = [...new Set(blocks.map(kindOf))].filter(
         (kind: string): boolean =>
             kind !== "" &&
@@ -833,7 +837,7 @@ export function roundListOf(
         fold.dataset.kind = kind;
         fold.open =
             opened.includes(kind) ||
-            inside.some((other: [string, BlockMark]): boolean => other[1] === "opened");
+            inside.some((other: [string, BlockMark]): boolean => other[0] === shown);
         fold.lastElementChild?.append(...inside.map(linkOf));
         list.append(fold);
     });
@@ -876,6 +880,7 @@ export function roundListOf(
  * @param text - Text of the note
  * @param round - Headings of the blocks of a section with their places in its round,
  *   `null` for any other note
+ * @param shown - For a section the heading of the block shown, where I am, empty for none
  * @param next - For a section the day its next Task comes, like `Tomorrow`, empty for none
  */
 export function outlineShow(
@@ -883,6 +888,7 @@ export function outlineShow(
     path: string,
     text: string,
     round: [string, BlockMark][] | null,
+    shown: string,
     next: string,
 ): void {
     const entry: HTMLElement | null = tree.querySelector(
@@ -902,7 +908,7 @@ export function outlineShow(
     tree.querySelectorAll(".tree-outline").forEach((outline: Element): void => outline.remove());
     if (entry === null) return;
     if (round !== null) {
-        entry.after(roundListOf(path, round, kinds, next));
+        entry.after(roundListOf(path, round, shown, kinds, next));
         return;
     }
 

@@ -697,6 +697,17 @@ function sessionShow(shown: Round): void {
 }
 
 /**
+ * Gives the block shown alone, where I am: the one opened from the tree, else the current step.
+ *
+ * @param blocks - The blocks of the note
+ * @param current - The current step, `undefined` for none
+ * @returns The block, `undefined` for none, like once the round is closed
+ */
+function shownOf(blocks: Block[], current: Step | undefined): Block | undefined {
+    return blocks.find((block: Block): boolean => block.heading === opened) ?? current?.block;
+}
+
+/**
  * Shows the round as it stands:
  * the round line with the session beside it, the block shown alone,
  * `Next` in the head, an arrow, see {@link roundNext}, and the close beside it, see {@link closeShow},
@@ -710,7 +721,7 @@ function sessionShow(shown: Round): void {
  * - `current`: The current step.
  * - `line`: The round line.
  * - `next`: `Next` in the head.
- * - `blocks`, `alone`: The blocks of the note and the one shown.
+ * - `alone`: The block shown, see {@link shownOf}.
  *
  * @param view - The editor
  * @param shown - The round
@@ -723,9 +734,7 @@ function roundDraw(view: EditorView, shown: Round): void {
     (document.getElementById("editor-round-label") as HTMLElement).textContent = roundLineOf(shown);
     line.hidden = false;
     sessionShow(shown);
-    const blocks: Block[] = blocksOf(view.state, shown.loaded.tasks);
-    const alone: Block | undefined =
-        blocks.find((block: Block): boolean => block.heading === opened) ?? current?.block;
+    const alone: Block | undefined = shownOf(blocksOf(view.state, shown.loaded.tasks), current);
     view.dispatch({
         effects: nextMoved.of(
             alone === undefined ? null : { block: alone, end: endOf(view.state, alone) },
@@ -922,11 +931,11 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
 /**
  * Gives the places of the blocks of the round shown in their order, every block of the note,
  * for the tree: done, wrong once its last result failed, like `Task. Food Truck` after Wrong,
- * so the tree shows the cross its heading line shows, the current step,
- * also while I look at another block,
- * which keeps its own place, its check or cross too, later in the round, or outside it,
- * like a Task variant not due, also when opened from the tree and shown.
- * - `steps`, `current`: Steps of the round and the current one.
+ * so the tree shows the cross its heading line shows, still to do in the round,
+ * the current step among them, or outside it, like a Task variant not due.
+ * The tree lights the block shown, see {@link roundShownOf}, never the current step for itself:
+ * where I am is the block shown, where the round goes on the first one after those done.
+ * - `steps`: Steps of the round.
  * - `own`: The steps of a block.
  * - `last`: The last attempt at a block done, skips left out,
  *   `undefined` for none, like for theory.
@@ -938,13 +947,11 @@ export function roundBlocksOf(view: EditorView): [string, BlockMark][] | null {
     if (round === null) return null;
     const shown: Round = round;
     const steps: Step[] = roundStepsOf(view, shown);
-    const current: Step | undefined = currentOf(shown, steps);
     return blocksOf(view.state, shown.loaded.tasks).map((block: Block): [string, BlockMark] => {
         const own: Step[] = steps.filter(
             (step: Step): boolean => step.block.heading === block.heading,
         );
-        if (own.length === 0) return [block.heading, opened === block.heading ? "opened" : "other"];
-        if (current?.block.heading === block.heading) return [block.heading, "current"];
+        if (own.length === 0) return [block.heading, "other"];
         if (!own.every((step: Step): boolean => doneIs(shown, step)))
             return [block.heading, "round"];
         const last: Attempt | undefined = block.task?.attempts.findLast(
@@ -955,6 +962,20 @@ export function roundBlocksOf(view: EditorView): [string, BlockMark][] | null {
             last !== undefined && failed.includes(last.result) ? "wrong" : "done",
         ];
     });
+}
+
+/**
+ * Gives the heading of the block shown alone, where I am, which the tree lights,
+ * also right after a click in the tree shows another block, see {@link shownOf}.
+ *
+ * @param view - The editor
+ * @returns The heading as written, empty for none or for a note that is no section
+ */
+export function roundShownOf(view: EditorView): string {
+    if (round === null) return "";
+    const shown: Round = round;
+    const current: Step | undefined = currentOf(shown, roundStepsOf(view, shown));
+    return shownOf(blocksOf(view.state, shown.loaded.tasks), current)?.heading ?? "";
 }
 
 /**
@@ -987,7 +1008,8 @@ export function roundNextOf(): string {
  * Shows a block by its heading alone,
  * as its line in the tree or a link to it in the note asks, back or ahead,
  * see the top of this file;
- * `Next` returns from it to the current step, which stays where it was, marked in the tree.
+ * `Next` returns from it to the current step, which stays where it was;
+ * the tree lights the block shown, see {@link roundShownOf}.
  * Its scenes fold for a link, or for a block outside the round.
  * - `block`: The block asked for.
  * - `steps`, `current`: The steps of the round and the current one.

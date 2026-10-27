@@ -356,14 +356,14 @@
    so the names after them start in one line;
    in the grey of a card, as in the note, the same under the pointer,
    since the box itself is nothing to click;
-   on a block outside the round as faint as its name */
+   on a block outside the round as faint as its name, but while it is shown */
 .tree-round .block-kind {
     min-width: 3.75em;
     font-size: 0.8em;
     text-align: center;
 }
 
-.tree-round :is(.tree-other, .tree-kind > summary) .block-kind {
+.tree-round :is(.tree-other:not(.tree-current), .tree-kind > summary) .block-kind {
     color: var(--reading-marker);
 }
 
@@ -371,7 +371,7 @@
    and the entry under the pointer in the light text, no grey behind the row */
 .tree-folder > summary:hover,
 .tree-file:hover,
-.tree-file:is(.shown, .tree-current, .tree-opened),
+.tree-file:is(.shown, .tree-current),
 .tree-choice:is(:hover, .picked) {
     color: var(--text-main);
 }

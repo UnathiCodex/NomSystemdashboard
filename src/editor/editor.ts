@@ -105,6 +105,7 @@ import {
     roundGo,
     roundHeadingShow,
     roundNextOf,
+    roundShownOf,
     roundStart,
 } from "./round.ts";
 import { outlineShow, treeShow } from "../notes/tree.ts";
@@ -282,13 +283,21 @@ function keyDown(event: KeyboardEvent): void {
 
 /**
  * Builds the outline of a note in the tree anew,
- * or for a section its blocks with their places in its round, with the day its next Task comes.
+ * or for a section its blocks with their places in its round, the one shown lit,
+ * with the day its next Task comes.
  * - `blocks`: The blocks of a section with their places, `null` for any other note.
  */
 function outlineRefresh(): void {
     const blocks: [string, BlockMark][] | null = roundBlocksOf(view);
     if (outlineTree !== null)
-        outlineShow(outlineTree, path, view.state.sliceDoc(), blocks, roundNextOf());
+        outlineShow(
+            outlineTree,
+            path,
+            view.state.sliceDoc(),
+            blocks,
+            roundShownOf(view),
+            roundNextOf(),
+        );
 }
 
 /**
