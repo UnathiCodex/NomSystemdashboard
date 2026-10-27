@@ -11,10 +11,13 @@
  * like the entries a rename writes one by one, are told once, after the last.
  * `Devices.md`, which a page writes when its size changes,
  * see `devices.ts`, tells nothing, since no page shows it.
+ * Nor does a file of a folder the reader does not use, see `systemRoots` in `sources.ts`,
+ * like `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`,
+ * since only the editor opens it, reading it anew each time.
  *
- * - `node:fs`: Watches the folders of the new system, every folder in them too.
+ * - `node:fs`: Watches the folders the reader uses, every folder in them too.
  * - `node:path`: Builds the path of a file changed.
- * - `./sources.ts`: Names the folders of the new system and `Devices.md`.
+ * - `./sources.ts`: Names the folders the reader uses and `Devices.md`.
  */
 
 import { existsSync, watch } from "node:fs";
@@ -63,7 +66,7 @@ export function changesSend(response: ServerResponse): void {
 }
 
 /**
- * Watches those of the folders of the new system that exist, as long as the reader runs:
+ * Watches those of the folders the reader uses that exist, as long as the reader runs:
  * every change of a file in them but `Devices.md` waits for {@link quiet},
  * then tells every open page.
  */

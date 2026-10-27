@@ -6,8 +6,9 @@
  * The tree is `NomManageplannings` with every folder in it, also one I add later,
  * but never my old system, `NomSystemprevious`, at any depth, nor a hidden file or folder,
  * like `.obsidian`, nor a symbolic link.
- * Reads and writes only inside the folders of my new system, see `systemFiles` in `sources.ts`:
- * a Markdown file, like `NomMetainformations/Foods.md` or a daily note, to edit,
+ * Reads and writes only the files of the tree, see `systemFiles` in `sources.ts`:
+ * a Markdown file, like `NomMetainformations/Foods.md`, a daily note
+ * or `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`, to edit,
  * written exactly as sent, without a diff, since only the notes of my modules keep diffs,
  * see `edit.ts`; an `.ics` file only to read.
  * Paths are written from `NomManageplannings` with `/`,
@@ -16,19 +17,12 @@
  * - `node:fs`: Lists folders, reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
  * - `./edit.ts`: Gives the form of a file as I saved it in the editor.
- * - `./sources.ts`: Names the tree, the folder left out of it and the folders of the new system,
+ * - `./sources.ts`: Names the tree and the folder left out of it,
  *   and tells which files the reader may write.
  */
 
-import {
-    existsSync,
-    readdirSync,
-    readFileSync,
-    realpathSync,
-    statSync,
-    writeFileSync,
-} from "node:fs";
-import { basename, extname, join, sep } from "node:path";
+import { readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { extname, join, sep } from "node:path";
 import { systemFiles, writeAllowed } from "./sources.ts";
 
 import type { Dirent } from "node:fs";
@@ -40,8 +34,7 @@ import type { NoteChange } from "./edit.ts";
  * - `name`: Its name, like `2026_10` or `Foods.md`.
  * - `path`: Its path, see the top of this file, like `NomMetainformations/Foods.md`.
  * - `folder`: Whether it is a folder.
- * - `opens`: Whether the editor opens it:
- *   a Markdown or `.ics` file of the folders of the new system, never a folder.
+ * - `opens`: Whether the editor opens it: a Markdown or `.ics` file, never a folder.
  * - `children`: What a folder holds, its folders first, each part by name; none for a file.
  */
 export type FileNode = {
@@ -87,20 +80,13 @@ function leftOut(part: string): boolean {
 }
 
 /**
- * Tells whether the editor opens a file of a path:
- * it lies in one of the folders and is Markdown or `.ics`.
- * - `top`: The folder of `NomManageplannings` it lies in, like `NomMetainformations`.
+ * Tells whether the editor opens a file of the tree: it is Markdown or `.ics`.
  *
- * @param path - Path like `NomMetainformations/Foods.md`
+ * @param path - Path like `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`
  * @returns Whether it opens
  */
 function opensOf(path: string): boolean {
-    const top: string = path.split("/")[0];
-    return (
-        path.includes("/") &&
-        systemFiles.folders.some((folder: string): boolean => basename(folder) === top) &&
-        openEndings.includes(extname(path).toLowerCase())
-    );
+    return openEndings.includes(extname(path).toLowerCase());
 }
 
 /**
@@ -154,21 +140,20 @@ export function treeRead(): FileNode[] {
 
 /**
  * Turns the path of a file of my new system into its file on the disk,
- * only for a file with one of the endings that lies in one of the folders and exists.
+ * only for a file with one of the endings that lies in the tree and exists.
  * - {@link realpathSync}: Makes a path absolute and follows symbolic links,
- *   so no link leads outside the folders.
+ *   so no link leads outside the tree or into a part left out of it.
  * - `parts`: The parts of the path as sent.
  * - `file`: The file on the disk.
- * - `root`: The one of the folders it lies in, `undefined` for none; a folder still missing,
- *   like `NomFrequencediary` before my first daily note, holds nothing.
+ * - `root`: The tree on the disk.
  *
- * @param path - Path like `NomMetainformations/Foods.md`
+ * @param path - Path like `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`
  * @param endings - Endings it may have, like `.md`
  * @returns File on the disk
  * @throws {Error} - When the path has a part left out,
  *   like `NomSystemprevious`, `.obsidian` or `..`,
  *   or a `\`, has none of the endings,
- *   lies outside the folders of the new system, or nothing lies there
+ *   lies outside the tree, or nothing lies there
  */
 function systemFileOf(path: string, endings: string[]): string {
     const parts: string[] = path.split("/");
@@ -180,12 +165,9 @@ function systemFileOf(path: string, endings: string[]): string {
         throw new Error(`No file of the new system the editor opens: ${path}`);
 
     const file: string = realpathSync(join(systemFiles.tree, ...parts));
-    const root: string | undefined = systemFiles.folders
-        .filter((folder: string): boolean => existsSync(folder))
-        .map((folder: string): string => realpathSync(folder))
-        .find((folder: string): boolean => file.startsWith(`${folder}${sep}`));
+    const root: string = realpathSync(systemFiles.tree);
     if (
-        root === undefined ||
+        !file.startsWith(`${root}${sep}`) ||
         file
             .slice(root.length + 1)
             .split(sep)

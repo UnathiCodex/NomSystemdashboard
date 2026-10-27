@@ -528,9 +528,9 @@ export function moduleFoldersRead(): string[] {
  * of each row the folder its column `Nom` links, the last part of the link,
  * like `IN2028_BusinessAnalyticsMachineLearning`
  * of `[BusinessAnalyticsMachineLearning](../../NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning)`,
- * and the semester its column `Semester` names,
- * the newest one I seriously took it in, graded or not, like `2026S`, the newest of several;
- * its column `Registered`, every semester I was registered in, stays unread.
+ * and the newest semester its column `Attempt` names,
+ * of every semester I seriously took it in, graded or not, like `2026S` of `2025S, 2026S`;
+ * its column `Registered (not attempt)`, every semester I was registered in, stays unread.
  * Each column found by its name in the head of the table, so the columns may move.
  * A row without such a link or without a semester stays out.
  * - `rows`: The rows of the table, the head first, each cut into its cells.
@@ -555,7 +555,7 @@ function semestersRead(): Map<string, string> {
                 .exec(cells[head.indexOf("Nom")] ?? "")?.[1]
                 .split("/")
                 .at(-1);
-            const last: string | undefined = cells[head.indexOf("Semester")]
+            const last: string | undefined = cells[head.indexOf("Attempt")]
                 ?.match(/\d{4}[WS]/g)
                 ?.sort(collator.compare)
                 .at(-1);
@@ -567,7 +567,7 @@ function semestersRead(): Map<string, string> {
 /**
  * Reads the modules of the semester, by their folders in `NomSkillingmodules`, like
  * `IN2028_BusinessAnalyticsMachineLearning`:
- * those whose column `Semester` in `Modules.md` names the semester of today in Berlin time,
+ * those whose newest `Attempt` in `Modules.md` is the semester of today in Berlin time,
  * see {@link semestersRead} and `semesterOf` in `categories.ts`,
  * also one whose folder is missing yet, in the order of the rows;
  * read anew each time, so a changed `Modules.md` changes them at once.

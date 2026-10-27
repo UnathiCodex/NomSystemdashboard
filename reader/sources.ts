@@ -3,22 +3,25 @@
  *
  * Names every folder and file the reader reads,
  * and every address on the web it asks, grouped by area.
- * My new system is three folders in `NomManageplannings`, see {@link systemRoots}:
+ * My new system is every folder in `NomManageplannings`, also one I add later,
+ * like `NomStudysciences` for the studies I collect, but my old system, `NomSystemprevious`,
+ * which lies beside them and is never read.
+ * The reader uses four of them, see {@link systemRoots}:
  * `NomManagecalendar` for plan and log, {@link calendarRoot},
  * `NomFrequencediary` for the daily notes, {@link diaryRoot},
- * and `NomMetainformations` for my foods, places, workouts, videos and weight, {@link dataRoot};
- * my old system, `NomSystemprevious`, lies beside them and is never read.
+ * `NomMetainformations` for my foods, places, workouts, videos and weight, {@link dataRoot},
+ * and `NomModulesuniversity` for my modules of the university, {@link universityRoot}.
  * The reader reads only the new system, my modules, see {@link notes},
  * and the files the skill entries link, in my modules and my projects,
  * see {@link activeProjects} and `documents.ts`, and nothing that is not listed here;
  * every file at its own place, none from a copy elsewhere, like a draft in `.claude`.
- * It writes only into the three folders of the new system
+ * It writes only into the new system
  * and into what the dashboards share in `NomKommunikation`, the mailbox between Vu and me,
  * see {@link writeAllowed} and {@link kommunikationRoot},
  * the editor into the notes of my modules and the file of my corrections, see {@link editor},
  * and a click on a folder of a module not there yet makes it, see `folderMake` in `notes.ts`;
  * the editor shows the tree
- * of `NomManageplannings` but for my old system, and opens only the files of the three folders,
+ * of `NomManageplannings` but for my old system, and opens its files, Markdown or `.ics`,
  * see {@link systemFiles}. A file or folder of the new system that is missing,
  * like `Birthdays.ics` or the log of a year without entries, counts as empty.
  *
@@ -50,7 +53,7 @@ export const vault: string = process.env.NOM_VAULT ?? join(homedir(), "NomWorksp
 
 /**
  * Folder `NomManageplannings`,
- * which holds the three folders of my new system and my old system beside them.
+ * which holds the folders of my new system and my old system beside them.
  */
 export const manageRoot: string = join(vault, "NomManageplannings");
 
@@ -127,9 +130,8 @@ export const personsFile: string = join(dataRoot, "Persons.md");
 export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
 
 /**
- * The four folders of my new system, the only ones the reader writes into,
- * but for the notes of my modules and the file of my corrections,
- * which the editor writes, see {@link editor}.
+ * The four folders of my new system the reader uses, see the top of this file.
+ * A change of a file in them tells every open page, see `changes.ts`.
  */
 export const systemRoots: string[] = [calendarRoot, diaryRoot, dataRoot, universityRoot];
 
@@ -213,12 +215,12 @@ export const modulesFolder: string = "NomSkillingmodules";
  * - `table`: The overview of my modules, `Modules.md` in {@link dataRoot},
  *   one Markdown table with one row per module:
  *   its column `Nom` links the folder of the module,
- *   its column `Semester` names the newest semester I seriously took it in, graded or not,
- *   like `2026S`, by which the menu of the scripts view orders my modules
+ *   its column `Attempt` names every semester I seriously took it in, graded or not,
+ *   like `2025S, 2026S`, by whose newest the menu of the scripts view orders my modules
  *   and the reader finds the modules of the semester,
  *   see `menuRead` and `activeModulesRead` in `notes.ts`;
- *   its column `Registered` names every semester I was registered in for it on TUMonline,
- *   like `2025S, 2026S`, which the reader does not read.
+ *   its column `Registered (not attempt)` names every semester I was registered in for it
+ *   on TUMonline, like `2025S, 2026S`, which the reader does not read.
  */
 export type NotesSources = {
     modules: string;
@@ -235,7 +237,7 @@ export const notes: NotesSources = {
 
 /**
  * Places the editor writes,
- * the only ones besides the three folders of the new system, see {@link systemRoots}.
+ * the only ones besides the files of the new system, see {@link systemFiles}.
  *
  * - `modules`: My modules, each note right at its place, the modules of {@link notes}.
  * - `corrections`: My corrections, one file, `.claude/modules/corrections.diff` of this project,
@@ -259,18 +261,17 @@ export const editor: EditorSources = {
  * Files of my new system the editor shows, see `files.ts`.
  *
  * - `tree`: Folder whose tree the editor shows on the left, `NomManageplannings`,
- *   with every folder I add to it later,
+ *   with every folder I add to it later, like `NomStudysciences`,
  *   but without `previous` and without hidden files and folders, like `.obsidian`.
+ *   The editor reads and writes its files: a Markdown file,
+ *   like `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`, to edit,
+ *   an `.ics` file only to read.
  * - `previous`: Name of my old system, `NomSystemprevious`,
  *   left out of the tree at any depth and never read.
- * - `folders`: The only folders whose files the editor reads and writes,
- *   the three folders of my new system, see {@link systemRoots}: a Markdown file,
- *   like `Foods.md`, to edit, an `.ics` file only to read.
  */
 export type SystemFilesSources = {
     tree: string;
     previous: string;
-    folders: string[];
 };
 
 /**
@@ -279,7 +280,6 @@ export type SystemFilesSources = {
 export const systemFiles: SystemFilesSources = {
     tree: manageRoot,
     previous: previousName,
-    folders: systemRoots,
 };
 
 /**
@@ -557,23 +557,28 @@ export function skillFileOf(name: string, ending: string): string {
 
 /**
  * Tells whether the reader may write a file:
- * only inside one of the three folders of the new system, see {@link systemRoots},
+ * only inside my new system, `NomManageplannings` but my old system, see {@link previousName},
+ * and a hidden file or folder right in it, like `.obsidian`,
  * or inside what the dashboards share in a box of `NomKommunikation`,
  * see {@link dashboardBoxOf}, never beside our messages.
+ * The editor leaves both out at any depth, see {@link systemFiles}.
  * - {@link resolve}: Makes a path absolute and takes out `..`, so no path leaves the folders.
  * - `path`: The file, absolute.
+ * - `root`: Start of every path inside `NomManageplannings`.
+ * - `top`: The first part of its path inside `NomManageplannings`, like `NomStudysciences`.
  * - `box`: Its parts inside `NomKommunikation`, like `to_vu`, `dashboard` and the file;
  *   one starting with `..` when it lies outside.
  *
  * @param file - Path of a file to write
- * @returns Whether the file lies inside one of the folders of the new system
- *   or what the dashboards share
+ * @returns Whether the file lies inside the new system or what the dashboards share
  */
 export function writeAllowed(file: string): boolean {
     const path: string = resolve(file);
+    const root: string = `${resolve(manageRoot)}${sep}`;
+    const top: string = path.slice(root.length).split(sep)[0];
     const box: string[] = relative(resolve(kommunikationRoot), path).split(sep);
     return (
-        systemRoots.some((root: string): boolean => path.startsWith(`${resolve(root)}${sep}`)) ||
+        (path.startsWith(root) && top !== previousName && !top.startsWith(".")) ||
         (/^to_\w+$/.test(box[0]) && box[1] === "dashboard" && box.length > 2)
     );
 }

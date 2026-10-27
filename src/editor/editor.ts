@@ -14,8 +14,8 @@
  * `NomSkillingmodules` at `/scripts`, the outline of the note under it, built anew as I write,
  * whose headings scroll the note to them without loading the page again;
  * `NomManageplannings` for a file of my new system and at `/plannings`,
- * where a click on a Markdown file of the three folders of my new system,
- * like `Foods.md`, `Places.md` or a daily note, opens it here to edit,
+ * where a click on any Markdown file of it but my old system,
+ * like `Foods.md`, a daily note or a study, opens it here to edit,
  * saved back into its file without a diff;
  * an `.ics` file opens as its plain text, to read only,
  * each block of it drawn one step in and its entries apart, its names grey,
