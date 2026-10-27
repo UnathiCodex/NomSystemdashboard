@@ -88,7 +88,7 @@ type Rows = {
 /**
  * Heading `##` of a block, with its text as written.
  */
-const blockRule: RegExp = /^##[ \t]+(.+?)[ \t]*$/;
+export const blockRule: RegExp = /^##[ \t]+(.+?)[ \t]*$/;
 
 /**
  * End of the heading of a cold task, `(cold)` with the space before it,

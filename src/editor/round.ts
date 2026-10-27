@@ -59,6 +59,8 @@
  * cancelled, I stay where I was.
  * I write only in the block shown, see {@link changesKeep} and {@link selectionKeep},
  * so no key, cut or drag takes the hidden text around the block away.
+ * Its heading retyped, the round knows it by the new heading, see {@link headingFollow},
+ * so `Next` goes on from it.
  *
  * - `@codemirror/state`, `@codemirror/view`:
  *   Hold the block shown, and keep what I write and select inside it.
@@ -66,7 +68,7 @@
  * - `./steps.ts`: Tells whether a block is folded.
  * - `../skill/attempts.ts`: Writes the days of the round line out,
  *   and the day of the next Task for the tree.
- * - `./tasks.ts`: Reads the blocks of the note with their tasks,
+ * - `./tasks.ts`: Reads the blocks of the note with their tasks and the heading of a line,
  *   and hears each load of the tasks, with its section, and each Right.
  * - `./session.ts`: Makes sure a session of the module runs before `Next`
  *   or the close writes, and gives the session running, with its day and times written out.
@@ -77,7 +79,7 @@
 import { EditorSelection, EditorState, Prec, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView } from "@codemirror/view";
 import { foldable, foldEffect, unfoldEffect } from "@codemirror/language";
-import { blocksOf, tasksFollow } from "./tasks.ts";
+import { blockRule, blocksOf, tasksFollow } from "./tasks.ts";
 import { foldedAt } from "./steps.ts";
 import { sessionEnsure, sessionOf, sessionTextOf } from "./session.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
@@ -92,7 +94,7 @@ import type {
     Transaction,
     TransactionSpec,
 } from "@codemirror/state";
-import type { DecorationSet } from "@codemirror/view";
+import type { DecorationSet, ViewUpdate } from "@codemirror/view";
 import type { Attempt, Result, SkillSection, SkillTask } from "../skill/attempts.ts";
 import type { Block, NoteTasks } from "./tasks.ts";
 import type { BlockMark } from "../notes/tree.ts";
@@ -132,7 +134,7 @@ export type Fallback = {
 };
 
 /**
- * The round shown.
+ * The round shown, its keys following the heading I type, see {@link headingFollow}.
  *
  * - `loaded`: The tasks of the note with its section, as loaded last.
  * - `section`: Its section.
@@ -155,11 +157,13 @@ type Round = {
  *
  * - `from`: Start of its heading line.
  * - `to`: Where it ends, see {@link endOf}.
+ * - `heading`: Its heading as it now stands, see {@link alonePlace}.
  * - `decorations`: What is drawn: the text around it hidden, its heading marked as the first.
  */
 type Alone = {
     from: number;
     to: number;
+    heading: string;
     decorations: DecorationSet;
 };
 
@@ -182,8 +186,8 @@ const nextMoved: StateEffectType<{ block: Block; end: number } | null> = StateEf
 let round: Round | null = null;
 
 /**
- * Heading of a block opened from the tree that is not the current step,
- * shown alone in its place until `Next`;
+ * Heading of a block opened from the tree that is not the current step, as I type it,
+ * see {@link headingFollow}, shown alone in its place until `Next`;
  * empty for none.
  */
 let opened: string = "";
@@ -203,6 +207,8 @@ const todayAddress: string = "/scripts";
  * - `from`: Its start, carried along.
  * - `decorations`: The hidden text around it, carried along.
  * - `hidden`: Start of the hidden text after it, past the end of the note for none.
+ * - `heading`: The heading on the line of its start as it now stands,
+ *   `undefined` while that line is none, like `## ` while I retype it, which keeps the one before.
  */
 const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
     create: (): Alone | null => null,
@@ -219,9 +225,13 @@ const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
         decorations.between(from, transaction.state.doc.length, (start: number): void => {
             if (start > from) hidden = Math.min(hidden, start);
         });
+        const heading: string | undefined = blockRule.exec(
+            transaction.state.doc.lineAt(from).text,
+        )?.[1];
         return {
             from: from,
             to: Math.min(transaction.changes.mapPos(alone.to, 1), hidden - 1),
+            heading: heading ?? alone.heading,
             decorations: decorations,
         };
     },
@@ -308,6 +318,38 @@ function selectionKeep(transaction: Transaction): TransactionSpec | readonly Tra
 }
 
 /**
+ * Renames where I am as I retype the heading of the block shown, see {@link Alone},
+ * like `Definition. Random Sample` retyped `Definition. Random Samples`,
+ * so `Next` goes on from that block, never from the first step:
+ * the key of the current step while it shows,
+ * else the heading of the block opened from the tree, see {@link opened}.
+ * The key of a step passed follows too, so the tree marks it as before,
+ * unless another block has the old heading, which a heading I retype may pass through.
+ * A step a failure brought back keeps its key, since it is found by the heading the reader read,
+ * see {@link fallbacksOf}.
+ * - `before`, `after`: The heading of the block shown before and after the change,
+ *   `undefined` for none.
+ * - `renamed`: Gives a key with the new heading for one with the old.
+ *
+ * @param update - A change of the editor
+ */
+function headingFollow(update: ViewUpdate): void {
+    const before: string | undefined = update.startState.field(alonePlace)?.heading;
+    const after: string | undefined = update.state.field(alonePlace)?.heading;
+    if (round === null || !update.docChanged || after === undefined || after === before) return;
+    const renamed: (key: string) => string = (key: string): string =>
+        key === before ? after : key;
+    if (opened === "") round.at = renamed(round.at);
+    else opened = renamed(opened);
+    if (
+        !blocksOf(update.state, round.loaded.tasks).some(
+            (block: Block): boolean => block.heading === before,
+        )
+    )
+        round.seen = round.seen.map(renamed);
+}
+
+/**
  * Gives where a block ends: the end of its section,
  * or of its heading line for a block with nothing below it.
  *
@@ -335,7 +377,7 @@ function aloneOf(state: EditorState, block: Block, end: number): Alone {
     if (start > 0) marks.push(Decoration.replace({ block: true }).range(0, start - 1));
     if (end < state.doc.length)
         marks.push(Decoration.replace({ block: true }).range(end + 1, state.doc.length));
-    return { from: start, to: end, decorations: Decoration.set(marks) };
+    return { from: start, to: end, heading: block.heading, decorations: Decoration.set(marks) };
 }
 
 /**
@@ -1073,10 +1115,11 @@ export function roundGo(view: EditorView): void {
  * - {@link EditorState.transactionFilter}: Changes a transaction before it is applied;
  *   {@link Prec.highest} runs {@link selectionKeep} after the other filters,
  *   which move the cursor too, so it has the last word.
+ * - {@link EditorView.updateListener}: Hears each change once it is applied.
  *
  * @param changed - Shows the places of the blocks anew in the tree
  * @returns Extension for the editor: the block shown alone,
- *   and what I write and select kept inside it
+ *   what I write and select kept inside it, its heading followed
  */
 export function roundStart(changed: () => void): Extension {
     tasksFollow(
@@ -1087,5 +1130,6 @@ export function roundStart(changed: () => void): Extension {
         alonePlace,
         EditorState.changeFilter.of(changesKeep),
         Prec.highest(EditorState.transactionFilter.of(selectionKeep)),
+        EditorView.updateListener.of(headingFollow),
     ];
 }
