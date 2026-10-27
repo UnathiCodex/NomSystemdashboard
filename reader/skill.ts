@@ -635,13 +635,10 @@ const chapterOpenRound: number = 2;
  * a module neither planned nor listed is estimated at {@link examDefault}.
  * IN2028 is estimated from its endterms of the last years,
  * all on the last Thursday or so of February:
- * 28.02.2022, 29.02.2024, 27.02.2025;
- * IN0004 from its last two, each on the second Friday of February:
- * 14.02.2025, 13.02.2026.
+ * 28.02.2022, 29.02.2024, 27.02.2025.
  */
 export const exams: { [code: string]: ExamDate } = {
     IN2028: { day: "2027-02-25", estimated: true },
-    IN0004: { day: "2027-02-12", estimated: true },
 };
 
 /**
