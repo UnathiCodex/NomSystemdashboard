@@ -215,9 +215,8 @@
     --reading-line-height: 2;
 }
 
-/* No space of their own around headings, only the empty lines of the file above and below them;
-   the little room around a list item, which the scripts view gives its element,
-   given to its lines instead: CodeMirror measures lines, not the elements around them,
+/* No space around headings and list items on their elements, only on their lines:
+   CodeMirror measures lines, not the elements around them,
    and an element still stands around what takes the place of the lines far above
    or below the screen, so its space pushed every line below off from where CodeMirror placed it,
    and a click or Arrow Down landed a line or two lower */
@@ -225,6 +224,17 @@
     padding-block: 0;
 }
 
+/* A heading a little farther from what stands above it than the empty lines of the file make,
+   and close to what it heads: its line in the tight lines of a heading, 1.3 of its text,
+   with room above its text one of its letters high and none below it,
+   so only the half empty line below it parts it from its text, as one paragraph from the next */
+.editor-text.markdown :is(h1, h2, h3, h4, h5, h6) > .cm-line {
+    padding-top: 1em;
+    line-height: 1.3;
+}
+
+/* The little room around a list item, which the scripts view gives its element,
+   given to its lines instead, see above */
 .editor-text.markdown li > .cm-line:first-child {
     padding-top: 0.075em;
 }
