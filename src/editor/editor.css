@@ -459,7 +459,7 @@
 
 /* Formula `$$…$$` rendered after what stands before it on its line, as wide as the line at most,
    too wide ones scrolling sideways as in the scripts view;
-   being edited, rendered below its TeX on a line of its own */
+   being edited, rendered above its TeX on a line of its own, where it stood */
 .editor-text .cm-math-display {
     display: inline-block;
     max-width: 100%;

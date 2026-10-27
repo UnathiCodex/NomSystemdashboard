@@ -591,7 +591,7 @@ class MathWidget extends WidgetType {
     readonly display: boolean;
 
     /**
-     * Whether it shows below its TeX being edited.
+     * Whether it shows above its TeX being edited.
      */
     readonly preview: boolean;
 
@@ -1265,7 +1265,9 @@ function tableRunsOf(view: EditorView, from: number, to: number): number[] {
  * of each selection its end that a key moves,
  * so a selection made by Shift and the arrows shows as text only what its cursor reaches,
  * like a link it goes into, never what it covers;
- * none of a selection made by the pointer, which keeps the look;
+ * none of a selection made by the pointer, which keeps the look,
+ * but of one inside a formula, made in its TeX, which so stays its text to edit,
+ * see {@link formulaHolds};
  * while the mouse button is down after a press in the text those of the moment of the press,
  * see {@link frozen}, so no text moves under the pointer while I click or drag,
  * and a click shows what it touches as text once I let go.
@@ -1277,9 +1279,31 @@ function cursorsOf(state: EditorState): number[] {
     return (
         state.field(frozen) ??
         state.selection.ranges
-            .filter((range: SelectionRange): boolean => range.empty || !state.field(pointed))
+            .filter(
+                (range: SelectionRange): boolean =>
+                    range.empty || !state.field(pointed) || formulaHolds(state, range),
+            )
             .map((range: SelectionRange): number => range.head)
     );
+}
+
+/**
+ * Tells whether a formula holds a stretch of the text, at its ends too,
+ * like a selection made by the pointer in its TeX, see {@link cursorsOf}.
+ * - `node`: A piece of syntax at the start of the stretch, from the innermost outwards.
+ *
+ * @param state - Text and syntax tree
+ * @param range - The stretch
+ * @returns Whether a formula, `InlineMath`, holds it
+ */
+function formulaHolds(state: EditorState, range: SelectionRange): boolean {
+    for (
+        let node: SyntaxNode | null = syntaxTree(state).resolveInner(range.from, 1);
+        node !== null;
+        node = node.parent
+    )
+        if (node.name === "InlineMath") return node.from <= range.from && node.to >= range.to;
+    return false;
 }
 
 /**
@@ -1425,8 +1449,9 @@ function foldLook(look: Look, line: Line, item: boolean): void {
  * its fold arrow after its text.
  * The type word of a block at its start,
  * like `Definition` of `## Definition. Population and Sample`, a small grey box before the name,
- * its dot and space hidden, while the cursor is not on the line, see {@link kindRule};
- * no text to click into, see {@link kindClicked}.
+ * its dot and space hidden, also while the cursor stands in the name,
+ * so a click into a heading moves none of its text; as written only while the cursor touches it,
+ * see {@link kindRule}; no text to click into, see {@link kindClicked}.
  * - `kind`: The type word with the dot and space after it, `null` for a heading without one.
  * - `start`: Where the text of the heading starts.
  *
@@ -1438,14 +1463,14 @@ function headingLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
     const mark: SyntaxNode | null = node.getChild("HeaderMark");
     wrap(look, node, `h${node.name.slice(-1)}`, {}, line.from + 1);
-    if (mark !== null && touched(look, line.from, line.to))
-        look.decorations.push(hanging.range(mark.from, markEndOf(look, mark)));
-    else if (mark !== null) {
+    if (mark !== null) {
         const start: number = markEndOf(look, mark);
         const kind: RegExpExecArray | null =
             node.name === "ATXHeading2" ? kindRule.exec(look.state.sliceDoc(start, line.to)) : null;
-        hide(look, mark.from, start);
-        if (kind !== null) {
+        if (touched(look, line.from, line.to))
+            look.decorations.push(hanging.range(mark.from, start));
+        else hide(look, mark.from, start);
+        if (kind !== null && !touched(look, start, start + kind[1].length)) {
             look.decorations.push(kindBox.range(start, start + kind[1].length));
             hide(look, start + kind[1].length, start + kind[0].length);
         }
@@ -1658,7 +1683,9 @@ function unresolvedOf(target: string): Decoration {
  * Formula: rendered while the cursor does not touch it,
  * a formula `$…$` with the punctuation right after it, like `,`, on its line,
  * as in the scripts view, see `mathInline` in `../notes/markdown.ts`;
- * else its TeX, a formula `$$…$$` rendered below it.
+ * else its TeX, also while a selection by the pointer lies in it, see {@link cursorsOf},
+ * a formula `$$…$$` rendered above its TeX, where it stood, so the formula I click stays in place,
+ * from the start of its line, before blanks hidden there, which would push it down a line.
  * - `after`: The rest of its line.
  * - `punctuation`: How many characters of punctuation follow it.
  *
@@ -1683,7 +1710,9 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
             look.decorations.push(unbroken.range(node.from, node.to + punctuation));
     } else if (display) {
         look.decorations.push(
-            Decoration.widget({ widget: new MathWidget(tex, true, true), side: 1 }).range(node.to),
+            Decoration.widget({ widget: new MathWidget(tex, true, true), side: -1 }).range(
+                look.state.doc.lineAt(node.from).from,
+            ),
         );
     }
     return false;
@@ -2794,7 +2823,9 @@ function addressFollow(view: EditorView, address: string): boolean {
 
 /**
  * Follows the link of a click: one of a rendered link, see {@link followable},
- * or with Ctrl held, on a Mac with Cmd, one of a link shown as its text.
+ * or with Ctrl held, on a Mac with Cmd, one of a link shown as its text,
+ * and so one in a heading, like `#### [Ice Cream Kiosk](<#Definition. Random Variable>)`,
+ * so a click into a heading edits it, never showing another block.
  * Taking the mouse button down there keeps the cursor where it is, so the link stays rendered;
  * letting it go follows it, see {@link linkFollow}; any other click goes on to the editor.
  * - `pos`: The place of the text clicked, `null` beside the text.
@@ -2805,9 +2836,13 @@ function addressFollow(view: EditorView, address: string): boolean {
  * @returns Whether it was a click on a link, which the editor then leaves alone
  */
 function linkClicked(event: MouseEvent, view: EditorView): boolean {
+    const target: Element = event.target as Element;
     if (
         event.button !== 0 ||
-        (!(event.target as Element).closest(".cm-follow") && !event.ctrlKey && !event.metaKey)
+        ((target.closest(".cm-follow") === null ||
+            target.closest("h1, h2, h3, h4, h5, h6") !== null) &&
+            !event.ctrlKey &&
+            !event.metaKey)
     )
         return false;
 
