@@ -451,12 +451,14 @@ async function fileStream(
  * - `GET /api/notes/broken`:
  *   Sends the links that lead nowhere in the notes of the semester, each with its note.
  * - `PUT /api/edit/note`: Writes note of my modules of the body, its change kept as a diff,
- *   refused with 409 when its file changed since the editor read it.
+ *   merged with a change of its file since the editor read it,
+ *   and sends it back as written, see `Written` in `edit.ts`.
  * - `GET /api/edit/tree`: Sends the tree of `NomManageplannings` for the editor,
  *   without my old system, read only.
  * - `GET /api/edit/file?path=…`: Sends a file of the folders of my new system, Markdown or `.ics`.
  * - `PUT /api/edit/file`: Writes Markdown file of the body into the folders of my new system,
- *   without a diff, refused with 409 when its file changed since the editor read it.
+ *   without a diff, merged with a change of its file since the editor read it,
+ *   and sends it back as written.
  * - `GET /api/skill/tasks`: Sends the modules with their tasks,
  *   when each is due, every module folder, and the types, for Learn,
  *   which shows the boxes of today it writes first.
@@ -761,17 +763,13 @@ async function requestHandle(
     } else if (request.method === "GET" && url.pathname === "/api/notes/broken") {
         responseSend(response, 200, brokenLinksRead());
     } else if (request.method === "PUT" && url.pathname === "/api/edit/note") {
-        responseSend(response, noteWrite((await json(request)) as NoteChange) ? 200 : 409, null);
+        responseSend(response, 200, noteWrite((await json(request)) as NoteChange));
     } else if (request.method === "GET" && url.pathname === "/api/edit/tree") {
         responseSend(response, 200, treeRead());
     } else if (request.method === "GET" && url.pathname === "/api/edit/file") {
         responseSend(response, 200, systemFileRead(path));
     } else if (request.method === "PUT" && url.pathname === "/api/edit/file") {
-        responseSend(
-            response,
-            systemFileWrite((await json(request)) as NoteChange) ? 200 : 409,
-            null,
-        );
+        responseSend(response, 200, systemFileWrite((await json(request)) as NoteChange));
     } else if (request.method === "GET" && url.pathname === "/api/skill/tasks") {
         suggestionsWrite();
         responseSend(response, 200, skillingRead());

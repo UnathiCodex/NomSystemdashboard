@@ -90,7 +90,7 @@
  * - `./editor.css`: Look of the editor.
  */
 
-import { EditorState } from "@codemirror/state";
+import { EditorState, Transaction } from "@codemirror/state";
 import { EditorView, drawSelection, keymap } from "@codemirror/view";
 import { defaultKeymap, history, indentWithTab } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
@@ -150,6 +150,16 @@ type SystemFile = {
     path: string;
     text: string;
     editable: boolean;
+};
+
+/**
+ * A file as the reader wrote it, see `Written` in `reader/edit.ts`:
+ * its text as written, the text I saved merged with a change of the file on the disk,
+ * and what that merge changed in the text I saved.
+ */
+type Written = {
+    text: string;
+    changes: { from: number; to: number; insert: string }[];
 };
 
 /**
@@ -230,12 +240,18 @@ function stateShow(notice: string): void {
 
 /**
  * Saves the file: sends its text to the reader with the text it had when read or saved last;
- * the reader writes it when the file has not changed since,
- * a note of my modules with its change as a diff;
- * then says so in the status line with the time, like `Saved 20:41`, until the next change,
+ * the reader writes it, merged with a change of the file on the disk since,
+ * like by a Claude session, mine standing where we both changed the same lines,
+ * a note of my modules with its change as a diff, see `reader/edit.ts`;
+ * the editor takes that change in, never into Undo, while I typed nothing meanwhile,
+ * else the next save merges it again;
+ * then says so in the status line with the time, like `Saved 20:41`,
+ * or `Saved 20:41 with the change on the disk`, until the next change,
  * and a note takes the files its links lead to anew,
  * so a link written since works, see `./preview.ts`.
  * Does nothing while a save is on its way, when nothing changed, or for a file to read only.
+ * - `written`: The file as the reader wrote it.
+ * - `merged`: Whether the reader merged a change of the disk into it.
  * - `reread`: The note read anew with its links,
  *   `null` for a file of my new system or when it cannot be read.
  */
@@ -251,13 +267,19 @@ async function noteSave(): Promise<void> {
             body: JSON.stringify({ path: path, base: saved, text: text }),
         });
         if (response.ok) {
-            saved = text;
-            stateShow(`Saved ${timeOf(new Date())}`);
+            const written: Written = (await response.json()) as Written;
+            const merged: boolean = written.text !== text;
+            if (merged && view.state.sliceDoc() === text)
+                view.dispatch({
+                    changes: written.changes,
+                    filter: false,
+                    annotations: Transaction.addToHistory.of(false),
+                });
+            saved = view.state.sliceDoc() === written.text ? written.text : text;
+            stateShow(`Saved ${timeOf(new Date())}${merged ? " with the change on the disk" : ""}`);
             const reread: Opened | null =
                 saveAddress === "/api/edit/note" ? await openedRead("") : null;
             if (reread !== null) linksSet(view, reread.links);
-        } else if (response.status === 409) {
-            stateShow("Not saved: it changed on the disk, reload it");
         } else {
             stateShow("Not saved");
         }

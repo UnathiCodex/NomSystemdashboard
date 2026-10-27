@@ -16,7 +16,8 @@
  *
  * - `node:fs`: Lists folders, reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
- * - `./edit.ts`: Gives the form of a file as I saved it in the editor.
+ * - `./edit.ts`: Gives the form of a file as I saved it in the editor,
+ *   merges it with a change of its file on the disk and tells the editor what that changed.
  * - `./sources.ts`: Names the tree and the folder left out of it,
  *   and tells which files the reader may write.
  */
@@ -24,9 +25,10 @@
 import { readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, sep } from "node:path";
 import { systemFiles, writeAllowed } from "./sources.ts";
+import { changesOf, textMerged } from "./edit.ts";
 
 import type { Dirent } from "node:fs";
-import type { NoteChange } from "./edit.ts";
+import type { NoteChange, Written } from "./edit.ts";
 
 /**
  * A folder or file of the tree, as the editor shows it.
@@ -197,17 +199,18 @@ export function systemFileRead(path: string): SystemFile {
 
 /**
  * Writes a Markdown file of my new system as I saved it, exactly the text sent,
- * when its file did not change since the editor read it; without a diff.
- * A text without change writes nothing.
+ * merged with a change of its file on the disk since the editor read it,
+ * see `textMerged` in `edit.ts`; without a diff. A text without change writes nothing.
  * - `file`: The file on the disk.
  * - `bytes`, `old`: What it holds now, as bytes and as text.
+ * - `text`: The text to write.
  *
  * @param change - File as saved
- * @returns Whether it is written, `false` when its file changed since the editor read it
+ * @returns The file as written, see `Written` in `edit.ts`
  * @throws {Error} - When it is no Markdown file of the folders of the new system,
  *   see {@link systemFileOf}, or its file is no UTF-8 text, which could not be written back exactly
  */
-export function systemFileWrite(change: NoteChange): boolean {
+export function systemFileWrite(change: NoteChange): Written {
     const file: string = systemFileOf(String(change.path ?? ""), editEndings);
     if (!writeAllowed(join(systemFiles.tree, ...change.path.split("/"))))
         throw new Error(`No writing outside the new system: ${change.path}`);
@@ -215,7 +218,8 @@ export function systemFileWrite(change: NoteChange): boolean {
     const old: string = bytes.toString("utf8");
     if (!Buffer.from(old, "utf8").equals(bytes))
         throw new Error(`No UTF-8 text, so not written: ${change.path}`);
-    if (old !== change.base) return false;
-    if (change.text !== old) writeFileSync(file, String(change.text));
-    return true;
+    const text: string =
+        old === change.base ? change.text : textMerged(change.base, change.text, old);
+    if (text !== old) writeFileSync(file, text);
+    return { text: text, changes: changesOf(change.text, text) };
 }
