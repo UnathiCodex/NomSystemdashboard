@@ -362,7 +362,7 @@ const categories: Category[] = [
     categoryOf("Talk"),
     categoryOf("Event"),
     categoryOf("Drink"),
-    categoryOf("Watch"),
+    categoryOf("Internet"),
     categoryOf("Game"),
 ];
 

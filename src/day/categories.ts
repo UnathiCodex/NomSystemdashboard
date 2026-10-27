@@ -11,7 +11,7 @@
  * see `timeFieldStart` in `times.ts`. Esc closes an open list, else
  * the dialog, and a click beside the dialog closes it without saving.
  * Enter in a field confirms only that field,
- * and the entry saves only by its check or by Ctrl+Enter, see {@link enterTake}.
+ * and the entry saves only by its check or Ctrl+Enter or Ctrl+S, see {@link enterTake}.
  * A new entry opens with the list of the categories open.
  * A changed entry of the log saves only while its file still holds it as the dialog opened it,
  * the first save winning, else the dialog says so above its buttons, see {@link entrySave}.
@@ -1241,7 +1241,7 @@ function summaryPartsShow(): void {
  * see {@link placePartsOf}: the pencil beside its summary, which always changes it,
  * see {@link summaryChange}, and the link below the summary, see {@link summaryPartsShow};
  * that of a skill entry beside and below its skill and type, see `skill.ts`.
- * The summary of a field, like `Wolrd News` of `Watch`,
+ * The summary of a field, like `Worldnews` of `Internet`,
  * `Night` of `Sleep` or `U-Bahn, Bus` of `Way`, also one as planned, has the part `Text`,
  * indented with the grey line at its left, see {@link partOf}, its summary as written,
  * which its pencil shows and hides and I change in place, as the name of my place:
@@ -3518,10 +3518,28 @@ function timesUnmark(event: Event): void {
  * a field that uses Enter keeps it,
  * like a list taking its first match or a field of a food saving that food,
  * and the note keeps it as a new line.
+ * Ctrl+S saves it alike, from anywhere in the open dialog, also with no field focused,
+ * in place of the browser saving the page; with another dialog over it, like that of a new place,
+ * it leaves the key to that one.
  * - `form`: The form of the dialog.
+ * - `dialog`: The dialog.
  */
 function enterTake(): void {
     const form: HTMLFormElement = document.getElementById("entry-form") as HTMLFormElement;
+    const dialog: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
+    document.addEventListener(
+        "keydown",
+        (event: KeyboardEvent): void => {
+            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s") return;
+            const target: Node = event.target as Node;
+            if (!dialog.open || (target !== document.body && !dialog.contains(target))) return;
+            event.preventDefault();
+            event.stopPropagation();
+            (document.activeElement as HTMLElement | null)?.blur();
+            form.requestSubmit();
+        },
+        true,
+    );
     form.addEventListener(
         "keydown",
         (event: KeyboardEvent): void => {
