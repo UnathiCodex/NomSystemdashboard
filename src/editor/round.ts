@@ -203,8 +203,13 @@ const todayAddress: string = "/scripts";
 /**
  * The block shown alone, `null` for none:
  * built anew when `Next` moves, carried along when the text changes,
- * its start before what I type at it and its end after, so what I type at either belongs to it.
+ * its start before what I type at it and its end after, so what I type at either belongs to it,
+ * its end never past the line break before the hidden text after it,
+ * also once its last line went with that line break, see {@link changesKeep}.
  * - {@link StateField}: Only a field may hide whole lines, like the text around the block.
+ * - `from`: Its start, carried along.
+ * - `decorations`: The hidden text around it, carried along.
+ * - `hidden`: Start of the hidden text after it, past the end of the note for none.
  */
 const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
     create: (): Alone | null => null,
@@ -215,10 +220,16 @@ const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
                     ? null
                     : aloneOf(transaction.state, effect.value.block, effect.value.end);
         if (alone === null || !transaction.docChanged) return alone;
+        const from: number = transaction.changes.mapPos(alone.from, -1);
+        const decorations: DecorationSet = alone.decorations.map(transaction.changes);
+        let hidden: number = transaction.state.doc.length + 1;
+        decorations.between(from, transaction.state.doc.length, (start: number): void => {
+            if (start > from) hidden = Math.min(hidden, start);
+        });
         return {
-            from: transaction.changes.mapPos(alone.from, -1),
-            to: transaction.changes.mapPos(alone.to, 1),
-            decorations: alone.decorations.map(transaction.changes),
+            from: from,
+            to: Math.min(transaction.changes.mapPos(alone.to, 1), hidden - 1),
+            decorations: decorations,
         };
     },
     provide: (field: StateField<Alone | null>): Extension =>
@@ -233,9 +244,12 @@ const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
  * a change reaching beyond it is left out whole, never half, like Delete at its end,
  * which took the line break after it and pulled the hidden text after it into the block,
  * Backspace at the start of its heading, or a cut over a selection reaching past its end;
+ * but whole lines taken away with the line break after its last line stand,
+ * like the line Ctrl+X cuts with nothing picked, since the text after them only moves up;
  * undo and redo, which CodeMirror never filters, only take back what was allowed.
  * - `alone`: The block shown alone before the change.
  * - `inside`: Whether every change lies inside it.
+ * - `lines`: Whether a change takes away whole lines up to the line break after the block.
  *
  * @param transaction - Transaction
  * @returns Whether its changes may stand
@@ -244,23 +258,31 @@ function changesKeep(transaction: Transaction): boolean {
     const alone: Alone | null = transaction.startState.field(alonePlace);
     let inside: boolean = true;
     if (alone !== null)
-        transaction.changes.iterChangedRanges((from: number, to: number): void => {
-            inside &&= from >= alone.from && to <= alone.to;
-        });
+        transaction.changes.iterChangedRanges(
+            (from: number, to: number, fromB: number, toB: number): void => {
+                const lines: boolean =
+                    to === alone.to + 1 &&
+                    fromB === toB &&
+                    from >= alone.from &&
+                    transaction.startState.doc.lineAt(from).from === from;
+                inside &&= (from >= alone.from && to <= alone.to) || lines;
+            },
+        );
     return inside;
 }
 
 /**
  * Keeps the cursor and what I select inside the block shown alone,
  * so neither reaches the hidden text,
- * like Shift+Down on its last line, Ctrl+A or a drag past its end:
+ * like Shift+Down on its last line, Ctrl+A or a drag past its end,
+ * or a change that carries them along, like the cut of its last line:
  * a place beyond the block goes to its start or its end.
- * Only where a key, a click or a drag puts them:
+ * Only where a key, a click, a drag or a change puts them:
  * the cursor left in the block before when `Next` moves on stays there,
  * unseen and without the focus, until I click or move it,
  * so the heading of the next block shows as before.
  * - `alone`: The block shown alone after the transaction.
- * - `selection`: The cursors and selections the transaction puts.
+ * - `selection`: The cursors and selections the transaction puts or carries along.
  * - `inside`: A place kept inside the block.
  * - `kept`: Each cursor or selection inside the block, the same where it already lies inside.
  *
@@ -269,10 +291,10 @@ function changesKeep(transaction: Transaction): boolean {
  *   when it reached beyond the block
  */
 function selectionKeep(transaction: Transaction): TransactionSpec | readonly TransactionSpec[] {
-    if (transaction.selection === undefined) return transaction;
+    if (transaction.selection === undefined && !transaction.docChanged) return transaction;
     const alone: Alone | null = transaction.state.field(alonePlace);
     if (alone === null) return transaction;
-    const selection: EditorSelection = transaction.selection;
+    const selection: EditorSelection = transaction.newSelection;
     const inside: (place: number) => number = (place: number): number =>
         Math.min(Math.max(place, alone.from), alone.to);
     const kept: SelectionRange[] = selection.ranges.map((range: SelectionRange): SelectionRange =>
