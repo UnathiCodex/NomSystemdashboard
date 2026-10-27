@@ -822,15 +822,15 @@ export function addedRowOf(
 }
 
 /**
- * Makes the grey box of a round, like `Round 0`, see `.round-tag` in `base.css`,
- * as the dialog of a box shows it after a note.
+ * Makes the grey box of a round, like `Round 0`, as the dialog of a box shows it after a note:
+ * the box of the round in the status line of the editor, see `.round-tag` in `base.css`.
  *
  * @param text - The round, like `Round 0`
  * @returns The box
  */
 export function roundTagOf(text: string): HTMLSpanElement {
     const tag: HTMLSpanElement = document.createElement("span");
-    tag.className = "round-tag";
+    tag.className = "block-kind round-tag";
     tag.textContent = text;
     return tag;
 }

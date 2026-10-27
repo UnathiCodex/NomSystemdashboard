@@ -496,15 +496,15 @@ h3 {
 }
 
 /* The round of a section, like `Round 0`, a small grey box after its note in the dialog,
-   in the grey and the corners of a note of the tree, see `.tree-file` in `notes/notes.css`,
-   see `roundTagOf` in `day/choices.ts` */
+   see `roundTagOf` in `day/choices.ts`: the box of the round in the status line of the editor,
+   see `.block-kind` above and `.editor-title .block-kind` in `editor/editor.css`,
+   as small, as wide, as grey, a little apart from the name of its note */
 .round-tag {
-    display: inline-block;
-    margin-left: 0.5rem;
-    padding: 0 0.375rem;
-    border-radius: var(--radius);
-    background: var(--chosen);
-    color: var(--text-muted);
+    box-sizing: border-box;
+    width: 7.25em;
+    margin: 0 0 0 0.75rem;
+    font-size: calc(0.55 * 1.4rem);
+    text-align: center;
     white-space: nowrap;
 }
 
