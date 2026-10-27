@@ -159,7 +159,7 @@ import type {
     Transaction,
     TransactionSpec,
 } from "@codemirror/state";
-import type { DecorationSet } from "@codemirror/view";
+import type { DecorationSet, ViewUpdate } from "@codemirror/view";
 import type { Highlighter } from "@lezer/highlight";
 import type { Person } from "../persons.ts";
 import type { SyntaxNode, SyntaxNodeRef } from "@lezer/common";
@@ -405,6 +405,26 @@ const focused: StateField<boolean> = StateField.define<boolean>({
         return value;
     },
 });
+
+/**
+ * Tells {@link focused} the focus right after any update of the editor that leaves it behind,
+ * not by CodeMirror's news of the focus, which it drops once another transaction comes first,
+ * like the press held by {@link pressHold} when I come back from another window
+ * by a click into the text: no heading or formula opened then,
+ * the whole note staying rendered until the page loaded anew.
+ * - {@link queueMicrotask}: Runs right after the code that made the update, like a click.
+ * - `focus`: Whether the editor has the focus by then.
+ *
+ * @param update - Update of the editor
+ */
+function focusKeep(update: ViewUpdate): void {
+    if (update.view.hasFocus === update.state.field(focused)) return;
+    queueMicrotask((): void => {
+        const focus: boolean = update.view.hasFocus;
+        if (focus !== update.view.state.field(focused))
+            update.view.dispatch({ effects: focusChange.of(focus) });
+    });
+}
 
 /**
  * Whether the pointer made the selection, by a click or a drag, see {@link cursorsOf};
@@ -2988,8 +3008,8 @@ export function linksSet(view: EditorView, links: Links): void {
  *   Take the decorations and elements of the look.
  * - {@link EditorView.editorAttributes}: Marks the cursor on the lower of two empty lines,
  *   see {@link stopCursorOf}.
- * - {@link EditorView.focusChangeEffect}:
- *   Tells {@link focused} when the editor gets or loses the focus.
+ * - {@link EditorView.updateListener}: Tells {@link focused} when the editor got or lost the focus,
+ *   see {@link focusKeep}.
  * - {@link EditorView.domEventObservers}: Holds the look while the mouse button is down,
  *   see {@link pressHold}, before the editor reads where I pressed,
  *   and lets a drag take the hidden start of a line, see {@link marginSelect}.
@@ -3044,10 +3064,7 @@ export function livePreview(links: Links, place: string): Extension {
         look,
         caretPlace,
         EditorView.editorAttributes.of(stopCursorOf),
-        EditorView.focusChangeEffect.of(
-            (_state: EditorState, focusing: boolean): StateEffect<boolean> =>
-                focusChange.of(focusing),
-        ),
+        EditorView.updateListener.of(focusKeep),
         EditorView.domEventObservers({ mousedown: pressHold }),
         EditorView.domEventObservers({ mousedown: marginSelect }),
         EditorView.domEventHandlers({ mousedown: kindClicked }),
