@@ -8,13 +8,18 @@
  * - In plain text and in a heading Enter writes one empty line more, wherever the cursor stands,
  *   before a new paragraph a line break and an empty line, see {@link paragraphBreak}.
  * - The air of a line, two empty lines, is the most air any key writes, see {@link airMost}.
- * - Enter continues a list or a task list with the next point, without air;
- *   right after the `-` of a point, a still empty one or one with text after the cursor,
- *   it puts two empty lines above it, the air of a whole line,
- *   see {@link pointAir}; Ctrl+Enter writes the next point with one empty line above it,
+ * - Lists are written as my notes write them, see §6.4, §6.5 and §6.12 of
+ *   `.claude/skills/learn/3-chapter-write/document-style.md`:
+ *   one tab per level, never spaces, a further line of a point in spaces under its text,
+ *   see {@link textIndentationOf}.
+ * - Enter continues a list or a task list with the next point of the same level, without air;
+ *   right after the `-` of a point with text after it a new empty point above it,
+ *   on a still empty point out one step, from the outermost level the end of the list,
+ *   as in Obsidian, see {@link pointEnter};
+ *   Ctrl+Enter writes the next point with one empty line above it,
  *   the air of a half line, also with the text right of the cursor,
- *   right after the `-` one more, in plain text and in a quote it is Enter twice,
- *   see {@link airBreak};
+ *   right after the `-` one empty line above the point, see {@link pointAir},
+ *   in plain text and in a quote it is Enter twice, see {@link airBreak};
  *   within a further line of a point it starts the next point too, see {@link furtherContinue};
  *   on a line of only blanks, like a paragraph of a point, and before the text of a further line
  *   it puts one more empty line above it, as on an empty line, see {@link paragraphBreak};
@@ -47,7 +52,7 @@
  *   Shift+Tab from the outermost level to the left edge, from right below text with air above it,
  *   see {@link blankIndent};
  *   always with its sub-points and further lines, taking the `-` or number of the list it joins,
- *   see {@link itemIndent}; every change of a list counts
+ *   see {@link itemIndent} and {@link itemShift}; every change of a list counts
  *   its numbered points in order again, a sub-list from `1.`, see {@link listChange};
  *   outside a list Tab does nothing, in code it writes a tab, see {@link tabWrite},
  *   on several lines picked it moves them all one step in, and Shift+Tab one step out.
@@ -87,7 +92,6 @@ import {
     cursorLineUp,
     deleteLine,
     indentLess,
-    indentMore,
     insertTab,
     moveLineDown,
     moveLineUp,
@@ -148,17 +152,20 @@ function quoteMarkIs(state: EditorState, line: Line): boolean {
 }
 
 /**
- * Gives the indentation of the text of a point, as my notes indent a further line of it:
- * its tabs and then as many spaces as its `-` or number with the space after it,
- * two under `- `, three under `1. `, also for a still empty point without that space.
+ * Gives the indentation of the text of a point, as my notes indent a further line of it,
+ * see §6.4 and §6.12 of `.claude/skills/learn/3-chapter-write/document-style.md`:
+ * only spaces, as many as its `-` or number with the space after it,
+ * and one more per tab before it,
+ * two under `- `, three under `\t- `, three under `1. `, four under `\t\t- `,
+ * also for a still empty point without that space.
  * - `point`: Its tabs and its `-` or number.
  *
  * @param text - Text of the line of the point, like `\t- θ (theta)`
- * @returns The indentation, like a tab and two spaces, `null` for a line that starts no point
+ * @returns The indentation, like three spaces, `null` for a line that starts no point
  */
 export function textIndentationOf(text: string): string | null {
     const point: RegExpExecArray | null = /^(\t*)([-*+]|\d+[.)])(?:[ \t]|$)/.exec(text);
-    return point !== null ? point[1] + " ".repeat(point[2].length + 1) : null;
+    return point !== null ? " ".repeat(point[2].length + 1 + point[1].length) : null;
 }
 
 /**
@@ -582,41 +589,101 @@ const quoteBreak: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Puts air above a point with the cursor right after its `-` or number, see {@link markEndIs},
- * a still empty point or one with its text after the cursor, the point staying where it is:
- * Enter at the end of a point writes the next point, Enter on it then the air of a whole line,
- * two empty lines above it, as Enter twice in plain text, never more, see {@link airMost};
- * Ctrl+Enter one empty line, the air of a half line, see {@link airBreak}.
- * A `-` goes only by Backspace, see {@link markerBackward}.
+ * Finds the point whose line the cursor stands on right after its `-` or number,
+ * see {@link markEndIs}, a still empty point or one with its text after the cursor.
  * - `range`: The cursor.
  * - `line`: Its line.
- * - `lines`: Empty lines it writes.
+ * - `item`: The point of the line, `null` for none.
  *
- * @param full - Whether it is Enter, the air of a whole line, else Ctrl+Enter, of a half line
- * @returns The command, which takes the key right after the `-` or number only
+ * @param state - Text and cursor
+ * @returns The point, `ListItem`, `null` when the cursor stands elsewhere
  */
-function pointAir(full: boolean): Command {
-    return (view: EditorView): boolean => {
-        const range: SelectionRange = view.state.selection.main;
-        const line: Line = view.state.doc.lineAt(range.head);
-        if (
-            view.state.selection.ranges.length > 1 ||
-            !range.empty ||
-            !markEndIs(view.state, line, range.head) ||
-            itemOf(view.state, line) === null ||
-            view.state.doc.lineAt(itemOf(view.state, line)?.from ?? 0).number !== line.number
-        )
-            return false;
-        const lines: number =
-            full && !emptyIs(view.state, view.state.doc.line(Math.max(line.number - 1, 1))) ? 2 : 1;
-        view.dispatch({
-            changes: { from: line.from, insert: airOf(view.state, line, lines) },
+function markedItemOf(state: EditorState): SyntaxNode | null {
+    const range: SelectionRange = state.selection.main;
+    const line: Line = state.doc.lineAt(range.head);
+    const item: SyntaxNode | null = itemOf(state, line);
+    return state.selection.ranges.length === 1 &&
+        range.empty &&
+        markEndIs(state, line, range.head) &&
+        item !== null &&
+        state.doc.lineAt(item.from).number === line.number
+        ? item
+        : null;
+}
+
+/**
+ * Enter with the cursor right after the `-` or number of a point, as Obsidian does:
+ * before its text a new empty point above it, of the same level, its `-` or number,
+ * the cursor staying before the text, the numbers counted on, see {@link listChange};
+ * on a still empty point out one step from a sub-point, see {@link itemShift},
+ * else the list ends there: the `-` gone, its line the empty line below the list,
+ * the cursor on a new line below it, where text typed stands as a paragraph of its own,
+ * since right below a point Markdown would take it on into that point.
+ * - `item`: The point, see {@link markedItemOf}.
+ * - `line`: Its line.
+ * - `head`: The cursor.
+ * - `prefix`: The `>` of a quote around it, which stays.
+ * - `point`: The start of the new point, the `-` or number with its blank, a task box empty.
+ * - `parent`: The point it stands in, `null` for none.
+ * - `insert`: The empty line and the start of the new line, in a quote each with its `>`.
+ *
+ * @param view - The editor
+ * @returns Whether it took the key
+ */
+const pointEnter: Command = (view: EditorView): boolean => {
+    const item: SyntaxNode | null = markedItemOf(view.state);
+    if (item === null) return false;
+    const line: Line = view.state.doc.lineAt(item.from);
+    const head: number = view.state.selection.main.head;
+    const prefix: string = quotePrefixOf(line.text);
+    if (view.state.sliceDoc(head, line.to).trim() !== "") {
+        const point: string = `${view.state.sliceDoc(line.from, head).trimEnd()} `.replace(
+            /\[[xX]\] $/,
+            "[ ] ",
+        );
+        listChange(view, {
+            changes: { from: line.from, insert: point + view.state.lineBreak },
+            selection: { anchor: head + point.length + view.state.lineBreak.length },
             scrollIntoView: true,
             userEvent: "input",
         });
         return true;
-    };
-}
+    }
+    const parent: SyntaxNode | null =
+        item.parent?.parent?.name === "ListItem" ? item.parent.parent : null;
+    if (parent !== null) {
+        itemShift(view, item, false, nextPointOf(view.state, parent));
+        return true;
+    }
+    const insert: string = prefix.trimEnd() + view.state.lineBreak + prefix;
+    listChange(view, {
+        changes: { from: line.from, to: line.to, insert: insert },
+        selection: { anchor: line.from + insert.length },
+        scrollIntoView: true,
+        userEvent: "input",
+    });
+    return true;
+};
+
+/**
+ * Ctrl+Enter with the cursor right after the `-` or number of a point, see {@link markedItemOf}:
+ * one empty line above it, the air of a half line, the point staying where it is,
+ * see {@link airBreak}; never more than the air of a line, see {@link airMost}.
+ *
+ * @param view - The editor
+ * @returns Whether it took the key
+ */
+const pointAir: Command = (view: EditorView): boolean => {
+    const item: SyntaxNode | null = markedItemOf(view.state);
+    if (item === null) return false;
+    const line: Line = view.state.doc.lineAt(item.from);
+    view.dispatch({
+        changes: { from: line.from, insert: airOf(view.state, line, 1) },
+        scrollIntoView: true,
+        userEvent: "input",
+    });
+    return true;
+};
 
 /**
  * Ctrl+Enter: a new block with air above it, as Enter twice in plain text:
@@ -635,7 +702,7 @@ function pointAir(full: boolean): Command {
  */
 const airBreak: Command = (view: EditorView): boolean => {
     const enter: () => boolean = (): boolean => quoteBreak(view) || paragraphBreak(view);
-    if (pointAir(false)(view)) return true;
+    if (pointAir(view)) return true;
     const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
     if (
         itemAt(view.state) !== null &&
@@ -1478,40 +1545,83 @@ function itemAt(state: EditorState): SyntaxNode | null {
 }
 
 /**
- * Runs one of CodeMirror's commands on the lines of a list item,
- * from the line of its `-` to its last sub-point or further line, as if they were picked,
- * with a further change of the same text, like the `-` of the item made `4.`,
- * and keeps my cursor where it was in the text;
+ * Moves the lines of a list item one step in or out, see {@link itemIndent},
+ * written as my notes write a list, see §6.5 and §6.12 of
+ * `.claude/skills/learn/3-chapter-write/document-style.md`:
+ * the line of each of its points and each line of code one tab more or one tab less,
+ * each further line in spaces under the text of its point, see {@link textIndentationOf},
+ * a line of blanks as it stands;
+ * its own `-` or number that of the list it joins, taken from the start of a point of that list,
+ * my cursor staying where it was in the text;
  * the numbers of the lists it touched count in order again, see {@link listChange}.
+ * - `mark`: Its `-` or number, `ListMark`.
+ * - `own`: Its `-` or number in the list it joins, `null` to keep its own.
+ * - `changes`: The new blanks of its lines and its `-` or number.
+ * - `line`: A line of it.
+ * - `prefix`, `body`: The `>` of a quote around the line, and the rest of it.
+ * - `blanks`, `from`: The blanks the rest begins with, and where they start.
+ * - `point`: The point the line stands in, and `head` the tabs and `-` or number of its line.
+ * - `tabs`: Tabs of that point after the move.
  *
  * @param view - The editor
  * @param item - The list item
- * @param command - CodeMirror's command, like `indentMore`
- * @param further - The further change
+ * @param inward - Whether it moves in, else out
+ * @param start - Start of a point of the list it joins, see {@link nextPointOf},
+ *   `null` to keep its own `-` or number
  */
-function itemLinesRun(
+function itemShift(
     view: EditorView,
     item: SyntaxNode,
-    command: StateCommand,
-    further: ChangeSpec,
+    inward: boolean,
+    start: string | null,
 ): void {
-    const lines: SelectionRange = EditorSelection.range(
-        view.state.doc.lineAt(item.from).from,
-        view.state.doc.lineAt(item.to).to,
-    );
-    command({
-        state: view.state.update({ selection: lines }).state,
-        dispatch: (transaction: Transaction): void =>
-            listChange(view, {
-                changes: [transaction.changes, further],
-                selection: view.state.selection.map(
-                    transaction.changes.compose(
-                        view.state.changes(further).map(transaction.changes),
-                    ),
-                    1,
-                ),
-                userEvent: transaction.annotation(Transaction.userEvent),
-            }),
+    const state: EditorState = view.state;
+    const mark: SyntaxNode | null = item.getChild("ListMark");
+    const own: string | null =
+        start === null ? null : (/([-*+]|\d+[.)]) (?:\[ \] )?$/.exec(start)?.[1] ?? null);
+    const changes: ChangeSpec[] =
+        mark === null || own === null ? [] : [{ from: mark.from, to: mark.to, insert: own }];
+    for (
+        let number: number = state.doc.lineAt(item.from).number;
+        number <= state.doc.lineAt(item.to).number;
+        number++
+    ) {
+        const line: Line = state.doc.line(number);
+        const prefix: string = quotePrefixOf(line.text);
+        const body: string = line.text.slice(prefix.length);
+        const blanks: string = /^[ \t]*/.exec(body)?.[0] ?? "";
+        const from: number = line.from + prefix.length;
+        const point: SyntaxNode | null = itemOf(state, line);
+        if (blanks === body || point === null) continue;
+        if (state.doc.lineAt(point.from).number === number || codeIs(state, line)) {
+            changes.push(
+                inward
+                    ? { from: from, insert: "\t" }
+                    : {
+                          from: from,
+                          to: from + (blanks.startsWith("\t") ? 1 : Math.min(4, blanks.length)),
+                      },
+            );
+            continue;
+        }
+        const text: string = state.doc.lineAt(point.from).text;
+        const head: RegExpExecArray | null = /^(\t*)([-*+]|\d+[.)])/.exec(
+            text.slice(quotePrefixOf(text).length),
+        );
+        if (head === null) continue;
+        const tabs: number = Math.max(head[1].length + (inward ? 1 : -1), 0);
+        changes.push({
+            from: from,
+            to: from + blanks.length,
+            insert: " ".repeat(
+                (point.from === item.from ? (own ?? head[2]) : head[2]).length + 1 + tabs,
+            ),
+        });
+    }
+    listChange(view, {
+        changes: changes,
+        selection: state.selection.map(state.changes(changes), 1),
+        userEvent: inward ? "input.indent" : "delete.dedent",
     });
 }
 
@@ -1522,14 +1632,14 @@ function itemLinesRun(
  * It takes the `-` or number of the list it joins, see {@link nextPointOf}:
  * out after the point it stood in, like `4.` after `3.`,
  * in after the last sub-point of the item above, like `- ` below `- a`,
- * where it starts a sub-list it keeps its own, a number counted from `1.` again.
+ * where it starts a sub-list it keeps its own, a number counted from `1.` again;
+ * its lines written as my notes write a list, see {@link itemShift}.
  * Outside a list, and on lines picked beyond one item, it leaves the key to the next,
  * see {@link markdownKeys}.
  * - `item`: The list item of the cursor.
  * - `parent`: The point it stands in, `null` for none.
  * - `last`: The last piece of the item above it, a list for sub-points.
  * - `before`: The point it follows in the list it joins, `null` for a new sub-list.
- * - `mark`: Its `-` or number, `ListMark`.
  * - `start`: The start of its line in the list it joins, `null` to keep its own.
  *
  * @param inward - Whether it moves in, else out
@@ -1549,19 +1659,9 @@ function itemIndent(inward: boolean): Command {
                 ? (last?.lastChild ?? null)
                 : null
             : parent;
-        const mark: SyntaxNode | null = item.getChild("ListMark");
         const start: string | null = before === null ? null : nextPointOf(view.state, before);
-        const further: ChangeSpec =
-            mark === null || start === null
-                ? []
-                : {
-                      from: mark.from,
-                      to: mark.to,
-                      insert: /([-*+]|\d+[.)]) (?:\[ \] )?$/.exec(start)?.[1] ?? "",
-                  };
-        if (inward && item.prevSibling?.name === "ListItem")
-            itemLinesRun(view, item, indentMore, further);
-        else if (!inward && parent !== null) itemLinesRun(view, item, indentLess, further);
+        if (inward && item.prevSibling?.name === "ListItem") itemShift(view, item, true, start);
+        else if (!inward && parent !== null) itemShift(view, item, false, start);
         return true;
     };
 }
@@ -1982,7 +2082,7 @@ export const markdownKeys: Extension = [
             { key: "Delete", run: tableJoin(true) },
             { key: "Enter", run: furtherContinue },
             { key: "Enter", run: quoteBreak },
-            { key: "Enter", run: pointAir(true) },
+            { key: "Enter", run: pointEnter },
             { key: "Enter", run: paragraphBreak },
             { key: "Enter", run: markupContinue },
             { key: "Shift-Enter", run: pointContinue },
