@@ -51,11 +51,14 @@
  * see `reader/documents.ts`.
  * Picks a list does not offer, like an older entry's, stay as rows until I take them back.
  * The note is only my free note.
- * The tasks of the chapters picked come after the documents, the due ones first,
- * then a result for each task picked, the task judged as a whole: Right,
+ * In the log a note of my own learning holds its tasks right below it, indented once more,
+ * as a chapter holds its notes, see {@link taskRowsOf}:
+ * the plus after the name of the note picks one of the tasks of that note, the due ones first,
+ * so a task always comes from the Markdown of its note, never typed;
+ * each task picked is a row with its result, the task judged as a whole: Right,
  * or Wrong with a short field for my comment on what went wrong;
  * a task left without result is no attempt and is not written.
- * Any type may hold attempts, like the tasks I solved in a tutorial.
+ * An entry of a type, whose documents are its material, picks no tasks.
  * Every field may stay empty, the skill too.
  * Below skill and type stands the link of the summary, small and grey, as every summary has it,
  * see `summaryPartsOf` in `categories.ts`: the folder of its skill, the path its entry links,
@@ -75,6 +78,8 @@
  *
  * - `./choices.ts`: Pickers, each one line in a row with its name, two side by side in one row,
  *   and the rows of a field of several values.
+ *   Marks where the name of a task may go on below.
+ * - `../icons.ts`: Puts the small grey × into the row of a task picked, which takes it back.
  * - `../skill/attempts.ts`:
  *   Loads the tasks with when they are due and what a module offers, groups the tasks,
  *   writes days out and sends skill entries.
@@ -91,6 +96,7 @@ import {
     addedRowOf,
     addedRowsOf,
     addRowOf,
+    breakableOf,
     choiceOf,
     choicesOf,
     lineMove,
@@ -98,6 +104,7 @@ import {
     rowOf,
     searchOf,
 } from "./choices.ts";
+import { crossPut } from "../icons.ts";
 import {
     dayTextOf,
     groupsOf,
@@ -756,24 +763,37 @@ function taskChoicesOf(tasks: SkillTask[]): Choice[] {
 }
 
 /**
- * Builds the result of a task picked: its name, whole in its tooltip, the line of its result,
- * and below that line, for Wrong, the field for my comment on what went wrong.
+ * Builds the row of a task picked, below its note, see {@link taskRowsOf}:
+ * its name, whole in its tooltip, then the line of its result at the right,
+ * grey `Right or Wrong` until I pick one, then the small grey × that takes the task back;
+ * below them, for Wrong, the field for my comment on what went wrong,
+ * the cursor in it once I pick Wrong.
+ * - `task`: The value of the row, the line of the task above the field.
+ * - `line`: Name, result and ×.
  * - `detail`: Place of the field.
- * - `detailShow`: Shows the field for Wrong.
+ * - `detailShow`: Shows the field for Wrong and gives it, `null` for any other result.
  *
  * @param pick - Task picked, changed as its result and comment are picked
  * @param name - Name of the task
+ * @param again - Shows the fields again and tells the dialog
  * @param changed - Tells the dialog that what is picked changed
- * @returns Result of the task
+ * @returns The row
  */
-function resultElementOf(pick: AttemptPick, name: string, changed: () => void): HTMLElement {
-    const element: HTMLDivElement = document.createElement("div");
-    const label: HTMLSpanElement = document.createElement("span");
+function taskRowOf(
+    pick: AttemptPick,
+    name: string,
+    again: () => void,
+    changed: () => void,
+): HTMLDivElement {
+    const task: HTMLDivElement = document.createElement("div");
+    const line: HTMLDivElement = document.createElement("div");
+    const text: HTMLSpanElement = document.createElement("span");
+    const remove: HTMLButtonElement = document.createElement("button");
     const detail: HTMLDivElement = document.createElement("div");
-    const detailShow: () => void = (): void => {
+    const detailShow: () => HTMLInputElement | null = (): HTMLInputElement | null => {
         if (pick.result !== "wrong") {
             detail.replaceChildren();
-            return;
+            return null;
         }
         const input: HTMLInputElement = document.createElement("input");
         input.type = "text";
@@ -785,32 +805,40 @@ function resultElementOf(pick: AttemptPick, name: string, changed: () => void): 
             pick.comment = input.value.trim();
         });
         detail.replaceChildren(input);
-        input.focus();
+        return input;
     };
 
-    element.className = "skill-result";
-    label.className = "skill-result-name";
-    label.textContent = name;
-    label.title = name;
+    line.className = "picker-added";
+    text.className = "picker-added-text";
+    text.title = name;
+    text.textContent = breakableOf(name);
+    remove.type = "button";
+    crossPut(remove, `Remove ${name}`);
+    remove.addEventListener("click", (): void => {
+        picks.attempts = picks.attempts.filter((other: AttemptPick): boolean => other !== pick);
+        again();
+    });
     detail.className = "skill-result-detail";
-    element.append(
-        label,
+    line.append(
+        text,
         choicesOf({
             search: searchOf(resultChoices),
             picked: pick.result === "" ? [] : [pick.result],
             many: false,
             adding: false,
+            empty: "Right or Wrong",
             pick: (values: string[]): void => {
                 pick.result = values[0] === "right" || values[0] === "wrong" ? values[0] : "";
                 pick.comment = "";
-                detailShow();
+                detailShow()?.focus();
                 changed();
             },
         }),
-        detail,
+        remove,
     );
+    task.append(line, detail);
     detailShow();
-    return element;
+    return rowOf("", task);
 }
 
 /**
@@ -884,71 +912,93 @@ async function contentsLoad(): Promise<void> {
 }
 
 /**
- * Builds the tasks of the chapters picked, in the log, the due ones first,
- * see {@link taskChoicesOf}, and below them a result for each task picked,
- * see {@link resultElementOf};
- * drops the tasks picked that are offered no more, like those of a chapter taken back.
- * Picking tasks shows their results as they are picked, the list staying open.
- * - `module`: Module of the semester picked, with its tasks,
- *   `undefined` for another module or before one is picked.
- * - `tasks`: Tasks of the chapters picked.
- * - `results`: Place of the results of the tasks picked.
- * - `resultsShow`: Shows a result for each task picked.
+ * Gives the tasks a document offers, in the log: those of a note of my own learning,
+ * as the note holds them; none for any other document, like a slide, nor in the plan.
+ * - `note`: Path of the document as the scripts view takes it.
  *
- * @param changed - Tells the dialog that what is picked changed, so it allows saving or not
- * @returns The row of the tasks with the results below its line,
- *   none while the chapters picked have no tasks
+ * @param path - Path of the document from the module folder,
+ *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ * @returns Its tasks in their order
  */
-function tasksOf(changed: () => void): HTMLElement[] {
-    const module: SkillModule | undefined = skilling.modules.find(
-        (candidate: SkillModule): boolean => candidate.code === picks.module,
+function tasksOfDocument(path: string): SkillTask[] {
+    const note: string = noteOf(path);
+    if (inPlan || picks.type !== "") return [];
+    return (
+        skilling.modules
+            .find((module: SkillModule): boolean => module.code === picks.module)
+            ?.tasks.filter((task: SkillTask): boolean => task.note === note) ?? []
     );
-    const tasks: SkillTask[] =
-        module?.tasks.filter((task: SkillTask): boolean => picks.chapters.includes(task.chapter)) ??
-        [];
-    picks.attempts = picks.attempts.filter((pick: AttemptPick): boolean =>
+}
+
+/**
+ * Builds the tasks of a note picked below its row, see the top of this file:
+ * each task picked a row of its own, indented once more under a second thin grey line,
+ * see {@link taskRowOf} and `.panel-nested-twice` in `choices.css`;
+ * then the list of its tasks not picked yet, the due ones first, see {@link taskChoicesOf},
+ * whose plus, `Add a task` its tooltip, stands right after the name of the note,
+ * as the plus of a chapter adds a note, see `lineMove` in `choices.ts`.
+ * None for a document without tasks, see {@link tasksOfDocument}.
+ * - `tasks`: Tasks of the note.
+ * - `picked`: Tasks picked of it, in the order they were picked.
+ * - `offered`: Its tasks not picked yet.
+ * - `rows`: The rows of the tasks picked, then the row of the list.
+ * - `text`: The name of the note, where the plus goes.
+ *
+ * @param path - Path of the note from the module folder
+ * @param row - Row of the note
+ * @param again - Shows the fields again and tells the dialog
+ * @param changed - Tells the dialog that what is picked changed, so it allows saving or not
+ * @returns The rows, none for a document without tasks
+ */
+function taskRowsOf(
+    path: string,
+    row: HTMLElement,
+    again: () => void,
+    changed: () => void,
+): HTMLElement[] {
+    const tasks: SkillTask[] = tasksOfDocument(path);
+    const picked: AttemptPick[] = picks.attempts.filter((pick: AttemptPick): boolean =>
         tasks.some((task: SkillTask): boolean => task.id === pick.task),
     );
-    const results: HTMLDivElement = document.createElement("div");
-    const resultsShow: () => void = (): void => {
-        results.replaceChildren(
-            ...picks.attempts.map((pick: AttemptPick): HTMLElement =>
-                resultElementOf(
-                    pick,
-                    tasks.find((task: SkillTask): boolean => task.id === pick.task)?.name ??
-                        pick.task,
-                    changed,
-                ),
-            ),
-        );
-    };
-    if (inPlan || tasks.length === 0) return [];
+    const offered: SkillTask[] = tasks.filter(
+        (task: SkillTask): boolean =>
+            !picked.some((pick: AttemptPick): boolean => pick.task === task.id),
+    );
+    const rows: HTMLElement[] = picked.map((pick: AttemptPick): HTMLElement => {
+        const name: string =
+            tasks.find((task: SkillTask): boolean => task.id === pick.task)?.name ?? pick.task;
+        const task: HTMLDivElement = taskRowOf(pick, name, again, changed);
+        task.classList.add("panel-nested", "panel-nested-twice");
+        return task;
+    });
+    if (offered.length === 0) return rows;
 
-    results.className = "skill-results";
-    resultsShow();
-    return [
-        rowOf(
-            "Tasks",
-            choicesOf({
-                below: [results],
-                search: searchOf(taskChoicesOf(tasks)),
-                picked: picks.attempts.map((pick: AttemptPick): string => pick.task),
-                many: true,
-                adding: false,
-                noun: "task",
-                pick: (values: string[]): void => {
-                    picks.attempts = values.map(
-                        (task: string): AttemptPick =>
-                            picks.attempts.find(
-                                (pick: AttemptPick): boolean => pick.task === task,
-                            ) ?? { task: task, result: "", comment: "" },
-                    );
-                    resultsShow();
-                    changed();
-                },
-            }),
-        ),
-    ];
+    const list: HTMLDivElement = rowOf(
+        "",
+        choicesOf({
+            search: searchOf(taskChoicesOf(offered)),
+            picked: [],
+            many: false,
+            adding: false,
+            noun: "task",
+            empty: "Add a task",
+            plus: true,
+            pick: (values: string[]): void => {
+                picks.attempts = [
+                    ...picks.attempts,
+                    ...values.map((task: string): AttemptPick => ({
+                        task: task,
+                        result: "",
+                        comment: "",
+                    })),
+                ];
+                again();
+            },
+        }),
+    );
+    const text: HTMLElement | null = row.querySelector(".picker-added-text");
+    if (text !== null) lineMove(list, text);
+    return [...rows, list];
 }
 
 /**
@@ -960,7 +1010,7 @@ function tasksOf(changed: () => void): HTMLElement[] {
  * see `addedRowOf` in `choices.ts`, and for my own
  * learning the one plus right after its name, `Add a document` as its tooltip,
  * and right below it, indented under a thin grey line, its documents, the notes of that chapter,
- * each with its ×, see {@link documentRowsOf};
+ * each with its ×, see {@link documentRowsOf}, in the log each with its tasks below it;
  * for a type the documents of its material once a chapter is picked,
  * or while the entry has some, below all chapters;
  * then, while the module has chapters left, the list that adds one by the names of their folders,
@@ -971,19 +1021,26 @@ function tasksOf(changed: () => void): HTMLElement[] {
  * like `MGT1372` before its chapters are written, keeps the row `Chapter +` with its list empty,
  * no grey hint, so the row never just disappears; a project has no chapters and no row.
  * A chapter keeps the name it has in the entry, also once its folder has another name.
- * Taking back a chapter of my own learning takes back its notes too;
+ * Taking back a chapter of my own learning takes back its notes too, a note its tasks;
  * documents of my own learning that belong to no chapter picked stay below, to be taken back.
- * Each change shows the fields again,
- * the tasks of the chapters picked with them, see {@link tasksOf}.
+ * Each change shows the fields again.
  * - `own`: Whether it is my own learning, without type, whose documents belong to their chapters.
  * - `offered`: Chapters of the module not picked yet.
  * - `rows`: The rows so far.
  * - `loose`: Documents of my own learning of no chapter picked.
  *
  * @param again - Shows the fields again and tells the dialog
+ * @param changed - Tells the dialog that what is picked changed, so it allows saving or not
  * @returns The rows, none while no skill is picked
  */
-function chapterRowsOf(again: () => void): HTMLElement[] {
+function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
+    picks.attempts = picks.attempts.filter((pick: AttemptPick): boolean =>
+        picks.documents.some(
+            (path: string): boolean =>
+                picks.chapters.includes(chapterOfDocument(path)) &&
+                tasksOfDocument(path).some((task: SkillTask): boolean => task.id === pick.task),
+        ),
+    );
     if (picks.module === "") return [];
     const own: boolean = picks.type === "";
     const offered: Choice[] = contents.chapters
@@ -1014,10 +1071,12 @@ function chapterRowsOf(again: () => void): HTMLElement[] {
                   ),
                   again,
                   true,
+                  changed,
               )
             : [];
         const list: HTMLElement | undefined = documents.find(
-            (one: HTMLElement): boolean => one.querySelector(".picker-line") !== null,
+            (one: HTMLElement): boolean =>
+                one.querySelector(":scope > .picker > .picker-head > .picker-line") !== null,
         );
         const text: HTMLElement | null = row.querySelector(".picker-added-text");
         if (list !== undefined && text !== null) lineMove(list, text);
@@ -1027,9 +1086,9 @@ function chapterRowsOf(again: () => void): HTMLElement[] {
     const loose: string[] = picks.documents.filter(
         (path: string): boolean => !picks.chapters.includes(chapterOfDocument(path)),
     );
-    if (own) rows.push(...documentRowsOf([], loose, again, false));
+    if (own) rows.push(...documentRowsOf([], loose, again, false, changed));
     else if (picks.chapters.length > 0 || picks.documents.length > 0)
-        rows.push(...documentRowsOf(documentChoicesOf(""), picks.documents, again, false));
+        rows.push(...documentRowsOf(documentChoicesOf(""), picks.documents, again, false, changed));
     if (
         offered.length > 0 ||
         (contents.chapters.length === 0 && picks.chapters.length === 0 && contents.folder !== "")
@@ -1076,11 +1135,23 @@ function chapterLinkOf(chapter: string): string {
 }
 
 /**
+ * Gives the path of a document as the scripts view takes it, from `NomSkillingmodules`,
+ * like `IN2028_…/01_StatisticsFoundations/01_01_SampleMeanEstimator.md`,
+ * as its section and its tasks name their note.
+ *
+ * @param path - Path of the document from the module folder,
+ *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ * @returns The path
+ */
+function noteOf(path: string): string {
+    return `${contents.folder.slice(modulesFolder.length + 1)}/${path}`;
+}
+
+/**
  * Gives the round of a note of a chapter, its section's, like `Round 0`,
  * as the scripts view shows it, see `round` of `SkillSection` in `../skill/attempts.ts`;
  * empty for any other document, like a slide, or a module not of the semester.
- * - `note`: Path of the note from `NomSkillingmodules`,
- *   like `IN2028_BusinessAnalyticsMachineLearning/01_StatisticsFoundations/01_01_SampleMeanEstimator.md`.
+ * - `note`: Path of the note from `NomSkillingmodules`, see {@link noteOf}.
  * - `section`: Its section, `undefined` for none.
  *
  * @param path - Path of the document from the module folder,
@@ -1088,7 +1159,7 @@ function chapterLinkOf(chapter: string): string {
  * @returns The round, empty for none
  */
 function roundOfDocument(path: string): string {
-    const note: string = `${contents.folder.slice(modulesFolder.length + 1)}/${path}`;
+    const note: string = noteOf(path);
     const section: SkillSection | undefined = skilling.modules
         .flatMap((module: SkillModule): SkillSection[] => module.sections)
         .find((section: SkillSection): boolean => section.note === note);
@@ -1103,13 +1174,16 @@ function roundOfDocument(path: string): string {
  * and a hint below when a document picked is in the module no more,
  * which the reader could not find by its fingerprint either.
  * Inside a chapter they stand below it, indented under a thin grey line,
- * see `nested` in `choices.ts`, their plus moved after the chapter's name.
- * - `rows`: The rows of the list and of the documents picked.
+ * see `nested` in `choices.ts`, their plus moved after the chapter's name,
+ * each with its tasks below it, see {@link taskRowsOf}.
+ * - `added`: The rows of the documents picked, then the row of the list.
+ * - `rows`: The same with the tasks of each document below its row.
  *
  * @param choices - Documents the list offers, none for no list
  * @param shown - Documents picked that these rows show, a part of all documents picked
  * @param again - Shows the fields again and tells the dialog
  * @param nested - Whether they stand inside the chapter above them
+ * @param changed - Tells the dialog that what is picked changed, so it allows saving or not
  * @returns The rows, none for neither documents offered nor picked
  */
 function documentRowsOf(
@@ -1117,8 +1191,9 @@ function documentRowsOf(
     shown: string[],
     again: () => void,
     nested: boolean,
+    changed: () => void,
 ): HTMLElement[] {
-    const rows: HTMLElement[] = addedRowsOf("Documents", {
+    const added: HTMLElement[] = addedRowsOf("Documents", {
         choices: choices,
         picked: shown,
         textOf: fileNameOf,
@@ -1134,6 +1209,11 @@ function documentRowsOf(
             again();
         },
     });
+    const rows: HTMLElement[] = added.flatMap((row: HTMLElement, index: number): HTMLElement[] =>
+        nested && index < shown.length
+            ? [row, ...taskRowsOf(shown[index], row, again, changed)]
+            : [row],
+    );
     if (shown.some((path: string): boolean => !contents.documents.includes(path)))
         rows.push(
             rowOf(
@@ -1153,8 +1233,8 @@ function documentRowsOf(
  * as the form of a series has it;
  * below the place and the times who I was with,
  * the chapters one after another with their documents, see {@link chapterRowsOf},
- * and in the log the tasks of the chapters picked with a result for each task picked,
- * see {@link tasksOf}, and the attempts the entry has;
+ * in the log each note with its tasks picked below it, each with its result,
+ * then the attempts the entry has;
  * the link of the summary below skill and type, see {@link SkillShown}.
  * Picking a skill loads its chapters and documents and shows the fields again, with no chapters,
  * documents or tasks picked;
@@ -1238,8 +1318,7 @@ function picksShow(shown: SkillShown): void {
     shownIn = shown;
     shown.more.replaceChildren(
         ...shown.people,
-        ...chapterRowsOf(again),
-        ...tasksOf(shown.changed),
+        ...chapterRowsOf(again, shown.changed),
         ...loggedOf(),
     );
 }

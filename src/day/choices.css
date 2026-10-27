@@ -216,6 +216,27 @@
     margin-left: 1.75rem;
 }
 
+/* Rows inside a value that stands inside another, like the tasks of a note of a chapter,
+   see `taskRowsOf` in `skill.ts`: indented once more under the text of the note,
+   a second guide line at their left beside the first;
+   the line of the result of a task in its row, not indented again */
+.panel-nested-twice::after {
+    content: "";
+    position: absolute;
+    top: calc(-0.125rem - 2px);
+    bottom: 0;
+    left: calc(var(--value-start) - 1px + 2.125rem);
+    border-left: 2px solid var(--guide);
+}
+
+.panel-nested-twice .picker-added {
+    margin-left: 3.5rem;
+}
+
+.panel-nested-twice .picker-added .picker-line {
+    margin-left: 0;
+}
+
 /* A line that adds, like a document to its chapter, the next chapter, a type or a meal:
    the one plus of every list, see `.plus-quiet` in `base.css`, in the middle of its row;
    its grey written again here only because a line otherwise takes the colour of a value */
@@ -289,37 +310,10 @@
     height: 0.9375rem;
 }
 
-/* Results of the tasks picked for a session, below their list, in two columns:
-   the name of a task grey, the line of its result,
-   and below that line the field of my comment on a wrong one */
-.skill-results {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.skill-results:empty {
-    display: none;
-}
-
-.skill-result {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-    gap: 0.375rem var(--gap);
-    align-items: baseline;
-}
-
-.skill-result-name {
-    overflow-wrap: anywhere;
-    color: var(--text-muted);
-}
-
+/* The field of my comment on a task picked as Wrong, below the line of the task,
+   in line with its name, see `taskRowOf` in `skill.ts` */
 .skill-result-detail {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-    grid-column: 2;
+    margin: 0.375rem 0 0 3.5rem;
 }
 
 .skill-result-detail:empty {
@@ -437,21 +431,9 @@
     border-top: 1px solid var(--line);
 }
 
-/* Phone: the result of a task below it, no empty line in a row without a value,
+/* Phone: no empty line in a row without a value,
    a list rising from the bottom, its groups closer and its values with room above and below */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    /* The result of a task picked for a session on a phone below the task,
-       as the value of a row stands below its name,
-       so the name of the task keeps the whole width instead of two fifths,
-       like `Unbiased Mean Check` on one line, and the field of my comment below the result */
-    .skill-result {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .skill-result-detail {
-        grid-column: 1;
-    }
-
     /* A row without a value on a phone holds no empty line of a value,
        since its value stands below its name, where an empty line would only take room */
     .picker-head:empty::before,
