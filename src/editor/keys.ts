@@ -992,6 +992,8 @@ function tableOf(state: EditorState, line: Line): SyntaxNode | null {
  * Enter, Shift+Enter and Ctrl+Enter in a table, which its widget edits, see `./table.ts`:
  * at the end of its last row a new paragraph after it, as Enter at the end of a paragraph,
  * see {@link paragraphBreak}, Ctrl+Enter with the air of a line;
+ * at the start of its first row an empty line above it, the table moved down by it,
+ * as Enter at the start of a paragraph, Ctrl+Enter two;
  * anywhere else nothing, so no row is torn apart.
  * - `range`: The cursor.
  * - `line`: Its line.
@@ -1017,16 +1019,25 @@ function tableBreak(lines: number): Command {
                 scrollIntoView: true,
                 userEvent: "input",
             });
+        else if (range.empty && range.head === line.from && table.from === line.from)
+            view.dispatch({
+                changes: { from: line.from, insert: view.state.lineBreak.repeat(lines - 1) },
+                selection: { anchor: line.from + view.state.lineBreak.length * (lines - 1) },
+                scrollIntoView: true,
+                userEvent: "input",
+            });
         return true;
     };
 }
 
 /**
- * Backspace at the start of a row of a table below text, and Delete at the end of a row
- * above text, do nothing, so no two rows are joined, see {@link tableBreak}.
+ * Backspace and Delete that would join a row of a table with a line of text, or two rows,
+ * do nothing, so no row is torn apart, see {@link tableBreak};
+ * an empty line above or below a table they take away, as in text, so the table moves up.
  * - `range`: The cursor.
  * - `line`: Its line.
  * - `next`: The line it would join.
+ * - `textIs`: Tells a line with text, neither empty nor an empty line of code.
  *
  * @param forward - Whether it is Delete, else Backspace
  * @returns The command
@@ -1039,10 +1050,11 @@ function tableJoin(forward: boolean): Command {
         const number: number = line.number + (forward ? 1 : -1);
         if (number < 1 || number > view.state.doc.lines) return false;
         const next: Line = view.state.doc.line(number);
+        const textIs = (row: Line): boolean => !emptyIs(view.state, row) && row.length > 0;
         return (
             (tableOf(view.state, line) !== null || tableOf(view.state, next) !== null) &&
-            !emptyIs(view.state, next) &&
-            next.length > 0
+            textIs(line) &&
+            textIs(next)
         );
     };
 }
