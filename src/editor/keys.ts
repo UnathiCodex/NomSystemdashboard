@@ -1152,14 +1152,17 @@ const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+\[[ xX]\])?[ \t
 /**
  * Takes the `-` or number of a point below another point away with Backspace
  * right after it, see {@link markEndIs}, of a still empty point or one with its text after it,
- * a step down the stairs of a point, see the top of this file:
- * the line keeps the blanks of the point's text, see {@link textIndentationOf},
- * and the air above it, none or as much as stood there:
- * after Enter the next line of the point above, as Shift+Enter writes it,
- * after Ctrl+Enter a paragraph of it with the air of a half line;
- * right below a line of a sub-point of the point above, as after Shift+Tab, one empty line,
- * as Markdown would take the line on into that sub-point, told by the points, not by the blanks,
- * since a further line stands in spaces and a point in tabs, see {@link textIndentationOf};
+ * a step down the stairs of a point, see the top of this file,
+ * its text staying at its depth, never a level out, the job of Shift+Tab:
+ * the line keeps the air above it, none or as much as stood there;
+ * after Enter the next line of the point above, in the blanks of the point's text,
+ * see {@link textIndentationOf}, as Shift+Enter writes it;
+ * after Ctrl+Enter a paragraph of it with the air of a half line,
+ * in the point's tabs and its `-` or number as spaces, the blanks Markdown wants
+ * for a paragraph to stay in a sub-point, where those of a further line put it a level out;
+ * right below a line of a sub-point of the point above, as after Shift+Tab, one empty line
+ * and such a paragraph, as Markdown would take the line on into that sub-point,
+ * told by the points, not by the blanks, since a further line stands in spaces and a point in tabs;
  * the cursor stands where text typed on it will stand, see {@link typingLine},
  * which writes nothing more, see {@link paragraphTyping}.
  * The next Backspace takes each empty line above away, then the line break,
@@ -1170,12 +1173,16 @@ const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+\[[ xX]\])?[ \t
  * - `line`: Its line.
  * - `point`: Whether the cursor stands right after the `-` or number, see {@link markEndIs}.
  * - `item`: The point of the line, `ListItem`, `null` for none.
- * - `indentation`: The `>` of a quote and the blanks of the point's text, which the line keeps,
- *   see {@link pointStartOf}.
+ * - `previous`: The point above it in its list, past the `>` of its line in a quote,
+ *   `null` for none.
  * - `above`: The line above it.
  * - `holder`: The point the line above stands in, `null` for none.
  * - `air`: The line break of the empty line it puts above,
  *   nothing but below a line of a sub-point of the point above.
+ * - `mark`: The `>` of a quote with the tabs of the point, and its `-` or number.
+ * - `indentation`: The `>` of a quote and the blanks the line keeps:
+ *   below air the point's tabs and its `-` or number in spaces,
+ *   else the blanks of the point's text, see {@link pointStartOf}.
  *
  * @param view - The editor
  * @returns Whether it took the key
@@ -1185,23 +1192,32 @@ const markerBackward: Command = (view: EditorView): boolean => {
     const line: Line = view.state.doc.lineAt(range.head);
     const point: boolean = markEndIs(view.state, line, range.head);
     const item: SyntaxNode | null = itemOf(view.state, line);
+    let previous: SyntaxNode | null = item?.prevSibling ?? null;
+    while (previous?.name === "QuoteMark") previous = previous.prevSibling;
     if (
         point &&
         range.empty &&
-        item?.prevSibling?.name === "ListItem" &&
+        item !== null &&
+        previous?.name === "ListItem" &&
         view.state.doc.lineAt(item.from).number === line.number &&
         pointStartOf(line.text) !== null
     ) {
-        const indentation: string = pointStartOf(line.text) ?? "";
         const above: Line = view.state.doc.line(line.number - 1);
         const holder: SyntaxNode | null = itemOf(view.state, above);
         const air: string =
             !emptyIs(view.state, above) &&
             holder !== null &&
-            holder.from > item.prevSibling.from &&
-            holder.to <= item.prevSibling.to
+            holder.from > previous.from &&
+            holder.to <= previous.to
                 ? airOf(view.state, line, 1)
                 : "";
+        const mark: RegExpExecArray | null = /^((?:[ \t]*>[ \t]?)*\t*)([-*+]|\d+[.)])/.exec(
+            line.text,
+        );
+        const indentation: string =
+            air === "" && !emptyIs(view.state, above)
+                ? (pointStartOf(line.text) ?? "")
+                : (mark?.[1] ?? "") + " ".repeat((mark?.[2].length ?? 0) + 1);
         listChange(view, {
             changes: { from: line.from, to: range.head, insert: air + indentation },
             selection: { anchor: line.from + air.length + indentation.length },
