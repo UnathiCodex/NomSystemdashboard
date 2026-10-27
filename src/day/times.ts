@@ -227,12 +227,12 @@ export function dateParse(text: string): string | null {
 /**
  * Gives the times a box is logged at as expected, with one tap:
  * from its expected time for its expected duration,
- * else ending at the last quarter hour before now on the shown day, like 14:30 at 14:41,
- * as a new entry of the log ends, see `categories.ts`;
+ * else from the coming quarter hour on the shown day, like 14:45 at 14:41,
+ * since I log from the plan what I start now or am about to do, never what I finished;
  * for {@link boxMinutes} when it has no duration.
  * - `length`: Its length in milliseconds.
- * - `start`: Its expected time.
- * - `end`: The last quarter hour before now on the shown day.
+ * - `start`: Its expected time, else the time of now on the shown day,
+ *   moved on to the coming quarter hour.
  *
  * @param box - The box
  * @param day - A date on the shown day
@@ -244,9 +244,9 @@ export function boxTimesOf(box: Box, day: Date): [Date, Date] {
         const start: Date = new Date(box.time);
         return [start, new Date(start.getTime() + length)];
     }
-    const end: Date = dateOf(day, timeOf(new Date()));
-    end.setMinutes(end.getMinutes() - (end.getMinutes() % 15));
-    return [new Date(end.getTime() - length), end];
+    const start: Date = dateOf(day, timeOf(new Date()));
+    start.setMinutes(Math.ceil(start.getMinutes() / 15) * 15);
+    return [start, new Date(start.getTime() + length)];
 }
 
 /**
