@@ -71,7 +71,8 @@
  *   and hears each load of the tasks, with its section, and each Right.
  * - `./session.ts`: Makes sure a session of the module runs before `Next`
  *   or the close writes, and gives the session running, with its day and times written out.
- * - `../notes/tree.ts`: The places of the blocks the tree shows.
+ * - `../notes/tree.ts`: The places of the blocks the tree shows,
+ *   and the type word at the start of a heading.
  */
 
 import { EditorSelection, EditorState, Prec, StateEffect, StateField } from "@codemirror/state";
@@ -81,6 +82,7 @@ import { blocksOf, tasksFollow } from "./tasks.ts";
 import { foldedAt } from "./steps.ts";
 import { sessionEnsure, sessionOf, sessionTextOf } from "./session.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
+import { kindRule } from "../notes/tree.ts";
 
 import type {
     Extension,
@@ -506,17 +508,60 @@ function waitingIs(shown: Round, step: Step): boolean {
 }
 
 /**
+ * Finds the step where I stand by the log, its key, see {@link keyOf}:
+ * the step of that key; once its heading changed in the note,
+ * like `Definition. Independent Draws` renamed `Definition. Independent Identical Draws`,
+ * or two blocks merged into one, the step of the same type word
+ * whose heading shares the most words with it;
+ * without such a step the last one with an attempt, so I never stand at the start again.
+ * - `wordsOf`: The type word and the other words of a key, in small letters.
+ * - `place`: The type word and the words of the key.
+ * - `scores`: Of each step the words it shares with the key, over all words of both,
+ *   0 for another type word.
+ * - `best`: The highest score.
+ *
+ * @param steps - Steps of the round
+ * @param at - Key of the step I stand at by the log, empty for none
+ * @returns Its index, -1 for none
+ */
+function placeOf(steps: Step[], at: string): number {
+    const exact: number = steps.findIndex((step: Step): boolean => keyOf(step) === at);
+    if (exact !== -1 || at === "") return exact;
+    const wordsOf: (key: string) => [string, string[]] = (key: string): [string, string[]] => [
+        kindRule.exec(key)?.[1] ?? "",
+        key
+            .replace(kindRule, "")
+            .toLowerCase()
+            .split(/[^\p{L}\p{N}]+/u)
+            .filter((word: string): boolean => word !== ""),
+    ];
+    const place: [string, string[]] = wordsOf(at);
+    const scores: number[] = steps.map((step: Step): number => {
+        const [kind, words]: [string, string[]] = wordsOf(keyOf(step));
+        const shared: number = words.filter((word: string): boolean =>
+            place[1].includes(word),
+        ).length;
+        return kind !== place[0] ? 0 : shared / new Set([...words, ...place[1]]).size;
+    });
+    const best: number = Math.max(0, ...scores);
+    if (best > 0) return scores.indexOf(best);
+    return steps.findLastIndex(
+        (step: Step): boolean => (step.block.task?.attempts.length ?? 0) > 0,
+    );
+}
+
+/**
  * Gives the steps without a result before where I stand, which count as passed,
- * see {@link resultlessIs}.
- * - `index`: Place of the step I stand at,
- *   none before the first step and for one no longer in the round.
+ * see {@link resultlessIs}, where I stand found also after its heading changed,
+ * see {@link placeOf}.
+ * - `index`: Place of the step I stand at, -1 before the first step.
  *
  * @param steps - Steps of the round
  * @param at - Key of the step I stand at by the log, empty for none
  * @returns Their keys
  */
 function passedOf(steps: Step[], at: string): string[] {
-    const index: number = steps.findIndex((step: Step): boolean => keyOf(step) === at);
+    const index: number = placeOf(steps, at);
     return steps.slice(0, Math.max(0, index)).filter(resultlessIs).map(keyOf);
 }
 
@@ -580,17 +625,15 @@ function currentOf(shown: Round, steps: Step[]): Step | undefined {
  * Gives where the round goes on when the page opens, from the log alone:
  * from the step of the last `Next`, the first step not done, else that step itself;
  * without a `Next` yet, the first step not done, else the last step.
- * - `from`: Index of the step of the last `Next`, 0 for none or one no longer in the note.
+ * The step of the last `Next` is found also once its heading changed, see {@link placeOf}.
+ * - `from`: Index of the step of the last `Next`, 0 for none.
  *
  * @param shown - The round
  * @param steps - Its steps
  * @returns Key of the step, empty for a round without steps
  */
 function resumedOf(shown: Round, steps: Step[]): string {
-    const from: number = Math.max(
-        0,
-        steps.findIndex((step: Step): boolean => keyOf(step) === shown.section.at),
-    );
+    const from: number = Math.max(0, placeOf(steps, shown.section.at));
     const step: Step | undefined =
         steps.slice(from).find((candidate: Step): boolean => !doneIs(shown, candidate)) ??
         steps[from] ??
