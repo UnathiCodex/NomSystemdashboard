@@ -1157,8 +1157,9 @@ const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+\[[ xX]\])?[ \t
  * and the air above it, none or as much as stood there:
  * after Enter the next line of the point above, as Shift+Enter writes it,
  * after Ctrl+Enter a paragraph of it with the air of a half line;
- * right below a line of a deeper point, as after Shift+Tab, one empty line,
- * as Markdown would take the line on into that deeper point;
+ * right below a line of a sub-point of the point above, as after Shift+Tab, one empty line,
+ * as Markdown would take the line on into that sub-point, told by the points, not by the blanks,
+ * since a further line stands in spaces and a point in tabs, see {@link textIndentationOf};
  * the cursor stands where text typed on it will stand, see {@link typingLine},
  * which writes nothing more, see {@link paragraphTyping}.
  * The next Backspace takes each empty line above away, then the line break,
@@ -1172,7 +1173,9 @@ const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+\[[ xX]\])?[ \t
  * - `indentation`: The `>` of a quote and the blanks of the point's text, which the line keeps,
  *   see {@link pointStartOf}.
  * - `above`: The line above it.
- * - `air`: The line break of the empty line it puts above, nothing but below a deeper point.
+ * - `holder`: The point the line above stands in, `null` for none.
+ * - `air`: The line break of the empty line it puts above,
+ *   nothing but below a line of a sub-point of the point above.
  *
  * @param view - The editor
  * @returns Whether it took the key
@@ -1191,10 +1194,12 @@ const markerBackward: Command = (view: EditorView): boolean => {
     ) {
         const indentation: string = pointStartOf(line.text) ?? "";
         const above: Line = view.state.doc.line(line.number - 1);
+        const holder: SyntaxNode | null = itemOf(view.state, above);
         const air: string =
             !emptyIs(view.state, above) &&
-            columnsOf(above.text.slice(quotePrefixOf(above.text).length)) >
-                columnsOf(indentation.slice(quotePrefixOf(indentation).length))
+            holder !== null &&
+            holder.from > item.prevSibling.from &&
+            holder.to <= item.prevSibling.to
                 ? airOf(view.state, line, 1)
                 : "";
         listChange(view, {
