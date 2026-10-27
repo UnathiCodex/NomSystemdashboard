@@ -56,9 +56,9 @@
  *   its numbered points in order again, a sub-list from `1.`, see {@link listChange};
  *   outside a list Tab does nothing, in code it writes a tab, see {@link tabWrite},
  *   on several lines picked it moves them all one step in, and Shift+Tab one step out.
- * - Alt+Up and Alt+Down move the line of the cursor, or the lines picked, one line up or down;
- *   a list item goes with its sub-points and further lines past the item before
- *   or after it, see {@link itemMove}.
+ * - Alt+Up and Alt+Down move the line of the cursor or the lines picked one line up or down,
+ *   as in VS Code: a point with its sub-points and further lines as one line,
+ *   a further line alone, see {@link linesMove}.
  * - Ctrl+Shift+Up and Ctrl+Shift+Down move the line of the cursor,
  *   or the lines picked, one line up or down, only them, as CodeMirror's Move line up and down.
  * - Ctrl+B and Ctrl+I make the text picked bold or italic, `**…**` and `*…*`, or take it back;
@@ -1679,7 +1679,8 @@ function itemIndent(inward: boolean): Command {
 /**
  * Swaps two blocks of whole lines that stand right below each other,
  * like a list item and the one before it,
- * and moves the cursor or what is picked along with the block it stands in;
+ * and moves the cursor or what is picked along with the block it stands in,
+ * never past the end of the text;
  * numbered points count in order again,
  * so `2.` moved above `1.` becomes `1.`, see {@link listChange}.
  * - `upper`, `lower`: The text of the two blocks.
@@ -1708,7 +1709,10 @@ function blocksSwap(
         changes: { from: from, to: to, insert: lower + view.state.lineBreak + upper },
         selection: EditorSelection.create(
             view.state.selection.ranges.map((range: SelectionRange): SelectionRange =>
-                EditorSelection.range(range.anchor + shift, range.head + shift),
+                EditorSelection.range(
+                    Math.min(range.anchor + shift, view.state.doc.length),
+                    Math.min(range.head + shift, view.state.doc.length),
+                ),
             ),
             view.state.selection.mainIndex,
         ),
@@ -1718,52 +1722,125 @@ function blocksSwap(
 }
 
 /**
- * Moves a list item one up, Alt+Up,
- * or down, Alt+Down, with its sub-points and further lines,
- * past the item before or after it in its list, with that item's own sub-points;
- * the first or last item of its list moves one line, still with its sub-points.
- * Outside a list, and on lines picked beyond one item,
- * it leaves the key to CodeMirror's own Move line up or down,
- * which moves the lines of the cursor or picked one line, as Obsidian does.
- * - `item`: The list item of the cursor.
- * - `first`, `last`: The first and the last line of the item.
- * - `sibling`: The item before or after it in its list, `null` for none.
- * - `line`: The line it moves past where it has no such item.
+ * Tells how far a line stands in: its tabs and spaces after the `>` of a quote around it,
+ * each counting one, as my notes indent a point by one tab per level
+ * and its further lines by spaces under its text, see {@link textIndentationOf}.
+ * - `body`: The line after the `>` of the quote.
+ * - `blanks`: Number of the tabs and spaces it begins with.
  *
- * @param down - Whether it moves down, else up
+ * @param text - Text of the line, like `> \t- Point`
+ * @returns How far it stands in, like `1`, `null` for an empty line
+ */
+function depthOf(text: string): number | null {
+    const body: string = text.slice(quotePrefixOf(text).length);
+    const blanks: number = /^[ \t]*/.exec(body)?.[0].length ?? 0;
+    return blanks === body.length ? null : blanks;
+}
+
+/**
+ * Tells the line of a point: its `-` or number first, after the `>` of a quote and the blanks;
+ * never a line of code, like a list in a block of YAML, see {@link codeIs}.
+ * - `line`: The line.
+ * - `body`: The line after the `>` of the quote.
+ *
+ * @param state - Text and syntax tree
+ * @param number - Number of the line, like that of `> \t- Point`
+ * @returns Whether it starts a point
+ */
+function pointIs(state: EditorState, number: number): boolean {
+    const line: Line = state.doc.line(number);
+    const body: string = line.text.slice(quotePrefixOf(line.text).length);
+    return /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]|$)/.test(body) && !codeIs(state, line);
+}
+
+/**
+ * Finds the last line of a point with its sub-points and further lines:
+ * the lines right below it that stand further in, see {@link depthOf},
+ * with the empty lines between them, not those after them.
+ * - `depth`: How far the point stands in.
+ * - `last`: Number of the last line found.
+ * - `blanks`: How far the next line stands in, `null` for an empty line.
+ *
+ * @param doc - Text
+ * @param number - Number of the line of the point
+ * @returns Number of its last line
+ */
+function pointLastOf(doc: Text, number: number): number {
+    const depth: number = depthOf(doc.line(number).text) ?? 0;
+    let last: number = number;
+    for (let next: number = number + 1; next <= doc.lines; next++) {
+        const blanks: number | null = depthOf(doc.line(next).text);
+        if (blanks !== null && blanks <= depth) break;
+        if (blanks !== null) last = next;
+    }
+    return last;
+}
+
+/**
+ * Moves the line of the cursor or the lines picked one line up, Alt+Up, or down, Alt+Down,
+ * as VS Code does, past an empty line too.
+ * A point counts as one line with its sub-points and further lines, see {@link pointLastOf}:
+ * it moves with them, and it goes past a point of its level with that point's own;
+ * a line of no point goes past a whole point of its level too.
+ * A further line moves alone, like a line of code, so I put the lines of a point in order.
+ * The first point of a sub-list goes up past the line above,
+ * the last one down past the line below.
+ * Lines picked take the sub-points and further lines of their points along.
+ * - `doc`: Text.
+ * - `text`: Gives the text of a line by its number.
+ * - `range`: The cursor or what is picked.
+ * - `first`, `last`: Numbers of the first and the last line that move,
+ *   not the line where what is picked ends at its start.
+ * - `end`: Number of the last line picked.
+ * - `level`: How far the first line that moves stands in, `null` for an empty line.
+ * - `below`, `bottom`: Numbers of the first and the last line they go past downwards.
+ * - `top`: Number of the first line they go past upwards, the line above them the last.
+ * - `blanks`: How far a line stands in, `null` for an empty line.
+ *
+ * @param down - Whether they move down, else up
  * @returns The command
  */
-function itemMove(down: boolean): Command {
+function linesMove(down: boolean): Command {
     return (view: EditorView): boolean => {
-        const item: SyntaxNode | null = itemAt(view.state);
-        if (item === null || view.state.readOnly) return false;
+        const doc: Text = view.state.doc;
+        if (view.state.readOnly) return false;
 
-        const first: Line = view.state.doc.lineAt(item.from);
-        const last: Line = view.state.doc.lineAt(item.to);
-        const sibling: SyntaxNode | null = down ? item.nextSibling : item.prevSibling;
-        if (sibling?.name === "ListItem") {
-            if (down)
-                blocksSwap(
-                    view,
-                    first.from,
-                    view.state.doc.lineAt(sibling.from).from,
-                    view.state.doc.lineAt(sibling.to).to,
-                    false,
-                );
-            else
-                blocksSwap(
-                    view,
-                    view.state.doc.lineAt(sibling.from).from,
-                    first.from,
-                    last.to,
-                    true,
-                );
+        const text: (number: number) => string = (number: number): string => doc.line(number).text;
+        const range: SelectionRange = view.state.selection.main;
+        const first: number = doc.lineAt(range.from).number;
+        let last: number = doc.lineAt(range.to).number;
+        if (!range.empty && range.to === doc.line(last).from) last--;
+        const end: number = last;
+        for (let number: number = first; number <= end; number++)
+            if (pointIs(view.state, number)) last = Math.max(last, pointLastOf(doc, number));
+
+        const level: number | null = depthOf(text(first));
+        if (down) {
+            if (last === doc.lines) return true;
+            const below: number = last + 1;
+            const bottom: number =
+                pointIs(view.state, below) && depthOf(text(below)) === level
+                    ? pointLastOf(doc, below)
+                    : below;
+            blocksSwap(
+                view,
+                doc.line(first).from,
+                doc.line(below).from,
+                doc.line(bottom).to,
+                false,
+            );
             return true;
         }
-        if (down ? last.number === view.state.doc.lines : first.number === 1) return true;
-        const line: Line = view.state.doc.line(down ? last.number + 1 : first.number - 1);
-        if (down) blocksSwap(view, first.from, line.from, line.to, false);
-        else blocksSwap(view, line.from, first.from, last.to, true);
+        if (first === 1) return true;
+        let top: number = first - 1;
+        if (level !== null && depthOf(text(top)) !== null)
+            for (let number: number = top; number >= 1; number--) {
+                const blanks: number | null = depthOf(text(number));
+                if (blanks === null || blanks > level) continue;
+                if (blanks === level && pointIs(view.state, number)) top = number;
+                break;
+            }
+        blocksSwap(view, doc.line(top).from, doc.line(first).from, doc.line(last).to, true);
         return true;
     };
 }
@@ -2142,7 +2219,7 @@ const historyInput: Extension = EditorView.domEventHandlers({
 
 /**
  * Keys of a Markdown file, see the top of this file;
- * Enter, Tab and Shift+Tab, Alt+Up and Alt+Down try the list item first,
+ * Enter, Tab and Shift+Tab try the list item first,
  * Enter then a new paragraph in a quote, a new paragraph and CodeMirror's list,
  * Enter on an empty point air above it before CodeMirror's list, Ctrl+Enter a block with air,
  * Backspace an empty line above a heading before CodeMirror's markup,
@@ -2181,8 +2258,8 @@ export const markdownKeys: Extension = [
             { key: "Tab", run: blankIndent(true), shift: blankIndent(false) },
             { key: "Tab", run: itemIndent(true), shift: itemIndent(false) },
             { key: "Tab", run: tabWrite, shift: indentLess },
-            { key: "Alt-ArrowUp", run: itemMove(false) },
-            { key: "Alt-ArrowDown", run: itemMove(true) },
+            { key: "Alt-ArrowUp", run: linesMove(false) },
+            { key: "Alt-ArrowDown", run: linesMove(true) },
             { key: "Mod-Shift-ArrowUp", run: moveLineUp },
             { key: "Mod-Shift-ArrowDown", run: moveLineDown },
             { key: "Mod-b", run: markupToggle("**") },
