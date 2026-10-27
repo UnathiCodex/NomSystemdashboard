@@ -62,7 +62,8 @@
  *
  * - `@codemirror/state`, `@codemirror/view`:
  *   The editor, CodeMirror 6, the engine of Obsidian's editor.
- * - `@codemirror/commands`: Undo, redo and the usual keys, Tab indenting a line.
+ * - `@codemirror/commands`: The history of the changes, whose Undo and Redo
+ *   stay within a block, see `./keys.ts`, and the usual keys, Tab indenting a line.
  * - `@codemirror/language`: Indents with tabs.
  * - `./ics.ts`: Shows an `.ics` file with its blocks one step in, its entries apart,
  *   its names grey and its values readable, each block folding.
@@ -91,7 +92,7 @@
 
 import { EditorState } from "@codemirror/state";
 import { EditorView, drawSelection, keymap } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import { defaultKeymap, history, indentWithTab } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { icsLook } from "./ics.ts";
 import { markdownKeys } from "./keys.ts";
@@ -335,7 +336,7 @@ function extensionsOf(opened: Opened): Extension[] {
         indentUnit.of("\t"),
         history(),
         drawSelection(),
-        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        keymap.of([...defaultKeymap, indentWithTab]),
         EditorView.lineWrapping,
         EditorView.darkTheme.of(true),
         EditorView.scrollMargins.of((): Partial<Rect> => ({

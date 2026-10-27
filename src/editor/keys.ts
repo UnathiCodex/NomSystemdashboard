@@ -64,13 +64,16 @@
  * - Ctrl+B and Ctrl+I make the text picked bold or italic, `**…**` and `*…*`, or take it back;
  *   with nothing picked the word at the cursor, see {@link markupToggle}.
  * - Ctrl+D takes away the line of the cursor, or the lines picked, as Obsidian's Delete paragraph.
+ * - Ctrl+Z undoes and Ctrl+Shift+Z redoes only within the block of the cursor,
+ *   never a change of another part of the note, see {@link historyIn}; Ctrl+Y does nothing.
  * - Arrow Up and Arrow Down go past the rows of a link or formula the cursor shows
  *   as its text in one step, and Arrow Down past a folded heading or point, see {@link lineMove};
  *   End goes past the hidden `]]` of a link that ends the line, see {@link lineEnd}.
  *
  * - `@codemirror/state`, `@codemirror/view`: The text with its cursor, and the keys.
  * - `@codemirror/commands`: CodeMirror's own commands:
- *   a tab at the cursor, indenting lines, deleting lines, moving a line up or down.
+ *   a tab at the cursor, indenting lines, deleting lines, moving a line up or down,
+ *   undoing and redoing.
  * - `@codemirror/language`: The syntax tree of the note,
  *   which tells where a list item begins and ends and where a link
  *   or formula stands, and what is folded.
@@ -95,9 +98,11 @@ import {
     insertTab,
     moveLineDown,
     moveLineUp,
+    redo,
     selectLineBoundaryForward,
     selectLineDown,
     selectLineUp,
+    undo,
 } from "@codemirror/commands";
 import { ensureSyntaxTree, foldedRanges, syntaxTree } from "@codemirror/language";
 import {
@@ -2057,6 +2062,80 @@ const blanksLeft: Extension = Prec.high(
 );
 
 /**
+ * Gives the block the cursor stands in, a definition, an example or a task:
+ * from its heading `##` to the line before the next one,
+ * from the start of the note before the first heading `##`; the whole note without one.
+ * In the round of a section it is the block shown, which the cursor never leaves,
+ * see `selectionKeep` in `./round.ts`.
+ * - `line`: Number of the line of the cursor.
+ * - `heading`: Tells a line of a heading `##`.
+ * - `first`, `last`: Numbers of the first and the last line of the block.
+ *
+ * @param state - Text and cursor
+ * @returns Start of its first line and end of its last line
+ */
+function blockOf(state: EditorState): { from: number; to: number } {
+    const line: number = state.doc.lineAt(state.selection.main.head).number;
+    const heading: (number: number) => boolean = (number: number): boolean =>
+        /^##[ \t]/.test(state.doc.line(number).text);
+    let first: number = line;
+    while (first > 1 && !heading(first)) first--;
+    let last: number = line;
+    while (last < state.doc.lines && !heading(last + 1)) last++;
+    return { from: state.doc.line(first).from, to: state.doc.line(last).to };
+}
+
+/**
+ * Undo or Redo only within the block of the cursor, see {@link blockOf},
+ * so it never changes another part of the note, which a round hides:
+ * the next step of the history goes back or comes again
+ * only while all it changes lies in that block, else nothing happens.
+ * - `block`: The block.
+ * - `steps`: The step CodeMirror's command would take, none at the end of the history.
+ * - `inside`: Whether all it changes lies in the block.
+ *
+ * @param command - CodeMirror's `undo` or `redo`
+ * @returns The command, which always takes the key
+ */
+function historyIn(command: StateCommand): Command {
+    return (view: EditorView): boolean => {
+        const block: { from: number; to: number } = blockOf(view.state);
+        const steps: Transaction[] = [];
+        command({
+            state: view.state,
+            dispatch: (transaction: Transaction): void => {
+                steps.push(transaction);
+            },
+        });
+        let inside: boolean = steps.length > 0;
+        steps[0]?.changes.iterChangedRanges((from: number, to: number): void => {
+            inside &&= from >= block.from && to <= block.to;
+        });
+        if (inside) view.dispatch(steps[0]);
+        return true;
+    };
+}
+
+/**
+ * Undo and Redo of the browser itself, like from the menu of a right click,
+ * only within the block of the cursor too, see {@link historyIn},
+ * before CodeMirror's history takes them.
+ */
+const historyInput: Extension = EditorView.domEventHandlers({
+    beforeinput: (event: InputEvent, view: EditorView): boolean => {
+        const command: StateCommand | null =
+            event.inputType === "historyUndo"
+                ? undo
+                : event.inputType === "historyRedo"
+                  ? redo
+                  : null;
+        if (command === null) return false;
+        event.preventDefault();
+        return historyIn(command)(view);
+    },
+});
+
+/**
  * Keys of a Markdown file, see the top of this file;
  * Enter, Tab and Shift+Tab, Alt+Up and Alt+Down try the list item first,
  * Enter then a new paragraph in a quote, a new paragraph and CodeMirror's list,
@@ -2074,6 +2153,7 @@ export const markdownKeys: Extension = [
     paragraphUntyped,
     airMost,
     blanksLeft,
+    Prec.high(historyInput),
     Prec.high(
         keymap.of([
             { key: "Enter", run: tableBreak(2), shift: tableBreak(2) },
@@ -2103,6 +2183,9 @@ export const markdownKeys: Extension = [
             { key: "Mod-b", run: markupToggle("**") },
             { key: "Mod-i", run: markupToggle("*") },
             { key: "Mod-d", run: deleteLine },
+            { key: "Mod-z", run: historyIn(undo), preventDefault: true },
+            { key: "Mod-Shift-z", run: historyIn(redo), preventDefault: true },
+            { key: "Mod-y", run: (): boolean => true, preventDefault: true },
             { key: "ArrowUp", run: lineMove(cursorLineUp), shift: lineMove(selectLineUp) },
             { key: "ArrowDown", run: lineMove(cursorLineDown), shift: lineMove(selectLineDown) },
             {
