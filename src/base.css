@@ -496,16 +496,27 @@ h3 {
 }
 
 /* The round of a section, like `Round 0`, a small grey box after its note in the dialog,
-   see `roundTagOf` in `day/choices.ts`: the box of the round in the status line of the editor,
+   see `roundTagOf` in `day/choices.ts` and `roundRowsOf` in `day/skill.ts`:
+   the box of the round in the status line of the editor,
    see `.block-kind` above and `.editor-title .block-kind` in `editor/editor.css`,
-   as small, as wide, as grey, a little apart from the name of its note */
+   as small, as wide, as grey, a little apart from the name of its note.
+   In the log a button that opens the rounds to pick, lighter under the pointer */
 .round-tag {
     box-sizing: border-box;
     width: 7.25em;
     margin: 0 0 0 0.75rem;
+    border: 0;
     font-size: calc(0.55 * 1.4rem);
     text-align: center;
     white-space: nowrap;
+}
+
+button.round-tag {
+    cursor: pointer;
+}
+
+button.round-tag:hover {
+    color: var(--text-main);
 }
 
 /* Phone: only plan and log of the day, see `main.ts`,

@@ -389,6 +389,7 @@ const skillNone: SkillValues = {
     chapters: [],
     links: [],
     attempts: [],
+    rounds: [],
 };
 
 /**
@@ -3393,7 +3394,7 @@ export async function boxOpenEdit(box: Box): Promise<void> {
 
 /**
  * Opens the dialog to change an entry of the log of the new system, its fields picked,
- * a meal with its foods, a skill entry with its skill, type, chapters, links and attempts.
+ * a meal with its foods, a skill entry with its skill, type, chapters, links, attempts, rounds.
  * - `props`: Fields of the entry as the reader gave them.
  * - `people`: Who I was with, as the reader gave them.
  *
@@ -3434,6 +3435,7 @@ export async function entryOpenEdit(entry: EventApi): Promise<void> {
             chapters: entry.extendedProps.chapters ?? [],
             links: entry.extendedProps.links ?? [],
             attempts: entry.extendedProps.attempts ?? [],
+            rounds: entry.extendedProps.rounds ?? [],
         },
         plan: null,
         entry: entry,
@@ -3445,14 +3447,15 @@ export async function entryOpenEdit(entry: EventApi): Promise<void> {
  * Opens the dialog anew for a copy of the entry of the log or the box it shows, as it was saved:
  * a new entry or a new box with the same category, fields, note, times and foods,
  * a skill one with its skill, type, semester, chapters and documents,
- * but without its attempts, the box it was logged from and its deadline, so I change what differs,
+ * but without its attempts, rounds, the box it was logged from, its deadline,
+ * so I change what differs,
  * like its day, and save it as one more; the entry or the box itself stays as it is.
  * A copy of a box is always a to-do, also that of a lecture imported from TUMonline.
  */
 async function entryDuplicate(): Promise<void> {
     await entryShow({
         ...opened,
-        skill: { ...opened.skill, title: "", titleLink: "", attempts: [] },
+        skill: { ...opened.skill, title: "", titleLink: "", attempts: [], rounds: [] },
         plan: null,
         entry: null,
         box: null,

@@ -27,8 +27,9 @@
  *   then one Task alone;
  *   that it is the first Example was Claude's choice, not mine;
  * - later: only the Task of today, once it is due.
- * A failure brings back one Example, the one before in the note, the same day,
- * see {@link fallbacksOf}:
+ * A failure brings back one Example, the one before in the note, see {@link fallbacksOf},
+ * the same day and on the days after while I did not close its round,
+ * see `day` of `SkillSection` in `../skill/attempts.ts`:
  * a wrong Task the last Example, a wrong Example the one before it,
  * a wrong first Example the Algorithm, read again;
  * one Task per round decides when the next round comes, see `reader/skill.ts`.
@@ -426,7 +427,8 @@ export function fallbacksOf(
  * Gives the steps of today's round, see the top of this file.
  * - `step`: A step of a block itself.
  * - `back`: The steps a failure of a block brings back, see {@link fallbacksOf}.
- * - `cold`: The Task of today, `null` for none, with its steps.
+ * - `cold`: The Task of today, `null` for none, with its steps,
+ *   after round 0 those its failure on the day of the round brings back.
  * - `first`: The first Example, the one of round 0.
  *
  * @param blocks - Blocks of the note
@@ -462,11 +464,11 @@ function stepsOf(
     const cold: Block | null =
         blocks.find((block: Block): boolean => block.task?.id === section.cold) ?? null;
     const coldSteps: Step[] =
-        cold === null ? [] : [step(cold), ...back(cold, section.ladder ? "" : today)];
+        cold === null ? [] : [step(cold), ...back(cold, section.ladder ? "" : section.day)];
     if (!section.ladder) {
         const task: SkillTask | null = cold?.task ?? null;
         return task !== null &&
-            (task.attempts.some((attempt: Attempt): boolean => attempt.day === today) ||
+            (task.attempts.some((attempt: Attempt): boolean => attempt.day === section.day) ||
                 (task.due !== "" && task.due <= today))
             ? coldSteps
             : [];
@@ -584,7 +586,8 @@ function passedOf(steps: Step[], at: string): string[] {
  * theory and the Algorithm, also brought back, once passed with `Next`;
  * an Example brought back once tried after the failure that brought it;
  * the Task of the ladder once tried, also on an earlier day of it,
- * a later Task once nothing of it is due today, by its attempts of today;
+ * a later Task once nothing of it is due today, by its attempts on the day of the round,
+ * see `day` of `SkillSection`;
  * any other task of the ladder once tried, on any day of it.
  * - `task`: Its task.
  *
@@ -601,7 +604,7 @@ function doneIs(shown: Round, step: Step): boolean {
     if (task.kind === "cold" && shown.section.ladder) return task.attempts.length > 0;
     if (task.kind === "cold")
         return (
-            task.attempts.some((attempt: Attempt): boolean => attempt.day === today) &&
+            task.attempts.some((attempt: Attempt): boolean => attempt.day === shown.section.day) &&
             (task.skipped || task.due === "" || task.due > today)
         );
     return task.attempts.length > 0;

@@ -117,8 +117,11 @@ export type SkillTask = Task & {
  * - `tried`: Number of its tasks I tried.
  * - `round`: Its round, the runs of its cold task done before today:
  *   a right run moves it on, a failed one leaves it.
+ *   A round I did not close goes on until I close it, see `sectionsOf` in `reader/skill.ts`.
  * - `ladder`: Whether it still learns the ladder before the cold task:
- *   while no cold task has an attempt on an earlier day.
+ *   while no cold task has an attempt on an earlier day, or while its round 0 goes on.
+ * - `day`: Day of the round shown, whose Task and whose failure count in it:
+ *   today, or for a later round going on from a day before the day of my last attempt at its Task.
  * - `rightDue`: Day the cold task comes back after a right run today; empty without a cold task.
  * - `wrongDue`: Day it comes back after a failed run today; empty without a cold task.
  * - `seen`: Steps of the round shown I passed with `Next`, by their keys,
@@ -142,6 +145,7 @@ export type SkillSection = {
     tried: number;
     round: number;
     ladder: boolean;
+    day: string;
     rightDue: string;
     wrongDue: string;
     seen: string[];
@@ -256,6 +260,18 @@ export type AttemptNew = {
 };
 
 /**
+ * A round I picked by hand for a note of a skill entry, to send with it,
+ * see `roundPicksOf` in `reader/skill.ts`.
+ *
+ * - `section`: Its section with its module, like `IN2028/01_01_SampleMeanEstimator`.
+ * - `round`: The round picked, like `0`.
+ */
+export type RoundPick = {
+    section: string;
+    round: number;
+};
+
+/**
  * A new skill entry of the log to send from the entry by category; an empty field is not written.
  *
  * - `title`: Its title, always the one its skill and type give it.
@@ -269,6 +285,7 @@ export type AttemptNew = {
  * - `documents`: Paths from the folder of its skill of the documents it used, none for none;
  *   the reader links each with its fingerprint, see `reader/documents.ts`.
  * - `attempts`: Its attempts, none for none.
+ * - `rounds`: Rounds I picked by hand for its notes, see {@link RoundPick}, none for none.
  * - `location`: Place, like the room of a lecture logged from the plan.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
  *   What I did online, like the stream of a lecture, see `Online` in `../day/entries.ts`.
@@ -287,6 +304,7 @@ export type SkillEntryNew = Partial<Online> & {
     chapters: string[];
     documents: string[];
     attempts: AttemptNew[];
+    rounds: RoundPick[];
     location: string;
     attendees: Attendee[];
     planned: string;

@@ -58,6 +58,11 @@
  * each task picked is a row with its result, the task judged as a whole: Right,
  * or Wrong with a short field for my comment on what went wrong;
  * a task left without result is no attempt and is not written.
+ * A note of a section shows its round after its name, a small grey box, like `Round 0`.
+ * In the plan it is its section's round now.
+ * In the log it is the round its line `X-ROUND` in the entry names, else its section's round now,
+ * and a click lets me pick it myself, see {@link roundRowsOf},
+ * so I can go on with a round on purpose, like round 0 after I closed it.
  * An entry of a type, whose documents are its material, picks no tasks.
  * Every field may stay empty, the skill too.
  * Below skill and type stands the link of the summary, small and grey, as every summary has it,
@@ -126,6 +131,7 @@ import type {
     Group,
     Link,
     ModuleContents,
+    RoundPick,
     SkillModule,
     SkillSection,
     SkillTask,
@@ -156,6 +162,7 @@ type AttemptPick = {
  * - `chapters`: Names of the chapters, like `01_RegressionAnalysis`.
  * - `documents`: Paths of the documents from the module folder, in the order they were picked.
  * - `attempts`: Tasks picked, in the order they were picked, each with its result.
+ * - `rounds`: Rounds I picked by hand, by the paths of their notes from the module folder.
  */
 type SkillPicks = {
     module: string;
@@ -164,6 +171,7 @@ type SkillPicks = {
     chapters: string[];
     documents: string[];
     attempts: AttemptPick[];
+    rounds: Map<string, number>;
 };
 
 /**
@@ -195,6 +203,8 @@ export type ModuleType = {
  *   like `IN2028/Airline Revenue Interval;right;low`,
  *   or `140500;IN2028/Airline Revenue Interval;right` with the time
  *   of the tap when a button wrote it.
+ * - `rounds`: Its `X-ROUND`s as the reader gave them, in the log,
+ *   like `01_01_SampleMeanEstimator;0;Definition. Sampling Distribution`.
  */
 export type SkillValues = {
     module: string;
@@ -205,6 +215,7 @@ export type SkillValues = {
     chapters: string[];
     links: Link[];
     attempts: string[];
+    rounds: string[];
 };
 
 /**
@@ -247,6 +258,7 @@ let picks: SkillPicks = {
     chapters: [],
     documents: [],
     attempts: [],
+    rounds: new Map(),
 };
 
 /**
@@ -354,6 +366,12 @@ const tapTime: RegExp = /^\d{2}:?\d{2}(?:\d{2})?$/;
  * which stay as they are, none for any other.
  */
 let logged: string[] = [];
+
+/**
+ * `X-ROUND`s of the skill entry of the log being changed, none for any other,
+ * whose rounds its notes show, see {@link roundRowsOf}.
+ */
+let loggedRounds: string[] = [];
 
 /**
  * Whether the dialog writes a box of the plan,
@@ -1021,7 +1039,8 @@ function taskRowsOf(
  * like `MGT1372` before its chapters are written, keeps the row `Chapter +` with its list empty,
  * no grey hint, so the row never just disappears; a project has no chapters and no row.
  * A chapter keeps the name it has in the entry, also once its folder has another name.
- * Taking back a chapter of my own learning takes back its notes too, a note its tasks;
+ * Taking back a chapter of my own learning takes back its notes too,
+ * a note its tasks and the round I picked for it;
  * documents of my own learning that belong to no chapter picked stay below, to be taken back.
  * Each change shows the fields again.
  * - `own`: Whether it is my own learning, without type, whose documents belong to their chapters.
@@ -1039,6 +1058,11 @@ function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
             (path: string): boolean =>
                 picks.chapters.includes(chapterOfDocument(path)) &&
                 tasksOfDocument(path).some((task: SkillTask): boolean => task.id === pick.task),
+        ),
+    );
+    picks.rounds = new Map(
+        [...picks.rounds].filter(([path]: [string, number]): boolean =>
+            picks.documents.includes(path),
         ),
     );
     if (picks.module === "") return [];
@@ -1148,22 +1172,98 @@ function noteOf(path: string): string {
 }
 
 /**
- * Gives the round of a note of a chapter, its section's, like `Round 0`,
- * as the scripts view shows it, see `round` of `SkillSection` in `../skill/attempts.ts`;
- * empty for any other document, like a slide, or a module not of the semester.
+ * Gives the section of a note of a chapter, with its round,
+ * see `SkillSection` in `../skill/attempts.ts`.
  * - `note`: Path of the note from `NomSkillingmodules`, see {@link noteOf}.
+ *
+ * @param path - Path of the document from the module folder,
+ *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ * @returns The section, `undefined` for any other document, like a slide,
+ *   or a module not of the semester
+ */
+function sectionOfDocument(path: string): SkillSection | undefined {
+    const note: string = noteOf(path);
+    return skilling.modules
+        .flatMap((module: SkillModule): SkillSection[] => module.sections)
+        .find((section: SkillSection): boolean => section.note === note);
+}
+
+/**
+ * Gives the round of a note of a chapter in the plan, its section's, like `Round 0`,
+ * as the scripts view shows it, see `round` of `SkillSection` in `../skill/attempts.ts`.
  * - `section`: Its section, `undefined` for none.
  *
  * @param path - Path of the document from the module folder,
  *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
- * @returns The round, empty for none
+ * @returns The round, empty for any other document, like a slide, or a module not of the semester
  */
 function roundOfDocument(path: string): string {
-    const note: string = noteOf(path);
-    const section: SkillSection | undefined = skilling.modules
-        .flatMap((module: SkillModule): SkillSection[] => module.sections)
-        .find((section: SkillSection): boolean => section.note === note);
+    const section: SkillSection | undefined = sectionOfDocument(path);
     return section === undefined ? "" : `Round ${section.round}`;
+}
+
+/**
+ * Builds the round of a note picked in the log, see the top of this file:
+ * a list whose line is the grey box of the round right after the name of the note,
+ * like `Round 0`, moved there as the plus of its tasks, see `lineMove` in `choices.ts`.
+ * It shows the round I picked, else the one its line `X-ROUND` in the entry names,
+ * else its section's round now.
+ * It offers the rounds from 0 to its section's round now, or to the one shown where higher.
+ * A pick, also of the round shown, is mine,
+ * and the reader writes it as the line `X-ROUND` of the note,
+ * see `roundPicksOf` in `reader/skill.ts`.
+ * Without a pick nothing is written.
+ * - `section`: The section of the note, `undefined` for none.
+ * - `line`: The line `X-ROUND` of its section in the entry, `undefined` for none.
+ * - `shown`: The round shown.
+ * - `list`: The row of the list, which keeps only the list once its line moved.
+ * - `box`: The line of the list, the grey box, no line of a picker any more,
+ *   so a click on the row of the note still opens its tasks, see `rowOf` in `choices.ts`.
+ * - `text`: The name of the note, after which the box goes.
+ *
+ * @param path - Path of the note from the module folder
+ * @param row - Row of the note
+ * @param again - Shows the fields again and tells the dialog
+ * @returns The row of the list, none for a document without section and in the plan
+ */
+function roundRowsOf(path: string, row: HTMLElement, again: () => void): HTMLElement[] {
+    const section: SkillSection | undefined = sectionOfDocument(path);
+    if (section === undefined || inPlan) return [];
+    const line: string | undefined = loggedRounds.find(
+        (value: string): boolean => value.split(";")[0] === section.title,
+    );
+    const shown: number =
+        picks.rounds.get(path) ?? (line === undefined ? section.round : Number(line.split(";")[1]));
+    const list: HTMLDivElement = rowOf(
+        "",
+        choicesOf({
+            search: searchOf(
+                Array.from(
+                    { length: Math.max(section.round, shown) + 1 },
+                    (_: unknown, round: number): Choice => ({
+                        value: String(round),
+                        text: `Round ${round}`,
+                        group: "",
+                    }),
+                ),
+            ),
+            picked: [String(shown)],
+            many: false,
+            adding: false,
+            noun: "round",
+            textOf: (value: string): string => `Round ${value}`,
+            pick: (values: string[]): void => {
+                picks.rounds.set(path, values.length === 0 ? shown : Number(values[0]));
+                again();
+            },
+        }),
+    );
+    const box: HTMLElement | null = list.querySelector(".picker-line");
+    const text: HTMLElement | null = row.querySelector(".picker-added-text");
+    if (box === null || text === null) return [list];
+    lineMove(list, text);
+    box.className = "block-kind round-tag";
+    return [list];
 }
 
 /**
@@ -1176,8 +1276,9 @@ function roundOfDocument(path: string): string {
  * Inside a chapter they stand below it, indented under a thin grey line,
  * see `nested` in `choices.ts`, their plus moved after the chapter's name,
  * each with its tasks below it, see {@link taskRowsOf}.
+ * A note shows its round after its name, see {@link roundOfDocument} and {@link roundRowsOf}.
  * - `added`: The rows of the documents picked, then the row of the list.
- * - `rows`: The same with the tasks of each document below its row.
+ * - `rows`: The same with the round of each note in the log and the tasks of each document.
  *
  * @param choices - Documents the list offers, none for no list
  * @param shown - Documents picked that these rows show, a part of all documents picked
@@ -1200,7 +1301,7 @@ function documentRowsOf(
         grouped: true,
         noun: "document",
         nested: nested,
-        tagOf: roundOfDocument,
+        tagOf: inPlan ? roundOfDocument : undefined,
         change: (values: string[]): void => {
             picks.documents = [
                 ...picks.documents.filter((path: string): boolean => !shown.includes(path)),
@@ -1210,8 +1311,12 @@ function documentRowsOf(
         },
     });
     const rows: HTMLElement[] = added.flatMap((row: HTMLElement, index: number): HTMLElement[] =>
-        nested && index < shown.length
-            ? [row, ...taskRowsOf(shown[index], row, again, changed)]
+        index < shown.length
+            ? [
+                  row,
+                  ...roundRowsOf(shown[index], row, again),
+                  ...(nested ? taskRowsOf(shown[index], row, again, changed) : []),
+              ]
             : [row],
     );
     if (shown.some((path: string): boolean => !contents.documents.includes(path)))
@@ -1271,6 +1376,7 @@ function picksShow(shown: SkillShown): void {
                 chapters: [],
                 documents: [],
                 attempts: [],
+                rounds: new Map(),
             };
             contentsLoad()
                 .then(again)
@@ -1446,6 +1552,7 @@ export async function skillFieldsShow(
     inPlan = plan;
     semesterDay = day;
     logged = plan ? [] : values.attempts;
+    loggedRounds = plan ? [] : values.rounds;
     picks = {
         module: values.module,
         type: values.type,
@@ -1453,6 +1560,7 @@ export async function skillFieldsShow(
         chapters: values.chapters,
         documents: [],
         attempts: [],
+        rounds: new Map(),
     };
     await contentsLoad();
     picks.documents = documentPathsOf(values.links);
@@ -1517,6 +1625,7 @@ export function skillModuleType(): ModuleType {
  * - {@link EventSourceApi#refetch}: Loads the entries of a calendar of the reader again.
  * - `attempts`: The tasks picked with their results,
  *   as attempts to send, a task without result left out.
+ * - `rounds`: The rounds I picked for notes, each with its section.
  * - `saved`: Whether the reader wrote it.
  *
  * @param calendar - Calendar of the day
@@ -1545,6 +1654,14 @@ export async function skillSave(
                   },
               ],
     );
+    const rounds: RoundPick[] = [...picks.rounds].flatMap(
+        ([path, round]: [string, number]): RoundPick[] => {
+            const section: SkillSection | undefined = sectionOfDocument(path);
+            return section === undefined
+                ? []
+                : [{ section: `${picks.module}/${section.title}`, round: round }];
+        },
+    );
 
     const saved: boolean = await skillEntrySend(
         id,
@@ -1557,6 +1674,7 @@ export async function skillSave(
             chapters: picks.chapters,
             documents: picks.documents,
             attempts: attempts,
+            rounds: rounds,
             location: fields.location,
             online: fields.online,
             onlineLink: fields.onlineLink,
