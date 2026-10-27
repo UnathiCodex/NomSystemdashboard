@@ -529,8 +529,8 @@ function selectionIs(info: EventDisplayInfo): boolean {
  * like `5416.01.003 (Hörsaal 2 "Interims II")`, which the plan leaves out,
  * see `roomOf` in `series.ts`, a way its route, see `whereOf` in `places.ts`;
  * a place with a link opens it on a click, see `whereLinkedOf`.
- * A route cut for room is cut where it starts, never at its goal,
- * like `Mensa Gar… → TUM Innenstadt`, see `.route-start` in `log.css`.
+ * A route without room for where it starts shows `…` in its place, never a part of it,
+ * and never cuts its goal, like `… → TUM Innenstadt`, see {@link linesFit}.
  * A tutorial ends its line with the group I went to, its `X-GROUP`, like `· Group 23`,
  * as its box in the plan does.
  * Every line stays one line: the place gives way first where a line is too narrow,
@@ -717,13 +717,28 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
  * hide as a whole from the bottom,
  * so no line is ever cut at the top and `Sleep: Night` stays in sight the longest;
  * an entry in sight keeps the lines it has room for;
+ * a line that an entry on top of it covers, see `slotEventOverlap` in {@link dayStart},
+ * ends as far before that entry as before the right edge of its own,
+ * and gives way there in the same order, the place first, see `log.css`:
+ * under a way from 13:30, `Body: Organisation` from 13:00 to 13:45 keeps its first line whole
+ * and ends its second `13:00 – 13:45 · TUM Klinikum Augen…`;
+ * where a way starts, `.route-start`, stands whole where it has room, else `…` alone,
+ * never a part of it, like `13:30 – 14:15 · … → Home Munich`;
  * lines no longer on the page,
  * like those of the copy FullCalendar draws while an entry is dragged, stay as they are.
  * - `inside`: Inside of the entry, with the space above and below its lines,
  *   `null` for lines no longer on it.
+ * - `harness`: Box FullCalendar places the entry in, with its z-index,
+ *   among those of the other entries of its column; `null` for an entry no longer on the page.
  * - `top`: Where the lines stick, 0.42rem below the top of the grid.
  * - `bottom`: Where the space below the lines begins.
  * - `room`: Whole lines between them.
+ * - `depth`: The z-index of the entry, higher for an entry FullCalendar lays over another.
+ * - `over`: Where the entries on top of it stand, those of its column with a higher z-index.
+ * - `end`: Room right of its lines, 0.5rem, on a phone 0.375rem, see `.entry-inner`.
+ * - `rect`: Where a line stands.
+ * - `edge`: Where the entries on top of a line start, the leftmost of them, `Infinity` for none.
+ * - `whole`: Where a way starts, written whole, like `TUM Klinikum Augenheilkunde`.
  *
  * @param lines - All lines of an entry, how many it has room for in `data-lines`,
  *   see {@link entryContentOf}
@@ -731,7 +746,8 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
  */
 function linesFit(lines: HTMLElement, grid: HTMLElement): void {
     const inside: HTMLElement | null = lines.parentElement;
-    if (inside === null) return;
+    const harness: HTMLElement | null = inside?.parentElement?.parentElement ?? null;
+    if (inside === null || harness === null) return;
     const top: number = grid.getBoundingClientRect().top + parseFloat(getComputedStyle(lines).top);
     const bottom: number =
         inside.getBoundingClientRect().bottom - parseFloat(getComputedStyle(inside).paddingBottom);
@@ -739,6 +755,28 @@ function linesFit(lines: HTMLElement, grid: HTMLElement): void {
         (bottom - top) / parseFloat(getComputedStyle(lines).lineHeight),
     );
     lines.style.maxHeight = `${Math.max(0, Math.min(Number(lines.dataset.lines), room))}lh`;
+    const depth: number = Number(getComputedStyle(harness).zIndex);
+    const over: DOMRect[] = [...(harness.parentElement?.children ?? [])]
+        .filter((other: Element): boolean => Number(getComputedStyle(other).zIndex) > depth)
+        .map((other: Element): DOMRect =>
+            (other.firstElementChild as Element).getBoundingClientRect(),
+        );
+    const end: number = parseFloat(getComputedStyle(inside).paddingInlineEnd);
+    for (const line of lines.children as HTMLCollectionOf<HTMLElement>) {
+        const rect: DOMRect = line.getBoundingClientRect();
+        const edge: number = Math.min(
+            ...over
+                .filter((box: DOMRect): boolean => box.top < rect.bottom && box.bottom > rect.top)
+                .map((box: DOMRect): number => box.left),
+        );
+        line.style.maxWidth = edge === Infinity ? "" : `${Math.max(0, edge - end - rect.left)}px`;
+    }
+    for (const start of lines.querySelectorAll<HTMLElement>(".route-start")) {
+        const whole: string = start.dataset.whole ?? start.textContent ?? "";
+        start.dataset.whole = whole;
+        start.textContent = whole;
+        if (start.scrollWidth > start.clientWidth) start.textContent = "…";
+    }
 }
 
 /**
@@ -900,7 +938,9 @@ async function noteStart(calendar: Calendar): Promise<void> {
  * a day the page stays on when it becomes visible loads again, see {@link dayAgain}.
  * While the grid scrolls, the lines of every entry fit to the part of it
  * in sight, see {@link linesFit};
- * the calendar catches the scroll on its way down to the grid, `capture`, since it never rises.
+ * the calendar catches the scroll on its way down to the grid, `capture`, since it never rises;
+ * they fit again when the grid changes its size, like with the window,
+ * since FullCalendar then moves the entries without drawing their lines anew.
  * - `initialView`: A time grid of the shown day, one column, the log.
  * - `headerToolbar`: None, since the date and its buttons stand above plan
  *   and log together, see {@link dayShow}.
@@ -973,7 +1013,8 @@ async function noteStart(calendar: Calendar): Promise<void> {
  *   as a longer one lie over the right part of it,
  *   as in Google Calendar, on a computer and on a phone alike,
  *   so the longer one keeps its text at its left,
- *   like a workshop with `Food: Pizza Salami` during it.
+ *   like a workshop with `Food: Pizza Salami` during it;
+ *   each line of it the entry on top covers ends before that entry, see {@link linesFit}.
  * - `nowIndicatorLineClass`, `nowIndicatorDotClass`:
  *   Add the classes `now-line` and `now-dot` to the line of now and its dot,
  *   so `log.css` draws them calm grey behind the entries, never through their text.
@@ -1105,6 +1146,10 @@ export function dayStart(): void {
         },
         { capture: true },
     );
+    new ResizeObserver((): void => {
+        for (const lines of document.querySelectorAll<HTMLElement>("#day-calendar .entry-lines"))
+            linesFit(lines, gridOf(lines));
+    }).observe(document.getElementById("day-calendar") as HTMLElement);
     document.getElementById("log-new")?.addEventListener("click", (): void => {
         entryOpenNow(calendar).catch((error: unknown): void => console.error(error));
     });

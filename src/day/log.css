@@ -112,7 +112,9 @@
    0.42rem below the top of the grid, as far as the entry reaches,
    so a night from 01:45, scrolled to 06:00, still says `Sleep: Night`;
    those its rest has no more room for hide as a whole from the bottom, see `linesFit` in `day.ts`,
-   so none is ever cut at the top */
+   so none is ever cut at the top;
+   a line that an entry on top of it covers ends before that entry, as wide as `linesFit` lets it,
+   like `13:00 – 13:45 · TUM Klinikum Augen…` under a way from 13:30 */
 .entry-lines {
     position: sticky;
     top: 0.42rem;
@@ -168,10 +170,11 @@
 
 /* Time in normal weight and the one grey of the page, never cut:
    after what on one line, like `· 05:15 – 05:45`, or on a line of its own, like `20:00 – 23:45`,
-   as wide as its text; only an entry narrower than the time alone,
-   beside others in a narrow column, ends it with an ellipsis */
+   as wide as its text, at most as wide as its line; only a line narrower than the time alone,
+   beside others in a narrow column or before an entry on top of it, ends it with an ellipsis */
 .entry-time {
     flex: none;
+    max-width: 100%;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -239,8 +242,8 @@ svg.route-arrow {
 }
 
 /* A route beside the time, like `· Mensa Garching → TUM Innenstadt`:
-   where it starts gives way first, cut with an ellipsis, `Mensa Gar… → TUM Innenstadt`,
-   its arrow and its goal always whole, see `entryContentOf` in `day.ts` */
+   where it starts gives way first, whole or as a whole to `…`, `… → TUM Innenstadt`,
+   its arrow and its goal always whole, see `linesFit` in `day.ts` */
 .entry-beside:has(> .route-start) {
     display: inline-flex;
     align-items: baseline;
