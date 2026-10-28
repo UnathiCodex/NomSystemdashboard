@@ -97,9 +97,12 @@ import type { Extra, Planned } from "./course.ts";
  *   `Home Munich, Burg-Eltz-Weg, 81375, München, Deutschland`, empty for none.
  * - `attendees`: Who I am with.
  * - `weekdays`: Its weekdays, from 1 for Monday to 7 for Sunday,
- *   like `[1, 4]`, all seven for every day; none for a monthly one.
- * - `monthDay`: Of a monthly series its day of the month, like 1 for my rent on the first,
+ *   like `[1, 4]`, all seven for every day; none for a monthly or yearly one.
+ * - `monthDay`: Of a monthly or yearly series its day of the month,
+ *   like 1 for my rent on the first,
  *   `FREQ=MONTHLY;BYMONTHDAY=1`, a month without that day left out; 0 for one by weekdays.
+ * - `month`: Of a yearly series its month, like 3 for an insurance due on 15 March,
+ *   `FREQ=YEARLY;BYMONTH=3;BYMONTHDAY=15`; 0 for any other.
  * - `start`, `end`: Its times in Berlin time,
  *   like `14:00` and `16:00`, both empty for a series without time.
  * - `minutes`: How long it lasts without time, like 480, `null` for no length;
@@ -130,6 +133,7 @@ export type Plain = Online & {
     attendees: Attendee[];
     weekdays: number[];
     monthDay: number;
+    month: number;
     start: string;
     end: string;
     minutes: number | null;
@@ -195,15 +199,17 @@ function minutesOf(time: string): number {
 
 /**
  * Tells whether a series happens on a day by its rule:
- * on its day of the month for a monthly one, else on one of its weekdays.
+ * on its day of the month for a monthly one, of its month for a yearly one,
+ * else on one of its weekdays.
  *
  * @param plain - The series
  * @param date - Day like `2026-11-01`
  * @returns Whether it happens that day
  */
-function onDay(plain: Pick<Plain, "weekdays" | "monthDay">, date: string): boolean {
+function onDay(plain: Pick<Plain, "weekdays" | "monthDay" | "month">, date: string): boolean {
     return plain.monthDay > 0
-        ? Number(date.slice(8)) === plain.monthDay
+        ? Number(date.slice(8)) === plain.monthDay &&
+              (plain.month === 0 || Number(date.slice(5, 7)) === plain.month)
         : plain.weekdays.includes(weekdayOf(date));
 }
 
@@ -223,7 +229,8 @@ function firstOf(plain: Plain): string {
 
 /**
  * Writes the rule of a series, its `RRULE`:
- * `FREQ=MONTHLY` with its day of the month as `BYMONTHDAY` for a monthly one,
+ * `FREQ=YEARLY` with its month as `BYMONTH` and its day of the month as `BYMONTHDAY`
+ * for a yearly one, `FREQ=MONTHLY` with its day of the month for a monthly one,
  * `FREQ=DAILY` for all seven weekdays, else `FREQ=WEEKLY` with its weekdays as `BYDAY`;
  * its last day as `UNTIL`, a day for a series without time,
  * else the end of that day in Berlin time as an instant in UTC,
@@ -244,14 +251,16 @@ function ruleOf(plain: Plain): string {
                     .replace(/[-:]/g, "")
                     .replace(/\.\d{3}/, "");
     const days: string =
-        plain.monthDay > 0
-            ? `FREQ=MONTHLY;BYMONTHDAY=${plain.monthDay}`
-            : plain.weekdays.length === 7
-              ? "FREQ=DAILY"
-              : `FREQ=WEEKLY;BYDAY=${[...plain.weekdays]
-                    .sort()
-                    .map((weekday: number): string => weekdayCodes[weekday - 1])
-                    .join(",")}`;
+        plain.month > 0
+            ? `FREQ=YEARLY;BYMONTH=${plain.month};BYMONTHDAY=${plain.monthDay}`
+            : plain.monthDay > 0
+              ? `FREQ=MONTHLY;BYMONTHDAY=${plain.monthDay}`
+              : plain.weekdays.length === 7
+                ? "FREQ=DAILY"
+                : `FREQ=WEEKLY;BYDAY=${[...plain.weekdays]
+                      .sort()
+                      .map((weekday: number): string => weekdayCodes[weekday - 1])
+                      .join(",")}`;
     return until === "" ? days : `${days};UNTIL=${until}`;
 }
 
@@ -267,7 +276,10 @@ function ruleOf(plain: Plain): string {
  * @param count - Its `COUNT`, like 31
  * @returns Day like `2026-11-21`
  */
-function countLastOf(plain: Pick<Plain, "weekdays" | "monthDay" | "first">, count: number): string {
+function countLastOf(
+    plain: Pick<Plain, "weekdays" | "monthDay" | "month" | "first">,
+    count: number,
+): string {
     let found: string = plain.first;
     let counted: number = onDay(plain, found) ? 1 : 0;
     while (counted < count) {
@@ -278,7 +290,8 @@ function countLastOf(plain: Pick<Plain, "weekdays" | "monthDay" | "first">, coun
 }
 
 /**
- * Lists the days a series happens on within a range: each of its days by its rule, see {@link onDay},
+ * Lists the days a series happens on within a range:
+ * each of its days by its rule, see {@link onDay},
  * from its first occurrence to its last day, and each of its extras, see `extras` of {@link Plain}.
  * - `days`: The days of its weekdays found.
  *
@@ -306,7 +319,9 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
  * Reads a part of a plain series of the plan by its `UID`, see {@link Plain}:
  * its weekdays from its rule, every day for `FREQ=DAILY`, its `BYDAY` for `FREQ=WEEKLY`,
  * else the weekday of its start;
- * of `FREQ=MONTHLY` no weekdays but its day of the month, its one `BYMONTHDAY` or that of its start;
+ * of `FREQ=MONTHLY` no weekdays but its day of the month,
+ * its one `BYMONTHDAY` or that of its start,
+ * of `FREQ=YEARLY` also its month, its one `BYMONTH` or that of its start;
  * its times and its length from its first occurrence, see `seriesLookup` in `calendar.ts`;
  * its last day from its `UNTIL`,
  * or of a series that ends after a count of occurrences the day of its last one,
@@ -315,10 +330,12 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
  * or of its day changed alone, see `extras` of {@link Plain}.
  * - `found`: Its file, its first occurrence and its rule.
  * - `days`: Its weekdays as its rule names them.
- * - `monthDays`: Its days of the month as its rule names them.
+ * - `monthDays`, `months`: Its days of the month and its months as its rule names them.
+ * - `dated`: Whether it repeats by a date, monthly or yearly.
  * - `timed`: Whether it has a time.
  * - `start`: Its first occurrence.
  * - `monthDay`: Its day of the month, 0 for a series by weekdays.
+ * - `month`: Its month, 0 for any but a yearly one.
  * - `weekdays`: Its weekdays, from 1 for Monday to 7 for Sunday.
  * - `own`: Its days changed alone.
  * - `extras`: Its single dates, see `extras` of {@link Plain}.
@@ -335,15 +352,19 @@ function partRead(id: string, key: string): Plain {
     const [file, entry, rule]: [string, Entry, ICAL.Recur] = found;
     const days: string[] = (rule.parts.BYDAY ?? []).map(String);
     const monthDays: number[] = (rule.parts.BYMONTHDAY ?? []).map(Number);
+    const months: number[] = (rule.parts.BYMONTH ?? []).map(Number);
+    const dated: boolean = ["MONTHLY", "YEARLY"].includes(rule.freq ?? "");
     if (
-        !["DAILY", "WEEKLY", "MONTHLY"].includes(rule.freq ?? "") ||
+        !["DAILY", "WEEKLY", "MONTHLY", "YEARLY"].includes(rule.freq ?? "") ||
         (rule.interval ?? 1) !== 1 ||
-        (rule.freq === "MONTHLY" && (days.length > 0 || monthDays.length > 1 || monthDays[0] < 1))
+        (dated && (days.length > 0 || monthDays.length > 1 || monthDays[0] < 1)) ||
+        months.length > (rule.freq === "YEARLY" ? 1 : 0)
     )
         throw new Error(`${entry.title}: no plain series`);
     const timed: boolean = !entry.allDay;
     const start: string = timed ? berlinDateOf(new Date(entry.start)) : entry.start;
-    const monthDay: number = rule.freq !== "MONTHLY" ? 0 : (monthDays[0] ?? Number(start.slice(8)));
+    const monthDay: number = !dated ? 0 : (monthDays[0] ?? Number(start.slice(8)));
+    const month: number = rule.freq !== "YEARLY" ? 0 : (months[0] ?? Number(start.slice(5, 7)));
     const own: Entry[] = fileEntriesRead(file).filter(
         (one: Entry): boolean => one.id === id && one.recurrence !== "",
     );
@@ -380,6 +401,7 @@ function partRead(id: string, key: string): Plain {
         attendees: entry.attendees,
         weekdays: weekdays,
         monthDay: monthDay,
+        month: month,
         start: timed ? berlinTimeOf(new Date(entry.start)) : "",
         end:
             timed && entry.minutes !== null
@@ -389,7 +411,10 @@ function partRead(id: string, key: string): Plain {
         first: start,
         last:
             rule.count !== null
-                ? countLastOf({ weekdays: weekdays, monthDay: monthDay, first: start }, rule.count)
+                ? countLastOf(
+                      { weekdays: weekdays, monthDay: monthDay, month: month, first: start },
+                      rule.count,
+                  )
                 : rule.until === null
                   ? ""
                   : rule.until.isDate
@@ -434,7 +459,8 @@ export function plainRead(id: string): Plain {
 
 /**
  * Checks a plain series as the dialog sends it: its weekdays, each once, from 1 to 7,
- * or of a monthly one none and its day of the month from 1 to 31;
+ * or of a monthly one none and its day of the month from 1 to 31,
+ * of a yearly one also its month from 1 to 12;
  * both times or none, the start before the end;
  * without times a whole number of minutes up to a day, or none;
  * its first day, and its last day on or after it, or none;
@@ -453,6 +479,10 @@ function plainCheck(plain: Plain): void {
         plain.monthDay < 0 ||
         plain.monthDay > 31 ||
         plain.monthDay > 0 !== (plain.weekdays.length === 0) ||
+        !Number.isInteger(plain.month) ||
+        plain.month < 0 ||
+        plain.month > 12 ||
+        (plain.month > 0 && plain.monthDay === 0) ||
         new Set(plain.weekdays).size !== plain.weekdays.length ||
         plain.weekdays.some(
             (weekday: number): boolean => !Number.isInteger(weekday) || weekday < 1 || weekday > 7,
@@ -981,6 +1011,7 @@ export function plainApply(change: PlainChange): Planned[] {
         JSON.stringify([
             change.weekdays,
             change.monthDay,
+            change.month,
             change.start,
             change.end,
             change.minutes,
@@ -996,6 +1027,7 @@ export function plainApply(change: PlainChange): Planned[] {
         JSON.stringify([
             old.weekdays,
             old.monthDay,
+            old.month,
             old.start,
             old.end,
             old.minutes,

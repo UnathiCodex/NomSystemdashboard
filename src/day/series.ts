@@ -111,7 +111,8 @@
  * which every box of it takes, its place, what it does online,
  * its weekdays picked as every series picks them, each with its times,
  * see {@link slotRowsOf}, or `Month` after them for once a month,
- * on the day of the month of its first day, like my rent on the first, see {@link monthly};
+ * on the day of the month of its first day, like my rent on the first, see {@link monthly},
+ * or `Year` for once a year, on the day and month of its first day, see {@link yearly};
  * a series written per time, or, by the switch beside them,
  * only how long they last, like `08:00` for my sleep, see {@link plainTimeRowsOf},
  * since a rule has one time;
@@ -527,8 +528,9 @@ export type Repeated = {
  * as the reader sends it and the form sends it back, see `Plain` in `reader/rules.ts`:
  * its `UID`, empty for a new one, what it is, of a skill its semester,
  * like `2026W`, empty for any other, its place, what it does online, who I am with,
- * its weekdays from 1 for Monday to 7 for Sunday, none for a monthly one,
- * of which its day of the month, like 1, else 0, its times in Berlin time,
+ * its weekdays from 1 for Monday to 7 for Sunday, none for a monthly or yearly one,
+ * of which its day of the month, like 1, else 0, of a yearly one its month, like 3, else 0,
+ * its times in Berlin time,
  * both empty without time, how long it lasts without time in minutes, `null` for no length,
  * its first day, its last, empty for none, its single dates besides its weekdays, its extras,
  * each with its times, without time its day alone,
@@ -548,6 +550,7 @@ export type Plain = Online & {
     attendees: Attendee[];
     weekdays: number[];
     monthDay: number;
+    month: number;
     start: string;
     end: string;
     minutes: number | null;
@@ -583,6 +586,13 @@ const examKinds: string[] = ["Midterm", "Endterm", "Retake"];
  * one day alone, on the day of the month of its first day, see `monthDay` of {@link Plain}.
  */
 const monthly: number = 8;
+
+/**
+ * The day of a yearly plain series among the weekdays of its form, after `Month`,
+ * its toggle `Year`, see {@link slotRowsOf}:
+ * one day alone, on the day and month of its first day, see `month` of {@link Plain}.
+ */
+const yearly: number = 9;
 
 /**
  * Waiting preview after a change,
@@ -833,11 +843,15 @@ export function weekdayNameOf(weekday: number, whole: boolean): string {
 /**
  * Writes the name of a day of the form of a series, short, see {@link slotRowsOf}.
  *
- * @param weekday - 1 for Monday to 7 for Sunday, or {@link monthly}
- * @returns Name like `Mon`, or `Month`
+ * @param weekday - 1 for Monday to 7 for Sunday, {@link monthly} or {@link yearly}
+ * @returns Name like `Mon`, `Month` or `Year`
  */
 function dayNameOf(weekday: number): string {
-    return weekday === monthly ? "Month" : weekdayNameOf(weekday, false);
+    return weekday === monthly
+        ? "Month"
+        : weekday === yearly
+          ? "Year"
+          : weekdayNameOf(weekday, false);
 }
 
 /**
@@ -1072,9 +1086,10 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
  * and moves the days of the series with it, see {@link daysMove} and {@link slotsFreed},
  * so a lecture moved from Monday to Tuesday keeps its boxes;
  * a slot without weekday yet, as a new series starts, takes the first weekday picked.
- * A plain series has `Month` after Sunday, see {@link monthly}, its one line like `Month 09:00`,
- * a day alone: picked, it takes the place of the weekdays, a weekday picked that of it.
- * - `shown`: The days to pick, the seven weekdays, and `Month`.
+ * A plain series has `Month` and `Year` after Sunday, see {@link monthly} and {@link yearly},
+ * its one line like `Month 09:00`,
+ * each a day alone: picked, it takes the place of the others, another one picked that of it.
+ * - `shown`: The days to pick, the seven weekdays, and `Month` and `Year`.
  * - `toggles`: Their toggles.
  * - `lines`: The days picked, one line each, or the length.
  * - `row`: The row.
@@ -1087,7 +1102,8 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
  *   like the switch of a plain series between times and a length;
  *   nothing when left out
  * @param lengthOf - Makes the length of a day in place of its times, `null` for the times
- * @param month - Whether `Month` stands after the weekdays, for a plain series; false when left out
+ * @param month - Whether `Month` and `Year` stand after the weekdays, for a plain series;
+ *   false when left out
  * @returns The row, alone, as the rows of the form are given
  */
 export function slotRowsOf(
@@ -1098,7 +1114,7 @@ export function slotRowsOf(
     lengthOf: ((slot: Slot) => HTMLElement) | null = null,
     month: boolean = false,
 ): HTMLElement[] {
-    const shown: number[] = [1, 2, 3, 4, 5, 6, 7, ...(month ? [monthly] : [])];
+    const shown: number[] = [1, 2, 3, 4, 5, 6, 7, ...(month ? [monthly, yearly] : [])];
     const toggles: HTMLElement = elementOf("span", "series-weekdays", "");
     toggles.append(
         ...shown.map((weekday: number): HTMLButtonElement => {
@@ -1144,24 +1160,26 @@ export function slotRowsOf(
  * which takes the boxes of a slot taken back before,
  * see {@link slotsFreed}, moving the days of the series with it, see {@link daysMove};
  * taken back, but the last one, its slot goes, its boxes kept for the next weekday picked.
- * `Month` picked, see {@link monthly}, stays alone with the times of the first,
- * and a weekday picked takes its slot as that of a slot without weekday.
+ * `Month` or `Year` picked, see {@link monthly} and {@link yearly},
+ * stays alone with the times of the first,
+ * and another day picked takes its slot as that of a slot without weekday.
  * The slots stay in the order of their weekdays, each with its `before`.
  * - `index`: The slot of the weekday, -1 for none.
- * - `empty`: The slot without weekday, or that of `Month`, -1 for none.
+ * - `empty`: The slot without weekday, or that of `Month` or `Year`, -1 for none.
  * - `freed`: The slot taken back whose boxes the new one takes, `undefined` for none.
  * - `pairs`: Each slot with its `before`, in the order of their weekdays.
  *
  * @param days - The days of the series
- * @param weekday - The weekday, from 1 for Monday to 7 for Sunday, or {@link monthly}
+ * @param weekday - The weekday, from 1 for Monday to 7 for Sunday,
+ *   {@link monthly} or {@link yearly}
  */
 function slotToggle(days: Days, weekday: number): void {
     const index: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
     const empty: number = days.slots.findIndex(
-        (slot: Slot): boolean => slot.weekday === 0 || slot.weekday === monthly,
+        (slot: Slot): boolean => slot.weekday === 0 || slot.weekday >= monthly,
     );
-    if (weekday === monthly && index === -1) {
-        days.slots = [{ ...days.slots[0], weekday: monthly }];
+    if (weekday >= monthly && index === -1) {
+        days.slots = [{ ...days.slots[0], weekday: weekday }];
         days.before = [0];
     } else if (index === -1 && empty !== -1) days.slots[empty].weekday = weekday;
     else if (index === -1) {
@@ -3849,7 +3867,8 @@ function plainReady(series: Plain, form: Form): boolean {
  * - `was`: The parts of the series as it was, the series being changed first.
  * - `keyOf`: Gives a time, its start and end, or its length.
  * - `groups`: The weekdays of each time, in the order of the days,
- *   of a monthly series `Month` alone, which writes its day of the month, that of its first day.
+ *   of a monthly series `Month` alone, which writes its day of the month, that of its first day,
+ *   of a yearly one `Year` alone, which writes also its month, that of its first day.
  * - `owners`: The part of the series as it was that each time keeps, by its time.
  * - `free`: The parts of the series as it was whose time went.
  * - `key`: The `X-SERIES` of the parts.
@@ -3933,10 +3952,11 @@ function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
             end: plainTimed ? time.split("-")[1] : "",
             minutes: plainTimed ? null : Number(time),
             weekdays:
-                weekdays[0] === monthly
+                weekdays[0] >= monthly
                     ? []
                     : weekdays.sort((first: number, second: number): number => first - second),
-            monthDay: weekdays[0] === monthly ? Number(form.first.slice(8)) : 0,
+            monthDay: weekdays[0] >= monthly ? Number(form.first.slice(8)) : 0,
+            month: weekdays[0] === yearly ? Number(form.first.slice(5, 7)) : 0,
             series: key,
             extras:
                 time !== kept
@@ -4270,7 +4290,8 @@ function plainSummaryOf(series: Plain): HTMLElement {
  * - `parts`: Its parts going on, see `plainRead` in `reader/rules.ts`,
  *   or itself alone, the earliest first day of them its first day.
  * - `loaded`: The categories and the people.
- * - `daysOf`: Gives the days of a part in the form, its weekdays or `Month`, see {@link monthly}.
+ * - `daysOf`: Gives the days of a part in the form, its weekdays, `Month` or `Year`,
+ *   see {@link monthly} and {@link yearly}.
  * - `slots`: Its weekdays with their times, of all its parts.
  * - `dialog`: The dialog.
  *
@@ -4281,7 +4302,7 @@ function plainSummaryOf(series: Plain): HTMLElement {
 async function plainStart(series: Plain, saved: () => void): Promise<void> {
     const parts: Plain[] = series.parts.length > 0 ? series.parts : [series];
     const daysOf: (part: Plain) => number[] = (part: Plain): number[] =>
-        part.monthDay > 0 ? [monthly] : part.weekdays;
+        part.month > 0 ? [yearly] : part.monthDay > 0 ? [monthly] : part.weekdays;
     const loaded: [Category[], Person[]] = await Promise.all([
         readerAsk<Category[]>(
             `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
@@ -4399,6 +4420,7 @@ export async function learningOpen(module: string, semester: string, id: string)
             attendees: [],
             weekdays: [weekdayOf(today)],
             monthDay: 0,
+            month: 0,
             start: "",
             end: "",
             minutes: null,
@@ -4636,6 +4658,7 @@ async function freshFollow(): Promise<void> {
             attendees: [],
             weekdays: [weekdayOf(day)],
             monthDay: 0,
+            month: 0,
             start: "",
             end: "",
             minutes: null,
