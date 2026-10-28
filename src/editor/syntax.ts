@@ -8,7 +8,10 @@
  *   taken whole, so `_`, `*` and `\` inside stay TeX, while `$` inside code stays text;
  * - wiki links `[[Note#Heading|Text]]` as `WikiLink`, embeds `![[Image.svg|300]]` as `WikiEmbed`;
  * - an HTML block like `<table>` ending on the line its tag closes, as in Obsidian's editor,
- *   so Markdown right below it is read as Markdown.
+ *   so Markdown right below it is read as Markdown;
+ * - a still empty point right below a paragraph as a point, like the one Enter writes
+ *   before the first point of a list, never as the line under a heading of the paragraph,
+ *   which Markdown would make of a `-` there.
  * The parser places each of them in the text, from where to where, for the live preview to draw.
  * Gives the Markdown of every editor of mine with it, see {@link markdownSupport}.
  *
@@ -127,11 +130,28 @@ function htmlBlockParse(cx: BlockContext, line: Line): boolean {
 }
 
 /**
+ * A still empty point, a `-`, `+`, `*` or number with nothing after it.
+ */
+const emptyPointRule: RegExp = /^(?:[-+*]|\d{1,9}[.)])[ \t]*$/;
+
+/**
+ * Ends a paragraph before a still empty point, which Markdown takes on into the paragraph,
+ * a `-` as the line under a heading, so the point is read as the first point of a list.
+ *
+ * @param cx - The parser
+ * @param line - The line after the paragraph so far
+ * @returns Whether the paragraph ends before the line
+ */
+function emptyPointEnds(cx: BlockContext, line: Line): boolean {
+    return emptyPointRule.test(line.text.slice(line.pos));
+}
+
+/**
  * The Obsidian syntax for CodeMirror's Markdown parser, see the top of this file.
  * - `defineNodes`: The new pieces of syntax, wiki links and embeds tagged as links.
  * - `parseInline`: Wiki links read before Markdown links and images, which would take their `[`.
  * - `parseBlock`: HTML blocks of block tags read before Markdown's own,
- *   which would go on to the next empty line.
+ *   which would go on to the next empty line; a paragraph ending before a still empty point.
  */
 const obsidianSyntax: MarkdownConfig = {
     defineNodes: [
@@ -143,7 +163,10 @@ const obsidianSyntax: MarkdownConfig = {
         { name: "InlineMath", parse: mathParse },
         { name: "WikiLink", parse: wikiLinkParse, before: "Link" },
     ],
-    parseBlock: [{ name: "ClosedHTMLBlock", parse: htmlBlockParse, before: "HTMLBlock" }],
+    parseBlock: [
+        { name: "ClosedHTMLBlock", parse: htmlBlockParse, before: "HTMLBlock" },
+        { name: "EmptyPoint", parse: (): boolean => false, endLeaf: emptyPointEnds },
+    ],
 };
 
 /**
