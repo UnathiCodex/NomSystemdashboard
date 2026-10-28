@@ -97,7 +97,9 @@ import type { Extra, Planned } from "./course.ts";
  *   `Home Munich, Burg-Eltz-Weg, 81375, München, Deutschland`, empty for none.
  * - `attendees`: Who I am with.
  * - `weekdays`: Its weekdays, from 1 for Monday to 7 for Sunday,
- *   like `[1, 4]`, all seven for every day.
+ *   like `[1, 4]`, all seven for every day; none for a monthly one.
+ * - `monthDay`: Of a monthly series its day of the month, like 1 for my rent on the first,
+ *   `FREQ=MONTHLY;BYMONTHDAY=1`, a month without that day left out; 0 for one by weekdays.
  * - `start`, `end`: Its times in Berlin time,
  *   like `14:00` and `16:00`, both empty for a series without time.
  * - `minutes`: How long it lasts without time, like 480, `null` for no length;
@@ -127,6 +129,7 @@ export type Plain = Online & {
     location: string;
     attendees: Attendee[];
     weekdays: number[];
+    monthDay: number;
     start: string;
     end: string;
     minutes: number | null;
@@ -191,7 +194,22 @@ function minutesOf(time: string): number {
 }
 
 /**
- * Gives the first occurrence of a series: its first weekday from its first day on.
+ * Tells whether a series happens on a day by its rule:
+ * on its day of the month for a monthly one, else on one of its weekdays.
+ *
+ * @param plain - The series
+ * @param date - Day like `2026-11-01`
+ * @returns Whether it happens that day
+ */
+function onDay(plain: Pick<Plain, "weekdays" | "monthDay">, date: string): boolean {
+    return plain.monthDay > 0
+        ? Number(date.slice(8)) === plain.monthDay
+        : plain.weekdays.includes(weekdayOf(date));
+}
+
+/**
+ * Gives the first occurrence of a series: its first day by its rule from its first day on,
+ * see {@link onDay}.
  * - `found`: The day looked at.
  *
  * @param plain - The series
@@ -199,12 +217,13 @@ function minutesOf(time: string): number {
  */
 function firstOf(plain: Plain): string {
     let found: string = plain.first;
-    while (!plain.weekdays.includes(weekdayOf(found))) found = dayAdd(found, 1);
+    while (!onDay(plain, found)) found = dayAdd(found, 1);
     return found;
 }
 
 /**
  * Writes the rule of a series, its `RRULE`:
+ * `FREQ=MONTHLY` with its day of the month as `BYMONTHDAY` for a monthly one,
  * `FREQ=DAILY` for all seven weekdays, else `FREQ=WEEKLY` with its weekdays as `BYDAY`;
  * its last day as `UNTIL`, a day for a series without time,
  * else the end of that day in Berlin time as an instant in UTC,
@@ -225,40 +244,42 @@ function ruleOf(plain: Plain): string {
                     .replace(/[-:]/g, "")
                     .replace(/\.\d{3}/, "");
     const days: string =
-        plain.weekdays.length === 7
-            ? "FREQ=DAILY"
-            : `FREQ=WEEKLY;BYDAY=${[...plain.weekdays]
-                  .sort()
-                  .map((weekday: number): string => weekdayCodes[weekday - 1])
-                  .join(",")}`;
+        plain.monthDay > 0
+            ? `FREQ=MONTHLY;BYMONTHDAY=${plain.monthDay}`
+            : plain.weekdays.length === 7
+              ? "FREQ=DAILY"
+              : `FREQ=WEEKLY;BYDAY=${[...plain.weekdays]
+                    .sort()
+                    .map((weekday: number): string => weekdayCodes[weekday - 1])
+                    .join(",")}`;
     return until === "" ? days : `${days};UNTIL=${until}`;
 }
 
 /**
  * Gives the last day of a series that ends after a count of occurrences, its `COUNT`,
  * like `2026-11-21` of 31 days from `2026-10-22`:
- * the day of its last occurrence, counted over its weekdays from its first day on.
+ * the day of its last occurrence, counted over its days by its rule from its first day on,
+ * see {@link onDay}.
  * - `found`: The day looked at.
  * - `counted`: Occurrences counted so far, that day included.
  *
- * @param first - Its first day, like `2026-10-22`
- * @param weekdays - Its weekdays, from 1 for Monday to 7 for Sunday
+ * @param plain - The series, its first day its first occurrence
  * @param count - Its `COUNT`, like 31
  * @returns Day like `2026-11-21`
  */
-function countLastOf(first: string, weekdays: number[], count: number): string {
-    let found: string = first;
-    let counted: number = weekdays.includes(weekdayOf(found)) ? 1 : 0;
+function countLastOf(plain: Pick<Plain, "weekdays" | "monthDay" | "first">, count: number): string {
+    let found: string = plain.first;
+    let counted: number = onDay(plain, found) ? 1 : 0;
     while (counted < count) {
         found = dayAdd(found, 1);
-        if (weekdays.includes(weekdayOf(found))) counted++;
+        if (onDay(plain, found)) counted++;
     }
     return found;
 }
 
 /**
- * Lists the days a series happens on within a range: each of its weekdays from its first occurrence
- * to its last day, and each of its extras, see `extras` of {@link Plain}.
+ * Lists the days a series happens on within a range: each of its days by its rule, see {@link onDay},
+ * from its first occurrence to its last day, and each of its extras, see `extras` of {@link Plain}.
  * - `days`: The days of its weekdays found.
  *
  * @param plain - The series
@@ -270,8 +291,7 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
     const days: string[] = [];
     const first: string = firstOf(plain);
     for (let found: string = from < first ? first : from; found <= to; found = dayAdd(found, 1))
-        if ((plain.last === "" || found <= plain.last) && plain.weekdays.includes(weekdayOf(found)))
-            days.push(found);
+        if ((plain.last === "" || found <= plain.last) && onDay(plain, found)) days.push(found);
     return [
         ...new Set([
             ...days,
@@ -286,6 +306,7 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
  * Reads a part of a plain series of the plan by its `UID`, see {@link Plain}:
  * its weekdays from its rule, every day for `FREQ=DAILY`, its `BYDAY` for `FREQ=WEEKLY`,
  * else the weekday of its start;
+ * of `FREQ=MONTHLY` no weekdays but its day of the month, its one `BYMONTHDAY` or that of its start;
  * its times and its length from its first occurrence, see `seriesLookup` in `calendar.ts`;
  * its last day from its `UNTIL`,
  * or of a series that ends after a count of occurrences the day of its last one,
@@ -294,8 +315,10 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
  * or of its day changed alone, see `extras` of {@link Plain}.
  * - `found`: Its file, its first occurrence and its rule.
  * - `days`: Its weekdays as its rule names them.
+ * - `monthDays`: Its days of the month as its rule names them.
  * - `timed`: Whether it has a time.
  * - `start`: Its first occurrence.
+ * - `monthDay`: Its day of the month, 0 for a series by weekdays.
  * - `weekdays`: Its weekdays, from 1 for Monday to 7 for Sunday.
  * - `own`: Its days changed alone.
  * - `extras`: Its single dates, see `extras` of {@link Plain}.
@@ -304,17 +327,23 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
  * @param key - The `X-SERIES` of its series, empty for none
  * @returns The part, without parts of its own
  * @throws {Error} - When the plan holds no series of the `UID`, or one whose rule is no plain one,
- *   like every second week
+ *   like every second week or every second Tuesday of a month
  */
 function partRead(id: string, key: string): Plain {
     const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(day.plan, id);
     if (found === undefined) throw new Error(`No series ${id} in the plan`);
     const [file, entry, rule]: [string, Entry, ICAL.Recur] = found;
-    if (!["DAILY", "WEEKLY"].includes(rule.freq ?? "") || (rule.interval ?? 1) !== 1)
-        throw new Error(`${entry.title}: no plain series`);
     const days: string[] = (rule.parts.BYDAY ?? []).map(String);
+    const monthDays: number[] = (rule.parts.BYMONTHDAY ?? []).map(Number);
+    if (
+        !["DAILY", "WEEKLY", "MONTHLY"].includes(rule.freq ?? "") ||
+        (rule.interval ?? 1) !== 1 ||
+        (rule.freq === "MONTHLY" && (days.length > 0 || monthDays.length > 1 || monthDays[0] < 1))
+    )
+        throw new Error(`${entry.title}: no plain series`);
     const timed: boolean = !entry.allDay;
     const start: string = timed ? berlinDateOf(new Date(entry.start)) : entry.start;
+    const monthDay: number = rule.freq !== "MONTHLY" ? 0 : (monthDays[0] ?? Number(start.slice(8)));
     const own: Entry[] = fileEntriesRead(file).filter(
         (one: Entry): boolean => one.id === id && one.recurrence !== "",
     );
@@ -329,11 +358,13 @@ function partRead(id: string, key: string): Plain {
         };
     });
     const weekdays: number[] =
-        rule.freq === "DAILY"
-            ? [1, 2, 3, 4, 5, 6, 7]
-            : days.length === 0
-              ? [weekdayOf(start)]
-              : days.map((code: string): number => weekdayCodes.indexOf(code) + 1);
+        monthDay > 0
+            ? []
+            : rule.freq === "DAILY"
+              ? [1, 2, 3, 4, 5, 6, 7]
+              : days.length === 0
+                ? [weekdayOf(start)]
+                : days.map((code: string): number => weekdayCodes.indexOf(code) + 1);
     return {
         id: id,
         category: entry.category,
@@ -348,6 +379,7 @@ function partRead(id: string, key: string): Plain {
         onlineTitle: entry.onlineTitle,
         attendees: entry.attendees,
         weekdays: weekdays,
+        monthDay: monthDay,
         start: timed ? berlinTimeOf(new Date(entry.start)) : "",
         end:
             timed && entry.minutes !== null
@@ -357,7 +389,7 @@ function partRead(id: string, key: string): Plain {
         first: start,
         last:
             rule.count !== null
-                ? countLastOf(start, weekdays, rule.count)
+                ? countLastOf({ weekdays: weekdays, monthDay: monthDay, first: start }, rule.count)
                 : rule.until === null
                   ? ""
                   : rule.until.isDate
@@ -401,7 +433,8 @@ export function plainRead(id: string): Plain {
 }
 
 /**
- * Checks a plain series as the dialog sends it: its weekdays, each once, from 1 to 7;
+ * Checks a plain series as the dialog sends it: its weekdays, each once, from 1 to 7,
+ * or of a monthly one none and its day of the month from 1 to 31;
  * both times or none, the start before the end;
  * without times a whole number of minutes up to a day, or none;
  * its first day, and its last day on or after it, or none;
@@ -416,7 +449,10 @@ function plainCheck(plain: Plain): void {
     const dayForm: RegExp = /^\d{4}-\d{2}-\d{2}$/;
     const timeForm: RegExp = /^\d{2}:\d{2}$/;
     if (
-        plain.weekdays.length === 0 ||
+        !Number.isInteger(plain.monthDay) ||
+        plain.monthDay < 0 ||
+        plain.monthDay > 31 ||
+        plain.monthDay > 0 !== (plain.weekdays.length === 0) ||
         new Set(plain.weekdays).size !== plain.weekdays.length ||
         plain.weekdays.some(
             (weekday: number): boolean => !Number.isInteger(weekday) || weekday < 1 || weekday > 7,
@@ -944,6 +980,7 @@ export function plainApply(change: PlainChange): Planned[] {
     const moved: boolean =
         JSON.stringify([
             change.weekdays,
+            change.monthDay,
             change.start,
             change.end,
             change.minutes,
@@ -958,6 +995,7 @@ export function plainApply(change: PlainChange): Planned[] {
         ]) !==
         JSON.stringify([
             old.weekdays,
+            old.monthDay,
             old.start,
             old.end,
             old.minutes,
