@@ -672,8 +672,7 @@ export type BlockMark = "done" | "wrong" | "round" | "other";
 
 /**
  * Type word of a block of a section at the start of its heading, with the dot and space after it,
- * like `Definition. ` of `Definition. Population and Sample`,
- * see `.claude/modules/learning-system.md`.
+ * like `Definition. ` of `Definition. Population and Sample`.
  */
 export const kindRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm|Example|Task)\.[ \t]+/;
 
