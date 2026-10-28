@@ -46,6 +46,11 @@
  * A click on a block in the tree,
  * or on a link to its heading in the note, shows it alone, back or ahead,
  * see {@link roundHeadingShow}, and `Next` returns to the current step.
+ * The reader keeps the block I opened in its memory, see {@link openedKeep},
+ * so a reload, also on another device, shows it again,
+ * and the current step only while I opened none since the reader started.
+ * Ctrl+Z goes back to the block I had open before, as the back button of a browser,
+ * once the block shown has nothing left to undo, see {@link roundBack}.
  * The round folds and unfolds only whole blocks, never a section in one:
  * the scene of a Definition, its section under a heading `####` like `#### Ice Cream Kiosk`,
  * folds only by my hand, also when I look the block up.
@@ -77,7 +82,7 @@
  */
 
 import { EditorSelection, EditorState, Prec, StateEffect, StateField } from "@codemirror/state";
-import { Decoration, EditorView } from "@codemirror/view";
+import { Decoration, EditorView, keymap } from "@codemirror/view";
 import { foldable, foldEffect, unfoldEffect } from "@codemirror/language";
 import { blockRule, blocksOf, tasksFollow } from "./tasks.ts";
 import { foldedAt } from "./steps.ts";
@@ -187,10 +192,46 @@ let round: Round | null = null;
 
 /**
  * Heading of a block opened from the tree that is not the current step, as I type it,
- * see {@link headingFollow}, shown alone in its place until `Next`;
- * empty for none.
+ * see {@link headingFollow}, shown alone in its place until `Next`, also after a reload,
+ * see {@link openedKeep}; empty for none.
  */
 let opened: string = "";
+
+/**
+ * Headings of the blocks I had open before, as written, the last one at the end,
+ * for Ctrl+Z, see {@link roundBack}; only while the page stays, a reload starts without.
+ */
+let openedBefore: string[] = [];
+
+/**
+ * Keeps the block shown in {@link openedBefore} before another one shows by a click or by `Next`,
+ * back or ahead.
+ * - `before`: The block shown, see {@link roundShownOf}.
+ *
+ * @param view - The editor
+ * @param heading - Heading of the block that shows next, as written
+ */
+function shownRemember(view: EditorView, heading: string): void {
+    const before: string = roundShownOf(view);
+    if (before !== "" && before !== heading) openedBefore.push(before);
+}
+
+/**
+ * Takes the block I opened in the section shown, empty for the current step, see {@link opened},
+ * and tells the reader, which keeps it in its memory until it restarts,
+ * see {@link roundOpenedOf}.
+ * - {@link Navigator#sendBeacon}: Sends it to the reader without waiting for its answer.
+ *
+ * @param shown - The round
+ * @param heading - Heading as written, empty for the current step
+ */
+function openedKeep(shown: Round, heading: string): void {
+    opened = heading;
+    navigator.sendBeacon(
+        "/api/skill/opened",
+        JSON.stringify({ path: shown.loaded.path, heading: heading }),
+    );
+}
 
 /**
  * Where to go once the round of today is done: back to Today, see `./today.ts`.
@@ -341,6 +382,7 @@ function headingFollow(update: ViewUpdate): void {
         key === before ? after : key;
     if (opened === "") round.at = renamed(round.at);
     else opened = renamed(opened);
+    openedBefore = openedBefore.map(renamed);
     if (
         !blocksOf(update.state, round.loaded.tasks).some(
             (block: Block): boolean => block.heading === before,
@@ -852,6 +894,7 @@ function blockOpen(view: EditorView, block: Block): void {
  * a line the reader does not take shows in the status line, see {@link failShow};
  * without a session, or once the round was shown anew meanwhile, as after a result, nothing moves.
  * - `steps`, `current`: The steps of the round and the current one.
+ * - `back`: Whether it goes from a block shown from the tree back to the current step.
  * - `following`: The step after it.
  *
  * @param view - The editor
@@ -863,18 +906,20 @@ async function roundNext(view: EditorView): Promise<void> {
     const steps: Step[] = roundStepsOf(view, shown);
     const current: Step | undefined = currentOf(shown, steps);
     if (current === undefined) return;
-    if (opened !== "" && opened !== current.block.heading) {
-        opened = "";
+    const back: boolean = opened !== "" && opened !== current.block.heading;
+    if (back) shownRemember(view, current.block.heading);
+    if (opened !== "") openedKeep(shown, "");
+    if (back) {
         blockOpen(view, current.block);
         roundDraw(view, shown);
         return;
     }
-    opened = "";
     const following: Step | undefined = steps[steps.indexOf(current) + 1];
     if (following === undefined || waitingIs(shown, current)) return;
     if (!(await sessionEnsure(moduleOf(shown))) || round !== shown) return;
     const passed: boolean = resultlessIs(current) && !shown.seen.includes(keyOf(current));
     if (passed) shown.seen.push(keyOf(current));
+    shownRemember(view, following.block.heading);
     shown.at = keyOf(following);
     lineWrite(shown, keyOf(following)).catch(failShow);
     blockOpen(view, following.block);
@@ -1082,9 +1127,15 @@ export function roundNextOf(): string {
  *
  * @param view - The editor
  * @param heading - Heading as written
+ * @param remembered - Whether Ctrl+Z goes back from it to the block shown before,
+ *   not for the block a page opens with or one Ctrl+Z goes back to
  * @returns Whether the round took it, not for a note that is no section
  */
-export function roundHeadingShow(view: EditorView, heading: string): boolean {
+export function roundHeadingShow(
+    view: EditorView,
+    heading: string,
+    remembered: boolean = true,
+): boolean {
     if (round === null) return false;
     const shown: Round = round;
     const block: Block | undefined = blocksOf(view.state, shown.loaded.tasks).find(
@@ -1092,10 +1143,38 @@ export function roundHeadingShow(view: EditorView, heading: string): boolean {
     );
     if (block === undefined) return false;
     const current: Step | undefined = currentOf(shown, roundStepsOf(view, shown));
-    opened = current?.block.heading === heading ? "" : heading;
+    if (remembered) shownRemember(view, heading);
+    openedKeep(shown, current?.block.heading === heading ? "" : heading);
     blockOpen(view, block);
     roundDraw(view, shown);
     return true;
+}
+
+/**
+ * Goes back to the block I had open before, see {@link openedBefore},
+ * as Ctrl+Z asks once the block shown has nothing left to undo, see `historyIn` in `./keys.ts`,
+ * or while the focus stands outside the text, see `keyDown` in `./editor.ts`.
+ * - `heading`: The block before.
+ *
+ * @param view - The editor
+ * @returns Whether it went back, not while I opened none before or for a note that is no section
+ */
+export function roundBack(view: EditorView): boolean {
+    const heading: string | undefined = openedBefore.pop();
+    return heading !== undefined && roundHeadingShow(view, heading, false);
+}
+
+/**
+ * Gives the block I opened last in a section, as the reader keeps it, see {@link openedKeep}.
+ *
+ * @param path - Path of the note, as the scripts view takes it
+ * @returns Heading as written, empty for the current step,
+ *   also while I opened none since the reader started
+ * @throws {Error} - When the reader cannot be reached
+ */
+export async function roundOpenedOf(path: string): Promise<string> {
+    const response: Response = await fetch(`/api/skill/opened?path=${encodeURIComponent(path)}`);
+    return response.ok ? ((await response.json()) as string) : "";
 }
 
 /**
@@ -1116,10 +1195,11 @@ export function roundGo(view: EditorView): void {
  *   {@link Prec.highest} runs {@link selectionKeep} after the other filters,
  *   which move the cursor too, so it has the last word.
  * - {@link EditorView.updateListener}: Hears each change once it is applied.
+ * - {@link keymap}: Takes Ctrl+Z once Undo within the block of `./keys.ts` has nothing left.
  *
  * @param changed - Shows the places of the blocks anew in the tree
  * @returns Extension for the editor: the block shown alone,
- *   what I write and select kept inside it, its heading followed
+ *   what I write and select kept inside it, its heading followed, Ctrl+Z going back
  */
 export function roundStart(changed: () => void): Extension {
     tasksFollow(
@@ -1128,6 +1208,7 @@ export function roundStart(changed: () => void): Extension {
     );
     return [
         alonePlace,
+        keymap.of([{ key: "Mod-z", run: roundBack }]),
         EditorState.changeFilter.of(changesKeep),
         Prec.highest(EditorState.transactionFilter.of(selectionKeep)),
         EditorView.updateListener.of(headingFollow),

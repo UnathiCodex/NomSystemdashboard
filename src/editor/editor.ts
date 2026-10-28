@@ -49,8 +49,9 @@
  * with the row of its table to scroll to and mark by the text of its first cell,
  * like `&row=Bichler%2C%20Martin` in `Persons.md`, see `rowShow` in `./preview.ts`,
  * which a person's name opens, see `../persons.ts`;
- * a section opens where its round stands,
- * a block it shows from the tree or a link staying out of the address, so a reload returns there.
+ * a section opens on the block I opened last from the tree or a link,
+ * which stays out of the address and which the reader keeps until it restarts,
+ * so a reload, also on another device, returns there, else where its round stands.
  * Saves only with its button, the plain floppy disk of saving,
  * so no check stands for saving, its tooltip `Save`,
  * or Ctrl+S, never by itself, merged with a change of the file on the disk since it was read,
@@ -101,11 +102,13 @@ import { headingShow, linksSet, livePreview, rowShow, solutionsFold } from "./pr
 import { solutionSteps } from "./steps.ts";
 import { taskRows, tasksLoad } from "./tasks.ts";
 import {
+    roundBack,
     roundBlocksOf,
     roundClose,
     roundGo,
     roundHeadingShow,
     roundNextOf,
+    roundOpenedOf,
     roundShownOf,
     roundStart,
 } from "./round.ts";
@@ -288,14 +291,27 @@ async function noteSave(): Promise<void> {
 /**
  * Saves on Ctrl+S, Cmd+S on a Mac, also while the cursor is outside the text,
  * instead of the browser saving the page.
+ * Ctrl+Z goes back to the block I had open before, see `roundBack` in `./round.ts`,
+ * while the focus stands outside the text, like on the tree after a click there,
+ * never in a field or a table opened over the file, which undo their own text.
+ * - `command`: Whether Ctrl or Cmd is held.
  *
  * @param event - Key pressed anywhere in the page
  */
 function keyDown(event: KeyboardEvent): void {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    const command: boolean = event.ctrlKey || event.metaKey;
+    if (command && event.key.toLowerCase() === "s") {
         event.preventDefault();
         noteSave();
-    }
+    } else if (
+        command &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "z" &&
+        !event.defaultPrevented &&
+        (event.target as Element).closest("input, textarea") === null &&
+        roundBack(view)
+    )
+        event.preventDefault();
 }
 
 /**
@@ -431,7 +447,7 @@ function addressHeadingShow(): void {
  * like in its outline, without loading the page again,
  * and keeps it in the address and the history of the browser;
  * a block of a section shows alone in its round, see `roundHeadingShow` in `./round.ts`,
- * and stays out of the address, so a reload returns to where the round stands;
+ * and stays out of the address, since the reader keeps it for a reload;
  * links to other notes, and clicks with a key held, act as usual.
  * - {@link History#pushState}:
  *   Writes the address as a new step of the history, for the back button.
@@ -478,7 +494,8 @@ function treeClick(event: MouseEvent): void {
  * so its blocks fold before they show,
  * scrolled to its current block unless the address names a heading,
  * whose block it shows once, the heading then dropped from the address,
- * see {@link History#replaceState}.
+ * see {@link History#replaceState}, or the reader keeps a block I opened last,
+ * see `roundOpenedOf` in `./round.ts`.
  * - `address`: The parameters of the address.
  * - `file`: Path of the file of my new system, empty for a note.
  * - `folder`: Path of the folder of my modules, empty for none.
@@ -488,6 +505,8 @@ function treeClick(event: MouseEvent): void {
  * - `close`, `next`: The close of a round and `Next` in the head, see `./round.ts`.
  * - `opened`: The file read.
  * - `text`: Element of the text, with the look of the notes for Markdown, else of plain text.
+ * - `kept`: The block I opened last in the section, asked from the reader while the tasks load,
+ *   empty for none or when the reader cannot be reached.
  * - `beforeunload`: Comes before the page closes or loads again, also for another file of the tree;
  *   `preventDefault` makes the browser ask.
  * - `popstate`: Comes when the back or forward button of the browser changes the address.
@@ -567,17 +586,20 @@ export async function editorStart(): Promise<void> {
     if (plannings || !opened.markdown) return;
 
     text.style.visibility = "hidden";
+    const kept: Promise<string> = roundOpenedOf(path).catch((): string => "");
     tasksLoad(view, path)
         .catch((error: unknown): void => console.error(error))
-        .finally((): void => {
-            text.style.visibility = "";
+        .then(async (): Promise<void> => {
             const sectionShown: boolean = roundBlocksOf(view) !== null;
+            const heading: string = sectionShown && location.hash === "" ? await kept : "";
+            text.style.visibility = "";
             if (!sectionShown) addressHeadingShow();
             else if (location.hash !== "") {
-                roundHeadingShow(view, decodeURIComponent(location.hash.slice(1)));
+                roundHeadingShow(view, decodeURIComponent(location.hash.slice(1)), false);
                 window.history.replaceState(null, "", location.pathname + location.search);
-            }
-        });
+            } else if (heading !== "") roundHeadingShow(view, heading, false);
+        })
+        .catch((error: unknown): void => console.error(error));
     shown
         .then((): void => {
             outlineTree = tree;

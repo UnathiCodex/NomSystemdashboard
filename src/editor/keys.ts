@@ -66,6 +66,7 @@
  * - Ctrl+D takes away the line of the cursor, or the lines picked, as Obsidian's Delete paragraph.
  * - Ctrl+Z undoes and Ctrl+Shift+Z redoes only within the block of the cursor,
  *   never a change of another part of the note, see {@link historyIn}; Ctrl+Y does nothing.
+ *   With nothing left there, Ctrl+Z in a round goes back to the block I had open before.
  * - Arrow Up and Arrow Down go past the rows of a link or formula the cursor shows
  *   as its text in one step, and Arrow Down past a folded heading or point, see {@link lineMove};
  *   End goes past the hidden `]]` of a link that ends the line, see {@link lineEnd}.
@@ -2187,13 +2188,15 @@ function blockOf(state: EditorState): { from: number; to: number } {
  * Undo or Redo only within the block of the cursor, see {@link blockOf},
  * so it never changes another part of the note, which a round hides:
  * the next step of the history goes back or comes again
- * only while all it changes lies in that block, else nothing happens.
+ * only while all it changes lies in that block, else the key goes on to the next command,
+ * like going back to the block I had open before, see `roundBack` in `./round.ts`,
+ * and never to the browser's own Undo.
  * - `block`: The block.
  * - `steps`: The step CodeMirror's command would take, none at the end of the history.
  * - `inside`: Whether all it changes lies in the block.
  *
  * @param command - CodeMirror's `undo` or `redo`
- * @returns The command, which always takes the key
+ * @returns The command, which takes the key only when it undoes or redoes
  */
 function historyIn(command: StateCommand): Command {
     return (view: EditorView): boolean => {
@@ -2210,7 +2213,7 @@ function historyIn(command: StateCommand): Command {
             inside &&= from >= block.from && to <= block.to;
         });
         if (inside) view.dispatch(steps[0]);
-        return true;
+        return inside;
     };
 }
 
@@ -2229,7 +2232,8 @@ const historyInput: Extension = EditorView.domEventHandlers({
                   : null;
         if (command === null) return false;
         event.preventDefault();
-        return historyIn(command)(view);
+        historyIn(command)(view);
+        return true;
     },
 });
 

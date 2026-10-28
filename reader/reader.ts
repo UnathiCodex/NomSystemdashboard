@@ -288,6 +288,13 @@ async function fileStream(
 }
 
 /**
+ * Heading of the block I opened last in each section, by the path of its note,
+ * empty for its current step, as the editor tells it, see `src/editor/round.ts`;
+ * kept in memory only, so a reload shows the block again until the reader restarts.
+ */
+const openedBlocks: Map<string, string> = new Map<string, string>();
+
+/**
  * Handles a request by its method and its address.
  * The range of the log comes as FullCalendar sends it, `start` and `end` with offset;
  * the range of the plan as days.
@@ -469,6 +476,9 @@ async function fileStream(
  * - `POST /api/skill/attempt`: Writes attempt of the body into the skill entry of the moment.
  * - `POST /api/skill/round`:
  *   Writes where I am in a round, a line `X-ROUND` of the body, into the skill entry of the moment.
+ * - `GET /api/skill/opened?path=…`:
+ *   Sends the block I opened last in the section of the note, see {@link openedBlocks}.
+ * - `POST /api/skill/opened`: Keeps the block of the body as the one I opened in its section.
  * - `POST /api/skill/entry`: Writes skill entry of the body into the log.
  * - `PATCH /api/skill/entry`:
  *   Changes skill entry of the body, adding its new attempts,
@@ -782,6 +792,15 @@ async function requestHandle(
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/skill/round") {
         roundAdd((await json(request)) as RoundNew);
+        responseSend(response, 200, null);
+    } else if (request.method === "GET" && url.pathname === "/api/skill/opened") {
+        responseSend(response, 200, openedBlocks.get(path) ?? "");
+    } else if (request.method === "POST" && url.pathname === "/api/skill/opened") {
+        const opened: { path: string; heading: string } = (await json(request)) as {
+            path: string;
+            heading: string;
+        };
+        openedBlocks.set(opened.path, opened.heading);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/skill/entry") {
         entryShare(skillEntryAdd((await json(request)) as SkillEntryNew));
