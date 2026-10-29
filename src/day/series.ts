@@ -2321,7 +2321,7 @@ function skillFieldOf(key: string): Field | undefined {
 /**
  * Gives my default place, `★` in `Places.md`, like `Home Munich`,
  * which every new series starts with, a new group and my learning too, as a new box does,
- * see `wayEndFill` in `./categories.ts`.
+ * see `lastPlaceFill` in `./categories.ts`.
  * - `standard`: My default place, `undefined` for none.
  *
  * @returns Its line, like `Home Munich, Burg-Eltz-Weg, 81375, München, Deutschland`, empty for none

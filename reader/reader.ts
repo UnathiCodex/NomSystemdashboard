@@ -112,7 +112,7 @@ import {
 } from "./course.ts";
 import { giftWrite } from "./gifts.ts";
 import { noteRead, notesStart, sectionsRead, sectionWrite } from "./note.ts";
-import { categoriesRead, semesterOf, wayEndRead } from "./categories.ts";
+import { categoriesRead, lastPlaceRead, semesterOf } from "./categories.ts";
 import {
     placeAdd,
     placeChange,
@@ -319,7 +319,7 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   Sends my gratitude and my points about the day of the daily note of the date as texts,
  *   empty ones for a day without note.
  * - `GET /api/day/categories?now=…`: Sends the categories with the values of their fields.
- * - `GET /api/day/way-end?before=…`: Sends where the last way before the instant ended.
+ * - `GET /api/day/last-place?before=…`: Sends where I was last before the instant.
  * - `GET /api/day/plain?id=…`:
  *   Sends the plain series of the `UID` of one of its parts, its rule, times and texts,
  *   with every part of it going on, see `plainRead` in `rules.ts`.
@@ -574,8 +574,8 @@ async function requestHandle(
         responseSend(response, 200, sectionsRead(date));
     } else if (request.method === "GET" && url.pathname === "/api/day/categories") {
         responseSend(response, 200, categoriesRead(now));
-    } else if (request.method === "GET" && url.pathname === "/api/day/way-end") {
-        responseSend(response, 200, wayEndRead(url.searchParams.get("before") ?? ""));
+    } else if (request.method === "GET" && url.pathname === "/api/day/last-place") {
+        responseSend(response, 200, lastPlaceRead(url.searchParams.get("before") ?? ""));
     } else if (request.method === "GET" && url.pathname === "/api/day/plain") {
         responseSend(response, 200, plainRead(url.searchParams.get("id") ?? ""));
     } else if (request.method === "GET" && url.pathname === "/api/day/trackers") {

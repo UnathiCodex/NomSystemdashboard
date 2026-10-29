@@ -293,7 +293,7 @@ export function placeEditOf(
 /**
  * Makes the star of a place, at the right of its label, see {@link placeEditOf}:
  * filled while the place is my default place, which a new entry starts with,
- * see `wayEndFill` in `categories.ts`, else empty;
+ * see `lastPlaceFill` in `categories.ts`, else empty;
  * a click makes it my default place at once, or none while it is,
  * see {@link standardSend}, the star filled or emptied once the reader wrote it,
  * apart from the other parts, which wait for the dialog to save.

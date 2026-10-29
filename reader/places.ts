@@ -7,7 +7,7 @@
  * like `TUM Innenstadt` with `Arcisstraße 21`, `80333`, `München` and `Deutschland`,
  * each part empty for none.
  * The column `Default` marks my default place by `★`, at most one row, like `Home Munich`,
- * which a new entry starts with, see `wayEndFill` in `src/day/categories.ts`;
+ * which a new entry starts with, see `lastPlaceFill` in `src/day/categories.ts`;
  * only its star in the dialog sets it, see {@link placeStandardSet},
  * and every other change of a row keeps it.
  * Every field of a place, the place of an entry and where a way starts, offers only these,

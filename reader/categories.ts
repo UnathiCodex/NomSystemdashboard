@@ -635,18 +635,20 @@ export function categoriesRead(now: string): CategoryShown[] {
 }
 
 /**
- * Finds where the last way before an instant ended:
- * the place of the last `Way` as it wrote it, with the address it had then,
+ * Finds where I was last before an instant:
+ * the place of the last entry with a place as it wrote it, with the address it had then,
  * like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
- * when its name is one of my places or of the rooms.
- * - `last`: Last way that started before the instant.
+ * when its name is one of my places or of the rooms;
+ * a way's place is its goal, and a place I changed by hand counts as a way there,
+ * like `TUM Garching` after a way to `Mensa Garching`.
+ * - `last`: Last entry with a place that started before the instant.
  *
  * @param before - Start of the new entry as ISO instant
- * @returns Place, empty when there was no way before or it ended at no place of mine and no room
+ * @returns Place, empty when no entry before has one or it is no place of mine and no room
  */
-export function wayEndRead(before: string): string {
+export function lastPlaceRead(before: string): string {
     const last: Entry | undefined = logsRead(before)
-        .filter((log: Entry): boolean => log.category === "Way")
+        .filter((log: Entry): boolean => log.location !== "")
         .sort((first: Entry, second: Entry): number => second.start.localeCompare(first.start))[0];
     return last !== undefined && placeNamesRead().includes(labelOf(last.location))
         ? last.location

@@ -79,10 +79,12 @@
  * below it every category has `Online`, what I did online: its platform of `Online.md`,
  * like `Zoom`, and below it the channel, the title and the link of its own meeting or video,
  * typed per entry, see {@link onlineRowOf}.
- * A new entry, also one logged from a box, starts where the last way before it ended,
+ * A new entry, also one logged from a box, starts where I was last,
+ * the place of the last entry before it, a way's goal, or a place I changed by hand,
+ * like `TUM Garching` after a way to `Mensa Garching`, as if a way had gone there,
  * else at my default place, the place I starred, like `Home Munich`, and a new box always there:
  * a way its `From`, every other category its place, with its link, as picked from the list,
- * see {@link wayEndFill}; a way's place, its goal, stays empty.
+ * see {@link lastPlaceFill}; a way's place, its goal, stays empty.
  * Plan and log use one and the same dialog with the same fields and lists, see `skill.ts`:
  * an entry of the log and a box of the plan alike have a start and an end,
  * each a day like `13.10.2026` and a plain time, as calendar apps write them:
@@ -594,8 +596,8 @@ let personEdits: { [old: string]: PersonEdit & { address: string } } = {};
 let persons: Person[] = [];
 
 /**
- * Place a new entry or box started with, where the last way before it ended,
- * see {@link wayEndFill}, so a way picked after it starts there instead of going there;
+ * Place a new entry or box started with, where I was last,
+ * see {@link lastPlaceFill}, so a way picked after it starts there instead of going there;
  * empty while none was filled in.
  */
 let placeFilled: string = "";
@@ -2233,28 +2235,28 @@ function sportShown(): boolean {
 }
 
 /**
- * Loads where the last way before the start of the entry ended, from the reader;
- * for a box without start time the last way before the end of its day,
- * like where I will be that day.
- * - `before`: The moment the way ended before.
+ * Loads where I was last before the start of the entry, from the reader,
+ * see `lastPlaceRead` in `reader/categories.ts`;
+ * for an entry without start time where I was last before the end of its day.
+ * - `before`: The moment I was there before.
  *
- * @returns Place, empty when there was no way before
+ * @returns Place, empty when no entry before has one
  * @throws {Error} - When the reader gives no valid answer
  */
-async function wayEndLoad(): Promise<string> {
+async function lastPlaceLoad(): Promise<string> {
     const before: Date =
         timeFieldRead(document.getElementById("entry-start") as HTMLInputElement) === ""
             ? dateOf(new Date(`${dayRead()}T12:00:00`), "23:59")
             : startRead();
-    const response: Response = await fetch(`/api/day/way-end?before=${before.toISOString()}`);
+    const response: Response = await fetch(`/api/day/last-place?before=${before.toISOString()}`);
     return await response.json();
 }
 
 /**
  * Fills in where a new entry starts, also one logged from a box,
- * as where the last way before it ended,
- * see {@link wayEndLoad}, else as my default place, `★` in `Places.md`, like `Home Munich`;
- * a new box of the plan always as my default place, since no way before it tells where I will be:
+ * as where I was last before it,
+ * see {@link lastPlaceLoad}, else as my default place, `★` in `Places.md`, like `Home Munich`;
+ * a new box of the plan always as my default place, since no entry before it tells where I will be:
  * a way its `From`, every other category its place, while that field is empty;
  * nothing for an entry or a box being changed.
  * The place is my place or room of that name as its list offers it, so it shows with its link,
@@ -2263,14 +2265,14 @@ async function wayEndLoad(): Promise<string> {
  * so its place, its goal, stays empty; nothing once another category was picked meanwhile.
  * - `way`: Whether the category is `Way`, which has the field `from`.
  * - `field`: The field to fill in, `From` of a way, else `Place`.
- * - `end`: The place where the last way ended, as that way wrote it, empty for none and for a box.
+ * - `last`: Where I was last, as its entry wrote it, empty for none and for a box.
  * - `standard`: My default place, `undefined` for none.
  * - `line`: The place to fill in.
  *
  * @param category - Category picked
  * @throws {Error} - When the reader gives no valid answer
  */
-async function wayEndFill(category: Category): Promise<void> {
+async function lastPlaceFill(category: Category): Promise<void> {
     const way: boolean = category.fields.some((field: Field): boolean => field.key === "from");
     const field: Field | undefined = category.fields.find(
         (other: Field): boolean => other.key === (way ? "from" : "location"),
@@ -2283,12 +2285,12 @@ async function wayEndFill(category: Category): Promise<void> {
         values[field.key] !== ""
     )
         return;
-    const end: string = opened.target === "box" ? "" : await wayEndLoad();
+    const last: string = opened.target === "box" ? "" : await lastPlaceLoad();
     if (chosen !== category) return;
     const standard: Place | undefined = Object.values(field.places).find(
         (place: Place): boolean => place.standard,
     );
-    const line: string = end !== "" ? end : standard === undefined ? "" : lineOf(standard);
+    const line: string = last !== "" ? last : standard === undefined ? "" : lineOf(standard);
     values[field.key] =
         [...field.values, ...field.rooms].find(
             (value: string): boolean => line !== "" && labelOf(value) === labelOf(line),
@@ -2301,7 +2303,7 @@ async function wayEndFill(category: Category): Promise<void> {
  * but not its summary with its link,
  * and an older value of a field that takes only its values as that field writes it,
  * see {@link fixedValueOf}.
- * A new entry starts where the last way before it ended, see {@link wayEndFill}.
+ * A new entry starts where I was last, see {@link lastPlaceFill}.
  * `Food` in the log shows its summary, its meals and its foods in place of the summary,
  * with those of the meal being changed, see `meal.ts`, built before its fields show,
  * unless another category was picked meanwhile;
@@ -2329,7 +2331,7 @@ async function categoryPick(category: Category | null): Promise<void> {
     meal = null;
     document.getElementById("entry-place")?.replaceChildren();
     document.getElementById("entry-more")?.replaceChildren();
-    if (category !== null) await wayEndFill(category);
+    if (category !== null) await lastPlaceFill(category);
     if (category?.name === skillName) {
         const summary: HTMLElement[] = summaryPartsOf(undefined, false);
         await skillFieldsShow(
@@ -3229,7 +3231,7 @@ export async function entryOpenNow(calendar: Calendar): Promise<void> {
 /**
  * Opens the dialog for a new skill entry of the log with start and end,
  * `Skill` and its module picked, the rest as for any new entry,
- * like the place where the last way ended:
+ * like the place where I was last:
  * the session the learning view asks for before it records, see `../editor/session.ts`.
  *
  * @param module - Its module, like `IN2028`
