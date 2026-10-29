@@ -3,7 +3,7 @@
  *
  * Finds foods through the reader, mine first,
  * then on Open Food Facts, page by page, sends new foods to `Foods.md` and renames them,
- * loads the grams I logged each food with last, loads my meals of `Meals.md`,
+ * loads my meals of `Meals.md`,
  * sends new and changed ones and removes them, loads the meals of a day with what they give,
  * writes amounts as the page shows them,
  * and makes the elements and buttons of both,
@@ -391,26 +391,6 @@ export async function foodChange(food: Food, changes: FoodChanges): Promise<Food
             ...changes,
         }),
     });
-}
-
-/**
- * Loads from the reader the grams I logged each food with last in an entry of a category,
- * at which a food picked into an entry of it starts.
- *
- * @param category - Category of the entry, `Food` or `Cook`
- * @returns Grams by the key of each food, its name, brand and store parted by `;` in small letters,
- *   like `sonnenmais zart;gut&günstig;edeka`;
- *   a food never logged there with grams is not among them
- * @throws {Error} - When the reader cannot answer
- */
-export async function gramsLoad(category: string): Promise<Map<string, number>> {
-    return new Map(
-        Object.entries(
-            await readerAsk<{ [key: string]: number }>(
-                `/api/food/grams?category=${encodeURIComponent(category)}`,
-            ),
-        ),
-    );
 }
 
 /**

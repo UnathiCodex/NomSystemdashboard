@@ -52,7 +52,7 @@
  * - `./suggestions.ts`: Writes the chapters due today into the plan of today, one box each
  * - `./food.ts`: Finds foods, mine first,
  *   then on Open Food Facts, adds foods to `Foods.md` and renames them, adds meals to `Meals.md`,
- *   reads the meals of a day, my meals, and the grams I logged each food with last
+ *   reads the meals of a day and my meals
  * - `./sport.ts`: Reads the sessions of a day with what they burned,
  *   keeps my workouts in `Workouts.md`, my exercises in `Exercises.md`,
  *   my videos in `Videos.md` and my weight in `Weights.md`,
@@ -158,7 +158,6 @@ import {
     foodDayRead,
     foodRemove,
     foodsFind,
-    gramsRead,
 } from "./food.ts";
 import {
     exerciseAdd,
@@ -491,8 +490,6 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `POST /api/food/foods`: Adds food of the body to `Foods.md` and sends it as written.
  * - `PATCH /api/food/foods`: Renames food of the body wherever it stands and sends it as written.
  * - `DELETE /api/food/foods?name=…&brand=…&store=…`: Removes the food from `Foods.md`.
- * - `GET /api/food/grams?category=…`:
- *   Sends the grams I logged each food with last in an entry of the category.
  * - `GET /api/food/day?date=…`: Sends the meals of the date with what they give.
  * - `GET /api/food/meals`: Sends my meals of `Meals.md`, each with its foods and what it gave.
  * - `POST /api/food/meals`: Writes the meal of the body, its name and foods,
@@ -842,12 +839,6 @@ async function requestHandle(
         foodRemove(removed);
         listShare({ call: "foodRemove", with: removed });
         responseSend(response, 200, null);
-    } else if (request.method === "GET" && url.pathname === "/api/food/grams") {
-        responseSend(
-            response,
-            200,
-            Object.fromEntries(gramsRead(url.searchParams.get("category") ?? "")),
-        );
     } else if (request.method === "GET" && url.pathname === "/api/food/day") {
         responseSend(response, 200, foodDayRead(date));
     } else if (request.method === "GET" && url.pathname === "/api/food/meals") {

@@ -3,14 +3,14 @@
  *
  * Reads my foods from `Foods.md`, finds foods by a name or a barcode, mine first,
  * then on Open Food Facts, page by page, adds new foods to `Foods.md` and renames them,
- * keeps my meals in `Meals.md`, finds the grams I logged each food with last,
+ * keeps my meals in `Meals.md`,
  * and reads the meals of a day from the log with what they give.
- * `Meals.md` holds my meals, each only its composition, one or more of my foods without grams,
- * servings or variants, since I prepare it a little differently every time:
+ * `Meals.md` holds my meals, each only its composition, one or more of my foods with their grams,
+ * without servings or variants, since I prepare it a little differently every time:
  * one section per meal, its name as heading, its short title below,
  * then its table with one row per food, the food, its brand, its store and its grams;
- * an entry brings each food at the grams I logged it with last in an entry of its category,
- * see {@link gramsRead}, which I change there;
+ * an entry brings each food of a meal at these grams and a food picked alone at one portion,
+ * see `src/day/meal.ts`, which I change there;
  * the lists of my meals show each with what it gave the last time I ate it, see {@link dishesRead}.
  * A meal keeps its name as I type it, its spaces too,
  * like `Chili con Carne`, only without commas, see {@link mealNameOf}.
@@ -908,53 +908,6 @@ function usesRead(): Map<string, number> {
             uses.set(key, (uses.get(key) ?? 0) + 1);
         });
     return uses;
-}
-
-/**
- * Reads the entries of the log up to now that list foods, my meals, `Food`,
- * and my cookings, `Cook`, the newest first.
- *
- * @returns The entries
- */
-function foodEntriesRead(): Entry[] {
-    return entriesRead(food.log, "1970-01-01T00:00:00Z", new Date().toISOString())
-        .filter((entry: Entry): boolean => entry.foods.length > 0)
-        .sort((first: Entry, second: Entry): number => second.start.localeCompare(first.start));
-}
-
-/**
- * Finds the grams each food was logged with last among entries:
- * for each food, by its name, brand and store,
- * the grams of its line in the first entry that holds it with grams;
- * a food never logged so is not among them.
- * - `last`: Grams by the key of each food, see {@link keyOf}.
- *
- * @param entries - Entries listing foods, the newest first
- * @returns Grams by the key of each food
- */
-function lastGramsOf(entries: Entry[]): Map<string, number> {
-    const last: Map<string, number> = new Map();
-    entries
-        .flatMap((entry: Entry): Line[] => entry.foods.map(lineOf))
-        .forEach((read: Line): void => {
-            if (read.grams !== null && !last.has(keyOf(read))) last.set(keyOf(read), read.grams);
-        });
-    return last;
-}
-
-/**
- * Finds the grams I logged each food with last in an entry of a category,
- * at which a food picked into an entry of it starts, see `src/day/meal.ts`:
- * the grams of its line in the newest entry of the category up to now that holds it
- * with grams, see {@link lastGramsOf}.
- *
- * @param category - Category of the entries, `Food` or `Cook`
- * @returns Grams by the key of each food, see {@link keyOf}
- */
-export function gramsRead(category: string): Map<string, number> {
-    return lastGramsOf(
-        foodEntriesRead().filter((entry: Entry): boolean => entry.category === category),
-    );
 }
 
 /**
