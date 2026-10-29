@@ -645,10 +645,12 @@ const examDays: number = 14;
 const keepUpDays: number = 42;
 
 /**
- * Round every section of a chapter must stand in before the next chapter opens by itself,
- * see {@link todayMarked}: 2, so each had its Task of round 0 and of round 1 right.
+ * Round a section must stand in before the next section comes new,
+ * and every section of a chapter before the next chapter opens by itself,
+ * see {@link todayMarked}: 2, so each had its Task of round 0 and of round 1 right,
+ * and the day after a section comes new holds its run 1 day later, no new one.
  */
-const chapterOpenRound: number = 2;
+const openRound: number = 2;
 
 /**
  * Estimated exams of the modules of the semester
@@ -1427,16 +1429,18 @@ function sectionsOf(
  * or whose Task I tried on the day of its round, today or that of a round going on,
  * see `day` of {@link SkillSection};
  * `new` for a section on round 0 I began, a day I learned it, see `days` of {@link SkillSection},
- * and while there is none, for the first section not begun yet of an open chapter, one at a time:
+ * and while there is none, for the first section not begun yet of an open chapter, one at a time,
+ * once the section before it, when begun, stands in round {@link openRound} or later:
  * the first chapter opens by a skill box of my plan that names it, see {@link openedOf},
  * a later one too, or by itself once every section of the chapter before
- * stands in round {@link chapterOpenRound} or later.
+ * stands in round {@link openRound} or later.
  * - `cold`: The Task of today of a section, `undefined` for none.
  * - `begun`: Whether I began a section, on a day I learned it.
  * - `marked`: The sections with their Tasks and begun rounds 0 marked.
  * - `chapters`: The chapters with sections, in order.
  * - `open`: Whether a chapter is open.
  * - `next`: The first section not begun yet of an open chapter, `undefined` for none.
+ * - `before`: The section with a Task before it, `undefined` for none.
  *
  * @param sections - Sections of a module in the order of their notes, nothing marked yet
  * @param tasks - Tasks of the module with when each is due
@@ -1486,11 +1490,16 @@ function todayMarked(
                         cold(section) !== undefined &&
                         section.chapter === chapters[chapters.indexOf(chapter) - 1],
                 )
-                .every((section: SkillSection): boolean => section.round >= chapterOpenRound));
+                .every((section: SkillSection): boolean => section.round >= openRound));
     const next: SkillSection | undefined = marked.find(
         (section: SkillSection): boolean =>
             cold(section) !== undefined && !begun(section) && open(section.chapter),
     );
+    if (next === undefined) return marked;
+    const before: SkillSection | undefined = marked
+        .slice(0, marked.indexOf(next))
+        .findLast((section: SkillSection): boolean => cold(section) !== undefined);
+    if (before !== undefined && begun(before) && before.round < openRound) return marked;
     return marked.map((section: SkillSection): SkillSection =>
         section === next ? { ...section, today: "new" } : section,
     );
