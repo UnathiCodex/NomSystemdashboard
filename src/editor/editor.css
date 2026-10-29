@@ -194,9 +194,22 @@
     min-width: 0;
 }
 
-/* Selection in the calm grey of what is picked, focused or not */
-.editor-text .cm-editor .cm-selectionBackground,
-.editor-text .cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground {
+/* Selection in the calm grey of what is picked, focused or not, marked line by line,
+   each line only as far as what it shows, see `selectionLines` in `./editor.ts`:
+   over the text, lightening only what is darker than the grey,
+   so the text keeps its colors and code and formulas show picked whole, their ground too;
+   never in the way of the pointer, so a click or a double click reaches the text below;
+   CodeMirror's own selection, one block over the lines between, never shown */
+.editor-text .cm-editor .cm-selectionLayer {
+    display: none;
+}
+
+.editor-text .cm-selection-lines {
+    mix-blend-mode: lighten;
+    pointer-events: none;
+}
+
+.editor-text .cm-editor .cm-selectionBackground {
     background: var(--chosen);
 }
 

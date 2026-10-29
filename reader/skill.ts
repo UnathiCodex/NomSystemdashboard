@@ -296,8 +296,8 @@ export type SkillTask = Task & {
  *   while no cold task has an attempt on a day before today, see {@link attemptDaysOf},
  *   or while its round 0 goes on.
  * - `day`: Day of the round shown, whose Task and whose failure count in it:
- *   today, or for a later round going on from a day before the day of my last attempt at its Task,
- *   see {@link sectionsOf}.
+ *   today, or for a later round going on from a day before the day of my last attempt at its Task
+ *   since the round began, see {@link sectionsOf}.
  * - `rightDue`: Day the cold task comes back after a right run today,
  *   by the spacing, see {@link dueAfter};
  *   empty without a cold task.
@@ -355,7 +355,7 @@ export type SectionToday = "task" | "new" | "";
  * like `Example. Kiosk Double Count after Task. Juice Bar`.
  * The last line of a section says where I stand,
  * so a round I did not close goes on over days until I close it, see {@link sectionsOf}.
- * Once closed, a later round, one Task and what its failure brings back,
+ * Once closed, a later round, its theory, one Task and what its failure brings back,
  * counts its lines of its day only, since a failed run repeats the round on another day.
  * An older line, one per thing I did, starts with its time and names the section with its module,
  * then its round, its kind and its step,
@@ -1294,8 +1294,8 @@ function variantIndexOf<T extends Task>(
  * A round I stopped before its end goes on: while the last line of the section is not `done`,
  * its round is the round shown on every day after, going on where that line stands,
  * until I close it.
- * A later round then shows its Task of the day of my last attempt at it
- * and what a failure then brought back.
+ * A later round then shows its Task of the day of my last attempt at it since the round began
+ * and what a failure then brought back, else that of today, like while I read its theory first.
  * Else round 0, the ladder, lasts while no cold task has an attempt on a day before today,
  * and a later round is the runs of its cold task done before today, with its lines of today.
  * The Task of round 0 is the first variant.
@@ -1304,7 +1304,8 @@ function variantIndexOf<T extends Task>(
  *   which holds the level of all.
  * - `attemptsOf`: Attempts at a task.
  * - `key`: The section as its lines name it, like `IN2028/01_01_SampleMeanEstimator`.
- * - `mine`: Its lines, and `after` those after the last one that closed a round.
+ * - `mine`: Its lines, and `after` those after the last one that closed a round,
+ *   the first of them where a round going on began.
  * - `last`: The last line of a round going on, `undefined` for none.
  * - `tries`: Attempts at its cold tasks, skips left out, in order.
  * - `day`: The day of the round shown, see `day` of {@link SkillSection}.
@@ -1356,7 +1357,10 @@ function sectionsOf(
                 (attempt: Attempt): boolean => attempt.result !== "skipped",
             );
             const day: string =
-                last !== undefined && !ladder ? (tries.at(-1)?.day ?? today) : today;
+                last !== undefined && !ladder
+                    ? (tries.findLast((attempt: Attempt): boolean => attempt.day >= after[0].day)
+                          ?.day ?? today)
+                    : today;
             const round: number =
                 last !== undefined
                     ? last.round

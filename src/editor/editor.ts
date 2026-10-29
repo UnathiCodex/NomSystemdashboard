@@ -5,6 +5,8 @@
  * its Markdown shown as in Obsidian's live preview away from the cursor, see `./preview.ts`.
  * The scripts view, `/scripts`, is this editor, always writing,
  * with no view beside it to read only.
+ * A selection marks each line only as far as what it shows, as a browser and Obsidian do,
+ * see {@link selectionLines}.
  * It edits the text of the file itself: saving writes exactly the edited text, nothing reformatted,
  * tabs and soft hyphens,
  * spaces at the ends of lines and the line breaks of the file as they were.
@@ -92,7 +94,7 @@
  */
 
 import { EditorState, Transaction } from "@codemirror/state";
-import { EditorView, drawSelection, keymap } from "@codemirror/view";
+import { EditorView, RectangleMarker, drawSelection, keymap, layer } from "@codemirror/view";
 import { defaultKeymap, history, indentWithTab } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { icsLook } from "./ics.ts";
@@ -122,8 +124,8 @@ import "../notes/notes.css";
 import "../day/day.css";
 import "./editor.css";
 
-import type { Extension } from "@codemirror/state";
-import type { Rect, ViewUpdate } from "@codemirror/view";
+import type { Extension, SelectionRange } from "@codemirror/state";
+import type { BlockInfo, Rect, ViewUpdate } from "@codemirror/view";
 import type { Links } from "./preview.ts";
 import type { BlockMark } from "../notes/tree.ts";
 
@@ -334,6 +336,229 @@ function outlineRefresh(): void {
 }
 
 /**
+ * A piece of the screen, in pixels of the window:
+ * the box of a word, a formula or an image, or a row of a line.
+ */
+type Box = {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+};
+
+/**
+ * Gives a row on the screen from its top to its bottom, not yet marked, so without a width.
+ *
+ * @param top - Its top
+ * @param bottom - Its bottom
+ * @returns The row
+ */
+function rowOf(top: number, bottom: number): Box {
+    return { left: Infinity, right: -Infinity, top: top, bottom: bottom };
+}
+
+/**
+ * Gives the rows a line stands in on the screen, one for each row its text wraps into,
+ * still without a width, see {@link selectionRowsOf}:
+ * each as high as its part of the line, two rows parted halfway between their text,
+ * and with the little room of the line's own above or below it, like that around a list item,
+ * so the rows of a selection touch, also from one line to the next,
+ * but never with more than a quarter of a line, like the room above a heading.
+ * - `range`: The whole line, whose boxes tell its rows.
+ * - `texts`: Its rows as far as the boxes of its text and widgets reach, top to bottom.
+ * - `style`, `box`: Style and box of the line.
+ * - `air`: The most room of the line's own its rows take in.
+ * - `above`, `below`: Room of the line's own above and below it.
+ * - `top`, `bottom`: Where its first row begins and its last ends.
+ *
+ * @param view - The editor
+ * @param line - Element of the line
+ * @returns Its rows, top to bottom
+ */
+function rowsOf(view: EditorView, line: HTMLElement): Box[] {
+    const range: Range = document.createRange();
+    range.selectNodeContents(line);
+    const texts: Box[] = [];
+    for (const rect of [...range.getClientRects()].sort(
+        (a: DOMRect, b: DOMRect): number => a.top - b.top,
+    )) {
+        const row: Box | undefined = texts.at(-1);
+        if (row !== undefined && (rect.top + rect.bottom) / 2 < row.bottom)
+            row.bottom = Math.max(row.bottom, rect.bottom);
+        else if (rect.height > 0) texts.push(rowOf(rect.top, rect.bottom));
+    }
+    const style: CSSStyleDeclaration = getComputedStyle(line);
+    const box: DOMRect = line.getBoundingClientRect();
+    const air: number = view.defaultLineHeight / 4;
+    const above: number = parseFloat(style.paddingTop);
+    const below: number = parseFloat(style.paddingBottom);
+    const top: number = box.top + (above > air ? above : 0);
+    const bottom: number = box.bottom - (below > air ? below : 0);
+    if (texts.length === 0) return [rowOf(top, bottom)];
+    return texts.map((row: Box, index: number): Box =>
+        rowOf(
+            index === 0 ? top : (texts[index - 1].bottom + row.top) / 2,
+            index === texts.length - 1 ? bottom : (row.bottom + texts[index + 1].top) / 2,
+        ),
+    );
+}
+
+/**
+ * Gives the boxes on the screen of what a selection covers of a line,
+ * see {@link selectionRowsOf}: of its text, its code and its links as far as it covers them,
+ * a rendered formula, an image or the type word of a heading whole once it covers some of it,
+ * by its own box only, never by what stands inside it,
+ * like a formula too wide for its line, which scrolls sideways;
+ * never a widget that holds no text, like the arrow that folds a heading.
+ * - `range`: What the selection covers of a piece of the line.
+ * - `start`, `end`: Where a piece of the line, an element or a text, begins and ends in the text.
+ * - `first`, `last`: Where what the selection covers of the piece begins and ends in the elements.
+ *
+ * @param view - The editor
+ * @param line - Element of the line
+ * @param from - Where the selection begins in the line
+ * @param to - Where it ends in the line
+ * @returns Boxes of what it covers, without those that take no room
+ */
+function selectedBoxesOf(view: EditorView, line: HTMLElement, from: number, to: number): Box[] {
+    const boxes: Box[] = [];
+    const range: Range = document.createRange();
+    line.childNodes.forEach((child: ChildNode, index: number): void => {
+        const start: number = view.posAtDOM(line, index);
+        const end: number = view.posAtDOM(line, index + 1);
+        if (start === end || end <= from || start >= to) return;
+        if (
+            child instanceof HTMLElement &&
+            (child.contentEditable === "false" || (start >= from && end <= to))
+        ) {
+            boxes.push(...child.getClientRects());
+            return;
+        }
+        const first: { node: Node; offset: number } = view.domAtPos(Math.max(from, start), 1);
+        const last: { node: Node; offset: number } = view.domAtPos(Math.min(to, end), -1);
+        range.setStart(first.node, first.offset);
+        range.setEnd(last.node, last.offset);
+        boxes.push(...range.getClientRects());
+    });
+    return boxes.filter((box: Box): boolean => box.right > box.left);
+}
+
+/**
+ * Widens each row over the boxes standing in it, a box in the row its middle stands in.
+ * - `middle`: Height of the middle of a box.
+ * - `row`: The row it stands in.
+ *
+ * @param rows - Rows without a width, top to bottom
+ * @param boxes - Boxes of what a selection covers
+ * @returns The rows some box stands in, as wide as their boxes reach
+ */
+function markedRowsOf(rows: Box[], boxes: Box[]): Box[] {
+    for (const box of boxes) {
+        const middle: number = (box.top + box.bottom) / 2;
+        const row: Box =
+            rows.find((candidate: Box): boolean => middle < candidate.bottom) ??
+            rows[rows.length - 1];
+        row.left = Math.min(row.left, box.left);
+        row.right = Math.max(row.right, box.right);
+    }
+    return rows.filter((row: Box): boolean => row.right > row.left);
+}
+
+/**
+ * Marks each selection line by line, as a browser and Obsidian do,
+ * never as CodeMirror's own selection,
+ * one block over the lines between its first and its last, also right of them and around formulas:
+ * on each line row by row, see {@link rowsOf},
+ * each row as far as the selection covers what it shows, see {@link selectedBoxesOf},
+ * and half a letter on where the selection goes on past the end of the line,
+ * as a browser marks a line break, so an empty line in it shows a small mark;
+ * a rendered block, like a table or a code block, as far as what it shows,
+ * whole once the selection covers some of it.
+ * Only the lines and blocks drawn, those on the screen or near it.
+ * - `ranges`: The selections that cover some text.
+ * - `scroller`, `left`, `top`: Where the marks are placed from, the top left of the text.
+ * - `rows`: The rows marked, on the screen.
+ * - `line`: Whether an element drawn is a line, else a rendered block.
+ * - `from`, `to`: Where it begins and ends in the text.
+ * - `box`, `parts`: Box of a block and those of the pieces it shows.
+ * - `boxes`: What a selection covers of a line, its end too where the selection goes on past.
+ * - `end`: Where the line ends on the screen.
+ *
+ * @param view - The editor
+ * @returns The marks, in the grey of what is picked, see `./editor.css`
+ */
+function selectionRowsOf(view: EditorView): RectangleMarker[] {
+    const ranges: SelectionRange[] = view.state.selection.ranges.filter(
+        (range: SelectionRange): boolean => !range.empty,
+    );
+    const scroller: DOMRect = view.scrollDOM.getBoundingClientRect();
+    const left: number = scroller.left - view.scrollDOM.scrollLeft;
+    const top: number = scroller.top - view.scrollDOM.scrollTop;
+    const rows: Box[] = [];
+    if (ranges.length > 0)
+        for (const element of view.contentDOM.querySelectorAll<HTMLElement>(
+            ".cm-line, [contenteditable=false]:not(.cm-line *, [contenteditable=false] *)",
+        )) {
+            const line: boolean = element.classList.contains("cm-line");
+            const from: number = view.posAtDOM(element, 0);
+            const to: number = line
+                ? view.posAtDOM(element, element.childNodes.length)
+                : view.lineBlockAt(from).to;
+            for (const range of ranges) {
+                if (range.from > to || range.to <= from) continue;
+                if (!line) {
+                    const box: DOMRect = element.getBoundingClientRect();
+                    const parts: DOMRect[] = [...element.children].map((child: Element): DOMRect =>
+                        child.getBoundingClientRect(),
+                    );
+                    rows.push(...markedRowsOf([rowOf(box.top, box.bottom)], parts));
+                    continue;
+                }
+                const boxes: Box[] = selectedBoxesOf(
+                    view,
+                    element,
+                    Math.max(range.from, from),
+                    Math.min(range.to, to),
+                );
+                const end: Rect | null = range.to > to ? view.coordsAtPos(to, -1) : null;
+                if (end !== null)
+                    boxes.push({
+                        left: end.right,
+                        right: end.right + view.defaultCharacterWidth / 2,
+                        top: end.top,
+                        bottom: end.bottom,
+                    });
+                rows.push(...markedRowsOf(rowsOf(view, element), boxes));
+            }
+        }
+    return rows.map(
+        (row: Box): RectangleMarker =>
+            new RectangleMarker(
+                "cm-selectionBackground",
+                row.left - left,
+                row.top - top,
+                row.right - row.left,
+                row.bottom - row.top,
+            ),
+    );
+}
+
+/**
+ * Selection marked line by line, see {@link selectionRowsOf},
+ * in place of CodeMirror's own, which `./editor.css` hides;
+ * `drawSelection` still draws the cursor and hides the browser's selection.
+ * - {@link layer}: Draws the marks over the text, see `./editor.css`,
+ *   anew when the text, the selection or what is drawn changes, or where it stands.
+ */
+const selectionLines: Extension = layer({
+    above: true,
+    class: "cm-selection-lines",
+    update: (update: ViewUpdate): boolean =>
+        update.docChanged || update.selectionSet || update.viewportChanged,
+    markers: selectionRowsOf,
+});
+
+/**
  * Builds the extensions of the editor for a file.
  * - `lineSeparator`: Splits and joins the lines by the line break of the file, `\r\n` or `\n`,
  *   so saving writes the line breaks as they were, also a single other one,
@@ -345,6 +570,8 @@ function outlineRefresh(): void {
  *   any other file stays its plain text,
  *   an `.ics` file with its blocks one step in, see `./ics.ts`.
  * - `indentUnit`: Indents with a tab, as my notes do.
+ * - `drawSelection`, `selectionLines`: Draw the cursor, and each selection line by line,
+ *   see {@link selectionLines}.
  * - `lineWrapping`: Wraps long lines at the reading width, as the scripts view does,
  *   so I see where a line overflows.
  * - `darkTheme`: Draws cursor and selection for a dark page.
@@ -368,6 +595,7 @@ function extensionsOf(opened: Opened): Extension[] {
         indentUnit.of("\t"),
         history(),
         drawSelection(),
+        selectionLines,
         keymap.of([...defaultKeymap, indentWithTab]),
         EditorView.lineWrapping,
         EditorView.darkTheme.of(true),

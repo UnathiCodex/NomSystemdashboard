@@ -38,7 +38,9 @@
  * - Formulas `$…$` and `$$…$$` rendered as in the scripts view, never broken inside,
  *   with the punctuation right after one on its line, see {@link mathLook};
  *   as their TeX while the cursor touches them;
- *   a formula `$$…$$` being edited shows rendered below its TeX, as in Obsidian.
+ *   a formula `$$…$$` being edited shows rendered below its TeX, as in Obsidian;
+ *   a double click on a rendered formula selects its whole TeX, without its `$`, to copy,
+ *   see {@link formulaClicked}.
  * - Images `![kiosk mean bell](Visualizations/KioskMeanBell.svg)` shown, see {@link imageLook};
  *   tables, callouts `> [!note] Title`,
  *   code blocks and HTML blocks like `<table>` rendered as in the scripts view,
@@ -69,7 +71,8 @@
  * so it shows as text, on a rendered table a double click, so a single one leaves it to scroll,
  * see {@link BlockWidget}; while the editor is not focused,
  * like before the first click, the whole note shows rendered.
- * A click on a rendered link follows it, as in Obsidian,
+ * A click on a rendered link follows it, as in Obsidian, in a heading too,
+ * whose text a click after its end edits,
  * and so does a click with Ctrl held on a link shown as text, see {@link linkFollow}:
  * a note opens in the scripts view at its heading, a heading of the same note scrolls into sight,
  * in a section its block shows alone, as a click in the tree shows it, any other file,
@@ -651,7 +654,8 @@ class MathWidget extends WidgetType {
     }
 
     /**
-     * Lets a click reach the editor, which puts the cursor at the formula, so it shows as TeX.
+     * Lets a click reach the editor, which puts the cursor at the formula, so it shows as TeX,
+     * and a double click, which selects its TeX, see {@link formulaClicked}.
      */
     override ignoreEvent(): boolean {
         return false;
@@ -2086,23 +2090,56 @@ function gapIs(state: EditorState, line: Line): boolean {
 /**
  * Counts the characters of a point's line before its text:
  * its indentation, its `-` or number with the blank after it, and a task box with its blank.
+ * - `mark`: Them, the indentation with the `-` or number and its blank first.
  *
  * @param text - Text of the line, like `\t- [ ] Task`
+ * @param box - Whether a task box counts too
  * @returns Their number, `0` for a line that starts no point
  */
-function pointMarkOf(text: string): number {
-    return /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?/.exec(text)?.[0].length ?? 0;
+function pointMarkOf(text: string, box: boolean): number {
+    const mark: RegExpExecArray | null =
+        /^([ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+|$))(?:\[[ xX]\][ \t]+)?/.exec(text);
+    return (box ? mark?.[0] : mark?.[1])?.length ?? 0;
+}
+
+/**
+ * Gives where the cursor may stand first on a line, see {@link caretPlace}:
+ * after its hidden start, see {@link hiddenStartOf},
+ * on the line of a point after its `-` or number with the blank after it, see {@link pointMarkOf},
+ * never before them, where CodeMirror's own keys would take or rewrite the tabs of the point,
+ * see `./keys.ts`, its task box still after the cursor, to be written;
+ * on a line of code that looks like a point, like YAML, before the `-` too.
+ * - `mark`: The piece of syntax where the text of the line begins, `ListMark` on a point.
+ *
+ * @param state - Text and syntax tree
+ * @param line - The line
+ * @returns The place
+ */
+function textStartOf(state: EditorState, line: Line): number {
+    const mark: SyntaxNode = syntaxTree(state).resolveInner(
+        line.from + (/^[ \t]*/.exec(line.text)?.[0].length ?? 0),
+        1,
+    );
+    return (
+        line.from +
+        Math.max(
+            hiddenStartOf(state, line),
+            mark.name === "ListMark" ? pointMarkOf(line.text, false) : 0,
+        )
+    );
 }
 
 /**
  * Keeps the cursor off what the look hides, so every key moves it where I see it:
  * put into the hidden start of a line,
  * see {@link hiddenStartOf}, by a click, Home or an arrow up or down,
- * it goes to where the text begins;
- * moved left out of the text of a line it goes on to the end of the line above,
- * as from the start of any line;
+ * it goes to where the text begins, on the line of a point after its `-` or number,
+ * see {@link textStartOf};
+ * moved left out of the text of a line by a key from where it begins,
+ * it goes on to the end of the line above, as from the start of any line;
  * moved up or down onto the line of a point before its text, like from the next line of a point
- * below it, it goes to where its text begins, after its `-` or number, see {@link pointMarkOf}.
+ * below it, it goes to where its text begins, after its `-` or number and its task box,
+ * see {@link pointMarkOf}.
  * Never on the gap between two paragraphs, see {@link gapIs}:
  * a click on it or an arrow down goes on to the line below it, an empty line or text,
  * an arrow up to the end of the line above;
@@ -2121,7 +2158,7 @@ function pointMarkOf(text: string): number {
  * - `vertical`: Whether an arrow up or down moved it to another line.
  * - `place`: Where it goes instead, the same for no change.
  * - `line`: A line passed, then the line of the place.
- * - `start`: Where the text of that line begins.
+ * - `start`: Where the text of that line begins, see {@link textStartOf}.
  * - `text`: Where the text of a point on that line begins, after its `-` or number.
  *
  * @returns Filter of the changes of the editor
@@ -2166,13 +2203,13 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
                       { selection: { anchor: range.anchor, head: place }, sequential: true },
                   ];
         for (let line: Line = state.doc.lineAt(place); ; line = state.doc.lineAt(place)) {
-            const start: number = line.from + hiddenStartOf(state, line);
-            const text: number = line.from + pointMarkOf(line.text);
+            const start: number = textStartOf(state, line);
+            const text: number = line.from + pointMarkOf(line.text, true);
             if (gapIs(state, line) && down && line.number < state.doc.lines)
                 place = state.doc.line(line.number + 1).from;
             else if (gapIs(state, line)) place = state.doc.line(line.number - 1).to;
             else if (vertical && place < text) place = text;
-            else if (place < start && before >= start && before <= line.to && line.number > 1)
+            else if (!pointer && place < start && before === start && line.number > 1)
                 place = state.doc.line(line.number - 1).to;
             else if (place < start) place = start;
             else break;
@@ -2842,12 +2879,21 @@ function addressFollow(view: EditorView, address: string): boolean {
 }
 
 /**
+ * Whether the click before followed a link, see {@link linkClicked},
+ * so the further clicks of a double click on it do nothing.
+ */
+let followed: boolean = false;
+
+/**
  * Follows the link of a click: one of a rendered link, see {@link followable},
- * or with Ctrl held, on a Mac with Cmd, one of a link shown as its text,
- * and so one in a heading, like `#### [Ice Cream Kiosk](<#Definition. Random Variable>)`,
- * so a click into a heading edits it, never showing another block.
+ * in a heading too, like `#### [Ice Cream Kiosk](<#Definition. Random Variable>)`,
+ * whose text a click after its end edits, the cursor there and its Markdown shown,
+ * or with Ctrl held, on a Mac with Cmd, one of a link shown as its text.
  * Taking the mouse button down there keeps the cursor where it is, so the link stays rendered;
  * letting it go follows it, see {@link linkFollow}; any other click goes on to the editor.
+ * The further clicks of a double click on a link do nothing, see {@link followed},
+ * so they neither follow a second link nor put the cursor into what the link showed,
+ * where Ctrl+Z would undo instead of going back, see `roundBack` in `./round.ts`.
  * - `pos`: The place of the text clicked, `null` beside the text.
  * - `node`: The link there, `null` for none.
  *
@@ -2856,13 +2902,15 @@ function addressFollow(view: EditorView, address: string): boolean {
  * @returns Whether it was a click on a link, which the editor then leaves alone
  */
 function linkClicked(event: MouseEvent, view: EditorView): boolean {
+    if (event.detail > 1 && followed) {
+        event.preventDefault();
+        return true;
+    }
+    followed = false;
     const target: Element = event.target as Element;
     if (
         event.button !== 0 ||
-        ((target.closest(".cm-follow") === null ||
-            target.closest("h1, h2, h3, h4, h5, h6") !== null) &&
-            !event.ctrlKey &&
-            !event.metaKey)
+        (target.closest(".cm-follow") === null && !event.ctrlKey && !event.metaKey)
     )
         return false;
 
@@ -2870,7 +2918,73 @@ function linkClicked(event: MouseEvent, view: EditorView): boolean {
     const node: SyntaxNode | null = pos === null ? null : linkAt(view.state, pos);
     if (node === null) return false;
     event.preventDefault();
-    if (event.type === "click") linkFollow(view, node);
+    if (event.type === "click") {
+        linkFollow(view, node);
+        followed = true;
+    }
+    return true;
+}
+
+/**
+ * TeX of the rendered formula the press before landed on, see {@link formulaClicked},
+ * `null` for none.
+ */
+let formulaPressed: { from: number; to: number } | null = null;
+
+/**
+ * Gives the TeX of the formula a rendered one stands for, without its `$` or `$$`:
+ * of the formula it replaces, see {@link MathWidget},
+ * or of the formula `$$…$$` being edited below it, the first on the line it stands at.
+ * - `from`: Where it stands: the start of the formula, or of the line of one being edited.
+ * - `tex`: The TeX found so far, `null` for none.
+ * - `marks`: How many `$` stand at either end of a formula.
+ *
+ * @param view - The editor
+ * @param box - The rendered formula, `cm-math`
+ * @returns Its TeX, `null` for none
+ */
+function texOf(view: EditorView, box: Element): { from: number; to: number } | null {
+    const from: number = view.posAtDOM(box);
+    let tex: { from: number; to: number } | null = null;
+    syntaxTree(view.state).iterate({
+        from: from,
+        to: view.state.doc.lineAt(from).to,
+        enter: (node: SyntaxNodeRef): void => {
+            const marks: number = view.state.sliceDoc(node.from, node.from + 2) === "$$" ? 2 : 1;
+            if (
+                tex === null &&
+                node.name === "InlineMath" &&
+                node.from >= from &&
+                (marks === 2 || !box.classList.contains("cm-math-preview"))
+            )
+                tex = { from: node.from + marks, to: node.to - marks };
+        },
+    });
+    return tex;
+}
+
+/**
+ * Selects the whole TeX of a rendered formula double clicked, without its `$` or `$$`,
+ * so Ctrl+C copies it, ready to paste:
+ * the first click puts the cursor at the formula, which shows as TeX, as any click does,
+ * the second selects that TeX, wherever in it it lands, see {@link formulaPressed};
+ * also the TeX of a formula `$$…$$` being edited, by a double click on it rendered above.
+ * Any other press goes on to the editor, like a double click into TeX shown, selecting a word.
+ * - `tex`: The TeX of the formula the press before landed on, `null` for none.
+ * - `box`: The rendered formula pressed, `null` for none.
+ *
+ * @param event - Mouse button taken down, `mousedown`
+ * @param view - The editor
+ * @returns Whether it selected the TeX of a formula, which the editor then leaves alone
+ */
+function formulaClicked(event: MouseEvent, view: EditorView): boolean {
+    const tex: { from: number; to: number } | null = formulaPressed;
+    const box: Element | null = (event.target as Element).closest(".cm-math");
+    formulaPressed =
+        event.button === 0 && event.detail === 1 && box !== null ? texOf(view, box) : null;
+    if (event.button !== 0 || event.detail !== 2 || tex === null) return false;
+    event.preventDefault();
+    view.dispatch({ selection: { anchor: tex.from, head: tex.to }, userEvent: "select.pointer" });
     return true;
 }
 
@@ -3014,7 +3128,8 @@ export function linksSet(view: EditorView, links: Links): void {
  *   see {@link pressHold}, before the editor reads where I pressed,
  *   and lets a drag take the hidden start of a line, see {@link marginSelect}.
  * - {@link EditorView.domEventHandlers}: Follow a link clicked,
- *   see {@link linkClicked}, before the editor puts the cursor there.
+ *   see {@link linkClicked}, before the editor puts the cursor there,
+ *   and select the TeX of a formula double clicked, see {@link formulaClicked}.
  * - {@link syntaxHighlighting}: Gives the pieces of syntax their classes, see {@link highlighter},
  *   those of code their colors of my theme, see `codeHighlighter` in `../notes/code.ts`.
  * - {@link codeFolding}: Holds what is folded, without the `…` CodeMirror puts in place of it,
@@ -3070,6 +3185,7 @@ export function livePreview(links: Links, place: string): Extension {
         EditorView.domEventHandlers({ mousedown: kindClicked }),
         EditorView.domEventHandlers({ mousedown: personClicked, click: personClicked }),
         EditorView.domEventHandlers({ mousedown: linkClicked, click: linkClicked }),
+        EditorView.domEventHandlers({ mousedown: formulaClicked }),
         syntaxHighlighting(highlighter),
         syntaxHighlighting(codeHighlighter),
     ];

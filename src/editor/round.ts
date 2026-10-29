@@ -5,8 +5,11 @@
  * a section, a note with tasks of the semester, shows its blocks, each `##` block,
  * as the round holds them, never changing the text:
  * only the current step stands on the page, the text before and after it hidden,
- * see {@link aloneOf}; every other block folded,
- * the cold Task variants not due this round like the Examples.
+ * see {@link aloneOf}; every other Example and Task folded,
+ * the cold Task variants not due this round among them,
+ * but theory only by my hand, like a Definition or the Algorithm, see {@link theoryIs}:
+ * it reads whole whenever I open it, by the tree, a link, `Next` or a reload,
+ * and in the whole note, which shows while the round has no step, like once it is closed.
  * In the head, at the right end of the status line, stands `Next`, an arrow, see {@link roundDraw}:
  * it checks a block without a result off, like theory,
  * and opens the next; a task stays unchecked until my result,
@@ -19,14 +22,16 @@
  * the tree lists every block with its place, see `roundListOf` in `../notes/tree.ts`,
  * and a click there shows a block alone, see {@link roundHeadingShow}.
  * What a round holds, only what it needs;
- * the other blocks wait, grey in the tree, those of one kind folded into one line there:
+ * the other blocks wait, grey in the tree, those of one kind folded into one line there.
+ * Every round starts with every theory block in the order of the note, the Algorithm among them,
+ * so what an Example or a Task uses, like $X$, stands defined right before it,
+ * also in a later round, when I forgot it; only its Examples and Tasks change:
  * - round 0, while the section learns the ladder,
  *   until a cold Task first comes back on a later day:
- *   every theory block in the order of the note, the Algorithm among them,
- *   then one Example, the first, its steps predicted one by one, see `./steps.ts`,
+ *   one Example, the first, its steps predicted one by one, see `./steps.ts`,
  *   then one Task alone;
  *   that it is the first Example was Claude's choice, not mine;
- * - later: only the Task of today, once it is due.
+ * - later: only the Task of today, once it is due; until then the round holds no theory either.
  * A failure brings back one Example, the one before in the note, see {@link fallbacksOf},
  * the same day and on the days after while I did not close its round,
  * see `day` of `SkillSection` in `../skill/attempts.ts`:
@@ -50,7 +55,8 @@
  * so a reload, also on another device, shows it again,
  * and the current step only while I opened none since the reader started.
  * Ctrl+Z goes back to the block I had open before, as the back button of a browser,
- * once the block shown has nothing left to undo, see {@link roundBack}.
+ * once the block shown has nothing left to undo, see {@link roundBack},
+ * and from the first block I opened in a note back to the note I came from by a link.
  * The round folds and unfolds only whole blocks, never a section in one:
  * the scene of a Definition, its section under a heading `####` like `#### Ice Cream Kiosk`,
  * folds only by my hand, also when I look the block up.
@@ -199,9 +205,28 @@ let opened: string = "";
 
 /**
  * Headings of the blocks I had open before, as written, the last one at the end,
- * for Ctrl+Z, see {@link roundBack}; only while the page stays, a reload starts without.
+ * for Ctrl+Z, see {@link roundBack}; kept with the page in the history of the browser,
+ * see {@link openedBeforeKeep}, so a reload and the way back from another note find them again.
  */
-let openedBefore: string[] = [];
+let openedBefore: string[] = Array.isArray(history.state) ? (history.state as string[]) : [];
+
+/**
+ * Whether I came to the page from a note or a file of the editor, by a link or the tree,
+ * as the referrer of the page tells, also after a reload and the way back to it,
+ * so Ctrl+Z goes back there, see {@link roundBack}; never to Today or another area.
+ */
+const linked: boolean = ["/scripts?path=", "/edit?file="].some((page: string): boolean =>
+    document.referrer.startsWith(`${location.origin}${page}`),
+);
+
+/**
+ * Keeps {@link openedBefore} with the page in the history of the browser,
+ * which gives it back with the page after a reload or the back button.
+ * - {@link History#replaceState}: Writes it into the step of the history the page stands on.
+ */
+function openedBeforeKeep(): void {
+    history.replaceState(openedBefore, "");
+}
 
 /**
  * Keeps the block shown in {@link openedBefore} before another one shows by a click or by `Next`,
@@ -214,6 +239,7 @@ let openedBefore: string[] = [];
 function shownRemember(view: EditorView, heading: string): void {
     const before: string = roundShownOf(view);
     if (before !== "" && before !== heading) openedBefore.push(before);
+    openedBeforeKeep();
 }
 
 /**
@@ -322,8 +348,8 @@ function changesKeep(transaction: Transaction): boolean {
  * or a change that carries them along, like the cut of its last line:
  * a place beyond the block goes to its start or its end.
  * Only where a key, a click, a drag or a change puts them:
- * the cursor left in the block before when `Next` moves on stays there,
- * unseen and without the focus, until I click or move it,
+ * the cursor left in the block before when another shows, by `Next`, the tree or a link,
+ * stays there, unseen and without the focus, see {@link blockOpen}, until I click or move it,
  * so the heading of the next block shows as before.
  * - `alone`: The block shown alone after the transaction.
  * - `selection`: The cursors and selections the transaction puts or carries along.
@@ -383,6 +409,7 @@ function headingFollow(update: ViewUpdate): void {
     if (opened === "") round.at = renamed(round.at);
     else opened = renamed(opened);
     openedBefore = openedBefore.map(renamed);
+    openedBeforeKeep();
     if (
         !blocksOf(update.state, round.loaded.tasks).some(
             (block: Block): boolean => block.heading === before,
@@ -508,9 +535,22 @@ export function fallbacksOf(
 }
 
 /**
+ * Tells whether a block is theory, like a Definition or the Algorithm:
+ * one without a task that is no Task, a step of every round, see {@link stepsOf},
+ * which the round never folds, see {@link roundTake}.
+ *
+ * @param block - Block
+ * @returns Whether it is theory
+ */
+function theoryIs(block: Block): boolean {
+    return block.task === null && !/^(Task|Completion)\./.test(block.heading);
+}
+
+/**
  * Gives the steps of today's round, see the top of this file.
  * - `step`: A step of a block itself.
  * - `back`: The steps a failure of a block brings back, see {@link fallbacksOf}.
+ * - `theory`: The theory, the first steps of every round, see {@link theoryIs}.
  * - `cold`: The Task of today, `null` for none, with its steps,
  *   after round 0 those its failure on the day of the round brings back.
  * - `first`: The first Example, the one of round 0.
@@ -545,6 +585,7 @@ function stepsOf(
                           : [{ block: block, after: fallback.after, since: fallback.since }];
                   },
               );
+    const theory: Step[] = blocks.filter(theoryIs).map(step);
     const cold: Block | null =
         blocks.find((block: Block): boolean => block.task?.id === section.cold) ?? null;
     const coldSteps: Step[] =
@@ -554,19 +595,14 @@ function stepsOf(
         return task !== null &&
             (task.attempts.some((attempt: Attempt): boolean => attempt.day === section.day) ||
                 (task.due !== "" && task.due <= today))
-            ? coldSteps
+            ? [...theory, ...coldSteps]
             : [];
     }
     const first: Block | undefined = blocks.find(
         (block: Block): boolean => block.task?.kind === "example",
     );
     return [
-        ...blocks
-            .filter(
-                (block: Block): boolean =>
-                    block.task === null && !/^(Task|Completion)\./.test(block.heading),
-            )
-            .map(step),
+        ...theory,
         ...(first === undefined ? [] : [step(first), ...back(first, "")]),
         ...coldSteps,
     ];
@@ -869,6 +905,9 @@ function roundDraw(view: EditorView, shown: Round): void {
 /**
  * Opens a block, which then stands alone on the page, and scrolls the page to its top,
  * so the block starts at the top of the screen, once the page is drawn anew.
+ * The text gives up the focus, also after a link in it, so the cursor left in the block before
+ * stays there unseen, see {@link selectionKeep},
+ * and Ctrl+Z goes back to that block, see {@link roundBack}, never undoing in it while hidden.
  * - {@link requestAnimationFrame}: Waits until the page is drawn next.
  *
  * @param view - The editor
@@ -878,6 +917,7 @@ function blockOpen(view: EditorView, block: Block): void {
     const body: { from: number; to: number } | null = bodyOf(view.state, block);
     if (body !== null && foldedAt(view.state, body.from))
         view.dispatch({ effects: unfoldEffect.of(body) });
+    view.contentDOM.blur();
     requestAnimationFrame((): void => {
         (document.querySelector(".editor-file") as HTMLElement).scrollTop = 0;
     });
@@ -992,13 +1032,14 @@ export function roundClose(): void {
 /**
  * Takes the tasks of the note as they load, see `tasksFollow` in `./tasks.ts`:
  * for a section, the first time its round from the log, where it goes on,
- * see {@link resumedOf}, the blocks done and the current one open, the others folded,
- * the Task variants not due among them, and where I am pinned to the current step,
+ * see {@link resumedOf}, theory, the blocks done and the current one open,
+ * the other Examples and Tasks folded, the Task variants not due among them,
+ * and where I am pinned to the current step,
  * so a result moves nothing, only `Next`, a click and the check of a Right;
  * each time after, like after a result, the round as it now stands.
  * - `fresh`: Whether the round of this note shows for the first time.
  * - `blocks`, `steps`, `current`: Blocks of the note, steps of the round and the current one.
- * - `open`: Whether a block stays open.
+ * - `open`: Whether a block stays open, theory always, see {@link theoryIs}.
  * - `effects`: The blocks to fold.
  *
  * @param view - The editor
@@ -1026,6 +1067,7 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
         const shown: Round = round;
         const current: Step | undefined = currentOf(shown, steps);
         const open: (block: Block) => boolean = (block: Block): boolean =>
+            theoryIs(block) ||
             block === current?.block ||
             steps.some((step: Step): boolean => step.block === block && doneIs(shown, step));
         const effects: StateEffect<{ from: number; to: number }>[] = [];
@@ -1153,15 +1195,20 @@ export function roundHeadingShow(
 /**
  * Goes back to the block I had open before, see {@link openedBefore},
  * as Ctrl+Z asks once the block shown has nothing left to undo, see `historyIn` in `./keys.ts`,
- * or while the focus stands outside the text, see `keyDown` in `./editor.ts`.
+ * or while the focus stands outside the text, see `keyDown` in `./editor.ts`;
+ * while I opened none before, back to the note I came from by a link, see {@link linked},
+ * as the back button of the browser, which shows the block I left it on, see {@link openedKeep}.
  * - `heading`: The block before.
  *
  * @param view - The editor
- * @returns Whether it went back, not while I opened none before or for a note that is no section
+ * @returns Whether it went back, not while I opened none before and came from no note
  */
 export function roundBack(view: EditorView): boolean {
     const heading: string | undefined = openedBefore.pop();
-    return heading !== undefined && roundHeadingShow(view, heading, false);
+    openedBeforeKeep();
+    if (heading !== undefined) return roundHeadingShow(view, heading, false);
+    if (linked) history.back();
+    return linked;
 }
 
 /**
