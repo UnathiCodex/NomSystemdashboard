@@ -1045,10 +1045,15 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
  *
  * @param file - Path of the `.ics` file
  * @param modified - Time of the last change on disk
+ * @param text - What the file holds, read from it when left out
  * @returns Calendar of the file
  */
-function calendarRead(file: string, modified: number): Calendar {
-    const root: ICAL.Component = new ICAL.Component(ICAL.parse(readFileSync(file, "utf8")));
+function calendarRead(
+    file: string,
+    modified: number,
+    text: string = readFileSync(file, "utf8"),
+): Calendar {
+    const root: ICAL.Component = new ICAL.Component(ICAL.parse(text));
     root.getAllSubcomponents("vtimezone").forEach((zone: ICAL.Component): void =>
         ICAL.TimezoneService.register(zone),
     );
@@ -1219,6 +1224,18 @@ export function entriesOnceRead(sources: CalendarSource[]): Entry[] {
  */
 export function fileEntriesRead(file: string): Entry[] {
     return calendarOf(file).entries;
+}
+
+/**
+ * Reads the entries that happen once of the text of an `.ics` file that lies nowhere on my disk,
+ * like an entry that came by SSH from the server that holds our boxes, see `shared.ts`.
+ *
+ * @param text - What the file holds
+ * @param name - Its name, like `20261021T093000123Z_Sopha_entry_….ics`
+ * @returns The {@link Entry}s of the text, none for none
+ */
+export function textEntriesRead(text: string, name: string): Entry[] {
+    return calendarRead(name, 0, text).entries;
 }
 
 /**
@@ -2449,6 +2466,48 @@ export function entryAppend(
     id: string = `${randomUUID()}@nomsystem`,
 ): string {
     writeCheck(file);
+    componentInsert(file, linesOf(eventOf(fields, own, id)));
+    return id;
+}
+
+/**
+ * Gives the text of a new `.ics` file that holds one entry and nothing else,
+ * the same as {@link entryAppend} writes into a file missing,
+ * like the copy of an entry I share, see `shared.ts`.
+ * - `lines`: The lines of the new calendar, the entry before its `END:VCALENDAR`.
+ *
+ * @param fields - Fields and times of the entry
+ * @param own - Properties beyond the fields, see {@link entryAppend}
+ * @param id - Identifier of the entry, its `UID`
+ * @returns The text, lines parted by `\r\n`
+ */
+export function entryIcsOf(
+    fields: EntryFields,
+    own: [string, string | Link | Date][],
+    id: string,
+): string {
+    const lines: string[] = [...linesOf(calendarCreate()), ""];
+    lines.splice(
+        lines.lastIndexOf("END:VCALENDAR"),
+        0,
+        ...linesOrdered(linesOf(eventOf(fields, own, id))),
+    );
+    return componentsSorted(lines, false).join("\r\n");
+}
+
+/**
+ * Builds the event of an entry, see {@link entryAppend}.
+ *
+ * @param fields - Fields and times of the entry
+ * @param own - Properties beyond the fields, see {@link entryAppend}
+ * @param id - Identifier of the entry, its `UID`
+ * @returns The event
+ */
+function eventOf(
+    fields: EntryFields,
+    own: [string, string | Link | Date][],
+    id: string,
+): ICAL.Component {
     const event: ICAL.Component = new ICAL.Component("vevent");
     event.addProperty(propertyOf("dtstart", writtenOf(fields.start)));
     event.addProperty(propertyOf("dtend", writtenOf(fields.end)));
@@ -2467,8 +2526,7 @@ export function entryAppend(
             event.addProperty(ownPropertyOf(name, value));
         },
     );
-    componentInsert(file, linesOf(event));
-    return id;
+    return event;
 }
 
 /**

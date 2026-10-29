@@ -1,7 +1,8 @@
 /**
  * ## Gate
  *
- * The one thing the key of a person I share with may do on my server, like Vu's key `vu@skriptum`:
+ * The one thing the key of a person I share with may do on my server, like Vu's key `vu@skriptum`,
+ * which holds `NomKommunikation`, see `holder` in `sources.ts`:
  * SSH runs this file for that key, whatever the key asks,
  * since `~/.ssh/authorized_keys` of my server names it before the key with `restrict`,
  * which allows no shell, no forwarding and no terminal, my name first, then the person's,
@@ -24,8 +25,10 @@
  *   an entry, a food, a meal or a place the dashboard of the person shares with mine,
  *   named by the moment, the person and what it is,
  *   like `20261021T093000123Z_Vu_entry_….ics`, see `shared.ts`.
- * - `hello`: Tells my dashboard that the dashboard of the person runs again,
- *   so it sends what waits for them.
+ * - `inbox`: Lists the names of what my dashboard shares with the person,
+ *   waiting in `dashboard/` of their box, the earliest first.
+ * - `take <name>`: Gives one of them.
+ * - `done <name>`: Puts one of them into the trash of my server, once their dashboard took it.
  * A path is parted by `/`, each part letters, digits, spaces and `._()+,&'-`,
  * not starting with a dot, so it holds no `..` and names no hidden file,
  * and every file it reads or writes lies inside the box after symbolic links are followed.
@@ -60,7 +63,8 @@ import type { Dirent } from "node:fs";
  * The commands of the gate, as it tells them when it refuses one.
  */
 const usage: string = [
-    "Allowed: readme | list | get <path> | put <path> | delete <path> | share <name> | hello",
+    "Allowed: readme | list | get <path> | put <path> | delete <path> | share <name>",
+    "  | inbox | take <name> | done <name>",
     "  A path starts with its box, like to_vu/2026-10-22_0930_antwort.md; both boxes are open to both of us.",
 ].join("\n");
 
@@ -90,6 +94,18 @@ const partForm: RegExp = /^[\p{L}\p{N}][\p{L}\p{N} ._()+,&'-]{0,199}$/u;
  * letters and digits of ASCII, starting with a letter, like `Vu`.
  */
 const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
+
+/**
+ * Gives the form of the name of a shared file of a sender, see `shared.ts`:
+ * the moment, the sender, what it is and its key,
+ * like `20261021T093000123Z_Vu_entry_….ics`.
+ *
+ * @param sender - The sender, like `Vu`
+ * @returns The form
+ */
+function sharedFormOf(sender: string): RegExp {
+    return new RegExp(`^\\d{8}T\\d{9}Z_${sender}_(?:entry|list)_[\\w.@-]{1,160}\\.(?:ics|json)$`);
+}
 
 /**
  * Ends the gate with a refusal.
@@ -123,7 +139,7 @@ function partsOf(path: string): string[] {
 /**
  * Splits a path as the caller sends it into its box and the file or folder in it,
  * refusing one outside both boxes or inside `dashboard/`,
- * which only the dashboards write, see `share` and `hello`.
+ * which only the dashboards use, see `share`, `inbox`, `take` and `done`.
  *
  * @param boxes - The boxes, like `NomKommunikation/to_vu` and `NomKommunikation/to_sopha`
  * @param path - Path like `to_vu/2026-10-15_studien-nacht/CLAIMS.tsv`
@@ -258,21 +274,28 @@ async function gateRun(): Promise<void> {
         process.stdout.write("ok\n");
     } else if (command === "share") {
         const box: string = join(mine, "dashboard");
-        if (
-            !new RegExp(
-                `^\\d{8}T\\d{9}Z_${caller}_(?:entry|list)_[\\w.@-]{1,160}\\.(?:ics|json)$`,
-            ).test(path)
-        )
-            refuse(`No shared name: ${path}`);
+        if (!sharedFormOf(caller).test(path)) refuse(`No shared name: ${path}`);
         const bytes: Buffer = await inputRead(shareMost);
         mkdirSync(box, { recursive: true });
         fileWrite(join(box, path), bytes);
         process.stdout.write("ok\n");
-    } else if (command === "hello") {
-        const box: string = join(mine, "dashboard");
-        mkdirSync(box, { recursive: true });
-        fileWrite(join(box, `hello_${caller}`), `${new Date().toISOString()}\n`);
-        process.stdout.write("ok\n");
+    } else if (command === "inbox") {
+        process.stdout.write(
+            filesOf(join(theirs, "dashboard"), [])
+                .filter((name: string): boolean => sharedFormOf(me).test(name))
+                .map((name: string): string => `${name}\n`)
+                .join(""),
+        );
+    } else if (command === "take" || command === "done") {
+        const box: string = join(theirs, "dashboard");
+        const file: string = join(box, path);
+        if (!sharedFormOf(me).test(path) || !existsSync(file)) refuse(`No such shared: ${path}`);
+        insideCheck(box, file);
+        if (command === "take") createReadStream(file).pipe(process.stdout);
+        else {
+            trashPut(file);
+            process.stdout.write("ok\n");
+        }
     } else {
         refuse(`Unknown command: ${asked}\n${usage}`, 2);
     }

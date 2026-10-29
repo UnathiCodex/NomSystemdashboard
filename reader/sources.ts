@@ -16,7 +16,8 @@
  * see {@link activeProjects} and `documents.ts`, and nothing that is not listed here;
  * every file at its own place, none from a copy elsewhere, like a draft in `.claude`.
  * It writes only into the new system
- * and into what the dashboards share in `NomKommunikation`, the mailbox between Vu and me,
+ * and, on the server that holds it, into what the dashboards share in `NomKommunikation`,
+ * the mailbox between Vu and me,
  * see {@link writeAllowed} and {@link kommunikationRoot},
  * the editor into the notes of my modules and the file of my corrections, see {@link editor},
  * and a click on a folder of a module not there yet makes it, see `folderMake` in `notes.ts`;
@@ -138,11 +139,19 @@ export const systemRoots: string[] = [calendarRoot, diaryRoot, dataRoot, univers
 /**
  * Folder `NomKommunikation` in `NomWorkspace`, the mailbox between Vu and me, see its `README.md`:
  * `to_vu/` for what goes to Vu, `to_sopha/` for what comes to me.
- * On my server it holds our messages;
- * on the server of each of us the box of each holds `dashboard/`, what the dashboards share,
- * see {@link dashboardBoxOf} and `shared.ts`.
+ * Only the server of {@link holder} has it, with our messages,
+ * and in the box of each of us `dashboard/`, what the dashboards share,
+ * see {@link dashboardBoxOf} and `shared.ts`;
+ * no other server ever makes or writes it.
  */
 export const kommunikationRoot: string = join(vault, "NomKommunikation");
+
+/**
+ * The one of us whose server holds {@link kommunikationRoot}, `Sopha` on `sophabohne`,
+ * as the people I share with write them in `With`;
+ * the reader of every other reaches it by SSH, see `shared.ts`.
+ */
+export const holder: string = "Sopha";
 
 /**
  * My name as the people I share with write me in `With`, like `Sopha`,
@@ -156,9 +165,10 @@ export const myName: string = process.env.NOM_NAME?.trim() ?? "";
  * The people I share with, as I write them in `With`, like `Vu`:
  * environment variable `NOM_PARTNERS` of the reader, names parted by commas, set in its service;
  * none when unset, and never me.
- * My reader reaches the server of each by SSH under `nom-` and the name in small letters,
- * like `nom-vu`, a host `~/.ssh/config` of my server names with its address,
- * its user and the key of my server, see `shared.ts`.
+ * The reader of one who is not {@link holder} reaches the server of the holder by SSH
+ * under `nom-` and the name in small letters, `nom-sopha`,
+ * a host `~/.ssh/config` of its server names with its address, its user and its key,
+ * see `shared.ts`.
  */
 export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
     .split(",")
@@ -168,7 +178,7 @@ export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
 /**
  * Gives the folder of what the dashboards share in the box of a person
  * in {@link kommunikationRoot}: `dashboard/` in `to_` and the name in small letters,
- * like `to_vu/dashboard/` for what goes to Vu, waiting there until Vu's server took it,
+ * like `to_vu/dashboard/` for what goes to Vu, waiting there until Vu's reader took it by SSH,
  * and `to_sopha/dashboard/` for what came to me; what is done goes into the trash, see `shared.ts`.
  *
  * @param name - Name of the person, like `Vu`
@@ -559,7 +569,8 @@ export function skillFileOf(name: string, ending: string): string {
  * Tells whether the reader may write a file:
  * only inside my new system, `NomManageplannings` but my old system, see {@link previousName},
  * and a hidden file or folder right in it, like `.obsidian`,
- * or inside what the dashboards share in a box of `NomKommunikation`,
+ * or, on the server of {@link holder} only,
+ * inside what the dashboards share in a box of `NomKommunikation`,
  * see {@link dashboardBoxOf}, never beside our messages.
  * The editor leaves both out at any depth, see {@link systemFiles}.
  * - {@link resolve}: Makes a path absolute and takes out `..`, so no path leaves the folders.
@@ -579,7 +590,10 @@ export function writeAllowed(file: string): boolean {
     const box: string[] = relative(resolve(kommunikationRoot), path).split(sep);
     return (
         (path.startsWith(root) && top !== previousName && !top.startsWith(".")) ||
-        (/^to_\w+$/.test(box[0]) && box[1] === "dashboard" && box.length > 2)
+        (myName.toLowerCase() === holder.toLowerCase() &&
+            /^to_\w+$/.test(box[0]) &&
+            box[1] === "dashboard" &&
+            box.length > 2)
     );
 }
 

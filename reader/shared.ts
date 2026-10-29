@@ -4,23 +4,22 @@
  * Shares with Vu, whose dashboard runs on a server of its own, skriptum,
  * what we agreed on and nothing else: an entry of my log with Vu in `With`,
  * and every food, meal and place either of us adds, changes or removes, so we both have them.
- * Who I share with, and how my server reaches theirs, names `sources.ts`, see `partners` there.
- * My reader sends what it shares at once, by SSH to the server of the other,
- * `ssh nom-vu share <name>`, where the key of my server may run nothing but the gate,
- * see `gate.ts`, which puts it into my box in `NomKommunikation` of that server,
- * like `to_sopha/dashboard/`;
- * the reader there sees it at once and takes it in, see {@link inboxTake},
- * and Vu's reader sends to mine the same way.
+ * Who I share with names `sources.ts`, see `partners` there.
+ * All we share lies only on my server, `sophabohne`, see `holder` in `sources.ts`,
+ * in `NomKommunikation`; Vu's server never has that folder, nor anything in its place.
  *
- * What goes to Vu waits first as a file in Vu's box on my server,
+ * My reader never reaches Vu's server.
+ * What goes to Vu waits as a file in Vu's box on my server,
  * `NomKommunikation/to_vu/dashboard/`, named by the moment, me and what it is,
- * like `20261021T093000123Z_Sopha_entry_<UID>.ics` or `…_Sopha_list_<random>.json`,
- * and goes out in that order, each into my trash once Vu's server took it,
- * see {@link outboxSend} and `trash.ts`;
- * there is no archive.
- * While Vu's server cannot be reached, it waits, and goes out with the next thing I share,
- * as soon as Vu's reader starts and says hello, see `hello` in `gate.ts`,
- * or as soon as something comes from Vu.
+ * like `20261021T093000123Z_Sopha_entry_<UID>.ics` or `…_Sopha_list_<random>.json`.
+ * Vu's reader reaches mine by SSH, `ssh nom-sopha`, where its key may run nothing but the gate,
+ * see `gate.ts`: as it starts and every {@link pollSeconds} it takes what waits in its box,
+ * the earliest first, by `inbox`, `take` and `done`, each into my trash once taken,
+ * see {@link inboxTake} and `trash.ts`; there is no archive.
+ * What Vu's reader shares it sends at once by `share <name>` into my box,
+ * `NomKommunikation/to_sopha/dashboard/`, where my reader sees it at once and takes it in.
+ * While my server cannot be reached, it waits in the memory of Vu's reader, in its order,
+ * and goes out after the next taking; a restart of Vu's reader loses it, see {@link outbox}.
  *
  * An entry: each of us in its `With` gets a copy as I add it or log a box,
  * and one who comes into its `With` as I change it, see {@link entryShare}:
@@ -41,31 +40,35 @@
  * as the call of `food.ts` or `places.ts` that changed it, like `foodAdd` with the food as written,
  * see {@link ListChange}, which the reader of Vu makes on its own lists, see {@link listApply};
  * one Vu has already, like the same food, a place of the same name or a meal already renamed,
- * stays as Vu has it. The first time my reader shares with someone, it sends all my foods, meals,
- * places and rooms, so our lists come together, see {@link sharedStart}.
+ * stays as Vu has it. The first time my reader shares with someone, as it makes their box,
+ * it sends all my foods, meals, places and rooms, so our lists come together,
+ * see {@link sharedStart}; Vu's reader, which makes no box, sent all of Vu's long ago.
  * What I change in the editor by hand goes to nobody.
  *
  * What comes to me lands in my box, `NomKommunikation/to_sopha/dashboard/`:
- * my reader takes it as it starts and whenever the box changes, the earliest first,
+ * my reader takes it as it starts and whenever the box changes, Vu's reader as above,
+ * the earliest first,
  * so a meal finds its foods and the cooking it draws from;
  * an entry into my log as the dialog would add it,
  * see `entryAdd` in `day.ts`, with the `UID` it brought, so it comes in only once;
  * then the file goes into my trash.
- * An entry my log cannot take, like one of a category my reader does not know, stays in my box,
+ * An entry a log cannot take, like one of a category its reader does not know, stays in its box,
  * and the reader says so once.
  *
- * - `node:child_process`: Runs `ssh` to the server of the other.
+ * - `node:child_process`: Runs `ssh` from Vu's reader to my server.
  * - `node:crypto`: Names a change of a list at random.
- * - `node:fs`: Creates the boxes, lists and watches mine, writes and reads what is shared.
+ * - `node:fs`: Creates the boxes on my server, lists and watches mine,
+ *   writes and reads what is shared there.
  * - `node:path`: Builds the paths of the boxes.
- * - `./calendar.ts`: Reads the entries of my log and of a shared file, writes the copy of an entry,
+ * - `./calendar.ts`: Reads the entries of my log and of a shared file, gives the copy of an entry,
  *   and names the category of skill entries.
  * - `./day.ts`: Adds an entry that came to my log, as the dialog adds one.
  * - `./food.ts`: Reads, adds, changes and removes my foods and meals.
  * - `./places.ts`: Reads, adds and changes my places and rooms,
  *   and tells a link I typed, a web address.
  * - `./persons.ts`: Names a person as `Persons.md` names it, so its names compare alike.
- * - `./sources.ts`: Names my log, my name, the people I share with and their boxes.
+ * - `./sources.ts`: Names my log, my name, the people I share with, who holds the boxes
+ *   and the boxes.
  * - `./trash.ts`: Puts what is done into my trash.
  */
 
@@ -73,7 +76,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { entryAppend, entryLookup, fileEntriesRead, skillName } from "./calendar.ts";
+import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
 import { entryAdd } from "./day.ts";
 import {
     compositionsRead,
@@ -96,7 +99,7 @@ import {
     roomsRead,
 } from "./places.ts";
 import { personNameOf } from "./persons.ts";
-import { dashboardBoxOf, day, myName, partners, writeAllowed } from "./sources.ts";
+import { dashboardBoxOf, day, holder, myName, partners, writeAllowed } from "./sources.ts";
 import { trashPut } from "./trash.ts";
 
 import type { ChildProcess } from "node:child_process";
@@ -140,9 +143,14 @@ const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
 const quiet: number = 300;
 
 /**
- * Seconds `ssh` waits to reach the server of the other before it gives up, and the thing waits.
+ * Seconds `ssh` waits to reach my server before it gives up, and the thing waits.
  */
 const reachSeconds: number = 10;
+
+/**
+ * Seconds between two takings of Vu's reader from its box on my server, see {@link inboxTake}.
+ */
+const pollSeconds: number = 60;
 
 /**
  * Milliseconds of the moment the last shared thing was named after,
@@ -152,24 +160,34 @@ const reachSeconds: number = 10;
 let lastStamp: number = 0;
 
 /**
- * The people whose box my reader sends now, see {@link outboxSend}.
+ * What Vu's reader shares and my server has not taken yet, the earliest first,
+ * each its name and what it holds, see the top of this file;
+ * only in memory, since Vu's server holds nothing of our boxes, so a restart loses it.
  */
-const sending: Set<string> = new Set();
+const outbox: [string, string][] = [];
 
 /**
- * The people whose box my reader sends again after it is through,
- * since something came while it sent.
+ * Whether Vu's reader sends now, see {@link outboxSend}.
  */
-const again: Set<string> = new Set();
+let sending: boolean = false;
 
 /**
- * The people whose server my reader could not reach the last time,
- * told once until it reaches it again.
+ * Whether Vu's reader sends again after it is through, since something came while it sent.
  */
-const unreached: Set<string> = new Set();
+let again: boolean = false;
 
 /**
- * Files of my box my reader could not take, each told once, see {@link inboxTake}.
+ * Whether Vu's reader takes from its box now, see {@link inboxTake}.
+ */
+let taking: boolean = false;
+
+/**
+ * Whether Vu's reader could not reach my server the last time, told once until it reaches it again.
+ */
+let unreached: boolean = false;
+
+/**
+ * Names of shared files a log could not take, each told once, see {@link inboxTake}.
  */
 const failed: Set<string> = new Set();
 
@@ -185,13 +203,28 @@ function sharingIs(): boolean {
 }
 
 /**
+ * Tells whether this reader runs on my server, the one that holds our boxes,
+ * see `holder` in `sources.ts`.
+ *
+ * @returns Whether it does
+ */
+function holderIs(): boolean {
+    return myName.toLowerCase() === holder.toLowerCase();
+}
+
+/**
  * Gives the people I share with whose names have the form of {@link nameForm};
- * one that has not is left out.
+ * one that has not is left out, and on every server but mine all but me,
+ * since Vu's reader shares only with mine.
  *
  * @returns Names, like `Vu`
  */
 function partnersOf(): string[] {
-    return partners.filter((partner: string): boolean => nameForm.test(partner));
+    return partners.filter(
+        (partner: string): boolean =>
+            nameForm.test(partner) &&
+            (holderIs() || partner.toLowerCase() === holder.toLowerCase()),
+    );
 }
 
 /**
@@ -231,19 +264,15 @@ function sameName(first: string, second: string): boolean {
 
 /**
  * Lists the shared files of a box, without hidden files and half written ones:
- * entries, changes of a list and hellos, the earliest first.
+ * entries and changes of a list, the earliest first.
  *
- * @param box - The box, like `NomKommunikation/to_vu/dashboard`
+ * @param box - The box, like `NomKommunikation/to_sopha/dashboard`
  * @returns Names, sorted
  */
 function boxFilesOf(box: string): string[] {
     if (!existsSync(box)) return [];
     return readdirSync(box)
-        .filter(
-            (name: string): boolean =>
-                !name.startsWith(".") &&
-                (/\.(?:ics|json)$/.test(name) || name.startsWith("hello_")),
-        )
+        .filter((name: string): boolean => !name.startsWith(".") && /\.(?:ics|json)$/.test(name))
         .sort();
 }
 
@@ -274,22 +303,22 @@ function addressOf(name: string): string {
 }
 
 /**
- * Runs `ssh` to the server of a person, `nom-` and the name in small letters,
- * like `ssh nom-vu share <name>`,
+ * Runs `ssh` from Vu's reader to my server, `nom-` and my name in small letters,
+ * like `ssh nom-sopha share <name>`,
  * never asking for a password and giving up after {@link reachSeconds};
- * what it gives goes in, and its answer is left.
- * Tells once that the server cannot be reached, and once that it can again.
+ * what it gives goes in.
+ * Tells once that my server cannot be reached, and once that it can again.
  * - `child`: The running `ssh`.
+ * - `given`: What the gate gives.
  * - `told`: Its error output.
  *
- * @param partner - The person, like `Vu`
  * @param words - What the gate there is to do,
- *   like `["share", "20261021T093000123Z_Sopha_entry_….ics"]`
+ *   like `["share", "20261021T093000123Z_Vu_entry_….ics"]`
  * @param input - What goes in, nothing for none
- * @returns Whether the gate did it
+ * @returns What the gate gave, `undefined` when it did not do it
  */
-function sshRun(partner: string, words: string[], input: Buffer | string = ""): Promise<boolean> {
-    return new Promise((resolve: (done: boolean) => void): void => {
+function sshRun(words: string[], input: string = ""): Promise<string | undefined> {
+    return new Promise((resolve: (given: string | undefined) => void): void => {
         const child: ChildProcess = spawn(
             "ssh",
             [
@@ -297,12 +326,16 @@ function sshRun(partner: string, words: string[], input: Buffer | string = ""): 
                 "BatchMode=yes",
                 "-o",
                 `ConnectTimeout=${reachSeconds}`,
-                `nom-${partner.toLowerCase()}`,
+                `nom-${holder.toLowerCase()}`,
                 ...words,
             ],
-            { stdio: ["pipe", "ignore", "pipe"] },
+            { stdio: ["pipe", "pipe", "pipe"] },
         );
+        const given: Buffer[] = [];
         let told: string = "";
+        child.stdout?.on("data", (chunk: Buffer): void => {
+            given.push(chunk);
+        });
         child.stderr?.on("data", (chunk: Buffer): void => {
             told += chunk.toString();
         });
@@ -311,66 +344,68 @@ function sshRun(partner: string, words: string[], input: Buffer | string = ""): 
             told += error.message;
         });
         child.on("close", (code: number | null): void => {
-            if (code !== 0 && !unreached.has(partner))
+            if (code !== 0 && !unreached)
                 console.error(
                     new Date().toISOString(),
-                    `${partner} not reached: ${words[0]}`,
+                    `${holder} not reached: ${words[0]}`,
                     told.trim(),
                 );
-            if (code === 0 && unreached.has(partner))
-                console.log(new Date().toISOString(), `${partner} reached again`);
-            if (code === 0) unreached.delete(partner);
-            else unreached.add(partner);
-            resolve(code === 0);
+            if (code === 0 && unreached)
+                console.log(new Date().toISOString(), `${holder} reached again`);
+            unreached = code !== 0;
+            resolve(code === 0 ? Buffer.concat(given).toString("utf8") : undefined);
         });
         child.stdin?.end(input);
     });
 }
 
 /**
- * Sends what waits for a person in their box on my server, the earliest first,
- * each into my trash once their server took it, see the top of this file;
- * stops at the first their server does not take, which waits with every one after it.
- * Runs once at a time per person: called while it runs, it runs again after.
- *
- * @param partner - The person, like `Vu`
+ * Sends what Vu's reader shares to my server, the earliest first, see {@link outbox};
+ * stops at the first my server does not take, which waits with every one after it.
+ * Runs once at a time: called while it runs, it runs again after.
+ * - `name`, `content`: The name of the first and what it holds.
  */
-export function outboxSend(partner: string): void {
-    if (sending.has(partner)) {
-        again.add(partner);
+function outboxSend(): void {
+    if (sending) {
+        again = true;
         return;
     }
-    sending.add(partner);
-    const box: string = dashboardBoxOf(partner);
+    sending = true;
     const run: () => Promise<void> = async (): Promise<void> => {
         do {
-            again.delete(partner);
-            for (const name of boxFilesOf(box)) {
-                if (!(await sshRun(partner, ["share", name], readFileSync(join(box, name)))))
-                    return;
-                trashPut(join(box, name));
+            again = false;
+            while (outbox.length > 0) {
+                const [name, content]: [string, string] = outbox[0];
+                if ((await sshRun(["share", name], content)) === undefined) return;
+                outbox.shift();
             }
-        } while (again.has(partner));
+        } while (again);
     };
     run()
         .catch((error: unknown): void => {
-            console.error(new Date().toISOString(), `Nothing sent to ${partner}`, error);
+            console.error(new Date().toISOString(), `Nothing sent to ${holder}`, error);
         })
         .finally((): void => {
-            sending.delete(partner);
+            sending = false;
         });
 }
 
 /**
- * Writes a shared file into the box of a person on my server,
- * to go out with the next sending, see {@link outboxSend}.
- * - `file`: The file.
+ * Shares a file with a person, see the top of this file:
+ * on my server into their box, where it waits for their reader,
+ * on Vu's into {@link outbox}, sent at once.
+ * - `file`: The file in their box.
  *
  * @param partner - The person, like `Vu`
  * @param name - Its name, see the top of this file
  * @param content - What it holds
  */
 function outboxWrite(partner: string, name: string, content: string): void {
+    if (!holderIs()) {
+        outbox.push([name, content]);
+        outboxSend();
+        return;
+    }
     const file: string = join(dashboardBoxOf(partner), name);
     if (!writeAllowed(file)) throw new Error(`No writing outside the boxes: ${file}`);
     mkdirSync(dashboardBoxOf(partner), { recursive: true });
@@ -378,8 +413,7 @@ function outboxWrite(partner: string, name: string, content: string): void {
 }
 
 /**
- * Writes the copy of an entry of my log into the box of one of us on my server,
- * see the top of this file:
+ * Shares the copy of an entry of my log with one of us, see the top of this file:
  * what we both have of it, with me in `With` in place of the person.
  * - `fields`: Its fields and times as the copy has them.
  * - `own`: Its foods and the cooking a meal draws from.
@@ -419,12 +453,10 @@ function copyWrite(entry: Entry, partner: string): void {
         food,
     ]);
     if (entry.cooked !== "") own.push(["x-cooked", entry.cooked]);
-    mkdirSync(dashboardBoxOf(partner), { recursive: true });
-    entryAppend(
-        join(dashboardBoxOf(partner), `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`),
-        fields,
-        own,
-        entry.id,
+    outboxWrite(
+        partner,
+        `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`,
+        entryIcsOf(fields, own, entry.id),
     );
 }
 
@@ -471,10 +503,7 @@ export function entryShare(id: string, before: Attendee[] = []): void {
                 )
                 .filter((partner: string | undefined): partner is string => partner !== undefined),
         );
-        to.forEach((partner: string): void => {
-            copyWrite(found[1], partner);
-            outboxSend(partner);
-        });
+        to.forEach((partner: string): void => copyWrite(found[1], partner));
     } catch (error: unknown) {
         console.error(new Date().toISOString(), `No copy of ${id}`, error);
     }
@@ -496,7 +525,6 @@ export function listShare(change: ListChange, only?: string): void {
                 `${stampOf()}_${myName}_list_${randomUUID()}.json`,
                 `${JSON.stringify(change)}\n`,
             );
-            outboxSend(partner);
         });
     } catch (error: unknown) {
         console.error(new Date().toISOString(), `No change shared: ${change.call}`, error);
@@ -600,62 +628,92 @@ function entryNewOf(entry: Entry): EntryNew {
 }
 
 /**
- * Takes what lies in my box, the earliest first, each into my trash after,
- * see the top of this file:
- * a hello sends what waits for its sender, an entry my log has already, by its `UID`, goes untaken,
- * a change of a list my lists refuse, like a food I have, is told and goes too;
- * an entry my log cannot take stays, told once.
- * Whatever came from someone I share with tells that their server is there,
- * so what waits for them goes out.
- * - `box`: My box, like `NomKommunikation/to_sopha/dashboard`.
- * - `senders`: Those I share with something came from.
- * - `file`: The file of a thing in my box.
- * - `sender`: Who sent it, by its name, see the top of this file.
+ * Takes one shared thing that came, see the top of this file:
+ * an entry the log has already, by its `UID`, goes untaken,
+ * a change of a list the lists refuse, like a food I have, is told and goes too;
+ * an entry the log cannot take stays, told once.
+ *
+ * @param name - Its name, see the top of this file
+ * @param text - What it holds
+ * @returns Whether it is done with, so it goes into my trash
  */
-export function inboxTake(): void {
-    if (!sharingIs()) return;
-    const box: string = dashboardBoxOf(myName);
-    const senders: Set<string> = new Set();
-    boxFilesOf(box).forEach((name: string): void => {
-        const file: string = join(box, name);
-        const sender: string = name.startsWith("hello_")
-            ? name.slice("hello_".length)
-            : (name.split("_")[1] ?? "");
-        try {
-            if (name.endsWith(".ics"))
-                fileEntriesRead(file)
-                    .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
-                    .forEach((entry: Entry): void => {
-                        entryAdd(entryNewOf(entry), entry.id);
-                    });
-            else if (name.endsWith(".json"))
-                try {
-                    listApply(JSON.parse(readFileSync(file, "utf8")) as ListChange);
-                } catch (error: unknown) {
-                    console.log(
-                        new Date().toISOString(),
-                        `Kept my lists as they are for ${name}:`,
-                        error instanceof Error ? error.message : error,
-                    );
-                }
-            trashPut(file);
-        } catch (error: unknown) {
-            if (!failed.has(file))
-                console.error(new Date().toISOString(), `My log cannot take ${file}`, error);
-            failed.add(file);
-        }
-        if (partnersOf().includes(sender)) senders.add(sender);
-    });
-    senders.forEach(outboxSend);
+function thingTake(name: string, text: string): boolean {
+    try {
+        if (name.endsWith(".ics"))
+            textEntriesRead(text, name)
+                .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
+                .forEach((entry: Entry): void => {
+                    entryAdd(entryNewOf(entry), entry.id);
+                });
+        else
+            try {
+                listApply(JSON.parse(text) as ListChange);
+            } catch (error: unknown) {
+                console.log(
+                    new Date().toISOString(),
+                    `Kept my lists as they are for ${name}:`,
+                    error instanceof Error ? error.message : error,
+                );
+            }
+        return true;
+    } catch (error: unknown) {
+        if (!failed.has(name))
+            console.error(new Date().toISOString(), `My log cannot take ${name}`, error);
+        failed.add(name);
+        return false;
+    }
 }
 
 /**
- * Starts sharing as the reader starts, while it shares, see {@link sharingIs}: creates my box;
- * for each person I share with sends what waits, all my lists the first time,
- * see {@link listsShareAll}, and says hello to their server, so it sends what waits for me;
+ * Takes what waits for this reader, the earliest first, each into my trash after,
+ * see {@link thingTake}:
+ * on my server what lies in my box,
+ * on Vu's what lies in Vu's box on my server, by SSH, once at a time,
+ * then sends what waits in {@link outbox}, since my server is there.
+ * - `box`: My box, like `NomKommunikation/to_sopha/dashboard`.
+ * - `file`: The file of a thing in my box.
+ * - `names`: The names of what waits in Vu's box, one a line, `undefined` when not reached.
+ * - `text`: What one holds, `undefined` when not reached.
+ */
+export function inboxTake(): void {
+    if (!sharingIs()) return;
+    if (holderIs()) {
+        const box: string = dashboardBoxOf(myName);
+        boxFilesOf(box).forEach((name: string): void => {
+            const file: string = join(box, name);
+            if (thingTake(name, readFileSync(file, "utf8"))) trashPut(file);
+        });
+        return;
+    }
+    if (taking) return;
+    taking = true;
+    const run: () => Promise<void> = async (): Promise<void> => {
+        const names: string | undefined = await sshRun(["inbox"]);
+        if (names === undefined) return;
+        for (const name of names.split("\n").filter((one: string): boolean => one !== "")) {
+            const text: string | undefined = await sshRun(["take", name]);
+            if (text === undefined) return;
+            if (thingTake(name, text)) await sshRun(["done", name]);
+        }
+        outboxSend();
+    };
+    run()
+        .catch((error: unknown): void => {
+            console.error(new Date().toISOString(), `Nothing taken from ${holder}`, error);
+        })
+        .finally((): void => {
+            taking = false;
+        });
+}
+
+/**
+ * Starts sharing as the reader starts, while it shares, see {@link sharingIs}:
+ * on my server creates my box, and for each person I share with their box,
+ * sending all my lists the first time, see {@link listsShareAll};
  * takes what lies in my box,
  * and watches it as long as the reader runs,
  * taking what comes after every change once it is quiet for {@link quiet}.
+ * On Vu's server takes what waits for it on mine, and again every {@link pollSeconds}.
  * - `box`: My box.
  * - `waiting`: Timer of the next taking, `undefined` while none waits.
  */
@@ -670,6 +728,11 @@ export function sharedStart(): void {
             );
         return;
     }
+    if (!holderIs()) {
+        inboxTake();
+        setInterval(inboxTake, pollSeconds * 1000);
+        return;
+    }
     const box: string = dashboardBoxOf(myName);
     mkdirSync(box, { recursive: true });
     partnersOf().forEach((partner: string): void => {
@@ -677,8 +740,6 @@ export function sharedStart(): void {
             mkdirSync(dashboardBoxOf(partner), { recursive: true });
             listsShareAll(partner);
         }
-        outboxSend(partner);
-        void sshRun(partner, ["hello"]);
     });
     inboxTake();
     let waiting: NodeJS.Timeout | undefined = undefined;
