@@ -82,6 +82,7 @@
  * A new entry, also one logged from a box, starts where I was last,
  * the place of the last entry before it, a way's goal, or a place I changed by hand,
  * like `TUM Garching` after a way to `Mensa Garching`, as if a way had gone there,
+ * never a room, so after a lecture I am where I was before it,
  * else at my default place, the place I starred, like `Home Munich`, and a new box always there:
  * a way its `From`, every other category its place, with its link, as picked from the list,
  * see {@link lastPlaceFill}; a way's place, its goal, stays empty.
@@ -2259,7 +2260,7 @@ async function lastPlaceLoad(): Promise<string> {
  * a new box of the plan always as my default place, since no entry before it tells where I will be:
  * a way its `From`, every other category its place, while that field is empty;
  * nothing for an entry or a box being changed.
- * The place is my place or room of that name as its list offers it, so it shows with its link,
+ * The place is my place of that name as its list offers it, so it shows with its link,
  * as picked there, like `Mensa Leopoldstraße` for a Talk after a way that ended there;
  * a way picked after another category leaves the place filled in for it,
  * so its place, its goal, stays empty; nothing once another category was picked meanwhile.
@@ -2292,7 +2293,7 @@ async function lastPlaceFill(category: Category): Promise<void> {
     );
     const line: string = last !== "" ? last : standard === undefined ? "" : lineOf(standard);
     values[field.key] =
-        [...field.values, ...field.rooms].find(
+        field.values.find(
             (value: string): boolean => line !== "" && labelOf(value) === labelOf(line),
         ) ?? line;
     if (!way) placeFilled = values.location;

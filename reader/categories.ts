@@ -435,16 +435,6 @@ function onlineUsesOf(logs: Entry[]): string[] {
 }
 
 /**
- * Gives the names of my places and of the rooms of the university,
- * which an entry writes as places, see `places.ts`.
- *
- * @returns Names like `Home Munich`, in the order of `Places.md`, then those of `Rooms.md`
- */
-function placeNamesRead(): string[] {
-    return [...placesRead(), ...roomsRead()].map((place: Place): string => place.name);
-}
-
-/**
  * Lists the values of the field `title` of a category in log entries:
  * the what of its entries, each value of a what of several on its own,
  * like `Caring` and `Shower` of `Caring, Shower`.
@@ -636,23 +626,23 @@ export function categoriesRead(now: string): CategoryShown[] {
 
 /**
  * Finds where I was last before an instant:
- * the place of the last entry with a place as it wrote it, with the address it had then,
- * like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
- * when its name is one of my places or of the rooms;
+ * the place of the last entry at one of my places as it wrote it, with the address it had then,
+ * like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`;
  * a way's place is its goal, and a place I changed by hand counts as a way there,
- * like `TUM Garching` after a way to `Mensa Garching`.
- * - `last`: Last entry with a place that started before the instant.
+ * like `TUM Garching` after a way to `Mensa Garching`;
+ * a room of the university counts as none, so after a lecture I am where I was before it.
+ * - `names`: Names of my places, like `Home Munich`.
+ * - `last`: Last entry at one of my places that started before the instant.
  *
  * @param before - Start of the new entry as ISO instant
- * @returns Place, empty when no entry before has one or it is no place of mine and no room
+ * @returns Place, empty when no entry before is at one of my places
  */
 export function lastPlaceRead(before: string): string {
+    const names: string[] = placesRead().map((place: Place): string => place.name);
     const last: Entry | undefined = logsRead(before)
-        .filter((log: Entry): boolean => log.location !== "")
+        .filter((log: Entry): boolean => names.includes(labelOf(log.location)))
         .sort((first: Entry, second: Entry): number => second.start.localeCompare(first.start))[0];
-    return last !== undefined && placeNamesRead().includes(labelOf(last.location))
-        ? last.location
-        : "";
+    return last?.location ?? "";
 }
 
 /**
