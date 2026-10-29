@@ -94,16 +94,9 @@ import type { CalendarSource } from "./sources.ts";
  *   a skill entry now links the folders of its chapters, see `chaptersOf` in `documents.ts`.
  * - `links`: Links of a skill entry of the log to the folder of its skill and the document it used,
  *   its `ATTACH`es in order, see {@link Link} and `documents.ts`; none when the event has none.
- * - `attempts`: Attempts of a skill entry of the log, its `X-ATTEMPT`s in order,
- *   like `140500;IN2028/Kiosk Sales Standard Error;stuck;high;step 2`,
+ * - `rounds`: Where I am in the rounds of my sections and what I did in them,
+ *   of a skill entry of the log, its `X-ROUND`s in order, see {@link RoundMark};
  *   none when the event has none.
- * - `rounds`: Where I am in the rounds of my sections, of a skill entry of the log,
- *   its `X-ROUND`s in order, like
- *   `091500;IN2028/01_01_SampleMeanEstimator;0;seen;Definition. Population and Sample`, see `reader/skill.ts`;
- *   none when the event has none.
- * - `tutors`: Tasks I copied for my tutor in an older skill entry of the log,
- *   its `X-TUTOR`s in order, only read,
- *   like `IN2028/Kiosk Sales Standard Error`, none when the event has none.
  * - `foods`: Foods of a meal or a cooking, its `X-FOOD`s in order,
  *   each a food of `Foods.md` by its name, brand and store with the grams,
  *   like `Skyr natur;K-Classic;Kaufland;150`, an older one by its name alone, like `Reis;150`;
@@ -199,9 +192,7 @@ export type Entry = {
     semester: string;
     chapters: string[];
     links: Link[];
-    attempts: string[];
-    rounds: string[];
-    tutors: string[];
+    rounds: RoundMark[];
     foods: string[];
     cooked: string;
     pain: string;
@@ -312,6 +303,37 @@ export type Push = {
 export type Link = {
     path: string;
     fingerprint: string;
+};
+
+/**
+ * A line `X-ROUND` of a skill entry: where I stand in the round of a section
+ * and what I did in it in this entry, its section as value, the rest as parameters,
+ * an empty one left out, see `RoundLine` in `skill.ts`, like
+ * `X-ROUND;ROUND=1;STEP=done;TASK=Task. Food Truck;USED=Example. Canteen Double Count;RESULT=wrong,right;NOTE=Varianz vergessen;DUE=20261106:01_02_SampleMeanEstimator`.
+ *
+ * - `section`: Its section, the name of its note, like `01_02_SampleMeanEstimator`,
+ *   with its module before `/` once the entry's skill changed, like `IN2028/01_02_…`.
+ * - `round`: Its round, `ROUND`, from 0.
+ * - `step`: Key of the step I stand at, `STEP`, a heading as written, `done` once closed,
+ *   empty before the first.
+ * - `task`: Heading of the cold Task I solved in it as written, `TASK`, like `Task. Food Truck`,
+ *   empty for none.
+ * - `used`: Heading of the Example I checked off in it with `Next`, `USED`,
+ *   like `Example. Canteen Double Count`, empty for none.
+ * - `results`: Results of that Task in it, `RESULT`, in order, `right` or `wrong`.
+ * - `notes`: My comment on each wrong one, `NOTE`, in order.
+ * - `due`: Day the next round comes, `DUE`, like `2026-11-06`,
+ *   written once the Task decided the round, empty before.
+ */
+export type RoundMark = {
+    section: string;
+    round: number;
+    step: string;
+    task: string;
+    used: string;
+    results: string[];
+    notes: string[];
+    due: string;
 };
 
 /**
@@ -481,7 +503,7 @@ const zone: ICAL.Timezone = new ICAL.Timezone(zoneComponent);
  * a box of a course, `X-NUMBER` and `X-GROUP`, of the group I pinned with `X-PINNED=TRUE`;
  * a meal, `X-FOOD` and `X-COOKED`;
  * sport, `X-WORKOUT`, `X-EXERCISE`, `X-VIDEO` and `X-PAIN`;
- * a skill entry, `X-TUTOR`, `X-SEMESTER`, `X-CHAPTER`, `X-ATTEMPT` and `X-ROUND`.
+ * a skill entry, `X-SEMESTER`, `X-CHAPTER` and `X-ROUND`.
  * Every other line comes after them, in the order it had, and the lines of a property that repeats,
  * like `X-FOOD`, `ATTENDEE` or `EXDATE`, stay together in the order they had.
  */
@@ -518,10 +540,8 @@ const lineOrder: string[] = [
     "X-EXERCISE",
     "X-VIDEO",
     "X-PAIN",
-    "X-TUTOR",
     "X-SEMESTER",
     "X-CHAPTER",
-    "X-ATTEMPT",
     "X-ROUND",
 ];
 
@@ -537,12 +557,19 @@ const lineOrder: string[] = [
 ICAL.design.icalendar.param.altrep = { multiValue: ",", multiValueSeparateDQuote: true };
 
 /**
+ * The parameters `RESULT` and `NOTE` of an `X-ROUND`, lists of several values, see {@link RoundMark}:
+ * `RESULT=wrong,right`, and each note in double quotes, `NOTE="Varianz vergessen","…"`,
+ * a `"` in one written `^'` and a line break `^n` (RFC 6868), which `ical.js` writes and reads back.
+ */
+ICAL.design.icalendar.param.result = { multiValue: "," };
+ICAL.design.icalendar.param.note = { multiValue: ",", multiValueSeparateDQuote: true };
+
+/**
  * Every `X-` property of my own the reader writes or reads,
  * as text of the standard, the value type of every `X-` property without one:
  * written with each `\`, `;` and `,` escaped by a `\` and a line break as `\n`,
- * like `X-ATTEMPT:Kiosk Chain\;wrong\;Step 2: weights add up to 1.2\, not 1`
- * or `X-FOOD:Skyr natur\;K-Classic\;Kaufland\;150`, and read back without them, as
- * `Kiosk Chain;wrong;Step 2: weights add up to 1.2, not 1`;
+ * like `X-FOOD:Skyr natur\;K-Classic\;Kaufland\;150`, and read back without them, as
+ * `Skyr natur;K-Classic;Kaufland;150`;
  * a line written raw before reads as it is, since it holds no `\` before such a sign.
  * `ical.js` wrote every `X-` value raw,
  * so a strict reader of the standard split them at each `;` and `,`,
@@ -553,9 +580,7 @@ const ownTexts: string[] = [
     "x-from",
     "x-semester",
     "x-chapter",
-    "x-attempt",
     "x-round",
-    "x-tutor",
     "x-food",
     "x-cooked",
     "x-pain",
@@ -976,15 +1001,7 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
             path: String(property.getFirstValue()),
             fingerprint: String(property.getParameter("x-sha256") ?? ""),
         })),
-        attempts: event.component
-            .getAllProperties("x-attempt")
-            .map((property: ICAL.Property): string => String(property.getFirstValue())),
-        rounds: event.component
-            .getAllProperties("x-round")
-            .map((property: ICAL.Property): string => String(property.getFirstValue())),
-        tutors: event.component
-            .getAllProperties("x-tutor")
-            .map((property: ICAL.Property): string => String(property.getFirstValue())),
+        rounds: event.component.getAllProperties("x-round").map(roundMarkOf),
         foods: event.component
             .getAllProperties("x-food")
             .map((property: ICAL.Property): string => String(property.getFirstValue())),
@@ -2380,7 +2397,7 @@ function ownPropertyOf(name: string, value: string | Link | Date): ICAL.Property
  * and puts the new ones where the first old one stood,
  * or before the end of the event when there was none;
  * no value removes the property.
- * Most properties have one value, the `X-ATTEMPT`s of a skill entry one per attempt,
+ * Most properties have one value, the `X-ROUND`s of a skill entry one per section,
  * its `ATTACH`es one per link, the `ATTENDEE`s of an entry one per person,
  * see {@link attendeePropertyOf}.
  * - `at`: Line of the first old value, or the end of the event.
@@ -2449,8 +2466,8 @@ function textsOf(fields: EntryTexts): [string, string][] {
  * @param file - Path of the `.ics` file
  * @param fields - Fields and times of the entry
  * @param own - Properties beyond the fields, each its name with its value,
- *   like `["x-attempt", "IN2028/Airline Revenue Interval;right"]` of a skill entry
- *   or `["x-food", "Reis;150"]` of a meal, `["attach", link]` for a link,
+ *   like `["x-chapter", "01_StatisticsFoundations"]` of a skill entry
+ *   or `["x-food", "Reis;150"]` of a meal, a property built already, like an `X-ROUND`, `["attach", link]` for a link,
  *   see {@link Link}, `["related-to", "study-13@nomsystem"]` for the box it was logged from,
  *   or `["rrule", "FREQ=WEEKLY;UNTIL=20270202T090000Z"]`
  *   and one `["exdate", date]` per date left out for a weekly series
@@ -2462,7 +2479,7 @@ function textsOf(fields: EntryTexts): [string, string][] {
 export function entryAppend(
     file: string,
     fields: EntryFields,
-    own: [string, string | Link | Date][],
+    own: [string, string | Link | Date | ICAL.Property][],
     id: string = `${randomUUID()}@nomsystem`,
 ): string {
     writeCheck(file);
@@ -2483,7 +2500,7 @@ export function entryAppend(
  */
 export function entryIcsOf(
     fields: EntryFields,
-    own: [string, string | Link | Date][],
+    own: [string, string | Link | Date | ICAL.Property][],
     id: string,
 ): string {
     const lines: string[] = [...linesOf(calendarCreate()), ""];
@@ -2505,7 +2522,7 @@ export function entryIcsOf(
  */
 function eventOf(
     fields: EntryFields,
-    own: [string, string | Link | Date][],
+    own: [string, string | Link | Date | ICAL.Property][],
     id: string,
 ): ICAL.Component {
     const event: ICAL.Component = new ICAL.Component("vevent");
@@ -2521,11 +2538,11 @@ function eventOf(
     fields.attendees.forEach((attendee: Attendee): void => {
         event.addProperty(attendeePropertyOf(attendee));
     });
-    own.filter(([, value]: [string, string | Link | Date]): boolean => value !== "").forEach(
-        ([name, value]: [string, string | Link | Date]): void => {
-            event.addProperty(ownPropertyOf(name, value));
-        },
-    );
+    own.filter(
+        ([, value]: [string, string | Link | Date | ICAL.Property]): boolean => value !== "",
+    ).forEach(([name, value]: [string, string | Link | Date | ICAL.Property]): void => {
+        event.addProperty(value instanceof ICAL.Property ? value : ownPropertyOf(name, value));
+    });
     return event;
 }
 
@@ -2792,16 +2809,65 @@ export function groupPropertyOf(group: string, pinned: boolean): ICAL.Property {
 }
 
 /**
+ * Reads an `X-ROUND`, see {@link RoundMark}; a parameter of one value reads as a list of one.
+ * - `listOf`: The values of a parameter, none for none.
+ *
+ * @param property - The `X-ROUND`
+ * @returns Its line
+ */
+function roundMarkOf(property: ICAL.Property): RoundMark {
+    const listOf: (name: string) => string[] = (name: string): string[] => {
+        const value: unknown = property.getParameter(name);
+        return value === undefined
+            ? []
+            : Array.isArray(value)
+              ? value.map(String)
+              : [String(value)];
+    };
+    const due: string = listOf("due")[0] ?? "";
+    return {
+        section: String(property.getFirstValue()),
+        round: Number(listOf("round")[0] ?? 0),
+        step: listOf("step")[0] ?? "",
+        task: listOf("task")[0] ?? "",
+        used: listOf("used")[0] ?? "",
+        results: listOf("result"),
+        notes: listOf("note"),
+        due: due === "" ? "" : `${due.slice(0, 4)}-${due.slice(4, 6)}-${due.slice(6, 8)}`,
+    };
+}
+
+/**
+ * Makes an `X-ROUND`, see {@link RoundMark}, each parameter only when it holds something.
+ * - `property`: The property.
+ *
+ * @param mark - Its line
+ * @returns The property
+ */
+export function roundPropertyOf(mark: RoundMark): ICAL.Property {
+    const property: ICAL.Property = new ICAL.Property("x-round");
+    property.setValue(mark.section);
+    property.setParameter("round", String(mark.round));
+    if (mark.step !== "") property.setParameter("step", mark.step);
+    if (mark.task !== "") property.setParameter("task", mark.task);
+    if (mark.used !== "") property.setParameter("used", mark.used);
+    if (mark.results.length > 0) property.setParameter("result", mark.results);
+    if (mark.notes.length > 0) property.setParameter("note", mark.notes);
+    if (mark.due !== "") property.setParameter("due", mark.due.replaceAll("-", ""));
+    return property;
+}
+
+/**
  * Puts new values into properties of the event or to-do with an identifier,
  * replacing all old lines of each,
- * like the end, the `X-CHAPTER`s and the `X-ATTEMPT`s of a skill entry that gets one more attempt;
+ * like the end, the `X-CHAPTER`s and the `X-ROUND`s of a skill entry that goes on in a round;
  * a date goes in Berlin time, a link as `ATTACH`, see {@link Link}.
  * Every other line of the file stays as it is, byte for byte.
  *
  * @param file - Path of the `.ics` file
  * @param id - Identifier of the event or to-do
  * @param properties - Properties, each its name with its new values,
- *   like `["x-attempt", ["IN2028/…;right", …]]`, a property built already,
+ *   like `["x-chapter", ["01_StatisticsFoundations", …]]`, a property built already,
  *   like an `X-GROUP` with its parameter, see {@link groupPropertyOf}, as it is
  * @throws {Error} - When the file lies outside the new system or does not hold the event once
  */

@@ -854,7 +854,7 @@ export function roundTagOf(text: string): HTMLSpanElement {
  * - `added`: The rows of the values picked.
  * - `last`: The row of the list, or of the hint, none without either.
  *
- * @param name - Name of the field, like `Documents`
+ * @param name - Name of the field, like `Attach`
  * @param setup - How the rows are built
  * @returns One row per value picked, then the row of the list
  */

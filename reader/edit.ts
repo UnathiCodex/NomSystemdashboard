@@ -10,7 +10,7 @@
  * the text sent and that change are merged, see {@link textMerged},
  * so nothing I typed is lost, and the editor gets the text written back, see {@link Written}.
  * Paths are those of the scripts view, from `NomSkillingmodules`, like
- * `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanEstimator.md`.
+ * `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`.
  *
  * - `node:fs`: Reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
@@ -186,7 +186,7 @@ export function changesOf(before: string, after: string): TextChange[] {
  * - {@link realpathSync}: Makes a path absolute and follows symbolic links,
  *   so no link leads outside.
  *
- * @param path - Path like `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanEstimator.md`
+ * @param path - Path like `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`
  * @returns File on the disk
  * @throws {Error} - When the path lies outside `NomSkillingmodules`,
  *   has a hidden part like `.obsidian` or `..`, is no note `.md`, or nothing lies there
@@ -222,7 +222,7 @@ function stampOf(): string {
  * since the editor read it, see {@link textMerged}:
  * first its change as a unified diff at the end of the file of my corrections,
  * its head naming the note and the time,
- * like `--- a/IN2028_…/01_RegressionAnalysis/01_01_SampleMeanEstimator.md` and,
+ * like `--- a/IN2028_…/01_RegressionAnalysis/01_02_SampleMeanEstimator.md` and,
  * after a tab, `2026-10-17 14:40:19`;
  * then the text, exactly as sent where the file did not change. A text without change writes nothing.
  * - {@link createTwoFilesPatch}: Writes the change as `diff -u` does, with the path of the note

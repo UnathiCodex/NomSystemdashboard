@@ -37,7 +37,7 @@
  * a module without chapters keeps the row `Chapter +`, its list empty, without a grey hint.
  * The reader writes one `X-CHAPTER` each,
  * and an entry keeps the name a chapter had, also once its folder has another name.
- * The documents are the real documents the entry used, several, each a row with a small ×,
+ * The list `Attach` holds the real documents the entry used, several, each a row with a small ×,
  * see `addedRowsOf` in `choices.ts`:
  * for my own learning, no type, the notes of each chapter picked right below it;
  * for a type, once a chapter is picked,
@@ -53,11 +53,16 @@
  * The note is only my free note.
  * In the log a note of my own learning holds its tasks right below it, indented once more,
  * as a chapter holds its notes, see {@link taskRowsOf}:
- * the plus after the name of the note picks one of the tasks of that note, the due ones first,
+ * the plus after the name of the note picks one of the Tasks of that note, the due ones first,
  * so a task always comes from the Markdown of its note, never typed;
- * each task picked is a row with its result, the task judged as a whole: Right,
- * or Wrong with a short field for my comment on what went wrong;
- * a task left without result is no attempt and is not written.
+ * each Task picked is a row with its result, the Task judged as a whole: Right,
+ * or Wrong with a short field for my comment on what went wrong, plain text in one line,
+ * see `plainKeep` in `../skill/task.ts`;
+ * a Task left without result is no attempt and is not written.
+ * An Example has no result, so it is no pick here; `Next` checks it off in its round.
+ * Every note of a section the entry attaches gets its line `X-ROUND`,
+ * so the reader writes the round I stand in, also with no Task picked,
+ * and the learning view goes on from there, see `marksOfEntry` in `reader/skill.ts`.
  * A note of a section shows its round after its name, a small grey box, like `Round 0`.
  * In the plan it is its section's round now.
  * In the log it is the round its line `X-ROUND` in the entry names, else its section's round now,
@@ -73,12 +78,12 @@
  * see {@link skillPathOf}; after the type the pencil of the summary,
  * which shows its title to type below them;
  * another skill or type a click on it picks for this entry alone, also of a box of a series.
- * A skill entry of the log already logged shows its attempts, which stay;
- * new ones are added after them.
- * Everything stays editable, its skill too, whose older attempts keep their task.
+ * A skill entry of the log already logged shows its rounds, what each line `X-ROUND` holds,
+ * which stay; new attempts go into the line of their section.
+ * Everything stays editable, its skill too, whose rounds keep their section.
  * Saving sends a skill entry of the log to the reader's one writer of skill entries,
  * with the times, the place and the note of the dialog;
- * a skill box of the plan has the same fields but tasks and attempts, which only happen in the log,
+ * a skill box of the plan has the same fields but tasks and rounds, which only happen in the log,
  * and the dialog writes it itself as a box with its chapters and documents.
  *
  * - `./choices.ts`: Pickers, each one line in a row with its name, two side by side in one row,
@@ -110,6 +115,7 @@ import {
     searchOf,
 } from "./choices.ts";
 import { crossPut } from "../icons.ts";
+import { plainKeep } from "../skill/task.ts";
 import {
     dayTextOf,
     groupsOf,
@@ -131,6 +137,7 @@ import type {
     Group,
     Link,
     ModuleContents,
+    RoundMark,
     RoundPick,
     SkillModule,
     SkillSection,
@@ -199,12 +206,7 @@ export type ModuleType = {
  *   empty for none.
  * - `chapters`: Names of its chapters, in the log.
  * - `links`: Its links as the reader gave them, to its document, in the log.
- * - `attempts`: Its `X-ATTEMPT`s as the reader gave them, in the log,
- *   like `IN2028/Airline Revenue Interval;right;low`,
- *   or `140500;IN2028/Airline Revenue Interval;right` with the time
- *   of the tap when a button wrote it.
- * - `rounds`: Its `X-ROUND`s as the reader gave them, in the log,
- *   like `01_01_SampleMeanEstimator;0;Definition. Sampling Distribution`.
+ * - `rounds`: Its `X-ROUND`s as the reader gave them, in the log, see `RoundMark`.
  */
 export type SkillValues = {
     module: string;
@@ -214,8 +216,7 @@ export type SkillValues = {
     titleLink: string;
     chapters: string[];
     links: Link[];
-    attempts: string[];
-    rounds: string[];
+    rounds: RoundMark[];
 };
 
 /**
@@ -264,7 +265,7 @@ let picks: SkillPicks = {
 /**
  * Name of the folder of the material of each type in a module, as the reader names it,
  * see `materialFolders` in `reader/notes.ts`,
- * whose files the Documents list offers for an entry of that type, a folder starting with its type,
+ * whose files the list `Attach` offers for an entry of that type, a folder starting with its type,
  * like `TU_`: a lecture's slides in `VO_UniversityLectureLessons`,
  * the sheet of an exercise in `UE_UniversityModuleExercises`,
  * of a central exercise in `ZU_UniversityCentralExercises`,
@@ -356,22 +357,10 @@ let contents: ModuleContents = {
 };
 
 /**
- * Time of the tap at the start of an `X-ATTEMPT` a button wrote, like `140500` for 14:05,
- * or `14:05` in an older one, see `reader/skill.ts`.
- */
-const tapTime: RegExp = /^\d{2}:?\d{2}(?:\d{2})?$/;
-
-/**
- * `X-ATTEMPT`s of the skill entry of the log being changed,
- * which stay as they are, none for any other.
- */
-let logged: string[] = [];
-
-/**
  * `X-ROUND`s of the skill entry of the log being changed, none for any other,
  * whose rounds its notes show, see {@link roundRowsOf}.
  */
-let loggedRounds: string[] = [];
+let loggedRounds: RoundMark[] = [];
 
 /**
  * Whether the dialog writes a box of the plan,
@@ -386,7 +375,7 @@ const noType: string = "None";
 
 /**
  * Gives the paths of the documents of a skill entry or a box from its links,
- * as the Documents list offers them, see `ModuleContents`:
+ * as the list `Attach` offers them, see `ModuleContents`:
  * its files in the folder of its module from that folder;
  * a file with its fingerprint, or one in a folder of material,
  * like the slides a lecture of my plan links without fingerprint, never the folder of a chapter,
@@ -705,7 +694,7 @@ function chapterOfDocument(path: string): string {
 }
 
 /**
- * Gives the documents a Documents list offers, see the top of this file:
+ * Gives the documents a list `Attach` offers, see the top of this file:
  * for my own learning the notes of a chapter, see {@link chapterOfDocument},
  * like `01_RegressionAnalysis/01_01_SampleMeanStandardError.md`;
  * for a type the files of the folder of its material,
@@ -731,7 +720,7 @@ function documentsOfferedOf(chapter: string): string[] {
 }
 
 /**
- * Builds the choices of a Documents list,
+ * Builds the choices of a list `Attach`,
  * see {@link documentsOfferedOf}, each its path as value, the name of its file as text,
  * and as group for a file of material the folders between the folder of its material and it,
  * like `04_LogisticPoissonRegression.pdf` under `TUM_2026W`, none for a note.
@@ -760,15 +749,18 @@ function fileNameOf(path: string): string {
 }
 
 /**
- * Builds the choices of the tasks of the chapters picked,
+ * Builds the choices of the Tasks of the chapters picked,
  * in groups by when they are due, the due ones first;
- * a later task shows its day.
+ * a later Task shows its day. An Example has no result, so it is no choice.
  *
  * @param tasks - Tasks of the chapters picked
- * @returns Choices of the tasks
+ * @returns Choices of the Tasks
  */
 function taskChoicesOf(tasks: SkillTask[]): Choice[] {
-    return groupsOf(tasks, calendarTodayOf()).flatMap((group: Group): Choice[] =>
+    return groupsOf(
+        tasks.filter((task: SkillTask): boolean => task.kind === "cold"),
+        calendarTodayOf(),
+    ).flatMap((group: Group): Choice[] =>
         group.tasks.map((task: SkillTask): Choice => ({
             value: task.id,
             text:
@@ -819,6 +811,7 @@ function taskRowOf(
         input.setAttribute("aria-label", "What went wrong");
         input.autocomplete = "off";
         input.value = pick.comment;
+        plainKeep(input);
         input.addEventListener("input", (): void => {
             pick.comment = input.value.trim();
         });
@@ -860,38 +853,28 @@ function taskRowOf(
 }
 
 /**
- * Builds the attempts of the entry being changed, which stay:
- * one line per attempt, its task and result, with my comment on what went wrong,
- * an older one also with my effort, where I got stuck or why I skipped.
- * - `parts`: An `X-ATTEMPT` cut at each `;`:
- *   task, result and comment, of an older one task, result, effort,
- *   and where I got stuck, why I skipped or what went wrong,
- *   without the time of the tap a button wrote at its start, see {@link tapTime}.
- * - `older`: Whether it is written the older way, its task with its module,
- *   a skill or another module before `/`, see `attemptLineOf` in `reader/skill.ts`,
- *   so a task of today's form keeps a `/` in its name, like `Train/Test Split`.
+ * Builds the rounds of the entry being changed, which stay:
+ * one line per line `X-ROUND`, its section, its round, where it stands,
+ * the Task with its results and my comments on the wrong ones, and the Example it checked off,
+ * like `01_02_SampleMeanEstimator · Round 1 · done · Task. Food Truck: wrong, right`.
  *
- * @returns Attempts, none for an entry without attempts
+ * @returns Rounds, none for an entry without rounds
  */
 function loggedOf(): HTMLElement[] {
-    if (logged.length === 0) return [];
+    if (loggedRounds.length === 0) return [];
 
     const list: HTMLUListElement = document.createElement("ul");
     list.className = "entry-skill";
     list.append(
-        ...logged.map((value: string): HTMLLIElement => {
-            const parts: string[] = value.split(";");
-            if (tapTime.test(parts[0])) parts.shift();
-            const older: boolean =
-                parts[0].includes("/") &&
-                [...skilling.skills, ...skilling.otherModules].includes(parts[0].split("/")[0]);
-            const effort: string = older ? (parts[2] ?? "") : "";
+        ...loggedRounds.map((mark: RoundMark): HTMLLIElement => {
             const item: HTMLLIElement = document.createElement("li");
             item.textContent = [
-                older ? parts[0].slice(parts[0].indexOf("/") + 1) : parts[0],
-                parts[1],
-                effort === "" ? "" : `${effort} effort`,
-                parts.slice(older ? 3 : 2).join(";"),
+                mark.section,
+                `Round ${mark.round}`,
+                mark.step,
+                mark.used,
+                mark.task === "" ? "" : `${mark.task}: ${mark.results.join(", ")}`,
+                ...mark.notes,
             ]
                 .filter((part: string): boolean => part !== "")
                 .join(" · ");
@@ -935,7 +918,7 @@ async function contentsLoad(): Promise<void> {
  * - `note`: Path of the document as the scripts view takes it.
  *
  * @param path - Path of the document from the module folder,
- *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ *   like `01_StatisticsFoundations/01_02_SampleMeanEstimator.md`
  * @returns Its tasks in their order
  */
 function tasksOfDocument(path: string): SkillTask[] {
@@ -1160,11 +1143,11 @@ function chapterLinkOf(chapter: string): string {
 
 /**
  * Gives the path of a document as the scripts view takes it, from `NomSkillingmodules`,
- * like `IN2028_…/01_StatisticsFoundations/01_01_SampleMeanEstimator.md`,
+ * like `IN2028_…/01_StatisticsFoundations/01_02_SampleMeanEstimator.md`,
  * as its section and its tasks name their note.
  *
  * @param path - Path of the document from the module folder,
- *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ *   like `01_StatisticsFoundations/01_02_SampleMeanEstimator.md`
  * @returns The path
  */
 function noteOf(path: string): string {
@@ -1177,7 +1160,7 @@ function noteOf(path: string): string {
  * - `note`: Path of the note from `NomSkillingmodules`, see {@link noteOf}.
  *
  * @param path - Path of the document from the module folder,
- *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ *   like `01_StatisticsFoundations/01_02_SampleMeanEstimator.md`
  * @returns The section, `undefined` for any other document, like a slide,
  *   or a module not of the semester
  */
@@ -1194,7 +1177,7 @@ function sectionOfDocument(path: string): SkillSection | undefined {
  * - `section`: Its section, `undefined` for none.
  *
  * @param path - Path of the document from the module folder,
- *   like `01_StatisticsFoundations/01_01_SampleMeanEstimator.md`
+ *   like `01_StatisticsFoundations/01_02_SampleMeanEstimator.md`
  * @returns The round, empty for any other document, like a slide, or a module not of the semester
  */
 function roundOfDocument(path: string): string {
@@ -1229,11 +1212,10 @@ function roundOfDocument(path: string): string {
 function roundRowsOf(path: string, row: HTMLElement, again: () => void): HTMLElement[] {
     const section: SkillSection | undefined = sectionOfDocument(path);
     if (section === undefined || inPlan) return [];
-    const line: string | undefined = loggedRounds.find(
-        (value: string): boolean => value.split(";")[0] === section.title,
+    const line: RoundMark | undefined = loggedRounds.findLast(
+        (mark: RoundMark): boolean => mark.section === section.title,
     );
-    const shown: number =
-        picks.rounds.get(path) ?? (line === undefined ? section.round : Number(line.split(";")[1]));
+    const shown: number = picks.rounds.get(path) ?? line?.round ?? section.round;
     const list: HTMLDivElement = rowOf(
         "",
         choicesOf({
@@ -1268,7 +1250,7 @@ function roundRowsOf(path: string, row: HTMLElement, again: () => void): HTMLEle
 
 /**
  * Builds the rows of documents, see `addedRowsOf` in `choices.ts`:
- * the Documents list of what it offers, see {@link documentChoicesOf},
+ * the list `Attach` of what it offers, see {@link documentChoicesOf},
  * and a row per document picked of it, the name of its file, see {@link fileNameOf};
  * no list while it offers nothing, like for a chapter without notes,
  * and a hint below when a document picked is in the module no more,
@@ -1294,7 +1276,7 @@ function documentRowsOf(
     nested: boolean,
     changed: () => void,
 ): HTMLElement[] {
-    const added: HTMLElement[] = addedRowsOf("Documents", {
+    const added: HTMLElement[] = addedRowsOf("Attach", {
         choices: choices,
         picked: shown,
         textOf: fileNameOf,
@@ -1551,7 +1533,6 @@ export async function skillFieldsShow(
     skilling = await skillingKept();
     inPlan = plan;
     semesterDay = day;
-    logged = plan ? [] : values.attempts;
     loggedRounds = plan ? [] : values.rounds;
     picks = {
         module: values.module,

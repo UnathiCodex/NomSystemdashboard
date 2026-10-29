@@ -3,16 +3,16 @@
  *
  * The rows of the tasks of a note in the editor,
  * as the scripts view showed them under their headings, see `../skill/task.ts`:
- * under the heading `##` of each task of the semester its row,
+ * under the heading `##` of each Task of the semester its row,
  * when it is due, its history, the menu for the next attempt,
  * which goes into the skill entry of the moment, Right and Wrong once its solution is open,
- * a Task's unfolded, an Example's with a step shown, see `./steps.ts`,
  * Wrong with my short comment; after each attempt the rows load again.
+ * An Example has no row and no result: `Next` checks it off in its round, see `./round.ts`.
  * A cold task, its heading ending with `(cold)`, shows a grey label in place of `(cold)`,
  * like `cold · 2 done · 1 right`, while the cursor is not on its heading.
  * Only a note with tasks of the semester has rows.
  * A section, a note whose tasks make a section of the semester,
- * has no rows but on the line of each heading of an Example or a Task, at its right end,
+ * has no rows but on the line of each heading of a Task, at its right end,
  * a check and a cross, its results Right and Wrong,
  * see `judgeOf` in `../skill/task.ts`, without state, hint or numbers,
  * and its `(cold)` hidden without a label, since its round says what is due, see `./round.ts`,
@@ -298,7 +298,7 @@ function decorationsOf(state: EditorState, loaded: NoteTasks | null): Decoration
 
     const decorations: Range<Decoration>[] = [];
     for (const block of blocksOf(state, loaded.tasks)) {
-        if (block.task === null) continue;
+        if (block.task === null || block.task.kind === "example") continue;
         const task: SkillTask = block.task;
         const line: Line = state.doc.line(block.line);
         const cold: RegExpExecArray | null = task.kind === "cold" ? coldMark.exec(line.text) : null;

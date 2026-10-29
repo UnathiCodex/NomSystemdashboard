@@ -15,7 +15,7 @@
  * `CATEGORIES:Skill`,
  * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons":IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * also one logged from a box, which takes its title, see `titleOf` in `documents.ts`;
- * its chapters, document and attempts only `skill.ts` writes.
+ * its chapters, documents and rounds only `skill.ts` writes.
  * A change from the dialog is written only while the file holds the entry as the dialog opened it,
  * see {@link entryEdit}, and a drag writes only the new start and end, see {@link entryMove},
  * so no page writes back what the file held before, like a food renamed in every entry since.
@@ -710,7 +710,7 @@ export function boxLog(logged: BoxLogged): string {
 /**
  * Takes a done box back to open, with one click on its check, see the top of this file:
  * removes the log entry written from it, as if I had not logged it;
- * one that holds what I added since, attempts, older copies for my tutor or a note,
+ * one that holds what I added since, rounds or a note,
  * stays in the log and only lets go of the box,
  * its `RELATED-TO` or its older `X-PLANNED` taken out.
  * A to-do done in another app, `COMPLETED` without log entry, is `NEEDS-ACTION` again.
@@ -736,12 +736,7 @@ export function boxUndo(id: string): void {
               ).find((entry: Entry): boolean => entry.planned === id);
     if (logged !== undefined) {
         const [file]: [string, Entry] = entryFind(day.log, logged.id);
-        if (
-            logged.attempts.length > 0 ||
-            logged.rounds.length > 0 ||
-            logged.tutors.length > 0 ||
-            logged.note.trim() !== ""
-        )
+        if (logged.rounds.length > 0 || logged.note.trim() !== "")
             propertiesPut(file, logged.id, [
                 ["related-to", []],
                 ["x-planned", []],

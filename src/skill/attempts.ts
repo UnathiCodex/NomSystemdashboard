@@ -16,40 +16,24 @@ import { readerAsk } from "../reader.ts";
 import type { Attendee, Online } from "../day/entries.ts";
 
 /**
- * Result of an attempt: solved right or wrong;
- * an older one may also be solved right with my tutor's help, stuck on the way,
- * or the task skipped, which nothing writes any more.
+ * Result of a cold Task: solved right or wrong.
  */
-export type Result = "right" | "guided" | "wrong" | "stuck" | "skipped";
+export type Result = "right" | "wrong";
 
 /**
- * My effort on an older attempt, as one tap after it rated it; nothing rates it any more.
- */
-export type Effort = "low" | "medium" | "high";
-
-/**
- * An attempt, as the reader sends it.
+ * An attempt, as the reader sends it, read from the lines `X-ROUND` of the log:
+ * a result of a cold Task, or an Example I checked off with `Next`, which reads as right.
  *
  * - `day`: Day its skill entry started, like `2026-10-10`.
  * - `order`: Its place among all my attempts, the oldest first,
  *   so attempts of one day keep the order I made them in.
- * - `time`: Time of the tap of an older attempt, like `14:05`, empty for any other.
- * - `part`: Part of a cold task an older attempt is about, like `2`, empty for the whole task.
  * - `result`: Its {@link Result}.
- * - `effort`: My {@link Effort} on an older attempt, empty for none.
- * - `stuck`: Where I got stuck, like `step 3`, empty when not given.
- * - `skip`: Why I skipped the task, like `too hard`, empty when not given.
  * - `error`: What went wrong in a wrong attempt, my short comment, empty when not given.
  */
 export type Attempt = {
     day: string;
     order: number;
-    time: string;
-    part: string;
     result: Result;
-    effort: Effort | "";
-    stuck: string;
-    skip: string;
     error: string;
 };
 
@@ -83,23 +67,18 @@ export type Task = {
 /**
  * A {@link Task} with when it is due, as the reader sends it, see `reader/skill.ts`.
  *
- * - `due`: Day it is due next, like `2026-10-12`;
- *   empty when nothing is due, like for a task never tried.
- * - `done`: For a task of the ladder, whether I solved it right once,
- *   or its section has a cold run.
+ * - `due`: Day it is due next, the day of the next round of its section for its cold Task
+ *   of that round, like `2026-10-12`; empty for any other task and when nothing is due.
+ * - `done`: For an Example, whether I checked it off in a round.
  * - `level`: For a cold task, the runs of its section that count, 0 to 4.
- * - `open`: For a cold task, its parts still to sit in its run; none for a task without parts.
  * - `ready`: For a cold task, whether its section has its four runs.
- * - `skipped`: Whether its last attempt skipped it.
  * - `attempts`: All its attempts, the latest last.
  */
 export type SkillTask = Task & {
     due: string;
     done: boolean;
     level: number;
-    open: string[];
     ready: boolean;
-    skipped: boolean;
     attempts: Attempt[];
 };
 
@@ -109,29 +88,25 @@ export type SkillTask = Task & {
  * - `title`: Its name, like `01_01_SampleMeanStandardError`.
  * - `note`: Path of its note.
  * - `chapter`: Name of its chapter.
- * - `cold`: Identity of its cold task of today, the one variant due, empty when it has none yet.
- * - `algorithm`: Heading of its Algorithm as written, the one worked example,
- *   at the bottom of its ladder;
- *   empty for none.
+ * - `cold`: Identity of the cold Task of the round shown, empty when it has none yet.
+ * - `example`: Identity of the Example of the round shown, the next unused one,
+ *   empty for none left.
+ * - `algorithm`: Heading of its Algorithm as written, the one worked example; empty for none.
  * - `tasks`: Number of its tasks.
  * - `tried`: Number of its tasks I tried.
- * - `round`: Its round, the runs of its cold task done before today:
- *   a right run moves it on, a failed one leaves it.
- *   A round I did not close goes on until I close it, see `sectionsOf` in `reader/skill.ts`.
- * - `ladder`: Whether it still learns the ladder before the cold task:
- *   while no cold task has an attempt on an earlier day, or while its round 0 goes on.
- * - `day`: Day of the round shown, whose Task and whose failure count in it:
- *   today, or for a later round going on from a day before the day of my last attempt at its Task.
- * - `rightDue`: Day the cold task comes back after a right run today; empty without a cold task.
- * - `wrongDue`: Day it comes back after a failed run today; empty without a cold task.
- * - `seen`: Steps of the round shown I passed with `Next`, by their keys,
- *   from older lines of the log;
- *   in today's form the steps before the one I stand at count as passed.
+ * - `round`: The round shown: one going on, or ended today, else the next one,
+ *   see `sectionOf` in `reader/skill.ts`.
+ * - `ladder`: Whether the round shown is round 0, its theory, one Example and its first Task.
+ * - `runs`: Its runs that count, decided before today.
+ * - `day`: Day the round shown began, today for one not begun.
+ * - `rightDue`: Day the next round comes after a right Task today; empty without a cold task.
+ * - `wrongDue`: Day it comes after a Task wrong for good today; empty without a cold task.
  * - `at`: Key of the step of the round shown I went on to with the last `Next`,
  *   where I stand, empty for none yet.
  * - `closed`: Whether I closed the round shown by hand.
- * - `days`: Days I learned it, by its attempts and its lines in the log,
- *   the oldest first, like `2026-10-11`.
+ * - `results`: Results of the Task of the round shown, in order, none for none yet.
+ * - `used`: Whether the round shown checked its Example off with `Next`.
+ * - `days`: Days I learned it, by its lines in the log, the oldest first, like `2026-10-11`.
  * - `today`: What of it is due today: `task`, its Task of today, `new`, its round 0,
  *   or empty for nothing, see `todayMarked` in `reader/skill.ts`.
  */
@@ -140,17 +115,20 @@ export type SkillSection = {
     note: string;
     chapter: string;
     cold: string;
+    example: string;
     algorithm: string;
     tasks: number;
     tried: number;
     round: number;
     ladder: boolean;
+    runs: number;
     day: string;
     rightDue: string;
     wrongDue: string;
-    seen: string[];
     at: string;
     closed: boolean;
+    results: Result[];
+    used: boolean;
     days: string[];
     today: "task" | "new" | "";
 };
@@ -260,10 +238,33 @@ export type AttemptNew = {
 };
 
 /**
- * A round I picked by hand for a note of a skill entry, to send with it,
- * see `roundPicksOf` in `reader/skill.ts`.
+ * A line `X-ROUND` of a skill entry, as the reader sends it, see `RoundMark` in `reader/calendar.ts`.
  *
- * - `section`: Its section with its module, like `IN2028/01_01_SampleMeanEstimator`.
+ * - `section`: Its section, the name of its note, like `01_02_SampleMeanEstimator`.
+ * - `round`: Its round.
+ * - `step`: Heading of the step I stand at, `done` once closed, empty before the first.
+ * - `task`: Heading of the cold Task I solved in it, empty for none.
+ * - `used`: Heading of the Example I checked off in it, empty for none.
+ * - `results`: Results of that Task in it, in order.
+ * - `notes`: My comment on each wrong one, in order.
+ * - `due`: Day the next round comes, once the Task decided the round, empty before.
+ */
+export type RoundMark = {
+    section: string;
+    round: number;
+    step: string;
+    task: string;
+    used: string;
+    results: Result[];
+    notes: string[];
+    due: string;
+};
+
+/**
+ * A round I picked by hand for a note of a skill entry, to send with it,
+ * see `markOf` in `reader/skill.ts`.
+ *
+ * - `section`: Its section with its module, like `IN2028/01_02_SampleMeanEstimator`.
  * - `round`: The round picked, like `0`.
  */
 export type RoundPick = {
@@ -467,43 +468,40 @@ export function semesterOf(day: string): string {
  * into groups by when they are due, see `reader/skill.ts`:
  * due today, also those due earlier, the earliest first;
  * new ones, never tried, in the order of the notes;
- * later ones by their day; done ones,
- * the ladder behind me and the ready cold tasks; skipped ones last.
- * - `open`: Tasks not skipped.
- * - `fresh`: Whether a task was never tried, skips aside.
+ * later ones by their day; done ones, the Examples I checked off,
+ * the Tasks tried and not due, and the ready cold tasks.
+ * - `fresh`: Whether a task was never tried.
  * - `byDue`: Compares two tasks by their due day, the earliest first.
  *
  * @param tasks - Tasks in the order of the notes
  * @param today - Today like `2026-10-10`
- * @returns Groups `Due today`, `New`, `Later`, `Done` and `Skipped`, also empty ones
+ * @returns Groups `Due today`, `New`, `Later` and `Done`, also empty ones
  */
 export function groupsOf(tasks: SkillTask[], today: string): Group[] {
-    const open: SkillTask[] = tasks.filter((task: SkillTask): boolean => !task.skipped);
     const fresh: (task: SkillTask) => boolean = (task: SkillTask): boolean =>
-        task.attempts.every((attempt: Attempt): boolean => attempt.result === "skipped");
+        task.attempts.length === 0;
     const byDue: (first: SkillTask, second: SkillTask) => number = (
         first: SkillTask,
         second: SkillTask,
     ): number => first.due.localeCompare(second.due);
-    const dueToday: SkillTask[] = open.filter(
+    const dueToday: SkillTask[] = tasks.filter(
         (task: SkillTask): boolean => task.due !== "" && task.due <= today,
     );
-    const later: SkillTask[] = open.filter((task: SkillTask): boolean => task.due > today);
+    const later: SkillTask[] = tasks.filter((task: SkillTask): boolean => task.due > today);
     return [
         { name: "Due today", tasks: dueToday.sort(byDue) },
         {
             name: "New",
-            tasks: open.filter(
+            tasks: tasks.filter(
                 (task: SkillTask): boolean => task.due === "" && fresh(task) && !task.done,
             ),
         },
         { name: "Later", tasks: later.sort(byDue) },
         {
             name: "Done",
-            tasks: open.filter(
+            tasks: tasks.filter(
                 (task: SkillTask): boolean => task.due === "" && (task.done || !fresh(task)),
             ),
         },
-        { name: "Skipped", tasks: tasks.filter((task: SkillTask): boolean => task.skipped) },
     ];
 }

@@ -13,7 +13,7 @@
  *   and below it its sections without a grey box around them,
  *   as the rows of the course, each a row, in the order of the notes, grey, as a note of the tree,
  *   see `.tree-file` in `../notes/notes.css`, white under the pointer:
- *   the name of the section as the tree names it, like `01_01_SampleMeanEstimator`, and its round,
+ *   the name of the section as the tree names it, like `01_02_SampleMeanEstimator`, and its round,
  *   like `2`, the one its view shows,
  *   see `./round.ts`, `Ready` once its Task has its runs spaced, `0` while I never learned it;
  *   a tap on a row opens the section.

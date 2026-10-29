@@ -11,12 +11,11 @@
  * it reads whole whenever I open it, by the tree, a link, `Next` or a reload,
  * and in the whole note, which shows while the round has no step, like once it is closed.
  * In the head, at the right end of the status line, stands `Next`, an arrow, see {@link roundDraw}:
- * it checks a block without a result off, like theory,
- * and opens the next; a task stays unchecked until my result,
+ * it checks a block without a result off, theory and an Example,
+ * and opens the next; the Task stays unchecked until my result,
  * which only its check and cross on the line of its heading write,
  * the check going on as `Next` does, see `../skill/task.ts`,
- * so `Next` stays off on an Example or a Task until it has my result,
- * and no block passes without one.
+ * so `Next` stays off on the Task until it has my result, and it never passes without one.
  * In the status line above the text stands the round, like `Round 1`, see {@link roundLineOf},
  * and beside it the session it writes into, see {@link sessionShow};
  * the tree lists every block with its place, see `roundListOf` in `../notes/tree.ts`,
@@ -26,28 +25,23 @@
  * Every round starts with every theory block in the order of the note, the Algorithm among them,
  * so what an Example or a Task uses, like $X$, stands defined right before it,
  * also in a later round, when I forgot it; only its Examples and Tasks change:
- * - round 0, while the section learns the ladder,
- *   until a cold Task first comes back on a later day:
- *   one Example, the first, its steps predicted one by one, see `./steps.ts`,
- *   then one Task alone;
- *   that it is the first Example was Claude's choice, not mine;
- * - later: only the Task of today, once it is due; until then the round holds no theory either.
- * A failure brings back one Example, the one before in the note, see {@link fallbacksOf},
- * the same day and on the days after while I did not close its round,
- * see `day` of `SkillSection` in `../skill/attempts.ts`:
- * a wrong Task the last Example, a wrong Example the one before it,
- * a wrong first Example the Algorithm, read again;
- * one Task per round decides when the next round comes, see `reader/skill.ts`.
+ * - round 0: one Example, the first, its steps predicted one by one, see `./steps.ts`,
+ *   then one Task alone, gone over with this Example and the theory until it is right,
+ *   since the first Task can only succeed, so a wrong one leaves the Task to do;
+ * - later: only the Task of the round, once it is due; until then the round holds no theory either;
+ *   a wrong Task brings the Example of the round, the next unused, then the Task again,
+ *   which then counts as right; wrong again, I go through it with its solution and close.
+ * The Task decides the round, and the reader writes the day of the next one with its result,
+ * see `reader/skill.ts` and `~/NomWorkspace/.claude/skills/learn/4-session-learn/session-learn.md`.
  * Where I am lives in the log alone, never in the browser or the note:
- * `Next` writes the step it goes on to,
+ * `Next` writes the step it goes on to, its heading,
  * where I stand, into the one line `X-ROUND` of the section in the skill entry of the moment,
+ * an Example it passes checked off there as the `USED` of the round,
  * written anew in its place, and the reader gives it back with the section,
  * see `RoundLine` in `reader/skill.ts`,
  * so a round goes on where I left it, in another sitting or on another day;
- * the steps without a result before it, like theory, count as passed,
- * as do those an older line `seen` names.
- * A task counts as done by the log:
- * in the ladder by any attempt, a Task once nothing of it is due today.
+ * the steps without a result before it, theory and the Example, count as passed.
+ * The Task counts as done by its results in the round, see {@link doneIs}.
  * A click on a block in the tree,
  * or on a link to its heading in the note, shows it alone, back or ahead,
  * see {@link roundHeadingShow}, and `Next` returns to the current step.
@@ -61,8 +55,7 @@
  * the scene of a Definition, its section under a heading `####` like `#### Ice Cream Kiosk`,
  * folds only by my hand, also when I look the block up.
  * On the last step `Next` stays off, since a round closes only by hand, with the close in the head,
- * see {@link roundClose}, once its Task has a result and what a failure of it brought back is done,
- * see {@link closeShow}; the close writes `done` where the step stood, and Today follows;
+ * see {@link roundClose}, once its Task decided it, see {@link closeShow}; the close writes `done` where the step stood, and Today follows;
  * once closed, neither shows, with no step to return to.
  * Reading a round needs no session,
  * but `Next` and the close write only in a session of the module,
@@ -112,36 +105,12 @@ import type { BlockMark } from "../notes/tree.ts";
 import type { Session } from "./session.ts";
 
 /**
- * A step of the round: its block,
- * and for one a failure brought back the heading of the block whose failure began the way down,
- * like the Task, and when the failure right before it was, see {@link timeOf}, both empty for none.
+ * A step of the round: its block, and whether it is the Task again after a wrong one
+ * and the Example of the round, see {@link stepsOf}.
  */
 type Step = {
     block: Block;
-    after: string;
-    since: string;
-};
-
-/**
- * A block of the ladder, see {@link fallbacksOf}: its heading as written,
- * and its task, `null` for the Algorithm.
- */
-type Rung = {
-    heading: string;
-    task: SkillTask | null;
-};
-
-/**
- * A block a failure brings back, see {@link fallbacksOf}:
- * its heading as written, its task, `null` for the Algorithm,
- * the heading of the block whose failure began the way down, like the Task,
- * and when the failure right before it was, the one that brought it, see {@link timeOf}.
- */
-export type Fallback = {
-    heading: string;
-    task: SkillTask | null;
-    after: string;
-    since: string;
+    again: boolean;
 };
 
 /**
@@ -150,7 +119,7 @@ export type Fallback = {
  * - `loaded`: The tasks of the note with its section, as loaded last.
  * - `section`: Its section.
  * - `seen`: Keys of the steps without a result passed with `Next`:
- *   those before where I stand by the log, and those an older line names, with those passed since.
+ *   those before where I stand by the log, with those passed since.
  * - `at`: Key of the current step, pinned while the page shows,
  *   so a result moves nothing, only `Next`; empty for none.
  * - `changed`: Shows the places of the blocks anew in the tree.
@@ -177,11 +146,6 @@ type Alone = {
     heading: string;
     decorations: DecorationSet;
 };
-
-/**
- * Results that bring a block back: wrong, stuck, or right only with my tutor's help.
- */
-const failed: Result[] = ["wrong", "stuck", "guided"];
 
 /**
  * Effect of `Next` moving, or a click in the tree, to the end of a block, `null` for none.
@@ -392,8 +356,7 @@ function selectionKeep(transaction: Transaction): TransactionSpec | readonly Tra
  * else the heading of the block opened from the tree, see {@link opened}.
  * The key of a step passed follows too, so the tree marks it as before,
  * unless another block has the old heading, which a heading I retype may pass through.
- * A step a failure brought back keeps its key, since it is found by the heading the reader read,
- * see {@link fallbacksOf}.
+ * The Task again after its Example follows as the Task does, see {@link keyOf}.
  * - `before`, `after`: The heading of the block shown before and after the change,
  *   `undefined` for none.
  * - `renamed`: Gives a key with the new heading for one with the old.
@@ -405,7 +368,7 @@ function headingFollow(update: ViewUpdate): void {
     const after: string | undefined = update.state.field(alonePlace)?.heading;
     if (round === null || !update.docChanged || after === undefined || after === before) return;
     const renamed: (key: string) => string = (key: string): string =>
-        key === before ? after : key;
+        key === before ? after : key === `${before} again` ? `${after} again` : key;
     if (opened === "") round.at = renamed(round.at);
     else opened = renamed(opened);
     openedBefore = openedBefore.map(renamed);
@@ -450,91 +413,6 @@ function aloneOf(state: EditorState, block: Block, end: number): Alone {
 }
 
 /**
- * Gives when an attempt was made, to compare, by its place among all my attempts, see `Attempt` in
- * `../skill/attempts.ts`, so attempts of one day compare
- * by the order I made them in, also without a time.
- *
- * @param attempt - Attempt
- * @returns Its place, written with nine digits, like `000000042`
- */
-export function timeOf(attempt: Attempt): string {
-    return String(attempt.order).padStart(9, "0");
-}
-
-/**
- * Gives the first attempt at a task after a time when it failed, wrong, stuck or guided:
- * the first attempt decides, skips left out.
- * - `attempt`: The first attempt.
- *
- * @param task - Task, `null` for none
- * @param after - Only attempts after this time count, see {@link timeOf}, empty for all
- * @param day - Only attempts of this day count, empty for all
- * @returns Its time, see {@link timeOf}, `null` for none or one not failed
- */
-function failedAt(task: SkillTask | null, after: string, day: string): string | null {
-    const attempt: Attempt | undefined = task?.attempts.find(
-        (candidate: Attempt): boolean =>
-            candidate.result !== "skipped" &&
-            timeOf(candidate) > after &&
-            (day === "" || candidate.day === day),
-    );
-    return attempt !== undefined && failed.includes(attempt.result) ? timeOf(attempt) : null;
-}
-
-/**
- * Gives what a failure of a task brings back the same day, one Example back each,
- * see the top of this file:
- * the ladder from the bottom up is the Algorithm, then the Examples in the order of the note;
- * a failed Task brings back the last of them, a failed Example the one below it,
- * each next one only once the one before failed too, down to the bottom, which is read again;
- * each by its first attempt, see {@link failedAt}.
- * - `rungOf`: The rung of a task.
- * - `rungs`: The ladder from the bottom up.
- * - `index`: Place in the ladder of the block that failed last, above the top for a Task.
- * - `since`: When the block that failed last failed, `null` once nothing failed.
- *
- * @param tasks - Tasks of the section
- * @param algorithm - Heading of its Algorithm, empty for none,
- *   see `SkillSection` in `../skill/attempts.ts`
- * @param from - The task that failed
- * @param day - Only a failure of this day counts, empty for any
- * @returns What comes back, in order; none without a failure
- */
-export function fallbacksOf(
-    tasks: SkillTask[],
-    algorithm: string,
-    from: SkillTask,
-    day: string,
-): Fallback[] {
-    const rungOf: (task: SkillTask) => Rung = (task: SkillTask): Rung => ({
-        heading: task.heading,
-        task: task,
-    });
-    const rungs: Rung[] = [
-        ...(algorithm !== "" ? [{ heading: algorithm, task: null }] : []),
-        ...tasks.filter((task: SkillTask): boolean => task.kind === "example").map(rungOf),
-    ];
-    const fallbacks: Fallback[] = [];
-    let index: number =
-        from.kind === "cold"
-            ? rungs.length
-            : rungs.findIndex((rung: Rung): boolean => rung.task?.id === from.id);
-    let since: string | null = failedAt(from, "", day);
-    while (index > 0 && since !== null) {
-        const rung: Rung = rungs[index - 1];
-        fallbacks.push({
-            heading: rung.heading,
-            task: rung.task,
-            after: from.heading,
-            since: since,
-        });
-        index--;
-        since = index === 0 ? null : failedAt(rung.task, since, "");
-    }
-    return fallbacks;
-}
-
-/**
  * Tells whether a block is theory, like a Definition or the Algorithm:
  * one without a task that is no Task, a step of every round, see {@link stepsOf},
  * which the round never folds, see {@link roundTake}.
@@ -547,91 +425,71 @@ function theoryIs(block: Block): boolean {
 }
 
 /**
- * Gives the steps of today's round, see the top of this file.
- * - `step`: A step of a block itself.
- * - `back`: The steps a failure of a block brings back, see {@link fallbacksOf}.
+ * Gives the steps of the round shown, see the top of this file:
+ * round 0 its theory, its Example and its Task;
+ * a later round, once its Task is due or the round goes on, its theory and its Task,
+ * after a wrong one its Example and the Task again; none for a later round not due.
+ * - `step`: A step of a block, `again` for the Task after its Example.
  * - `theory`: The theory, the first steps of every round, see {@link theoryIs}.
- * - `cold`: The Task of today, `null` for none, with its steps,
- *   after round 0 those its failure on the day of the round brings back.
- * - `first`: The first Example, the one of round 0.
+ * - `cold`, `example`: The blocks of the Task and the Example of the round, `undefined` for none.
  *
  * @param blocks - Blocks of the note
  * @param section - Its section
- * @param tasks - Its tasks
- * @param today - Today like `2026-10-17`
  * @returns Steps in order
  */
-function stepsOf(
-    blocks: Block[],
-    section: SkillSection,
-    tasks: SkillTask[],
-    today: string,
-): Step[] {
-    const step: (block: Block) => Step = (block: Block): Step => ({
+function stepsOf(blocks: Block[], section: SkillSection): Step[] {
+    const step: (block: Block, again: boolean) => Step = (block: Block, again: boolean): Step => ({
         block: block,
-        after: "",
-        since: "",
+        again: again,
     });
-    const back: (from: Block, day: string) => Step[] = (from: Block, day: string): Step[] =>
-        from.task === null
-            ? []
-            : fallbacksOf(tasks, section.algorithm, from.task, day).flatMap(
-                  (fallback: Fallback): Step[] => {
-                      const block: Block | undefined = blocks.find(
-                          (candidate: Block): boolean => candidate.heading === fallback.heading,
-                      );
-                      return block === undefined
-                          ? []
-                          : [{ block: block, after: fallback.after, since: fallback.since }];
-                  },
-              );
-    const theory: Step[] = blocks.filter(theoryIs).map(step);
-    const cold: Block | null =
-        blocks.find((block: Block): boolean => block.task?.id === section.cold) ?? null;
-    const coldSteps: Step[] =
-        cold === null ? [] : [step(cold), ...back(cold, section.ladder ? "" : section.day)];
-    if (!section.ladder) {
-        const task: SkillTask | null = cold?.task ?? null;
-        return task !== null &&
-            (task.attempts.some((attempt: Attempt): boolean => attempt.day === section.day) ||
-                (task.due !== "" && task.due <= today))
-            ? [...theory, ...coldSteps]
-            : [];
-    }
-    const first: Block | undefined = blocks.find(
-        (block: Block): boolean => block.task?.kind === "example",
+    const theory: Step[] = blocks.filter(theoryIs).map((block: Block): Step => step(block, false));
+    const cold: Block | undefined = blocks.find(
+        (block: Block): boolean => block.task?.id === section.cold,
     );
+    const example: Block | undefined = blocks.find(
+        (block: Block): boolean => section.example !== "" && block.task?.id === section.example,
+    );
+    if (section.ladder)
+        return [
+            ...theory,
+            ...(example === undefined ? [] : [step(example, false)]),
+            ...(cold === undefined ? [] : [step(cold, false)]),
+        ];
+    if (cold === undefined || section.today !== "task") return [];
     return [
         ...theory,
-        ...(first === undefined ? [] : [step(first), ...back(first, "")]),
-        ...coldSteps,
+        step(cold, false),
+        ...(section.results[0] === "wrong"
+            ? [...(example === undefined ? [] : [step(example, false)]), step(cold, true)]
+            : []),
     ];
 }
 
 /**
  * Gives the key of a step, which names it while the note changes: its heading,
- * and for a step a failure brought back the heading of the block whose failure began the way down,
- * so each key is once in a round.
+ * for the Task again after its Example with ` again`, so each key is once in a round;
+ * the log holds the heading alone, see {@link lineWrite} and {@link resumedOf}.
  *
  * @param step - Step
- * @returns Key like `Example. Kiosk Half Trend after Task. Juice Bar`
+ * @returns Key like `Task. Food Truck again`
  */
 function keyOf(step: Step): string {
-    return step.after === "" ? step.block.heading : `${step.block.heading} after ${step.after}`;
+    return step.again ? `${step.block.heading} again` : step.block.heading;
 }
 
 /**
- * Tells whether a step has no result of its own, theory like the Algorithm, so `Next` passes it.
+ * Tells whether a step has no result of its own, theory like the Algorithm or an Example,
+ * so `Next` passes it.
  *
  * @param step - Step
  * @returns Whether it has no result
  */
 function resultlessIs(step: Step): boolean {
-    return step.block.task === null;
+    return step.block.task === null || step.block.task.kind === "example";
 }
 
 /**
- * Tells whether a step waits for my result: an Example or a Task not done yet, see {@link doneIs},
+ * Tells whether a step waits for my result: the Task not done yet, see {@link doneIs},
  * so `Next` stays off on it, and its check, Right, or its cross, Wrong, is the way on,
  * see `judgeOf` in `../skill/task.ts`.
  *
@@ -703,31 +561,20 @@ function passedOf(steps: Step[], at: string): string[] {
 
 /**
  * Tells whether a step is done:
- * theory and the Algorithm, also brought back, once passed with `Next`;
- * an Example brought back once tried after the failure that brought it;
- * the Task of the ladder once tried, also on an earlier day of it,
- * a later Task once nothing of it is due today, by its attempts on the day of the round,
- * see `day` of `SkillSection`;
- * any other task of the ladder once tried, on any day of it.
- * - `task`: Its task.
+ * theory and the Example once passed with `Next`;
+ * the Task of round 0 once right, since the first can only succeed;
+ * a later Task once it has a result in the round, the Task again once it has a second one.
+ * - `results`: Results of the Task of the round.
  *
  * @param shown - The round
  * @param step - Step
  * @returns Whether it is done
  */
 function doneIs(shown: Round, step: Step): boolean {
-    const task: SkillTask | null = step.block.task;
-    const today: string = shown.loaded.today;
-    if (task === null) return shown.seen.includes(keyOf(step));
-    if (step.after !== "")
-        return task.attempts.some((attempt: Attempt): boolean => timeOf(attempt) > step.since);
-    if (task.kind === "cold" && shown.section.ladder) return task.attempts.length > 0;
-    if (task.kind === "cold")
-        return (
-            task.attempts.some((attempt: Attempt): boolean => attempt.day === shown.section.day) &&
-            (task.skipped || task.due === "" || task.due > today)
-        );
-    return task.attempts.length > 0;
+    if (resultlessIs(step)) return shown.seen.includes(keyOf(step));
+    const results: Result[] = shown.section.results;
+    if (shown.section.ladder) return results.includes("right");
+    return results.length >= (step.again ? 2 : 1);
 }
 
 /**
@@ -738,12 +585,7 @@ function doneIs(shown: Round, step: Step): boolean {
  * @returns Steps in order
  */
 function roundStepsOf(view: EditorView, shown: Round): Step[] {
-    return stepsOf(
-        blocksOf(view.state, shown.loaded.tasks),
-        shown.section,
-        shown.loaded.tasks,
-        shown.loaded.today,
-    );
+    return stepsOf(blocksOf(view.state, shown.loaded.tasks), shown.section);
 }
 
 /**
@@ -759,6 +601,23 @@ function currentOf(shown: Round, steps: Step[]): Step | undefined {
 }
 
 /**
+ * Gives the key of the step I stand at by the log, see {@link keyOf}:
+ * the heading the log holds, the Task again once the round checked its Example off
+ * after a wrong Task, see `used` of `SkillSection`.
+ *
+ * @param section - The section
+ * @returns The key, empty for none
+ */
+function atKeyOf(section: SkillSection): string {
+    const again: boolean =
+        !section.ladder &&
+        section.used &&
+        section.results[0] === "wrong" &&
+        section.at === `Task. ${section.cold.slice(section.cold.indexOf("/") + 1)}`;
+    return again ? `${section.at} again` : section.at;
+}
+
+/**
  * Gives where the round goes on when the page opens, from the log alone:
  * from the step of the last `Next`, the first step not done, else that step itself;
  * without a `Next` yet, the first step not done, else the last step.
@@ -770,7 +629,7 @@ function currentOf(shown: Round, steps: Step[]): Step | undefined {
  * @returns Key of the step, empty for a round without steps
  */
 function resumedOf(shown: Round, steps: Step[]): string {
-    const from: number = Math.max(0, placeOf(steps, shown.section.at));
+    const from: number = Math.max(0, placeOf(steps, atKeyOf(shown.section)));
     const step: Step | undefined =
         steps.slice(from).find((candidate: Step): boolean => !doneIs(shown, candidate)) ??
         steps[from] ??
@@ -793,7 +652,7 @@ function moduleOf(shown: Round): string {
  * see `RoundLine` in `reader/skill.ts`.
  *
  * @param shown - The round
- * @param step - Key of the step I went on to, or `done` once I closed the round
+ * @param step - Heading of the step I went on to, or `done` once I closed the round
  * @returns When the reader has written it
  * @throws {Error} - When the reader does not write it
  */
@@ -961,7 +820,7 @@ async function roundNext(view: EditorView): Promise<void> {
     if (passed) shown.seen.push(keyOf(current));
     shownRemember(view, following.block.heading);
     shown.at = keyOf(following);
-    lineWrite(shown, keyOf(following)).catch(failShow);
+    lineWrite(shown, following.block.heading).catch(failShow);
     blockOpen(view, following.block);
     roundDraw(view, shown);
 }
@@ -981,34 +840,24 @@ function failShow(error: unknown): void {
  * Shows the close of the round in the head, see {@link roundClose}:
  * a loose icon, a check in a ring, so it never looks like the check of a block,
  * between the save button and `Next`, its tooltip only `Close the round`;
- * on once the round's Task has a result and the way down its failure brings back has ended,
- * see {@link fallbacksOf}, in its full grey then, as the save button with changes; off and faint
- * before; hidden once the round is closed or for a round without steps.
- * The way down has ended once its last Example is right,
- * or once it reached the bottom, the Algorithm,
- * on which as the last step `Next` stays off and which passes by the close itself,
- * so I close the round standing on it:
- * after Wrong on `Task. Food Truck` the close stays off until `Example. Kiosk Half Trend` is right,
- * or, wrong on down, until the Algorithm stands.
- * - `cold`: Place of the Task of the round, the steps after it those its failure brings back.
+ * on once the round's Task decided it, in its full grey then, as the save button with changes;
+ * off and faint before; hidden once the round is closed or for a round without steps.
+ * The Task decides round 0 once it is right, a later round once it is right,
+ * also after its Example, or wrong a second time, see `decidedIs` in `reader/skill.ts`,
+ * so after Wrong on `Task. Food Truck` the close stays off until the Task again has its result.
+ * - `results`: Results of the Task of the round.
  *
  * @param shown - The round
  * @param steps - Its steps
  */
 function closeShow(shown: Round, steps: Step[]): void {
     const close: HTMLButtonElement = document.getElementById("editor-close") as HTMLButtonElement;
-    const cold: number = steps.findIndex(
-        (step: Step): boolean => step.block.task?.kind === "cold" && step.after === "",
-    );
+    const results: Result[] = shown.section.results;
     close.hidden = shown.section.closed || steps.length === 0;
-    close.disabled =
-        cold === -1 ||
-        !steps
-            .slice(cold)
-            .every(
-                (step: Step): boolean =>
-                    doneIs(shown, step) || (resultlessIs(step) && keyOf(step) === shown.at),
-            );
+    close.disabled = !(
+        results.at(-1) === "right" ||
+        (!shown.section.ladder && results.length >= 2)
+    );
 }
 
 /**
@@ -1054,12 +903,12 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
     }
     const fresh: boolean = round === null || round.loaded.path !== loaded.path;
     const blocks: Block[] = blocksOf(view.state, loaded.tasks);
-    const steps: Step[] = stepsOf(blocks, section, loaded.tasks, loaded.today);
+    const steps: Step[] = stepsOf(blocks, section);
     round = {
         loaded: loaded,
         section: section,
         changed: changed,
-        seen: fresh ? [...section.seen, ...passedOf(steps, section.at)] : (round?.seen ?? []),
+        seen: fresh ? passedOf(steps, atKeyOf(section)) : (round?.seen ?? []),
         at: fresh ? "" : (round?.at ?? ""),
     };
     if (fresh) round.at = resumedOf(round, steps);
@@ -1084,15 +933,14 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
 
 /**
  * Gives the places of the blocks of the round shown in their order, every block of the note,
- * for the tree: done, wrong once its last result failed, like `Task. Food Truck` after Wrong,
+ * for the tree: done, wrong once its last result was wrong, like `Task. Food Truck` after Wrong,
  * so the tree shows the cross its heading line shows, still to do in the round,
  * the current step among them, or outside it, like a Task variant not due.
  * The tree lights the block shown, see {@link roundShownOf}, never the current step for itself:
  * where I am is the block shown, where the round goes on the first one after those done.
  * - `steps`: Steps of the round.
  * - `own`: The steps of a block.
- * - `last`: The last attempt at a block done, skips left out,
- *   `undefined` for none, like for theory.
+ * - `last`: The last attempt at a block done, `undefined` for none, like for theory.
  *
  * @param view - The editor
  * @returns Headings with their places, `null` for a note that is no section
@@ -1108,13 +956,8 @@ export function roundBlocksOf(view: EditorView): [string, BlockMark][] | null {
         if (own.length === 0) return [block.heading, "other"];
         if (!own.every((step: Step): boolean => doneIs(shown, step)))
             return [block.heading, "round"];
-        const last: Attempt | undefined = block.task?.attempts.findLast(
-            (attempt: Attempt): boolean => attempt.result !== "skipped",
-        );
-        return [
-            block.heading,
-            last !== undefined && failed.includes(last.result) ? "wrong" : "done",
-        ];
+        const last: Attempt | undefined = block.task?.attempts.at(-1);
+        return [block.heading, last?.result === "wrong" ? "wrong" : "done"];
     });
 }
 

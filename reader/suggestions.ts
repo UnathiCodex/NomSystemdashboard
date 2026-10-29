@@ -14,7 +14,7 @@
  * and `ESTIMATED-DURATION:PT2H` for 01.03 on round 0 with the Tasks of 01.01 and 01.02,
  * see `boxes.ts`, and one `ATTACH` per note of the chapter with something due,
  * at most one Task each, like
- * `ATTACH:NomSkillingmodules/IN2028_…/01_RegressionAnalysis/01_01_SampleMeanEstimator.md`,
+ * `ATTACH:NomSkillingmodules/IN2028_…/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`,
  * as it stands when the box is written; its real length the log keeps.
  * A chapter gets no box while the plan of today holds a study box of it,
  * one without time and deadline,

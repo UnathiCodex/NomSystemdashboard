@@ -2241,7 +2241,7 @@ function sourcePieceOf(state: EditorState, pos: number): SyntaxNode | null {
  * so a first Arrow Down seemed to do nothing;
  * and the rows of the link or formula the cursor stands on, which shows as its text there,
  * see {@link sourcePieceOf}, on more rows than drawn,
- * like `#### [[01_01_SampleMeanEstimator#Algorithm. Check an Estimator for Bias|Ice Cream Kiosk]]`
+ * like `#### [[01_02_SampleMeanEstimator#Algorithm. Check an Estimator for Bias|Ice Cream Kiosk]]`
  * or a long formula, so a step stopped on its next row instead of the next line.
  * - `line`: The line the cursor stood on.
  * - `piece`: The link or formula it stood on, `null` for none.

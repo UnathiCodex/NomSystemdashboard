@@ -3,18 +3,20 @@
  *
  * What the views show of one task: when it is due, and its history folded behind a small button
  * that opens all its attempts, each with its day, its result and my comment on what went wrong,
- * an older one also with its time, its part, my effort, where I got stuck or why I skipped,
- * and a link to the day; in the scripts view and in a card, under the heading of the task,
+ * and a link to the day; in the scripts view and in a card, under the heading of a Task,
  * its row with one button `⋯` for the next attempt, as a box of the day has, see `../menu.ts`;
- * in a section, an Example or a Task of a round,
+ * in a section, the Task of a round,
  * a check and a cross on the line of its heading instead, see {@link judgeOf}.
+ * Only a cold Task has a result; an Example has none, `Next` checks it off in its round,
+ * see `../editor/round.ts`.
  * Its menu writes into the skill entry of the moment, through the reader's one writer of attempts,
  * the task judged as a whole:
  * Right at once, Wrong opens one short field for my comment on what went wrong,
  * which Enter writes with it, also empty, and Escape closes without writing;
+ * the field takes plain text in one line only, see {@link plainKeep};
  * only in a session of its module, which the dialog of a new entry starts while none runs,
  * see `../editor/session.ts`.
- * Right and Wrong work only once the solution of the task is open, an Example's once a step shows,
+ * Right and Wrong work only once the solution of the task is open,
  * so I judge against it, not by feeling, since self-grading runs generous (León 2023);
  * a task without a solution takes them always. A broken task I tell my tutor in the chat.
  * A card keeps the row quiet, as quiet as a box of the day:
@@ -46,18 +48,14 @@ import type { IconNode } from "lucide";
 /**
  * Tells when a task is due, as a line of its own,
  * where no group of due tasks names it, see `reader/skill.ts`:
- * a task due, a cold task ready with nothing due, a task of the ladder done, else new.
+ * a task due, a cold task ready with nothing due, an Example done, else new.
  *
  * @param task - Task
  * @param today - Today like `2026-10-10`
  * @returns Text like `Due today`, also for a task due earlier, `Due 12.10.2026 (Mon)`, `New`,
- *   `Ready`, `Done` or `Skipped: too easy`
+ *   `Ready` or `Done`
  */
 export function stateTextOf(task: SkillTask, today: string): string {
-    if (task.skipped) {
-        const skip: string = task.attempts.at(-1)?.skip ?? "";
-        return skip === "" ? "Skipped" : `Skipped: ${skip}`;
-    }
     if (task.due !== "")
         return task.due <= today ? "Due today" : `Due ${dayTextOf(task.due, true)}`;
     if (task.ready) return "Ready";
@@ -67,15 +65,13 @@ export function stateTextOf(task: SkillTask, today: string): string {
 /**
  * Builds the label of a cold task,
  * to stand grey beside its heading in the scripts view in place of its `(cold)`:
- * that it is cold, how often I tried it and how often I got it right, skips left out.
+ * that it is cold, how often I tried it and how often I got it right.
  *
  * @param task - Cold task
  * @returns Label like `cold · 2 done · 1 right`
  */
 export function coldLabelOf(task: SkillTask): HTMLElement {
-    const done: number = task.attempts.filter(
-        (attempt: Attempt): boolean => attempt.result !== "skipped",
-    ).length;
+    const done: number = task.attempts.length;
     const right: number = task.attempts.filter(
         (attempt: Attempt): boolean => attempt.result === "right",
     ).length;
@@ -83,26 +79,35 @@ export function coldLabelOf(task: SkillTask): HTMLElement {
 }
 
 /**
- * Writes the result of an attempt, with my comment on what went wrong,
- * an older one also after its part, with where I got stuck or why I skipped,
- * and my effort when I rated it.
- * - `result`: The result with where I got stuck or why I skipped.
- * - `part`: The part before it, empty for the whole task.
+ * Writes the result of an attempt, with my comment on what went wrong.
  *
  * @param attempt - Attempt
- * @returns Text like `right · low effort`, `2. stuck at step 3`, `1. wrong: weights add up to 1.2`,
- *   `right with tutor` or `skipped: too easy`
+ * @returns Text like `right` or `wrong: weights add up to 1.2`
  */
 export function resultTextOf(attempt: Attempt): string {
-    let result: string = attempt.result;
-    if (attempt.error !== "") result = `wrong: ${attempt.error}`;
-    else if (attempt.stuck !== "") result = `stuck at ${attempt.stuck}`;
-    else if (attempt.skip !== "") result = `skipped: ${attempt.skip}`;
-    else if (attempt.result === "guided") result = "right with tutor";
-    const part: string = attempt.part === "" ? "" : `${attempt.part}. `;
-    return attempt.effort === ""
-        ? `${part}${result}`
-        : `${part}${result} · ${attempt.effort} effort`;
+    return attempt.error === "" ? attempt.result : `wrong: ${attempt.error}`;
+}
+
+/**
+ * Keeps a field of my comment on what went wrong plain text in one line,
+ * since it goes into the line `X-ROUND` as its `NOTE`, see `reader/skill.ts`:
+ * a `"`, a line break or another control sign I type or paste never stands in it;
+ * the reader replaces them once more as it writes.
+ * - `plain`: The text without them.
+ * - `at`: Where the cursor goes, after what stays of the text before it.
+ *
+ * @param input - The field
+ */
+export function plainKeep(input: HTMLInputElement): void {
+    input.addEventListener("input", (): void => {
+        const plain: string = input.value.replace(/["\p{Cc}]/gu, "");
+        if (plain === input.value) return;
+        const at: number = input.value
+            .slice(0, input.selectionStart ?? input.value.length)
+            .replace(/["\p{Cc}]/gu, "").length;
+        input.value = plain;
+        input.setSelectionRange(at, at);
+    });
 }
 
 /**
@@ -135,10 +140,7 @@ export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
             const item: HTMLElement = elementOf("li", "", "");
             const day: HTMLAnchorElement = document.createElement("a");
             day.href = `/?date=${attempt.day}`;
-            day.textContent =
-                attempt.time === ""
-                    ? dayTextOf(attempt.day, false)
-                    : `${dayTextOf(attempt.day, false)}, ${attempt.time}`;
+            day.textContent = dayTextOf(attempt.day, false);
             item.append(day, ` · ${resultTextOf(attempt)}`);
             return item;
         }),
@@ -213,6 +215,7 @@ function wrongShow(row: HTMLElement, task: SkillTask, written: () => Promise<voi
     input.type = "text";
     input.placeholder = "What went wrong";
     input.autocomplete = "off";
+    plainKeep(input);
     input.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (event.key === "Enter")
             attemptWrite(row, task, "wrong", input.value.trim(), written, (error: unknown): void =>
@@ -345,7 +348,7 @@ export function judgeOf(
     const reason: HTMLElement = elementOf("div", "task-reason", "");
     const input: HTMLInputElement = document.createElement("input");
     const done: Attempt | undefined = task.attempts.findLast(
-        (attempt: Attempt): boolean => attempt.day === today && attempt.result !== "skipped",
+        (attempt: Attempt): boolean => attempt.day === today,
     );
     const failed: (error: unknown) => void = (error: unknown): void => {
         console.error(error);
@@ -357,6 +360,7 @@ export function judgeOf(
     input.type = "text";
     input.placeholder = "What went wrong";
     input.autocomplete = "off";
+    plainKeep(input);
     input.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (event.key !== "Enter") return;
         reason.hidePopover();

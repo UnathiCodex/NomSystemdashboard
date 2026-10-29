@@ -28,7 +28,7 @@
  * where a way starts, the semester of a skill entry, the foods of a meal
  * or a cooking and the cooking a meal draws from,
  * with me in `With` in place of the person, the others staying;
- * not my note, my attempts, my rounds, my chapters, the links to my files, my pain,
+ * not my note, my rounds, my chapters, the links to my files, my pain,
  * what a session of sport did, nor the box it was logged from, which are mine alone.
  * After that each copy is its owner's: a change goes to nobody,
  * and a copy that comes for an entry the log of the other has already, by its `UID`,

@@ -473,7 +473,8 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   Sends the chapters and documents of the skill of the name, none for a project.
  * - `GET /api/skill/file?path=…`:
  *   Sends a file a skill entry links, by its path from `NomWorkspace`, read only.
- * - `POST /api/skill/attempt`: Writes attempt of the body into the skill entry of the moment.
+ * - `POST /api/skill/attempt`: Writes the result of the cold Task of the body
+ *   into the line `X-ROUND` of its section in the skill entry of the moment.
  * - `POST /api/skill/round`:
  *   Writes where I am in a round, a line `X-ROUND` of the body, into the skill entry of the moment.
  * - `GET /api/skill/opened?path=…`:
@@ -481,7 +482,7 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `POST /api/skill/opened`: Keeps the block of the body as the one I opened in its section.
  * - `POST /api/skill/entry`: Writes skill entry of the body into the log.
  * - `PATCH /api/skill/entry`:
- *   Changes skill entry of the body, adding its new attempts,
+ *   Changes skill entry of the body, adding its new attempts to the lines of their sections,
  *   refused with 409 when its file changed it since the dialog opened it.
  * - `GET /api/skill/session?module=…`: Sends the session of the module running now, or `null`.
  * - `GET /api/food/search?q=…&page=…&products=…`:

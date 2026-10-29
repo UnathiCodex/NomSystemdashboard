@@ -18,7 +18,7 @@
  * or once it is wider than the column, like a long formula on its own line;
  * a table is left out, since its rows may be wider.
  * Each such line comes as `<file>:<number>: <what>: <line>`, like
- * ``01_01_SampleMeanEstimator.md:17: 2 lines, 1 character too long: - `import numpy as np` …``,
+ * ``01_02_SampleMeanEstimator.md:17: 2 lines, 1 character too long: - `import numpy as np` …``,
  * the characters guessed at half the size of the text each;
  * a file whose lines all fit gets one line that says so.
  * The command ends with 1 while a line does not fit,

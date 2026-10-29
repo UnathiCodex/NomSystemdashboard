@@ -388,7 +388,6 @@ const skillNone: SkillValues = {
     titleLink: "",
     chapters: [],
     links: [],
-    attempts: [],
     rounds: [],
 };
 
@@ -3434,7 +3433,6 @@ export async function entryOpenEdit(entry: EventApi): Promise<void> {
             titleLink: props.titleLink ?? "",
             chapters: entry.extendedProps.chapters ?? [],
             links: entry.extendedProps.links ?? [],
-            attempts: entry.extendedProps.attempts ?? [],
             rounds: entry.extendedProps.rounds ?? [],
         },
         plan: null,
@@ -3455,7 +3453,7 @@ export async function entryOpenEdit(entry: EventApi): Promise<void> {
 async function entryDuplicate(): Promise<void> {
     await entryShow({
         ...opened,
-        skill: { ...opened.skill, title: "", titleLink: "", attempts: [], rounds: [] },
+        skill: { ...opened.skill, title: "", titleLink: "", rounds: [] },
         plan: null,
         entry: null,
         box: null,

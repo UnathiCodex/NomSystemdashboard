@@ -44,7 +44,7 @@
  * like an `.ics` file a folder opens, shows as its plain text, to read only,
  * as an `.ics` file of my new system.
  * The address names a note by its path in the scripts view and the heading to scroll to, like
- * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanEstimator.md#…`,
+ * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md#…`,
  * so a reload and the back button of the browser stay on it,
  * and a file of my new system by its path in the tree,
  * like `/edit?file=NomMetainformations/Foods.md`,
