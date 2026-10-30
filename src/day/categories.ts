@@ -48,7 +48,9 @@
  * it shows below it its text, which I change in place, like `Wolrd News` to `World News`,
  * see {@link summaryPartsOf}, also that of `Sport` and `Way`,
  * which the reader still takes only as one of their values, and one as planned;
- * the new text changes only this box or entry, a box and the entry logged from it together.
+ * the new text changes only this box or entry, a box and the entry logged from it together;
+ * a summary of several values has one pencil per value, which changes that value,
+ * see {@link manyRowOf}.
  * A box of a series of the plan, like my sleep every night, and an entry logged from it
  * open no list, see {@link ofSeries}, and only their pencil changes them alone;
  * the whole series changes only in the dialog of the series,
@@ -511,6 +513,18 @@ let summaryLink: string = "";
  * see {@link summaryPartsOf}.
  */
 let summaryOpen: boolean = false;
+
+/**
+ * The value of a summary of several values whose pencil is open, its place among them,
+ * see {@link manyRowOf}; -1 while the part `Text` holds the whole summary.
+ */
+let summaryValue: number = -1;
+
+/**
+ * The values of a summary of several values as its part `Text` got the cursor,
+ * which it changes one of as I type, see {@link summaryValue}.
+ */
+let summaryValues: string[] = [];
 
 /**
  * The title the skill and the type picked of a skill entry give it, as last shown,
@@ -1220,7 +1234,9 @@ function summaryPartsShow(): void {
         HTMLInputElement,
         HTMLInputElement,
     ] = summaryShown;
-    if (text !== document.activeElement) text.value = values.title;
+    if (text !== document.activeElement)
+        text.value =
+            summaryValue === -1 ? values.title : (values.title.split(", ")[summaryValue] ?? "");
     if (address !== document.activeElement)
         address.value =
             summaryLink === "" && chosen?.name === skillName ? skillPathOf() : summaryLink;
@@ -1296,10 +1312,11 @@ function summaryPartsOf(
     parts.hidden = !summaryOpen;
     text.addEventListener("focusin", (): void => {
         shown = values.title;
+        summaryValues = values.title.split(", ");
     });
     text.addEventListener("input", (): void => {
-        values.title =
-            summary === undefined ? text.value.trim() : fixedTextOf(summary, text.value.trim());
+        const typed: string = summaryTypedOf(text.value.trim());
+        values.title = summary === undefined ? typed : fixedTextOf(summary, typed);
         saveAllow();
     });
     text.addEventListener("focusout", (event: FocusEvent): void => {
@@ -1326,6 +1343,22 @@ function summaryPartsOf(
 }
 
 /**
+ * Gives the summary as the part `Text` holds it:
+ * the text typed, or the values of a summary of several with the one of its pencil changed,
+ * an emptied value left out, see {@link summaryValue}.
+ *
+ * @param typed - The text typed, like `Dusche`
+ * @returns The summary, like `Caring, Dusche`
+ */
+function summaryTypedOf(typed: string): string {
+    if (summaryValue === -1) return typed;
+    return summaryValues
+        .map((value: string, index: number): string => (index === summaryValue ? typed : value))
+        .filter((value: string): boolean => value !== "")
+        .join(", ");
+}
+
+/**
  * Changes the summary of this entry alone as its pencil asks,
  * see {@link summaryPartsOf}, never opening a series:
  * opens the list of the foods of a meal, which its foods write, see `meal.ts`;
@@ -1337,6 +1370,7 @@ function summaryPartsOf(
 function summaryChange(parts: HTMLElement): void {
     if (meal !== null) meal.at(-1)?.querySelector<HTMLButtonElement>(".picker-line")?.click();
     else {
+        summaryValue = -1;
         summaryOpen = !summaryOpen;
         parts.hidden = !summaryOpen;
         if (summaryOpen) parts.querySelector("input")?.focus();
@@ -1588,16 +1622,17 @@ function fieldRowsOf(field: Field): HTMLElement[] {
  * any other summary the order of its list, the most used first, a new value last,
  * like `Caring, Shower`, see {@link rankOf}. While none is picked, the row empty without a plus, as
  * every field of one value, since a click into it opens its list;
- * its pencil beside it and its link below it, see {@link summaryPartsOf}.
+ * each value its own pencil, like `Caring ✎, Shower ✎`, see {@link valuePencilOf},
+ * and the link of the summary below it, see {@link summaryPartsOf}.
  * - `picked`: The values picked, in their order.
- * - `pencil`, `link`, `linkParts`: Pencil, link and the part to type it of the summary.
+ * - `link`, `linkParts`: Link and the part to type it of the summary.
  *
  * @param field - Field of several values, like the summary of `Way` or `Body`
  * @returns Its row
  */
 function manyRowOf(field: Field): HTMLElement {
     const picked: string[] = values[field.key] === "" ? [] : values[field.key].split(", ");
-    const [pencil, link, linkParts]: [HTMLButtonElement, HTMLAnchorElement, HTMLElement] =
+    const [, link, linkParts]: [HTMLButtonElement, HTMLAnchorElement, HTMLElement] =
         summaryPartsOf(field);
     return rowOf(
         field.name,
@@ -1607,7 +1642,8 @@ function manyRowOf(field: Field): HTMLElement {
             many: true,
             adding: !field.fixed,
             noun: "summary",
-            aside: [pencil],
+            linkOf: (): string => "",
+            afterOf: valuePencilOf,
             below: [link, linkParts],
             order: field.fixed
                 ? undefined
@@ -1618,10 +1654,45 @@ function manyRowOf(field: Field): HTMLElement {
                       ),
             pick: (chosen: string[]): void => {
                 values[field.key] = chosen.join(", ");
+                summaryOpen = false;
+                summaryValue = -1;
+                linkParts.hidden = true;
                 saveAllow();
             },
         }),
     );
+}
+
+/**
+ * Makes the pencil of one value of a summary of several, see {@link manyRowOf}:
+ * it shows and hides the part `Text` with that value, its click opening no list,
+ * and takes no focus, so a part I leave by it keeps what I typed.
+ * Only that value changes, in this entry or box, see {@link summaryTypedOf}.
+ * A value I changed and did not leave yet is found no more, which closes it.
+ * - `pencil`: The pencil.
+ * - `at`: Place of the value among those of the summary now, -1 once it changed.
+ *
+ * @param value - Value picked, like `Shower`
+ * @returns Its pencil
+ */
+function valuePencilOf(value: string): HTMLElement {
+    const pencil: HTMLButtonElement = document.createElement("button");
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    iconPut(pencil, Pencil, `Change ${value}`);
+    pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    pencil.addEventListener("click", (event: MouseEvent): void => {
+        event.stopPropagation();
+        const at: number = values.title.split(", ").indexOf(value);
+        summaryOpen = at !== -1 && at !== summaryValue;
+        summaryValue = summaryOpen ? at : -1;
+        titleRowsShow();
+        if (summaryOpen)
+            document
+                .querySelector<HTMLInputElement>('#entry .field-parts input[aria-label^="Text"]')
+                ?.focus();
+    });
+    return pencil;
 }
 
 /**
@@ -3114,6 +3185,7 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     onlineOpen = false;
     summaryLink = opening.titleLink;
     summaryOpen = false;
+    summaryValue = -1;
     partsOpen = null;
     edits = { title: null, from: null, location: null, online: null, with: null };
     addresses = { ...opening.addresses };
