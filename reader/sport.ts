@@ -84,7 +84,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { berlinDateOf, entriesRead } from "./calendar.ts";
+import { berlinDateOf, entriesRead, summaryBaseOf } from "./calendar.ts";
 import { sport, writeAllowed } from "./sources.ts";
 
 import type { Entry } from "./calendar.ts";
@@ -1080,7 +1080,7 @@ export function sportDayRead(date: string): SportDay {
                     Math.round((Date.parse(entry.end) - Date.parse(entry.start)) / 60000),
                 ) || 0;
             const kind: SportKind | undefined = sportKinds.find(
-                (known: SportKind): boolean => known.name === entry.title,
+                (known: SportKind): boolean => known.name === summaryBaseOf(entry.title),
             );
             const before: string = entry.workout ?? "";
             const exercises: SessionExercise[] = (entry.exercises ?? []).map(
@@ -1114,7 +1114,7 @@ export function sportDayRead(date: string): SportDay {
                 id: entry.id,
                 start: entry.start,
                 end: entry.end,
-                kind: entry.title,
+                kind: summaryBaseOf(entry.title),
                 minutes: minutes,
                 kcal:
                     kind === undefined

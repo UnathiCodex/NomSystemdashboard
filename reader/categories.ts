@@ -67,7 +67,7 @@
  * - `./persons.ts`: Names a person I share with as `Persons.md` names it.
  */
 
-import { entriesRead, skillName } from "./calendar.ts";
+import { entriesRead, skillName, summaryBaseOf } from "./calendar.ts";
 import { personNameOf } from "./persons.ts";
 import { labelOf, lineOf, placesRead, platformsRead, roomsRead } from "./places.ts";
 import { sportKinds, sportName } from "./sport.ts";
@@ -437,7 +437,8 @@ function onlineUsesOf(logs: Entry[]): string[] {
 /**
  * Lists the values of the field `title` of a category in log entries:
  * the what of its entries, each value of a what of several on its own,
- * like `Caring` and `Shower` of `Caring, Shower`.
+ * like `Caring` and `Shower` of `Caring, Shower`,
+ * each without its parameter in round brackets, like `Augenheilkunde` of `Augenheilkunde (Sehtest)`.
  *
  * @param logs - Log entries
  * @param name - Name of the category
@@ -447,7 +448,8 @@ function onlineUsesOf(logs: Entry[]): string[] {
 function titleUsesOf(logs: Entry[], name: string, many: boolean): string[] {
     return logs
         .filter((log: Entry): boolean => log.category === name)
-        .flatMap((log: Entry): string[] => (many ? log.title.split(", ") : [log.title]));
+        .flatMap((log: Entry): string[] => (many ? log.title.split(", ") : [log.title]))
+        .map(summaryBaseOf);
 }
 
 /**
@@ -710,7 +712,7 @@ export function categoryAllows(
             : fields.title.trim() !== "" &&
               (!what.fixed ||
                   (what.many === true ? fields.title.split(", ") : [fields.title]).every(
-                      (value: string): boolean => what.values.includes(value),
+                      (value: string): boolean => what.values.includes(summaryBaseOf(value)),
                   ));
     return (
         whatAllowed &&

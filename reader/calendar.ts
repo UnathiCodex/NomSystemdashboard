@@ -1547,7 +1547,7 @@ let spreading: boolean = false;
  * @param summary - Summary, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
  * @returns Summary like `IN2028_BusinessAnalyticsMachineLearning`
  */
-function summaryBaseOf(summary: string): string {
+export function summaryBaseOf(summary: string): string {
     return summary.replace(/\s*\([^()]*\)\s*$/, "").trim();
 }
 

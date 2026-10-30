@@ -39,7 +39,7 @@
  * - `./sources.ts`: Names the log of the trackers.
  */
 
-import { berlinDateOf, berlinTimeOf, entriesRead } from "./calendar.ts";
+import { berlinDateOf, berlinTimeOf, entriesRead, summaryBaseOf } from "./calendar.ts";
 import { neckRoutines, skillName } from "./categories.ts";
 import { foodDayRead } from "./food.ts";
 import { trackerLog } from "./sources.ts";
@@ -338,7 +338,7 @@ function sleepRead(date: string): SleepDay {
     ).filter((entry: Entry): boolean => entry.category === sleepName && !entry.allDay);
     const longs: Entry[] = sleeps.filter(
         (sleep: Entry): boolean =>
-            sleep.title !== napName && lengthOf(sleep) >= nightMinutes * 60 * 1000,
+            summaryBaseOf(sleep.title) !== napName && lengthOf(sleep) >= nightMinutes * 60 * 1000,
     );
     const nights: (Night | null)[] = Array.from(
         { length: weekDays },

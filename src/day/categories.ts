@@ -51,6 +51,9 @@
  * the new text changes only this box or entry, a box and the entry logged from it together;
  * a summary of several values has one pencil per value, which changes that value,
  * see {@link manyRowOf}.
+ * A plus beside a value adds its parameter, like `Augenheilkunde (Sehtest)`,
+ * shown after it in the line, its list always offering only `Augenheilkunde`,
+ * see {@link parameterForm}, in every category with a list of summaries.
  * A box of a series of the plan, like my sleep every night, and an entry logged from it
  * open no list, see {@link ofSeries}, and only their pencil changes them alone;
  * the whole series changes only in the dialog of the series,
@@ -226,7 +229,7 @@ import { folderLinkShow } from "../skill/links.ts";
 import { iconPut, QuestionMark } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { changesKept } from "../changes.ts";
-import { Check, Copy, Pencil, Repeat, Trash, X } from "lucide";
+import { Check, Copy, Pencil, Plus, Repeat, Trash, X } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
 import type { Box } from "./boxes.ts";
@@ -521,6 +524,50 @@ let summaryOpen: boolean = false;
 let summaryValue: number = -1;
 
 /**
+ * The plus beside a summary of one value without parameter, see {@link summaryPartsOf};
+ * `null` while the summary takes no parameter.
+ */
+let summaryPlus: HTMLButtonElement | null = null;
+
+/**
+ * The value and the parameter of a value of a summary,
+ * in round brackets at its end, like `Sehtest` of `Augenheilkunde (Sehtest)`.
+ * The list offers only the value, the line shows its parameter after it.
+ */
+const parameterForm: RegExp = /^(.*?)\s*\(([^()]*)\)\s*$/;
+
+/**
+ * Gives a value of a summary without its parameter, see {@link parameterForm}.
+ *
+ * @param value - Value, like `Augenheilkunde (Sehtest)`
+ * @returns Value, like `Augenheilkunde`
+ */
+function baseOf(value: string): string {
+    return parameterForm.exec(value)?.[1] ?? value;
+}
+
+/**
+ * Gives the parameter of a value of a summary, see {@link parameterForm}.
+ *
+ * @param value - Value, like `Augenheilkunde (Sehtest)`
+ * @returns Parameter, like `Sehtest`, empty for none
+ */
+function parameterOf(value: string): string {
+    return parameterForm.exec(value)?.[2] ?? "";
+}
+
+/**
+ * Writes a value of a summary with its parameter, see {@link parameterForm}.
+ *
+ * @param base - Value, like `Augenheilkunde`
+ * @param parameter - Parameter, like `Sehtest`, empty for none
+ * @returns Value, like `Augenheilkunde (Sehtest)`
+ */
+function parameterPut(base: string, parameter: string): string {
+    return parameter === "" ? base : `${base} (${parameter})`;
+}
+
+/**
  * The values of a summary of several values as its part `Text` got the cursor,
  * which it changes one of as I type, see {@link summaryValue}.
  */
@@ -539,7 +586,14 @@ let skillGiven: string = "";
  * `null` while no summary shows them.
  */
 let summaryShown:
-    [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement, HTMLInputElement] | null = null;
+    | [
+          HTMLButtonElement,
+          HTMLAnchorElement,
+          HTMLInputElement,
+          HTMLInputElement,
+          HTMLInputElement | null,
+      ]
+    | null = null;
 
 /**
  * Category picked, `null` before picking.
@@ -976,15 +1030,17 @@ function stepsShow(steps: HTMLElement, field: Field): void {
  *
  * @param field - Field of the value, like the summary of `Way`
  * @param value - Value as written, like `UBahn`
- * @returns Value of the field, like `U-Bahn`
+ * @returns Value of the field, like `U-Bahn`, a parameter kept
  */
 function fixedValueOf(field: Field, value: string): string {
     const simple: (text: string) => string = (text: string): string =>
         text.replace(/[-\s]/g, "").toLowerCase();
-    if (!field.fixed || field.values.includes(value)) return value;
-    return (
-        field.values.find((candidate: string): boolean => simple(candidate) === simple(value)) ??
-        value
+    const base: string = baseOf(value);
+    if (!field.fixed || field.values.includes(base)) return value;
+    return parameterPut(
+        field.values.find((candidate: string): boolean => simple(candidate) === simple(base)) ??
+            base,
+        parameterOf(value),
     );
 }
 
@@ -1228,15 +1284,20 @@ function partsOf(field: Field): HTMLElement {
  */
 function summaryPartsShow(): void {
     if (summaryShown === null) return;
-    const [pencil, link, text, address]: [
+    const [pencil, link, text, address, parameter]: [
         HTMLButtonElement,
         HTMLAnchorElement,
         HTMLInputElement,
         HTMLInputElement,
+        HTMLInputElement | null,
     ] = summaryShown;
-    if (text !== document.activeElement)
-        text.value =
-            summaryValue === -1 ? values.title : (values.title.split(", ")[summaryValue] ?? "");
+    const value: string =
+        summaryValue === -1 ? values.title : (values.title.split(", ")[summaryValue] ?? "");
+    if (text !== document.activeElement) text.value = parameter === null ? value : baseOf(value);
+    if (parameter !== null && parameter !== document.activeElement)
+        parameter.value = parameterOf(value);
+    if (summaryPlus !== null)
+        summaryPlus.hidden = values.title === "" || parameterOf(values.title) !== "";
     if (address !== document.activeElement)
         address.value =
             summaryLink === "" && chosen?.name === skillName ? skillPathOf() : summaryLink;
@@ -1300,35 +1361,45 @@ function summaryPartsOf(
     const text: HTMLInputElement = partFieldOf("text", values.title, "Text of the summary");
     const address: HTMLInputElement = partFieldOf("url", summaryLink, "Link of the summary");
     const parts: HTMLElement = document.createElement("div");
+    const parameter: HTMLInputElement | null =
+        summary === undefined ? null : partFieldOf("text", "", "Parameter of the summary");
+    const changed: () => void = (): void => {
+        const name: string = text.value.trim();
+        const typed: string = summaryTypedOf(
+            parameter === null ? name : parameterPut(name, parameter.value.trim()),
+        );
+        values.title = summary === undefined ? typed : fixedTextOf(summary, typed);
+        saveAllow();
+    };
     let shown: string = values.title;
+    summaryPlus = parameter === null ? null : parameterPlusOf(-1);
     pencil.type = "button";
     pencil.className = "entry-pencil";
     link.className = "entry-address";
     link.rel = "noopener";
     parts.className = "field-parts";
     if (typed) parts.append(partOf("Text", text));
+    if (parameter !== null) parts.append(partOf("Parameter", parameter));
     if (summary !== undefined || chosen?.name === skillName) parts.append(partOf("Link", address));
     iconPut(pencil, Pencil, "Change the summary");
     parts.hidden = !summaryOpen;
-    text.addEventListener("focusin", (): void => {
-        shown = values.title;
-        summaryValues = values.title.split(", ");
-    });
-    text.addEventListener("input", (): void => {
-        const typed: string = summaryTypedOf(text.value.trim());
-        values.title = summary === undefined ? typed : fixedTextOf(summary, typed);
-        saveAllow();
-    });
-    text.addEventListener("focusout", (event: FocusEvent): void => {
-        const next: string | null =
-            event.relatedTarget instanceof HTMLElement
-                ? event.relatedTarget.getAttribute("aria-label")
-                : null;
-        if (values.title === shown || summary === undefined) return;
-        titleRowsShow();
-        document
-            .querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)
-            ?.focus();
+    [text, ...(parameter === null ? [] : [parameter])].forEach((input: HTMLInputElement): void => {
+        input.addEventListener("focusin", (): void => {
+            shown = values.title;
+            summaryValues = values.title.split(", ");
+        });
+        input.addEventListener("input", changed);
+        input.addEventListener("focusout", (event: FocusEvent): void => {
+            const next: string | null =
+                event.relatedTarget instanceof HTMLElement
+                    ? event.relatedTarget.getAttribute("aria-label")
+                    : null;
+            if (values.title === shown || summary === undefined) return;
+            titleRowsShow();
+            document
+                .querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)
+                ?.focus();
+        });
     });
     address.addEventListener("input", (): void => {
         summaryLink = address.value.trim();
@@ -1337,7 +1408,7 @@ function summaryPartsOf(
     pencil.addEventListener("click", (): void => {
         summaryChange(parts);
     });
-    summaryShown = [pencil, link, text, address];
+    summaryShown = [pencil, link, text, address, parameter];
     summaryPartsShow();
     return [pencil, link, parts];
 }
@@ -1567,7 +1638,14 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                                       fieldChoiceOf(field, value),
                                   ),
                               )(text),
-                picked: values[field.key] === "" ? [] : [mineOf(field) ?? values[field.key]],
+                picked:
+                    values[field.key] === ""
+                        ? []
+                        : [
+                              field.key === "title"
+                                  ? baseOf(values.title)
+                                  : (mineOf(field) ?? values[field.key]),
+                          ],
                 many: false,
                 adding: !field.fixed,
                 locked: field.key === "title" && ofSeries(),
@@ -1576,7 +1654,16 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                         ? undefined
                         : (name: string): Promise<string | null> => placeAdd(field, name),
                 noun: field.key === "title" ? "summary" : "place",
-                aside: place !== null ? [place[0]] : summary.slice(0, 1),
+                aside:
+                    place !== null
+                        ? [place[0]]
+                        : [...summary.slice(0, 1), ...(summaryPlus === null ? [] : [summaryPlus])],
+                ...(field.key === "title"
+                    ? {
+                          linkOf: (): string => "",
+                          afterOf: (): HTMLElement => parameterShownOf(values.title),
+                      }
+                    : {}),
                 below:
                     place === null
                         ? [...summary.slice(1), steps]
@@ -1631,7 +1718,8 @@ function fieldRowsOf(field: Field): HTMLElement[] {
  * @returns Its row
  */
 function manyRowOf(field: Field): HTMLElement {
-    const picked: string[] = values[field.key] === "" ? [] : values[field.key].split(", ");
+    const picked: string[] =
+        values[field.key] === "" ? [] : values[field.key].split(", ").map(baseOf);
     const [, link, linkParts]: [HTMLButtonElement, HTMLAnchorElement, HTMLElement] =
         summaryPartsOf(field);
     return rowOf(
@@ -1653,7 +1741,13 @@ function manyRowOf(field: Field): HTMLElement {
                               rankOf(field, first) - rankOf(field, second),
                       ),
             pick: (chosen: string[]): void => {
-                values[field.key] = chosen.join(", ");
+                const before: string[] = values[field.key].split(", ");
+                values[field.key] = chosen
+                    .map(
+                        (value: string): string =>
+                            before.find((old: string): boolean => baseOf(old) === value) ?? value,
+                    )
+                    .join(", ");
                 summaryOpen = false;
                 summaryValue = -1;
                 linkParts.hidden = true;
@@ -1664,18 +1758,24 @@ function manyRowOf(field: Field): HTMLElement {
 }
 
 /**
- * Makes the pencil of one value of a summary of several, see {@link manyRowOf}:
- * it shows and hides the part `Text` with that value, its click opening no list,
+ * Makes what stands after one value of a summary of several in its line,
+ * see {@link manyRowOf}: its parameter, its pencil and, without parameter, its plus.
+ * The pencil shows and hides the parts of that value, its click opening no list,
  * and takes no focus, so a part I leave by it keeps what I typed.
  * Only that value changes, in this entry or box, see {@link summaryTypedOf}.
  * A value I changed and did not leave yet is found no more, which closes it.
+ * - `all`: The elements together.
  * - `pencil`: The pencil.
  * - `at`: Place of the value among those of the summary now, -1 once it changed.
  *
  * @param value - Value picked, like `Shower`
- * @returns Its pencil
+ * @returns What stands after it
  */
 function valuePencilOf(value: string): HTMLElement {
+    const all: HTMLSpanElement = document.createElement("span");
+    const found: string | undefined = values.title
+        .split(", ")
+        .find((old: string): boolean => baseOf(old) === value);
     const pencil: HTMLButtonElement = document.createElement("button");
     pencil.type = "button";
     pencil.className = "entry-pencil";
@@ -1683,7 +1783,7 @@ function valuePencilOf(value: string): HTMLElement {
     pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     pencil.addEventListener("click", (event: MouseEvent): void => {
         event.stopPropagation();
-        const at: number = values.title.split(", ").indexOf(value);
+        const at: number = valueAtOf(value);
         summaryOpen = at !== -1 && at !== summaryValue;
         summaryValue = summaryOpen ? at : -1;
         titleRowsShow();
@@ -1692,7 +1792,75 @@ function valuePencilOf(value: string): HTMLElement {
                 .querySelector<HTMLInputElement>('#entry .field-parts input[aria-label^="Text"]')
                 ?.focus();
     });
-    return pencil;
+    all.append(parameterShownOf(found ?? value), pencil);
+    if (found === undefined || parameterOf(found) === "") {
+        const plus: HTMLButtonElement = parameterPlusOf(0);
+        plus.addEventListener("click", (event: MouseEvent): void => {
+            event.stopPropagation();
+            parameterOpen(valueAtOf(value));
+        });
+        all.append(plus);
+    }
+    return all;
+}
+
+/**
+ * Gives where a value picked stands among those of the summary now.
+ *
+ * @param value - Value picked, without parameter, like `Shower`
+ * @returns Its place, from 0, -1 once it changed
+ */
+function valueAtOf(value: string): number {
+    return values.title.split(", ").findIndex((old: string): boolean => baseOf(old) === value);
+}
+
+/**
+ * Shows the parameter of a value after it in its line.
+ *
+ * @param value - Value, like `Augenheilkunde (Sehtest)`
+ * @returns Its parameter in brackets, empty without one
+ */
+function parameterShownOf(value: string): HTMLElement {
+    const shown: HTMLSpanElement = document.createElement("span");
+    const parameter: string = parameterOf(value);
+    shown.textContent = parameter === "" ? "" : ` (${parameter})`;
+    return shown;
+}
+
+/**
+ * Makes the plus that opens the part `Parameter`, see {@link parameterOpen}:
+ * of the whole summary for -1, its click then its own;
+ * a plus of one value of several gets its click from {@link valuePencilOf}.
+ *
+ * @param at - Place of the value it opens, -1 for the whole summary
+ * @returns The plus
+ */
+function parameterPlusOf(at: number): HTMLButtonElement {
+    const plus: HTMLButtonElement = document.createElement("button");
+    plus.type = "button";
+    plus.className = "entry-pencil";
+    iconPut(plus, Plus, "Add a parameter");
+    plus.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    if (at === -1)
+        plus.addEventListener("click", (event: MouseEvent): void => {
+            event.stopPropagation();
+            parameterOpen(-1);
+        });
+    return plus;
+}
+
+/**
+ * Opens the parts of a value or of the whole summary with the cursor in `Parameter`.
+ *
+ * @param at - Place of the value, -1 for the whole summary
+ */
+function parameterOpen(at: number): void {
+    summaryOpen = true;
+    summaryValue = at;
+    titleRowsShow();
+    document
+        .querySelector<HTMLInputElement>('#entry .field-parts input[aria-label^="Parameter"]')
+        ?.focus();
 }
 
 /**
