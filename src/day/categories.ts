@@ -3063,7 +3063,8 @@ async function paramsRename(dry: boolean): Promise<void> {
  * Sends the new or changed box to the reader, its fields, note, start, end and deadline,
  * see {@link boxFieldsRead}, writes a place, the people and a param I changed by their parts
  * everywhere, see {@link placesRename}, `personsRename` in `../persons.ts`
- * and {@link paramsRename}, then closes the dialog, after which the list of boxes loads again, see `boxes.ts`.
+ * and {@link paramsRename},
+ * then closes the dialog, after which the list of boxes loads again, see `boxes.ts`.
  *
  * @throws {Error} - When the reader does not take the box
  */
