@@ -3736,6 +3736,81 @@ export function attendeesRename(
 }
 
 /**
+ * A param changed by the pencil of a value, as the page sends it, see {@link paramRename}.
+ *
+ * - `category`: Category of the value, like `Body`.
+ * - `value`: The value without param, like `Caring`.
+ * - `old`: Its param as it was, like `Shower`.
+ * - `name`: Its new param, like `Dusche`.
+ * - `dry`: Whether only to count the lines, writing nothing.
+ */
+export type ParamRenamed = {
+    category: string;
+    value: string;
+    old: string;
+    name: string;
+    dry: boolean;
+};
+
+/**
+ * Writes a param anew in every event and to-do of its category that gives it to its value,
+ * as the pencil of a value sends it, see `paramsRename` in `src/day/categories.ts`,
+ * like `Caring (Dusche)` for every `Caring (Shower)`, alone or among the values of a summary;
+ * the same param of another value stays, since each value has its own list of params,
+ * see `paramsOf` in `categories.ts`.
+ * Reads every file and works out each of its lines first, and writes only then,
+ * as {@link attendeesRename} does.
+ * - `from`, `to`: The value with its param as it was and with the new one.
+ * - `changes`: Each file to write with its lines.
+ * - `count`: How many lines change.
+ * - `text`: Lines of a file.
+ * - `named`: How many lines changed before the file.
+ * - `property`: A line `SUMMARY` read.
+ * - `summary`: Its text.
+ * - `written`: Its text with the param changed.
+ *
+ * @param sent - The param, see {@link ParamRenamed}
+ * @returns How many lines change
+ * @throws {Error} - When the new param is none or would part the value,
+ *   or a file to write lies outside the new system
+ */
+export function paramRename(sent: ParamRenamed): number {
+    if (!/^[^,()]+$/.test(sent.name)) throw new Error(`No param: ${sent.name}`);
+    const from: string = `${sent.value} (${sent.old})`;
+    const to: string = `${sent.value} (${sent.name})`;
+    const changes: [string, FileLines][] = [];
+    let count: number = 0;
+    calendarFilesOf().forEach((file: string): void => {
+        const text: FileLines = linesRead(file);
+        const named: number = count;
+        summariesOf(text.lines)
+            .filter((summed: Summed): boolean => summed.category === sent.category)
+            .forEach((summed: Summed): void => {
+                const property: ICAL.Property = ICAL.Property.fromString(text.lines[summed.index]);
+                const summary: string = String(property.getFirstValue() ?? "");
+                const written: string =
+                    summary === from
+                        ? to
+                        : summary
+                              .split(", ")
+                              .map((value: string): string => (value === from ? to : value))
+                              .join(", ");
+                if (written === summary) return;
+                property.setValue(written);
+                text.lines[summed.index] = property.toICALString();
+                count++;
+            });
+        if (count > named) {
+            writeCheck(file);
+            changes.push([file, text]);
+        }
+    });
+    if (!sent.dry)
+        changes.forEach(([file, text]: [string, FileLines]): void => linesWrite(file, text));
+    return count;
+}
+
+/**
  * Writes a place anew in every event and to-do of calendar sources that names it,
  * see `placeRename` in `places.ts`:
  * each `LOCATION` and each `X-FROM`, where a way starts,

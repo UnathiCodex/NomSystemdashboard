@@ -123,7 +123,7 @@ import {
 } from "./places.ts";
 import { plainApply, plainRead, plainRemove } from "./rules.ts";
 import { personRename, personsRead } from "./persons.ts";
-import { attendeesRename } from "./calendar.ts";
+import { attendeesRename, paramRename } from "./calendar.ts";
 import { calendarRoot } from "./sources.ts";
 import {
     brokenLinksRead,
@@ -183,7 +183,7 @@ import type { IncomingMessage, ServerResponse, Server } from "node:http";
 import type { ViteDevServer } from "vite";
 import type { BoxLogged, EntryChange, EntryMoved, EntryNew } from "./day.ts";
 import type { Box, BoxChange, BoxNew } from "./boxes.ts";
-import type { Attendee } from "./calendar.ts";
+import type { Attendee, ParamRenamed } from "./calendar.ts";
 import type { PersonRenamed } from "./persons.ts";
 import type {
     ExamChange,
@@ -382,6 +382,10 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   address and link of the body,
  *   its row in `Places.md` or `Rooms.md` and every line of my calendars that names it,
  *   see `placeRename` in `places.ts`;
+ *   when the body says `dry: true` only checks it, writing nothing.
+ * - `POST /api/day/param-renamed`:
+ *   Changes the param of the value of the body in every entry and box of its category,
+ *   see `paramRename` in `calendar.ts`;
  *   when the body says `dry: true` only checks it, writing nothing.
  * - `POST /api/day/standard`:
  *   Makes the place named in the body my default place, `★` in `Places.md` or `Rooms.md`,
@@ -676,6 +680,9 @@ async function requestHandle(
     } else if (request.method === "POST" && url.pathname === "/api/day/renamed") {
         const changed: PlaceChanged | null = placeRename((await json(request)) as PlaceRenamed);
         if (changed !== null) listShare({ call: "placeChange", with: changed });
+        responseSend(response, 200, null);
+    } else if (request.method === "POST" && url.pathname === "/api/day/param-renamed") {
+        paramRename((await json(request)) as ParamRenamed);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/standard") {
         placeStandardSet(String(((await json(request)) as { name?: string }).name ?? ""));

@@ -53,7 +53,9 @@
  * see {@link manyRowOf}.
  * Every value takes a param, like `Augenheilkunde (Sehtest)`,
  * by a small plus beside it, as a skill takes its type, but typed as I like,
- * see {@link paramPickerOf}, and its pencil changes it in the part `Param` below `Text`;
+ * see {@link paramPickerOf}, and its pencil changes it in the part `Param` below `Text`,
+ * for every entry and box of its category with that value and param,
+ * see {@link paramsRename}, its list changing only this box or entry;
  * its list always offers only `Augenheilkunde`.
  * A box of a series of the plan, like my sleep every night, and an entry logged from it
  * open no list, see {@link ofSeries}, and only their pencil changes them alone;
@@ -660,6 +662,14 @@ let withOpen: string[] = [];
  * none while I changed nobody.
  */
 let personEdits: { [old: string]: PersonEdit & { address: string } } = {};
+
+/**
+ * Each param I changed by the part `Param` of a pencil, by its value without param,
+ * with the param it had as I first typed and the param typed, empty once I emptied it,
+ * which the dialog writes in every entry and box with it once it saves, see {@link paramsRename};
+ * none while I changed none.
+ */
+let paramEdits: { [value: string]: { old: string; name: string } } = {};
 
 /**
  * The people of `Persons.md` as kept when the dialog opened, see `personsKept` in `../persons.ts`,
@@ -1343,6 +1353,8 @@ function summaryPartsShow(): void {
  * - `address`: The field of its link as typed, in the parts only for the summary of a field.
  * - `parts`: The parts holding it, shown while the pencil opened them, see {@link summaryOpen}.
  * - `shown`: The summary as its line shows it, taken as I enter `text`.
+ * - `before`: The value of the pencil as I entered `param`, whose param I type over,
+ *   see {@link paramEdits}.
  *
  * @param summary - Field of the summary, which shows its text to change;
  *   left out for a summary without field, like that of a meal or the title of a skill entry
@@ -1396,6 +1408,13 @@ function summaryPartsOf(
                 .querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)
                 ?.focus();
         });
+    });
+    param?.addEventListener("input", (): void => {
+        const before: string = summaryValue === -1 ? shown : summaryValues[summaryValue];
+        paramEdits[baseOf(before)] = {
+            old: paramEdits[baseOf(before)]?.old ?? paramOf(before),
+            name: paramOf(summaryPickedOf()),
+        };
     });
     address.addEventListener("input", (): void => {
         summaryLink = address.value.trim();
@@ -1763,7 +1782,8 @@ function manyRowOf(field: Field): HTMLElement {
  * see {@link paramListOpen}, then its pencil.
  * The pencil shows and hides the parts of that value, its click opening no list,
  * and takes no focus, so a part I leave by it keeps what I typed.
- * Only that value changes, in this entry or box, see {@link summaryTypedOf}.
+ * Only that value changes, in this entry or box, see {@link summaryTypedOf},
+ * its param in every entry and box that has it, see {@link paramsRename}.
  * A value I changed and did not leave yet is found no more, which closes it.
  * - `all`: The elements together.
  * - `shown`: Its param in brackets, or the plus.
@@ -3006,10 +3026,44 @@ async function placesRename(dry: boolean): Promise<void> {
 }
 
 /**
+ * Writes each param I changed by the part `Param` of a pencil in every entry and box
+ * of the category picked that gives it to its value, see {@link paramEdits}
+ * and `paramRename` in `reader/calendar.ts`, like `Caring (Dusche)` for every `Caring (Shower)`:
+ * before the entry or the box is saved only checked, and after it written, as a place.
+ * Nothing for a param emptied, which leaves only this entry or box,
+ * nor for one the summary no longer holds, since I picked another from its list.
+ * - `written`: The value with the param typed.
+ *
+ * @param dry - Whether only to check, before saving
+ * @throws {Error} - When the reader does not take a param
+ */
+async function paramsRename(dry: boolean): Promise<void> {
+    for (const [value, edit] of Object.entries(paramEdits)) {
+        const written: string = paramPut(value, edit.name);
+        if (
+            edit.name !== "" &&
+            edit.name !== edit.old &&
+            (values.title === written || values.title.split(", ").includes(written))
+        )
+            await readerAsk<null>("/api/day/param-renamed", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    category: chosen?.name ?? "",
+                    value: value,
+                    old: edit.old,
+                    name: edit.name,
+                    dry: dry,
+                }),
+            });
+    }
+}
+
+/**
  * Sends the new or changed box to the reader, its fields, note, start, end and deadline,
- * see {@link boxFieldsRead}, writes a place and the people I changed by their parts everywhere,
- * see {@link placesRename} and `personsRename` in `../persons.ts`,
- * then closes the dialog, after which the list of boxes loads again, see `boxes.ts`.
+ * see {@link boxFieldsRead}, writes a place, the people and a param I changed by their parts
+ * everywhere, see {@link placesRename}, `personsRename` in `../persons.ts`
+ * and {@link paramsRename}, then closes the dialog, after which the list of boxes loads again, see `boxes.ts`.
  *
  * @throws {Error} - When the reader does not take the box
  */
@@ -3018,6 +3072,7 @@ async function boxSave(): Promise<void> {
     else await boxAdd(boxFieldsRead());
     await placesRename(false);
     await personsRename(personEdits, persons, false, pickedNames());
+    await paramsRename(false);
     (document.getElementById("entry") as HTMLDialogElement).close();
 }
 
@@ -3043,9 +3098,9 @@ function pickedNames(): string[] {
  * nothing is saved and the dialog stays open,
  * saying `Not saved: it changed on the disk, close and open it again`, see {@link hintShow};
  * opened again, it shows the entry as the file holds it, to change and save once more.
- * A place and the people I changed by their parts are checked before anything is saved,
- * and written everywhere once the entry or the box is,
- * see {@link placesRename} and `personsRename` in `../persons.ts`.
+ * A place, the people and a param I changed by their parts
+ * are checked before anything is saved, and written everywhere once the entry or the box is,
+ * see {@link placesRename}, `personsRename` in `../persons.ts` and {@link paramsRename}.
  * - `fields`: Fields, note and times of the dialog.
  * - `version`: Fingerprint of the entry being changed as the dialog opened it,
  *   see `version` of `Entry` in `reader/calendar.ts`; empty for a new one.
@@ -3058,6 +3113,7 @@ function pickedNames(): string[] {
 async function entrySave(calendar: Calendar): Promise<void> {
     await placesRename(true);
     await personsRename(personEdits, persons, true, pickedNames());
+    await paramsRename(true);
     if (opened.target === "box") {
         await boxSave();
         return;
@@ -3073,6 +3129,7 @@ async function entrySave(calendar: Calendar): Promise<void> {
     if (saved) {
         await placesRename(false);
         await personsRename(personEdits, persons, false, pickedNames());
+        await paramsRename(false);
         (document.getElementById("entry") as HTMLDialogElement).close();
     } else hintShow("entry-changed");
 }
@@ -3405,6 +3462,7 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     addresses = { ...opening.addresses };
     withOpen = [];
     personEdits = {};
+    paramEdits = {};
     addedLine = "";
     placeFilled = "";
     chosen = null;
