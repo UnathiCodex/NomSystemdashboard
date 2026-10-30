@@ -184,7 +184,7 @@ export type Choice = {
  *   like the address of a place; none when left out.
  * - `locked`: Whether the value stays as picked, its line opening no list,
  *   `As planned` as its tooltip,
- *   like the category of an entry of the log logged from a box of the plan; open when left out.
+ *   like the summary of an entry of the log logged from a box of the plan; open when left out.
  * - `plus`: Whether the line shows the one plus in place of `empty` while nothing is picked,
  *   see `plusPut` in `../icons.ts`, `empty` then its tooltip,
  *   like the plus that adds a document to a chapter; words when left out.

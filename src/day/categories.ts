@@ -1511,7 +1511,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             }),
         ];
     if (field.key === "title" && meal !== null) return meal;
-    if (field.key === "title" && field.many === true) return [manyRowOf(field)];
+    if (field.key === "title" && field.many === true && !asPlanned()) return [manyRowOf(field)];
     const place: [HTMLButtonElement, HTMLAnchorElement] | null =
         field.key === "title" ? null : placePartsOf(field);
     const summary: HTMLElement[] = field.key === "title" ? summaryPartsOf(field) : [];
@@ -1545,6 +1545,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                     place === null
                         ? [...summary.slice(1), steps]
                         : [place[1], ...(shown ? [partsOf(field)] : [])],
+                locked: field.key === "title" && asPlanned(),
                 pick: (picked: string[]): void => {
                     const line: string = picked[0] ?? "";
                     const before: string = labelOf(values[field.key]);
@@ -2167,11 +2168,12 @@ function moreRowsOf(): HTMLElement[] {
 /**
  * Tells whether the dialog logs a box of the plan that has a category,
  * or changes an entry of the log logged from a box, which points to it with `RELATED-TO`:
- * its category stays the plan's, so the link shows how the plan was really done,
- * while its summary, times, place, people, semester and note change freely,
+ * its category and summary stay the plan's, so the link shows how the plan was really done,
+ * while its times, place, people, semester and note change freely,
  * like a lecture watched online at home;
- * the skill and type of a skill entry change by a click on them, see `skill.ts`.
- * A box without category leaves it open, to be picked.
+ * its summary changes only by its pencil, see {@link summaryChange},
+ * and the skill and type of a skill entry by a click on them, see `skill.ts`.
+ * A box without category leaves both open, to be picked.
  *
  * @returns Whether it does
  */
