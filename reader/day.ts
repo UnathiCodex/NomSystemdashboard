@@ -64,7 +64,7 @@
  * - `./trackers.ts`: Tells whether an entry is a glass of water.
  */
 
-import { boxDone, boxFind, boxOpenFind, boxReopen } from "./boxes.ts";
+import { boxDone, boxFind, boxOpenFind, boxRename, boxReopen } from "./boxes.ts";
 import {
     berlinDateOf,
     entriesOnceRead,
@@ -757,6 +757,8 @@ export function boxUndo(id: string): void {
  * then its fields and times change.
  * The entry moves into the log it belongs into now
  * when that is another file, see {@link logFileOf}.
+ * Its box takes a new summary with it, see `boxRename` in `boxes.ts`,
+ * but for a meal, whose foods write its summary, what I really ate.
  *
  * @param file - `.ics` file of the entry
  * @param entry - The entry as its file holds it
@@ -794,6 +796,8 @@ function entryWrite(file: string, entry: Entry, change: EntryNew): void {
             ["x-video", videos.map((line: string): string => sportIcsOf(line, true))],
         ]);
     entryChange(file, entry, fields, logFileOf(fields));
+    if (entry.planned !== "" && foods.length === 0 && fields.title !== entry.title)
+        boxRename(entry.planned, fields.title);
     cookedShare(entry.cooked);
     if (change.cooked !== undefined && change.cooked !== entry.cooked) cookedShare(change.cooked);
     if (fields.category === cookName) cookedShare(entry.id, entry.foods);

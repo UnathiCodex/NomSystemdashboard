@@ -48,7 +48,8 @@
  * it shows below it its text, which I change in place, like `Wolrd News` to `World News`,
  * see {@link summaryPartsOf}, also that of `Sport` and `Way`,
  * which the reader still takes only as one of their values, and one as planned;
- * the new text changes only this box or entry, also a box of a series of the plan,
+ * the new text changes only this box or entry, a box and the entry logged from it together,
+ * also a box of a series of the plan,
  * like my sleep every night,
  * whose whole series changes only in the dialog of the series,
  * by the series icon ⟳ after its times, see {@link seriesShow}.
@@ -1511,7 +1512,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             }),
         ];
     if (field.key === "title" && meal !== null) return meal;
-    if (field.key === "title" && field.many === true && !asPlanned()) return [manyRowOf(field)];
+    if (field.key === "title" && field.many === true) return [manyRowOf(field)];
     const place: [HTMLButtonElement, HTMLAnchorElement] | null =
         field.key === "title" ? null : placePartsOf(field);
     const summary: HTMLElement[] = field.key === "title" ? summaryPartsOf(field) : [];
@@ -1545,7 +1546,6 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                     place === null
                         ? [...summary.slice(1), steps]
                         : [place[1], ...(shown ? [partsOf(field)] : [])],
-                locked: field.key === "title" && asPlanned(),
                 pick: (picked: string[]): void => {
                     const line: string = picked[0] ?? "";
                     const before: string = labelOf(values[field.key]);
@@ -2168,12 +2168,12 @@ function moreRowsOf(): HTMLElement[] {
 /**
  * Tells whether the dialog logs a box of the plan that has a category,
  * or changes an entry of the log logged from a box, which points to it with `RELATED-TO`:
- * its category and summary stay the plan's, so the link shows how the plan was really done,
+ * its category stays the plan's, so the link shows how the plan was really done,
+ * and its summary, picked or by its pencil, changes in the box too, see `boxRename` in `boxes.ts`,
  * while its times, place, people, semester and note change freely,
  * like a lecture watched online at home;
- * its summary changes only by its pencil, see {@link summaryChange},
- * and the skill and type of a skill entry by a click on them, see `skill.ts`.
- * A box without category leaves both open, to be picked.
+ * the skill and type of a skill entry change by a click on them, see `skill.ts`.
+ * A box without category leaves it open, to be picked.
  *
  * @returns Whether it does
  */

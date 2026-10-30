@@ -2916,6 +2916,25 @@ export function stampPut(file: string, id: string): void {
 }
 
 /**
+ * Sets the summary of a to-do or an event with its link.
+ * Every other line of the file stays as it is, byte for byte.
+ *
+ * @param file - Path of the `.ics` file
+ * @param id - Identifier of the to-do or the event
+ * @param fields - Text fields with its summary and the link of it
+ * @throws {Error} - When the file lies outside the new system
+ *   or does not hold the to-do or the event once
+ */
+export function titlePut(file: string, id: string, fields: EntryTexts): void {
+    writeCheck(file);
+    const text: FileLines = linesRead(file);
+    const place: [number, number] = componentFind(text.lines, id);
+    const component: string[] = text.lines.slice(...place);
+    propertyPut(component, "summary", [textPropertyOf("summary", fields.title, fields)]);
+    componentWrite(file, text, place, component, file);
+}
+
+/**
  * Sets the state of a box of the plan, its `STATUS`, `COMPLETED` for a done one,
  * without the moment it was done, the `COMPLETED` line iCalendar offers for it,
  * since the log entry written from the box holds its real time.

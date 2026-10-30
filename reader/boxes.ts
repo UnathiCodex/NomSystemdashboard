@@ -167,6 +167,7 @@ import {
     seriesDayRemove,
     stampPut,
     statusPut,
+    titlePut,
     todoAppend,
     todoChange,
 } from "./calendar.ts";
@@ -1282,6 +1283,7 @@ export function boxUniversity(id: string, cancelled: boolean): void {
  * so a change the reader does not take changes nothing.
  * One occurrence of a series left with nothing of its own goes back
  * to its series, see {@link boxTidy}.
+ * The log entry written from it takes a new summary with it, see {@link logRename}.
  * - `old`: Its entry as its file holds it, before the pushes of a box carried along are written.
  * - `todo`: New fields of a to-do, `null` for an event.
  * - `event`: New fields and times of an event, see {@link eventFieldsOf}, `null` for a to-do.
@@ -1315,6 +1317,30 @@ export function boxEdit(change: BoxChange): void {
     else if (event !== null) entryChange(file, entry, event, target);
     boxLinksPut(target, change.id, links);
     boxTidy(file, entry);
+    if (change.title !== old.title && box.category !== skillName)
+        logRename(change.id, box, change.title);
+}
+
+/**
+ * Renames the log entry written from a box once the box is renamed, so both keep one summary,
+ * but a meal, whose foods write its summary, and one of the old system.
+ * - `logged`: The log entry pointing to it, `undefined` for none.
+ * - `found`: Its `.ics` file and its entry.
+ *
+ * @param id - Identifier of the box
+ * @param box - The box with the times of its log entry
+ * @param title - Its new summary
+ */
+function logRename(id: string, box: Box, title: string): void {
+    if (box.log === null) return;
+    const logged: Entry | undefined = entriesRead(
+        day.log,
+        box.log.start,
+        new Date(Date.parse(box.log.end) + 1).toISOString(),
+    ).find((entry: Entry): boolean => entry.planned === id);
+    if (logged === undefined || logged.foods.length > 0 || !logged.editable) return;
+    const found: [string, Entry] | undefined = entryLookup(day.log, logged.id);
+    if (found !== undefined) titlePut(found[0], logged.id, { ...textsOf(logged), title: title });
 }
 
 /**
@@ -1541,6 +1567,39 @@ export function boxSubmit(id: string, submitted: boolean): void {
 }
 
 /**
+ * Finds a box of the plan, also an occurrence of a series.
+ * - `at`: Place of the last `#` of the identifier, -1 for none.
+ *
+ * @param id - Identifier of the box
+ * @returns Its `.ics` file and its entry, `undefined` when it is gone
+ */
+function boxLookup(id: string): [string, Entry] | undefined {
+    const at: number = id.lastIndexOf("#");
+    return (
+        entryLookup(day.plan, id) ??
+        (at === -1 ? undefined : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)))
+    );
+}
+
+/**
+ * Renames a box once the log entry written from it is renamed, so both keep one summary:
+ * one occurrence of a series alone, see {@link boxOwn},
+ * and a box no longer in the plan or of the old system stays as it is.
+ * - `found`: Its `.ics` file and its entry, `undefined` when it is gone.
+ *
+ * @param id - Identifier of the box
+ * @param title - Its new summary
+ */
+export function boxRename(id: string, title: string): void {
+    const found: [string, Entry] | undefined = boxLookup(id);
+    if (found === undefined || !found[1].editable) return;
+    const [file, entry]: [string, Entry] = found;
+    boxOwn(file, entry);
+    titlePut(file, id, { ...textsOf(entry), title: title });
+    boxTidy(file, entry);
+}
+
+/**
  * Opens a box again once the log entry written from it is removed:
  * a done to-do of the new system becomes `NEEDS-ACTION`;
  * an occurrence of a series is open again by itself,
@@ -1548,15 +1607,11 @@ export function boxSubmit(id: string, submitted: boolean): void {
  * since only my tick decides it, see {@link boxSubmit};
  * one of a day over stays on its day, see {@link overKeep}.
  * - `found`: Its `.ics` file and its entry, `undefined` when it is gone.
- * - `at`: Place of the last `#` of the identifier, -1 for none.
  *
  * @param id - Identifier of the box
  */
 export function boxReopen(id: string): void {
-    const at: number = id.lastIndexOf("#");
-    const found: [string, Entry] | undefined =
-        entryLookup(day.plan, id) ??
-        (at === -1 ? undefined : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)));
+    const found: [string, Entry] | undefined = boxLookup(id);
     if (found === undefined || found[1].deadline !== "") return;
     if (found[1].todo && found[1].editable && found[1].status === "COMPLETED")
         statusPut(found[0], id, "NEEDS-ACTION");
