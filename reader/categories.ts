@@ -134,6 +134,8 @@ export type Category = {
  *   its address in its parts and its link, by its line, see `places.ts`; none for any other field.
  * - `links`: For `With` the address of each name, as its last entry wrote it,
  *   like `sophale@invalid`, see {@link addressesOf}; none for any other field.
+ * - `params`: For a summary the params each value had before, see {@link paramsOf};
+ *   none for any other field.
  * - `platforms`: For `Online` each of my platforms as its row of `Online.md` holds it,
  *   its provider and the link of its web app, by its name, see `Platform` in `places.ts`;
  *   none for any other field.
@@ -142,6 +144,7 @@ export type FieldShown = Field & {
     rooms: string[];
     places: { [line: string]: Place };
     links: { [value: string]: string };
+    params: { [value: string]: string[] };
     platforms: { [name: string]: Platform };
 };
 
@@ -437,8 +440,7 @@ function onlineUsesOf(logs: Entry[]): string[] {
 /**
  * Lists the values of the field `title` of a category in log entries:
  * the what of its entries, each value of a what of several on its own,
- * like `Caring` and `Shower` of `Caring, Shower`,
- * each without its parameter in round brackets, like `Augenheilkunde` of `Augenheilkunde (Sehtest)`.
+ * like `Caring` and `Shower` of `Caring, Shower`.
  *
  * @param logs - Log entries
  * @param name - Name of the category
@@ -448,8 +450,36 @@ function onlineUsesOf(logs: Entry[]): string[] {
 function titleUsesOf(logs: Entry[], name: string, many: boolean): string[] {
     return logs
         .filter((log: Entry): boolean => log.category === name)
-        .flatMap((log: Entry): string[] => (many ? log.title.split(", ") : [log.title]))
-        .map(summaryBaseOf);
+        .flatMap((log: Entry): string[] => (many ? log.title.split(", ") : [log.title]));
+}
+
+/**
+ * Gives the params each value of a summary had in log entries, in round brackets at its end,
+ * like `Sehtest` of `Augenheilkunde (Sehtest)`, the most used first.
+ * - `uses`: The values with a param, a value as often as it was used.
+ *
+ * @param logs - Log entries
+ * @param name - Name of the category
+ * @param many - Whether its what takes several values, parted by `, `
+ * @returns Params by value, like `Augenheilkunde`
+ */
+function paramsOf(logs: Entry[], name: string, many: boolean): { [value: string]: string[] } {
+    const uses: string[] = titleUsesOf(logs, name, many).filter(
+        (use: string): boolean => summaryBaseOf(use) !== use,
+    );
+    return Object.fromEntries(
+        [...new Set(uses.map(summaryBaseOf))].map((base: string): [string, string[]] => [
+            base,
+            valuesOrder(
+                uses
+                    .filter((use: string): boolean => summaryBaseOf(use) === base)
+                    .map((use: string): string =>
+                        use.slice(summaryBaseOf(use).length).trim().slice(1, -1),
+                    ),
+                [],
+            ),
+        ]),
+    );
 }
 
 /**
@@ -608,7 +638,9 @@ export function categoriesRead(now: string): CategoryShown[] {
                               : [
                                     ...field.values,
                                     ...valuesOrder(
-                                        titleUsesOf(logs, category.name, field.many === true),
+                                        titleUsesOf(logs, category.name, field.many === true).map(
+                                            summaryBaseOf,
+                                        ),
                                         [],
                                     ).filter(
                                         (value: string): boolean => !field.values.includes(value),
@@ -621,6 +653,8 @@ export function categoriesRead(now: string): CategoryShown[] {
                 rooms: ["location", "from"].includes(field.key) ? rooms.map(lineOf) : [],
                 places: ["location", "from"].includes(field.key) ? rows : {},
                 links: field.key === "with" ? addresses : {},
+                params:
+                    field.key === "title" ? paramsOf(logs, category.name, field.many === true) : {},
                 platforms: field.key === "online" ? rowsOnline : {},
             })),
         }));

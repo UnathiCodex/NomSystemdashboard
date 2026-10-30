@@ -310,6 +310,18 @@
 /* The link of the summary of a skill entry on a line of its own below skill and type,
    the folder of its skill, as close below them as an address below its place,
    see `skillPathShow` in `skill.ts` */
+/* The picker of the param of a value of several, without line of its own,
+   its list opening below the row, see `paramListOpen` in `categories.ts` */
+.picker-quiet .picker-head {
+    height: 0;
+}
+
+/* Unseen, never cut off, since a list hides with a line that is cut off */
+.picker-quiet .picker-line {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .panel-pair .entry-address {
     order: 1;
     flex-basis: 100%;
