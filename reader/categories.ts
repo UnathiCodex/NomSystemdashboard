@@ -42,8 +42,8 @@
  * `Event` is what I go to that is no skill,
  * like an evening at a company, its what as I type it, its place where it is,
  * which I add with its address and link like any place of mine.
- * `Sleep` takes only two whats, `Night` and `Day`, a nap, see {@link sleepWhats}, and no new ones,
- * so the sleep tracker tells a nap from a night, see `trackers.ts`;
+ * `Sleep` offers `Night` and `Day`, a nap, first, see {@link sleepWhats}, and takes new ones,
+ * the sleep tracker telling a nap from a night by `Day` and the length, see `trackers.ts`;
  * `Way` takes only my means of transport, see {@link transports}.
  * `Sport` is a session of sport, not the moving of every day, which ways on foot or by bike are:
  * it takes only its kinds, `Gym` and `Home workout`, see `sportKinds` in `sport.ts`,
@@ -252,7 +252,7 @@ export const skillTypes: string[] = ["VO", "UE", "ZU", "TU", "HU", "FA", "PR"];
 const semesterForm: RegExp = /^\d{4}[WS]$/;
 
 /**
- * The only whats of `Sleep`, in this order: `Night`, the sleep of a night, and `Day`, a nap,
+ * The whats `Sleep` offers first, in this order: `Night`, the sleep of a night, and `Day`, a nap,
  * which the sleep tracker never counts as a night, see `trackers.ts`.
  */
 const sleepWhats: string[] = ["Night", "Day"];
@@ -293,7 +293,7 @@ const categories: Category[] = [
     {
         name: "Sleep",
         fields: [
-            { name: "Summary", key: "title", values: sleepWhats, steps: {}, fixed: true },
+            { name: "Summary", key: "title", values: sleepWhats, steps: {}, fixed: false },
             { name: "Place", key: "location", values: [], steps: {}, fixed: false },
             onlineField,
             withField,

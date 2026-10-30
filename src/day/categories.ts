@@ -18,7 +18,7 @@
  * Every category has its `Summary`, the `SUMMARY` of its file, its `Place`,
  * a way also `From` before its place, and below the times `With`,
  * who I was with, see {@link withRowOf};
- * the summary of `Sleep` only `Night` or `Day`, a nap, that of `Way` my means of transport;
+ * the summary of `Sleep` first `Night` or `Day`, a nap, that of `Way` my means of transport;
  * a value with steps shows them below its line while it is picked, with the note of its last entry;
  * `Body` is my body care, one or several, like `Shower` or `Caring, Shower`;
  * in the log, `Food` has its summary written by itself from its meals and its foods,
@@ -42,11 +42,11 @@
  * Each list comes from the log, the most used first, searched as I type, see `choices.ts`;
  * the typed text can be added as a new value with `+ New summary` at the end of the list,
  * which is then picked, the way to write a new summary or another one in place of the one picked,
- * but to the summary of `Sleep`, `Sport` and `Way`, whose lists take no new ones.
+ * but to the summary of `Sport` and `Way`, whose lists take no new ones.
  * A summary is plain text, and every summary has a pencil `✎` beside it, as a place has,
  * which always changes it, in plan and log alike, see {@link summaryChange}:
  * it shows below it its text, which I change in place, like `Wolrd News` to `World News`,
- * see {@link summaryPartsOf}, also that of `Sleep`, `Sport` and `Way`,
+ * see {@link summaryPartsOf}, also that of `Sport` and `Way`,
  * which the reader still takes only as one of their values, and one as planned;
  * the new text changes only this box or entry, also a box of a series of the plan,
  * like my sleep every night,

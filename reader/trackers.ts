@@ -7,10 +7,10 @@
  * My goals stand here, in one place, and so do the numbers of my learning, see {@link settings}.
  * Sleep is an entry of the category `Sleep`,
  * written by the entry by category with its start and end,
- * and its what, `Night` or `Day` for a nap, see `categories.ts`.
+ * and its what, `Night`, `Day` for a nap or a new one, see `categories.ts`.
  * The night of a day is the longest sleep of at least 3 hours that ends on it in Berlin time,
  * the sleep I wake up from that morning, so a nap never becomes the night,
- * and a sleep `Day` never, whatever its length; an old entry without what counts like a `Night`.
+ * and a sleep `Day` never, whatever its length; any other what counts like a `Night`.
  * What I slept on a day is every sleep that ends on it, the night and the naps,
  * so a sleep from 22:00 to 05:00 counts for the day it ends on, never for the day it began on.
  * The week holds the nights of the day and the six days before it,
