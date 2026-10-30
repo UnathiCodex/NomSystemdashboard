@@ -78,6 +78,9 @@
  * in a section its block shows alone, as a click in the tree shows it, any other file,
  * like a PDF at its page, opens in this window, in Chrome's own viewer,
  * and an address of the web in a new tab.
+ * A copy takes the selection as the note writes it, a formula as its TeX,
+ * with every link it reaches into whole, so a link copied stays a link,
+ * see {@link selectionCopied}.
  * Links resolve as the reader found them when the note was read or saved last,
  * see {@link linksSet}: a link that leads nowhere fades and leads nowhere,
  * a link or image written since works once the note is saved.
@@ -2989,6 +2992,42 @@ function formulaClicked(event: MouseEvent, view: EditorView): boolean {
 }
 
 /**
+ * Copies the selection as the note writes it, a formula as its TeX,
+ * with every link it reaches into whole, see {@link linkAt},
+ * like `by [probability distribution](<#Definition. Probability Distribution>)`
+ * for `by probability distribution` selected,
+ * whose end before the hidden `](…)` would leave the link out.
+ * A copy without a selection goes on to the editor, which copies the line,
+ * and so does a cut, which takes out only what is selected.
+ * - `state`: Text and selection of the note.
+ * - `ranges`: What is selected.
+ *
+ * @param event - Copy, `copy`
+ * @param view - The editor
+ * @returns Whether it copied the selection, which the editor then leaves alone
+ */
+function selectionCopied(event: ClipboardEvent, view: EditorView): boolean {
+    const state: EditorState = view.state;
+    const ranges: SelectionRange[] = state.selection.ranges.filter(
+        (range: SelectionRange): boolean => !range.empty,
+    );
+    if (ranges.length === 0 || event.clipboardData === null) return false;
+    event.preventDefault();
+    event.clipboardData.setData(
+        "text/plain",
+        ranges
+            .map((range: SelectionRange): string =>
+                state.sliceDoc(
+                    linkAt(state, range.from)?.from ?? range.from,
+                    linkAt(state, range.to - 1)?.to ?? range.to,
+                ),
+            )
+            .join(state.lineBreak),
+    );
+    return true;
+}
+
+/**
  * Follows the click on the name of a person under `## Modulverantwortliche`,
  * see {@link responsiblesLook}, to its row in `Persons.md` in this window,
  * as a click on a name in the column `Lecturers` does, see `personRowAddressOf` in `../persons.ts`.
@@ -3129,7 +3168,8 @@ export function linksSet(view: EditorView, links: Links): void {
  *   and lets a drag take the hidden start of a line, see {@link marginSelect}.
  * - {@link EditorView.domEventHandlers}: Follow a link clicked,
  *   see {@link linkClicked}, before the editor puts the cursor there,
- *   and select the TeX of a formula double clicked, see {@link formulaClicked}.
+ *   select the TeX of a formula double clicked, see {@link formulaClicked},
+ *   and copy a selection with its links whole, see {@link selectionCopied}.
  * - {@link syntaxHighlighting}: Gives the pieces of syntax their classes, see {@link highlighter},
  *   those of code their colors of my theme, see `codeHighlighter` in `../notes/code.ts`.
  * - {@link codeFolding}: Holds what is folded, without the `…` CodeMirror puts in place of it,
@@ -3186,6 +3226,7 @@ export function livePreview(links: Links, place: string): Extension {
         EditorView.domEventHandlers({ mousedown: personClicked, click: personClicked }),
         EditorView.domEventHandlers({ mousedown: linkClicked, click: linkClicked }),
         EditorView.domEventHandlers({ mousedown: formulaClicked }),
+        EditorView.domEventHandlers({ copy: selectionCopied }),
         syntaxHighlighting(highlighter),
         syntaxHighlighting(codeHighlighter),
     ];
