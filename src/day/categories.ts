@@ -50,8 +50,9 @@
  * which the reader still takes only as one of their values, and one as planned;
  * the new text changes only this box or entry, a box and the entry logged from it together.
  * A box of a series of the plan, like my sleep every night, and an entry logged from it
- * change their summary only with the whole series, in the dialog of the series,
- * by the series icon ⟳ after its times, see {@link seriesShow} and {@link ofSeries}.
+ * open no list, see {@link ofSeries}, and only their pencil changes them alone;
+ * the whole series changes only in the dialog of the series,
+ * by the series icon ⟳ after its times, see {@link seriesShow}.
  * The pencil of a skill entry shows only its link, its title always the one skill and type give it,
  * see {@link categoryPick};
  * its skill and type a click on them picks, see `skill.ts`; that of a meal
@@ -1223,7 +1224,7 @@ function summaryPartsShow(): void {
     if (address !== document.activeElement)
         address.value =
             summaryLink === "" && chosen?.name === skillName ? skillPathOf() : summaryLink;
-    pencil.hidden = titleRead(valuesRead().title) === "" || ofSeries();
+    pencil.hidden = titleRead(valuesRead().title) === "";
     if (chosen?.name === skillName && summaryLink === "") {
         skillPathShow(link);
         return;
@@ -2169,8 +2170,7 @@ function moreRowsOf(): HTMLElement[] {
  * Tells whether the dialog logs a box of the plan that has a category,
  * or changes an entry of the log logged from a box, which points to it with `RELATED-TO`:
  * its category stays the plan's, so the link shows how the plan was really done,
- * and its summary changes in the box too, see `boxRename` in `boxes.ts`, but of a series,
- * see {@link ofSeries},
+ * and its summary changes in the box too, see `boxRename` in `boxes.ts`,
  * while its times, place, people, semester and note change freely,
  * like a lecture watched online at home;
  * the skill and type of a skill entry change by a click on them, see `skill.ts`.
@@ -2187,19 +2187,17 @@ function asPlanned(): boolean {
 }
 
 /**
- * Tells whether the dialog shows a box of a series or an entry logged from one,
- * whose summary changes only in the dialog of the series, see {@link seriesShow}:
- * its list opens none and its pencil is gone.
- * A skill entry keeps its pencil, which shows only its link.
+ * Tells whether the dialog shows a box of a series or an entry logged from one:
+ * its line opens no list, so another summary comes only by the dialog of the series,
+ * see {@link seriesShow}; its pencil still renames this box and its entry.
  *
  * @returns Whether it does
  */
 function ofSeries(): boolean {
     return (
-        chosen?.name !== skillName &&
-        (opened.box?.series === true ||
-            opened.plan?.series === true ||
-            String(opened.entry?.extendedProps.planned ?? "").includes("#"))
+        opened.box?.series === true ||
+        opened.plan?.series === true ||
+        String(opened.entry?.extendedProps.planned ?? "").includes("#")
     );
 }
 

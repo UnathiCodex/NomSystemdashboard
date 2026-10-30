@@ -1582,8 +1582,9 @@ function boxLookup(id: string): [string, Entry] | undefined {
 }
 
 /**
- * Renames a box once the log entry written from it is renamed, so both keep one summary;
- * a box of a series, no longer in the plan or of the old system stays as it is.
+ * Renames a box once the log entry written from it is renamed, so both keep one summary:
+ * one occurrence of a series alone, see {@link boxOwn},
+ * and a box no longer in the plan or of the old system stays as it is.
  * - `found`: Its `.ics` file and its entry, `undefined` when it is gone.
  *
  * @param id - Identifier of the box
@@ -1591,8 +1592,11 @@ function boxLookup(id: string): [string, Entry] | undefined {
  */
 export function boxRename(id: string, title: string): void {
     const found: [string, Entry] | undefined = boxLookup(id);
-    if (found === undefined || !found[1].editable || found[1].recurrence !== "") return;
-    titlePut(found[0], id, { ...textsOf(found[1]), title: title });
+    if (found === undefined || !found[1].editable) return;
+    const [file, entry]: [string, Entry] = found;
+    boxOwn(file, entry);
+    titlePut(file, id, { ...textsOf(entry), title: title });
+    boxTidy(file, entry);
 }
 
 /**
