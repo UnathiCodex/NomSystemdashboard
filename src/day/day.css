@@ -292,6 +292,11 @@
     min-width: 5rem;
 }
 
+/* The plus of a param right after its value, however short, as after the name of a skill */
+.panel-pair.summary-pair > .picker:first-child .picker-head {
+    min-width: 0;
+}
+
 /* The second picker a line of text too, even while it holds only its plus or a pencil,
    which have no text, so it stands on the baseline of the first and the plus
    as high in every dialog, with a pencil beside it or without */
@@ -615,6 +620,19 @@ fieldset.entry-times {
 .entry-pencil {
     font-size: inherit;
     translate: 0 calc(50% - 0.5cap);
+}
+
+/* The plus of the param of a value of several, inside its line,
+   where it stands as the plus of a type beside a skill: as far off, as high, as grey,
+   see `paramShownOf` in `categories.ts` */
+.entry-pencil.plus-quiet {
+    padding-block: 0;
+    color: var(--text-muted);
+}
+
+/* The param of a value of several as far after it as the type after a skill, see `.panel-pair` */
+.value-param {
+    margin-inline-start: 0.3em;
 }
 
 /* Skill session being changed: its attempts, one per line, grey, in place of the fields */

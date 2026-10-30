@@ -1663,14 +1663,13 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             if (field.key === "title") titleRowsShow();
         },
     });
-    return [
-        rowOf(
-            field.name,
-            paired
-                ? pairOf(picker, paramPickerOf(field, -1, values.title, summary.slice(0, 1)))
-                : picker,
-        ),
-    ];
+    if (!paired) return [rowOf(field.name, picker)];
+    const pair: HTMLElement = pairOf(
+        picker,
+        paramPickerOf(field, -1, values.title, summary.slice(0, 1)),
+    );
+    pair.classList.add("summary-pair");
+    return [rowOf(field.name, pair)];
 }
 
 /**
@@ -1800,13 +1799,15 @@ function valueAtOf(value: string): number {
 function paramShownOf(value: string): HTMLElement {
     const param: string = paramOf(value);
     if (param === "") {
-        const plus: HTMLSpanElement = document.createElement("span");
+        const plus: HTMLButtonElement = document.createElement("button");
+        plus.type = "button";
         plus.className = "entry-pencil";
         plusPut(plus, "Add a param");
         return plus;
     }
     const shown: HTMLSpanElement = document.createElement("span");
-    shown.textContent = ` (${param})`;
+    shown.className = "value-param";
+    shown.textContent = `(${param})`;
     return shown;
 }
 
