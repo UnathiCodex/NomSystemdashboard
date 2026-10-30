@@ -617,9 +617,17 @@ fieldset.entry-times {
     padding-inline: 0.25rem;
 }
 
-.entry-pencil {
+.entry-pencil,
+.panel-pair .picker-line.plus-quiet {
     font-size: inherit;
     translate: 0 calc(50% - 0.5cap);
+}
+
+.panel-pair .picker-line.plus-quiet {
+    flex: none;
+    align-self: baseline;
+    min-height: 0;
+    padding-block: 0;
 }
 
 /* The plus of the param of a value of several, inside its line,
