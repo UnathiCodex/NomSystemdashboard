@@ -128,6 +128,7 @@ import { boxDrop, boxLog, boxPush, boxSubmit, boxUndo, boxUniversity } from "./e
 import { boxOpenEdit, boxOpenNew, entryOpenFromBox } from "./categories.ts";
 import { giftOpen } from "./gifts.ts";
 import { middleCutPut } from "./choices.ts";
+import { summaryShownOf } from "../persons.ts";
 import { whereLinkedOf, whereOf } from "./places.ts";
 import { linkNameOf } from "../skill/links.ts";
 import { boxMinutes, boxTimesOf, lengthOf, nearOf, rangeDash, timeOf } from "./times.ts";
@@ -367,7 +368,8 @@ export function whatOf(category: string, what: string): (string | Node)[] {
 
 /**
  * Gives what an entry or a box shows as its what, see {@link whatOf}:
- * its what as written, its `SUMMARY`, of a skill entry or box its skill and type,
+ * its what as written, its `SUMMARY`, its values apart by a middle dot, like `U-Bahn · Walk`,
+ * see `summaryShownOf` in `../persons.ts`, of a skill entry or box its skill and type,
  * like `IN2028_BusinessAnalyticsMachineLearning (VO)`;
  * on a phone the title its skill and type give it,
  * the name of the folder of its skill and its type in brackets,
@@ -383,7 +385,7 @@ export function whatOf(category: string, what: string): (string | Node)[] {
  */
 export function shownWhatOf(category: string, title: string, module: string, type: string): string {
     if (category !== skillName || !phone || module === "" || !title.startsWith(`${module}_`))
-        return title;
+        return summaryShownOf(title);
     return type === "" ? module : `${module} (${type})`;
 }
 

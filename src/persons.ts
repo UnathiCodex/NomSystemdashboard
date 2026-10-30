@@ -107,21 +107,38 @@ export const personsKept: () => Promise<Person[]> = changesKept((): Promise<Pers
 );
 
 /**
- * Puts several people on one line, each name apart by a middle dot,
- * like `Durmann, Julius · Ewert, Markus`, never a comma or `; `, since a name holds a comma;
- * an en space on each side of the dot, as far as every dot that parts a line,
- * see `.entry-parted` in `./day/day.css`, the line going on after it where it is too long.
- * - `dot`: The dot between two names.
+ * The middle dot that parts people or the values of a summary on one line,
+ * never a comma or `; `, since a name holds a comma:
+ * an en space on each side of it, as far as every dot that parts a line,
+ * see `.entry-parted` in `./day/day.css`.
+ */
+export const valueDot: string = "\u2002·\u2002";
+
+/**
+ * Shows a summary as the page writes it, the values its file parts by `, ` apart by
+ * {@link valueDot}, like `U-Bahn · Walk` of `U-Bahn, Walk`.
+ *
+ * @param summary - The summary as its file writes it, like `U-Bahn, Walk`
+ * @returns The summary as the page writes it
+ */
+export function summaryShownOf(summary: string): string {
+    return summary.replaceAll(", ", valueDot);
+}
+
+/**
+ * Puts several people or values on one line, each apart by {@link valueDot},
+ * like `Durmann, Julius · Ewert, Markus`, the line going on after it where it is too long.
+ * - `dot`: The dot between two of them.
  *
  * @param names - The names, each its text or its link
  * @returns The names with the dots between them
  */
-export function peopleOf(names: (string | Node)[]): (string | Node)[] {
+export function dottedOf(names: (string | Node)[]): (string | Node)[] {
     return names.flatMap((name: string | Node, index: number): (string | Node)[] => {
         if (index === 0) return [name];
         const dot: HTMLSpanElement = document.createElement("span");
-        dot.className = "people-dot";
-        dot.textContent = "\u2002·\u2002";
+        dot.className = "value-dot";
+        dot.textContent = valueDot;
         return [dot, name];
     });
 }

@@ -685,14 +685,16 @@ fieldset.entry-times {
     margin-inline: 0.5em;
 }
 
-/* Middle dot between two people on one line, like `Durmann, Julius · Ewert, Markus`, see `peopleOf`
-   in `../persons.ts`: an en space on each side,
-   as far as the dot of `.entry-parted` and the dash of a range;
-   after the pencil of a person, see `withRowOf` in `categories.ts`,
+/* Middle dot between two people or two values of a summary on one line,
+   like `Durmann, Julius · Ewert, Markus`, see `dottedOf` in `../persons.ts`:
+   an en space on each side, as far as the dot of `.entry-parted` and the dash of a range;
+   after the pencil of a person or a value,
+   see `withRowOf` and `valueAfterOf` in `categories.ts`,
    as far from the pencil drawn as from the next name,
    so the room the pencil keeps right of its line,
    its padding and the white of its icon, taken back */
-:has(> .entry-pencil:last-child) + .people-dot {
+:has(> .entry-pencil:last-child) + .value-dot,
+:has(> :last-child > .entry-pencil:last-child) + .value-dot {
     margin-left: -0.37em;
 }
 

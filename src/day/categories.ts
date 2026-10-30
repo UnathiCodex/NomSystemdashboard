@@ -20,7 +20,7 @@
  * who I was with, see {@link withRowOf};
  * the summary of `Sleep` first `Night` or `Day`, a nap, that of `Way` my means of transport;
  * a value with steps shows them below its line while it is picked, with the note of its last entry;
- * `Body` is my body care, one or several, like `Shower` or `Caring, Shower`;
+ * `Body` is my body care, one or several, like `Caring (Shower)` or `Caring, Augenheilkunde`;
  * in the log, `Food` has its summary written by itself from its meals and its foods,
  * each in a row of its own with its own list, my meals of `Meals.md` and my foods,
  * like `Käsesalat, Brot`, see `meal.ts`;
@@ -282,7 +282,7 @@ const topics: { [category: string]: string } = {
  *   like the exercises of `Neck short`.
  * - `fixed`: Whether it takes only its values, like `Night` and `Day` of `Sleep`, and no new ones.
  * - `many`: Whether it takes several of its values, parted by `, `,
- *   like the means of a way, `U-Bahn, Bus`, or my body care, `Caring, Shower`,
+ *   like the means of a way, `U-Bahn, Bus`, or my body care, `Caring, Augenheilkunde`,
  *   see {@link manyRowOf}, or the people of `With`, parted by `; `, `Bichler, Martin; Willi`,
  *   see {@link withRowOf}; one when left out.
  * - `rooms`: For a field of a place, the rooms of the university in `Rooms.md`,
@@ -1424,8 +1424,8 @@ function summaryPickedOf(): string {
  * the text typed, or the values of a summary of several with the one of its pencil changed,
  * an emptied value left out, see {@link summaryValue}.
  *
- * @param typed - The text typed, like `Dusche`
- * @returns The summary, like `Caring, Dusche`
+ * @param typed - The text typed, like `Augenheilkunde`
+ * @returns The summary, like `Caring, Augenheilkunde`
  */
 function summaryTypedOf(typed: string): string {
     if (summaryValue === -1) return typed;
@@ -1697,16 +1697,17 @@ function fieldRowsOf(field: Field): HTMLElement[] {
 
 /**
  * Builds the row of a summary of several values, like the means of a way, since I change on it,
- * like U-Bahn then bus, or my body care, like `Caring, Shower`:
- * one line of the row, the values picked concatenated as one summary, parted by `, `,
- * like `U-Bahn, Bus`, which is also how the entry writes them;
+ * like U-Bahn then bus, or my body care, like `Caring, Augenheilkunde`:
+ * one line of the row, the values picked concatenated as one summary, parted by a middle dot,
+ * like `U-Bahn · Bus`, which its entry writes `U-Bahn, Bus`;
  * its list, a menu, takes a value or takes it back by a click and stays open for the next,
  * see `many` in `choices.ts`, and takes a new value where the field takes new ones,
  * like `Body`, not `Way`. A way keeps the order picked, the order I rode in;
  * any other summary the order of its list, the most used first, a new value last,
- * like `Caring, Shower`, see {@link rankOf}. While none is picked, the row empty without a plus, as
- * every field of one value, since a click into it opens its list;
- * each value its own pencil, like `Caring ✎, Shower ✎`, see {@link valueAfterOf},
+ * like `Caring, Augenheilkunde`, see {@link rankOf}.
+ * While none is picked, the row empty without a plus, as every field of one value,
+ * since a click into it opens its list;
+ * each value its own pencil, like `Caring ✎ · Augenheilkunde ✎`, see {@link valueAfterOf},
  * and the link of the summary below it, see {@link summaryPartsOf}.
  * - `picked`: The values picked, in their order.
  * - `link`, `linkParts`: Link and the part to type it of the summary.
@@ -1772,7 +1773,7 @@ function manyRowOf(field: Field): HTMLElement {
  *
  * @param field - Field of the summary
  * @param home - Where the list of its param stands
- * @param value - Value picked, like `Shower`
+ * @param value - Value picked, like `Caring`
  * @returns What stands after it
  */
 function valueAfterOf(field: Field, home: HTMLElement, value: string): HTMLElement {
@@ -1806,7 +1807,7 @@ function valueAfterOf(field: Field, home: HTMLElement, value: string): HTMLEleme
 /**
  * Gives where a value picked stands among those of the summary now.
  *
- * @param value - Value picked, without param, like `Shower`
+ * @param value - Value picked, without param, like `Caring`
  * @returns Its place, from 0, -1 once it changed
  */
 function valueAtOf(value: string): number {
@@ -1899,7 +1900,7 @@ function paramPick(field: Field, at: number, param: string): void {
  *
  * @param field - Field of the summary
  * @param home - Where the picker stands
- * @param value - Value picked, like `Shower`
+ * @param value - Value picked, like `Caring`
  */
 function paramListOpen(field: Field, home: HTMLElement, value: string): void {
     const at: number = valueAtOf(value);
@@ -1914,7 +1915,7 @@ function paramListOpen(field: Field, home: HTMLElement, value: string): void {
  * a value not in it, a new one, after all.
  *
  * @param field - Field of several values, like the summary of `Body`
- * @param value - Value picked, like `Shower`
+ * @param value - Value picked, like `Caring`
  * @returns Its place, from 0
  */
 function rankOf(field: Field, value: string): number {
@@ -2086,7 +2087,6 @@ export function withChoicesOf(
         add: async (name: string): Promise<string | null> =>
             name.includes(";") ? null : (personOf(persons, name.trim())?.name ?? name.trim()),
         noun: "person",
-        people: true,
         linkOf: (name: string): string => {
             const person: Person | undefined = personOf(persons, name);
             return person === undefined ? "" : personRowAddressOf(person);
@@ -2100,7 +2100,7 @@ export function withChoicesOf(
  * like `Bichler, Martin · Willi`, the one maker of this dialog and of that of a series,
  * see {@link WithSetup}: one line of the row, the names picked apart by a middle dot,
  * since a person of `Persons.md` holds a comma in its name,
- * see `peopleOf` in `../persons.ts`, going on over the next line where it is too long;
+ * see `dottedOf` in `../persons.ts`, going on over the next line where it is too long;
  * a name of a person there, also an older
  * one spoken, like `Philip Zimmer`, is a link in the line to its row there,
  * see `personOf` in `../persons.ts`, any other name plain text.

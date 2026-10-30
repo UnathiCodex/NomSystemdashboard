@@ -42,13 +42,13 @@
  * - `../icons.ts`: Puts the one plus into a line that adds, or before the typed text it adds,
  *   and the one `×` into the button that takes a value back, and makes the search field of a list.
  * - `../search.ts`: Compares a typed text with the values, as every search of the page does.
- * - `../persons.ts`: Puts the people of a line apart by a middle dot.
+ * - `../persons.ts`: Puts the people or values of a line apart by a middle dot.
  */
 
 import { Star } from "lucide";
 import { crossPut, iconOf, plusPut, plusTake, plusTypedPut, searchFieldOf } from "../icons.ts";
 import { matchesAll, searchTextOf, wordsOf } from "../search.ts";
-import { peopleOf } from "../persons.ts";
+import { dottedOf, valueDot } from "../persons.ts";
 
 /**
  * Marks where a long name may go on over a next line, where it is wider than its room,
@@ -194,9 +194,6 @@ export type Choice = {
  *   back in its picker once a value shows; false when left out.
  * - `textOf`: Text of a value picked before its list ever opened,
  *   like the name and day of a cooking of its identifier; the value itself when left out.
- * - `people`: Whether the values are people, like those of `With`,
- *   whose names hold a comma, parted in the line by a middle dot, like `Bichler, Martin · Willi`,
- *   see `peopleOf` in `../persons.ts`; parted by `, ` when left out.
  * - `linkOf`: Address a value picked opens from the line,
  *   like the row of a person in `Persons.md`, empty for a value that opens nothing,
  *   see {@link lineValueOf}; every value plain text when left out.
@@ -220,7 +217,6 @@ export type ChoicesSetup = {
     plus?: boolean;
     besideName?: boolean;
     textOf?: (value: string) => string;
-    people?: boolean;
     linkOf?: (value: string) => string;
     afterOf?: (value: string) => HTMLElement;
 };
@@ -574,7 +570,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         const shown: string[] = chosen.map(
             (value: string): string => texts.get(value) ?? setup.textOf?.(value) ?? value,
         );
-        const text: string = shown.join(setup.people === true ? " · " : ", ");
+        const text: string = shown.join(valueDot);
         if (text === "" && setup.plus === true) {
             plusPut(line, setup.empty ?? "");
             line.classList.add("picker-empty");
@@ -596,14 +592,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
                 return both;
             },
         );
-        if (text !== "" && setup.people === true) line.replaceChildren(...peopleOf(values));
-        else if (text !== "" && setup.linkOf !== undefined)
-            line.replaceChildren(
-                ...values.flatMap((value: string | Node, index: number): (string | Node)[] => [
-                    ...(index === 0 ? [] : [", "]),
-                    value,
-                ]),
-            );
+        if (text !== "" && setup.linkOf !== undefined) line.replaceChildren(...dottedOf(values));
         line.title = setup.locked ? "As planned" : text;
         line.classList.toggle("picker-empty", text === "");
     };

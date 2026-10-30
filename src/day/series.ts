@@ -4212,7 +4212,7 @@ function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
  * see `fieldRowsOf` in `./categories.ts`, from the values of its category, the most used first,
  * a new one typed where its category takes new ones,
  * so not for `Sleep`, `Sport` or `Way`, several parted by `, ` where it takes several,
- * like `Caring, Shower`, in the order of the list, a way in the order picked,
+ * like `Caring, Augenheilkunde`, in the order of the list, a way in the order picked,
  * see `manyRowOf` there; of a skill its text to type,
  * since what a skill box is follows from its skill.
  * A summary picked has its pencil right after it, as in the dialog of a box,

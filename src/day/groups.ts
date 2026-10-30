@@ -58,7 +58,7 @@ import { calendarTodayOf } from "../today.ts";
 import { elementOf } from "../food/foods.ts";
 import { iconOf } from "../icons.ts";
 import { menuAnchor, menuItemOf } from "../menu.ts";
-import { peopleOf } from "../persons.ts";
+import { dottedOf } from "../persons.ts";
 import { Check, ChevronDown, Pin, Repeat } from "lucide";
 import "./groups.css";
 
@@ -321,7 +321,7 @@ function weekPick(course: Course, box: Box, group: Group, session: Session, show
 
 /**
  * Makes the tutors of a group in the menu of the groups, apart by a middle dot,
- * see `peopleOf` in `../persons.ts`, like `Durmann, Julius · Ewert, Markus`, plain text,
+ * see `dottedOf` in `../persons.ts`, like `Durmann, Julius · Ewert, Markus`, plain text,
  * so a click on them picks the group as anywhere on its row.
  * - `names`: The names of its tutors.
  * - `tutors`: The tutors.
@@ -333,7 +333,7 @@ function tutorsOf(group: Group): HTMLElement | null {
     const names: string[] = group.rule.attendees.map((attendee: Attendee): string => attendee.name);
     const tutors: HTMLElement = elementOf("span", "group-tutors", "");
     if (names.length === 0) return null;
-    tutors.append(...peopleOf(names));
+    tutors.append(...dottedOf(names));
     return tutors;
 }
 

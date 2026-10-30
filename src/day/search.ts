@@ -39,7 +39,7 @@ import { dateTextOf, rangeDash, timeOf } from "./times.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { iconPut, searchFieldOf } from "../icons.ts";
-import { peopleOf } from "../persons.ts";
+import { dottedOf } from "../persons.ts";
 import { Search } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
@@ -135,7 +135,7 @@ function searchedOf(entry: LogEntry): string {
  * - `day`: Day of its start, like `2026-10-16`.
  * - `place`: Its place as shown, see `whereLinkedOf` in `places.ts`, none for none.
  * - `people`: The names of who I was with, apart by a middle dot, like `Sophale, Willi · Socials`,
- *   see `peopleOf` in `../persons.ts`, none for nobody.
+ *   see `dottedOf` in `../persons.ts`, none for nobody.
  * - `where`: Its place and who I was with, those it has.
  * - `meta`: The grey line below what it was, its day and time, then where.
  * - `button`: The result, which opens the entry.
@@ -156,7 +156,7 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
         entry.online,
         "",
     );
-    const people: (string | Node)[] = peopleOf(
+    const people: (string | Node)[] = dottedOf(
         entry.attendees.map((person: Attendee): string => person.name),
     );
     const where: (string | Node)[][] = [place, people].filter(

@@ -29,10 +29,11 @@
  * A value offered in the code may come with steps, which the dialog shows while it is picked,
  * and below them the note of the last entry of it,
  * like `Last time: band red · 3×10`, so the load can rise.
- * `Body` is my body care, showering and any care, offering `Caring` and `Shower` first,
- * in that order, then the rest by use, as every summary offers the values of the code first,
+ * `Body` is my body care, showering and any care, offering `Caring` first,
+ * a shower its param, `Caring (Shower)`,
+ * then the rest by use, as every summary offers the values of the code first,
  * and takes several, parted by `, `,
- * like `Caring, Shower`, its list offering each once; my neck routine,
+ * like `Caring, Augenheilkunde`, its list offering each once; my neck routine,
  * `Neck short` and `Neck long`, is no what of it any more, also where the log holds it,
  * see {@link retiredWhats}.
  * A dish, the what of `Food` and `Cook`, names its foods parted by `, `, like `Reis, Bohnen, Eier`.
@@ -97,7 +98,7 @@ export type FieldKey = "title" | "from" | "location" | "online" | "with";
  * - `fixed`: Whether it takes only the values offered in the code,
  *   like `Night` and `Day` of `Sleep`, and no new ones.
  * - `many`: Whether it takes several of its values, parted by `, `,
- *   like the means of a way, `U-Bahn, Bus`, my body care, `Caring, Shower`,
+ *   like the means of a way, `U-Bahn, Bus`, my body care, `Caring, Augenheilkunde`,
  *   or the people of `With`, parted by `; `, `Bichler, Martin; Willi`; one when left out.
  */
 export type Field = {
@@ -311,7 +312,7 @@ const categories: Category[] = [
             {
                 name: "Summary",
                 key: "title",
-                values: ["Caring", "Shower"],
+                values: ["Caring"],
                 steps: {},
                 fixed: false,
                 many: true,
@@ -440,7 +441,7 @@ function onlineUsesOf(logs: Entry[]): string[] {
 /**
  * Lists the values of the field `title` of a category in log entries:
  * the what of its entries, each value of a what of several on its own,
- * like `Caring` and `Shower` of `Caring, Shower`.
+ * like `Caring` and `Augenheilkunde` of `Caring, Augenheilkunde`.
  *
  * @param logs - Log entries
  * @param name - Name of the category

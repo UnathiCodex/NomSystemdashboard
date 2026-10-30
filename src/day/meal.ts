@@ -97,6 +97,7 @@ import {
 import { dishesFound, dishNameOf, kcalTextOf, mealNameOf } from "../food/meals.ts";
 import { foodDetailOf, foodSearchClear, foodSearchOf, listLineOf } from "../food/search.ts";
 import { crossPut, iconOf, iconPut, plusPut } from "../icons.ts";
+import { summaryShownOf } from "../persons.ts";
 import { readerAsk } from "../reader.ts";
 import { Pencil, Plus } from "lucide";
 
@@ -745,7 +746,7 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
 /**
  * Shows the summary, see {@link mealTitle}, and after it the kcal of the whole meal in brackets,
  * as a type stands after its skill,
- * like `Chili con Carne, Weißbrot (660 kcal)`, white like the summary;
+ * like `Chili con Carne · Weißbrot (660 kcal)`, white like the summary;
  * no kcal while no food has grams, as a food without grams shows none.
  * - `total`: kcal of the meals and the foods beside them.
  * - `text`: The summary with its kcal.
@@ -754,7 +755,7 @@ function summaryShow(): void {
     const total: number =
         meals.reduce((sum: number, meal: MealPick): number => sum + mealKcalOf(meal), 0) +
         picks.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0);
-    const text: HTMLElement = elementOf("span", "meal-summary", mealTitle());
+    const text: HTMLElement = elementOf("span", "meal-summary", summaryShownOf(mealTitle()));
     if (
         [...meals.flatMap((meal: MealPick): FoodPick[] => meal.foods), ...picks].some(
             (pick: FoodPick): boolean => numberOf(pick.grams) !== null,
@@ -998,7 +999,7 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
 
 /**
  * Writes a cooking as the list of the cookings offers it: what it was and when it started,
- * like `Hackfleisch, Kidneybohnen, Tomaten · 13.10.2026 (Tue) 16:00`.
+ * like `Hackfleisch · Kidneybohnen · Tomaten · 13.10.2026 (Tue) 16:00`.
  * - `start`: Its start.
  *
  * @param cooking - Cooking
@@ -1006,7 +1007,7 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
  */
 function cookingTextOf(cooking: Cooking): string {
     const start: Date = new Date(cooking.start);
-    return `${cooking.title} · ${dayTextOf(dayOf(start), true)} ${timeOf(start)}`;
+    return `${summaryShownOf(cooking.title)} · ${dayTextOf(dayOf(start), true)} ${timeOf(start)}`;
 }
 
 /**
