@@ -53,7 +53,8 @@
  * see {@link manyRowOf}.
  * Every value takes a param, like `Augenheilkunde (Sehtest)`,
  * by a small plus beside it, as a skill takes its type, but typed as I like,
- * see {@link paramPickerOf}; its list always offers only `Augenheilkunde`.
+ * see {@link paramPickerOf}, and its pencil changes it in the part `Param` below `Text`;
+ * its list always offers only `Augenheilkunde`.
  * A box of a series of the plan, like my sleep every night, and an entry logged from it
  * open no list, see {@link ofSeries}, and only their pencil changes them alone;
  * the whole series changes only in the dialog of the series,
@@ -556,14 +557,16 @@ function paramOf(value: string): string {
 }
 
 /**
- * Writes a value of a summary with its param, see {@link paramForm}.
+ * Writes a value of a summary with its param, see {@link paramForm},
+ * without what would part it from the value.
  *
  * @param base - Value, like `Augenheilkunde`
  * @param param - Param, like `Sehtest`, empty for none
  * @returns Value, like `Augenheilkunde (Sehtest)`
  */
 function paramPut(base: string, param: string): string {
-    return param === "" ? base : `${base} (${param})`;
+    const clean: string = param.replace(/[,()]/g, "").trim();
+    return clean === "" ? base : `${base} (${clean})`;
 }
 
 /**
@@ -585,8 +588,14 @@ let skillGiven: string = "";
  * `null` while no summary shows them.
  */
 let summaryShown:
-    [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement, HTMLInputElement, boolean] | null =
-    null;
+    | [
+          HTMLButtonElement,
+          HTMLAnchorElement,
+          HTMLInputElement,
+          HTMLInputElement,
+          HTMLInputElement | null,
+      ]
+    | null = null;
 
 /**
  * Category picked, `null` before picking.
@@ -1277,16 +1286,16 @@ function partsOf(field: Field): HTMLElement {
  */
 function summaryPartsShow(): void {
     if (summaryShown === null) return;
-    const [pencil, link, text, address, split]: [
+    const [pencil, link, text, address, param]: [
         HTMLButtonElement,
         HTMLAnchorElement,
         HTMLInputElement,
         HTMLInputElement,
-        boolean,
+        HTMLInputElement | null,
     ] = summaryShown;
-    const value: string =
-        summaryValue === -1 ? values.title : (values.title.split(", ")[summaryValue] ?? "");
-    if (text !== document.activeElement) text.value = split ? baseOf(value) : value;
+    const value: string = summaryPickedOf();
+    if (text !== document.activeElement) text.value = param === null ? value : baseOf(value);
+    if (param !== null && param !== document.activeElement) param.value = paramOf(value);
     if (address !== document.activeElement)
         address.value =
             summaryLink === "" && chosen?.name === skillName ? skillPathOf() : summaryLink;
@@ -1350,6 +1359,8 @@ function summaryPartsOf(
     const text: HTMLInputElement = partFieldOf("text", values.title, "Text of the summary");
     const address: HTMLInputElement = partFieldOf("url", summaryLink, "Link of the summary");
     const parts: HTMLElement = document.createElement("div");
+    const param: HTMLInputElement | null =
+        summary === undefined ? null : partFieldOf("text", "", "Param of the summary");
     let shown: string = values.title;
     pencil.type = "button";
     pencil.className = "entry-pencil";
@@ -1357,32 +1368,34 @@ function summaryPartsOf(
     link.rel = "noopener";
     parts.className = "field-parts";
     if (typed) parts.append(partOf("Text", text));
+    if (param !== null && paramOf(summaryPickedOf()) !== "") parts.append(partOf("Param", param));
     if (summary !== undefined || chosen?.name === skillName) parts.append(partOf("Link", address));
     iconPut(pencil, Pencil, "Change the summary");
     parts.hidden = !summaryOpen;
-    text.addEventListener("focusin", (): void => {
-        shown = values.title;
-        summaryValues = values.title.split(", ");
-    });
-    text.addEventListener("input", (): void => {
-        const name: string = text.value.trim();
-        const before: string = summaryValue === -1 ? shown : (summaryValues[summaryValue] ?? "");
-        const typed: string = summaryTypedOf(
-            summary === undefined ? name : paramPut(name, paramOf(before)),
-        );
-        values.title = summary === undefined ? typed : fixedTextOf(summary, typed);
-        saveAllow();
-    });
-    text.addEventListener("focusout", (event: FocusEvent): void => {
-        const next: string | null =
-            event.relatedTarget instanceof HTMLElement
-                ? event.relatedTarget.getAttribute("aria-label")
-                : null;
-        if (values.title === shown || summary === undefined) return;
-        titleRowsShow();
-        document
-            .querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)
-            ?.focus();
+    [text, ...(param === null ? [] : [param])].forEach((input: HTMLInputElement): void => {
+        input.addEventListener("focusin", (): void => {
+            shown = values.title;
+            summaryValues = values.title.split(", ");
+        });
+        input.addEventListener("input", (): void => {
+            const name: string = text.value.trim();
+            const typed: string = summaryTypedOf(
+                param === null ? name : paramPut(name, param.value),
+            );
+            values.title = summary === undefined ? typed : fixedTextOf(summary, typed);
+            saveAllow();
+        });
+        input.addEventListener("focusout", (event: FocusEvent): void => {
+            const next: string | null =
+                event.relatedTarget instanceof HTMLElement
+                    ? event.relatedTarget.getAttribute("aria-label")
+                    : null;
+            if (values.title === shown || summary === undefined) return;
+            titleRowsShow();
+            document
+                .querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)
+                ?.focus();
+        });
     });
     address.addEventListener("input", (): void => {
         summaryLink = address.value.trim();
@@ -1391,9 +1404,19 @@ function summaryPartsOf(
     pencil.addEventListener("click", (): void => {
         summaryChange(parts);
     });
-    summaryShown = [pencil, link, text, address, summary !== undefined];
+    summaryShown = [pencil, link, text, address, param];
     summaryPartsShow();
     return [pencil, link, parts];
+}
+
+/**
+ * Gives what the parts of the summary change: the value of its pencil, or the whole summary,
+ * see {@link summaryValue}.
+ *
+ * @returns The value, with its param
+ */
+function summaryPickedOf(): string {
+    return summaryValue === -1 ? values.title : (values.title.split(", ")[summaryValue] ?? "");
 }
 
 /**
@@ -1835,30 +1858,34 @@ function paramPickerOf(field: Field, at: number, value: string, aside: HTMLEleme
         plus: true,
         aside: aside,
         pick: (picked: string[]): void => {
-            paramPick(at, picked[0] ?? "");
+            paramPick(field, at, picked[0] ?? "");
         },
     });
 }
 
 /**
- * Writes the param of a value into the summary, without what would part it from the value,
- * and shows its rows anew.
+ * Writes the param of a value into the summary and shows its rows anew;
+ * its list keeps offering it, also once I pick another, until the page loads anew,
+ * then those of the log, see `paramsOf` in `reader/categories.ts`.
  * - `all`: The values of the summary.
+ * - `base`: The value without param.
+ * - `written`: The value with its param.
  *
+ * @param field - Field of the summary, with the params of each value
  * @param at - Place of the value in the summary, -1 for a summary of one value
  * @param param - Param, like `Sehtest`, empty for none
  */
-function paramPick(at: number, param: string): void {
-    const typed: string = param.replace(/[,()]/g, "").trim();
-    const all: string[] = values.title.split(", ");
-    values.title =
-        at === -1
-            ? paramPut(baseOf(values.title), typed)
-            : all
-                  .map((value: string, index: number): string =>
-                      index === at ? paramPut(baseOf(value), typed) : value,
-                  )
-                  .join(", ");
+function paramPick(field: Field, at: number, param: string): void {
+    const all: string[] = at === -1 ? [values.title] : values.title.split(", ");
+    const base: string = baseOf(all[Math.max(at, 0)]);
+    const written: string = paramPut(base, param);
+    values.title = all
+        .map((value: string, index: number): string =>
+            index === Math.max(at, 0) ? written : value,
+        )
+        .join(", ");
+    if (paramOf(written) !== "")
+        field.params[base] = [...new Set([...(field.params[base] ?? []), paramOf(written)])];
     saveAllow();
     titleRowsShow();
 }
