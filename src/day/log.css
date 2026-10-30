@@ -207,13 +207,16 @@
 
 /* Arrow of a route between where a way starts and its goal, like `Home Munich → TUM Garching`:
    drawn as an icon as high as a letter, in the grey of its line,
-   its middle on the middle of the letters, with a third of a letter of room on both sides,
-   see `routeArrowOf` in `places.ts` */
+   with a third of a letter of room on both sides, see `routeArrowOf` in `places.ts`;
+   every line puts the icon on the foot of the letters, a flex line too, which ignores
+   `vertical-align`, and `top` lowers it so its middle stands 0.27em above that foot,
+   on the middle of the small letters, as high as the dash of a time */
 svg.route-arrow {
+    position: relative;
+    top: 0.23em;
     width: 1em;
     height: 1em;
     margin-inline: 0.3em;
-    vertical-align: -0.15em;
 }
 
 /* Place with a link, its `ALTREP`, in an entry or a box, like `8120.01.101 (Audimax im Galileo)`,
