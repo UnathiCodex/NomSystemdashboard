@@ -258,13 +258,12 @@ let shownIn: SkillShown | null = null;
  * Chapters and documents of the skill picked,
  * none before one is picked and for a project.
  */
-let contents: ModuleContents = {
-    folder: "",
-    chapters: [],
-    documents: [],
-    materials: {},
-    inner: [],
-};
+let contents: ModuleContents = contentsNone();
+
+/** Gives the contents of no skill. */
+function contentsNone(): ModuleContents {
+    return { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
+}
 
 /**
  * `X-ROUND`s of the skill entry of the log being changed, none for any other.
@@ -320,9 +319,9 @@ function moduleIs(code: string): boolean {
  * Gives the name of the folder of the skill picked, which names the files of its plan
  * and its log, as the reader names it, see `skillFolderNameOf` in `reader/documents.ts`.
  */
-export function skillFolderNameOf(): string {
-    const path: string = skilling.paths[picks.module] ?? "";
-    return path === "" ? picks.module : path.slice(path.lastIndexOf("/") + 1);
+export function skillFolderNameOf(module: string = picks.module): string {
+    const path: string = skilling.paths[module] ?? "";
+    return path === "" ? module : path.slice(path.lastIndexOf("/") + 1);
 }
 
 /**
@@ -454,17 +453,10 @@ export function skillSemesterOf(day: string): string {
 }
 
 /**
- * Builds the choices of the semester, never typed: that of the day of the dialog first,
- * then every semester the module has material for, newest first,
+ * Builds the choices of the semester, never typed: that of a day first,
+ * like the day of the dialog,
+ * then every semester the documents of a module are of, newest first,
  * and the one picked when it is none of them, like that of an older entry.
- */
-function semesterChoicesOf(): Choice[] {
-    return semesterListOf(semesterDay, contents.documents, picks.semester);
-}
-
-/**
- * Builds the choices of the semester from a day, the documents of a module
- * and the semester picked, see {@link semesterChoicesOf}.
  */
 function semesterListOf(day: string, documents: string[], picked: string): Choice[] {
     const current: string = semesterOf(day);
@@ -549,16 +541,12 @@ function documentsOfferedOf(chapter: string): string[] {
  * the folders between the folder of its material and it.
  */
 function documentChoicesOf(chapter: string): Choice[] {
-    return documentsOfferedOf(chapter).map((path: string): Choice => {
-        const parts: string[] = path.split("/");
-        if (chapterOfDocument(path) !== "")
-            return { value: path, text: parts.at(-1) ?? path, group: "" };
-        return {
-            value: path,
-            text: parts.at(-1) ?? path,
-            group: parts.slice(1, -1).join("/"),
-        };
-    });
+    return documentsOfferedOf(chapter).map((path: string): Choice => ({
+        value: path,
+        text: fileNameOf(path),
+        group:
+            chapterOfDocument(path) !== "" ? "" : path.split("/").slice(1, -1).join("/"),
+    }));
 }
 
 /**
@@ -694,19 +682,12 @@ function loggedOf(): HTMLElement[] {
  */
 async function contentsLoad(): Promise<void> {
     const module: string = picks.module;
-    const none: ModuleContents = {
-        folder: "",
-        chapters: [],
-        documents: [],
-        materials: {},
-        inner: [],
-    };
     const loaded: ModuleContents =
         module === ""
-            ? none
+            ? contentsNone()
             : await moduleLoad(module).catch((error: unknown): ModuleContents => {
                   console.error(error);
-                  return none;
+                  return contentsNone();
               });
     if (module === picks.module) contents = loaded;
 }
@@ -905,12 +886,11 @@ function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
  * empty for a chapter without notes, like one whose folder has another name now.
  */
 function chapterLinkOf(chapter: string): string {
-    const module: string = contents.folder.slice(modulesFolder.length + 1);
     const note: string | undefined = contents.documents.find(
         (path: string): boolean => chapterOfDocument(path) === chapter,
     );
     if (note === undefined) return "";
-    return `/scripts?path=${encodeURIComponent(`${module}/${note}`)}`;
+    return `/scripts?path=${encodeURIComponent(noteOf(note))}`;
 }
 
 /**
@@ -1049,6 +1029,56 @@ function documentRowsOf(
 }
 
 /**
+ * Makes the Skill list of a skill entry or a series, see {@link moduleSearchOf},
+ * which adds a new module typed, see {@link moduleAdd}.
+ */
+function skillPickerOf(
+    module: string,
+    below: HTMLElement[],
+    aside: HTMLElement[] | undefined,
+    pick: (values: string[]) => void,
+): HTMLElement {
+    return choicesOf({
+        search: moduleSearchOf(module),
+        picked: module === "" ? [] : [module],
+        many: false,
+        adding: true,
+        add: moduleAdd,
+        noun: "module",
+        below: below,
+        aside: aside,
+        newTextOf: (text: string): string | null => {
+            const folder: string | null = moduleFolderNameOf(text);
+            return folder === null ? null : `New module ${folder}`;
+        },
+        pick: pick,
+    });
+}
+
+/**
+ * Makes the list of the type beside the skill, a plus while none is picked,
+ * its first choice taking the type back, see {@link noType}.
+ */
+function typePickerOf(
+    type: string,
+    aside: HTMLElement[] | undefined,
+    pick: (type: string) => void,
+): HTMLElement {
+    return choicesOf({
+        search: searchOf([noType, ...skilling.types].map(choiceOf)),
+        picked: type === "" ? [] : [type],
+        many: false,
+        adding: false,
+        noun: "type",
+        empty: "Add a type",
+        plus: true,
+        aside: aside,
+        pick: (values: string[]): void =>
+            pick(values[0] === noType ? "" : (values[0] ?? "")),
+    });
+}
+
+/**
  * Shows the fields of `Skill` as picked so far:
  * skill and type in the row of its summary, the type only for a module,
  * the semester below,
@@ -1062,20 +1092,11 @@ function picksShow(shown: SkillShown): void {
     };
 
     if (!moduleIs(picks.module)) picks.type = "";
-    const skill: HTMLElement = choicesOf({
-        search: moduleSearchOf(),
-        picked: picks.module === "" ? [] : [picks.module],
-        many: false,
-        adding: true,
-        add: moduleAdd,
-        noun: "module",
-        below: shown.summary.slice(1),
-        aside: moduleIs(picks.module) ? [] : shown.summary.slice(0, 1),
-        newTextOf: (text: string): string | null => {
-            const folder: string | null = moduleFolderNameOf(text);
-            return folder === null ? null : `New module ${folder}`;
-        },
-        pick: (values: string[]): void => {
+    const skill: HTMLElement = skillPickerOf(
+        picks.module,
+        shown.summary.slice(1),
+        moduleIs(picks.module) ? [] : shown.summary.slice(0, 1),
+        (values: string[]): void => {
             picks = {
                 ...picks,
                 module: values[0] ?? "",
@@ -1084,11 +1105,9 @@ function picksShow(shown: SkillShown): void {
                 attempts: [],
                 rounds: new Map(),
             };
-            contentsLoad()
-                .then(again)
-                .catch((error: unknown): void => console.error(error));
+            contentsLoad().then(again).catch(console.error);
         },
-    });
+    );
     shown.head.replaceChildren(
         rowOf(
             "Summary",
@@ -1096,26 +1115,22 @@ function picksShow(shown: SkillShown): void {
                 ? skill
                 : pairOf(
                       skill,
-                      choicesOf({
-                          search: searchOf([noType, ...skilling.types].map(choiceOf)),
-                          picked: picks.type === "" ? [] : [picks.type],
-                          many: false,
-                          adding: false,
-                          noun: "type",
-                          empty: "Add a type",
-                          plus: true,
-                          aside: shown.summary.slice(0, 1),
-                          pick: (values: string[]): void => {
-                              picks.type = values[0] === noType ? "" : (values[0] ?? "");
+                      typePickerOf(
+                          picks.type,
+                          shown.summary.slice(0, 1),
+                          (type: string): void => {
+                              picks.type = type;
                               again();
                           },
-                      }),
+                      ),
                   ),
         ),
         rowOf(
             "Semester",
             choicesOf({
-                search: searchOf(semesterChoicesOf()),
+                search: searchOf(
+                    semesterListOf(semesterDay, contents.documents, picks.semester),
+                ),
                 picked: [skillSemesterOf(semesterDay)],
                 many: false,
                 adding: false,
@@ -1153,48 +1168,29 @@ export async function skillPairOf(
         pick(next);
         skillPairOf(next, pick)
             .then((fresh: HTMLElement): void => pair.replaceWith(fresh))
-            .catch((error: unknown): void => console.error(error));
+            .catch(console.error);
     };
     const link: HTMLAnchorElement = document.createElement("a");
     link.className = "entry-address";
     folderLinkShow(link, skillNamesOf(picked).link);
-    const skill: HTMLElement = choicesOf({
-        search: moduleSearchOf(picked.module),
-        picked: picked.module === "" ? [] : [picked.module],
-        many: false,
-        adding: true,
-        add: moduleAdd,
-        noun: "module",
-        below: picked.module === "" ? [] : [link],
-        newTextOf: (text: string): string | null => {
-            const folder: string | null = moduleFolderNameOf(text);
-            return folder === null ? null : `New module ${folder}`;
-        },
-        pick: (values: string[]): void =>
+    const skill: HTMLElement = skillPickerOf(
+        picked.module,
+        picked.module === "" ? [] : [link],
+        undefined,
+        (values: string[]): void =>
             again({
                 ...picked,
                 module: values[0] ?? "",
                 type: moduleIs(values[0] ?? "") ? picked.type : "",
             }),
-    });
+    );
     const pair: HTMLElement = !moduleIs(picked.module)
         ? skill
         : pairOf(
               skill,
-              choicesOf({
-                  search: searchOf([noType, ...skilling.types].map(choiceOf)),
-                  picked: picked.type === "" ? [] : [picked.type],
-                  many: false,
-                  adding: false,
-                  noun: "type",
-                  empty: "Add a type",
-                  plus: true,
-                  pick: (values: string[]): void =>
-                      again({
-                          ...picked,
-                          type: values[0] === noType ? "" : (values[0] ?? ""),
-                      }),
-              }),
+              typePickerOf(picked.type, undefined, (type: string): void =>
+                  again({ ...picked, type: type }),
+              ),
           );
     return pair;
 }
@@ -1210,13 +1206,11 @@ export function skillNamesOf(picked: ModuleType): {
     link: string;
     file: string;
 } {
-    const path: string = skilling.paths[picked.module] ?? "";
-    const name: string =
-        path === "" ? picked.module : path.slice(path.lastIndexOf("/") + 1);
+    const name: string = skillFolderNameOf(picked.module);
     if (name === "") return { title: "", link: "", file: "" };
     return {
         title: picked.type === "" ? name : `${name} (${picked.type})`,
-        link: skilling.links[picked.module] ?? path,
+        link: skilling.links[picked.module] ?? skilling.paths[picked.module] ?? "",
         file:
             "NomManageplannings/NomManagecalendar/" +
             `${/^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
