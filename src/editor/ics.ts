@@ -34,7 +34,7 @@
  * Every block folds to its first line, like `BEGIN:VTIMEZONE`, by the arrow after it,
  * as the arrow of a heading of a note does,
  * see `FoldWidget` in `./preview.ts`; each comes unfolded.
- * Left of the text stands its overview, as in ChatGPT's reports, see {@link overviewKeep}:
+ * In the status line stands its overview, see {@link overviewKeep}:
  * a short dash per entry, white for the entry at the top of the view;
  * resting the mouse on one shows its entry as a box of the plan shows it, only its facts,
  * and a click scrolls to it.
@@ -394,7 +394,7 @@ const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
  * its lines decorated once as it opens,
  * and again whenever its text changes or a block folds or unfolds;
  * the readable forms at the right edge of the save button, see {@link overhangKeep};
- * its overview left of it, see {@link overviewKeep}.
+ * its overview above it, see {@link overviewKeep}.
  * - {@link codeFolding}: Holds what is folded, without the `…` CodeMirror puts in place of it,
  *   since the arrow turned right tells it, as in a note, see `livePreview` in `./preview.ts`.
  * - {@link foldService}: Tells what the first line of a block folds, see {@link blockOf}.
@@ -556,16 +556,17 @@ function boxOf(block: Block): HTMLElement {
 }
 
 /**
- * Keeps the overview of a calendar file left of its text, see the top of this file:
- * in the room left of the page, see `.ics-overview` in `editor.css`, a dash per entry,
+ * Keeps the overview of a calendar file above its text, see the top of this file:
+ * in the status line, see `.ics-overview` in `editor.css`, a dash per entry,
  * see {@link blocksOf}, named by its name for screen readers;
  * the dash of the entry at the top of the view, the last that begins above it, white,
  * followed as the file scrolls, and the overview scrolled so that dash stays in its middle,
  * so many entries never crowd it;
- * resting the mouse on a dash shows the box of its entry right of the overview at its height,
+ * resting the mouse on a dash shows the box of its entry below it, within the page,
  * see {@link boxOf}, a click scrolls the file to the entry's first line. It goes with the editor.
  * - `file`: The part of the page that scrolls the file,
  *   see `.editor-file` in `editor.css`, `null` for none.
+ * - `state`: The notice of the status line, which the overview stands before.
  * - `overview`: The overview.
  * - `blocks`, `dashes`: The entries and their dashes.
  * - `shown`: The box shown, `null` while none shows.
@@ -578,6 +579,7 @@ function boxOf(block: Block): HTMLElement {
 const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
     (view: EditorView): { destroy: () => void } => {
         const file: HTMLElement | null = view.dom.closest(".editor-file");
+        const state: HTMLElement | null = document.getElementById("editor-state");
         const overview: HTMLElement = document.createElement("nav");
         const blocks: Block[] = blocksOf(view.state);
         let shown: HTMLElement | null = null;
@@ -603,9 +605,10 @@ const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
             dash.addEventListener("mouseenter", (): void => {
                 boxHide();
                 shown = boxOf(block);
-                shown.style.left = `${overview.getBoundingClientRect().right + 8}px`;
-                shown.style.top = `${dash.getBoundingClientRect().top - 8}px`;
                 document.body.append(shown);
+                const room: number = innerWidth - shown.offsetWidth - 8;
+                shown.style.left = `${Math.min(dash.getBoundingClientRect().left, room)}px`;
+                shown.style.top = `${overview.getBoundingClientRect().bottom + 8}px`;
             });
             dash.addEventListener("mouseleave", boxHide);
             return dash;
@@ -626,13 +629,14 @@ const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
             dashes.forEach((dash: HTMLButtonElement, index: number): void => {
                 dash.classList.toggle("ics-dash-current", index === current);
             });
-            overview.scrollTop = (dashes[current]?.offsetTop ?? 0) - overview.clientHeight / 2;
+            overview.scrollLeft = (dashes[current]?.offsetLeft ?? 0) - overview.clientWidth / 2;
         };
-        if (file === null || blocks.length === 0) return { destroy: (): void => {} };
+        if (file === null || state === null || blocks.length === 0)
+            return { destroy: (): void => {} };
         overview.className = "ics-overview";
         overview.setAttribute("aria-label", "Entries");
         overview.append(...dashes);
-        file.append(overview);
+        state.before(overview);
         requestAnimationFrame(follow);
         file.addEventListener("scroll", follow);
         return {
