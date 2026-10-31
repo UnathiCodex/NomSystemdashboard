@@ -1099,15 +1099,10 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
             preview.filled();
         };
     const shown: boolean = box.chained === true || box.change === "removed";
+    const back: (() => void) | null = box.editable && !shown ? stated("open") : null;
     if (box.state === "done") return markOf(Check, "Done", null);
-    if (box.state === "dropped")
-        return markOf(X, "Skipped", box.editable && !shown ? stated("open") : null);
-    if (box.state === "university")
-        return markOf(
-            CalendarOff,
-            "Cancelled",
-            box.editable && !shown ? stated("open") : null,
-        );
+    if (box.state === "dropped") return markOf(X, "Skipped", back);
+    if (box.state === "university") return markOf(CalendarOff, "Cancelled", back);
     if (shown) return elementOf("span", "series-end", "");
     const session: Session | undefined = sessionOf(box);
     const buttons: HTMLButtonElement[] = [
@@ -1930,21 +1925,16 @@ async function examSend(form: Form, dry: boolean): Promise<Planned[]> {
             const time: string = start === null ? box.time : start.toISOString();
             const number: string = form.kinds[box.day] ?? box.number;
             return {
-                id: box.id,
-                day: box.day,
+                ...plannedOf(box),
                 time: time,
                 minutes: minutes,
                 number: number,
-                state: box.state,
-                pushed: box.pushed.length > 0,
-                editable: false,
                 retimable:
                     box.editable && box.todo && !box.series && box.pushed.length === 0,
                 change:
                     time === box.time && minutes === box.minutes && number === box.number
                         ? ""
                         : "changed",
-                attendees: box.attendees,
             };
         });
     const added: [Extra, Date, number][] = form.extras.map(
@@ -2143,19 +2133,24 @@ function waitingFill(form: Form): void {
 function keptOf(form: Form): Planned[] {
     return (course?.boxes ?? [])
         .filter((box: Box): boolean => box.type === form.type)
-        .map((box: Box): Planned => ({
-            id: box.id,
-            day: box.day,
-            time: box.time,
-            minutes: box.minutes,
-            number: box.number,
-            state: box.state,
-            pushed: box.pushed.length > 0,
-            editable: false,
-            retimable: false,
-            change: "",
-            attendees: box.attendees,
-        }));
+        .map(plannedOf);
+}
+
+/** Gives a box there already as a row of the list shows it, to be changed nowhere. */
+function plannedOf(box: Box): Planned {
+    return {
+        id: box.id,
+        day: box.day,
+        time: box.time,
+        minutes: box.minutes,
+        number: box.number,
+        state: box.state,
+        pushed: box.pushed.length > 0,
+        editable: false,
+        retimable: false,
+        change: "",
+        attendees: box.attendees,
+    };
 }
 
 /**
