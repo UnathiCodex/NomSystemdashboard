@@ -357,11 +357,19 @@ export function groupIs(entry: Entry): boolean {
 }
 
 /**
- * Reads the entries of the plan that are boxes in a range, every one but the groups,
+ * Reads the entries of the plan that are boxes from its first entry to a day,
+ * every one but the groups,
  * see `entriesRead` in `calendar.ts`, whose sessions are never walked.
+ *
+ * @param until - Day after the last
  */
-function planRead(start: string, end: string): Entry[] {
-    return entriesRead(day.plan, start, end, (entry: Entry): boolean => !groupIs(entry));
+function planRead(until: string): Entry[] {
+    return entriesRead(
+        day.plan,
+        "1970-01-01T00:00:00Z",
+        berlinDayStartOf(until),
+        (entry: Entry): boolean => !groupIs(entry),
+    );
 }
 
 /**
@@ -381,10 +389,7 @@ function planOnceRead(): Entry[] {
  * @throws {Error} - When the plan holds no such entry, or it is a group
  */
 function planEntryFind(id: string): [string, Entry] {
-    let found: [string, Entry] | undefined = entryLookup(day.plan, id);
-    const at: number = id.lastIndexOf("#");
-    if (found === undefined && at !== -1)
-        found = occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1));
+    const found: [string, Entry] | undefined = boxLookup(id);
     if (found === undefined || groupIs(found[1])) throw new Error(`No box ${id}`);
     return found;
 }
@@ -408,21 +413,7 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
     return carriedOf(
         {
             id: entryIdOf(entry),
-            category: entry.category,
-            title: entry.title,
-            titleLink: entry.titleLink,
-            location: entry.location,
-            locationLink: entry.locationLink,
-            online: entry.online,
-            onlineLink: entry.onlineLink,
-            onlineChannel: entry.onlineChannel,
-            onlineTitle: entry.onlineTitle,
-            from: entry.from,
-            attendees: entry.attendees,
-            module: entry.module,
-            type: entry.type,
-            semester: entry.semester,
-            note: entry.note,
+            ...textsOf(entry),
             day: dayOf(entry),
             time: entry.allDay ? "" : entry.start,
             minutes: minutes,
@@ -585,13 +576,9 @@ export function boxesRead(start: string, end: string): PlanDay[] {
     const logs: Map<string, Entry> = logsOf(dayAdd(logsUntilOf(end), deadlineDays));
     const entries: Entry[] = [
         ...new Map(
-            [
-                ...planRead(
-                    "1970-01-01T00:00:00Z",
-                    berlinDayStartOf(dayAdd(end, deadlineDays)),
-                ),
-                ...planOnceRead(),
-            ].map((entry: Entry): [string, Entry] => [entryIdOf(entry), entry]),
+            [...planRead(dayAdd(end, deadlineDays)), ...planOnceRead()].map(
+                (entry: Entry): [string, Entry] => [entryIdOf(entry), entry],
+            ),
         ).values(),
     ];
     const boxes: Box[] = entries.map((entry: Entry): Box => boxOf(entry, logs));
@@ -638,7 +625,7 @@ export function boxesRead(start: string, end: string): PlanDay[] {
 export function boxesCarried(date: string): Box[] {
     dateCheck(date);
     const logs: Map<string, Entry> = logsOf(date);
-    return planRead("1970-01-01T00:00:00Z", berlinDayStartOf(date))
+    return planRead(date)
         .map((entry: Entry): Box => boxOf(entry, logs))
         .filter(
             (box: Box): boolean =>
@@ -660,7 +647,7 @@ export function boxesCarried(date: string): Box[] {
 export function skillBoxesRead(until: string): Box[] {
     dateCheck(until);
     const logs: Map<string, Entry> = logsOf(until);
-    return planRead("1970-01-01T00:00:00Z", berlinDayStartOf(until))
+    return planRead(until)
         .map((entry: Entry): Box => boxOf(entry, logs))
         .filter((box: Box): boolean => box.category === skillName);
 }
@@ -772,14 +759,14 @@ function boxLinksPut(
 }
 
 /**
- * Turns a box as the page sends it into the fields of its to-do:
+ * Turns a box as the page sends it into its text fields:
  * its place with the link the reader finds, see `placeLinkOf` in `places.ts`,
  * what it does online as sent, else as it had it, see `onlineFor` there,
  * and what a skill box is as the reader writes it, see `titleOf` in `documents.ts`.
  *
  * @throws {Error} - When the link typed online is no web address
  */
-function todoFieldsOf(box: BoxNew, old: Entry | null): TodoFields {
+function boxTextsOf(box: BoxNew, old: Entry | null): EntryTexts {
     const semester: string = semesterFor(box.category, box.semester, box.day);
     const [title, titleLink]: [string, string] = titleOf(
         { ...box, semester: semester },
@@ -798,6 +785,13 @@ function todoFieldsOf(box: BoxNew, old: Entry | null): TodoFields {
         type: box.type,
         semester: semester,
         note: box.note,
+    };
+}
+
+/** Turns a box as the page sends it into the fields of its to-do, see {@link boxTextsOf}. */
+function todoFieldsOf(box: BoxNew, old: Entry | null): TodoFields {
+    return {
+        ...boxTextsOf(box, old),
         day: box.day,
         time: box.time === "" ? null : new Date(box.time),
         minutes: box.minutes,
@@ -818,24 +812,8 @@ function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
             `${old.title} is an event of the plan and keeps its time and its duration`,
         );
     const start: Date = new Date(change.time);
-    const semester: string = semesterFor(change.category, change.semester, change.day);
-    const [title, titleLink]: [string, string] = titleOf(
-        { ...change, semester: semester },
-        old,
-    );
     return {
-        category: change.category,
-        title: title,
-        titleLink: titleLink,
-        location: change.location,
-        locationLink: placeLinkOf(change.location, old),
-        ...onlineFor(change, old),
-        from: change.from,
-        attendees: change.attendees ?? old.attendees,
-        module: change.module,
-        type: change.type,
-        semester: semester,
-        note: change.note,
+        ...boxTextsOf(change, old),
         start: start,
         end: new Date(start.getTime() + change.minutes * minuteLength),
     };
@@ -849,11 +827,7 @@ function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
  * which took seconds for each lecture cancelled or added.
  */
 function seriesOf(module: string, type: string): Entry[] {
-    const entries: Entry[] = planRead(
-        "1970-01-01T00:00:00Z",
-        berlinDayStartOf(dayAdd(berlinDateOf(new Date()), 2 * 366)),
-    );
-    return entries
+    return planRead(dayAdd(berlinDateOf(new Date()), 2 * 366))
         .filter(
             (entry: Entry): boolean =>
                 entry.category === skillName &&
