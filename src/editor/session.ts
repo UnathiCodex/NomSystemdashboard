@@ -7,9 +7,7 @@
  * its skill entry of the moment, into which the record goes, see `reader/skill.ts`;
  * reading a section needs none.
  * While none runs, the day view's own dialog of a new entry opens over the page,
- * the one I log every entry with in the calendar, see `../day/categories.ts`:
- * `Skill` and the module picked, from now, to the minute, as long as my usual session,
- * see `sessionMinutes` in `reader/trackers.ts`;
+ * the one I log every entry with in the calendar, see `../day/categories.ts`.
  * I fill and save it there as always, and the record follows into it.
  * Cancelled, or saved as no session running now,
  * nothing is recorded and I stay where I was.
@@ -17,17 +15,6 @@
  * counts without the dialog.
  * The dialog comes into the page only the first time it opens, see `./dialog.ts`,
  * so the scripts load no calendar before.
- * The round shows the session it writes into beside its number,
- * its day and times as the calendar writes an entry, see {@link sessionTextOf}.
- *
- * - `./dialog.ts`: Puts the dialog of an entry of the day into the page,
- *   which opens for a new skill entry of the module.
- * - `../day/trackers.ts`: Loads my settings, with the minutes of my usual session.
- * - `../day/times.ts`: Gives now to the minute,
- *   as the day view writes its entries, and writes a time out.
- * - `../skill/attempts.ts`: Writes today's day in the form of the reader,
- *   and a day out as the page shows it.
- * - `../reader.ts`: Asks the reader.
  */
 
 import { dialogOf } from "./dialog.ts";
@@ -43,10 +30,7 @@ import type { Session } from "../../reader/skill.ts";
  * Loads from the reader the session of a module running now:
  * its skill entry of the moment,
  * see `sessionRead` in `reader/skill.ts`, while its end lies after now.
- * - `session`: The skill entry of the moment, `null` for none.
  *
- * @param module - Code of the module, like `IN2028`
- * @returns The session, `null` while none runs
  * @throws {Error} - When the reader cannot answer
  */
 export async function sessionOf(module: string): Promise<Session | null> {
@@ -59,10 +43,6 @@ export async function sessionOf(module: string): Promise<Session | null> {
 /**
  * Writes a session out as the calendar writes an entry:
  * its day with its weekday, then its start and end.
- * - `start`: Its start.
- *
- * @param session - Session
- * @returns Text like `17.10.2026 (Sat) · 21:40 – 22:40`
  */
 export function sessionTextOf(session: Session): string {
     const start: Date = new Date(session.start);
@@ -73,17 +53,11 @@ export function sessionTextOf(session: Session): string {
 }
 
 /**
- * Makes sure a session of a module runs before the learning view records something,
- * see the top of this file:
+ * Makes sure a session of a module runs before the learning view records something:
  * without one running now opens the dialog of a new entry for it and waits
  * until it closes, saved or not.
- * - `categories`, `trackers`: The code of the dialog and of my settings.
- * - `minutes`: Minutes of my usual session.
- * - `start`: Now, to the minute.
- * - `closed`: Comes once the dialog closes.
+ * Gives whether a session of the module runs now, so the record may follow.
  *
- * @param module - Code of the module, like `IN2028`
- * @returns Whether a session of the module runs now, so the record may follow
  * @throws {Error} - When the reader cannot answer
  */
 export async function sessionEnsure(module: string): Promise<boolean> {

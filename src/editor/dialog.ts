@@ -13,17 +13,6 @@
  * The dialog, its HTML from `../day/day.html`,
  * its code and its look come into the page only the first time it opens,
  * so the scripts load no calendar before.
- *
- * - `../day/day.html?raw`: Html of the day as text, of which the dialogs `#entry`,
- *   `#series` and the still copy below a group, `#series-under`.
- * - `../day/categories.ts`: Starts the dialog and opens it.
- * - `../day/times.ts`: Starts the fields of the times of the dialog,
- *   as the day view starts them.
- * - `../reader.ts`: Asks the reader for an entry of the log.
- * - `fullcalendar`, `fullcalendar/timegrid`: A calendar of a day, never drawn,
- *   which the dialog's writes ask for, to load its log again.
- * - `../day/day.css`, `../day/choices.css`, `../day/meal.css`:
- *   Look of the dialog and of its fields.
  */
 
 import { timesStart } from "../day/times.ts";
@@ -36,10 +25,8 @@ import type * as TimeGrid from "fullcalendar/timegrid";
 /**
  * The dialog of an entry in the page, once started, see {@link dialogOf}.
  *
- * - `categories`: The code of the dialog, which opens it for an entry or a box.
  * - `calendar`: A calendar of a day, never drawn and without entries,
- *   which the dialog writes with,
- *   like a box logged, since the scripts view shows no log;
+ *   which the dialog writes with, since the scripts view shows no log;
  *   only the entry the food view opens, see {@link logEntryOpen}.
  */
 export type Dialog = {
@@ -47,28 +34,16 @@ export type Dialog = {
     calendar: FullCalendar.Calendar;
 };
 
-/**
- * The dialog once in the page and started, `null` before it opened first.
- */
+/** The dialog once in the page and started, `null` before it opened first. */
 let dialogReady: Promise<Dialog> | null = null;
 
 /**
  * Puts the dialog of an entry of the day into the page and starts it,
- * see `categoriesStart` in `../day/categories.ts`,
- * with a calendar of a day as the day view has,
- * but never drawn and without entries, since the scripts view shows no log;
  * its look loaded in the order the day loads it,
  * so `choices.css` wins over `day.css` as there,
  * like a row that keeps only a list taking no room;
  * its times and days checked and written as the day view does,
- * see `timesStart` in `../day/times.ts`, like `14:15` of `1415`.
- * - `html`, `categories`, `full`, `timeGrid`:
- *   The HTML of the day, with the dialogs `#entry` and `#series`, the code of the dialog,
- *   that of the calendar and of its view of a day.
- * - `day`: The HTML of the day as a document, whose dialogs go into the page.
- * - `calendar`: The calendar, never drawn.
- *
- * @returns The dialog
+ * see `timesStart` in `../day/times.ts`.
  */
 async function dialogStart(): Promise<Dialog> {
     await import("../day/day.css");
@@ -99,8 +74,6 @@ async function dialogStart(): Promise<Dialog> {
 /**
  * Gives the dialog of an entry,
  * put into the page and started the first time, see {@link dialogStart}.
- *
- * @returns The dialog
  */
 export function dialogOf(): Promise<Dialog> {
     dialogReady ??= dialogStart();
@@ -114,12 +87,7 @@ export function dialogOf(): Promise<Dialog> {
  * the entry as the reader sends it to the day view, in the calendar of the dialog alone;
  * one the reader sends no more, or that cannot be changed,
  * like an occurrence of a series, opens nothing, as there.
- * - `moment`: The start of the entry, in milliseconds.
- * - `found`: The entry as the reader sends it, `undefined` for none.
- * - `entry`: The entry in the calendar of the dialog.
  *
- * @param id - Identifier of the entry
- * @param start - Its start as ISO instant
  * @throws {Error} - When the reader gives no valid answer
  */
 export async function logEntryOpen(id: string, start: string): Promise<void> {

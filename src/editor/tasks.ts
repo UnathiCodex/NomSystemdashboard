@@ -4,33 +4,16 @@
  * The rows of the tasks of a note in the editor,
  * as the scripts view showed them under their headings, see `../skill/task.ts`:
  * under the heading `##` of each Task of the semester its row,
- * when it is due, its history, the menu for the next attempt,
- * which goes into the skill entry of the moment,
- * Right and Wrong once its solution is open,
- * Wrong with my short comment; after each attempt the rows load again.
+ * Right and Wrong once its solution is open; after each attempt the rows load again.
  * An Example has no row and no result:
  * `Next` checks it off in its round, see `./round.ts`.
- * A cold task, its heading ending with `(cold)`, shows a grey label in place of `(cold)`,
- * like `cold · 2 done · 1 right`, while the cursor is not on its heading.
+ * A cold task shows a grey label in place of `(cold)`,
+ * while the cursor is not on its heading.
  * Only a note with tasks of the semester has rows.
  * A section, a note whose tasks make a section of the semester,
- * has no rows but on the line of each heading of a Task, at its right end,
- * a check and a cross, its results Right and Wrong,
- * see `judgeOf` in `../skill/task.ts`, without state, hint or numbers,
- * and its `(cold)` hidden without a label,
- * since its round says what is due, see `./round.ts`,
- * which hears of each load and each Right, see {@link tasksFollow}.
- *
- * - `@codemirror/state`, `@codemirror/view`:
- *   Hold the tasks of the note and draw the rows as widgets between its lines.
- * - `@codemirror/language`: Tells when something folds or unfolds.
- * - `./steps.ts`: The heading of a solution, whether it is folded,
- *   and whether an Example shows a step.
- * - `../skill/attempts.ts`: Loads the tasks with when they are due.
- * - `../today.ts`: Gives today's calendar date, for when a task is due.
- * - `../skill/task.ts`: Builds the row of a task,
- *   the check and the cross of a task of a section,
- *   and the label of a cold task.
+ * has no rows but a check and a cross at the right end of each heading of a Task,
+ * without state, hint or numbers, and its `(cold)` hidden without a label,
+ * since its round says what is due, see `./round.ts`.
  */
 
 import { StateEffect, StateField } from "@codemirror/state";
@@ -60,10 +43,7 @@ import type {
 
 /**
  * The tasks of the note, as loaded for its rows.
- *
  * - `path`: Path of the note, as the scripts view takes it.
- * - `tasks`: Its tasks of the semester, none for a note without.
- * - `today`: Today like `2026-10-10`.
  * - `section`: Its section, `null` for a note that is none.
  */
 export type NoteTasks = {
@@ -84,10 +64,7 @@ export type Block = {
 };
 
 /**
- * The rows of the note: its tasks and the widgets drawn for them.
- *
- * - `loaded`: The tasks of the note, `null` before they are loaded.
- * - `decorations`: The rows and labels of cold tasks.
+ * The rows of the note: its tasks, `null` before they load, and the widgets drawn.
  */
 type Rows = {
     loaded: NoteTasks | null;
@@ -100,8 +77,7 @@ type Rows = {
 export const blockRule: RegExp = /^##[ \t]+(.+?)[ \t]*$/;
 
 /**
- * End of the heading of a cold task, `(cold)` with the space before it,
- * like in `Task. Kiosk Chain Review (cold)`.
+ * End of the heading of a cold task, `(cold)` with the space before it.
  */
 const coldMark: RegExp = /[ \t]*\(cold\)$/;
 
@@ -122,7 +98,7 @@ let goer: ((view: EditorView) => void) | null = null;
 
 /**
  * Line of the heading of a task of a section,
- * with room at its right for the check and the cross, see `./editor.css`.
+ * with room at its right for the check and the cross.
  */
 const judgedLine: Decoration = Decoration.line({ class: "task-heading" });
 
@@ -131,14 +107,8 @@ const judgedLine: Decoration = Decoration.line({ class: "task-heading" });
  * its attempts or the fold of its solution change.
  */
 abstract class TaskWidget<Open extends boolean | null> extends WidgetType {
-    /**
-     * The task.
-     */
     readonly task: SkillTask;
 
-    /**
-     * The tasks of the note, with what the row picks from.
-     */
     readonly loaded: NoteTasks;
 
     /**
@@ -155,7 +125,6 @@ abstract class TaskWidget<Open extends boolean | null> extends WidgetType {
 
     /**
      * Tells whether another widget is the same, so the drawn one stays:
-     * the same task with the same attempts and state, its solution the same;
      * so a load after a result draws only the widget that changed,
      * and the rows outside the screen keep their measured heights,
      * which keeps the page where it is.
@@ -183,7 +152,7 @@ abstract class TaskWidget<Open extends boolean | null> extends WidgetType {
  */
 class RowWidget extends TaskWidget<boolean | null> {
     /**
-     * Builds the row; each attempt written loads the rows again, see {@link tasksLoad}.
+     * Builds the row; each attempt written loads the rows again.
      */
     toDOM(view: EditorView): HTMLElement {
         return taskRowOf(
@@ -200,13 +169,12 @@ class RowWidget extends TaskWidget<boolean | null> {
 
 /**
  * Check and cross of a task of a section at the right end of the line of its heading,
- * see `judgeOf` in `../skill/task.ts`; they work while its solution is open,
- * so a fold, an unfold or a step shown draws them anew.
+ * see `judgeOf` in `../skill/task.ts`; they work while its solution is open.
  */
 class JudgeWidget extends TaskWidget<boolean> {
     /**
      * Builds the buttons; each attempt written loads the tasks again,
-     * see {@link tasksLoad}, a Right then goes on, see {@link tasksFollow}.
+     * a Right then goes on.
      */
     toDOM(view: EditorView): HTMLElement {
         return judgeOf(
@@ -223,9 +191,6 @@ class JudgeWidget extends TaskWidget<boolean> {
  * Label of a cold task in place of its `(cold)`, see `coldLabelOf` in `../skill/task.ts`.
  */
 class ColdWidget extends WidgetType {
-    /**
-     * The cold task.
-     */
     readonly task: SkillTask;
 
     constructor(task: SkillTask) {
@@ -234,16 +199,13 @@ class ColdWidget extends WidgetType {
     }
 
     /**
-     * Tells whether another label is that of the same task
-     * as loaded, so the drawn one stays.
+     * Tells whether another label is that of the same task as loaded,
+     * so the drawn one stays.
      */
     override eq(other: ColdWidget): boolean {
         return other.task === this.task;
     }
 
-    /**
-     * Builds the label.
-     */
     toDOM(): HTMLElement {
         return coldLabelOf(this.task);
     }
@@ -251,16 +213,9 @@ class ColdWidget extends WidgetType {
 
 /**
  * Tells whether the solution of a task is open:
- * that of an Example once a step of it shows,
- * see `exampleOpenOf` in `./steps.ts`;
- * else the first heading `#### Solution…` of its block,
- * from its heading to the next heading `##`, unfolded.
- * - `example`: Whether the solution of an Example is open,
- *   `null` for a task of no Example.
- * - `line`: A line of the block.
+ * that of an Example once a step of it shows, see `exampleOpenOf` in `./steps.ts`,
+ * else the first `#### Solution…` of its block unfolded.
  *
- * @param state - Text, folds and steps of the note
- * @param heading - Line of the heading of the task
  * @returns Whether its solution is open, `null` for a task without one
  */
 function solutionOpenOf(state: EditorState, heading: Line): boolean | null {
@@ -277,10 +232,6 @@ function solutionOpenOf(state: EditorState, heading: Line): boolean | null {
 
 /**
  * Reads the blocks of the note, each with its task.
- *
- * @param state - Text of the note
- * @param tasks - Its tasks
- * @returns Blocks in their order
  */
 export function blocksOf(state: EditorState, tasks: SkillTask[]): Block[] {
     const blocks: Block[] = [];
@@ -301,21 +252,9 @@ export function blocksOf(state: EditorState, tasks: SkillTask[]): Block[] {
 }
 
 /**
- * Builds the rows of the note, see the top of this file:
- * a row after the heading of each task,
- * as wide as the page, and the label of a cold task in place of its `(cold)`
- * while the cursor is not on its heading;
- * in a section the check and the cross on the line of the heading instead of the row,
- * after its fold arrow, so the cursor at the end of the heading stands
- * at its text, see `./preview.ts`.
- * - `decorations`: The rows and labels found so far.
- * - `block`: A block of the note with a task, `task` the task,
- *   `line` the line of its heading.
- * - `cold`: Where `(cold)` stands in the heading of a cold task, `null` for no such task.
- *
- * @param state - Text, cursor and folds of the note
- * @param loaded - The tasks of the note, `null` before they are loaded
- * @returns The rows
+ * Builds the rows of the note, see the top of this file;
+ * in a section the check and the cross go after the fold arrow of the heading,
+ * so the cursor at the end of the heading stands at its text, see `./preview.ts`.
  */
 function decorationsOf(state: EditorState, loaded: NoteTasks | null): DecorationSet {
     if (loaded === null || loaded.tasks.length === 0) return Decoration.none;
@@ -369,9 +308,6 @@ function decorationsOf(state: EditorState, loaded: NoteTasks | null): Decoration
  * Lets something hear each load of the tasks, after their rows are drawn,
  * and each Right of a task of a section, once written and loaded,
  * like the round of a section, see `./round.ts`.
- *
- * @param listener - Hears the editor and the tasks loaded
- * @param right - Hears the editor after a Right
  */
 export function tasksFollow(
     listener: (view: EditorView, loaded: NoteTasks) => void,
@@ -383,14 +319,8 @@ export function tasksFollow(
 
 /**
  * Loads the tasks of the note from the reader and shows their rows,
- * see the top of this file;
- * without tasks of the semester the note shows no rows.
- * Then tells the one following, see {@link tasksFollow}.
- * - `skilling`: Every module of the semester with its tasks.
- * - `loaded`: The tasks of the note with its section.
+ * then tells the one following, see {@link tasksFollow}.
  *
- * @param view - The editor
- * @param path - Path of the note, as the scripts view takes it
  * @throws {Error} - When the reader cannot read the tasks
  */
 export async function tasksLoad(view: EditorView, path: string): Promise<void> {
@@ -411,11 +341,8 @@ export async function tasksLoad(view: EditorView, path: string): Promise<void> {
 }
 
 /**
- * The rows of the tasks of a note, see the top of this file:
- * built again when the tasks load, the text or the cursor changes,
- * something folds or unfolds,
- * or more steps show;
- * none until {@link tasksLoad} has loaded the tasks.
+ * The rows of the tasks of a note, built again when the tasks load,
+ * the text or the cursor changes, something folds or unfolds, or more steps show.
  * - {@link StateField}: Holds the rows; only a field may draw widgets between the lines.
  */
 export const taskRows: Extension = StateField.define<Rows>({

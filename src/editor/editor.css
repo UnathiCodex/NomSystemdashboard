@@ -1,5 +1,4 @@
-/* Editor, the scripts view too: the tree on the left,
-   see `../notes/notes.css`, the file on the right, filling the screen beside the areas */
+/* Editor, the scripts view too: the tree on the left, the file on the right */
 .editor {
     display: grid;
     grid-template-columns: var(--tree-width) minmax(0, 1fr);
@@ -9,12 +8,9 @@
 }
 
 /* The file: the page of it in the middle, scrolls alone,
-   the same room at its left and at its right on every page,
-   a note, a file of my new system,
-   an `.ics` file and the page of a module alike, `--edge-room`, 2rem,
+   the same room at its left and at its right on every page, `--edge-room`,
    so the check and the cross at the right end
    of a heading keep air to the edge of the screen;
-   where the screen has room, as on my PC, the page stays in the middle;
    the room of the scrollbar kept also for a file too short to scroll,
    so the page stands at the same place in every file */
 .editor-file {
@@ -28,11 +24,9 @@
 }
 
 /* Page of every file exactly my reading width, in the middle, where the screen has room,
-   so the lines of a note break at the same words on every screen,
-   and a file of my new system has the same room around it;
-   markup shown left of its text, like `##`, stands in the room beside it;
-   what is too wide, like a table of `Foods.md`, scrolls sideways on its own;
-   its text 16 px in Obsidian's grey, grown with the page;
+   so the lines of a note break at the same words on every screen;
+   markup shown left of its text stands in the room beside it;
+   what is too wide scrolls sideways on its own;
    room below the last line, so it can scroll up to the middle */
 .editor-page {
     grid-area: 1 / 2;
@@ -43,32 +37,16 @@
     color: var(--reading-text);
 }
 
-/* Status line above the text, quiet, a gap above and below it,
-   its middle level with the save button and the first area of the rail:
-   for a section its round,
-   like `Round 1`, in a small grey box as the type word of a block,
-   see `.block-kind` in `../base.css`, as big as the type word on the heading of a block,
-   see `.editor-title .block-kind`;
-   then the name of the file, like `Foods.md`,
-   its whole path from `NomWorkspace` on as its title,
-   as the dialogs show the file of an entry, see `fileShow` in `../day/choices.ts`;
-   then the session the round writes into, like `17.10.2026 (Sat) · 21:40 – 22:40`,
-   see `sessionShow` in `round.ts`, right after the type word, without a dot before it;
-   at the right, a gap apart, whether the changes are saved,
-   like `Saved 20:41` or `Not saved`,
-   then the head, see `.editor-head`;
-   all in the grey of quiet text, as big as the text of
-   the tree, on one line, one chip high also while only the name stands,
+/* Status line above the text, quiet:
+   for a section its round, then the name of the file,
+   then the session the round writes into, see `sessionShow` in `round.ts`;
+   at the right whether the changes are saved, then the head, see `.editor-head`;
+   on one line, one chip high also while only the name stands,
    so the text never moves when a notice comes,
-   going on below only where the page is narrow,
    the notice never taking more than half the line;
    on top while the text scrolls below it,
    on the ground of the page reaching out left and right of it,
-   so the markup left of a line,
-   like `##`, hides under it too;
-   a thin line below it across the page in the grey of the line beside the tree,
-   as between the groups of the plan, so it reads as what stays while the text scrolls,
-   and a gap below that line before the text */
+   so the markup left of a line hides under it too */
 .editor-status {
     position: sticky;
     top: 0;
@@ -108,15 +86,10 @@
     text-align: right;
 }
 
-/* Head at the right end of the status line, a gap after the notice:
+/* Head at the right end of the status line:
    the save button, for a section then the close of its round and `Next`,
-   an arrow, see `round.ts`,
-   so the arrow forward stands last, at the right, where a way forward points,
-   the round's two controls side by side and the save button, of the file, before them;
-   its right edge that of the page,
-   of the check and cross of a heading and of `Next step`;
-   the buttons taking no height of the line, so it stays one chip high,
-   their middle in its middle, level with the first area of the rail */
+   so the arrow forward stands last, at the right, where a way forward points;
+   the buttons taking no height of the line, so it stays one chip high */
 .editor-head {
     display: flex;
     flex: none;
@@ -135,14 +108,10 @@
 }
 
 /* The type word of a block on the line of its heading,
-   and the round in the status line alike,
-   like `Round 1`, so both boxes are one:
-   see `.block-kind` in `../base.css`, about as big as the text of the tree,
-   0.55 of a heading of 1.4 of the text, see `.markdown h2` in `../notes/notes.css`:
-   every box as wide as the widest word, `Algorithm`, its word in the middle,
-   so the names after them start in one line, a clear gap before the name;
-   on every screen at the left edge of the page,
-   where the text starts, never hanging beside it */
+   and the round in the status line alike, so both boxes are one,
+   see `.block-kind` in `../base.css`:
+   every box as wide as the widest word, `Algorithm`,
+   so the names after them start in one line */
 .editor-text h2 .block-kind,
 .editor-title .block-kind {
     box-sizing: border-box;
@@ -153,11 +122,8 @@
     cursor: default;
 }
 
-/* Buttons of the head, icon buttons as the areas of the rail,
-   see `.icon-button` and `.areas` in `../base.css`: as big;
-   faint while off, the save button while nothing is to save, the close of a round,
-   see `round.ts`, before the round's Task has a result
-   and the way down its failure brings back has ended, `Next` while it cannot go on */
+/* Buttons of the head, icon buttons as big as the areas of the rail;
+   faint while off */
 .editor-save,
 .editor-close,
 .editor-next {
@@ -170,23 +136,19 @@
 }
 
 /* Over the page of a module or of a chapter and over a folder of my modules
-   no status line with its head, the first card,
-   the name of the chapter or of the folder standing where the text of a note starts */
+   no status line, the first name standing where the text of a note starts */
 .editor-on-overview .editor-status {
     display: none;
 }
 
-/* Text in the font and lines of the scripts view,
-   without a frame when focused and without room around the lines;
+/* Text without a frame when focused and without room around the lines;
    `.editor-text .cm-editor` wins over CodeMirror's own look, being more exact */
 .editor-text .cm-editor.cm-focused {
     outline: none;
 }
 
 /* Text not cut at the sides of the page,
-   so markup shown left of it, like `##`, stays in sight;
-   what is too wide, like a long formula or table, scrolls sideways on its own,
-   as in the scripts view */
+   so markup shown left of it stays in sight */
 .editor-text .cm-editor .cm-scroller {
     overflow: visible;
     font-family: inherit;
@@ -198,17 +160,17 @@
     padding: 0;
 }
 
-/* Lines as wide as the page, never wider: something too wide,
-   like a long formula, overflows its own line only */
+/* Lines as wide as the page, never wider:
+   something too wide overflows its own line only */
 .editor-text .cm-editor .cm-content {
     min-width: 0;
 }
 
-/* Selection in the calm grey of what is picked, focused or not, marked line by line,
-   each line only as far as what it shows, see `selectionLines` in `./editor.ts`:
+/* Selection in the calm grey of what is picked, marked line by line,
+   see `selectionLines` in `./editor.ts`:
    over the text, lightening only what is darker than the grey,
-   so the text keeps its colors and code and formulas show picked whole, their ground too;
-   never in the way of the pointer, so a click or a double click reaches the text below;
+   so the text keeps its colors and code and formulas show picked whole;
+   never in the way of the pointer, so a click reaches the text below;
    CodeMirror's own selection, one block over the lines between, never shown */
 .editor-text .cm-editor .cm-selectionLayer {
     display: none;
@@ -223,18 +185,15 @@
     background: var(--chosen);
 }
 
-/* Headings, lists and quotes stand in the elements of the scripts view and take its look,
-   see `./preview.ts`, but not its space around them:
+/* Headings, lists and quotes take the look of the scripts view, but not its space:
    CodeMirror measures no space between lines, so the empty lines of the file give it */
 .editor-text.markdown :is(h1, h2, h3, h4, h5, h6, blockquote) {
     margin: 0;
 }
 
-/* Lines of a note closer than in the scripts view, as in a plain text editor,
+/* Lines of a note closer than in the scripts view,
    so the lines of one paragraph or point stand together as one block
-   and an empty line, half as high, is the air between two;
-   a line with a tall formula grows by it,
-   a formula on a line of its own keeps its height */
+   and an empty line, half as high, is the air between two */
 .editor-text.markdown {
     --reading-line-height: 2;
 }
@@ -249,19 +208,14 @@
     padding-block: 0;
 }
 
-/* A heading a little farther from what stands
-   above it than the empty lines of the file make,
-   and close to what it heads: its line in the tight lines of a heading, 1.3 of its text,
-   with room above its text one of its letters high and none below it,
-   so only the half empty line below it parts it from its text,
-   as one paragraph from the next */
+/* A heading a little farther from what stands above it, and close to what it heads,
+   so only the half empty line below it parts it from its text */
 .editor-text.markdown :is(h1, h2, h3, h4, h5, h6) > .cm-line {
     padding-top: 1em;
     line-height: 1.3;
 }
 
-/* The little room around a list item, which the scripts view gives its element,
-   given to its lines instead, see above */
+/* The little room around a list item given to its lines instead, see above */
 .editor-text.markdown li > .cm-line:first-child {
     padding-top: 0.075em;
 }
@@ -270,42 +224,33 @@
     padding-bottom: 0.075em;
 }
 
-/* An empty line half as high as a line of text, a small gap, the cursor on it as high,
-   see `spaceLook` in `preview.ts` */
+/* An empty line half as high as a line of text, see `spaceLook` in `preview.ts` */
 .editor-text.markdown .cm-line.cm-gap {
     height: calc(var(--empty-line) / 2);
     line-height: calc(var(--empty-line) / 2);
 }
 
-/* The cursor on it half a line higher, over both empty lines, the air of a line,
-   as on a line of text there, see `stopCursorOf` in `preview.ts` */
+/* The cursor on it half a line higher, over both empty lines,
+   see `stopCursorOf` in `preview.ts` */
 .cm-stop-cursor .cm-cursor {
     transform: translateY(calc(var(--empty-line) / -2));
 }
 
 /* An empty line ending a point keeps the room below the point's last line too,
-   so nothing below moves when the empty line leaves the list,
-   as text typed below ends it */
+   so nothing below moves when the empty line leaves the list */
 .editor-text.markdown li > .cm-line.cm-gap:last-child {
     height: calc(var(--empty-line) / 2 + 0.075em);
 }
 
-/* An empty line right below another, a place to write,
-   half as high below the half line above it,
-   so two stand as one line of air;
-   its text, and so its cursor, a whole line high from its top,
-   where the text typed on it will stand, see `spaceLook` in `preview.ts` */
+/* An empty line right below another, half as high, so two stand as one line of air;
+   its cursor a whole line high from its top, where the text typed on it will stand */
 .editor-text.markdown .cm-line.cm-gap.cm-stop {
     line-height: var(--empty-line);
 }
 
-/* The guide line of sub-points, see `../notes/notes.css`,
-   on through the empty lines right below them up to the next line with text,
-   as the air of the point above, while the list goes on there,
-   never before a heading or text after the list:
-   within the point by the guide lines of those empty lines,
-   below the point by its own, as long as they are, see `listLook` in `preview.ts`;
-   never beside a line with text after them, like a paragraph of the point,
+/* The guide line of sub-points on through the empty lines right below them,
+   while the list goes on there, see `listLook` in `preview.ts`;
+   never beside a line with text after them,
    nor beside the line the cursor stands on to write, nor below either */
 .editor-text.markdown li > :is(ul, ol)::before {
     bottom: calc(var(--air-below, 0) * var(--empty-line) / -2);
@@ -316,16 +261,15 @@
     content: none;
 }
 
-/* Markup shown, like `##` and `**`,
-   and the markers of lists in the faint grey of list markers */
+/* Markup shown and the markers of lists in the faint grey of list markers */
 .editor-text .cm-mark {
     color: var(--reading-marker);
 }
 
 /* Markup `##` of a heading and `>` of a quote on the line of the cursor left
    of the text, which keeps its place;
-   its line one line high also while it holds nothing else, like an empty `>` of a quote,
-   which took no room and drew its `>` and the cursor over the line below */
+   its line one line high also while it holds nothing else,
+   since an empty `>` took no room and drew the cursor over the line below */
 .editor-text .cm-hanging {
     position: absolute;
     transform: translateX(-100%);
@@ -336,12 +280,8 @@
     min-height: 1lh;
 }
 
-/* List item the cursor is on:
-   its marker as written in place of the scripts view's bullet or number,
-   which hides, left of the text, so the text keeps its place:
-   `-` where the bullet stands, 0.95em before the text,
-   a number ending a space before the text,
-   in the digits of equal width of the scripts view's numbers */
+/* List item the cursor is on: its marker as written in place of the bullet or number,
+   left of the text, so the text keeps its place */
 .editor-text li.cm-source::before,
 .editor-text li.cm-source::marker {
     content: none;
@@ -364,9 +304,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Fold arrow, see `./preview.ts`: Lucide's chevron in the grey of callout titles,
-   as the arrow of a block of the scripts view, turned right while folded;
-   a heading's after its text, a step apart, always shown, as in the scripts view */
+/* Fold arrow, see `./preview.ts`, turned right while folded;
+   a heading's after its text, always shown */
 .editor-text .cm-fold {
     display: inline-block;
     width: 1.125rem;
@@ -386,8 +325,7 @@
     margin-left: 0.25rem;
 }
 
-/* A list item's arrow left of its bullet or number,
-   as in Obsidian, without taking room from its text:
+/* A list item's arrow left of its bullet or number, without taking room from its text,
    shown softly while the pointer is on the item's line, and always while folded */
 .editor-text .cm-fold-item {
     position: absolute;
@@ -425,8 +363,7 @@
     text-decoration: line-through;
 }
 
-/* Links in my accent's lighter grey,
-   as in the scripts view, the address of a Markdown link in the faint grey */
+/* Links in my accent's lighter grey, the address of a Markdown link fainter */
 .editor-text .cm-link {
     color: var(--reading-link);
 }
@@ -435,10 +372,8 @@
     color: var(--reading-marker);
 }
 
-/* A rendered link, which a click follows, see `./preview.ts`:
-   in the grey of links, also an address of the web written as it is,
-   with the pointer of a link,
-   its text's grey under the pointer, as a link of the scripts view */
+/* A rendered link, which a click follows, see `./preview.ts`,
+   as a link of the scripts view */
 .editor-text .cm-follow,
 .editor-text .cm-follow * {
     color: var(--reading-link);
@@ -452,21 +387,19 @@
     transition: color var(--hover-in);
 }
 
-/* A link that opens only on the computer in the grey of links, faded,
-   see `../notes/notes.css`, without a pointer */
+/* A link that opens only on the computer faded, without a pointer */
 .editor-text .is-computer-only {
     color: var(--reading-link);
 }
 
-/* A link that leads nowhere faded, see `../notes/notes.css`, and dotted below,
-   as a link of the scripts view, a quiet mark that a source is broken */
+/* A link that leads nowhere faded and dotted below,
+   a quiet mark that a source is broken */
 .editor-text .is-unresolved {
     text-decoration: underline dotted;
 }
 
-/* Code within a line on a grey ground in a font of fixed width,
-   with its room around it, as in the scripts view;
-   code blocks on grey line by line, their code without a ground of its own */
+/* Code on a grey ground in a font of fixed width, as in the scripts view;
+   code blocks on grey line by line */
 .editor-text .cm-monospace,
 .editor-text .cm-code-block {
     background: var(--fill);
@@ -479,8 +412,7 @@
     border-radius: 0.25rem;
 }
 
-/* The code of a code block, between its ```, indented as the code of a block rendered,
-   see `.markdown pre` in `../notes/notes.css` */
+/* The code of a code block indented as the code of a block rendered */
 .editor-text .cm-editor .cm-line.cm-code-text {
     padding-left: 1rem;
 }
@@ -491,10 +423,8 @@
     font-size: 1em;
 }
 
-/* Formula `$$…$$` rendered after what stands before it on its line,
-   as wide as the line at most,
-   too wide ones scrolling sideways as in the scripts view;
-   being edited, rendered above its TeX on a line of its own, where it stood */
+/* Formula `$$…$$` rendered as wide as the line at most, too wide ones scrolling sideways;
+   being edited, rendered above its TeX on a line of its own */
 .editor-text .cm-math-display {
     display: inline-block;
     max-width: 100%;
@@ -505,12 +435,10 @@
     display: block;
 }
 
-/* Table or HTML block rendered with the spaces,
-   line breaks and word breaks of the scripts view,
+/* Table or HTML block rendered with the spaces and breaks of the scripts view,
    not those of the text around it,
    which would break a table in two and its words anywhere;
-   without space of its own above and below it, which only the empty lines around it give,
-   as around any block, see `spaceLook` in `./preview.ts` */
+   without space of its own, which only the empty lines around it give */
 .editor-text .cm-rendered {
     display: flow-root;
     white-space: normal;
@@ -526,10 +454,8 @@
     margin-bottom: 0;
 }
 
-/* The row of a table the address names,
-   like a person of `Persons.md` opened from its name,
-   see `rowShow` in `preview.ts`: in the calm grey of what is picked,
-   until its table shows as text */
+/* The row of a table the address names, see `rowShow` in `preview.ts`,
+   in the calm grey of what is picked */
 .editor-text .cm-rendered tr.row-shown > :is(td, th) {
     background: var(--chosen);
 }
@@ -540,10 +466,7 @@
     color: transparent;
 }
 
-/* Tabs within a selection, as VS Code shows them with `renderWhitespace: selection`:
-   a tab as `→`, barely visible, the grey of the guide lines and fainter still;
-   over their own room, and where the look hides them,
-   like the indentation of a list, left of where the text begins;
+/* Tabs within a selection as `→`, barely visible, as VS Code shows them;
    taking no room, so nothing moves, see `invisiblesLook` in `preview.ts` */
 .editor-text :is(.cm-invisible, .cm-invisibles) {
     position: relative;
@@ -575,18 +498,15 @@
     right: 3.5ch;
 }
 
-/* A file that is no Markdown, like an `.ics` file,
-   as its plain text in a font of even width */
+/* A file that is no Markdown as its plain text in a font of even width */
 .editor-plain .cm-editor .cm-content {
     font-family: ui-monospace, monospace;
     font-size: 0.875em;
 }
 
-/* Lines of an `.ics` file left-aligned at the depth of their block,
-   two characters a step,
+/* Lines of an `.ics` file at the depth of their block,
    a line too long for one row going on one step further in,
-   so it plainly belongs to its first row,
-   like a long `SUMMARY`; and the room of an empty line above each entry;
+   so it plainly belongs to its first row;
    all drawn as padding and indent, which CodeMirror measures, see `ics.ts` */
 .editor-text .cm-editor .cm-line.ics-line {
     text-indent: -2ch;
@@ -616,12 +536,10 @@
     padding-top: 1lh;
 }
 
-/* The readable form of the value of a line of an `.ics` file,
-   see below, stands right of the text, ending where the save button ends,
-   which is `--ics-overhang` from the text,
-   see `overhangKeep` in `ics.ts`, in a column `--ics-column` wide;
-   only a line with such a form keeps that column free, its value short,
-   any other line takes the width of the page, its 90 characters on one row */
+/* The readable form of the value of a line of an `.ics` file
+   stands right of the text in a column, see `overhangKeep` in `ics.ts`;
+   only a line with such a form keeps that column free,
+   any other line takes the width of the page */
 .editor-text .cm-editor .cm-line.ics-line {
     --ics-column: 11rem;
     position: relative;
@@ -631,17 +549,9 @@
     padding-right: max(0px, calc(var(--ics-column) + 1rem - var(--ics-overhang, 0px)));
 }
 
-/* Name of each property of an `.ics` file with its colon,
-   like `DTSTART:` of `DTSTART;TZID=Europe/Berlin:` or `BEGIN:`,
-   in the grey of quiet text,
-   so the values stand out, its parameters,
-   like `;TZID=Europe/Berlin`, a step fainter in the grey of markup,
-   still plainly apart from it;
-   a line with a value with a meaning holds its readable form,
-   like `19.10.2026 (Mon), 14:00`, in the column at its right, level with its first row,
-   in a small grey box in the page's own font,
-   smaller than the text, as the kind of a block,
-   see `.block-kind` in `../base.css`,
+/* Name of each property of an `.ics` file with its colon in the grey of quiet text,
+   so the values stand out, its parameters a step fainter;
+   the readable form of a value in a small grey box in the page's own font,
    so it is plainly no text of the file, see `ics.ts` */
 .editor-text .ics-name {
     color: var(--text-muted);
@@ -668,10 +578,8 @@
 }
 
 /* Overview of an `.ics` file in the status line, see `overviewKeep` in `ics.ts`:
-   a short thick dash per entry in the grey of a line of the page,
-   the one of the entry at the top of the view white, one under the pointer lighter;
-   a dash its own column, wider than it, so the pointer meets it;
-   scrolled by the file, never by hand */
+   a short dash per entry, the one at the top of the view white;
+   a dash its own column, wider than it, so the pointer meets it */
 .ics-overview {
     position: relative;
     flex: 1;
@@ -712,12 +620,9 @@
     background: var(--text-main);
 }
 
-/* Box of an entry of the overview, as a box of the plan,
-   see `../day/boxes.css`, right of the overview at the height of its dash, over the text,
-   framed and shadowed as a menu, see `.menu` in `../menu.css`,
+/* Box of an entry of the overview, as a box of the plan, framed as a menu,
    never in the way of the pointer;
-   each of its lines whole on one row, never cut by `…`,
-   so the box is as wide as its longest line */
+   each of its lines whole on one row, so the box is as wide as its longest line */
 .ics-box {
     --plan-space: 0.5rem;
     position: fixed;

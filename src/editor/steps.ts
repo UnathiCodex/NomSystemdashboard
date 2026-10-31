@@ -3,28 +3,17 @@
  *
  * The solutions of a note in the editor one step at a time,
  * so I predict each step before I see it:
- * an Example, `## Example. …`, shows its scene and question and none of its steps,
- * its solution from its first numbered line,
- * like `1. Find the weights $a_i$`, to its end;
+ * an Example shows its scene and question and none of its steps,
+ * its solution from its first numbered line to its end;
  * a solution of a Task, the section under `#### Solution…`,
  * shows its first step once unfolded.
  * Below a solution `Next step` shows the next one and `Show all` the rest.
  * Its steps are the items of its lists in the order of the text,
- * a parent before its own items,
- * and its other blocks, like a formula of its own or the answer in words;
+ * a parent before its own items, and its other blocks;
  * an empty line between two steps goes with the step after it.
- * Hiding is only for reading:
- * the text stays as it is, the cursor stays at the end
- * of the last step shown, also after End,
- * and the cursor going into a hidden step,
- * like by the arrow keys or a new line, shows the whole solution, so I edit it as before.
- *
- * - `@codemirror/state`, `@codemirror/view`:
- *   Hold how many steps of each solution show, hide the others,
- *   and draw the buttons below the solution as a widget.
- * - `@codemirror/language`:
- *   Gives the syntax tree of the note,
- *   the section of a solution and whether it is folded.
+ * Hiding is only for reading: the text stays as it is,
+ * and the cursor going into a hidden step shows the whole solution,
+ * so I edit it as before.
  */
 
 import { EditorSelection, EditorState, StateEffect, StateField } from "@codemirror/state";
@@ -45,14 +34,8 @@ import type { SyntaxNodeRef } from "@lezer/common";
 
 /**
  * A solution of the note shown, that of an Example or the unfolded one of a Task.
- *
- * - `heading`: Start of its heading, `## Example. …` or `#### Solution…`,
- *   which names it while the text around it changes.
- * - `to`: End of its section, below which its buttons stand.
- * - `first`: Number of its first line.
- * - `steps`: For each of its lines from the first,
- *   the number of the step it belongs to, from 0.
- * - `count`: Number of its steps.
+ * - `heading`: Start of its heading, which names it while the text around it changes.
+ * - `steps`: For each of its lines from the first, the number of its step, from 0.
  * - `initial`: How many of its steps show at first: none of an Example, one of a Task,
  *   whose unfolding asked for it.
  */
@@ -67,11 +50,7 @@ type Solution = {
 
 /**
  * The steps of the note.
- *
- * - `shown`: How many steps of each solution show, by the start of its heading;
- *   its `initial` for a solution not in it.
- * - `decorations`: The hidden steps
- *   and the buttons below each solution with steps hidden.
+ * - `shown`: How many steps of each solution show, by the start of its heading.
  */
 type Steps = {
     shown: Map<number, number>;
@@ -88,19 +67,17 @@ type More = {
 };
 
 /**
- * Heading of a solution, like `#### Solution` or `#### Solution (own, unchecked)`,
- * as the scripts view folds it.
+ * Heading of a solution, as the scripts view folds it.
  */
 export const solutionRule: RegExp = /^####[ \t]+Solution\b/;
 
 /**
- * Heading of an Example, `## Example.`.
+ * Heading of an Example.
  */
 const exampleRule: RegExp = /^##[ \t]+Example\./;
 
 /**
- * First line of the solution of an Example, its first numbered line,
- * like `1. Find the weights $a_i$`.
+ * First line of the solution of an Example, its first numbered line.
  */
 const stepRule: RegExp = /^\d+\.\s/;
 
@@ -120,8 +97,7 @@ const hidden: Decoration = Decoration.replace({});
 const stepsMore: StateEffectType<More> = StateEffect.define<More>();
 
 /**
- * `Next step` and `Show all` below a solution with steps hidden;
- * a click shows one step more or all of them.
+ * `Next step` and `Show all` below a solution with steps hidden.
  */
 class StepsWidget extends WidgetType {
     /**
@@ -134,9 +110,6 @@ class StepsWidget extends WidgetType {
 
     /**
      * Builds the buttons.
-     * - `buttons`: Row of `Next step` and `Show all`.
-     * - `more`: Tells the solution below which the buttons stand
-     *   to show one step more, or all.
      */
     toDOM(view: EditorView): HTMLElement {
         const buttons: HTMLElement = document.createElement("div");
@@ -168,16 +141,6 @@ class StepsWidget extends WidgetType {
 
 /**
  * Finds the steps of a solution, see the top of this file.
- * - `last`: Number of its last line.
- * - `count`: Steps found so far.
- * - `next`: Step of the line below, for a line of no step.
- *
- * @param state - Text and syntax tree of the note
- * @param heading - Line of its heading
- * @param start - Its first line
- * @param to - End of its section
- * @param initial - How many of its steps show at first
- * @returns The solution
  */
 function solutionOf(
     state: EditorState,
@@ -231,10 +194,6 @@ function solutionOf(
 /**
  * Tells whether something folded starts at a place,
  * like the section of a heading at the end of its line.
- *
- * @param state - Folds of the note
- * @param from - The place
- * @returns Whether it is folded
  */
 export function foldedAt(state: EditorState, from: number): boolean {
     let found: boolean = false;
@@ -245,13 +204,7 @@ export function foldedAt(state: EditorState, from: number): boolean {
 }
 
 /**
- * Gives the first line of the solution of an Example, its first numbered line,
- * see {@link stepRule}.
- *
- * @param state - Text of the note
- * @param heading - Line of its heading
- * @param to - End of its section
- * @returns The line, `null` for an Example without steps
+ * Gives the first line of the solution of an Example, `null` for one without steps.
  */
 function exampleStartOf(state: EditorState, heading: Line, to: number): Line | null {
     for (
@@ -267,14 +220,7 @@ function exampleStartOf(state: EditorState, heading: Line, to: number): Line | n
 
 /**
  * Finds the solutions of the note shown with their steps:
- * that of each Example and of each Task unfolded, see the top of this file.
- * - `line`: A line of the note, the heading of an Example or a solution.
- * - `example`: Whether it is that of an Example.
- * - `section`: Its section, from the end of its heading, `null` for none.
- * - `start`: The first line of the solution, `null` for an Example without steps.
- *
- * @param state - Text, syntax tree and folds of the note
- * @returns The solutions
+ * that of each Example and of each Task unfolded.
  */
 function solutionsOf(state: EditorState): Solution[] {
     const solutions: Solution[] = [];
@@ -298,10 +244,7 @@ function solutionsOf(state: EditorState): Solution[] {
 /**
  * Tells whether the solution of an Example is open, once a step of it shows,
  * as that of a Task once unfolded, so I judge it against its steps, see `./tasks.ts`.
- * - `section`: Its section, `null` for none.
  *
- * @param state - Text and steps of the note
- * @param heading - Line of the heading of a task
  * @returns Whether it is open, also for an Example without steps;
  *   `null` for a heading of no Example
  */
@@ -320,11 +263,7 @@ export function exampleOpenOf(state: EditorState, heading: Line): boolean | null
 }
 
 /**
- * Tells whether a transaction shows more steps, by `Next step` or `Show all`,
- * see {@link stepsMore}.
- *
- * @param transaction - Transaction
- * @returns Whether it does
+ * Tells whether a transaction shows more steps, by `Next step` or `Show all`.
  */
 export function stepsMoreIs(transaction: Transaction): boolean {
     return transaction.effects.some((effect: StateEffect<unknown>): boolean =>
@@ -336,13 +275,6 @@ export function stepsMoreIs(transaction: Transaction): boolean {
  * Gives the stretches of a solution hidden:
  * each run of lines of hidden steps, from the end of the line above it,
  * so the lines go with their line breaks.
- * - `ranges`: The stretches found so far.
- * - `line`: A line of a hidden step, and `above` the end of the line above it.
- * - `last`: The last stretch found so far, `undefined` for none.
- *
- * @param state - Text of the note
- * @param shown - How many of its steps show
- * @returns The stretches, none while every step shows
  */
 function hiddenOf(
     state: EditorState,
@@ -362,15 +294,8 @@ function hiddenOf(
 }
 
 /**
- * Builds the hidden steps of the solutions,
- * and below each solution with steps hidden its buttons,
+ * Builds the hidden steps of the solutions and the buttons below each,
  * which stand outside the elements of its lines, see `wrap` in `./preview.ts`.
- * - `decorations`: The hidden steps and buttons found so far.
- *
- * @param state - Text of the note
- * @param solutions - Its unfolded solutions
- * @param shown - How many steps of each solution show, by the start of its heading
- * @returns The decorations
  */
 function decorationsOf(
     state: EditorState,
@@ -401,17 +326,10 @@ function decorationsOf(
 
 /**
  * Takes a transaction into the steps:
- * their headings moved with the text,
- * one step more or all for a click on `Next step` or `Show all`, see {@link stepsMore},
+ * their headings moved with the text, one step more or all for a click,
  * and all once the cursor goes into a hidden step or to its end,
  * see also {@link endAvoid};
  * the look built again when the text, the cursor, the syntax tree or the folds change.
- * - `solutions`: The unfolded solutions after the transaction.
- * - `head`: Where the cursor stands.
- * - `entered`: The solution the cursor went into a hidden step of, `undefined` for none.
- *
- * @param steps - Steps before the transaction
- * @returns Steps after it
  */
 function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
     const clicks: StateEffect<More>[] = transaction.effects.filter(
@@ -467,9 +385,7 @@ function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
 }
 
 /**
- * Steps of the note, see {@link Steps}.
- * - {@link StateField}: Holds the steps;
- *   only a field may hide line breaks, like those of hidden steps.
+ * Steps of the note, a field since only a field may hide line breaks.
  */
 const hiddenSteps: StateField<Steps> = StateField.define<Steps>({
     create: (state: EditorState): Steps => ({
@@ -488,16 +404,6 @@ const hiddenSteps: StateField<Steps> = StateField.define<Steps>({
  * Keeps the cursor at the end of the last step shown
  * where it would stand at the end of the hidden steps after it, which go on that line,
  * like after End there: what I type then shows where I type it.
- * - `ends`: The start of each hidden stretch,
- *   at the end of the line above it, by its end.
- * - `selection`: The cursors and selections of the transaction.
- * - `moved`: Each of them, a cursor at the end of hidden steps moved to their start.
- * - `start`: Start of the hidden steps a cursor stands at the end of,
- *   `undefined` for none.
- *
- * @param transaction - Transaction that moves the cursor, without changing the text
- * @returns The transaction, and after it the cursor moved,
- *   when it stands at the end of hidden steps
  */
 function endAvoid(
     transaction: Transaction,
@@ -539,10 +445,8 @@ function endAvoid(
 }
 
 /**
- * The steps of the solutions of a note, those of its Examples and its Tasks,
- * see the top of this file,
+ * The steps of the solutions of a note,
  * with the cursor kept at the end of the last step shown, see {@link endAvoid}.
- * - {@link EditorState.transactionFilter}: Changes a transaction before it is applied.
  */
 export const solutionSteps: Extension = [
     hiddenSteps,

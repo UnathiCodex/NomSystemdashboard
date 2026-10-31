@@ -3,64 +3,25 @@
  *
  * A table of a note opened over the whole page, as Notion opens a page in full,
  * see `BlockWidget` in `./preview.ts`:
- * a spreadsheet of Jspreadsheet,
- * see `.table-viewer` in `../notes/notes.css`,
+ * a spreadsheet of Jspreadsheet, see `.table-viewer` in `../notes/notes.css`,
  * its head row and its first column staying while its cells scroll both ways,
- * each column as wide as its widest cell, at most about 24 characters as in every table,
- * a longer text cut by `…`,
- * see {@link cellTitleShow}, every row one line, more only where a cell holds a `<br>`;
- * the cross at its top left closing it,
- * as `Esc` does, at its top right the save button of the editor again,
- * its floppy disk faint or full grey as there,
- * and beside it whether the changes are saved.
+ * each column as wide as its widest cell, at most about 24 characters as in every table.
  * I use it as a spreadsheet, never the Markdown of the table:
- * a click picks a cell, the arrows and `Tab` move, the cell picked always in view,
- * also behind the first column or the head row;
- * `Shift` with a click or an arrow,
- * or a drag, picks a range,
- * `Ctrl+C` and `Ctrl+V` copy and paste it as the text I type in its cells,
- * separated by tabs as LibreOffice and Excel take it, `Delete` empties it.
- * Typing, `Enter`, `F2` or a double click edits a cell:
- * its text in a field over it, a `<br>` a line break there,
- * `Alt+Enter` or `Shift+Enter` a new one,
- * `Enter` and `Tab` keep it and move on, `Esc` takes it back;
- * `Enter` in the last row adds a row below. A double click on a head edits it too.
- * A click on the number of a row picks it, a drag moves it, `Delete` removes it at once,
- * `Alt+↑` and `Alt+↓` move the row of the cell picked;
- * a right click on a row opens its menu where it was:
- * insert a row above or below, move it up or down, remove the rows picked.
- * A column grows or shrinks by dragging the right edge of its head,
- * showing more or less of its cells.
- * Nothing asks first: `Ctrl+Z` takes the last change back and `Ctrl+Y` brings it again,
- * in the history of the spreadsheet, which stays while the table is open.
+ * `Ctrl+C` and `Ctrl+V` copy and paste as the text I type in its cells,
+ * separated by tabs as LibreOffice and Excel take it.
+ * A right click on a row opens its menu: insert, move or remove rows.
+ * Nothing asks first: `Ctrl+Z` takes the last change back and `Ctrl+Y` brings it again.
  * Each change goes at once into the text of the editor, only the lines changed,
- * every other line as it was, in a row only the cells changed,
  * see {@link rowsWritten}, a step of its own in the history of the editor,
- * so the editor below shows it and saves it as any change, by the save button or Ctrl+S,
- * never by itself, merged with a change of the file on the disk since it was read,
- * see `noteSave` in `./editor.ts`:
- * the save button of the table presses that of the editor,
- * and both show what the editor's shows.
- * A link in a cell opens by a click on it, as in Google Sheets:
- * a web link in a new tab, the table staying, a link into my files in place of the table,
- * like a person of the column `Lecturers`, `Tutor` or `Head` its row in `Persons.md`,
+ * so the editor saves it as any change, never by itself, see `noteSave` in `./editor.ts`:
+ * the save button of the table presses that of the editor.
+ * A link in a cell opens by a click on it, as in Google Sheets,
+ * a person of the column `Lecturers`, `Tutor` or `Head` its row in `Persons.md`,
  * see `../persons.ts`; a click beside it picks its cell.
- * A file to read only, like an `.ics` file, shows its table only to read,
- * its save button crossed out as the editor's.
+ * A file to read only, like an `.ics` file, shows its table only to read.
  *
- * - `jspreadsheet-ce`: The spreadsheet, its look from its own style sheets,
- *   in my greys by their variables, see `../notes/notes.css`.
  * - `diff`: Finds the rows of the spreadsheet that stayed as they were,
  *   so their lines stay too.
- * - `@codemirror/commands`:
- *   Makes each change of the table a step of its own in the history of the editor.
- * - `lucide`, `../icons.ts`:
- *   The cross that closes it, the floppy disk of saving
- *   and the icons of the menu of a row.
- * - `../menu.ts`: The items of the menu of a row and their look,
- *   as every menu of the page.
- * - `../persons.ts`: Turns the names of people in the columns `Lecturers`,
- *   `Tutor` and `Head` into links to their rows.
  */
 
 import { isolateHistory } from "@codemirror/commands";
@@ -94,14 +55,11 @@ import type {
 } from "jspreadsheet-ce";
 
 /**
- * A line of a table: begins with `|`,
- * after the indentation and the `>` of a quote or callout around it.
+ * A line of a table: begins with `|`, after indentation and the `>` of a quote.
  */
 const rowRule: RegExp = /^[ \t>]*\|/;
 
-/**
- * A line break written in a cell, `<br>`, also as `<br/>` or `<br />`.
- */
+/** A line break written in a cell, `<br>`, also as `<br/>` or `<br />`. */
 const breakRule: RegExp = /<br\s*\/?>/gi;
 
 /**
@@ -112,39 +70,11 @@ type Sheet = WorksheetInstance & { selectedRow: number | false | null };
 
 /**
  * Opens a table of the note over the whole page, see the top of this file.
- * - `editorSave`, `editorState`:
- *   The save button of the editor and whether its changes are saved,
- *   `Saved` or `Failed`, see `./editor.html`,
- *   which the save button and the state of the table repeat.
- * - `body`: Holds the spreadsheet, as high and wide as the page below the top row.
- * - `menu`: The menu of a row, over the page, which a click beside it or `Esc` closes,
- *   see `menuShow`; a click on an item gives the keys back to the spreadsheet,
+ * - `menu`: A click on an item gives the keys back to the spreadsheet,
  *   which a click outside it takes them from, `jspreadsheet.current`.
- * - `lines`, `heads`, `count`:
- *   The lines of the table as read, the texts of its heads and how many columns it has.
- * - `markdownCell`: How a cell shows and edits, see {@link CustomEditor}:
- *   shows its Markdown rendered, with its links, in the columns `Lecturers`,
- *   `Tutor` and `Head` its people as links too, see `peopleCellLink` in `../persons.ts`,
- *   edits its text in a field over it, wide enough for the text,
- *   at most to the right edge of the spreadsheet, `room` away.
- * - `sheet`: The spreadsheet, see {@link Sheet}.
- * - {@link MutationObserver}:
- *   Repeats the grey of the editor's save button and its state whenever they change.
- * - `keydown`: Caught before the spreadsheet:
- *   `Esc` closes the table while no cell is edited, `Enter` edits the cell picked,
- *   `Delete` and `Backspace` remove the rows picked by their numbers
- *   and else empty the cells picked,
- *   as Jspreadsheet does, only never asking first, `Alt+↑` and `Alt+↓` move a row,
- *   `Ctrl+S` presses the save button, never the spreadsheet's own download;
- *   a field of a head and an open menu take their own keys.
- * - `contextmenu`: A right click on a row,
- *   or a long press, opens its menu, in place of the spreadsheet's own.
- * - `click`: A click on a link follows it, see the top of this file.
- * - `dblclick`: A double click on a head edits it, see `headEdit`.
- * - `mouseover`: Shows the whole text of a cell cut by `…`, see {@link cellTitleShow}.
+ * - `keydown`: Caught before the spreadsheet, so `Delete` never asks first
+ *   and `Ctrl+S` presses the save button, never the spreadsheet's own download.
  *
- * @param view - The editor
- * @param from - Start of the first line of the table, its head
  * @param render - Renders Markdown as the note shows it,
  *   see `blockRender` in `./preview.ts`
  * @param follow - Follows the link clicked, and tells whether it opened something,
@@ -170,9 +100,7 @@ export function tableOpen(
     const heads: string[] = cellsOf(lines[0].text);
     const count: number = heads.length;
 
-    /**
-     * Shows the text of a cell rendered, as the note shows it in a table.
-     */
+    /** Shows the text of a cell rendered, as the note shows it in a table. */
     const cellShow = (cell: HTMLTableCellElement, value: string): void => {
         const head: HTMLElement | null = render(
             `| ${cellMarkdownOf(value)} |\n| --- |`,
@@ -319,12 +247,8 @@ export function tableOpen(
     })[0] as Sheet;
 
     /**
-     * Gives the width of a column,
-     * as wide as its widest cell or head, measured rendered in `body`,
-     * at least a little more than its padding.
-     * - `probe`: A cell as the spreadsheet's, never seen,
-     *   see `.table-viewer-probe` in `../notes/notes.css`.
-     * - `values`: The texts of the cells of the column.
+     * Gives the width of a column, as wide as its widest cell or head, measured rendered,
+     * see `.table-viewer-probe` in `../notes/notes.css`.
      */
     function widthOf(column: number): number {
         const probe: HTMLTableCellElement = document.createElement("td");
@@ -344,11 +268,7 @@ export function tableOpen(
 
     /**
      * Writes the spreadsheet into the text of the editor, only the lines that changed,
-     * see {@link rowsWritten}, a step of its own in the history of the editor;
-     * nothing when no line changed.
-     * - `old`, `fresh`: The lines of the table in the text,
-     *   and as the spreadsheet has them.
-     * - `start`, `end`: How many lines at the start and at the end stayed as they were.
+     * a step of its own in the history of the editor; nothing when no line changed.
      */
     function sync(): void {
         const table: Line[] = linesOf(view, from);
@@ -401,25 +321,13 @@ export function tableOpen(
     }
 
     /**
-     * Keeps the cell picked last in view:
-     * right of the columns that stay,
-     * below the head row and inside the edges of the spreadsheet,
-     * scrolling as little as it takes;
-     * Jspreadsheet scrolls on its own, but knows nothing of the columns that stay,
-     * see `.table-viewer` in `../notes/notes.css`;
-     * a cell of the first column stays anyway.
-     * Whole rows picked, by their numbers, keep the table where it is sideways,
-     * and whole columns, by their heads, up and down,
+     * Keeps the cell picked last in view, scrolling as little as it takes;
+     * Jspreadsheet scrolls on its own, but knows nothing of the columns that stay.
+     * Whole rows picked keep the table where it is sideways,
+     * and whole columns up and down,
      * since the cell picked last of them is that at their far end;
      * Jspreadsheet, moving by the keys, scrolls to that end right after,
      * so the table goes back where it was before the page is drawn again.
-     * - `range`: The range picked, see {@link rangeOf}.
-     * - `room`: The part of the spreadsheet its cells scroll in.
-     * - `fixed`: The head of the first column,
-     *   whose right and bottom edges end what stays.
-     * - `across`, `down`: Whether whole rows or whole columns are picked.
-     * - `kept`: Where the table stands sideways and up and down.
-     * - {@link requestAnimationFrame}: Calls back right before the page is drawn again.
      */
     function inView(): void {
         const picked: [number, number] | null = cursorOf();
@@ -468,24 +376,16 @@ export function tableOpen(
             : [Number(picked[2]), Number(picked[3])];
     }
 
-    /**
-     * Gives how many rows the table has, its head left out.
-     */
+    /** Gives how many rows the table has, its head left out. */
     const rowCount = (): number => (sheet.options.data ?? []).length;
 
-    /**
-     * Gives the range picked, its first column, first row,
-     * last column and last row, `null` for none.
-     */
+    /** Gives the range picked, `null` for none. */
     function rangeOf(): [number, number, number, number] | null {
         return sheet.selectedCell === null || sheet.selectedCell === undefined
             ? null
             : sheet.getSelection();
     }
 
-    /**
-     * Tells whether the range picked holds a row.
-     */
     const pickedHas = (row: number): boolean => {
         const range: [number, number, number, number] | null = rangeOf();
         return range !== null && range[1] <= row && row <= range[3];
@@ -511,9 +411,6 @@ export function tableOpen(
         sheet.updateSelectionFromCoords(0, row, 0, row);
     };
 
-    /**
-     * Moves a row a row up or down and picks the cell it moves to.
-     */
     const move = (row: number, step: number): void => {
         const column: number = cursorOf()?.[0] ?? 0;
         if (row + step < 0 || row + step >= rowCount()) return;
@@ -521,9 +418,7 @@ export function tableOpen(
         sheet.updateSelectionFromCoords(column, row + step, column, row + step);
     };
 
-    /**
-     * Opens the menu of a row at a place of the screen; moving faint where it cannot go.
-     */
+    /** Opens the menu of a row; moving faint where it cannot go. */
     const menuShow = (row: number, x: number, y: number): void => {
         const [first, last]: [number, number] = pickedOf(row);
         const rows: number = rowCount();
@@ -556,8 +451,7 @@ export function tableOpen(
     };
 
     /**
-     * Edits a head in a field in its place:
-     * `Enter` or a click elsewhere keeps it, `Esc` takes it back;
+     * Edits a head in a field in its place;
      * Jspreadsheet reads the head from its text,
      * so the head shows its `title` again before it changes, which `Ctrl+Z` brings back.
      */
@@ -583,9 +477,7 @@ export function tableOpen(
         input.select();
     };
 
-    /**
-     * Repeats the grey of the editor's save button and whether its changes are saved.
-     */
+    /** Repeats the grey of the editor's save button and whether its changes are saved. */
     const saveShow = (): void => {
         save.classList.toggle("unsaved", editorSave.classList.contains("unsaved"));
         state.textContent = editorState.textContent;
@@ -598,9 +490,6 @@ export function tableOpen(
      */
     const editedOf = (): HTMLTableCellElement | null => sheet.edition?.[0] ?? null;
 
-    /**
-     * Keeps the text of a cell being edited.
-     */
     const commit = (): void => {
         const edited: HTMLTableCellElement | null = editedOf();
         if (edited !== null) sheet.closeEditor(edited, true);
@@ -658,10 +547,7 @@ export function tableOpen(
         }
     };
 
-    /**
-     * Closes the table, keeping the text of a cell being edited,
-     * and lets the spreadsheet go with its keys.
-     */
+    /** Closes the table, keeping the text of a cell being edited. */
     const shut = (): void => {
         commit();
         watch.disconnect();
@@ -716,15 +602,7 @@ export function tableOpen(
 
 /**
  * Shows the whole text of a cell of a table cut by `…` as its tooltip,
- * while the pointer is over it, its lines as in the cell; a cell shown whole gets none.
- * Every table does so, in a note,
- * see `BlockWidget` in `./preview.ts`, as opened over the page,
- * where a column is at most about 24 characters wide,
- * see `.markdown :is(th, td)` in `../notes/notes.css`, or narrowed by hand.
- * - `cell`: The cell under the pointer, `null` for none.
- * - {@link HTMLElement#innerText}: The text of the cell as shown, a `<br>` a line break.
- *
- * @param event - The pointer coming over an element
+ * in a note as in a table opened over the page; a cell shown whole gets none.
  */
 export function cellTitleShow(event: MouseEvent): void {
     const cell: HTMLTableCellElement | null = (event.target as Element).closest("td, th");
@@ -733,12 +611,7 @@ export function cellTitleShow(event: MouseEvent): void {
 }
 
 /**
- * Gives the lines of a table as they stand in the text now,
- * from its head to its last row.
- *
- * @param view - The editor
- * @param from - Start of the first line of the table, its head
- * @returns Its lines, the head, the line of `-` under it, then its rows
+ * Gives the lines of a table as they stand in the text now, from its head on.
  */
 function linesOf(view: EditorView, from: number): Line[] {
     const lines: Line[] = [];
@@ -751,26 +624,15 @@ function linesOf(view: EditorView, from: number): Line[] {
     return lines;
 }
 
-/**
- * Gives how a column aligns, from its cell in the line of `-` under the head:
- * `---:` right, `:---:` centred, else left.
- *
- * @param rule - Its cell of that line, like `---:`
- * @returns Its alignment
- */
+/** Gives how a column aligns, from its cell in the line of `-` under the head. */
 function alignOf(rule: string): HorizontalAlign {
     return rule.endsWith(":") ? (rule.startsWith(":") ? "center" : "right") : "left";
 }
 
 /**
- * Gives cells as LibreOffice and Excel copy them:
- * cells parted by tabs, rows by line breaks, each the text I type in it,
- * in `"` when it holds a tab, a line break, a `,` or a `"`, its `"` doubled,
+ * Gives cells as LibreOffice and Excel copy them, each the text I type in it,
  * as Jspreadsheet writes them too, so it pastes them as it copied them;
  * never the rendered cell, which Jspreadsheet would copy.
- *
- * @param rows - The cells picked, row by row
- * @returns The text to copy
  */
 function clipboardOf(rows: CellValue[][]): string {
     return rows
@@ -785,14 +647,7 @@ function clipboardOf(rows: CellValue[][]): string {
         .join("\r\n");
 }
 
-/**
- * Gives a row with as many cells as the table has columns,
- * empty ones added, those beyond left out.
- *
- * @param cells - Its cells
- * @param count - How many columns the table has
- * @returns The row
- */
+/** Gives a row with as many cells as the table has columns. */
 function paddedOf(cells: string[], count: number): string[] {
     return Array.from(
         { length: count },
@@ -803,18 +658,10 @@ function paddedOf(cells: string[], count: number): string[] {
 /**
  * Gives the lines of the rows of a table for the rows of the spreadsheet:
  * a row as it was keeps its line, even when moved;
- * a row changed in place keeps its line
- * with only the cells changed written anew, see {@link lineWritten};
- * a new row gets a line in the form of the others, like `| a | b |`.
- * - {@link diffArrays}: Finds the runs of rows kept, removed and added;
- *   a run added right after a run removed holds the rows changed in place.
- * - `gone`: The lines of the rows removed, by their cells, for a row moved elsewhere.
- * - `left`: The lines of the run removed right before, for the rows changed in place.
- *
- * @param old - The lines of the rows, as they stand in the text
- * @param data - The cells of the rows of the spreadsheet, as I type them
- * @param count - How many columns the table has
- * @returns The lines of the rows
+ * a row changed in place keeps its line with only the cells changed written anew;
+ * a new row gets a line in the form of the others.
+ * - {@link diffArrays}: A run added right after a run removed
+ *   holds the rows changed in place.
  */
 function rowsWritten(old: string[], data: string[][], count: number): string[] {
     const keyOf = (cells: string[]): string => cells.join("\u0000");
@@ -861,14 +708,7 @@ function rowsWritten(old: string[], data: string[][], count: number): string[] {
     return lines;
 }
 
-/**
- * Writes cells into a line of a table,
- * only those that differ from the line's own, see {@link cellWritten}.
- *
- * @param text - The line
- * @param cells - The cells as I type them
- * @returns The line with them
- */
+/** Writes into a line of a table only the cells that differ from the line's own. */
 function lineWritten(text: string, cells: string[]): string {
     return cells.reduce(
         (line: string, cell: string, column: number): string =>
@@ -880,11 +720,7 @@ function lineWritten(text: string, cells: string[]): string {
 }
 
 /**
- * Finds the `|` of a line of a table that part its cells, an escaped one, `\|`,
- * like in `[[Note\|Text]]`, left out.
- *
- * @param text - The line
- * @returns Where each `|` stands
+ * Finds the `|` of a line of a table that part its cells, an escaped one, `\|`, left out.
  */
 function barsOf(text: string): number[] {
     const bars: number[] = [];
@@ -896,9 +732,6 @@ function barsOf(text: string): number[] {
 /**
  * Gives the cells of a line of a table as I type them, without the spaces around them,
  * with their `\|` as `|` and their `<br>` as line breaks; the line may end without `|`.
- *
- * @param text - The line
- * @returns Its cells, like `[[Note|Text]]`
  */
 function cellsOf(text: string): string[] {
     const bars: number[] = barsOf(text);
@@ -916,11 +749,7 @@ function cellsOf(text: string): string[] {
 }
 
 /**
- * Gives the Markdown of a cell as I type it:
- * its `|` escaped as `\|`, its line breaks as `<br>`.
- *
- * @param value - Its text, like `[[Note|Text]]`
- * @returns Its Markdown, like `[[Note\|Text]]`
+ * Gives the Markdown of a cell as I type it: `|` escaped as `\|`, line breaks as `<br>`.
  */
 function cellMarkdownOf(value: string): string {
     return value
@@ -930,18 +759,10 @@ function cellMarkdownOf(value: string): string {
 }
 
 /**
- * Writes the text of a cell into a line of a table,
- * see {@link cellMarkdownOf}, between the spaces the cell had,
- * one on each side for an empty one,
- * like `| 4311501435229 |`; the rest of the line as it was.
+ * Writes the text of a cell into a line of a table, between the spaces the cell had,
+ * one on each side for an empty one; the rest of the line as it was.
  * A line with fewer cells gets the missing ones at its end, empty ones as `|  |`,
  * as every empty cell of my tables.
- * - `cells`: How many cells the line has, ended by its last `|`.
- *
- * @param text - The line
- * @param column - Number of the cell, the first being 0
- * @param value - Its text as typed
- * @returns The line with it
  */
 function cellWritten(text: string, column: number, value: string): string {
     const bars: number[] = barsOf(text);

@@ -3,62 +3,20 @@
  *
  * Shows an `.ics` file in the editor easy to read,
  * the file itself staying exactly as it is:
- * every line left-aligned at the depth of its block,
  * each line inside a `BEGIN:` and its `END:` one step further in,
- * like the lines of a `VEVENT` inside `VCALENDAR`,
- * and an empty line's room above each entry of the calendar,
- * a `BEGIN:` right inside `VCALENDAR`,
- * so the entries stand apart.
- * A folded line, starting with a space, stays in the block of the line it continues,
- * and its text counts as part of that property, see {@link propertyOf}.
+ * and an empty line's room above each entry of the calendar, so the entries stand apart.
+ * A folded line, starting with a space, stays in the block of the line it continues.
  * Only the look changes: the steps and the room are drawn by the stylesheet,
- * see `.ics-depth-1` and `.ics-entry` in `editor.css`, no character is added.
- * The name of each property with its parameters,
- * up to and with the colon before its value, like `DTSTART;TZID=Europe/Berlin:`
- * of `DTSTART;TZID=Europe/Berlin:20261019T140000`, is grey,
- * so the value stands out white, of a line `BEGIN:` or `END:` too,
- * so `VEVENT` of `BEGIN:VEVENT` is white;
- * its parameters, like `;TZID=Europe/Berlin`, a step fainter, since they say least.
+ * see `editor.css`, no character is added.
+ * The name of each property with its parameters is grey, so the value stands out white,
+ * its parameters a step fainter, since they say least.
  * After a value with a meaning, its line shows it readable, faint,
- * in a column of its own at its right, as the page writes it:
- * a date, a date with its time or a length, like
- * `20261019T140000  19.10.2026 (Mon), 14:00`,
- * `20261019  19.10.2026 (Mon)` or `PT2H  02h 00m`,
- * a time in UTC, ending in `Z`, in Berlin time;
- * a rule of a series, its `RRULE`,
- * like `FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU  yearly in Mar on last Sun`,
- * see {@link ruleTextOf};
- * an offset of a time zone, like `+0100  UTC+01:00`;
- * the name of a time of a time zone, like `CEST  summer time`, see {@link zoneNames};
- * each short, so its column stays narrow.
- * The stylesheet draws the grey and the readable form too,
- * see `.ics-name` and `[data-readable]` in `editor.css`,
+ * in a column of its own at its right, see {@link readableOf},
  * the readable form no part of the text,
  * so copying a line copies it as the file has it.
- * The text is as wide as that of a note;
- * the readable forms stand right of it, at the right edge of the save button,
- * see {@link overhangKeep}.
- * Every block folds to its first line, like `BEGIN:VTIMEZONE`, by the arrow after it,
- * as the arrow of a heading of a note does,
- * see `FoldWidget` in `./preview.ts`; each comes unfolded.
- * In the status line stands its overview, see {@link overviewKeep}:
- * a short dash per entry, white for the entry at the top of the view;
- * resting the mouse on one shows its entry as a box of the plan shows it, only its facts,
- * and a click scrolls to it.
- *
- * - `@codemirror/state`: The text and its lines.
- * - `@codemirror/view`: Decorations of whole lines and of the names,
- *   how they reach the editor,
- *   and the measure of the room right of the text.
- * - `@codemirror/language`: Folds a block.
- * - `./preview.ts`: The fold arrow of a heading, for a block.
- * - `./steps.ts`: Tells whether a block is folded.
- * - `../skill/attempts.ts`, `../day/times.ts`:
- *   Write a day, a time and a length as the page shows them.
- * - `../day/boxes.ts`, `../day/series.ts`:
- *   Make the lines of a box of the plan and write a room short,
- *   for the box of an entry of the overview.
- * - `../day/boxes.css`: Look of a box of the plan.
+ * Every block folds to its first line by the arrow after it,
+ * as the arrow of a heading of a note does; each comes unfolded.
+ * In the status line stands its overview, see {@link overviewKeep}.
  */
 
 import { StateField } from "@codemirror/state";
@@ -77,46 +35,40 @@ import type { EditorState, Extension, Line, Range, Transaction } from "@codemirr
 import type { DecorationSet } from "@codemirror/view";
 
 /**
- * Most steps a line of a calendar file is drawn further in;
- * a deeper line, rare, like inside a `VALARM` of a `VEVENT` of a series, stays at it.
+ * Most steps a line of a calendar file is drawn further in, a deeper line stays at it.
  */
 const deepest: number = 4;
 
 /**
- * Name of a property with its parameters, up to and with the colon before its value,
- * like `DTSTART;TZID=Europe/Berlin:` of `DTSTART;TZID=Europe/Berlin:20261019T140000`;
- * a colon in the quotes of a parameter,
- * like those of `ALTREP="https://nav.tum.de/room/5416.01.003"`, belongs to the parameter.
+ * Name of a property with its parameters, up to and with the colon before its value;
+ * a colon in the quotes of a parameter belongs to the parameter.
  */
 const nameRule: RegExp = /^[A-Z0-9-]+(?:;(?:[^":]|"[^"]*")*)?:/i;
 
 /**
- * Date of a value: its year, month and day, like `20261019`,
- * and of a date with its time its hours, minutes and seconds,
- * like `T140000`, with `Z` in UTC.
+ * Date of a value, and of a date with its time its hours, minutes and seconds,
+ * with `Z` in UTC.
  */
 const dateRule: RegExp = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z?))?$/;
 
 /**
- * A length, like `PT2H` or `PT1H30M`: its hours and its minutes.
+ * A length, like `PT2H`: its hours and its minutes.
  */
 const lengthRule: RegExp = /^PT(?:(\d+)H)?(?:(\d+)M)?$/;
 
 /**
- * An offset of a time zone, like `+0100`: its sign, hours and minutes.
+ * An offset of a time zone: its sign, hours and minutes.
  */
 const offsetRule: RegExp = /^([+-])(\d{2})(\d{2})$/;
 
 /**
- * Names of the times of a time zone, its `TZNAME`, said short, those my calendars use,
- * the zone itself standing in its `TZID` above, like `Europe/Berlin`;
+ * Names of the times of a time zone, its `TZNAME`, said short, those my calendars use;
  * another, like `GMT+1`, says itself.
  */
 const zoneNames: Record<string, string> = { CET: "standard time", CEST: "summer time" };
 
 /**
- * How often a series repeats, its `FREQ`, after every how many of it, its `INTERVAL`,
- * like `weekly` or `every 2 weeks`.
+ * How often a series repeats, its `FREQ`, after every how many of it, its `INTERVAL`.
  */
 const frequencies: Record<string, [string, string]> = {
     SECONDLY: ["every second", "seconds"],
@@ -129,8 +81,7 @@ const frequencies: Record<string, [string, string]> = {
 };
 
 /**
- * Weekdays of a series, its `BYDAY`,
- * short as the page writes a weekday, like `Sun` for `SU`.
+ * Weekdays of a series, its `BYDAY`, short as the page writes a weekday.
  */
 const weekdays: Record<string, string> = {
     MO: "Mon",
@@ -143,36 +94,26 @@ const weekdays: Record<string, string> = {
 };
 
 /**
- * An entry of the calendar, a block right inside `VCALENDAR`, for the overview,
- * see {@link overviewKeep}.
- * - `line`: Number of its first line, its `BEGIN:`, from 1.
- * - `kind`: Its kind, like `VTODO`.
- * - `values`: Its own properties by their names,
- *   like `SUMMARY`, the first of each, its folded lines joined,
- *   its escapes, like `\\,`, read.
+ * An entry of the calendar, a block right inside `VCALENDAR`, for the overview.
+ * - `values`: Its own properties, the first of each, folded lines joined, escapes read.
  */
 type Block = { line: number; kind: string; values: Map<string, string> };
 
 /**
- * Grey of the name of a property with its colon,
- * see {@link nameRule}, also of `BEGIN:` or `END:`.
+ * Grey of the name of a property with its colon, also of `BEGIN:` or `END:`.
  */
 const nameMark: Decoration = Decoration.mark({ class: "ics-name" });
 
 /**
- * Fainter grey of the parameters of a property, like `;TZID=Europe/Berlin`.
+ * Fainter grey of the parameters of a property.
  */
 const parameterMark: Decoration = Decoration.mark({ class: "ics-parameter" });
 
 /**
- * Writes a date readable, see the top of this file:
- * a date like `19.10.2026 (Mon)`, a date with its time like `19.10.2026 (Mon), 14:00`,
- * as the page writes them, see `dayTextOf` in `../skill/attempts.ts`.
- * - `date`: The parts of the date, see {@link dateRule}, `null` for none.
- * - `moment`: The moment of a date with its time: as written,
- *   or with its `Z` in UTC, written in Berlin time.
+ * Writes a date readable as the page writes it,
+ * see `dayTextOf` in `../skill/attempts.ts`,
+ * a time in UTC in Berlin time.
  *
- * @param value - A date, like `20261019T140000`
  * @param timed - Whether to write the time of a date with its time, else only its day
  * @returns The date readable, `null` for no date
  */
@@ -189,22 +130,10 @@ function dateTextOf(value: string, timed: boolean): string | null {
 }
 
 /**
- * Writes a rule of a series readable,
- * see the top of this file, short, its parts in the order they are read,
- * like `yearly in Mar on last Sun` of `FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU`
- * or `weekly until 04.02.2027 (Thu)` of `FREQ=WEEKLY;UNTIL=20270204T090000Z`:
- * how often, its `FREQ` after every how many, its `INTERVAL`;
- * the months, `BYMONTH`, short, like `Mar`; the days of the month, `BYMONTHDAY`;
- * the weekdays, `BYDAY`, short, see {@link weekdays}, each with its place in the month,
- * like `-1` for the last; how many times, `COUNT`, or until when, `UNTIL`, its day alone;
+ * Writes a rule of a series readable and short, its parts in the order they are read,
+ * like `yearly in Mar on last Sun` of `FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU`;
  * any other part as written.
- * - `parts`: The parts of the rule by their names, like `FREQ` to `YEARLY`.
- * - `every`: How many of its frequency lie between two of the series, 1 for each.
- * - `ordinalOf`: Writes a number as a place, like `2nd` for 2.
- * - `placeOf`: Writes the place of a weekday in its month,
- *   like `last` for `-1`, `2nd last` for `-2` or `2nd` for 2.
  *
- * @param value - The rule, like `FREQ=WEEKLY;UNTIL=20270204T090000Z`
  * @returns The rule readable, `null` for one without `FREQ`
  */
 function ruleTextOf(value: string): string | null {
@@ -267,18 +196,9 @@ function ruleTextOf(value: string): string | null {
 }
 
 /**
- * Writes a value readable, see the top of this file: a date or a date with its time,
- * see {@link dateTextOf}, a length like `02h 00m`,
- * see `lengthOf` in `../day/times.ts`, a rule of a series,
- * see {@link ruleTextOf}, an offset of a time zone, like `UTC+01:00`,
- * and the name of a time of a time zone, see {@link zoneNames}.
- * - `length`: Hours and minutes of a length, see {@link lengthRule}, `null` for none.
- * - `offset`: Sign, hours and minutes of an offset,
- *   see {@link offsetRule}, `null` for none.
+ * Writes a value readable: a date, a length, a rule of a series,
+ * an offset of a time zone or the name of a time of a time zone.
  *
- * @param name - Name of the property with its parameters,
- *   like `DTSTART;TZID=Europe/Berlin:`
- * @param value - Its value, like `20261019T140000`
  * @returns The value readable, `null` for a value without a meaning to add
  */
 function readableOf(name: string, value: string): string | null {
@@ -295,15 +215,10 @@ function readableOf(name: string, value: string): string | null {
 }
 
 /**
- * Tells what the first line of a block folds, see the top of this file:
+ * Tells what the first line of a block folds:
  * from the end of its `BEGIN:` to the end of its `END:`, blocks inside it skipped,
- * so only its first line shows; nothing for any other line.
- * - `depth`: How many blocks inside it are open at a line below it.
- * - `end`: A line below it, at last its `END:`.
+ * so only its first line shows.
  *
- * @param state - State of the editor, with the text of the file
- * @param from - Start of the line
- * @param to - End of the line
  * @returns What it folds, `null` for nothing
  */
 function blockOf(
@@ -327,16 +242,9 @@ function blockOf(
 }
 
 /**
- * Gives a property of a calendar file as one line:
- * its line and the folded lines after it, each without the space it starts with,
+ * Gives a property of a calendar file as one line, its folded lines joined
+ * without the space each starts with,
  * so a name with parameters cut inside a link reads whole.
- * - `next`: Number of a line after it.
- * - `text`: Text of that line.
- *
- * @param state - State of the editor, with the text of the file
- * @param number - Number of its line, from 1
- * @returns The property,
- *   like `LOCATION;ALTREP="https://nav.tum.de/room/5416.01.003":5416.01.003`
  */
 function propertyOf(state: EditorState, number: number): string {
     let property: string = state.doc.line(number).text;
@@ -349,32 +257,11 @@ function propertyOf(state: EditorState, number: number): string {
 }
 
 /**
- * Gives the decorations of the lines of a calendar file, see the top of this file:
- * each line as one, `ics-line`, with its step, as a class like `ics-depth-1`,
- * and for each entry, a `BEGIN:` right inside `VCALENDAR`, the room above it;
- * the grey of the name of each property and the fainter grey of its parameters;
- * its value readable, as the attribute `data-readable` of its line;
+ * Gives the decorations of the lines of a calendar file:
+ * each line with its step, the room above each entry,
+ * the grey of names and parameters, the readable value as `data-readable`,
  * and the fold arrow of each block.
- * - `decorations`: Decorations found so far, in the order of the lines.
- * - `depth`: Depth of the block the next line lies in, 0 outside every block.
- * - `property`: The property of the line, see {@link propertyOf}.
- * - `above`: How many of its characters stand on the lines above.
- * - `number`: Number of a line, from 1.
- * - `line`, `text`: A line and its text.
- * - `step`: Step the line is drawn at:
- *   an `END:` at the depth of its `BEGIN:`, a further line one inside.
- * - `entry`: Whether the line begins an entry of the calendar.
- * - `lead`: The space a folded line starts with, 0 for any other line.
- * - `first`: Where the text of the line starts, after that space.
- * - `name`: The name of its property, see {@link nameRule}, `null` for none.
- * - `parameters`: Where its parameters start, after the name of its property,
- *   right before its colon for none.
- * - `readable`: The value of its property readable, on its first line,
- *   see {@link readableOf}, `null` for none.
- * - `markPut`: Marks what of a part of the property stands on the line.
- *
- * @param state - State of the editor, with the text of the file and what of it is folded
- * @returns Decorations of the lines
+ * - `step`: An `END:` at the depth of its `BEGIN:`, a further line one inside.
  */
 function decorationsOf(state: EditorState): DecorationSet {
     const decorations: Range<Decoration>[] = [];
@@ -431,14 +318,9 @@ function decorationsOf(state: EditorState): DecorationSet {
 }
 
 /**
- * Keeps the room from the right edge of the text to the right edge of the save button,
- * see `./editor.html`, as the variable `--ics-overhang` of the editor,
- * so the readable forms of the values stand at that edge,
- * see `[data-readable]` in `editor.css`:
- * measured as the editor stands and again whenever the window changes its size.
- * - {@link EditorView#requestMeasure}:
- *   Reads the edges and writes the room at the moment the editor measures.
- * - `measure`: Measures it.
+ * Keeps the room from the right edge of the text to the right edge of the save button
+ * as `--ics-overhang`, so the readable forms stand at that edge,
+ * measured again whenever the window changes its size.
  */
 const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
     (view: EditorView): { destroy: () => void } => {
@@ -460,18 +342,10 @@ const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
 );
 
 /**
- * The look of a calendar file for the editor, see the top of this file:
- * its lines decorated once as it opens,
- * and again whenever its text changes or a block folds or unfolds;
- * the readable forms at the right edge of the save button, see {@link overhangKeep};
- * its overview above it, see {@link overviewKeep}.
- * - {@link codeFolding}: Holds what is folded,
- *   without the `…` CodeMirror puts in place of it,
- *   since the arrow turned right tells it, as in a note,
- *   see `livePreview` in `./preview.ts`.
- * - {@link foldService}: Tells what the first line of a block folds, see {@link blockOf}.
- *
- * @returns Extension of the editor
+ * The look of a calendar file for the editor, decorated again
+ * whenever its text changes or a block folds or unfolds.
+ * - {@link codeFolding}: Without the `…` CodeMirror puts in place of what is folded,
+ *   since the arrow turned right tells it, as in a note.
  */
 export function icsLook(): Extension {
     return [
@@ -499,13 +373,6 @@ export function icsLook(): Extension {
 
 /**
  * Reads the entries of a calendar file, see {@link Block}.
- * - `blocks`: The entries so far.
- * - `depth`: Depth of the block the next line lies in, 0 outside every block.
- * - `text`: The property of a line, see {@link propertyOf}, of a folded line nothing.
- * - `found`, `name`: Its name with its parameters, and its name alone.
- *
- * @param state - State of the editor, with the text of the file
- * @returns The entries, in order
  */
 function blocksOf(state: EditorState): Block[] {
     const blocks: Block[] = [];
@@ -541,25 +408,10 @@ function blocksOf(state: EditorState): Block[] {
 }
 
 /**
- * Makes the box of an entry of the overview, see {@link overviewKeep},
- * as a box of the plan shows it,
- * see `boxContentOf` in `../day/boxes.ts`, only its facts, no buttons:
- * what it is in bold, its category and its name,
- * like **`Skill: IN2028 Business Analytics Machine Learning (VO)`**,
- * of a time zone its `TZID`;
- * then in grey its day, its times or, of a to-do without times, its length,
- * of one without a start its deadline, and its place, a room by its code,
- * see `roomOf` in `../day/series.ts`, or what it does online, like
- * `19.10.2026 (Mon) · 14:00 – 16:00 · 5416.01.003`.
- * - `values`: Its properties.
- * - `date`: The parts of its start or deadline, see {@link dateRule}, `null` for none.
- * - `start`: Its start, `null` for none or a whole day.
- * - `length`: Its length in minutes, of its end or of its duration, `null` for none.
- * - `parts`: The parts of its grey line, in order.
- * - `place`: Its place or what it does online, empty for none.
- *
- * @param block - The entry
- * @returns The box
+ * Makes the box of an entry of the overview as a box of the plan shows it,
+ * see `boxContentOf` in `../day/boxes.ts`, only its facts, no buttons;
+ * of a time zone its `TZID`, of a to-do without times its length,
+ * of one without a start its deadline.
  */
 function boxOf(block: Block): HTMLElement {
     const values: Map<string, string> = block.values;
@@ -635,26 +487,11 @@ function boxOf(block: Block): HTMLElement {
 }
 
 /**
- * Keeps the overview of a calendar file above its text, see the top of this file:
- * in the status line, see `.ics-overview` in `editor.css`, a dash per entry,
- * see {@link blocksOf}, named by its name for screen readers;
- * the dash of the entry at the top of the view, the last that begins above it, white,
- * followed as the file scrolls, and the overview scrolled
- * so that dash stays in its middle,
- * so many entries never crowd it;
- * resting the mouse on a dash shows the box of its entry below it, within the page,
- * see {@link boxOf}, a click scrolls the file to the entry's first line.
- * It goes with the editor.
- * - `file`: The part of the page that scrolls the file,
- *   see `.editor-file` in `editor.css`, `null` for none.
- * - `state`: The notice of the status line, which the overview stands before.
- * - `blocks`, `dashes`: The entries and their dashes.
- * - `shown`: The box shown, `null` while none shows.
- * - `boxHide`: Takes the box away.
- * - `follow`: Marks the dash of the entry at the top of the view.
- * - `top`: Height just below the status line, where the view begins.
- * - `at`: Number of the line at the top of the view.
- * - `current`: Place of its entry, the first while none begins above it.
+ * Keeps the overview of a calendar file in the status line, a dash per entry,
+ * named by its name for screen readers;
+ * the dash of the entry at the top of the view white, the overview scrolled
+ * so that dash stays in its middle, so many entries never crowd it;
+ * resting the mouse on a dash shows the box of its entry, a click scrolls to the entry.
  */
 const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
     (view: EditorView): { destroy: () => void } => {
