@@ -2,23 +2,13 @@
  * ## Code
  *
  * The languages of my code blocks, a fixed list, see {@link codeLanguages},
- * named after the ``` of a block, like ```python,
- * and picked in the editor from that list:
  * the words of a block of one of them in the colors of my IntelliJ theme,
- * see `reader/theme.ts`,
- * every other block in the color of text, white;
- * in the scripts view, see {@link codeHtmlOf},
- * and in the editor, see `../editor/syntax.ts`.
+ * see `reader/theme.ts`, every other block in the color of text, white.
+ * Used in the scripts view, see {@link codeHtmlOf}, and in the editor,
+ * see `../editor/syntax.ts`.
  * Make has no language of its own there, its lines take that of Bash.
- * Built-in functions, like `print` and `len`, take a color of their own only in Python,
- * as my theme gives it for Python alone, see {@link plain}, and so do `self` and `cls`;
- * simple types, like `int` and `void`, that of keywords.
- *
- * - `@codemirror/language`:
- *   Reads a language of CodeMirror's older modes, `StreamLanguage`.
- * - `@codemirror/legacy-modes`: The languages.
- * - `@lezer/highlight`: Gives each piece of code its class, like `code-keyword`,
- *   see {@link codeHighlighter}, colored by `notes.css`.
+ * Built-in functions take a color of their own only in Python,
+ * as my theme gives it for Python alone, see {@link plain}.
  */
 
 import { StreamLanguage } from "@codemirror/language";
@@ -36,13 +26,8 @@ import type { Highlighter } from "@lezer/highlight";
 
 /**
  * A language whose built-in words read as any other word,
- * as my theme colors built-in functions of Python alone;
- * its simple types, written small like `void`, `int` and `boolean`, as keywords,
- * as IntelliJ colors them, while types like `String` and `size_t` stay types.
- * - `style`: The kind of the word the mode reads.
- *
- * @param mode - The language as CodeMirror's old mode, like `java`
- * @returns The language, its built-in words plain, its simple types keywords
+ * as my theme colors built-in functions of Python alone,
+ * and its simple types written small as keywords, as IntelliJ colors them.
  */
 function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
     return StreamLanguage.define({
@@ -75,8 +60,7 @@ export const codeLanguages: { [name: string]: StreamLanguage<unknown> } = {
 
 /**
  * Classes of the pieces of code, one for each kind of word of `reader/theme.ts`,
- * like `code-keyword`, which `notes.css` colors by `--code-keyword`;
- * every other word, like the name of a variable, in the color of text.
+ * colored by `notes.css`, every other word in the color of text.
  */
 export const codeHighlighter: Highlighter = tagHighlighter([
     { tag: tags.self, class: "code-self" },
@@ -99,24 +83,15 @@ export const codeHighlighter: Highlighter = tagHighlighter([
 ]);
 
 /**
- * Finds the language of a code block by what follows its ```.
- *
- * @param info - What follows the ```, like `python` or `Python title="x"`
- * @returns The language, `null` for none of my list
+ * Finds the language of a code block by what follows its ```, `null` for none of my list.
  */
 export function codeLanguageOf(info: string): StreamLanguage<unknown> | null {
     return codeLanguages[info.trim().split(/\s/)[0].toLowerCase()] ?? null;
 }
 
 /**
- * Turns the code of a block into HTML with a class for each piece, like `code-keyword`,
- * see {@link codeHighlighter}.
- * - `language`: Its language.
- * - `html`: The HTML so far.
- * - `escaped`: Gives a piece of code as text of HTML.
- *
- * @param info - What follows the ``` of the block
- * @returns The HTML, `null` for a block of no language of my list
+ * Turns the code of a block into HTML with a class for each piece,
+ * `null` for a block of no language of my list.
  */
 export function codeHtmlOf(code: string, info: string): string | null {
     const language: StreamLanguage<unknown> | null = codeLanguageOf(info);
@@ -142,9 +117,8 @@ export function codeHtmlOf(code: string, info: string): string | null {
 }
 
 /**
- * Gives every kind of code its color from my theme, see `reader/theme.ts`,
- * as `--code-…` on the page, like `--code-string`, for `notes.css`.
- * - `colors`: Color of each kind, like `{ "string": "#6aab73", … }`.
+ * Gives every kind of code its color from my theme as `--code-…` on the page,
+ * for `notes.css`.
  */
 export async function codeColorsSet(): Promise<void> {
     const colors: { [kind: string]: string } = await (await fetch("/api/theme")).json();

@@ -6,37 +6,22 @@
  * - formulas `$…$` and `$$…$$`, taken whole before any other Markdown,
  *   so `_`, `*` and `\` inside stay TeX, while `$` inside code stays text;
  *   as in Obsidian, `$$…$$` within a line stands on a line of its own;
- * - callouts `> [!note] Title`, folded with `-` after the type, foldable with `+`;
- *   their lines without `>` and one space are read by the same rules
- *   as the rest of the note;
- * - wiki links `[[Note#Heading|Text]]` and embeds `![[Note]]`,
- *   images only in Markdown's form;
+ * - callouts, their lines without `>` read by the same rules as the rest of the note;
+ * - wiki links and embeds, images only in Markdown's form;
  * - a single line break as a break, as with Obsidian's strict line breaks off;
- * - a lazy line, one that goes on with the text of a list item without being indented,
- *   like the spacer `⠀` under a sub-bullet, as part of that item, as CommonMark reads it;
- * - an HTML block like `<table>` ending on the line its tag closes,
- *   as in Obsidian's editor,
+ * - a lazy line as part of its list item, as CommonMark reads it;
+ * - an HTML block ending on the line its tag closes, as in Obsidian's editor,
  *   so Markdown right below it is read as Markdown;
  * - `|` inside `[[…]]` on a table row as part of the link, not as the end of a cell.
- * Beyond Obsidian, the block under each heading `##`,
- * like a theory block or a task, folds by a click on its heading, open at first,
+ * Beyond Obsidian, the block under each heading `##` folds by a click on its heading,
  * and the section under a heading `#### Solution…` comes folded,
  * so I try a task before I see its solution.
  * Also beyond Obsidian, every empty line between two blocks stays one line high,
- * as I wrote it and as the editor shows it,
- * so the space between two blocks shows how many empty lines I wrote between them,
- * see {@link emptyLinesMade}.
- * Links, images and embeds keep their link as written in `data-link` and `data-heading`,
- * for the scripts view to resolve;
- * formulas keep their TeX as text in an element of the class `math`,
- * as in Obsidian, for `math.ts` to render.
+ * as the editor shows it, see {@link emptyLinesMade}.
+ * Links keep their link as written in `data-link` and `data-heading`,
+ * for the scripts view to resolve; formulas keep their TeX for `math.ts` to render.
  * The HTML comes cleaned of scripts, as in Obsidian,
  * because some notes in my modules come from the internet.
- *
- * Code blocks of a language of my list show in the colors of my theme, see `./code.ts`.
- *
- * - `marked`: Turns Markdown into HTML, with extensions for the syntax above.
- * - `dompurify`: Cleans HTML of scripts, event handlers and the like.
  */
 
 import { Marked } from "marked";
@@ -85,24 +70,14 @@ const mathInlineRule: RegExp = /^\$(?![ \t$])((?:\\[\s\S]|[^\\])+?)(?<![ \t])\$(
  */
 export const punctuationRule: RegExp = /^[.,;:!?)]+/;
 
-/**
- * Callout: a quote whose first line is `> [!type] Title`,
- * with its type, `-` or `+` for folding,
- * its title, and the further lines of the quote.
- */
+/** Callout: a quote whose first line is `> [!type] Title`, `-` or `+` for folding. */
 const calloutRule: RegExp =
     /^ {0,3}>[ \t]?\[!([^\]]+)\]([+-]?)[ \t]*(.*)(?:\n|$)((?: {0,3}>.*(?:\n|$))*)/;
 
-/**
- * Wiki link `[[Note#Heading|Text]]` or embed `![[Note]]`, `!` for an embed.
- */
+/** Wiki link `[[Note#Heading|Text]]` or embed `![[Note]]`. */
 const wikiLinkRule: RegExp = /^(!?)\[\[([^\]]+)\]\]/;
 
-/**
- * HTML block of a block tag,
- * like `<table>`, up to the end of the line where the tag closes,
- * with no empty line in it.
- */
+/** HTML block of a block tag, up to the end of the line where the tag closes. */
 const htmlBlockRule: RegExp = new RegExp(
     /^ {0,3}/.source +
         /<(table|div|details|figure|center)\b(?:(?!\n[ \t]*\n)[\s\S])*?<\/\1>/.source +
@@ -116,16 +91,10 @@ const htmlBlockRule: RegExp = new RegExp(
  */
 const frontMatterRule: RegExp = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/;
 
-/**
- * Row of a table, like `| ![tangent](Visualizations/Tangens.svg) | … |`,
- * also inside a quote.
- */
+/** Row of a table, also inside a quote. */
 const tableRowRule: RegExp = /^[ \t>]*\|.*$/gm;
 
-/**
- * List item at the start of a line: its indentation, its marker like `-` or `1.`,
- * and the spaces up to its text.
- */
+/** List item at the start of a line: its indentation, its marker and the spaces after. */
 const listItemRule: RegExp = /^([ \t]*)([-*+]|\d{1,9}[.)])([ \t]+|$)/;
 
 /**
@@ -136,23 +105,13 @@ const listItemRule: RegExp = /^([ \t]*)([-*+]|\d{1,9}[.)])([ \t]+|$)/;
 const blockStartRule: RegExp =
     /^[ \t]*(?:#{1,6}(?:[ \t]|$)|>|```|~~~|\||<|(?:[-*_][ \t]*){3,}$)/;
 
-/**
- * Text of a heading that opens a solution,
- * like `Solution` or `Solution (own, unchecked)`.
- */
+/** Text of a heading that opens a solution, like `Solution (own, unchecked)`. */
 const solutionRule: RegExp = /^Solution\b/;
 
-/**
- * Address with a scheme, like `https://…`: a link out of the module, opened as it is.
- */
+/** Address with a scheme: a link out of the module, opened as it is. */
 const externalRule: RegExp = /^[a-z][a-z\d+.-]*:/i;
 
-/**
- * Escapes text for HTML, also inside attributes in `"…"`.
- *
- * @param text - Text like `a < b`
- * @returns Text like `a &lt; b`
- */
+/** Escapes text for HTML, also inside attributes in `"…"`. */
 function escaped(text: string): string {
     return text
         .replace(/&/g, "&amp;")
@@ -162,12 +121,8 @@ function escaped(text: string): string {
 }
 
 /**
- * Splits a link at its first `#` into the link to a file and the heading in it.
- *
- * @param address - Link
- *   like `05_06_EulerTrigonometrie#05.06. Definition. Eulersche Formel`
- * @returns Link to the file, empty for the note itself,
- *   and heading, empty when there is none
+ * Splits a link at its first `#` into the link to a file and the heading in it,
+ * the file empty for the note itself.
  */
 function linkPartsOf(address: string): [string, string] {
     const hash: number = address.indexOf("#");
@@ -180,10 +135,6 @@ function linkPartsOf(address: string): [string, string] {
  * Counts the empty lines at the end of Markdown:
  * the line breaks after its last text, less the one that ends its last line;
  * a line of spaces or tabs counts as empty.
- * - `end`: The spaces, tabs and line breaks after the last text, like `\n\n\n`.
- *
- * @param markdown - Markdown, like `Text\n\n\n`
- * @returns Number of empty lines at its end, like 2
  */
 function emptyLinesAtEndOf(markdown: string): number {
     const end: string = /[ \t\n]*$/.exec(markdown)?.[0] ?? "";
@@ -197,13 +148,8 @@ function emptyLinesAtEndOf(markdown: string): number {
  * like the spacer `⠀` under a sub-bullet.
  * marked would end the whole list at a lazy line whose line above lies 4 columns
  * or more deeper than its item, and every step after it would turn into plain text.
- * - A tab counts 4 columns, as in marked.
- * - Lines inside a formula `$$…$$` over several lines are TeX,
- *   never a list item or another block,
- *   so a row like `- & 1 & 2` starts no list.
- *
- * @param markdown - Markdown, like a note or the lines of a callout without their `>`
- * @returns The same Markdown, each lazy line of a list indented as the text above it
+ * Lines inside a formula `$$…$$` over several lines are TeX,
+ * so a row like `- & 1 & 2` starts no list.
  */
 function lazyLinesIndented(markdown: string): string {
     const lines: string[] = markdown.split("\n");
@@ -264,12 +210,8 @@ function lazyLinesIndented(markdown: string): string {
 /**
  * Prepares a note for marked:
  * without its front matter, with every `|` inside `[[…]]` on a table row written `\|`,
- * as Obsidian asks for in tables,
- * so marked keeps the link in one cell and gives it back with `|`,
+ * as Obsidian asks for in tables, so marked keeps the link in one cell,
  * and with its lazy lines indented, see {@link lazyLinesIndented}.
- *
- * @param note - Text of the note
- * @returns Markdown for marked
  */
 function preprocess(note: string): string {
     return lazyLinesIndented(
@@ -287,10 +229,6 @@ function preprocess(note: string): string {
  * Hides wiki links and formulas from marked's search for the end of `*…*` and `_…_`,
  * so an emphasis never ends inside them, like at the `*` of `$x^*$`;
  * each becomes as many `a` as it is long.
- * marked has already hidden code and escaped characters the same way.
- *
- * @param src - Text of a paragraph, with code and escapes hidden
- * @returns Text of the same length, with wiki links and formulas hidden too
  */
 function emStrongMask(src: string): string {
     let masked: string = src.replace(/!?\[\[[^\]]*\]\]/g, (link: string): string =>
@@ -335,13 +273,9 @@ const mathBlock: TokenizerAndRendererExtension = {
 /**
  * Formula within a line, `$$…$$` or `$…$`,
  * see {@link mathDisplayRule} and {@link mathInlineRule}.
- * Renders as `<span class="math math-block">` for `$$…$$`,
- * `<span class="math math-inline">` for `$…$`, with its TeX, as in Obsidian;
- * a formula `$…$` with punctuation right after it,
- * see {@link punctuationRule}, together with it in `<span class="math-unbroken">`,
+ * A formula `$…$` with punctuation right after it, see {@link punctuationRule},
+ * goes together with it in `<span class="math-unbroken">`,
  * which `notes.css` keeps on one line.
- * - `punctuation`: The punctuation right after a formula `$…$`, empty for none.
- * - `math`: The element of the formula.
  */
 const mathInline: TokenizerAndRendererExtension = {
     name: "mathInline",
@@ -375,18 +309,11 @@ const mathInline: TokenizerAndRendererExtension = {
 
 /**
  * Callout, see {@link calloutRule};
- * its title as the type with a capital, like `Note`, when it has none.
- * Renders as `<div class="callout">`,
- * or as `<details class="callout">` to fold, open for `+`,
- * with the type in `data-callout`
- * and the title inside `callout-title-inner`, as in Obsidian,
- * so the title stays one piece of text between the icon and the fold arrow.
- * - {@link Lexer#inline}: Reads the title as Markdown once the blocks are read.
- * - {@link Lexer#blockTokens}:
- *   Reads the lines of the quote without their `>`
- *   and one space as Markdown of their own,
- *   by the same rules as the rest of the note, lazy lines included;
- *   a tab right after `>` stays as indentation.
+ * its title as the type with a capital when it has none.
+ * The title stands inside `callout-title-inner`, as in Obsidian,
+ * so it stays one piece of text between the icon and the fold arrow.
+ * - {@link Lexer#blockTokens}: Reads the lines of the quote as Markdown of their own,
+ *   lazy lines included; a tab right after `>` stays as indentation.
  */
 const callout: TokenizerAndRendererExtension = {
     name: "callout",
@@ -435,12 +362,10 @@ const callout: TokenizerAndRendererExtension = {
 
 /**
  * Wiki link or embed, see {@link wikiLinkRule}; `\|` counts as `|`.
- * A link renders as `<a class="internal-link">` with its text,
- * else its target and heading like `Note > Heading`.
- * An embedded note renders
- * as an empty `<div class="markdown-embed">` the scripts view fills;
- * any other file as a link, an image too, which is written in Markdown's form,
- * see {@link imageOf}.
+ * A link shows its text, else its target and heading like `Note > Heading`.
+ * An embedded note renders as an empty `<div class="markdown-embed">`,
+ * which the scripts view fills;
+ * any other file as a link, an image too, which is written in Markdown's form.
  */
 const wikiLink: TokenizerAndRendererExtension = {
     name: "wikiLink",
@@ -481,9 +406,8 @@ const wikiLink: TokenizerAndRendererExtension = {
 };
 
 /**
- * Empty lines between two blocks, see {@link emptyLinesMade}:
- * renders as an empty `<div class="empty-lines">` with their number in `data-lines`,
- * which {@link htmlOf} gives to the block below them.
+ * Empty lines between two blocks, see {@link emptyLinesMade},
+ * their number in `data-lines`, which {@link htmlOf} gives to the block below them.
  */
 const emptyLines: TokenizerAndRendererExtension = {
     name: "emptyLines",
@@ -492,10 +416,8 @@ const emptyLines: TokenizerAndRendererExtension = {
 };
 
 /**
- * Section under a heading that folds, see {@link foldsMade}:
- * renders as `<details class="fold">`, open or closed,
- * with the heading as its `<summary>`, the one place to click to fold it,
- * and the blocks of the section inside.
+ * Section under a heading that folds, see {@link foldsMade},
+ * with the heading as its `<summary>`, the one place to click to fold it.
  */
 const fold: TokenizerAndRendererExtension = {
     name: "fold",
@@ -512,19 +434,13 @@ const fold: TokenizerAndRendererExtension = {
 /**
  * Keeps the empty lines between two blocks,
  * which marked reads as a block `space` and draws as nothing:
- * each `space` between two blocks becomes one {@link emptyLines} with the number of empty
- * lines between them, like 1 for the empty line below the `Generated:` quote of a block,
+ * each `space` between two blocks becomes one {@link emptyLines},
  * counted from the end of the block above,
  * since marked keeps the line break that ends a block's last line sometimes in the block
  * and sometimes in the `space`.
  * The same inside quotes, callouts and list items, and between two list items,
  * whose empty lines marked keeps at the end of the item above, so they go there.
- * Empty lines before the first or after the last block of a note, a quote,
- * a callout or an item stand between no blocks and go.
- * - `lines`: Number of empty lines at the end of a list item.
- *
- * @param tokens - Blocks, like those of a note or of a list item
- * @returns The same blocks, with their empty lines
+ * Empty lines before the first or after the last block stand between no blocks and go.
  */
 function emptyLinesMade(tokens: Token[] | TokensList): Token[] | TokensList {
     while (tokens[0]?.type === "space") tokens.shift();
@@ -553,14 +469,6 @@ function emptyLinesMade(tokens: Token[] | TokensList): Token[] | TokensList {
  * Folds each section under a heading of a level,
  * up to the next heading of the same or a higher level, into one {@link fold},
  * when the heading's text says so.
- * - `sectionEnds`: Tells whether a block ends the section,
- *   a heading of the same or a higher level.
- *
- * @param tokens - Blocks of a note
- * @param depth - Level of the headings, like 2 for `##`
- * @param folds - Tells by the text of a heading whether its section folds
- * @param open - Whether the sections are open at first
- * @returns The same blocks, each such section as one block
  */
 function sectionsFolded(
     tokens: Token[] | TokensList,
@@ -589,13 +497,8 @@ function sectionsFolded(
 }
 
 /**
- * Folds the sections of a note, see {@link sectionsFolded}:
- * first each under a heading `#### Solution…`, closed,
- * so I try a task before I see its solution,
+ * Folds the sections of a note: first each under a heading `#### Solution…`, closed,
  * then each under a heading `##`, open, its solutions inside.
- *
- * @param tokens - Blocks of a note
- * @returns The same blocks, with the sections folded
  */
 function foldsMade(tokens: Token[] | TokensList): Token[] | TokensList {
     sectionsFolded(tokens, 4, (text: string): boolean => solutionRule.test(text), false);
@@ -603,24 +506,15 @@ function foldsMade(tokens: Token[] | TokensList): Token[] | TokensList {
 }
 
 /**
- * Changes the blocks of a note once they are read, before they turn into HTML:
- * keeps their empty lines, see {@link emptyLinesMade}, then folds their sections,
- * see {@link foldsMade}, so the empty lines below a section stand at the end of its fold.
- *
- * @param tokens - Blocks of a note
- * @returns The same blocks, with their empty lines and folds
+ * Changes the blocks of a note once they are read: keeps their empty lines,
+ * then folds their sections,
+ * so the empty lines below a section stand at the end of its fold.
  */
 function blocksMade(tokens: Token[] | TokensList): Token[] | TokensList {
     return foldsMade(emptyLinesMade(tokens));
 }
 
-/**
- * Heading with its text as written in `data-heading`,
- * so a link like `[[Note#Heading]]` finds it.
- *
- * @param token - Heading
- * @returns HTML of the heading
- */
+/** Heading with its text as written in `data-heading`, so `[[Note#Heading]]` finds it. */
 function headingOf(this: Renderer, token: Tokens.Heading): string {
     return (
         `<h${token.depth} data-heading="${escaped(token.text)}">` +
@@ -629,12 +523,8 @@ function headingOf(this: Renderer, token: Tokens.Heading): string {
 }
 
 /**
- * Markdown link like `[Text](Note.md#Heading)`:
- * inside the module an `internal-link` like a wiki link, outside,
- * like `https://…`, a link as marked writes it.
- *
- * @param token - Link
- * @returns HTML of the link, or `false` for marked's own
+ * Markdown link: inside the module an `internal-link` like a wiki link,
+ * outside, `false` for marked's own.
  */
 function linkOf(this: Renderer, token: Tokens.Link): string | false {
     if (externalRule.test(token.href)) return false;
@@ -648,13 +538,8 @@ function linkOf(this: Renderer, token: Tokens.Link): string | false {
 }
 
 /**
- * Code block of a language of my list, like ```python:
- * its pieces in the colors of my theme,
- * see `./code.ts`.
- * - `html`: The code with a class for each piece, `null` for no language of my list.
- *
- * @param token - Code block
- * @returns HTML of the block, or `false` for marked's own
+ * Code block of a language of my list in the colors of my theme, see `./code.ts`,
+ * `false` for marked's own.
  */
 function codeOf(token: Tokens.Code): string | false {
     const html: string | null = codeHtmlOf(token.text, token.lang ?? "");
@@ -665,12 +550,8 @@ function codeOf(token: Tokens.Code): string | false {
 }
 
 /**
- * Markdown image like `![Singleton](./img/Singleton.png)`:
- * inside the module with its link in `data-link`, outside,
- * like `https://…`, an image as marked writes it.
- *
- * @param token - Image
- * @returns HTML of the image, or `false` for marked's own
+ * Markdown image: inside the module with its link in `data-link`,
+ * outside, `false` for marked's own.
  */
 function imageOf(this: Renderer, token: Tokens.Image): string | false {
     return externalRule.test(token.href)
@@ -679,10 +560,8 @@ function imageOf(this: Renderer, token: Tokens.Image): string | false {
 }
 
 /**
- * HTML block that ends on the line where its tag closes, see {@link htmlBlockRule}.
- *
- * @param src - Markdown from the start of a block
- * @returns HTML block, or `false` for marked's own, which ends at the next empty line
+ * HTML block that ends on the line where its tag closes, see {@link htmlBlockRule},
+ * `false` for marked's own, which ends at the next empty line.
  */
 function htmlBlockOf(src: string): Tokens.HTML | false {
     const match: RegExpExecArray | null = htmlBlockRule.exec(src);
@@ -691,12 +570,7 @@ function htmlBlockOf(src: string): Tokens.HTML | false {
         : { type: "html", block: true, pre: false, raw: match[0], text: match[0] };
 }
 
-/**
- * Markdown reader with Obsidian's syntax, see the top of this file.
- * - `breaks`: Turns a single line break into `<br>`.
- * - `processAllTokens`: Changes the blocks of a note once they are read,
- *   before they turn into HTML.
- */
+/** Markdown reader with Obsidian's syntax, see the top of this file. */
 const markdown: Marked = new Marked({
     breaks: true,
     extensions: [mathBlock, mathInline, callout, wikiLink, emptyLines, fold],
@@ -711,24 +585,12 @@ const markdown: Marked = new Marked({
 
 /**
  * Turns the Markdown of a note into clean HTML, see the top of this file.
- * The block below empty lines, see {@link emptyLinesMade},
- * gets their number in `--empty-lines`,
+ * The block below empty lines gets their number in `--empty-lines`,
  * which `notes.css` turns into room above it, so the room comes and goes with the block,
  * like a step of a solution shown one at a time.
- * Empty lines at the end of a list item
- * or of a section stand above the next item or section,
- * so they go to the element after the first element around them that has one,
- * like the next `<li>` or the next fold.
- * - {@link Marked#parse}: Turns Markdown into HTML, with `async: false` directly as text.
- * - {@link DOMPurify.sanitize}:
- *   Takes out scripts, event handlers and the like, keeps classes and `data-` fields.
- * - `page`: The HTML as elements, in a `<template>`,
- *   which shows and loads nothing of them, like an image.
- * - `above`: The empty lines, or the first element around them with an element after it.
- * - `below`: That element after it, the block below the empty lines, `null` for none.
- *
- * @param note - Text of the note
- * @returns HTML of the note
+ * Empty lines at the end of a list item or of a section stand above the next one,
+ * so they go to the element after the first element around them that has one.
+ * - `page`: A `<template>`, which shows and loads nothing of the HTML, like an image.
  */
 export function htmlOf(note: string): string {
     const page: HTMLTemplateElement = document.createElement("template");
@@ -749,13 +611,7 @@ export function htmlOf(note: string): string {
 
 /**
  * Turns a line of Markdown into clean HTML within a line,
- * like the text of a heading for the outline:
- * its formulas, links, bold and italic, no block around it.
- * - {@link Marked#parseInline}:
- *   Turns Markdown within a line into HTML, with `async: false` directly as text.
- *
- * @param text - Text, like `Definition. Variance of $\bar{X}$`
- * @returns HTML of the text
+ * like the text of a heading for the outline.
  */
 export function inlineHtmlOf(text: string): string {
     return DOMPurify.sanitize(markdown.parseInline(text, { async: false }));
