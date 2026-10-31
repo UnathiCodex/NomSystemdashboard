@@ -21,8 +21,7 @@
  * and, on the server that holds it, into what the dashboards share in `NomKommunikation`,
  * the mailbox between Vu and me,
  * see {@link writeAllowed} and {@link kommunikationRoot},
- * the editor into the notes of my modules
- * and the file of my corrections, see {@link editor},
+ * the editor into the notes of my modules, see {@link editor},
  * and a click on a folder of a module not there yet makes it,
  * see `folderMake` in `notes.ts`;
  * the editor shows the tree
@@ -268,14 +267,9 @@ export const notes: NotesSources = {
  * the only ones besides the files of the new system, see {@link systemFiles}.
  *
  * - `modules`: My modules, each note right at its place, the modules of {@link notes}.
- * - `corrections`: My corrections, one file,
- *   `corrections-personal.diff` of skills-evaluate,
- *   out of Git, each save of a note of my modules added at its end as a unified diff,
- *   for the AI to turn into rules of my style.
  */
 export type EditorSources = {
     modules: string;
-    corrections: string;
 };
 
 /**
@@ -283,14 +277,6 @@ export type EditorSources = {
  */
 export const editor: EditorSources = {
     modules: notes.modules,
-    corrections: join(
-        vault,
-        ".claude",
-        "skills",
-        "learn",
-        "5-skills-evaluate",
-        "corrections-personal.diff",
-    ),
 };
 
 /**

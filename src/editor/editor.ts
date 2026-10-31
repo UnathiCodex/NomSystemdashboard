@@ -12,9 +12,7 @@
  * saving writes exactly the edited text, nothing reformatted,
  * tabs and soft hyphens,
  * spaces at the ends of lines and the line breaks of the file as they were.
- * A note of my modules is saved right into its file in `NomSkillingmodules`,
- * and the reader keeps each change as a diff,
- * so the AI learns my style from my corrections.
+ * A note of my modules is saved right into its file in `NomSkillingmodules`.
  * On the left the tree of one root, see `../notes/tree.ts`:
  * `NomSkillingmodules` at `/scripts`,
  * the outline of the note under it, built anew as I write,

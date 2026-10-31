@@ -3,9 +3,7 @@
  *
  * Writes a note of my modules as I saved it in the editor,
  * right at its place in `NomSkillingmodules`:
- * exactly the text sent, nothing reformatted,
- * and first adds the change as a unified diff to the end of the file of my corrections,
- * so the AI can turn them into rules of my style, see `editor` in `sources.ts`.
+ * exactly the text sent, nothing reformatted.
  * When its file changed on the disk since the editor read it, like by a Claude session,
  * the text sent and that change are merged, see {@link textMerged},
  * so nothing I typed is lost, and the editor gets the text written back,
@@ -16,23 +14,18 @@
  *
  * - `node:fs`: Reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
- * - `diff`: Writes a change as a unified diff, as `git diff` does,
- *   and compares the lines of two texts, for a merge.
- * - `temporal-polyfill`: Gives the time in Berlin, for the head of a diff.
- * - `./sources.ts`: Names the folder of my modules and the file of my corrections.
+ * - `diff`: Compares the lines of two texts, for a merge.
+ * - `./sources.ts`: Names the folder of my modules.
  */
 
 import {
-    appendFileSync,
-    mkdirSync,
     readFileSync,
     realpathSync,
     statSync,
     writeFileSync,
 } from "node:fs";
-import { dirname, extname, join, sep } from "node:path";
-import { createTwoFilesPatch, diffArrays, FILE_HEADERS_ONLY } from "diff";
-import { Temporal } from "temporal-polyfill";
+import { extname, join, sep } from "node:path";
+import { diffArrays } from "diff";
 import { editor } from "./sources.ts";
 
 /**
@@ -221,28 +214,10 @@ function noteFileOf(path: string): string {
 }
 
 /**
- * Writes the time now in Berlin for the head of a diff,
- * as `diff -u` writes it beside the path of a file.
- *
- * @returns Time like `2026-10-17 14:40:19`
- */
-function stampOf(): string {
-    return Temporal.Now.plainDateTimeISO("Europe/Berlin")
-        .toString({ smallestUnit: "second" })
-        .replace("T", " ");
-}
-
-/**
  * Writes a note of my modules as I saved it, merged with a change of its file on the disk
- * since the editor read it, see {@link textMerged}:
- * first its change as a unified diff at the end of the file of my corrections,
- * its head naming the note and the time,
- * like `--- a/IN2028_…/01_RegressionAnalysis/01_02_SampleMeanEstimator.md` and,
- * after a tab, `2026-10-17 14:40:19`;
- * then the text, exactly as sent where the file did not change.
+ * since the editor read it, see {@link textMerged},
+ * exactly as sent where the file did not change.
  * A text without change writes nothing.
- * - {@link createTwoFilesPatch}: Writes the change as `diff -u` does,
- *   with the path of the note in `NomSkillingmodules` and the time.
  * - `text`: The text to write.
  *
  * @param change - Note as saved
@@ -261,22 +236,6 @@ export function noteWrite(change: NoteChange): Written {
     const written: Written = { text: text, changes: changesOf(change.text, text) };
     if (text === old) return written;
 
-    const stamp: string = stampOf();
-    mkdirSync(dirname(editor.corrections), { recursive: true });
-    appendFileSync(
-        editor.corrections,
-        createTwoFilesPatch(
-            `a/${change.path}`,
-            `b/${change.path}`,
-            old,
-            text,
-            stamp,
-            stamp,
-            {
-                headerOptions: FILE_HEADERS_ONLY,
-            },
-        ),
-    );
     writeFileSync(file, text);
     return written;
 }
