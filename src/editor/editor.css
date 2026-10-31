@@ -591,12 +591,14 @@
    see below, stands right of the text, ending where the save button ends,
    which is `--ics-overhang` from the text,
    see `overhangKeep` in `ics.ts`, in a column `--ics-column` wide;
-   every line breaks a little before that column at the latest,
-   as far as the room beside the page cannot hold it, else at the width of the page, as a note does,
-   like a long `SUMMARY` with its `ALTREP` */
+   only a line with such a form keeps that column free, its value short,
+   any other line takes the width of the page, its 90 characters on one row */
 .editor-text .cm-editor .cm-line.ics-line {
     --ics-column: 11rem;
     position: relative;
+}
+
+.editor-text .cm-editor .cm-line.ics-line[data-readable] {
     padding-right: max(0px, calc(var(--ics-column) + 1rem - var(--ics-overhang, 0px)));
 }
 
