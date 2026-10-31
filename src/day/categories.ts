@@ -540,6 +540,21 @@ let timesMarked: HTMLInputElement | null = null;
  */
 let dayCalendar: Calendar | null = null;
 
+/** Gives a field of the dialog by its id. */
+function inputOf(id: string): HTMLInputElement {
+    return document.getElementById(id) as HTMLInputElement;
+}
+
+/** Reads the time typed in a field of the dialog, see `timeFieldRead` in `times.ts`. */
+function timeRead(id: string): string {
+    return timeFieldRead(inputOf(id));
+}
+
+/** Reads the day typed in a field of the dialog, `null` while it is no date. */
+function dayTypedOf(id: string): string | null {
+    return dateParse(inputOf(id).value);
+}
+
 /**
  * Loads the categories with the values of their fields from the reader;
  * an answer that is an error, like while the reader cannot read a file, is no categories,
@@ -563,14 +578,8 @@ const categoriesKept: () => Promise<Category[]> = changesKept(categoriesLoad);
  * on the day the dialog opened with should the typed day be no date.
  */
 function startRead(): Date {
-    const day: string =
-        dateParse(
-            (document.getElementById("entry-start-day") as HTMLInputElement).value,
-        ) ?? dayOf(opened.start);
-    return dateOf(
-        new Date(`${day}T12:00:00`),
-        timeFieldRead(document.getElementById("entry-start") as HTMLInputElement),
-    );
+    const day: string = dayTypedOf("entry-start-day") ?? dayOf(opened.start);
+    return dateOf(new Date(`${day}T12:00:00`), timeRead("entry-start"));
 }
 
 /**
@@ -712,15 +721,13 @@ async function realLoad(): Promise<void> {
  * or while no entry like it is logged.
  */
 function endFill(): void {
-    const end: HTMLInputElement = document.getElementById(
-        "entry-end",
-    ) as HTMLInputElement;
+    const end: HTMLInputElement = inputOf("entry-end");
     if (
         opened.target !== "box" ||
         opened.box !== null ||
         realMiddle === null ||
         end.value.trim() !== "" ||
-        timeFieldRead(document.getElementById("entry-start") as HTMLInputElement) === ""
+        timeRead("entry-start") === ""
     )
         return;
     const start: Date = startRead();
@@ -733,10 +740,9 @@ function endFill(): void {
  * as `sport.ts` asks while it holds only videos; nothing while the start has no time.
  */
 function endFit(minutes: number): void {
-    if (timeFieldRead(document.getElementById("entry-start") as HTMLInputElement) === "")
-        return;
+    if (timeRead("entry-start") === "") return;
     timeFieldShow(
-        document.getElementById("entry-end") as HTMLInputElement,
+        inputOf("entry-end"),
         new Date(startRead().getTime() + minutes * 60 * 1000),
     );
     endDayFill();
@@ -1762,7 +1768,7 @@ function sportShown(): boolean {
  */
 async function lastPlaceLoad(): Promise<string> {
     const before: Date =
-        timeFieldRead(document.getElementById("entry-start") as HTMLInputElement) === ""
+        timeRead("entry-start") === ""
             ? dateOf(new Date(`${dayRead()}T12:00:00`), "23:59")
             : startRead();
     const response: Response = await fetch(
@@ -1993,15 +1999,8 @@ function textsRead(): BoxFields {
  */
 function dayRead(): string {
     const deadlineDay: string | null =
-        opened.target === "box"
-            ? dateParse(
-                  (document.getElementById("entry-deadline-day") as HTMLInputElement)
-                      .value,
-              )
-            : null;
-    const typed: string | null =
-        deadlineDay ??
-        dateParse((document.getElementById("entry-start-day") as HTMLInputElement).value);
+        opened.target === "box" ? dayTypedOf("entry-deadline-day") : null;
+    const typed: string | null = deadlineDay ?? dayTypedOf("entry-start-day");
     return typed ?? dayOf(opened.start);
 }
 
@@ -2011,13 +2010,8 @@ function dayRead(): string {
  * on the day of the start should the typed day be no date.
  */
 function endRead(start: Date): Date {
-    const day: string =
-        dateParse((document.getElementById("entry-end-day") as HTMLInputElement).value) ??
-        dayOf(start);
-    return dateOf(
-        new Date(`${day}T12:00:00`),
-        timeFieldRead(document.getElementById("entry-end") as HTMLInputElement),
-    );
+    const day: string = dayTypedOf("entry-end-day") ?? dayOf(start);
+    return dateOf(new Date(`${day}T12:00:00`), timeRead("entry-end"));
 }
 
 /**
@@ -2028,21 +2022,13 @@ function endRead(start: Date): Date {
  * nothing while one of them is no day or no time.
  */
 function endDayFill(): void {
-    const day: string | null = dateParse(
-        (document.getElementById("entry-start-day") as HTMLInputElement).value,
-    );
-    const start: string = timeFieldRead(
-        document.getElementById("entry-start") as HTMLInputElement,
-    );
-    const end: string = timeFieldRead(
-        document.getElementById("entry-end") as HTMLInputElement,
-    );
+    const day: string | null = dayTypedOf("entry-start-day");
+    const start: string = timeRead("entry-start");
+    const end: string = timeRead("entry-end");
     if (endDayTyped || day === null || start === "" || end === "") return;
     const next: Date = new Date(`${day}T12:00:00`);
     next.setDate(next.getDate() + 1);
-    const field: HTMLInputElement = document.getElementById(
-        "entry-end-day",
-    ) as HTMLInputElement;
+    const field: HTMLInputElement = inputOf("entry-end-day");
     field.value = weekdayDateTextOf(end <= start ? dayOf(next) : day);
     field.setCustomValidity("");
     endDayShow();
@@ -2098,26 +2084,12 @@ function fieldsRead(): EntryFields {
  * keeping the duration it had; an empty deadline is none.
  */
 function boxFieldsRead(): BoxFields {
-    const day: string =
-        dateParse(
-            (document.getElementById("entry-start-day") as HTMLInputElement).value,
-        ) ?? dayOf(opened.start);
-    const startTime: string = timeFieldRead(
-        document.getElementById("entry-start") as HTMLInputElement,
-    );
-    const endTime: string = timeFieldRead(
-        document.getElementById("entry-end") as HTMLInputElement,
-    );
-    const length: string = timeFieldRead(
-        document.getElementById("entry-length") as HTMLInputElement,
-    );
-    const deadlineDay: string =
-        dateParse(
-            (document.getElementById("entry-deadline-day") as HTMLInputElement).value,
-        ) ?? "";
-    const deadlineTime: string = timeFieldRead(
-        document.getElementById("entry-deadline-time") as HTMLInputElement,
-    );
+    const day: string = dayTypedOf("entry-start-day") ?? dayOf(opened.start);
+    const startTime: string = timeRead("entry-start");
+    const endTime: string = timeRead("entry-end");
+    const length: string = timeRead("entry-length");
+    const deadlineDay: string = dayTypedOf("entry-deadline-day") ?? "";
+    const deadlineTime: string = timeRead("entry-deadline-time");
     const start: Date | null =
         startTime === "" || lengthOnly
             ? null
@@ -2232,7 +2204,7 @@ async function boxSave(): Promise<void> {
     await placesRename(false);
     await personsRename(personEdits, persons, false, pickedNames());
     await paramsRename(false);
-    (document.getElementById("entry") as HTMLDialogElement).close();
+    entryClose();
 }
 
 /**
@@ -2284,7 +2256,7 @@ async function entrySave(calendar: Calendar): Promise<void> {
         await placesRename(false);
         await personsRename(personEdits, persons, false, pickedNames());
         await paramsRename(false);
-        (document.getElementById("entry") as HTMLDialogElement).close();
+        entryClose();
     } else hintShow("entry-changed");
 }
 
@@ -2312,7 +2284,7 @@ async function entryRemove(calendar: Calendar): Promise<void> {
 
     if (opened.target === "box") await boxDelete(opened.box?.id ?? "");
     else await entryDelete(calendar, opened.entry?.id ?? "");
-    (document.getElementById("entry") as HTMLDialogElement).close();
+    entryClose();
 }
 
 /**
@@ -2323,12 +2295,8 @@ async function entryRemove(calendar: Calendar): Promise<void> {
  * since a time alone is no deadline.
  */
 function deadlineSee(): void {
-    const deadlineDay: HTMLInputElement = document.getElementById(
-        "entry-deadline-day",
-    ) as HTMLInputElement;
-    const deadlineTime: HTMLInputElement = document.getElementById(
-        "entry-deadline-time",
-    ) as HTMLInputElement;
+    const deadlineDay: HTMLInputElement = inputOf("entry-deadline-day");
+    const deadlineTime: HTMLInputElement = inputOf("entry-deadline-time");
     const off: boolean = opened.target === "box" && deadlineDay.value.trim() !== "";
     [
         "entry-start-day",
@@ -2369,24 +2337,14 @@ function timesShow(opening: EntryOpening): void {
         : opening.time === null || opening.minutes === null
           ? null
           : new Date(opening.time.getTime() + opening.minutes * 60 * 1000);
-    const startDay: HTMLInputElement = document.getElementById(
-        "entry-start-day",
-    ) as HTMLInputElement;
-    const endDay: HTMLInputElement = document.getElementById(
-        "entry-end-day",
-    ) as HTMLInputElement;
-    const startTime: HTMLInputElement = document.getElementById(
-        "entry-start",
-    ) as HTMLInputElement;
-    const endTime: HTMLInputElement = document.getElementById(
-        "entry-end",
-    ) as HTMLInputElement;
+    const startDay: HTMLInputElement = inputOf("entry-start-day");
+    const endDay: HTMLInputElement = inputOf("entry-end-day");
+    const startTime: HTMLInputElement = inputOf("entry-start");
+    const endTime: HTMLInputElement = inputOf("entry-end");
     const deadlineRow: HTMLElement = document.getElementById(
         "entry-deadline",
     ) as HTMLElement;
-    const deadlineDay: HTMLInputElement = document.getElementById(
-        "entry-deadline-day",
-    ) as HTMLInputElement;
+    const deadlineDay: HTMLInputElement = inputOf("entry-deadline-day");
     const deadline: string = opening.box?.deadline ?? "";
     startDay.value = weekdayDateTextOf(dayOf(opening.start));
     startDay.setCustomValidity("");
@@ -2403,7 +2361,7 @@ function timesShow(opening: EntryOpening): void {
         start === null &&
         opening.minutes !== null &&
         deadline === "";
-    (document.getElementById("entry-length") as HTMLInputElement).value =
+    inputOf("entry-length").value =
         lengthOnly && opening.minutes !== null ? lengthTextOf(opening.minutes) : "";
     lengthShow();
     deadlineRow.hidden = required;
@@ -2413,7 +2371,7 @@ function timesShow(opening: EntryOpening): void {
     deadlineDay.value = deadline === "" ? "" : weekdayDateTextOf(opening.box?.day ?? "");
     deadlineDay.setCustomValidity("");
     timeFieldShow(
-        document.getElementById("entry-deadline-time") as HTMLInputElement,
+        inputOf("entry-deadline-time"),
         deadline === "" || deadline === opening.box?.day ? null : new Date(deadline),
     );
     deadlineSee();
@@ -2426,12 +2384,8 @@ function timesShow(opening: EntryOpening): void {
  * a field being typed in stays.
  */
 function endDayShow(): void {
-    const start: HTMLInputElement = document.getElementById(
-        "entry-start-day",
-    ) as HTMLInputElement;
-    const end: HTMLInputElement = document.getElementById(
-        "entry-end-day",
-    ) as HTMLInputElement;
+    const start: HTMLInputElement = inputOf("entry-start-day");
+    const end: HTMLInputElement = inputOf("entry-end-day");
     end.classList.toggle(
         "entry-same-day",
         end !== document.activeElement &&
@@ -2450,15 +2404,9 @@ function endDayShow(): void {
  * and empties them; to times it empties the length; the field shown then focused.
  */
 function lengthShow(): void {
-    const length: HTMLInputElement = document.getElementById(
-        "entry-length",
-    ) as HTMLInputElement;
-    const start: HTMLInputElement = document.getElementById(
-        "entry-start",
-    ) as HTMLInputElement;
-    const end: HTMLInputElement = document.getElementById(
-        "entry-end",
-    ) as HTMLInputElement;
+    const length: HTMLInputElement = inputOf("entry-length");
+    const start: HTMLInputElement = inputOf("entry-start");
+    const end: HTMLInputElement = inputOf("entry-end");
     const swappable: boolean = opened.target === "box" && !start.required;
     document
         .getElementById("entry-times")
@@ -2958,12 +2906,8 @@ async function entryDuplicate(): Promise<void> {
  * only so long, see {@link lengthOnly}.
  */
 function timesCheck(): boolean {
-    const startTime: HTMLInputElement = document.getElementById(
-        "entry-start",
-    ) as HTMLInputElement;
-    const endTime: HTMLInputElement = document.getElementById(
-        "entry-end",
-    ) as HTMLInputElement;
+    const startTime: HTMLInputElement = inputOf("entry-start");
+    const endTime: HTMLInputElement = inputOf("entry-end");
     let field: HTMLInputElement | null = null;
     if (startTime.matches(":disabled") || lengthOnly) return true;
     if (timeFieldRead(startTime) === "" && timeFieldRead(endTime) !== "") {
@@ -2974,7 +2918,7 @@ function timesCheck(): boolean {
         timeFieldRead(endTime) !== "" &&
         endRead(startRead()) <= startRead()
     ) {
-        field = document.getElementById("entry-end-day") as HTMLInputElement;
+        field = inputOf("entry-end-day");
         field.setCustomValidity("The end lies after the start");
     }
     timesMarked = field;
@@ -3072,9 +3016,7 @@ export function categoriesStart(calendar: Calendar): void {
     iconPut(document.getElementById("entry-save") as HTMLElement, Check, "Save");
     document
         .getElementById("entry-cancel")
-        ?.addEventListener("click", (): void =>
-            (document.getElementById("entry") as HTMLDialogElement).close(),
-        );
+        ?.addEventListener("click", (): void => entryClose());
     document.getElementById("entry-remove")?.addEventListener("click", (): void => {
         entryRemove(calendar).catch(errorShow);
     });
@@ -3110,9 +3052,7 @@ export function categoriesStart(calendar: Calendar): void {
             entryFileShow();
         }),
     );
-    const endDay: HTMLInputElement = document.getElementById(
-        "entry-end-day",
-    ) as HTMLInputElement;
+    const endDay: HTMLInputElement = inputOf("entry-end-day");
     endDay.addEventListener("input", (): void => {
         endDayTyped = true;
     });
