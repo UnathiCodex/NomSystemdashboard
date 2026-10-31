@@ -25,7 +25,7 @@
  * like `20261026T130000Z` or `20261026`, never like `2026-10-26T13:00:00.000Z`,
  * and every duration so, like `PT25M`, never like `25`, see {@link sportIcsOf};
  * puts the lines of every entry it writes, new or changed, into one fixed
- * order, see {@link lineOrder}, each property on one line, never folded, see {@link linesOf},
+ * order, see {@link lineOrder}, folds each line over 90 characters, see {@link foldedOf},
  * and leaves every other line as it is, byte for byte, but for the order of the entries of a file,
  * which it keeps so it reads well, see {@link componentsSorted}.
  *
@@ -429,8 +429,8 @@ type Range = {
  * Text of an `.ics` file as lines.
  *
  * - `lines`: Lines of the file, one per property;
- *   a folded line of an older file is joined to the line before
- *   as it is read, see {@link linesRead}.
+ *   a folded line is joined to the line before as it is read, see {@link linesRead},
+ *   and folded anew as it is written, see {@link foldedOf}.
  * - `newline`: Line break of the file, `\r\n` as the reader writes new files, or `\n`.
  */
 type FileLines = {
@@ -598,11 +598,46 @@ ownTexts.forEach((name: string): void => {
 });
 
 /**
- * Gives the lines of a component, one line per property, never folded:
+ * Most characters of a line of an `.ics` file, as of every document of mine,
+ * its line break not counted.
+ */
+const lineMost: number = 90;
+
+/**
+ * Folds a line of an `.ics` file as the format folds one, into parts of at most
+ * {@link lineMost} characters, each after the first starting with the space of the fold,
+ * which every reader of the format takes out again with the line break before it:
+ * right after a space of the text where one fits, so a place stays whole,
+ * like `Burg-Eltz-Weg\, ` and ` 81375 München`, that space ending its line,
+ * since the space of the fold never counts as text;
+ * else after the last character that fits, like inside a long link.
+ * - `folded`: The parts so far.
+ * - `rest`: The characters left, a next part with the space of the fold before them.
+ * - `space`: Place of the last space of the text that fits, -1 for none.
+ * - `end`: Where the part ends.
+ *
+ * @param line - Line of the file, a whole property
+ * @returns Its parts, the line itself when it fits
+ */
+function foldedOf(line: string): string[] {
+    const folded: string[] = [];
+    let rest: string[] = [...line];
+    while (rest.length > lineMost) {
+        const space: number = rest.lastIndexOf(" ", lineMost - 1);
+        const end: number = space > 0 ? space + 1 : lineMost;
+        folded.push(rest.slice(0, end).join(""));
+        rest = [" ", ...rest.slice(end)];
+    }
+    return [...folded, rest.join("")];
+}
+
+/**
+ * Gives the lines of a component, one line per property, unfolded:
  * `ical.js` folds a line after 75 bytes, which the standard only recommends, for e-mail,
  * and which cut a place in two, like `Burg-Eltz-Weg\, 81` and ` 375 München`;
  * so each fold, a line break and the space after it, is taken back,
- * as every reader of the format unfolds it.
+ * as every reader of the format unfolds it,
+ * and folded anew as it is written, see {@link foldedOf}.
  * - {@link ICAL.Component#toString}:
  *   Writes a component in the iCalendar format, lines parted by `\r\n`.
  *
@@ -1373,7 +1408,7 @@ function writeCheck(file: string): void {
  * Reads an `.ics` file as {@link FileLines}, one line per property:
  * a folded line, one that starts with a space or a tab,
  * is joined to the line before without that first space or tab, as the format unfolds it,
- * so a file written back holds no fold any more, see {@link linesOf}.
+ * so a file written back is folded anew, see {@link foldedOf}.
  * - `text`: The file.
  * - `newline`: Its line break.
  * - `lines`: Its lines, unfolded.
@@ -1624,7 +1659,8 @@ export function sharedLinkOf(category: string, summary: string): string | undefi
 
 /**
  * Writes {@link FileLines} into an `.ics` file, creating its folders when missing,
- * its events and to-dos in their order, see {@link componentsSorted}.
+ * its events and to-dos in their order, see {@link componentsSorted},
+ * every line folded, see {@link foldedOf}.
  * A summary written anew in plan or log, with a link or another one,
  * gives its link to every entry and box of its category with the same summary,
  * counted without what stands in round brackets at its end,
@@ -1642,7 +1678,9 @@ function linesWrite(file: string, text: FileLines): void {
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(
         file,
-        componentsSorted(text.lines, dirname(file) === modulesRoot).join(text.newline),
+        componentsSorted(text.lines, dirname(file) === modulesRoot)
+            .flatMap(foldedOf)
+            .join(text.newline),
     );
     if (dirname(file) === modulesRoot)
         writtenFollowers.forEach(
@@ -2509,7 +2547,7 @@ export function entryIcsOf(
         0,
         ...linesOrdered(linesOf(eventOf(fields, own, id))),
     );
-    return componentsSorted(lines, false).join("\r\n");
+    return componentsSorted(lines, false).flatMap(foldedOf).join("\r\n");
 }
 
 /**

@@ -7,7 +7,8 @@
  * like the lines of a `VEVENT` inside `VCALENDAR`,
  * and an empty line's room above each entry of the calendar, a `BEGIN:` right inside `VCALENDAR`,
  * so the entries stand apart.
- * A folded line, starting with a space, stays in the block of the line it continues.
+ * A folded line, starting with a space, stays in the block of the line it continues,
+ * and its text counts as part of that property, see {@link propertyOf}.
  * Only the look changes: the steps and the room are drawn by the stylesheet,
  * see `.ics-depth-1` and `.ics-entry` in `editor.css`, no character is added.
  * The name of each property with its parameters, up to and with the colon before its value, like
@@ -300,6 +301,28 @@ function blockOf(
 }
 
 /**
+ * Gives a property of a calendar file as one line:
+ * its line and the folded lines after it, each without the space it starts with,
+ * so a name with parameters cut inside a link reads whole.
+ * - `next`: Number of a line after it.
+ * - `text`: Text of that line.
+ *
+ * @param state - State of the editor, with the text of the file
+ * @param number - Number of its line, from 1
+ * @returns The property,
+ *   like `LOCATION;ALTREP="https://nav.tum.de/room/5416.01.003":5416.01.003`
+ */
+function propertyOf(state: EditorState, number: number): string {
+    let property: string = state.doc.line(number).text;
+    for (let next: number = number + 1; next <= state.doc.lines; next++) {
+        const text: string = state.doc.line(next).text;
+        if (!/^[ \t]/.test(text)) break;
+        property += text.slice(1);
+    }
+    return property;
+}
+
+/**
  * Gives the decorations of the lines of a calendar file, see the top of this file:
  * each line as one, `ics-line`, with its step, as a class like `ics-depth-1`,
  * and for each entry, a `BEGIN:` right inside `VCALENDAR`, the room above it;
@@ -308,16 +331,21 @@ function blockOf(
  * and the fold arrow of each block.
  * - `decorations`: Decorations found so far, in the order of the lines.
  * - `depth`: Depth of the block the next line lies in, 0 outside every block.
+ * - `property`: The property of the line, see {@link propertyOf}.
+ * - `above`: How many of its characters stand on the lines above.
  * - `number`: Number of a line, from 1.
  * - `line`, `text`: A line and its text.
  * - `step`: Step the line is drawn at:
  *   an `END:` at the depth of its `BEGIN:`, a further line one inside.
  * - `entry`: Whether the line begins an entry of the calendar.
- * - `name`: The name of its property, see {@link nameRule}, `null` for a folded line,
- *   which goes on the line above.
+ * - `lead`: The space a folded line starts with, 0 for any other line.
+ * - `first`: Where the text of the line starts, after that space.
+ * - `name`: The name of its property, see {@link nameRule}, `null` for none.
  * - `parameters`: Where its parameters start, after the name of its property,
  *   right before its colon for none.
- * - `readable`: Its value readable, see {@link readableOf}, `null` for none.
+ * - `readable`: The value of its property readable, on its first line,
+ *   see {@link readableOf}, `null` for none.
+ * - `markPut`: Marks what of a part of the property stands on the line.
  *
  * @param state - State of the editor, with the text of the file and what of it is folded
  * @returns Decorations of the lines
@@ -325,30 +353,45 @@ function blockOf(
 function decorationsOf(state: EditorState): DecorationSet {
     const decorations: Range<Decoration>[] = [];
     let depth: number = 0;
+    let property: string = "";
+    let above: number = 0;
     for (let number: number = 1; number <= state.doc.lines; number++) {
         const line: Line = state.doc.line(number);
         const text: string = line.text;
         if (/^END:/i.test(text)) depth = Math.max(0, depth - 1);
         const step: number = Math.min(depth, deepest);
         const entry: boolean = depth === 1 && /^BEGIN:/i.test(text);
-        const name: RegExpExecArray | null = nameRule.exec(text);
+        const lead: number = /^[ \t]/.test(text) ? 1 : 0;
+        const first: number = line.from + lead;
+        if (lead === 0) [property, above] = [propertyOf(state, number), 0];
+        const name: RegExpExecArray | null = nameRule.exec(property);
         const readable: string | null =
-            name === null ? null : readableOf(name[0], text.slice(name[0].length));
+            name === null || lead === 1
+                ? null
+                : readableOf(name[0], property.slice(name[0].length));
         decorations.push(
             Decoration.line({
                 class: `ics-line ics-depth-${step}${entry ? " ics-entry" : ""}`,
                 attributes: readable === null ? {} : { "data-readable": readable },
             }).range(line.from),
         );
-        const parameters: number = name === null ? 0 : (/^[A-Z0-9-]+/i.exec(text)?.[0].length ?? 0);
-        if (name !== null && parameters < name[0].length - 1)
-            decorations.push(
-                nameMark.range(line.from, line.from + parameters),
-                parameterMark.range(line.from + parameters, line.from + name[0].length - 1),
-                nameMark.range(line.from + name[0].length - 1, line.from + name[0].length),
-            );
-        else if (name !== null)
-            decorations.push(nameMark.range(line.from, line.from + name[0].length));
+        const parameters: number =
+            name === null ? 0 : (/^[A-Z0-9-]+/i.exec(property)?.[0].length ?? 0);
+        const markPut: (mark: Decoration, from: number, to: number) => void = (
+            mark: Decoration,
+            from: number,
+            to: number,
+        ): void => {
+            const start: number = first + Math.max(0, from - above);
+            const end: number = first + Math.min(line.to - first, to - above);
+            if (start < end) decorations.push(mark.range(start, end));
+        };
+        if (name !== null && parameters < name[0].length - 1) {
+            markPut(nameMark, 0, parameters);
+            markPut(parameterMark, parameters, name[0].length - 1);
+            markPut(nameMark, name[0].length - 1, name[0].length);
+        } else if (name !== null) markPut(nameMark, 0, name[0].length);
+        above += line.to - first;
         if (blockOf(state, line.from, line.to) !== null)
             decorations.push(
                 Decoration.widget({
@@ -424,9 +467,8 @@ export function icsLook(): Extension {
  * Reads the entries of a calendar file, see {@link Block}.
  * - `blocks`: The entries so far.
  * - `depth`: Depth of the block the next line lies in, 0 outside every block.
- * - `name`: Name of the last own property of the entry read,
- *   for a folded line going on with it, empty for none.
- * - `text`: Text of a line.
+ * - `text`: The property of a line, see {@link propertyOf}, of a folded line nothing.
+ * - `found`, `name`: Its name with its parameters, and its name alone.
  *
  * @param state - State of the editor, with the text of the file
  * @returns The entries, in order
@@ -434,30 +476,23 @@ export function icsLook(): Extension {
 function blocksOf(state: EditorState): Block[] {
     const blocks: Block[] = [];
     let depth: number = 0;
-    let name: string = "";
     for (let number: number = 1; number <= state.doc.lines; number++) {
-        const text: string = state.doc.line(number).text;
+        const text: string = propertyOf(state, number);
         const block: Block | undefined = blocks.at(-1);
-        if (/^END:/i.test(text)) {
-            depth -= 1;
-            name = "";
-        } else if (/^BEGIN:/i.test(text)) {
+        if (/^END:/i.test(text)) depth -= 1;
+        else if (/^BEGIN:/i.test(text)) {
             depth += 1;
-            name = "";
             if (depth === 2)
                 blocks.push({
                     line: number,
                     kind: text.slice("BEGIN:".length).toUpperCase(),
                     values: new Map(),
                 });
-        } else if (depth === 2 && block !== undefined && /^[ \t]/.test(text) && name !== "") {
-            block.values.set(name, (block.values.get(name) ?? "") + text.slice(1));
         } else if (depth === 2 && block !== undefined) {
             const found: RegExpExecArray | null = nameRule.exec(text);
-            name = found === null ? "" : (/^[A-Z0-9-]+/i.exec(found[0])?.[0] ?? "").toUpperCase();
+            const name: string = /^[A-Z0-9-]+/i.exec(text)?.[0].toUpperCase() ?? "";
             if (found !== null && !block.values.has(name))
                 block.values.set(name, text.slice(found[0].length));
-            else name = "";
         }
     }
     blocks.forEach((block: Block): void =>
