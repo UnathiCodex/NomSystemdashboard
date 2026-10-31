@@ -718,9 +718,13 @@ function entryOf(
     file: string,
 ): Entry {
     const todo: boolean = event.component.name === "vtodo";
-    const category: string = String(
-        event.component.getFirstPropertyValue("categories") ?? "",
-    );
+    const valueOf: (name: string) => string = (name: string): string =>
+        String(event.component.getFirstPropertyValue(name) ?? "");
+    const valuesOf: (name: string) => string[] = (name: string): string[] =>
+        event.component
+            .getAllProperties(name)
+            .map((property: ICAL.Property): string => String(property.getFirstValue()));
+    const category: string = valueOf("categories");
     const online: Placed = onlineOf(event.component);
     const [module, type]: [string, string] =
         category === skillName ? skillPartsOf(event.summary ?? "") : ["", ""];
@@ -733,7 +737,7 @@ function entryOf(
         category: category,
         title: event.summary ?? "",
         ...online,
-        from: String(event.component.getFirstPropertyValue("x-from") ?? ""),
+        from: valueOf("x-from"),
         attendees: event.component
             .getAllProperties("attendee")
             .map((property: ICAL.Property): Attendee => {
@@ -748,10 +752,8 @@ function entryOf(
             }),
         module: module,
         type: type,
-        semester: String(event.component.getFirstPropertyValue("x-semester") ?? ""),
-        chapters: event.component
-            .getAllProperties("x-chapter")
-            .map((property: ICAL.Property): string => String(property.getFirstValue())),
+        semester: valueOf("x-semester"),
+        chapters: valuesOf("x-chapter"),
         links: event.component
             .getAllProperties("attach")
             .map((property: ICAL.Property): Link => ({
@@ -759,26 +761,20 @@ function entryOf(
                 fingerprint: String(property.getParameter("x-sha256") ?? ""),
             })),
         rounds: event.component.getAllProperties("x-round").map(roundMarkOf),
-        foods: event.component
-            .getAllProperties("x-food")
-            .map((property: ICAL.Property): string => String(property.getFirstValue())),
-        cooked: String(event.component.getFirstPropertyValue("x-cooked") ?? ""),
-        pain: String(event.component.getFirstPropertyValue("x-pain") ?? ""),
-        workout: String(event.component.getFirstPropertyValue("x-workout") ?? ""),
-        exercises: event.component
-            .getAllProperties("x-exercise")
-            .map((property: ICAL.Property): string =>
-                sportLineOf(String(property.getFirstValue()), false),
-            ),
-        videos: event.component
-            .getAllProperties("x-video")
-            .map((property: ICAL.Property): string =>
-                sportLineOf(String(property.getFirstValue()), true),
-            ),
+        foods: valuesOf("x-food"),
+        cooked: valueOf("x-cooked"),
+        pain: valueOf("x-pain"),
+        workout: valueOf("x-workout"),
+        exercises: valuesOf("x-exercise").map((line: string): string =>
+            sportLineOf(line, false),
+        ),
+        videos: valuesOf("x-video").map((line: string): string =>
+            sportLineOf(line, true),
+        ),
         planned: plannedOf(event.component),
         note: event.description ?? "",
         todo: todo,
-        status: String(event.component.getFirstPropertyValue("status") ?? ""),
+        status: valueOf("status"),
         minutes: todo ? estimatedMinutesOf(event.component) : null,
         deadline: todo ? deadlineOf(event.component) : "",
         pushed: event.component
@@ -786,8 +782,8 @@ function entryOf(
             .map((property: ICAL.Property): Push =>
                 pushOf(property, start.isDate ? null : berlinOf(start.toJSDate())),
             ),
-        number: String(event.component.getFirstPropertyValue("x-number") ?? ""),
-        group: String(event.component.getFirstPropertyValue("x-group") ?? ""),
+        number: valueOf("x-number"),
+        group: valueOf("x-group"),
         pinned:
             String(
                 event.component.getFirstProperty("x-group")?.getParameter("x-pinned") ??
@@ -2008,23 +2004,35 @@ function eventOf(
     event.addProperty(propertyOf("dtend", writtenOf(fields.end)));
     event.addPropertyWithValue("dtstamp", ICAL.Time.fromJSDate(new Date(), true));
     event.addPropertyWithValue("uid", id);
+    fieldsAdd(event, fields, own);
+    return event;
+}
+
+/**
+ * Adds the text fields that are not empty to a new event or to-do,
+ * who I was with, and the properties beyond them that are not empty.
+ */
+function fieldsAdd(
+    component: ICAL.Component,
+    fields: EntryTexts,
+    own: [string, string | Link | Date | ICAL.Property][],
+): void {
     textsOf(fields)
         .filter(([, value]: [string, string]): boolean => value !== "")
         .forEach(([name, value]: [string, string]): void => {
-            event.addProperty(textPropertyOf(name, value, fields));
+            component.addProperty(textPropertyOf(name, value, fields));
         });
     fields.attendees.forEach((attendee: Attendee): void => {
-        event.addProperty(attendeePropertyOf(attendee));
+        component.addProperty(attendeePropertyOf(attendee));
     });
     own.filter(
         ([, value]: [string, string | Link | Date | ICAL.Property]): boolean =>
             value !== "",
     ).forEach(([name, value]: [string, string | Link | Date | ICAL.Property]): void => {
-        event.addProperty(
+        component.addProperty(
             value instanceof ICAL.Property ? value : ownPropertyOf(name, value),
         );
     });
-    return event;
 }
 
 /** Gives the `DTSTART` of a to-do: its day when it has no time, else its time. */
@@ -2081,19 +2089,7 @@ export function todoAppend(
     todo.addPropertyWithValue("dtstamp", ICAL.Time.fromJSDate(new Date(), true));
     todo.addPropertyWithValue("uid", id);
     if (open) todo.addPropertyWithValue("status", "NEEDS-ACTION");
-    textsOf(fields)
-        .filter(([, value]: [string, string]): boolean => value !== "")
-        .forEach(([name, value]: [string, string]): void => {
-            todo.addProperty(textPropertyOf(name, value, fields));
-        });
-    fields.attendees.forEach((attendee: Attendee): void => {
-        todo.addProperty(attendeePropertyOf(attendee));
-    });
-    own.filter(
-        ([, value]: [string, string | Link | Date]): boolean => value !== "",
-    ).forEach(([name, value]: [string, string | Link | Date]): void => {
-        todo.addProperty(ownPropertyOf(name, value));
-    });
+    fieldsAdd(todo, fields, own);
     componentInsert(file, linesOf(todo));
     return id;
 }
@@ -2930,66 +2926,97 @@ export function attendeesRename(
     mail: string,
     dry: boolean,
 ): number {
+    return componentsRewrite(filesOf(sources), dry, (component: string[]): number => {
+        const people: ICAL.Property[] = unfold(component)
+            .filter((line: string): boolean => /^ATTENDEE[;:]/i.test(line))
+            .map((line: string): ICAL.Property => ICAL.Property.fromString(line));
+        let renamed: boolean = false;
+        const written: ICAL.Property[] = people.map(
+            (person: ICAL.Property): ICAL.Property => {
+                if (String(person.getParameter("cn") ?? "") !== old) return person;
+                renamed = true;
+                const address: string = String(person.getFirstValue() ?? "").replace(
+                    /^mailto:/i,
+                    "",
+                );
+                const target: string =
+                    mail !== ""
+                        ? mail
+                        : address.endsWith("@invalid")
+                          ? invalidAddressOf(name)
+                          : address;
+                const property: ICAL.Property = propertyOf(
+                    "attendee",
+                    `mailto:${target}`,
+                );
+                property.setParameter("cn", name);
+                return property;
+            },
+        );
+        if (!renamed) return 0;
+        propertyPut(
+            component,
+            "attendee",
+            written.filter(
+                (person: ICAL.Property, at: number): boolean =>
+                    written.findIndex(
+                        (other: ICAL.Property): boolean =>
+                            String(other.getParameter("cn") ?? "") ===
+                            String(person.getParameter("cn") ?? ""),
+                    ) === at,
+            ),
+        );
+        return 1;
+    });
+}
+
+/**
+ * Changes the lines of files, `change` giving how many, and writes them only then,
+ * so a line that cannot be read
+ * or a file outside the new system stops it before anything is written.
+ */
+function filesRewrite(
+    files: string[],
+    dry: boolean,
+    change: (text: FileLines) => number,
+): number {
     const changes: [string, FileLines][] = [];
     let count: number = 0;
-    filesOf(sources).forEach((file: string): void => {
+    files.forEach((file: string): void => {
         const text: FileLines = linesRead(file);
-        const places: [number, number][] = placesOf(text.lines).reverse();
-        const named: number = count;
-        places.forEach(([first, after]: [number, number]): void => {
-            const component: string[] = text.lines.slice(first, after);
-            const people: ICAL.Property[] = unfold(component)
-                .filter((line: string): boolean => /^ATTENDEE[;:]/i.test(line))
-                .map((line: string): ICAL.Property => ICAL.Property.fromString(line));
-            let renamed: boolean = false;
-            const written: ICAL.Property[] = people.map(
-                (person: ICAL.Property): ICAL.Property => {
-                    if (String(person.getParameter("cn") ?? "") !== old) return person;
-                    renamed = true;
-                    const address: string = String(person.getFirstValue() ?? "").replace(
-                        /^mailto:/i,
-                        "",
-                    );
-                    const target: string =
-                        mail !== ""
-                            ? mail
-                            : address.endsWith("@invalid")
-                              ? invalidAddressOf(name)
-                              : address;
-                    const property: ICAL.Property = propertyOf(
-                        "attendee",
-                        `mailto:${target}`,
-                    );
-                    property.setParameter("cn", name);
-                    return property;
-                },
-            );
-            if (!renamed) return;
-            propertyPut(
-                component,
-                "attendee",
-                written.filter(
-                    (person: ICAL.Property, at: number): boolean =>
-                        written.findIndex(
-                            (other: ICAL.Property): boolean =>
-                                String(other.getParameter("cn") ?? "") ===
-                                String(person.getParameter("cn") ?? ""),
-                        ) === at,
-                ),
-            );
-            text.lines.splice(first, after - first, ...linesOrdered(component));
-            count++;
-        });
-        if (count > named) {
-            writeCheck(file);
-            changes.push([file, text]);
-        }
+        const changed: number = change(text);
+        if (changed === 0) return;
+        count += changed;
+        writeCheck(file);
+        changes.push([file, text]);
     });
     if (!dry)
         changes.forEach(([file, text]: [string, FileLines]): void =>
             linesWrite(file, text),
         );
     return count;
+}
+
+/**
+ * Changes every event and to-do of files, see {@link filesRewrite},
+ * from the last, so one written anew leaves those before it where they are.
+ */
+function componentsRewrite(
+    files: string[],
+    dry: boolean,
+    change: (component: string[]) => number,
+): number {
+    return filesRewrite(files, dry, (text: FileLines): number =>
+        placesOf(text.lines)
+            .reverse()
+            .reduce((count: number, [first, after]: [number, number]): number => {
+                const component: string[] = text.lines.slice(first, after);
+                const changed: number = change(component);
+                if (changed > 0)
+                    text.lines.splice(first, after - first, ...linesOrdered(component));
+                return count + changed;
+            }, 0),
+    );
 }
 
 /**
@@ -3021,11 +3048,8 @@ export function paramRename(sent: ParamRenamed): number {
     if (!/^[^,()]+$/.test(sent.name)) throw new Error(`No param: ${sent.name}`);
     const from: string = `${sent.value} (${sent.old})`;
     const to: string = `${sent.value} (${sent.name})`;
-    const changes: [string, FileLines][] = [];
-    let count: number = 0;
-    calendarFilesOf().forEach((file: string): void => {
-        const text: FileLines = linesRead(file);
-        const named: number = count;
+    return filesRewrite(calendarFilesOf(), sent.dry, (text: FileLines): number => {
+        let count: number = 0;
         summariesOf(text.lines)
             .filter((summed: Summed): boolean => summed.category === sent.category)
             .forEach((summed: Summed): void => {
@@ -3047,16 +3071,8 @@ export function paramRename(sent: ParamRenamed): number {
                 text.lines[summed.index] = property.toICALString();
                 count++;
             });
-        if (count > named) {
-            writeCheck(file);
-            changes.push([file, text]);
-        }
+        return count;
     });
-    if (!sent.dry)
-        changes.forEach(([file, text]: [string, FileLines]): void =>
-            linesWrite(file, text),
-        );
-    return count;
 }
 
 /**
@@ -3067,10 +3083,7 @@ export function paramRename(sent: ParamRenamed): number {
  * a `LOCATION` with its link as `ALTREP`, as {@link textPropertyOf} writes them.
  * A line written so already stays as it is.
  * Reads every file and works out each of its lines first, and writes only then,
- * so a line that cannot be read
- * or a file outside the new system stops it before anything is written.
- * The components are written from the last,
- * so one written anew leaves those before it where they are.
+ * see {@link componentsRewrite}.
  *
  * @param place - The line it takes, see `lineOf` in `places.ts`
  * @param link - The link a `LOCATION` takes, empty for none, an `X-FROM` has none
@@ -3086,40 +3099,22 @@ export function placeLinesRename(
     link: string,
     dry: boolean,
 ): number {
-    const changes: [string, FileLines][] = [];
-    let count: number = 0;
-    filesOf(sources).forEach((file: string): void => {
-        const text: FileLines = linesRead(file);
-        const places: [number, number][] = placesOf(text.lines).reverse();
-        const named: number = count;
-        places.forEach(([first, after]: [number, number]): void => {
-            const component: string[] = text.lines.slice(first, after);
-            const found: number = count;
-            ["location", "x-from"].forEach((name: string): void => {
-                const line: string = unfoldedOf(component, name);
-                if (line === "") return;
-                const value: string = String(
-                    ICAL.Property.fromString(line).getFirstValue() ?? "",
-                );
-                if (labelOf(value) !== old) return;
-                const written: ICAL.Property = propertyOf(name, place);
-                if (name === "location" && link !== "")
-                    written.setParameter("altrep", [link]);
-                if (written.toICALString() === line) return;
-                propertyPut(component, name, [written]);
-                count++;
-            });
-            if (count > found)
-                text.lines.splice(first, after - first, ...linesOrdered(component));
+    return componentsRewrite(filesOf(sources), dry, (component: string[]): number => {
+        let count: number = 0;
+        ["location", "x-from"].forEach((name: string): void => {
+            const line: string = unfoldedOf(component, name);
+            if (line === "") return;
+            const value: string = String(
+                ICAL.Property.fromString(line).getFirstValue() ?? "",
+            );
+            if (labelOf(value) !== old) return;
+            const written: ICAL.Property = propertyOf(name, place);
+            if (name === "location" && link !== "")
+                written.setParameter("altrep", [link]);
+            if (written.toICALString() === line) return;
+            propertyPut(component, name, [written]);
+            count++;
         });
-        if (count > named) {
-            writeCheck(file);
-            changes.push([file, text]);
-        }
+        return count;
     });
-    if (!dry)
-        changes.forEach(([file, text]: [string, FileLines]): void =>
-            linesWrite(file, text),
-        );
-    return count;
 }
