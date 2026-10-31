@@ -663,7 +663,7 @@
 .ics-dash::before {
     content: "";
     display: block;
-    width: 4px;
+    width: 6px;
     height: 0.75rem;
     border-radius: 2px;
     background: var(--chosen-line);
