@@ -623,6 +623,12 @@ fieldset.entry-times {
     translate: 0 calc(50% - 0.5cap);
 }
 
+/* A pencil right after a plus only its padding apart from it, so both read as one pair,
+   like `U-Bahn + ✎ · Walk + ✎`, closer than the dot between two pairs */
+.plus-quiet + .entry-pencil {
+    margin-inline-start: 0;
+}
+
 .panel-pair .picker-line.plus-quiet {
     flex: none;
     align-self: baseline;
@@ -690,12 +696,13 @@ fieldset.entry-times {
    an en space on each side, as far as the dot of `.entry-parted` and the dash of a range;
    after the pencil of a person or a value,
    see `withRowOf` and `valueAfterOf` in `categories.ts`,
+   half an en space further on each side, so it parts two names with their icons,
    as far from the pencil drawn as from the next name,
    so the room the pencil keeps right of its line,
    its padding and the white of its icon, taken back */
 :has(> .entry-pencil:last-child) + .value-dot,
 :has(> :last-child > .entry-pencil:last-child) + .value-dot {
-    margin-left: -0.37em;
+    margin-inline: -0.12em 0.25em;
 }
 
 /* Time field as wide as what it holds, a time like 14:00 or, while empty, its grey `hh:mm`,
