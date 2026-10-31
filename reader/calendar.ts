@@ -2173,6 +2173,29 @@ function componentWrite(
 }
 
 /**
+ * Changes the event or to-do with an identifier in its file, see {@link componentFind},
+ * and writes it back or moves it, see {@link componentWrite}.
+ *
+ * @param edit - Changes the lines of the event or the to-do in place
+ * @throws {Error} - When a file lies outside the new system
+ *   or does not hold the event or the to-do once
+ */
+function componentEdit(
+    file: string,
+    id: string,
+    edit: (component: string[]) => void,
+    target: string = file,
+): void {
+    writeCheck(file);
+    writeCheck(target);
+    const text: FileLines = linesRead(file);
+    const place: [number, number] = componentFind(text.lines, id);
+    const component: string[] = text.lines.slice(...place);
+    edit(component);
+    componentWrite(file, text, place, component, target);
+}
+
+/**
  * Changes fields and times of the event of an entry,
  * writing only the properties that changed,
  * and moves it into another file when one is given, see {@link componentWrite}.
@@ -2186,18 +2209,14 @@ export function entryChange(
     fields: EntryFields,
     target: string,
 ): void {
-    writeCheck(file);
-    writeCheck(target);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, entryIdOf(entry));
-    const event: string[] = text.lines.slice(...place);
-
-    textsPut(event, entry, fields);
-    if (fields.start.getTime() !== new Date(entry.start).getTime())
-        propertyPut(event, "dtstart", [writtenOf(fields.start)]);
-    if (fields.end.getTime() !== new Date(entry.end).getTime())
-        propertyPut(event, "dtend", [writtenOf(fields.end)]);
-    componentWrite(file, text, place, event, target);
+    const edit: (event: string[]) => void = (event: string[]): void => {
+        textsPut(event, entry, fields);
+        if (fields.start.getTime() !== new Date(entry.start).getTime())
+            propertyPut(event, "dtstart", [writtenOf(fields.start)]);
+        if (fields.end.getTime() !== new Date(entry.end).getTime())
+            propertyPut(event, "dtend", [writtenOf(fields.end)]);
+    };
+    componentEdit(file, entryIdOf(entry), edit, target);
 }
 
 /**
@@ -2216,30 +2235,27 @@ export function todoChange(
     fields: TodoFields,
     target: string,
 ): void {
-    writeCheck(file);
-    writeCheck(target);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, entryIdOf(entry));
-    const todo: string[] = text.lines.slice(...place);
-
-    textsPut(todo, entry, fields);
     const start: string = fields.time === null ? fields.day : fields.time.toISOString();
-    if (fields.deadline === "" && (start !== entry.start || entry.deadline !== ""))
-        propertyPut(todo, "dtstart", [todoStartOf(fields)]);
-    if (fields.deadline !== "" && entry.deadline === "") propertyPut(todo, "dtstart", []);
-    if (fields.deadline !== entry.deadline)
-        propertyPut(
-            todo,
-            "due",
-            fields.deadline === "" ? [] : [deadlineTimeOf(fields.deadline)],
-        );
-    if (fields.minutes !== entry.minutes)
-        propertyPut(
-            todo,
-            "estimated-duration",
-            fields.minutes === null ? [] : [durationOf(fields.minutes)],
-        );
-    componentWrite(file, text, place, todo, target);
+    const edit: (todo: string[]) => void = (todo: string[]): void => {
+        textsPut(todo, entry, fields);
+        if (fields.deadline === "" && (start !== entry.start || entry.deadline !== ""))
+            propertyPut(todo, "dtstart", [todoStartOf(fields)]);
+        if (fields.deadline !== "" && entry.deadline === "")
+            propertyPut(todo, "dtstart", []);
+        if (fields.deadline !== entry.deadline)
+            propertyPut(
+                todo,
+                "due",
+                fields.deadline === "" ? [] : [deadlineTimeOf(fields.deadline)],
+            );
+        if (fields.minutes !== entry.minutes)
+            propertyPut(
+                todo,
+                "estimated-duration",
+                fields.minutes === null ? [] : [durationOf(fields.minutes)],
+            );
+    };
+    componentEdit(file, entryIdOf(entry), edit, target);
 }
 
 /**
@@ -2304,24 +2320,21 @@ export function propertiesPut(
     id: string,
     properties: [string, (string | Date | Link | ICAL.Property)[]][],
 ): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, id);
-    const event: string[] = text.lines.slice(...place);
-    properties.forEach(
-        ([name, values]: [string, (string | Date | Link | ICAL.Property)[]]): void =>
-            propertyPut(
-                event,
-                name,
-                values.map(
-                    (
-                        value: string | Date | Link | ICAL.Property,
-                    ): string | ICAL.Time | Link | ICAL.Property =>
-                        value instanceof Date ? writtenOf(value) : value,
+    componentEdit(file, id, (event: string[]): void =>
+        properties.forEach(
+            ([name, values]: [string, (string | Date | Link | ICAL.Property)[]]): void =>
+                propertyPut(
+                    event,
+                    name,
+                    values.map(
+                        (
+                            value: string | Date | Link | ICAL.Property,
+                        ): string | ICAL.Time | Link | ICAL.Property =>
+                            value instanceof Date ? writtenOf(value) : value,
+                    ),
                 ),
-            ),
+        ),
     );
-    componentWrite(file, text, place, event, file);
 }
 
 /**
@@ -2333,12 +2346,9 @@ export function propertiesPut(
  *   or does not hold the to-do or the event once
  */
 export function stampPut(file: string, id: string): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, id);
-    const component: string[] = text.lines.slice(...place);
-    propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
-    componentWrite(file, text, place, component, file);
+    componentEdit(file, id, (component: string[]): void =>
+        propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]),
+    );
 }
 
 /**
@@ -2348,12 +2358,11 @@ export function stampPut(file: string, id: string): void {
  *   or does not hold the to-do or the event once
  */
 export function titlePut(file: string, id: string, fields: EntryTexts): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, id);
-    const component: string[] = text.lines.slice(...place);
-    propertyPut(component, "summary", [textPropertyOf("summary", fields.title, fields)]);
-    componentWrite(file, text, place, component, file);
+    componentEdit(file, id, (component: string[]): void =>
+        propertyPut(component, "summary", [
+            textPropertyOf("summary", fields.title, fields),
+        ]),
+    );
 }
 
 /**
@@ -2366,12 +2375,9 @@ export function titlePut(file: string, id: string, fields: EntryTexts): void {
  *   or does not hold the to-do or the event once
  */
 export function statusPut(file: string, id: string, status: string): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, id);
-    const component: string[] = text.lines.slice(...place);
-    propertyPut(component, "status", status === "" ? [] : [status]);
-    componentWrite(file, text, place, component, file);
+    componentEdit(file, id, (component: string[]): void =>
+        propertyPut(component, "status", status === "" ? [] : [status]),
+    );
 }
 
 /**
@@ -2388,13 +2394,6 @@ export function statusPut(file: string, id: string, status: string): void {
  *   or does not hold the to-do or the event once
  */
 export function pushAdd(file: string, id: string, entry: Entry): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, id);
-    const component: string[] = text.lines.slice(...place);
-    const before: ICAL.Property[] = new ICAL.Component(
-        ICAL.parse(component.join("\r\n")),
-    ).getAllProperties("x-pushed");
     const minutes: number | null = entry.todo
         ? entry.minutes
         : (Date.parse(entry.end) - Date.parse(entry.start)) / (60 * 1000);
@@ -2406,8 +2405,12 @@ export function pushAdd(file: string, id: string, entry: Entry): void {
     );
     if (minutes !== null)
         pushed.setParameter("x-estimated-duration", durationOf(minutes));
-    propertyPut(component, "x-pushed", [...before, pushed]);
-    componentWrite(file, text, place, component, file);
+    componentEdit(file, id, (component: string[]): void => {
+        const before: ICAL.Property[] = new ICAL.Component(
+            ICAL.parse(component.join("\r\n")),
+        ).getAllProperties("x-pushed");
+        propertyPut(component, "x-pushed", [...before, pushed]);
+    });
 }
 
 /**
@@ -2497,8 +2500,7 @@ export function seriesDayRemove(file: string, uid: string, recurrence: string): 
             seriesTimeOf(series, "exdate", start),
         ]);
     }
-    text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(component));
-    linesWrite(file, text);
+    componentWrite(file, text, place, component, file);
 }
 
 /**
@@ -2519,18 +2521,15 @@ export function seriesDayRestore(file: string, uid: string, recurrence: string):
     );
     if (kept.length === excluded.length)
         throw new Error(`No day ${recurrence} left out of the series ${uid}`);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, uid);
-    const component: string[] = text.lines.slice(...place);
-    propertyPut(
-        component,
-        "exdate",
-        kept.map((property: ICAL.Property): ICAL.Property =>
-            ICAL.Property.fromString(property.toICALString()),
+    componentEdit(file, uid, (component: string[]): void =>
+        propertyPut(
+            component,
+            "exdate",
+            kept.map((property: ICAL.Property): ICAL.Property =>
+                ICAL.Property.fromString(property.toICALString()),
+            ),
         ),
     );
-    text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(component));
-    linesWrite(file, text);
 }
 
 /**
@@ -2587,8 +2586,7 @@ export function seriesCut(file: string, uid: string, last: string): void {
                 ICAL.Property.fromString(property.toICALString()),
             ),
     );
-    text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(component));
-    linesWrite(file, text);
+    componentWrite(file, text, place, component, file);
 }
 
 /**
@@ -2623,21 +2621,17 @@ export function seriesDatesOf(sources: CalendarSource[], uid: string): string[] 
  *   or does not hold the series once
  */
 export function seriesDatesPut(file: string, uid: string, starts: string[]): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, uid);
-    const component: string[] = text.lines.slice(...place);
-    propertyPut(
-        component,
-        "rdate",
-        starts.map((start: string): ICAL.Time =>
-            /^\d{4}-\d{2}-\d{2}$/.test(start)
-                ? ICAL.Time.fromDateString(start)
-                : berlinOf(new Date(start)),
+    componentEdit(file, uid, (component: string[]): void =>
+        propertyPut(
+            component,
+            "rdate",
+            starts.map((start: string): ICAL.Time =>
+                /^\d{4}-\d{2}-\d{2}$/.test(start)
+                    ? ICAL.Time.fromDateString(start)
+                    : berlinOf(new Date(start)),
+            ),
         ),
     );
-    text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(component));
-    linesWrite(file, text);
 }
 
 /**
@@ -2656,20 +2650,12 @@ export function occurrenceMove(
     uid: string,
     target: string,
 ): void {
-    writeCheck(file);
-    writeCheck(target);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, id);
-    const own: string[] = text.lines.slice(...place);
-    propertyPut(own, "uid", [uid]);
-    if (target === file) {
-        text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(own));
-        linesWrite(file, text);
-        return;
-    }
-    componentInsert(target, own);
-    text.lines.splice(place[0], place[1] - place[0]);
-    linesWrite(file, text);
+    componentEdit(
+        file,
+        id,
+        (own: string[]): void => propertyPut(own, "uid", [uid]),
+        target,
+    );
 }
 
 /**
@@ -2765,13 +2751,9 @@ export function seriesWrite(
  *   or does not hold the series once
  */
 function seriesPut(file: string, uid: string, property: ICAL.Property): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, uid);
-    const series: string[] = text.lines.slice(...place);
-    propertyPut(series, property.name, [property]);
-    text.lines.splice(place[0], place[1] - place[0], ...linesOrdered(series));
-    linesWrite(file, text);
+    componentEdit(file, uid, (series: string[]): void =>
+        propertyPut(series, property.name, [property]),
+    );
 }
 
 /**
