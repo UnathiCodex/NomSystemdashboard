@@ -171,6 +171,9 @@ type Look = {
     rendered: number[];
 };
 
+/** Stretch of the text, like what a heading folds or the TeX of a formula. */
+type Span = { from: number; to: number };
+
 /** Look of a note: its decorations and the elements its lines stand in. */
 type Drawing = {
     decorations: DecorationSet;
@@ -178,16 +181,7 @@ type Drawing = {
 };
 
 /** Endings of images shown when embedded, as in the scripts view. */
-const imageEndings: string[] = [
-    "png",
-    "jpg",
-    "jpeg",
-    "gif",
-    "bmp",
-    "svg",
-    "webp",
-    "avif",
-];
+const imageRule: RegExp = /\.(?:png|jpe?g|gif|bmp|svg|webp|avif)$/i;
 
 /** Pieces of syntax drawn in an element of their own, see {@link wrap}. */
 const wrapped: string[] = ["BulletList", "OrderedList", "ListItem", "Blockquote"];
@@ -254,28 +248,19 @@ const kindBox: Decoration = Decoration.mark({ class: "block-kind" });
 const invisibleMark: Decoration = Decoration.mark({ class: "cm-hidden-char" });
 
 /**
- * Marks of the invisible characters within a selection,
- * as VS Code shows them with `renderWhitespace: selection`:
- * a tab `→`, see {@link invisiblesLook}.
+ * Mark of a tab within a selection,
+ * as VS Code shows it with `renderWhitespace: selection`, see {@link invisiblesLook}.
  */
-const invisibleMarks: { [char: string]: string } = { "\t": "→" };
-
-/** Tabs, which a selection shows by their marks, see {@link invisibleMarks}. */
-const markedRule: RegExp = /\t/g;
+const tabMark: string = "→";
 
 /**
  * Tab within a selection where it takes its room, its mark drawn faintly over it,
- * taking no room of its own, see `./editor.css`,
- * by the character, see {@link invisibleMarks}.
+ * taking no room of its own, see `./editor.css`.
  */
-const invisibleShown: { [char: string]: Decoration } = Object.fromEntries(
-    Object.entries(invisibleMarks).map(
-        ([char, mark]: [string, string]): [string, Decoration] => [
-            char,
-            Decoration.mark({ class: "cm-invisible", attributes: { "data-mark": mark } }),
-        ],
-    ),
-);
+const tabShown: Decoration = Decoration.mark({
+    class: "cm-invisible",
+    attributes: { "data-mark": tabMark },
+});
 
 /** Text of a rendered link, which a click follows, see {@link linkClicked}. */
 const followable: Decoration = Decoration.mark({ class: "cm-follow" });
@@ -330,20 +315,25 @@ const codeLine: Decoration = Decoration.line({ class: "cm-code-block" });
 /** Line of the code of a code block being edited, indented as the code rendered. */
 const codeText: Decoration = Decoration.line({ class: "cm-code-text" });
 
+/** Field that holds the value of the last of its effects, else its first value. */
+function effectField<T>(effect: StateEffectType<T>, first: T): StateField<T> {
+    return StateField.define<T>({
+        create: (): T => first,
+        update: (value: T, transaction: Transaction): T => {
+            for (const each of transaction.effects)
+                if (each.is(effect)) return each.value;
+            return value;
+        },
+    });
+}
+
 /** Effect of the editor getting the focus, `true`, or losing it, `false`. */
 const focusChange: StateEffectType<boolean> = StateEffect.define<boolean>();
 
 /**
  * Whether the editor has the focus, from the last {@link focusChange}; not at first.
  */
-const focused: StateField<boolean> = StateField.define<boolean>({
-    create: (): boolean => false,
-    update: (value: boolean, transaction: Transaction): boolean => {
-        for (const effect of transaction.effects)
-            if (effect.is(focusChange)) return effect.value;
-        return value;
-    },
-});
+const focused: StateField<boolean> = effectField(focusChange, false);
 
 /**
  * Tells {@link focused} the focus right
@@ -410,14 +400,7 @@ const linksFound: StateEffectType<Links> = StateEffect.define<Links>();
  * as the reader found them when the note was read or saved last;
  * none at first, see {@link livePreview}.
  */
-const linkTargets: StateField<Links> = StateField.define<Links>({
-    create: (): Links => ({}),
-    update: (links: Links, transaction: Transaction): Links => {
-        for (const effect of transaction.effects)
-            if (effect.is(linksFound)) return effect.value;
-        return links;
-    },
-});
+const linkTargets: StateField<Links> = effectField(linksFound, {});
 
 /** Effect of the people of `Persons.md` being loaded, see {@link personsLoad}. */
 const personsFound: StateEffectType<Person[]> = StateEffect.define<Person[]>();
@@ -427,14 +410,7 @@ const personsFound: StateEffectType<Person[]> = StateEffect.define<Person[]>();
  * see {@link responsiblesLook};
  * none until they are loaded, see {@link personsLoad}.
  */
-const personsLoaded: StateField<Person[]> = StateField.define<Person[]>({
-    create: (): Person[] => [],
-    update: (persons: Person[], transaction: Transaction): Person[] => {
-        for (const effect of transaction.effects)
-            if (effect.is(personsFound)) return effect.value;
-        return persons;
-    },
-});
+const personsLoaded: StateField<Person[]> = effectField(personsFound, []);
 
 /**
  * Loads the people of `Persons.md` once the editor stands,
@@ -684,7 +660,7 @@ class BreakWidget extends WidgetType {
 /**
  * Tabs the look hides, like the indentation of a line of a list,
  * as far as a selection covers them:
- * their marks, see {@link invisibleMarks}, faint left of where the text begins,
+ * their marks, see {@link tabMark}, faint left of where the text begins,
  * or of the bullet or number of a point, taking no room, so I see what I select,
  * see {@link invisiblesLook}.
  */
@@ -1362,8 +1338,7 @@ function imageLook(look: Look, node: SyntaxNode): boolean {
     const address: string = look.state.sliceDoc(url.from, url.to).replace(/^<|>$/g, "");
     const target: string = address.split("#")[0].trim();
     const path: string | null | undefined = look.links[target];
-    const ending: string = /\.([a-z\d]+)$/i.exec(target)?.[1].toLowerCase() ?? "";
-    if (imageEndings.includes(ending) && typeof path === "string")
+    if (imageRule.test(target) && typeof path === "string")
         look.decorations.push(
             Decoration.replace({ widget: new ImageWidget(fileAddressOf(path)) }).range(
                 node.from,
@@ -2156,9 +2131,9 @@ function invisibleCharsLook(look: Look): void {
 }
 
 /**
- * Shows the tabs within each selection by their marks, see {@link invisibleMarks},
+ * Shows the tabs within each selection by their marks, see {@link tabMark},
  * so I see what I select and can check they are there: where they take their room,
- * like a tab within a line, each mark over its character, see {@link invisibleShown};
+ * like a tab within a line, each mark over its character, see {@link tabShown};
  * where the look hides them,
  * like the indentation of a line of a list,
  * the marks of what the selection covers in place of the hidden stretch,
@@ -2188,7 +2163,7 @@ function invisiblesLook(look: Look): void {
         const marks: string = text
             .split("")
             .map((char: string, at: number): string =>
-                selected(decoration.from + at) ? (invisibleMarks[char] ?? " ") : " ",
+                selected(decoration.from + at) && char === "\t" ? tabMark : " ",
             )
             .join("");
         const before: string = /^[-*+][ \t]/.test(
@@ -2204,14 +2179,9 @@ function invisiblesLook(look: Look): void {
             }).range(decoration.from, decoration.to);
     });
     for (const range of ranges)
-        for (const match of look.state
-            .sliceDoc(range.from, range.to)
-            .matchAll(markedRule))
+        for (const match of look.state.sliceDoc(range.from, range.to).matchAll(/\t/g))
             look.decorations.push(
-                invisibleShown[match[0]].range(
-                    range.from + match.index,
-                    range.from + match.index + match[0].length,
-                ),
+                tabShown.range(range.from + match.index, range.from + match.index + 1),
             );
 }
 
@@ -2303,7 +2273,7 @@ function drawingOf(state: EditorState): Drawing {
  */
 function foldToggle(view: EditorView, pos: number): void {
     const line: Line = view.state.doc.lineAt(pos);
-    let folded: { from: number; to: number } | null = null;
+    let folded: Span | null = null;
     foldedRanges(view.state).between(
         line.to,
         line.to,
@@ -2311,8 +2281,7 @@ function foldToggle(view: EditorView, pos: number): void {
             if (from === line.to) folded = { from: from, to: to };
         },
     );
-    const range: { from: number; to: number } | null =
-        folded ?? foldable(view.state, line.from, line.to);
+    const range: Span | null = folded ?? foldable(view.state, line.from, line.to);
     if (range !== null)
         view.dispatch({
             effects: (folded === null ? foldEffect : unfoldEffect).of(range),
@@ -2326,21 +2295,16 @@ function foldToggle(view: EditorView, pos: number): void {
  */
 export function solutionsFold(view: EditorView): void {
     forceParsing(view, view.state.doc.length, 1000);
-    const ranges: { from: number; to: number }[] = [];
+    const ranges: Span[] = [];
     for (let number: number = 1; number <= view.state.doc.lines; number++) {
         const line: Line = view.state.doc.line(number);
-        const range: { from: number; to: number } | null = solutionRule.test(line.text)
+        const range: Span | null = solutionRule.test(line.text)
             ? foldable(view.state, line.from, line.to)
             : null;
         if (range !== null) ranges.push(range);
     }
     view.dispatch({
-        effects: ranges.map(
-            (range: {
-                from: number;
-                to: number;
-            }): StateEffect<{ from: number; to: number }> => foldEffect.of(range),
-        ),
+        effects: ranges.map((range: Span): StateEffect<Span> => foldEffect.of(range)),
     });
 }
 
@@ -2351,7 +2315,7 @@ export function solutionsFold(view: EditorView): void {
  */
 export function headingShow(view: EditorView, heading: string): void {
     let line: Line | undefined;
-    const unfolds: StateEffect<{ from: number; to: number }>[] = [];
+    const unfolds: StateEffect<Span>[] = [];
     for (
         let number: number = 1;
         heading !== "" && line === undefined && number <= view.state.doc.lines;
@@ -2550,16 +2514,16 @@ function linkClicked(event: MouseEvent, view: EditorView): boolean {
  * TeX of the rendered formula the press before landed on, see {@link formulaClicked},
  * `null` for none.
  */
-let formulaPressed: { from: number; to: number } | null = null;
+let formulaPressed: Span | null = null;
 
 /**
  * Gives the TeX of the formula a rendered one stands for, without its `$` or `$$`:
  * of the formula it replaces, see {@link MathWidget},
  * or of the formula `$$…$$` being edited below it, the first on the line it stands at.
  */
-function texOf(view: EditorView, box: Element): { from: number; to: number } | null {
+function texOf(view: EditorView, box: Element): Span | null {
     const from: number = view.posAtDOM(box);
-    let tex: { from: number; to: number } | null = null;
+    let tex: Span | null = null;
     syntaxTree(view.state).iterate({
         from: from,
         to: view.state.doc.lineAt(from).to,
@@ -2588,7 +2552,7 @@ function texOf(view: EditorView, box: Element): { from: number; to: number } | n
  * like a double click into TeX shown, selecting a word.
  */
 function formulaClicked(event: MouseEvent, view: EditorView): boolean {
-    const tex: { from: number; to: number } | null = formulaPressed;
+    const tex: Span | null = formulaPressed;
     const box: Element | null = (event.target as Element).closest(".cm-math");
     formulaPressed =
         event.button === 0 && event.detail === 1 && box !== null
