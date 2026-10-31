@@ -788,7 +788,7 @@ function boxTextsOf(box: BoxNew, old: Entry | null): EntryTexts {
     };
 }
 
-/** Turns a box as the page sends it into the fields of its to-do, see {@link boxTextsOf}. */
+/** Turns a box as the page sends it into the fields of its to-do. */
 function todoFieldsOf(box: BoxNew, old: Entry | null): TodoFields {
     return {
         ...boxTextsOf(box, old),
