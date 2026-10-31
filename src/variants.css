@@ -68,13 +68,13 @@
    so that one size scales the whole page, also the time grid and the formulas,
    and the margins and widths follow it; only the lines of 1 or 2 px stay thin on purpose:
    the page is drawn for my laptop, 1600 px wide, with a root of 20 px,
-   and a page wider than 1667 px grows as a whole in the same proportion, as if zoomed,
-   so my desktop's 1920 px get a root of 23 px, a little calmer than a zoom of 120 %;
-   `vw` is 1 % of the page width, so 1.2vw is 20 px at 1667 px and 23 px at 1920 px,
+   and a wider page grows as a whole in the same proportion, as if zoomed,
+   so my desktop's 1920 px get a root of 24 px and show exactly what the laptop shows;
+   `vw` is 1 % of the page width, so 1.25vw is 20 px at 1600 px and 24 px at 1920 px,
    and `max` keeps the root from going below 20 px in a narrow window,
    so the text never gets smaller than on the laptop */
 :root {
-    font-size: max(20px, 1.2vw);
+    font-size: max(20px, 1.25vw);
     --background: #1f1f1f;
     --text-main: #f1f1f1;
     --text-muted: #a3a3a3;
