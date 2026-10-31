@@ -201,6 +201,11 @@ let gramsFields: WeakMap<FoodPick, HTMLInputElement> = new WeakMap();
 /** The plus of each meal block, so a new meal opens its search at once. */
 let blockPluses: WeakMap<MealPick, HTMLButtonElement> = new WeakMap();
 
+/** Takes my meals of `Meals.md` as the reader sends them after a change. */
+function dishesTake(all: Dish[]): void {
+    dishes = all;
+}
+
 /**
  * Keeps a food among my foods by its key and,
  * unless a food of its name came first, by its name alone, see {@link mine}.
@@ -210,8 +215,8 @@ function mineAdd(food: Food): void {
     if (!mine.has(food.name.toLowerCase())) mine.set(food.name.toLowerCase(), food);
 }
 
-/** Makes a food picked of a line `X-FOOD`. */
-function pickOf(read: Line, grams: string): FoodPick {
+/** Makes a food picked of a line `X-FOOD` or of a food. */
+function pickOf(read: Pick<Line, "name" | "brand" | "store">, grams: string): FoodPick {
     return { name: read.name, brand: read.brand, store: read.store, grams: grams };
 }
 
@@ -222,12 +227,7 @@ function gramsTextOf(grams: number): string {
 
 /** Makes a food picked newly, its grams one portion of it, empty without portion. */
 function pickNewOf(food: Food): FoodPick {
-    return {
-        name: food.name,
-        brand: food.brand,
-        store: food.store,
-        grams: food.portion === null ? "" : gramsTextOf(food.portion),
-    };
+    return pickOf(food, food.portion === null ? "" : gramsTextOf(food.portion));
 }
 
 /**
@@ -390,9 +390,7 @@ function foodTake(old: Food, written: Food): void {
         pick.store = written.store;
     });
     dishesLoad()
-        .then((all: Dish[]): void => {
-            dishes = all;
-        })
+        .then(dishesTake)
         .catch((error: unknown): void => console.error(error));
 }
 
@@ -507,8 +505,7 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
     );
     const remove: HTMLButtonElement = buttonOf("", "", (): void => {
         meals = meals.filter((other: MealPick): boolean => other !== meal);
-        rowsShow(changed);
-        changed();
+        rowsChanged(changed);
     });
     const name: HTMLElement = elementOf("span", "meal-name", meal.name);
     const parts: HTMLElement = elementOf("div", "meal-parts", "");
@@ -526,8 +523,7 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
                 freshSend(meal);
             }
             close();
-            rowsShow(changed);
-            changed();
+            rowsChanged(changed);
             gramsFocus([pick]);
         },
         meals: null,
@@ -568,13 +564,9 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
                     meals = meals.filter(
                         (other: MealPick): boolean => other.foods.length > 0,
                     );
-                    rowsShow(changed);
-                    changed();
+                    rowsChanged(changed);
                 },
-                (): void => {
-                    rowsShow(changed);
-                    changed();
-                },
+                (): void => rowsChanged(changed),
             ),
         ),
         box,
@@ -604,6 +596,12 @@ function summaryShow(): void {
     summaryLine.replaceChildren(text);
 }
 
+/** Shows the rows anew, see {@link rowsShow}, then tells the dialog of the change. */
+function rowsChanged(changed: () => void): void {
+    rowsShow(changed);
+    changed();
+}
+
 /** Shows the blocks of the meals picked, then the foods beside them, then the summary. */
 function rowsShow(changed: () => void): void {
     foodsRows.replaceChildren(
@@ -617,13 +615,9 @@ function rowsShow(changed: () => void): void {
                 },
                 (): void => {
                     picks = picks.filter((other: FoodPick): boolean => other !== pick);
-                    rowsShow(changed);
-                    changed();
+                    rowsChanged(changed);
                 },
-                (): void => {
-                    rowsShow(changed);
-                    changed();
-                },
+                (): void => rowsChanged(changed),
             ),
         ),
     );
@@ -643,8 +637,7 @@ function foodPick(food: Food, changed: () => void): void {
         pick = pickNewOf(food);
         picks.push(pick);
     }
-    rowsShow(changed);
-    changed();
+    rowsChanged(changed);
     foodsClose();
     gramsFocus([pick]);
 }
@@ -692,8 +685,7 @@ function dishPick(dish: Dish, changed: () => void): void {
             }),
         };
         meals.push(meal);
-        rowsShow(changed);
-        changed();
+        rowsChanged(changed);
     }
     foodsClose();
     gramsFocus(meal.foods);
@@ -707,8 +699,7 @@ function mealNew(name: string, changed: () => void): void {
     const meal: MealPick = { name: name, foods: [], fresh: true };
     meals.push(meal);
     foodsClose();
-    rowsShow(changed);
-    changed();
+    rowsChanged(changed);
     blockPluses.get(meal)?.click();
 }
 
@@ -730,9 +721,7 @@ function freshSend(meal: MealPick): void {
               ),
           )
     )
-        .then((all: Dish[]): void => {
-            dishes = all;
-        })
+        .then(dishesTake)
         .catch((error: unknown): void => console.error(error));
 }
 
@@ -870,8 +859,7 @@ function drawnShow(changed: () => void): void {
                 !drawn.some((other: FoodPick): boolean => keyOf(other) === keyOf(pick)),
         ),
     ];
-    rowsShow(changed);
-    changed();
+    rowsChanged(changed);
 }
 
 /**
@@ -918,27 +906,6 @@ function cookedRowOf(changed: () => void): HTMLElement {
 /** Gives the identifier of the cooking the meal draws from, empty for none. */
 export function mealCooked(): string {
     return cooked;
-}
-
-/**
- * Builds the row `Foods`: its name with the plus that opens the list,
- * then the blocks and rows picked.
- *
- * @returns The row and what closes its list
- */
-function foodsRowOf(
-    line: HTMLButtonElement,
-    rows: HTMLElement,
-    box: HTMLElement,
-    opened: () => void,
-): [HTMLElement, () => void] {
-    const picker: HTMLElement = elementOf("div", "meal picker", "");
-    line.classList.add("picker-line");
-    const close: () => void = listOf(picker, line, box, opened, (): void => {});
-    picker.append(rows, box);
-    const row: HTMLElement = rowOf("Foods", picker);
-    row.querySelector(".entry-name")?.append(line);
-    return [row, close];
 }
 
 /**
@@ -1023,16 +990,23 @@ export async function mealOf(
     });
     const foodsBox: HTMLElement = elementOf("div", "picker-box meal-box", "");
     foodsBox.append(foodsSearch);
-    const [foodsRow, closeFoods]: [HTMLElement, () => void] = foodsRowOf(
+    // The row `Foods`: its name with the plus that opens the list,
+    // then the blocks and rows picked.
+    const picker: HTMLElement = elementOf("div", "meal picker", "");
+    foodsLine.classList.add("picker-line");
+    foodsClose = listOf(
+        picker,
         foodsLine,
-        foodsRows,
         foodsBox,
         (): void => {
             foodSearchClear(foodsSearch);
             foodsSearch.querySelector("input")?.focus();
         },
+        (): void => {},
     );
-    foodsClose = closeFoods;
+    picker.append(foodsRows, foodsBox);
+    const foodsRow: HTMLElement = rowOf("Foods", picker);
+    foodsRow.querySelector(".entry-name")?.append(foodsLine);
     rowsShow(changed);
     const summaryRow: HTMLDivElement = rowOf("Summary", summaryLine);
     summaryRow.classList.add("panel-fixed");
