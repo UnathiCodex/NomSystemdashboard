@@ -86,7 +86,7 @@
  * whose timer the page shows when it is of a type I pace myself,
  * my own learning or homework, see {@link sessionRead}.
  * Due by my protocol, per section, a note like `01_01_SampleMeanStandardError.md`,
- * as `~/NomWorkspace/.claude/skills/learn/4-session-learn/session-learn.md` says it,
+ * as `~/NomWorkspace/.claude/skills/learn/3-session-learn/session-learn.md` says it,
  * see `## Rounds`:
  * round 0 is its whole theory, its first Example and its first Task,
  * gone over until the Task is right, since the first can only succeed;

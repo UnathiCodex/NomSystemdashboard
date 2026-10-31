@@ -2,8 +2,8 @@
  * ## Wraps
  *
  * Prints every line of a Markdown file that does not fit on one line of my editor,
- * for the writers of my documents and their checks, see §6.1 of
- * `.claude/skills/learn/3-chapter-write/document-style.md` in `NomWorkspace`:
+ * for the writers of my documents and their checks, see
+ * `.claude/skills/learn/2-chapter-write/document-style.md` in `NomWorkspace`:
  * `node ~/NomWorkspace/NomSystemdashboard/reader/wraps.ts <file.md> …`,
  * also for a draft outside my modules, like `/var/tmp/01_06_TwoSampleTests.md`,
  * while the reader runs, see `reader.ts`.

@@ -10,8 +10,8 @@
  *   before a new paragraph a line break and an empty line, see {@link paragraphBreak}.
  * - The air of a line, two empty lines,
  *   is the most air any key writes, see {@link airMost}.
- * - Lists are written as my notes write them, see §6.4, §6.5 and §6.12 of
- *   `.claude/skills/learn/3-chapter-write/document-style.md`:
+ * - Lists are written as my notes write them, see
+ *   `.claude/skills/learn/2-chapter-write/document-style.md`:
  *   one tab per level, never spaces, a further line of a point in spaces under its text,
  *   see {@link textIndentationOf}.
  * - Every key keeps a point in the point it stands in,
@@ -198,7 +198,7 @@ function quoteMarkIs(state: EditorState, line: Line): boolean {
 
 /**
  * Gives the indentation of the text of a point, as my notes indent a further line of it,
- * see §6.4 and §6.12 of `.claude/skills/learn/3-chapter-write/document-style.md`:
+ * see `.claude/skills/learn/2-chapter-write/document-style.md`:
  * only spaces, as many as its `-` or number with the space after it,
  * and one more per tab before it,
  * two under `- `, three under `\t- `, three under `1. `, four under `\t\t- `,
@@ -1885,8 +1885,8 @@ function itemsAt(state: EditorState): [SyntaxNode, SyntaxNode] | null {
 
 /**
  * Moves the lines of points of one list one step in or out, see {@link itemIndent},
- * written as my notes write a list, see §6.5 and §6.12 of
- * `.claude/skills/learn/3-chapter-write/document-style.md`:
+ * written as my notes write a list, see
+ * `.claude/skills/learn/2-chapter-write/document-style.md`:
  * the line of each of its points and each line of code one tab more or one tab less,
  * each further line in spaces under the text of its point, see {@link textIndentationOf},
  * a line of blanks as it stands;
