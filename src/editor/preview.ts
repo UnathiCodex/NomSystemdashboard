@@ -488,16 +488,13 @@ const highlighter: Highlighter = tagHighlighter([
  * and leaves the cursor where it is.
  */
 export class FoldWidget extends WidgetType {
-    /** Whether it belongs to a list item, else to a heading or a time zone. */
-    readonly item: boolean;
-
-    /** Whether what it folds is folded. */
-    readonly folded: boolean;
-
-    constructor(item: boolean, folded: boolean) {
+    constructor(
+        /** Whether it belongs to a list item, else to a heading or a time zone. */
+        readonly item: boolean,
+        /** Whether what it folds is folded. */
+        readonly folded: boolean,
+    ) {
         super();
-        this.item = item;
-        this.folded = folded;
     }
 
     /** Tells whether another arrow looks the same, so the drawn one stays. */
@@ -534,20 +531,15 @@ export class FoldWidget extends WidgetType {
  * `$…$` within the line, `$$…$$` on its own.
  */
 class MathWidget extends WidgetType {
-    /** TeX of the formula, without its `$`. */
-    readonly tex: string;
-
-    /** Whether it is a formula `$$…$$`. */
-    readonly display: boolean;
-
-    /** Whether it shows above its TeX being edited. */
-    readonly preview: boolean;
-
-    constructor(tex: string, display: boolean, preview: boolean) {
+    constructor(
+        /** TeX of the formula, without its `$`. */
+        readonly tex: string,
+        /** Whether it is a formula `$$…$$`. */
+        readonly display: boolean,
+        /** Whether it shows above its TeX being edited. */
+        readonly preview: boolean,
+    ) {
         super();
-        this.tex = tex;
-        this.display = display;
-        this.preview = preview;
     }
 
     /** Tells whether another formula looks the same, so the rendered one stays. */
@@ -585,12 +577,11 @@ class MathWidget extends WidgetType {
 
 /** Image, as the scripts view shows it, at its own size. */
 class ImageWidget extends WidgetType {
-    /** Address of the image at the reader. */
-    readonly address: string;
-
-    constructor(address: string) {
+    constructor(
+        /** Address of the image at the reader. */
+        readonly address: string,
+    ) {
         super();
-        this.address = address;
     }
 
     /** Tells whether another image looks the same, so the shown one stays. */
@@ -619,12 +610,11 @@ class ImageWidget extends WidgetType {
  * in a file to read only it cannot be ticked.
  */
 class TaskBoxWidget extends WidgetType {
-    /** Whether it is ticked, `[x]`. */
-    readonly done: boolean;
-
-    constructor(done: boolean) {
+    constructor(
+        /** Whether it is ticked, `[x]`. */
+        readonly done: boolean,
+    ) {
         super();
-        this.done = done;
     }
 
     /** Tells whether another box looks the same, so the shown one stays. */
@@ -666,12 +656,11 @@ class TaskBoxWidget extends WidgetType {
  * of a line holds the empty line below it.
  */
 class BreakWidget extends WidgetType {
-    /** Element drawn, `br` or `wbr`. */
-    readonly tagName: string;
-
-    constructor(tagName: string) {
+    constructor(
+        /** Element drawn, `br` or `wbr`. */
+        readonly tagName: string,
+    ) {
         super();
-        this.tagName = tagName;
     }
 
     /** Tells whether another break is the same element, so the drawn one stays. */
@@ -700,20 +689,17 @@ class BreakWidget extends WidgetType {
  * see {@link invisiblesLook}.
  */
 class InvisiblesWidget extends WidgetType {
-    /** The marks, a blank for each other character hidden with them. */
-    readonly marks: string;
-
-    /**
-     * What the hidden stretch stands before:
-     * `bullet` or `number` for the indentation of a point,
-     * whose marks go left of its bullet or number, else `text`.
-     */
-    readonly before: string;
-
-    constructor(marks: string, before: string) {
+    constructor(
+        /** The marks, a blank for each other character hidden with them. */
+        readonly marks: string,
+        /**
+         * What the hidden stretch stands before:
+         * `bullet` or `number` for the indentation of a point,
+         * whose marks go left of its bullet or number, else `text`.
+         */
+        readonly before: string,
+    ) {
         super();
-        this.marks = marks;
-        this.before = before;
     }
 
     /** Tells whether other marks are the same, so the drawn ones stay. */
@@ -742,20 +728,15 @@ class InvisiblesWidget extends WidgetType {
  * which only the empty lines around them give, as around any block, see `./editor.css`.
  */
 class BlockWidget extends WidgetType {
-    /** Markdown of the blocks, their whole lines. */
-    readonly markdown: string;
-
-    /** Files the links of the note lead to. */
-    readonly links: Links;
-
-    /** Length of their lines in the note, with their indentation. */
-    readonly length: number;
-
-    constructor(markdown: string, links: Links, length: number) {
+    constructor(
+        /** Markdown of the blocks, their whole lines. */
+        readonly markdown: string,
+        /** Files the links of the note lead to. */
+        readonly links: Links,
+        /** Length of their lines in the note, with their indentation. */
+        readonly length: number,
+    ) {
         super();
-        this.markdown = markdown;
-        this.links = links;
-        this.length = length;
     }
 
     /** Tells whether other blocks look the same, so the rendered ones stay. */
