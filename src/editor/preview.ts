@@ -1109,19 +1109,22 @@ function cursorsOf(state: EditorState): number[] {
     );
 }
 
+/** Gives a piece of syntax and the pieces around it, from the inside out. */
+function upwardOf(node: SyntaxNode | null): SyntaxNode[] {
+    const nodes: SyntaxNode[] = [];
+    for (let up: SyntaxNode | null = node; up !== null; up = up.parent) nodes.push(up);
+    return nodes;
+}
+
 /**
  * Tells whether a formula holds a stretch of the text, at its ends too,
  * like a selection made by the pointer in its TeX, see {@link cursorsOf}.
  */
 function formulaHolds(state: EditorState, range: SelectionRange): boolean {
-    for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(range.from, 1);
-        node !== null;
-        node = node.parent
-    )
-        if (node.name === "InlineMath")
-            return node.from <= range.from && node.to >= range.to;
-    return false;
+    const formula: SyntaxNode | undefined = upwardOf(
+        syntaxTree(state).resolveInner(range.from, 1),
+    ).find((node: SyntaxNode): boolean => node.name === "InlineMath");
+    return formula !== undefined && formula.from <= range.from && formula.to >= range.to;
 }
 
 /**
@@ -1187,13 +1190,9 @@ function wrap(
     to: number = node.to,
     from: number = node.from,
 ): void {
-    let depth: number = 0;
-    for (
-        let parent: SyntaxNode | null = node.parent;
-        parent !== null;
-        parent = parent.parent
-    )
-        if (wrapped.includes(parent.name)) depth++;
+    const depth: number = upwardOf(node.parent).filter((parent: SyntaxNode): boolean =>
+        wrapped.includes(parent.name),
+    ).length;
     look.wrappers.push(
         BlockWrapper.create({
             tagName: tagName,
@@ -1607,16 +1606,12 @@ function listBlankIs(state: EditorState, line: Line): boolean {
     let above: Line = line;
     while (above.number > 1 && /^[ \t]*$/.test(above.text))
         above = state.doc.line(above.number - 1);
-    for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(
+    return upwardOf(
+        syntaxTree(state).resolveInner(
             above.from + (/^[ \t]*/.exec(above.text)?.[0].length ?? 0),
             1,
-        );
-        node !== null;
-        node = node.parent
-    )
-        if (node.name === "ListItem") return true;
-    return false;
+        ),
+    ).some((node: SyntaxNode): boolean => node.name === "ListItem");
 }
 
 /**
@@ -1701,14 +1696,7 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
 function hiddenStartOf(state: EditorState, line: Line): number {
     const blanks: number = /^[ \t]*/.exec(line.text)?.[0].length ?? 0;
     if (blanks === line.length) return listBlankIs(state, line) ? blanks : 0;
-    for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(
-            line.from + blanks,
-            1,
-        );
-        node !== null;
-        node = node.parent
-    ) {
+    for (const node of upwardOf(syntaxTree(state).resolveInner(line.from + blanks, 1))) {
         if (["Paragraph", "Task", "ListItem"].includes(node.name)) return blanks;
         if (
             ["FencedCode", "CodeBlock", "HTMLBlock", "Table", "Blockquote"].includes(
@@ -1898,13 +1886,9 @@ function htmlTagLook(look: Look, node: SyntaxNode): boolean {
     const tagName: string | undefined = breakRule
         .exec(look.state.sliceDoc(node.from, node.to))?.[1]
         .toLowerCase();
-    let table: boolean = false;
-    for (
-        let parent: SyntaxNode | null = node.parent;
-        parent !== null;
-        parent = parent.parent
-    )
-        table ||= parent.name === "Table";
+    const table: boolean = upwardOf(node.parent).some(
+        (parent: SyntaxNode): boolean => parent.name === "Table",
+    );
     if (tagName !== undefined && !table && !touched(look, node.from, node.to))
         widgetPut(look, new BreakWidget(tagName), node.from, node.to);
     return false;
@@ -2341,11 +2325,7 @@ export function rowShow(view: EditorView, text: string): void {
  */
 function linkAt(state: EditorState, pos: number): SyntaxNode | null {
     let url: SyntaxNode | null = null;
-    for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, 1);
-        node !== null;
-        node = node.parent
-    ) {
+    for (const node of upwardOf(syntaxTree(state).resolveInner(pos, 1))) {
         if (node.name === "WikiLink" || node.name === "Link") return node;
         if (node.name === "URL") url = node;
     }
