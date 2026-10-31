@@ -530,13 +530,14 @@ export const sport: SportSources = {
 
 /**
  * Folders and topics of the files of every category but `Skill` in {@link calendarRoot}:
- * my sleep in `Health/`, my food with my cooking in `Living/`, each in files of its own,
+ * my sleep in `Health/`, my food with my cooking and my ways in `Living/`, each in its own files,
  * any other category in those of the topic `Living` in `Living/`, see {@link topicFileOf}.
  */
 export const topics: { [category: string]: string } = {
     Sleep: "Health/Sleep",
     Food: "Living/Food",
     Cook: "Living/Food",
+    Way: "Living/Way",
 };
 
 /**
