@@ -71,7 +71,8 @@ import "../food/search.css";
 import "../food/meals.css";
 import "./sport.css";
 
-import type { Session, SportDay } from "./mine.ts";
+import type { Session } from "./mine.ts";
+import type { SportDay } from "../../reader/sport.ts";
 
 /**
  * Day shown, like `2026-10-17`.

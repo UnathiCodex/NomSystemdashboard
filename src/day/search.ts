@@ -48,7 +48,7 @@ import { dottedOf } from "../persons.ts";
 import { Search } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
-import type { Attendee } from "./entries.ts";
+import type { Attendee } from "../../reader/calendar.ts";
 
 /**
  * An entry of the log as the reader sends it for the search,

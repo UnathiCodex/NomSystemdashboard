@@ -15,8 +15,7 @@
  */
 
 import { middleCutPut } from "../day/choices.ts";
-
-import type { Link } from "./attempts.ts";
+import type { Link } from "../../reader/calendar.ts";
 
 /**
  * Folder of my modules in `NomWorkspace`, the first part of the folder of a module.

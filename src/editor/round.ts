@@ -118,10 +118,10 @@ import type {
     TransactionSpec,
 } from "@codemirror/state";
 import type { DecorationSet, ViewUpdate } from "@codemirror/view";
-import type { Attempt, Result, SkillSection, SkillTask } from "../skill/attempts.ts";
+import type { SkillSection, SkillTask } from "../skill/attempts.ts";
 import type { Block, NoteTasks } from "./tasks.ts";
 import type { BlockMark } from "../notes/tree.ts";
-import type { Session } from "./session.ts";
+import type { Attempt, Result, Session } from "../../reader/skill.ts";
 
 /**
  * A step of the round: its block, and whether it is the Task again after a wrong one

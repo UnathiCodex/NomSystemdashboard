@@ -20,7 +20,7 @@
 import { Check, Trash, X } from "lucide";
 import { iconPut } from "../icons.ts";
 import { fileShow } from "./choices.ts";
-import type { Occasion } from "./boxes.ts";
+import type { Occasion } from "../../reader/boxes.ts";
 
 /**
  * The birthday or holiday the dialog writes the gift idea of.

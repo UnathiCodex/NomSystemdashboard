@@ -77,8 +77,7 @@ import {
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Check, Plus, X } from "lucide";
 import "./search.css";
-
-import type { Food, FoodsFound, Kind, Product } from "./foods.ts";
+import type { Food, FoodsFound, Kind, Product } from "../../reader/food.ts";
 
 /**
  * What a search does, where it stands.

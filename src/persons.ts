@@ -32,21 +32,7 @@
 
 import { changesKept } from "./changes.ts";
 import { readerAsk } from "./reader.ts";
-
-/**
- * A person of `Persons.md`, as the reader sends it.
- *
- * - `name`: Its name, like `Bichler, Martin`.
- * - `link`: Its page in TUMonline, like `https://campus.tum.de/…`, empty for none.
- * - `title`: Its title, like `Prof. Dr.`, empty for none; kept, never shown.
- * - `mail`: Its mail, like `m.bichler@tum.de`, empty for none; kept, never shown.
- */
-export type Person = {
-    name: string;
-    link: string;
-    title: string;
-    mail: string;
-};
+import type { Person } from "../reader/persons.ts";
 
 /**
  * A person as I changed it by its parts below `With`,

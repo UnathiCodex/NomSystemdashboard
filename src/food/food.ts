@@ -76,8 +76,7 @@ import { logEntryOpen } from "../editor/dialog.ts";
 import { iconPut, plusPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
 import "./food.css";
-
-import type { Eaten, FoodDay, Meal } from "./foods.ts";
+import type { Eaten, FoodDay, Meal } from "../../reader/food.ts";
 
 /**
  * Day shown, like `2026-10-10`.

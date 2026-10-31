@@ -20,8 +20,7 @@
 
 import { noteShow, sectionsLoad, sectionSend } from "./note.ts";
 import { pointsRead, pointsShow, pointsStart } from "./points.ts";
-
-import type { SectionTitle } from "./note.ts";
+import type { SectionTitle } from "../../reader/note.ts";
 
 /**
  * A list of points of the daily note I write.

@@ -51,46 +51,7 @@ import { readerAsk } from "../reader.ts";
 import { partFieldOf, partOf } from "./choices.ts";
 
 import type { Choice } from "./choices.ts";
-
-/**
- * A place, one row of `Places.md` or `Rooms.md`, as the reader writes it.
- *
- * - `name`: Name, like `TUM Innenstadt`, without a comma, which the reader drops,
- *   see `nameOf` in `reader/places.ts`.
- * - `street`: Its street with the number of the house,
- *   which may stay out, like `Arcisstraße 21`.
- * - `code`: Its code, the postcode, like `80333`.
- * - `city`: Its town, like `München`.
- * - `country`: Its country, like `Deutschland`.
- * - `link`: Its link, like `https://nav.tum.de/room/0509.EG.980`.
- * - `standard`: Whether it is my default place,
- *   `★` in its column `Default`, like `Home Munich`.
- *
- * Each text empty for none.
- */
-export type Place = {
-    name: string;
-    street: string;
-    code: string;
-    city: string;
-    country: string;
-    link: string;
-    standard: boolean;
-};
-
-/**
- * A platform of what I do online, one row of `Online.md`, as the reader writes it,
- * see `Platform` in `reader/places.ts`.
- *
- * - `name`: Name, like `Zoom`.
- * - `provider`: Who offers it, like `Zoom Video Communications`, empty for none.
- * - `link`: The link of its web app, like `https://zoom.us`, empty for none.
- */
-export type Platform = {
-    name: string;
-    provider: string;
-    link: string;
-};
+import type { Place, Platform } from "../../reader/places.ts";
 
 /**
  * A link of a place as the reader takes it, a web address without spaces,

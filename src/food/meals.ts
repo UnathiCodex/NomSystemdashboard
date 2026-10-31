@@ -101,7 +101,8 @@ import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
 import "./meals.css";
 
-import type { Dish, Food } from "./foods.ts";
+import type { Dish } from "./foods.ts";
+import type { Food } from "../../reader/food.ts";
 
 /**
  * Writes the name of a meal as the reader writes it,

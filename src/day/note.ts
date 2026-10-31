@@ -19,12 +19,7 @@
 import { Marked } from "marked";
 import DOMPurify from "dompurify";
 import { readerAsk } from "../reader.ts";
-
-/**
- * Titles of the sections the page reads and writes, as the reader names them:
- * my gratitude and my points about the day.
- */
-export type SectionTitle = "Gratitude" | "About";
+import type { SectionTitle } from "../../reader/note.ts";
 
 /**
  * Markdown reader of the daily note.

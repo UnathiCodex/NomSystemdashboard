@@ -15,73 +15,7 @@
  */
 
 import { readerAsk } from "../reader.ts";
-
-/**
- * Energy and nutrients of 100 g of a food, or of what one food of a meal gave,
- * as the reader sends them, as far as they are known:
- * kcal always, protein, carbs and fat `null` where unknown,
- * never 0, see `reader/food.ts`.
- *
- * - `kcal`: Energy in kcal.
- * - `protein`: Protein in grams, `null` when unknown.
- * - `carbs`: Carbohydrates in grams, `null` when unknown.
- * - `fat`: Fat in grams, `null` when unknown.
- */
-export type Nutrients = {
-    kcal: number;
-    protein: number | null;
-    carbs: number | null;
-    fat: number | null;
-};
-
-/**
- * What meals gave together, as the reader sends it, each the sum of what is known.
- *
- * - `kcal`: Energy in kcal.
- * - `protein`: Protein in grams.
- * - `carbs`: Carbohydrates in grams.
- * - `fat`: Fat in grams.
- */
-export type Totals = {
-    kcal: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-};
-
-/**
- * Kind of a food, as the reader sends it:
- * `Eat`, its values per 100 g and its amounts in grams,
- * or `Drink`, its values per 100 ml and its amounts in millilitres, see {@link unitOf}.
- */
-export type Kind = "Eat" | "Drink";
-
-/**
- * A food, one row of `Foods.md`, or a product of Open Food Facts as it would go there:
- * its {@link Nutrients} per 100 of its unit with its name,
- * barcode, brand, store, pack and kind.
- *
- * - `name`: Name, by which a meal lists it,
- *   like `Reis` of `X-FOOD:Reis;Golden Sun;Lidl;150`.
- * - `barcode`: Open Food Facts barcode it came from, empty for a food added by hand.
- * - `brand`: Its first brand, like `Milbona`, empty when none is known.
- * - `store`: The first store that sells it, like `Lidl`, empty when none is known.
- * - `pack`: Size of its pack as sold in its unit, like 450, `null` when none is known.
- * - `portion`: Amount in its unit I typically take at once,
- *   like 50 of a Semmel, one piece,
- *   or 30 of oil, two tablespoons, so an entry takes `2x` or `2 St` as twice that;
- *   `null` only in a row left empty by hand.
- * - `kind`: Its kind, `Eat` or `Drink`.
- */
-export type Food = Nutrients & {
-    name: string;
-    barcode: string;
-    brand: string;
-    store: string;
-    pack: number | null;
-    portion: number | null;
-    kind: Kind;
-};
+import type { Food, FoodDay, FoodsFound, Kind } from "../../reader/food.ts";
 
 /**
  * What changes of a food of mine, as typed, see {@link foodChange}:
@@ -100,86 +34,6 @@ export type FoodChanges = {
     pack?: number | null;
     portion?: number | null;
     kind?: Kind;
-};
-
-/**
- * A product of Open Food Facts as a search sends it:
- * a {@link Food}, its kcal `null` where Open Food Facts does not know them,
- * like `Zwiebeln` of Edeka, so it still shows
- * and I type its kcal from the pack, see `./search.ts`.
- */
-export type Product = Omit<Food, "kcal"> & {
-    kcal: number | null;
-};
-
-/**
- * What a search finds, as the reader sends it.
- *
- * - `foods`: My foods found, the most eaten first;
- *   all of them for an empty search; of every brand.
- * - `products`: Products of Open Food Facts on the page asked
- *   for that are not among my foods,
- *   each as it would go into `Foods.md`,
- *   its kcal `null` where unknown, the best match first;
- *   none for a search of only a few letters or of my foods only;
- *   `null` when Open Food Facts cannot be reached.
- * - `total`: Number of products of Open Food Facts the search matches;
- *   a lower bound, like 10,000, when not `exact`.
- * - `exact`: Whether `total` is exact.
- * - `more`: Whether a page after the one asked for holds more products.
- */
-export type FoodsFound = {
-    foods: Food[];
-    products: Product[] | null;
-    total: number;
-    exact: boolean;
-    more: boolean;
-};
-
-/**
- * A food of a meal with what it gives,
- * as the reader sends it, a nutrient its food does not know unknown too.
- *
- * - `name`: Name of the food, as the meal lists it, like `Skyr natur`.
- * - `brand`, `store`: Its brand and the store I bought it in,
- *   like `K-Classic` and `Kaufland`;
- *   empty where the line names none.
- * - `grams`: Grams eaten as the meal lists them, millilitres of a drink,
- *   0 for none, which count nothing.
- * - `estimate`: Whether the grams are guessed, marked by `~`.
- * - `known`: Whether `Foods.md` holds the food; an unknown food gives nothing.
- * - `meal`: The meal of mine it belongs to in this entry, like `Chili con Carne`;
- *   empty for a food eaten by itself.
- * - `kind`: Kind of its food, `Eat` for one `Foods.md` does not hold.
- */
-export type Eaten = Nutrients & {
-    name: string;
-    brand: string;
-    store: string;
-    grams: number;
-    estimate: boolean;
-    known: boolean;
-    meal: string;
-    kind: Kind;
-};
-
-/**
- * A meal, a log entry of the category `Food`, with what it gives, as the reader sends it.
- *
- * - `id`: Identifier of the entry.
- * - `start`: Start as ISO instant.
- * - `title`: What I ate, like `Reis-Bohnen-Eier`.
- * - `location`: Where, like `Home Munich`, empty when it has none.
- * - `foods`: Its foods with what each gives, none when it lists none.
- * - `estimate`: Whether one of its foods counts grams guessed.
- */
-export type Meal = Totals & {
-    id: string;
-    start: string;
-    title: string;
-    location: string;
-    foods: Eaten[];
-    estimate: boolean;
 };
 
 /**
@@ -263,17 +117,6 @@ export function portionGramsOf(text: string, portion: number | null): number | n
         ? null
         : Number((typed[1] ?? "1").replace(",", ".")) * portion;
 }
-
-/**
- * The meals of a day with what they give together, as the reader sends them.
- *
- * - `meals`: Meals of the day, in the order of their starts.
- * - `estimate`: Whether a food of a meal counts grams guessed.
- */
-export type FoodDay = Totals & {
-    meals: Meal[];
-    estimate: boolean;
-};
 
 /**
  * Finds foods by a name or a barcode: my foods first, then,

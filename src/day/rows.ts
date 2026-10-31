@@ -33,9 +33,8 @@
 import { personLinkOf, personOf } from "../persons.ts";
 import { lengthOf, rangeDash, timeOf, weekdayDateTextOf } from "./times.ts";
 import { elementOf } from "../food/foods.ts";
-
-import type { Attendee } from "./entries.ts";
-import type { Person } from "../persons.ts";
+import type { Attendee } from "../../reader/calendar.ts";
+import type { Person } from "../../reader/persons.ts";
 
 /**
  * The parts of a row, see the top of this file.

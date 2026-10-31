@@ -172,16 +172,8 @@ import { ArrowLeft, ArrowRight, CalendarOff, Check, Gift, Repeat, X } from "luci
 
 import type { Calendar, EventApi, EventReceiveInfo } from "fullcalendar";
 import type { IconNode } from "lucide";
-import type { Attendee } from "./entries.ts";
-import type { Link } from "../skill/attempts.ts";
-
-/**
- * State of a box: open, done, since a log entry points to it, dropped,
- * which I cancelled, `STATUS:CANCELLED`,
- * cancelled by the university, its `X-NUMBER:NONE`,
- * or pushed, as it shows greyed on a day it left, see `reader/boxes.ts`.
- */
-export type BoxState = "open" | "done" | "dropped" | "university" | "pushed";
+import type { BoxState, Moved, Occasion } from "../../reader/boxes.ts";
+import type { Attendee, Link, Push } from "../../reader/calendar.ts";
 
 /**
  * A box, as the reader sends it.
@@ -201,9 +193,10 @@ export type BoxState = "open" | "done" | "dropped" | "university" | "pushed";
  * - `locationLink`: Link of its place, its `ALTREP`,
  *   like `https://nav.tum.de/room/0509.EG.980`, empty for none.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
- *   What it does online, see `Online` in `entries.ts`, each empty for none.
+ *   What it does online, see `Online` in `reader/calendar.ts`, each empty for none.
  * - `from`: Where a way starts, empty for none.
- * - `attendees`: Who I will be with, see `Attendee` in `entries.ts`, none for nobody.
+ * - `attendees`: Who I will be with, see `Attendee` in `reader/calendar.ts`,
+ *   none for nobody.
  * - `module`: Module of a skill box, like `WI1059`, empty for any other box.
  * - `type`: Type of a skill box, like `HU`, empty for any other box.
  * - `semester`: Semester of a skill box, like `2026W`, empty for none,
@@ -275,53 +268,6 @@ export type Box = {
     number: string;
     group: string;
     moved: Moved | null;
-    file: string;
-};
-
-/**
- * Where a box stood before one push to a later day, as the reader sends it,
- * see `Push` in `reader/calendar.ts`.
- *
- * - `day`: Its day before, like `2026-10-16`.
- * - `time`: Its start before as ISO instant, empty for a box without time.
- * - `minutes`: Its length before in minutes, `null` where the push noted none.
- */
-export type Push = {
-    day: string;
-    time: string;
-    minutes: number | null;
-};
-
-/**
- * Where a box went that shows on a day it was pushed from, greyed,
- * or open on its own day while it is carried along, as the reader sends it.
- *
- * - `day`: The day it stands on now, like `2026-10-17`, where a click on its lines leads.
- * - `went`: The day it went to from the day it shows on, later or earlier,
- *   which its arrow points to.
- */
-export type Moved = {
-    day: string;
-    went: string;
-};
-
-/**
- * A birthday or holiday of a day, as the reader sends it.
- *
- * - `id`: Its identifier in `Birthdays.ics` or `Holidays.ics`,
- *   shared by every year of it.
- * - `category`: Its category, like `Birthday` or `Holiday`, empty for none.
- * - `title`: Its name as its file writes it,
- *   like `Karlbauer Florian` or `Ostermontag (AT, DE)`.
- * - `gift`: My gift idea for it, its `DESCRIPTION`, empty for none.
- * - `file`: Its file from `NomWorkspace` on,
- *   like `NomManageplannings/NomManagecalendar/Meta/Birthdays.ics`.
- */
-export type Occasion = {
-    id: string;
-    category: string;
-    title: string;
-    gift: string;
     file: string;
 };
 

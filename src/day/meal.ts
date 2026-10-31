@@ -117,7 +117,8 @@ import { readerAsk } from "../reader.ts";
 import { Pencil, Plus } from "lucide";
 
 import type { Choice } from "./choices.ts";
-import type { Dish, Food, FoodsFound, Kind } from "../food/foods.ts";
+import type { Dish } from "../food/foods.ts";
+import type { Food, FoodsFound, Kind } from "../../reader/food.ts";
 
 /**
  * A food picked, beside the meals or as part of one.

@@ -155,15 +155,15 @@ import type { EntryFields } from "./entries.ts";
 import type {
     AttemptNew,
     Group,
-    Link,
-    ModuleContents,
     RoundMark,
-    RoundPick,
     SkillModule,
     SkillSection,
     SkillTask,
     Skilling,
 } from "../skill/attempts.ts";
+import type { Link } from "../../reader/calendar.ts";
+import type { ModuleContents } from "../../reader/notes.ts";
+import type { RoundPick } from "../../reader/skill.ts";
 
 /**
  * A task picked for the entry, with its result as picked so far.

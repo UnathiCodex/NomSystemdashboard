@@ -274,17 +274,14 @@ import { Check, Copy, Pencil, Repeat, Trash, X } from "lucide";
 import type { Calendar, EventApi } from "fullcalendar";
 import type { Box } from "./boxes.ts";
 import type { Choice, ChoicesSetup } from "./choices.ts";
-import type { Place, Platform } from "./places.ts";
-import type { Attendee, BoxFields, EntryFields, Online } from "./entries.ts";
+import type { BoxFields, EntryFields } from "./entries.ts";
 import type { ModuleType, SkillLinks, SkillValues } from "./skill.ts";
-import type { Person, PersonEdit } from "../persons.ts";
+import type { PersonEdit } from "../persons.ts";
 import type { Course } from "./series.ts";
-
-/**
- * Field of an entry a field of a category writes into:
- * `title`, `from`, `location`, `online`, its platform online, or `with`, its people.
- */
-export type FieldKey = "title" | "from" | "location" | "online" | "with";
+import type { FieldKey } from "../../reader/categories.ts";
+import type { Place, Platform } from "../../reader/places.ts";
+import type { Attendee, Online } from "../../reader/calendar.ts";
+import type { Person } from "../../reader/persons.ts";
 
 /**
  * Fields of a place, where an entry is and where a way starts,
@@ -405,7 +402,7 @@ type EntryTarget = "log" | "box";
  * - `onlineLink`, `onlineChannel`, `onlineTitle`:
  *   The link, the channel and the title of its meeting or video online,
  *   as the entry, the box or the box to log has them, or the one it is a copy of,
- *   see `Online` in `entries.ts`; empty for none.
+ *   see `Online` in `reader/calendar.ts`; empty for none.
  * - `note`: Note of the entry.
  * - `foods`: Foods of the meal the dialog changes, its lines `X-FOOD`;
  *   none for any other entry.

@@ -14,30 +14,9 @@
  */
 
 import { readerAsk } from "../reader.ts";
-
-import type { Attendee, Online } from "../day/entries.ts";
-
-/**
- * Result of a cold Task: solved right or wrong.
- */
-export type Result = "right" | "wrong";
-
-/**
- * An attempt, as the reader sends it, read from the lines `X-ROUND` of the log:
- * a result of a cold Task, or an Example I checked off with `Next`, which reads as right.
- *
- * - `day`: Day its skill entry started, like `2026-10-10`.
- * - `order`: Its place among all my attempts, the oldest first,
- *   so attempts of one day keep the order I made them in.
- * - `result`: Its {@link Result}.
- * - `error`: What went wrong in a wrong attempt, my short comment, empty when not given.
- */
-export type Attempt = {
-    day: string;
-    order: number;
-    result: Result;
-    error: string;
-};
+import type { Attempt, ExamDate, Result, RoundPick } from "../../reader/skill.ts";
+import type { ModuleContents } from "../../reader/notes.ts";
+import type { Attendee, Online } from "../../reader/calendar.ts";
 
 /**
  * A task as a chapter note holds it, as the reader sends it.
@@ -145,17 +124,6 @@ export type SkillSection = {
 };
 
 /**
- * The exam of a module, as the reader sends it.
- *
- * - `day`: Day of the exam, like `2027-02-25`.
- * - `estimated`: Whether the day is an estimate.
- */
-export type ExamDate = {
-    day: string;
-    estimated: boolean;
-};
-
-/**
  * A module of the semester with its tasks, as the reader sends it.
  *
  * - `code`: Module code, like `IN2028`.
@@ -202,42 +170,6 @@ export type Skilling = {
 };
 
 /**
- * A link of a skill entry to a file or a folder, its `ATTACH`, as the reader sends it,
- * see `reader/documents.ts`.
- *
- * - `path`: Path from `NomWorkspace`, parted by `/`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`.
- * - `fingerprint`: SHA-256 of a file, empty for a folder.
- */
-export type Link = {
-    path: string;
-    fingerprint: string;
-};
-
-/**
- * What a skill offers a skill entry, as the reader sends it; a project offers nothing.
- *
- * - `folder`: The module folder from `NomWorkspace`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
- *   empty for a project.
- * - `chapters`: Names of its chapter folders, also of the empty ones,
- *   like `05 Decision Trees Ensembles`.
- * - `documents`: Its files outside the chapter folders, the university's material,
- *   and the notes of its chapters, by their paths from the module folder,
- *   like `VO_UniversityLectureLessons/TUM_2025W/04_….pdf`
- *   or `01_RegressionAnalysis/01_01_SampleMeanStandardError.md`.
- * - `materials`: The folder of the material of each type, also while the module has none
- *   yet, like `VO_UniversityLectureLessons` for `VO`, none for a project.
- */
-export type ModuleContents = {
-    folder: string;
-    chapters: string[];
-    documents: string[];
-    materials: { [type: string]: string };
-    inner: string[];
-};
-
-/**
  * A new attempt to send, from a button of a task or as one of a skill entry:
  * the task judged as a whole.
  *
@@ -277,18 +209,6 @@ export type RoundMark = {
 };
 
 /**
- * A round I picked by hand for a note of a skill entry, to send with it,
- * see `markOf` in `reader/skill.ts`.
- *
- * - `section`: Its section with its module, like `IN2028/01_02_SampleMeanEstimator`.
- * - `round`: The round picked, like `0`.
- */
-export type RoundPick = {
-    section: string;
-    round: number;
-};
-
-/**
  * A new skill entry of the log to send from the entry by category;
  * an empty field is not written.
  *
@@ -308,8 +228,9 @@ export type RoundPick = {
  *   see {@link RoundPick}, none for none.
  * - `location`: Place, like the room of a lecture logged from the plan.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
- *   What I did online, like the stream of a lecture, see `Online` in `../day/entries.ts`.
- * - `attendees`: Who I was with, see `Attendee` in `../day/entries.ts`, none for nobody.
+ *   What I did online, like the stream of a lecture,
+ *   see `Online` in `reader/calendar.ts`.
+ * - `attendees`: Who I was with, see `Attendee` in `reader/calendar.ts`, none for nobody.
  * - `planned`: Identifier of the plan entry it is logged from, empty for none.
  * - `note`: Free note.
  * - `start`: Start of the entry.

@@ -1,3 +1,4 @@
+import type { SportDay, Video, VideoFound } from "../../reader/sport.ts";
 /**
  * ## Mine
  *
@@ -44,21 +45,6 @@ export type Session = {
         link: string;
         workout: string;
     }[];
-};
-
-/**
- * The sessions of a day with what they took together.
- *
- * - `sessions`: The sessions in the order of their starts.
- * - `minutes`: Their minutes together.
- * - `kcal`: Their kcal together, `null` while none is known.
- * - `kg`: My weight on the day, `null` while I have none.
- */
-export type SportDay = {
-    sessions: Session[];
-    minutes: number;
-    kcal: number | null;
-    kg: number | null;
 };
 
 /**
@@ -113,26 +99,6 @@ export type Exercise = {
 };
 
 /**
- * A video of mine.
- *
- * - `title`: Its title.
- * - `channel`: Its channel, empty for none.
- * - `minutes`: The minutes I do it, `null` while none are written.
- * - `kind`: Its kind, like `HIIT`.
- * - `link`: Its link, empty for a video added by hand.
- * - `kcal`: What it burns above rest at my weight of today,
- *   `null` without minutes or weight.
- */
-export type Video = {
-    title: string;
-    channel: string;
-    minutes: number | null;
-    kind: string;
-    link: string;
-    kcal: number | null;
-};
-
-/**
  * Everything of mine the sport area lists.
  *
  * - `workouts`: My workouts.
@@ -152,19 +118,6 @@ export type Mine = {
     basics: string[];
     kinds: string[];
     last: { [name: string]: string };
-};
-
-/**
- * What YouTube tells of a video.
- *
- * - `title`: Its title.
- * - `channel`: Its channel.
- * - `link`: Its link in the one form of `Videos.md`.
- */
-export type VideoFound = {
-    title: string;
-    channel: string;
-    link: string;
 };
 
 /**

@@ -73,8 +73,9 @@ import { Check, ChevronDown, Pin, Repeat } from "lucide";
 import "./groups.css";
 
 import type { Box } from "./boxes.ts";
-import type { Attendee } from "./entries.ts";
-import type { Course, Group, Planned, Series, Session, Slot } from "./series.ts";
+import type { Course, Group, Series, Session } from "./series.ts";
+import type { Attendee } from "../../reader/calendar.ts";
+import type { Planned, Slot } from "../../reader/course.ts";
 
 /**
  * Shows a pick of a group at once and sends it, as the page of the menu does,

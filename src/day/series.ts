@@ -276,53 +276,21 @@ import {
 } from "lucide";
 import "./series.css";
 
-import type { Box, BoxState, PlanDay } from "./boxes.ts";
+import type { Box, PlanDay } from "./boxes.ts";
 import type { Category, Field } from "./categories.ts";
 import type { Choice } from "./choices.ts";
-import type { Attendee, BoxFields, Online } from "./entries.ts";
-import type { Place } from "./places.ts";
-import type { Person, PersonEdit } from "../persons.ts";
+import type { BoxFields } from "./entries.ts";
+import type { PersonEdit } from "../persons.ts";
 import type { ModuleType } from "./skill.ts";
 import type { IconNode } from "lucide";
 import type { Calendar as DayCalendar } from "fullcalendar";
-
-/**
- * A slot of a series, one weekday with its times, as the reader takes it,
- * see `Slot` in `reader/course.ts`.
- *
- * - `weekday`: Its weekday, from 1 for Monday to 7 for Sunday, 0 while none is picked.
- * - `start`, `end`: Its times in Berlin time, like `14:00` and `16:00`, empty for none.
- * - `minutes`: Of a slot of a course or a group by its length,
- *   without times, how long it lasts,
- *   like 120, 0 while not typed; none for a slot with times, see {@link courseSwapOf}.
- */
-export type Slot = {
-    weekday: number;
-    start: string;
-    end: string;
-    minutes?: number;
-};
-
-/**
- * An extra of a series, a single date besides its weeks, as the reader takes it,
- * see `Extra` in `reader/course.ts`.
- *
- * - `day`: Its day, like `2026-11-14`, empty while not typed as a day.
- * - `start`, `end`: Its times in Berlin time, like `10:00` and `12:00`, empty for none.
- */
-export type Extra = {
-    day: string;
-    start: string;
-    end: string;
-};
-
-/**
- * The dates of the slots of a series with times of their own,
- * other than those of their slot,
- * by their days, like `2026-10-30` with `14:00` and `17:00`, as the reader takes them,
- * see `Times` in `reader/course.ts`.
- */
-export type Times = { [day: string]: Pick<Slot, "start" | "end"> };
+import type { Plain } from "../../reader/rules.ts";
+import type { MaterialFolder } from "../../reader/notes.ts";
+import type { Extra, Planned, Slot, Times } from "../../reader/course.ts";
+import type { BoxState } from "../../reader/boxes.ts";
+import type { Attendee, Online } from "../../reader/calendar.ts";
+import type { Place } from "../../reader/places.ts";
+import type { Person } from "../../reader/persons.ts";
 
 /**
  * The days of a series as typed so far, see the top of this file.
@@ -346,37 +314,6 @@ export type Days = {
     first: string;
     last: string;
     times: Times;
-};
-
-/**
- * A box of a series, as the reader sends it for the preview,
- * see `Planned` in `reader/course.ts`:
- * its identifier, empty for a new one, its day, its time as ISO instant, empty for none,
- * and its length in minutes, `null` for none, its number,
- * like `2`, `NONE` for one the university cancelled, of an exam its kind,
- * like `Endterm`, empty for none, its state, `new` for a new one,
- * `university` for a new one I cancelled, whether I pushed it,
- * whether I may skip it or mark it cancelled,
- * whether I may give it other times, what the change does to it, who I am with,
- * like a tutor or the lecturers,
- * of a plain series whether it is a day of another series of its chain, only shown,
- * and of a session of a group the university changed alone its own room with its link.
- */
-export type Planned = {
-    id: string;
-    day: string;
-    time: string;
-    minutes: number | null;
-    number: string;
-    state: BoxState | "new";
-    pushed: boolean;
-    editable: boolean;
-    retimable: boolean;
-    change: "new" | "changed" | "renumbered" | "removed" | "";
-    attendees: Attendee[];
-    chained?: boolean;
-    location?: string;
-    locationLink?: string;
 };
 
 /**
@@ -471,19 +408,6 @@ export type Group = {
     ids: string[];
     rule: Rule;
     sessions: Session[];
-};
-
-/**
- * The folder of the material of a type of a semester in a module, as the reader sends it,
- * see `MaterialFolder` in `reader/notes.ts`.
- *
- * - `path`: Its path from the module folder,
- *   like `VO_UniversityLectureLessons/TUM_2026W`.
- * - `exists`: Whether it is there; one that is not a click on it makes.
- */
-export type MaterialFolder = {
-    path: string;
-    exists: boolean;
 };
 
 /**
@@ -583,48 +507,6 @@ export type Repeated = {
     summary: string;
     link: string;
     file: string;
-};
-
-/**
- * A plain series, one to-do that repeats by its rule,
- * as the reader sends it and the form sends it back, see `Plain` in `reader/rules.ts`:
- * its `UID`, empty for a new one, what it is, of a skill its semester,
- * like `2026W`, empty for any other, its place, what it does online, who I am with,
- * its weekdays from 1 for Monday to 7 for Sunday, none for a monthly or yearly one,
- * of which its day of the month, like 1, else 0,
- * of a yearly one its month, like 3, else 0,
- * its times in Berlin time,
- * both empty without time, how long it lasts without time in minutes,
- * `null` for no length,
- * its first day, its last, empty for none,
- * its single dates besides its weekdays, its extras,
- * each with its times, without time its day alone,
- * and its plan from `NomWorkspace` on, empty for a new one;
- * the `X-SERIES` its parts share, empty for a series of one time,
- * and its parts going on, itself among them, each a plain series of one time,
- * see `plainRead` in `reader/rules.ts`.
- */
-export type Plain = Online & {
-    id: string;
-    category: string;
-    title: string;
-    module: string;
-    type: string;
-    semester: string;
-    location: string;
-    attendees: Attendee[];
-    weekdays: number[];
-    monthDay: number;
-    month: number;
-    start: string;
-    end: string;
-    minutes: number | null;
-    first: string;
-    last: string;
-    extras: Extra[];
-    file: string;
-    series: string;
-    parts: Plain[];
 };
 
 /**

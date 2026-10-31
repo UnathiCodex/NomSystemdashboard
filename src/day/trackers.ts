@@ -59,7 +59,7 @@ import { readerAsk } from "../reader.ts";
 import { Check, Minus } from "lucide";
 
 import type { Calendar } from "fullcalendar";
-import type { Totals } from "../food/foods.ts";
+import type { Totals } from "../../reader/food.ts";
 
 /**
  * My goals for the trackers, the size of a glass and the numbers of my learning,

@@ -37,24 +37,7 @@ import { readerAsk } from "../reader.ts";
 
 import type * as Categories from "../day/categories.ts";
 import type * as Trackers from "../day/trackers.ts";
-
-/**
- * A session of a module running now, as the reader sends it,
- * see `sessionRead` in `reader/skill.ts`.
- *
- * - `module`: Name of its skill, like `IN2028` or `WokFlow`.
- * - `type`: Its type, `HU`, empty for none, like my own learning or a project.
- * - `title`: What its skill entry is as written,
- *   like `IN2028_BusinessAnalyticsMachineLearning (HU)`.
- * - `start`, `end`: Start and end of its skill entry, as ISO instants.
- */
-export type Session = {
-    module: string;
-    type: string;
-    title: string;
-    start: string;
-    end: string;
-};
+import type { Session } from "../../reader/skill.ts";
 
 /**
  * Loads from the reader the session of a module running now:

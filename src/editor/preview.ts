@@ -193,8 +193,8 @@ import type {
 } from "@codemirror/state";
 import type { DecorationSet, ViewUpdate } from "@codemirror/view";
 import type { Highlighter } from "@lezer/highlight";
-import type { Person } from "../persons.ts";
 import type { SyntaxNode, SyntaxNodeRef } from "@lezer/common";
+import type { Person } from "../../reader/persons.ts";
 
 /**
  * For each link of a note as written,

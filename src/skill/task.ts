@@ -46,8 +46,9 @@ import { menuAnchor, menuItemOf, menuOf } from "../menu.ts";
 import { Check, History, X } from "lucide";
 import "./task.css";
 
-import type { Attempt, SkillTask } from "./attempts.ts";
+import type { SkillTask } from "./attempts.ts";
 import type { IconNode } from "lucide";
+import type { Attempt } from "../../reader/skill.ts";
 
 /**
  * Tells when a task is due, as a line of its own,

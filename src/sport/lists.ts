@@ -105,7 +105,8 @@ import {
 } from "../icons.ts";
 import { Pencil, Plus } from "lucide";
 
-import type { Exercise, Mine, Part, Video, VideoFound, Workout } from "./mine.ts";
+import type { Exercise, Mine, Part, Workout } from "./mine.ts";
+import type { Video, VideoFound } from "../../reader/sport.ts";
 
 /**
  * Everything of mine as the reader last sent it.

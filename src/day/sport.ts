@@ -69,7 +69,8 @@ import { crossPut } from "../icons.ts";
 import "./sport.css";
 
 import type { Choice } from "./choices.ts";
-import type { Exercise, Mine, Part, Video, Workout } from "../sport/mine.ts";
+import type { Exercise, Mine, Part, Workout } from "../sport/mine.ts";
+import type { Video } from "../../reader/sport.ts";
 
 /**
  * An exercise of the session as its row holds it.
@@ -283,7 +284,7 @@ function videoFind(link: string, title: string): Video | undefined {
 
 /**
  * Gives what a video of the session burns in its minutes,
- * as my video burns in its own at my weight of today, see `Video` in `../sport/mine.ts`;
+ * as my video burns in its own at my weight of today, see `Video` in `reader/sport.ts`;
  * 0 while I have no weight or the video is no longer mine.
  * - `own`: The video of mine.
  * - `minutes`: Its minutes in the session.

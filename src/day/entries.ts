@@ -29,41 +29,10 @@
 import { searchTextOf } from "../search.ts";
 import { spokenOf } from "../persons.ts";
 
-import type { Days, Planned, States } from "./series.ts";
+import type { Days, States } from "./series.ts";
 import type { Calendar } from "fullcalendar";
-
-/**
- * A person or a group I was with, one `ATTENDEE` of an entry or a box,
- * like `ATTENDEE;CN=Sophale:mailto:sophale@invalid`.
- *
- * - `name`: Its name, like `Sophale` or `Socials`,
- *   a person of `Persons.md` as it names it,
- *   like `Bichler, Martin`, without `;`.
- * - `address`: Its address without `mailto:`, like `sophale@invalid`,
- *   which reaches nobody, or a real one I typed.
- */
-export type Attendee = {
-    name: string;
-    address: string;
-};
-
-/**
- * What an entry or a box did online, apart from where I physically was, its `X-ONLINE`,
- * see `Online` in `reader/calendar.ts`.
- *
- * - `online`: Its platform, a row of `Online.md`, like `Zoom`, empty for none.
- * - `onlineLink`: The link of its own meeting or video, its `ALTREP`, empty for none.
- * - `onlineChannel`: Its channel, its `X-CHANNEL`,
- *   like the channel of a video on YouTube or the ID of a meeting, empty for none.
- * - `onlineTitle`: Its title, its `X-TITLE`,
- *   like the title of a video or the passcode of a meeting, empty for none.
- */
-export type Online = {
-    online: string;
-    onlineLink: string;
-    onlineChannel: string;
-    onlineTitle: string;
-};
+import type { Attendee, Online } from "../../reader/calendar.ts";
+import type { Planned } from "../../reader/course.ts";
 
 /**
  * Fields and times of an entry of the log to send; an empty field is not written.

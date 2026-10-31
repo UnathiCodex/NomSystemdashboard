@@ -173,9 +173,10 @@ import "./course.css";
 
 import type { Dialog } from "./dialog.ts";
 import type { Box } from "../day/boxes.ts";
-import type { Course, Group, Learned, MaterialFolder, Series } from "../day/series.ts";
-import type { Person } from "../persons.ts";
+import type { Course, Group, Learned, Series } from "../day/series.ts";
 import type { IconNode } from "lucide";
+import type { MaterialFolder } from "../../reader/notes.ts";
+import type { Person } from "../../reader/persons.ts";
 
 /**
  * The types of the cards by their codes, in the order of the cards:
@@ -829,7 +830,8 @@ function learningShow(): void {
  * its type whole, its code in round brackets, like `Vorlesung (VO)`,
  * see {@link typeNames}, of my own learning just `Learning`, right after it the pencil,
  * which opens the form of the series, also for a type with groups but no series yet,
- * whose row `Group` makes and changes its groups, see `groupPickOf` in `../day/series.ts`;
+ * whose row `Group` makes and changes its groups,
+ * see `groupPickOf` in `../day/series.ts`;
  * at its right for a type with groups the menu of the group pinned,
  * see `pinnedMenuOf` in `../day/groups.ts`.
  * - `head`: The heading.
