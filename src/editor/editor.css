@@ -652,7 +652,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 0.5rem;
+    width: 0.6rem;
     height: var(--chip-height);
     padding: 0;
     border: 0;
