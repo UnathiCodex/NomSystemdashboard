@@ -136,12 +136,8 @@ details.task-history a {
     visibility: hidden;
 }
 
-/* A step of a solution not shown yet, and below the solution Next step and Show all,
+/* Below the solution Next step and Show all,
    like the buttons of a task, at the right, as every button of a block of a section */
-.step-hidden {
-    display: none;
-}
-
 .steps-buttons {
     display: flex;
     justify-content: flex-end;

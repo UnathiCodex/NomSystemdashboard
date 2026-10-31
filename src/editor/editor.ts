@@ -143,7 +143,7 @@ import "../day/day.css";
 import "./editor.css";
 
 import type { Extension, SelectionRange } from "@codemirror/state";
-import type { BlockInfo, Rect, ViewUpdate } from "@codemirror/view";
+import type { Rect, ViewUpdate } from "@codemirror/view";
 import type { Links } from "./preview.ts";
 import type { BlockMark } from "../notes/tree.ts";
 

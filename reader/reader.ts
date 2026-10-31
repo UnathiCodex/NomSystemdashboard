@@ -44,7 +44,7 @@
  *   and changes one everywhere
  * - `./persons.ts`: Reads the people I name from `Persons.md`, read only
  * - `./notes.ts`: Reads every module for the menu of the scripts view, the notes,
- *   files and folders of my modules and the links that lead nowhere, read only,
+ *   files and folders of my modules, read only,
  *   streams a file of them, and makes a folder of a module on a click on it
  * - `./edit.ts`: Writes a note of my modules as I edited it,
  *   at its place in `NomSkillingmodules`,
@@ -55,7 +55,7 @@
  *   and what a module offers a skill entry, writes skill entries,
  *   attempts and where I stand in rounds into the log, and reads the session running now
  * - `./documents.ts`: Checks the links of the skill entries at the start and every night,
- *   repairing what it can, and reads a file a skill entry links
+ *   repairing what it can
  * - `./suggestions.ts`: Writes the chapters due today
  *   into the plan of today, one box each
  * - `./food.ts`: Finds foods, mine first,
@@ -135,7 +135,6 @@ import { personRename, personsRead } from "./persons.ts";
 import { attendeesRename, paramRename } from "./calendar.ts";
 import { calendarRoot } from "./sources.ts";
 import {
-    brokenLinksRead,
     fileOpen,
     fileRead,
     folderMake,
@@ -155,7 +154,7 @@ import {
     skillEntryEdit,
     skillingRead,
 } from "./skill.ts";
-import { linkedFileRead, linksCheckStart } from "./documents.ts";
+import { linksCheckStart } from "./documents.ts";
 import { suggestionsWrite } from "./suggestions.ts";
 import {
     dishAdd,
@@ -330,10 +329,6 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `GET /api/day/carried?date=…`:
  *   Sends the boxes whose deadline lies on a day before the date and that are open,
  *   see `boxesCarried` in `boxes.ts`.
- * - `GET /api/day/box?id=…`: Sends the box of the identifier with its state,
- *   like the box a log entry was logged from,
- *   whose series the pencil of its summary opens,
- *   see `src/day/categories.ts`.
  * - `GET /api/day/note?date=…`: Sends the daily note of the date,
  *   or `null` for a day without note.
  * - `GET /api/day/sections?date=…`:
@@ -503,8 +498,6 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `POST /api/notes/module`:
  *   Makes the empty folder of the new module named in the body in `NomSkillingmodules`,
  *   see `moduleMake` in `notes.ts`.
- * - `GET /api/notes/broken`:
- *   Sends the links that lead nowhere in the notes of the semester, each with its note.
  * - `PUT /api/edit/note`: Writes note of my modules of the body,
  *   its change kept as a diff,
  *   merged with a change of its file since the editor read it,
@@ -522,8 +515,6 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   which shows the boxes of today it writes first.
  * - `GET /api/skill/module?code=…`:
  *   Sends the chapters and documents of the skill of the name, none for a project.
- * - `GET /api/skill/file?path=…`:
- *   Sends a file a skill entry links, by its path from `NomWorkspace`, read only.
  * - `POST /api/skill/attempt`: Writes the result of the cold Task of the body
  *   into the line `X-ROUND` of its section in the skill entry of the moment.
  * - `POST /api/skill/round`:
@@ -628,8 +619,6 @@ async function requestHandle(
     } else if (request.method === "GET" && url.pathname === "/api/day/carried") {
         suggestionsWrite();
         responseSend(response, 200, boxesCarried(date));
-    } else if (request.method === "GET" && url.pathname === "/api/day/box") {
-        responseSend(response, 200, boxFind(url.searchParams.get("id") ?? "")[2]);
     } else if (request.method === "GET" && url.pathname === "/api/day/note") {
         responseSend(response, 200, noteRead(date));
     } else if (request.method === "GET" && url.pathname === "/api/day/sections") {
@@ -846,8 +835,6 @@ async function requestHandle(
     } else if (request.method === "POST" && url.pathname === "/api/notes/module") {
         moduleMake(((await json(request)) as { folder: string }).folder);
         responseSend(response, 200, null);
-    } else if (request.method === "GET" && url.pathname === "/api/notes/broken") {
-        responseSend(response, 200, brokenLinksRead());
     } else if (request.method === "PUT" && url.pathname === "/api/edit/note") {
         responseSend(response, 200, noteWrite((await json(request)) as NoteChange));
     } else if (request.method === "GET" && url.pathname === "/api/edit/tree") {
@@ -861,8 +848,6 @@ async function requestHandle(
         responseSend(response, 200, skillingRead());
     } else if (request.method === "GET" && url.pathname === "/api/skill/module") {
         responseSend(response, 200, moduleRead(url.searchParams.get("code") ?? ""));
-    } else if (request.method === "GET" && url.pathname === "/api/skill/file") {
-        fileSend(response, linkedFileRead(path), path.split("/").at(-1) ?? path);
     } else if (request.method === "POST" && url.pathname === "/api/skill/attempt") {
         attemptAdd((await json(request)) as AttemptNew);
         responseSend(response, 200, null);

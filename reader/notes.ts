@@ -7,7 +7,7 @@
  * those of the semester first, see {@link menuRead},
  * the modules of the semester for their tasks,
  * see `skill.ts`, a note with the files its links lead to,
- * the links of the notes of the semester that lead nowhere, single files,
+ * single files,
  * like the images of a note, a file to send piece by piece, like a PDF,
  * and a folder with its folders and files, see {@link folderRead};
  * for the skill entries of the day,
@@ -147,20 +147,6 @@ export type NotesStream = {
 export type NotesFolder = {
     folders: string[];
     files: string[];
-};
-
-/**
- * A link of a note that leads nowhere.
- *
- * - `note`: Path of the note, see the top of this file.
- * - `link`: The link as written,
- *   like `VO_UniversityLectureLessons/TUM_2025W/04_LogisticPoissonRegression.pdf` of
- *   `[[VO_UniversityLectureLessons/TUM_2025W/04_LogisticPoissonRegression.pdf#page=10|
- *   lecture 04 slide 10]]`.
- */
-export type BrokenLink = {
-    note: string;
-    link: string;
 };
 
 /**
@@ -523,9 +509,7 @@ function chaptersRead(module: string): Chapter[] {
 /**
  * Reads the modules of the semester,
  * see {@link activeModulesRead}, each with its chapters and their notes,
- * see {@link chaptersRead}, for their tasks, see `skill.ts`,
- * and the links that lead nowhere,
- * see {@link brokenLinksRead}.
+ * see {@link chaptersRead}, for their tasks, see `skill.ts`.
  *
  * @returns Modules in the order of the list,
  *   a module whose folder is missing without chapters
@@ -921,47 +905,13 @@ export function linkedNoteRead(path: string): LinkedNote {
 }
 
 /**
- * Reads the links that lead nowhere in the notes of the semester, the chapter notes
- * of the modules of the semester, see {@link modulesRead}, each link once per note,
- * like a link to a slide whose file was renamed.
- * Lists the files of each module once.
- * - `vaults`: Files the links may lead to,
- *   by the path of the module of a note, as listed so far.
- * - `root`: Path of the module of a note, like `IN2028_BusinessAnalyticsMachineLearning`.
- * - `files`: Files the links of the note may lead to.
- *
- * @returns Links that lead nowhere, by the order of the modules of the semester
- * @throws {Error} - When a folder or note cannot be read
- */
-export function brokenLinksRead(): BrokenLink[] {
-    const vaults: Map<string, Map<string, string>> = new Map();
-    return modulesRead()
-        .flatMap((module: NotesModule): NoteEntry[] =>
-            module.chapters.flatMap((chapter: Chapter): NoteEntry[] => chapter.notes),
-        )
-        .flatMap((note: NoteEntry): BrokenLink[] => {
-            const root: string = moduleOf(note.path);
-            const files: Map<string, string> = vaults.get(root) ?? vaultFilesRead(root);
-            vaults.set(root, files);
-            return Object.entries(
-                linksOf(readFileSync(diskPathOf(note.path), "utf8"), note.path, files),
-            )
-                .filter(([, file]: [string, string | null]): boolean => file === null)
-                .map(([link]: [string, string | null]): BrokenLink => ({
-                    note: note.path,
-                    link: link,
-                }));
-        });
-}
-
-/**
  * Gives the content type of a file by its ending, see {@link types}.
  *
  * @param file - Path of the file, like `…/04_LogisticPoissonRegression.pdf`
  * @returns Content type, like `application/pdf`,
  *   `application/octet-stream` for any other ending
  */
-export function contentTypeOf(file: string): string {
+function contentTypeOf(file: string): string {
     return types[extname(file).toLowerCase()] ?? "application/octet-stream";
 }
 

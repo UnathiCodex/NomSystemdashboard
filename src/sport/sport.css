@@ -43,32 +43,6 @@
     vertical-align: top;
 }
 
-/* A video in its list: its title with its channel,
-   then its kind and its minutes, close to its kcal */
-.sport-video {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.sport-video > .sport-name {
-    flex: 1;
-}
-
-.sport-video > :not(.sport-name) {
-    flex: none;
-}
-
-/* The kind of a video in its list, small and outlined, as the one grey of the page */
-.sport-tag {
-    padding: 0 0.375rem;
-    border: 1px solid var(--line);
-    border-radius: var(--chip-radius);
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
 /* A length or a channel grey beside the white facts, like the minutes of a video */
 .sport-grey {
     color: var(--text-muted);
@@ -96,12 +70,6 @@
 .sport-kind:hover,
 .sport-kind[aria-pressed="true"] {
     color: var(--text-main);
-}
-
-/* The link of a video opened, which leads to YouTube,
-   going on below where it has no room */
-.sport-link {
-    overflow-wrap: anywhere;
 }
 
 /* My weight among the totals, see `weightOf` in `sport.ts`:

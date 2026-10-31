@@ -61,9 +61,6 @@
  * which has no code to find it by.
  * Fingerprints are kept by path, size and time of change,
  * so only new or changed files are read again.
- * The reader sends a file a skill entry links, read only,
- * so the page opens it in the browser's own viewer, see {@link linkedFileRead};
- * no other file of `NomWorkspace`.
  * By the folder of its skill a skill entry also finds its log and a skill box its plan,
  * any other entry or box the log or the plan of its topic and year,
  * see {@link calendarFileOf}.
@@ -77,7 +74,6 @@
  *   and names the category of skill entries.
  * - `./notes.ts`: Finds the folder of a module by its code and of a chapter by its name,
  *   lists the documents of a module, names a folder to read,
- *   gives the content type of a file,
  *   and reads the modules of the semester.
  * - `./sources.ts`: Names `NomWorkspace`, the folder of my modules,
  *   the projects of the semester and the skill log,
@@ -85,7 +81,7 @@
  */
 
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { join, resolve, sep } from "node:path";
+import { join } from "node:path";
 import { createHash } from "node:crypto";
 import {
     berlinDateOf,
@@ -103,7 +99,6 @@ import {
     activeModulesRead,
     chapterNameOf,
     codeOf,
-    contentTypeOf,
     moduleContentsRead,
     moduleFolderOf,
 } from "./notes.ts";
@@ -119,7 +114,6 @@ import {
 
 import type { Stats } from "node:fs";
 import type { Entry, EntryFields, Link } from "./calendar.ts";
-import type { NotesFile } from "./notes.ts";
 
 /**
  * A fingerprint as computed, with what tells whether its file changed since.
@@ -683,34 +677,4 @@ export function linksCheckStart(): void {
         setTimeout(check, next.getTime() - now.getTime());
     };
     check();
-}
-
-/**
- * Reads a file a skill entry of the log links, to send it read only,
- * so the page opens it in the browser's own viewer, like the slides of a lecture as PDF;
- * no other file, and none outside `NomWorkspace` or hidden, like `.git` or `.claude`.
- * - `linked`: Whether a skill entry of the whole log links the file,
- *   see {@link linksCheck}.
- * - `file`: Path of the file on the disk.
- * - `hidden`: Whether a part of the path starts with `.`, like `..` or `.git`.
- *
- * @param path - Path from `NomWorkspace`,
- *   like `NomSkillingmodules/IN2028_…/VO_…/04_LogisticPoissonRegression.pdf`
- * @returns File with its content type
- * @throws {Error} - When no skill entry links the file,
- *   it lies outside `NomWorkspace` or is hidden, or it is missing
- */
-export function linkedFileRead(path: string): NotesFile {
-    const linked: boolean = logRead().some((entry: Entry): boolean =>
-        entry.links.some(
-            (link: Link): boolean => link.fingerprint !== "" && link.path === path,
-        ),
-    );
-    const file: string = diskOf(path);
-    const hidden: boolean = path
-        .split("/")
-        .some((part: string): boolean => part.startsWith("."));
-    if (!linked || hidden || !resolve(file).startsWith(`${resolve(vault)}${sep}`))
-        throw new Error(`No linked file ${path}`);
-    return { type: contentTypeOf(file), content: readFileSync(file) };
 }

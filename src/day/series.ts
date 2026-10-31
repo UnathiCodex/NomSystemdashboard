@@ -208,7 +208,6 @@ import {
     lengthSwapOf,
     lengthTextOf,
     minutesOf,
-    rangeDash,
     timeFieldRead,
     timeFieldStart,
     timeOf,
@@ -936,16 +935,6 @@ function dayNameOf(weekday: number): string {
         : weekday === yearly
           ? "Year"
           : weekdayNameOf(weekday, false);
-}
-
-/**
- * Writes a slot as the heading of a card,
- * a row of the table of the groups and a group in a list read it.
- *
- * @returns Text like `Mon 14:00 – 16:00`
- */
-export function slotTextOf(slot: Slot): string {
-    return `${weekdayNameOf(slot.weekday, false)} ${slot.start}${rangeDash}${slot.end}`;
 }
 
 /**

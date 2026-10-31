@@ -70,15 +70,6 @@
     visibility: hidden;
 }
 
-/* A thin line between the parts of a menu,
-   like the groups of a week and pinning one of them */
-.menu-line {
-    height: 1px;
-    flex-shrink: 0;
-    margin: 0.375rem 0;
-    background: var(--line);
-}
-
 /* Phone: the button `⋯` as it looks,
    but a finger's width to hit, its own width and 0.5rem above and below;
    the items, a finger high already, only themselves, so no tap reaches beside them;
