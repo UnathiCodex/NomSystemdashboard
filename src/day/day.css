@@ -703,8 +703,9 @@ fieldset.entry-times {
    so they read as its parts;
    the same for the parts of a field below it:
    of a place my place's label, address and link, those of `Online`,
-   see `partsOf` and `onlineRowOf` in `categories.ts`, and of a summary its text,
-   see `summaryPartsOf`; here and not in `meal.css` or `choices.css`, before both,
+   see `partsOf` in `categories.ts` and `onlineRowOf` in `attendance.ts`,
+   and of a summary its text, see `summaryPartsOf`;
+   here and not in `meal.css` or `choices.css`, before both,
    since the foods of a meal indented less on a phone, at the end of `meal.css`,
    and the parts of a field in two columns,
    see `.field-parts` in `choices.css`, build on it */

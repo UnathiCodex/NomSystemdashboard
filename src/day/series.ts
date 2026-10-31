@@ -163,9 +163,9 @@
  * - `./entries.ts`: Adds an exam as a box
  *   and a new box repeated once per date of its days,
  *   logs a box of the list, takes it back, skips it and cancels it.
- * - `./categories.ts`: Makes the rows `Online` and `With`,
- *   the same as in the dialog of an entry;
- *   opens a box of the list in the dialog of an entry,
+ * - `./attendance.ts`: Makes the rows `Online` and `With`,
+ *   the same as in the dialog of an entry.
+ * - `./categories.ts`: Opens a box of the list in the dialog of an entry,
  *   and gives the calendar it writes with.
  * - `./actions.ts`: Makes the actions of an open box of the list, as in the plan.
  * - `./boxes.ts`: Loads the boxes of the days of the list.
@@ -239,9 +239,8 @@ import {
     entryBoxOf,
     entryOpenFromBox,
     topicFileOf,
-    onlineRowOf,
-    withRowOf,
 } from "./categories.ts";
+import { onlineRowOf, withRowOf } from "./attendance.ts";
 import { boxActionsOf } from "./actions.ts";
 import { boxesFetch } from "./boxes.ts";
 import { boxGroupOf, pinnedMenuOf } from "./groups.ts";
@@ -645,13 +644,13 @@ let slotsFreed: [number, number][] = [];
 
 /**
  * The people of `With` of the form whose parts show below its names,
- * each opened and closed by its own pencil, see `withRowOf` in `./categories.ts`.
+ * each opened and closed by its own pencil, see `withRowOf` in `./attendance.ts`.
  */
 let withOpen: string[] = [];
 
 /**
  * Each person of `With` I changed by its parts, by its name as picked,
- * see `withRowOf` in `./categories.ts`, which saving writes everywhere,
+ * see `withRowOf` in `./attendance.ts`, which saving writes everywhere,
  * see `personsRename` in `../persons.ts`;
  * none while I changed nobody, and once the dialog closes.
  */
@@ -3097,7 +3096,7 @@ function placeRowOf(form: Form): HTMLElement {
 /**
  * Makes the row of what the series does online in the form,
  * the row `Online` of the dialog of an entry,
- * see `onlineRowOf` in `./categories.ts`, its field that of `Skill`:
+ * see `onlineRowOf` in `./attendance.ts`, its field that of `Skill`:
  * its platform, below it grey its provider, channel and title,
  * its pencil opening `Label`, `Provider`, `Channel`, `Title` and `Link`;
  * what I pick and type goes into the form, so into its boxes.
@@ -3134,7 +3133,7 @@ function onlineRowsOf(form: Form): HTMLElement[] {
 
 /**
  * Makes the row of who I am with in the form, the row `With` of the dialog of an entry,
- * see `withRowOf` in `./categories.ts`, its field that of `Skill`;
+ * see `withRowOf` in `./attendance.ts`, its field that of `Skill`;
  * what I pick goes into the form, so into its boxes.
  * - `field`: The field `With` of `Skill`,
  *   `undefined` while the categories are not loaded.

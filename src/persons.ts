@@ -36,7 +36,7 @@ import type { Person } from "../reader/persons.ts";
 
 /**
  * A person as I changed it by its parts below `With`,
- * see `withRowOf` in `./day/categories.ts`:
+ * see `withRowOf` in `./day/attendance.ts`:
  * its name, its title, its mail and its link as typed.
  *
  * - `name`: Its name, like `Cuzic, Mihovil`.

@@ -408,7 +408,7 @@
 }
 
 /* The parts of the people of `With`, one block of parts per person,
-   see `withPartsOf` in `categories.ts`, each with its own thin grey line,
+   see `withPartsOf` in `attendance.ts`, each with its own thin grey line,
    a little more room between two blocks than between the parts of one,
    so two lecturers read as two people */
 .people-parts {
