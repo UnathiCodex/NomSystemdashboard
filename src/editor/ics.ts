@@ -648,7 +648,6 @@ function boxOf(block: Block): HTMLElement {
  * - `file`: The part of the page that scrolls the file,
  *   see `.editor-file` in `editor.css`, `null` for none.
  * - `state`: The notice of the status line, which the overview stands before.
- * - `overview`: The overview.
  * - `blocks`, `dashes`: The entries and their dashes.
  * - `shown`: The box shown, `null` while none shows.
  * - `boxHide`: Takes the box away.

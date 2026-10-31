@@ -341,7 +341,6 @@ export function stepsMoreIs(transaction: Transaction): boolean {
  * - `last`: The last stretch found so far, `undefined` for none.
  *
  * @param state - Text of the note
- * @param solution - The solution
  * @param shown - How many of its steps show
  * @returns The stretches, none while every step shows
  */
@@ -412,7 +411,6 @@ function decorationsOf(
  * - `entered`: The solution the cursor went into a hidden step of, `undefined` for none.
  *
  * @param steps - Steps before the transaction
- * @param transaction - The transaction
  * @returns Steps after it
  */
 function stepsUpdate(steps: Steps, transaction: Transaction): Steps {

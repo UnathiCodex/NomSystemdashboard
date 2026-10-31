@@ -226,7 +226,6 @@ export function listHeadOf(name: string, unit: string): HTMLElement {
  * see {@link listHeadOf}; then, where given, what stands at the end of the line,
  * like the small grey `×` of a meal, whose room every line keeps,
  * so the numbers of all lists stand in one column.
- * - `line`: The line.
  * - `row`: Its row, a button where a click does something.
  *
  * @param name - Name of the meal or food, with what stands after or below it
@@ -550,7 +549,6 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
  * - `remove`: Its `×`, `null` where foods are picked.
  * - `line`, `row`: Its line and row.
  *
- * @param search - The search
  * @param food - My food
  * @returns Its line, and the food opened below it while open
  */
@@ -609,7 +607,6 @@ function mineLinesOf(search: Search, food: Food): HTMLElement[] {
  * like `Pack 265 g` or `Pack 330 ml`, where known.
  * - `title`: Name, and below it the pack.
  *
- * @param product - The product
  * @returns The name
  */
 function productNameOf(product: Product): HTMLElement {
@@ -640,8 +637,6 @@ function productNameOf(product: Product): HTMLElement {
  * - `kcal`: Its kcal, `null` while unknown.
  * - `line`, `row`: Its line and row.
  *
- * @param search - The search
- * @param product - The product
  * @returns Its line
  */
 function productLineOf(search: Search, product: Product): HTMLElement {
@@ -699,8 +694,6 @@ const shownFoods: number = 10;
  * - `listed`: My foods listed.
  * - `sections`: The sections that found something, each its lines,
  *   below the head of those that have one.
- *
- * @param search - The search
  */
 function resultsShow(search: Search): void {
     const found: FoodsFound = search.found ?? {
@@ -784,8 +777,6 @@ function resultsShow(search: Search): void {
  * - `products`: Products shown.
  * - `above`: Whether something stands above them, like my foods.
  * - `line`: The thin grey line above them, none at the top of the results.
- *
- * @param search - The search
  */
 function productsShow(search: Search): void {
     const found: FoodsFound = search.found ?? {
@@ -843,8 +834,6 @@ function productsShow(search: Search): void {
  * the first of my meals or foods it shows, never a product of Open Food Facts,
  * which goes into my foods only by a click, nor a new meal or food;
  * nothing in a search that only shows.
- *
- * @param search - The search
  */
 function firstPick(search: Search): void {
     if (search.setup.pick === null) return;
@@ -859,9 +848,7 @@ function firstPick(search: Search): void {
  * a click opens the form of a food by hand at the top of the results, named as typed,
  * see {@link newFormShow}, the food saved there picked at once where foods are picked,
  * else shown among my foods.
- * - `plus`: The plus.
  *
- * @param search - The search
  * @param query - The search as typed
  * @param mine - My foods found
  * @returns The plus, none where it is not offered
@@ -892,7 +879,6 @@ function newFoodOf(search: Search, query: string, mine: Food[]): HTMLElement[] {
  * so I mend at once what came wrong from Open Food Facts or my typing,
  * see {@link resultsShow}.
  *
- * @param search - The search
  * @returns Takes the food written
  */
 function addedOf(search: Search): (food: Food) => void {
@@ -942,7 +928,6 @@ function numberRead(text: string): number | null {
  * brand and store of one of mine,
  * or a field holds no number, the form stays open and says so.
  * - `search`: The search, `undefined` for an element that is none.
- * - `form`: The form.
  * - `facts`: Its values in two columns.
  * - `inputs`: Text field of each value.
  * - `error`: Hint that the food is not taken.
@@ -970,7 +955,6 @@ export function foodNewShow(element: HTMLElement): void {
  * a food of my own is `Eat`, which I change once it is saved, see {@link foodDetailOf}.
  * - `kind`: Kind of the food.
  * - `start`: What each field starts with.
- * - `form`: The form.
  * - `facts`: Its values in two columns.
  * - `inputs`: Text field of each value.
  * - `error`: Hint that the food is not taken.
@@ -978,7 +962,6 @@ export function foodNewShow(element: HTMLElement): void {
  * - `close`: Closes the form.
  * - `add`: Sends the food, see {@link foodNewShow}.
  *
- * @param search - The search
  * @param product - Product of Open Food Facts the food is, `null` for a food of my own
  */
 function newFormShow(search: Search, product: Product | null): void {
@@ -1080,10 +1063,8 @@ function newFormShow(search: Search, product: Product | null): void {
  * Builds the line below the products: how many it shows of how many the search matches,
  * like `8 of 54`, `10.000+` when Open Food Facts gives only a lower bound, and `More`,
  * while a next page holds more, which loads it and takes no second click meanwhile.
- * - `line`: The line.
  * - `more`: The button `More`.
  *
- * @param search - The search
  * @param shown - Number of products shown
  * @param found - What the search found
  * @returns The line
@@ -1154,7 +1135,6 @@ async function foodsFindTwice(
  * - `asked`: Number of this search.
  * - `text`: The text searched for.
  *
- * @param search - The search
  * @param wait - Milliseconds before Open Food Facts is asked,
  *   {@link pause} while I type, else 0
  */
@@ -1200,7 +1180,6 @@ function resultsLoad(search: Search, wait: number): void {
  * - `text`: The text searched for.
  * - `take`: Takes the answer and shows it.
  *
- * @param search - The search
  * @param page - Page of the products, 1 for the first
  */
 function productsLoad(search: Search, page: number): void {
@@ -1243,8 +1222,6 @@ function productsLoad(search: Search, page: number): void {
  * since they told of the text before;
  * the answer for the text as it stands shows them again,
  * should it find nothing too, see {@link resultsLoad}.
- *
- * @param search - The search
  */
 function nothingHide(search: Search): void {
     search.results

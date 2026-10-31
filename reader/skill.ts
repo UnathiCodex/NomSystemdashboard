@@ -410,7 +410,7 @@ export type RoundNew = {
 
 /**
  * A round I picked by hand for a note of a skill entry, as its dialog sends it,
- * see {@link roundPicksOf}.
+ * see {@link marksOfEntry}.
  *
  * - `section`: Its section with its module, like `IN2028/01_02_SampleMeanEstimator`.
  * - `round`: The round picked, like `0`.
@@ -985,7 +985,6 @@ function attemptsOf(lines: RoundLine[]): LoggedAttempt[] {
  * or its Task decided it on a day before, so a round decided in a unit I logged by hand
  * and never closed lets the next one start.
  *
- * @param round - The round
  * @param day - The day, like `2026-10-29`
  * @returns Whether it is over
  */
@@ -1037,7 +1036,6 @@ function roundsOf(lines: RoundLine[]): Round[] {
  * in a later round wrong for good, wrong twice or wrong once I closed it.
  * Round 0 ends only right, since its first Task can only succeed.
  *
- * @param round - The round
  * @returns Whether it is decided
  */
 function decidedIs(round: Round): boolean {
@@ -1639,7 +1637,6 @@ function lineOf(mark: RoundMark, module: string, entry: string, day: string): Ro
  *
  * @param mark - The line of the section
  * @param task - Task of the attempt, as its note holds it now
- * @param attempt - The attempt
  * @param decided - Whether the round is decided already, see {@link decidedIs}
  * @returns The line
  * @throws {Error} - When an Example comes with a result other than right,

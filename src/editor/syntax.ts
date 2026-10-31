@@ -121,7 +121,6 @@ function wikiLinkParse(cx: InlineContext, next: number, pos: number): number {
  * - {@link BlockContext#peekLine}: Gives the text of the next line without moving to it.
  *
  * @param cx - Note being read, at the start of a line
- * @param line - The line
  * @returns Whether an HTML block starts here, read to its end
  */
 function htmlBlockParse(cx: BlockContext, line: Line): boolean {

@@ -710,7 +710,6 @@ function gramsFocus(picked: FoodPick[]): void {
  *   which takes no room among them.
  * - `plus`: The plus that adds a food to it.
  * - `box`: The menu with the search.
- * - `search`: The search.
  * - `close`: Closes the menu.
  *
  * @param meal - Meal picked
@@ -1232,7 +1231,6 @@ export function mealCooked(): string {
  * its name with the plus beside it that opens the list, a menu over the dialog,
  * see `listOf` in `choices.ts`, then the blocks and rows picked.
  * - `picker`: Rows and list.
- * - `row`: The row.
  * - `close`: Closes the list.
  *
  * @param line - The plus

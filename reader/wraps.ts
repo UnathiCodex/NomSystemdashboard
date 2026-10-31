@@ -96,7 +96,6 @@ const address: string = "http://127.0.0.1:3000/scripts";
  * - `heading`: Heading of an Example or a Task, see `taskHeading` in `skill.ts`.
  * - `start`: The text as CodeMirror holds it, for the lines of those headings.
  * - `judged`: The lines of those headings with the room of their check and cross.
- * - `editor`: The editor.
  * - `found`: The lines that do not fit, by their number.
  * - `fences`: Number of the first line of every code block of the file, its ```.
  * - `lineMeasure`: Measures a line of text.
@@ -104,7 +103,6 @@ const address: string = "http://127.0.0.1:3000/scripts";
  * - `codeMeasure`: Measures the lines of each code block drawn.
  * - `scroller`: What scrolls the file.
  *
- * @param file - The file
  * @returns The lines that do not fit, in their order
  */
 async function misfitsDraw(file: Drawn): Promise<Misfit[]> {

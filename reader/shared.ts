@@ -623,7 +623,6 @@ function listsShareAll(partner: string): void {
  * with the same call as the one who made it,
  * see the top of this file.
  *
- * @param change - The change
  * @throws {Error} - When the call is none of a {@link ListChange}, or refuses it,
  *   like a food I have already
  */

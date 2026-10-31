@@ -716,7 +716,6 @@ export const skillName: string = "Skill";
  * a module named by its code, the part before the first `_`, like `IN2028`,
  * a project by its name, like `NomSystemdashboard`, without type, like my own learning.
  * - `parts`: The name and the type.
- * - `name`: The name.
  *
  * @param summary - The `SUMMARY`, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
  * @returns Skill and type, like `IN2028` and `VO`,
@@ -2165,10 +2164,8 @@ function componentFind(lines: string[], id: string): [number, number] {
  * with the same `TZID`, like `TZID=Europe/Berlin`,
  * in UTC with `Z`, or a day with `VALUE=DATE`,
  * so calendar apps and `ical.js` match the `RECURRENCE-ID` with the occurrence.
- * - `property`: The property.
  * - `zoneId`: `TZID` of the `DTSTART` of the series, empty for none.
  *
- * @param series - The series
  * @param name - Name of the property, like `recurrence-id`
  * @param time - The time, in the time zone of the series
  * @returns Property to write
@@ -2234,7 +2231,6 @@ export function occurrenceOwn(file: string, entry: Entry): void {
  * Finds a start of a series, walking its starts up to it.
  * - `walk`, `start`: Walk through the starts of the series.
  *
- * @param series - The series
  * @param recurrence - The start looked for, in the form of {@link Entry},
  *   like `2026-10-24` or an instant
  * @returns The start, `undefined` when the series has none such
@@ -2258,7 +2254,6 @@ function seriesStartOf(series: ICAL.Event, recurrence: string): ICAL.Time | unde
  * - `own`: The lines.
  * - `end`: The end of the occurrence.
  *
- * @param series - The series
  * @param lines - Lines of the series in its file
  * @param start - The start of the occurrence in the series
  * @returns The lines
@@ -2577,7 +2572,6 @@ function textPropertyOf(name: string, value: string, fields: EntryTexts): ICAL.P
  * `ATTENDEE;CN="Bichler, Martin":mailto:m.bichler@tum.de`.
  * - `mail`: The mail of the person in `Persons.md`,
  *   empty for none and for an address I typed.
- * - `property`: The property.
  *
  * @param attendee - The person, like `Herr Müller` with `herr.mueller@invalid`
  * @returns Property to write
@@ -2604,7 +2598,6 @@ function attendeePropertyOf(attendee: Attendee): ICAL.Property {
  * since the `UID` names the whole series,
  * like `RELATED-TO;X-RECURRENCE-ID=20261026T130000Z:weekly-lecture@nomsystem`.
  * - `at`: Place of the last `#` in the identifier, -1 for none.
- * - `property`: The property.
  *
  * @param box - Identifier of the box, see {@link entryIdOf},
  *   like `weekly-lecture@nomsystem#2026-10-26T13:00:00.000Z`
@@ -3115,7 +3108,6 @@ export function todoChange(
  * Makes the `X-GROUP` of a group of a course, its name,
  * with the parameter `X-PINNED=TRUE` while it is the group I pinned,
  * like `X-GROUP;X-PINNED=TRUE:06`, none while not, see `pinPut` in `course.ts`.
- * - `property`: The property.
  *
  * @param group - The group, like `06`
  * @param pinned - Whether it is the group I pinned
@@ -3160,7 +3152,6 @@ function roundMarkOf(property: ICAL.Property): RoundMark {
 
 /**
  * Makes an `X-ROUND`, see {@link RoundMark}, each parameter only when it holds something.
- * - `property`: The property.
  *
  * @param mark - Its line
  * @returns The property
@@ -3394,7 +3385,7 @@ export function seriesRemove(file: string, uid: string): boolean {
 
 /**
  * Takes one day out of a series, as the bin of the dialog of one of its boxes asks,
- * see `plainDayRemove` in `rules.ts`:
+ * see `boxDelete` in `boxes.ts`:
  * its start in the series as one more `EXDATE` of the series,
  * in the form of its `DTSTART`,
  * see {@link seriesTimeOf}, a single date of it,
@@ -3578,7 +3569,6 @@ export function seriesCut(file: string, uid: string, last: string): void {
  * each value of each line, the earliest first;
  * a period, `VALUE=PERIOD`, left out, since `ical.js` cannot give its occurrence.
  *
- * @param series - The series
  * @returns The dates, as days or times
  */
 function seriesDatesRead(series: ICAL.Event): ICAL.Time[] {

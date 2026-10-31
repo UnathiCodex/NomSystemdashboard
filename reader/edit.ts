@@ -73,7 +73,6 @@ type Hunk = {
 /**
  * Gives the lines of a text, each with its line break, the last maybe without one.
  *
- * @param text - The text
  * @returns Its lines, none for an empty text
  */
 function linesOf(text: string): string[] {

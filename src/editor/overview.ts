@@ -56,7 +56,6 @@ import type {
  * - `ready`: Whether its Task has its runs spaced.
  *
  * @param module - Its module with its tasks
- * @param section - The section
  * @returns Its round, like `2`, `0` while I never learned it, or `Ready`
  */
 function roundOf(module: SkillModule, section: SkillSection): string {
@@ -71,10 +70,8 @@ function roundOf(module: SkillModule, section: SkillSection): string {
  * Makes the row of a section, see the top of this file:
  * a link to it, its name, whole as its tooltip, since a long one ends in `…`,
  * see `.overview-name` in `./overview.css`, and its round.
- * - `row`: The row.
  *
  * @param module - Its module with its tasks
- * @param section - The section
  * @returns The row
  */
 function rowOf(module: SkillModule, section: SkillSection): HTMLAnchorElement {
@@ -178,7 +175,6 @@ export async function overviewShow(
  * - `picked`: The module in the tree, `null` for one not in it.
  * - `shown`: The chapter in it, `null` for none.
  *
- * @param tree - The tree
  * @param module - Name of the folder of the module,
  *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param chapter - Name of the chapter, like `01_RegressionAnalysis`, empty for none

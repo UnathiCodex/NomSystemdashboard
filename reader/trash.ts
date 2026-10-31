@@ -36,7 +36,6 @@ const triesMost: number = 1000;
 /**
  * Writes a moment in local time as the specification asks, like `2026-10-22T21:50:07`.
  *
- * @param moment - The moment
  * @returns The moment written
  */
 function dateOf(moment: Date): string {

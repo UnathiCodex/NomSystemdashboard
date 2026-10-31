@@ -382,7 +382,6 @@ export async function foodSend(food: Food): Promise<Food> {
  * entries and meals listing it keep their lines.
  * - `query`: Its name, brand and store as parameters of the address.
  *
- * @param food - The food
  * @throws {Error} - When the reader does not remove it
  */
 export async function foodDelete(food: Food): Promise<void> {

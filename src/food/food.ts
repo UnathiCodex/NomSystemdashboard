@@ -235,7 +235,6 @@ function kcalOf(foods: Eaten[]): number | null {
  * which the hints below the totals name, see {@link totalsShow};
  * a meal or a food eaten by itself in the text of controls,
  * the foods of a meal indented below it, see {@link mealLinesOf}.
- * - `line`: The line.
  *
  * @param name - Name of the meal or the food, like `Chili con Carne` or `Semmel`
  * @param kcal - What it gives, see {@link kcalOf}, `null` for nothing known
@@ -348,7 +347,6 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
  * a click on its start shows its day instead.
  * A change saved there loads the day anew,
  * as every change of a file does, see {@link foodStart}.
- * - `block`: The block.
  *
  * @param meal - Entry with what it gives
  * @returns Block of the entry

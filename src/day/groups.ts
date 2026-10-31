@@ -87,7 +87,6 @@ export type PickShow = (change: () => void, send: () => Promise<unknown>) => voi
 /**
  * A group in the menu of the groups, see {@link groupMenuOf}.
  *
- * - `group`: The group.
  * - `day`: The day it stands below, the weekday of the group, like `Tue`,
  *   or the day of its session, like `27.10.2026 (Tue)`; empty for none.
  * - `times`: Its times, like `10:00 – 12:00`, empty for none.
@@ -108,7 +107,6 @@ type Item = {
  * no date of a series of a file, never pushed,
  * as a change of the reader may move it, see `changeable` in `reader/course.ts`.
  *
- * @param box - The box
  * @returns Whether it may
  */
 export function pickable(box: Box): boolean {
@@ -126,7 +124,6 @@ export function pickable(box: Box): boolean {
  * Tells whether a session of a group has no times, only its day and its length,
  * see `Session` in `reader/course.ts`.
  *
- * @param session - The session
  * @returns Whether it has none
  */
 function dayIs(session: Session): boolean {
@@ -138,7 +135,6 @@ function dayIs(session: Session): boolean {
  * like `10:00 – 12:00`, of one without times its length, like `02h 00m`.
  * - `start`: Its start.
  *
- * @param session - The session
  * @returns Its times
  */
 function sessionTimesOf(session: Session): string {
@@ -153,7 +149,6 @@ function sessionTimesOf(session: Session): string {
 /**
  * Tells whether a session of a group is over.
  *
- * @param session - The session
  * @returns Whether its end lies before now
  */
 function overOf(session: Session): boolean {
@@ -163,7 +158,6 @@ function overOf(session: Session): boolean {
 /**
  * Gives the sessions of groups in a week, each with its group, the earliest first.
  *
- * @param groups - The groups
  * @param week - Monday of the week, like `2026-10-19`
  * @returns The sessions with their groups
  */
@@ -185,7 +179,6 @@ function meetingsOf(groups: Group[], week: string): [Group, Session][] {
 /**
  * Gives the group pinned of a type, see the top of this file: the group of its series.
  *
- * @param course - The course
  * @param type - The type, like `TU`
  * @returns The group, like `06`, empty for none
  */
@@ -201,8 +194,6 @@ function pinnedOf(course: Course, type: string): string {
  * see `targetOf` in `reader/course.ts`:
  * its day, its time, its length, the place, what it does online, the tutor and the group.
  *
- * @param box - The box
- * @param group - The group
  * @param session - Its session
  */
 function boxMove(box: Box, group: Group, session: Session): void {
@@ -234,8 +225,6 @@ function boxMove(box: Box, group: Group, session: Session): void {
  * - `series`: The series of the type, `undefined` for none yet.
  * - `session`: The session of the group in the week of a box, `undefined` for none.
  *
- * @param course - The course
- * @param group - The group
  * @param show - Shows the pick, see {@link PickShow}
  */
 function pinPick(course: Course, group: Group, show: PickShow): void {
@@ -283,7 +272,6 @@ function pinPick(course: Course, group: Group, show: PickShow): void {
  * - `today`: Today's calendar date.
  * - `pinned`: The group pinned.
  *
- * @param course - The course
  * @param type - The type, like `TU`
  * @param show - Shows the pick, see {@link PickShow}
  */
@@ -321,7 +309,6 @@ function unpinPick(course: Course, type: string, show: PickShow): void {
  *
  * @param course - Its course
  * @param box - The box, one that may go to another group, see {@link pickable}
- * @param group - The group
  * @param session - Its session in the week of the box
  * @param show - Shows the pick, see {@link PickShow}
  */
@@ -349,9 +336,7 @@ function weekPick(
  * see `dottedOf` in `../persons.ts`, like `Durmann, Julius · Ewert, Markus`, plain text,
  * so a click on them picks the group as anywhere on its row.
  * - `names`: The names of its tutors.
- * - `tutors`: The tutors.
  *
- * @param group - The group
  * @returns Its tutors, `null` while unknown
  */
 function tutorsOf(group: Group): HTMLElement | null {
@@ -376,7 +361,6 @@ function tutorsOf(group: Group): HTMLElement | null {
  * and its tutors while known, see {@link tutorsOf}.
  * - `where`: Its times and its place.
  *
- * @param group - The group
  * @param times - Its times, like `10:00 – 12:00`, empty for none
  * @returns Its group, its times and place, and its tutors, `null` while unknown
  */
@@ -414,8 +398,6 @@ function groupPartsOf(
  * while it has a way to take the group pinned back,
  * a click on that pin does so, `Unpin` its tooltip.
  * - `place`: The button with its menu.
- * - `button`: The button.
- * - `menu`: The menu.
  * - `day`: The day of the groups so far, empty before the first.
  * - `line`: The item of a group.
  * - `mark`: The pin of the one pinned, empty for the others.
@@ -509,7 +491,6 @@ function groupMenuOf(
  *   like `2 10:00`, `8` for one without slot.
  * - `slot`: The first slot of a group, `undefined` for none.
  *
- * @param course - The course
  * @param type - The type, like `TU`
  * @param show - Shows a pick, see {@link PickShow}
  * @param open - Opens a group to change it;
@@ -565,7 +546,6 @@ export function pinnedMenuOf(
  * the day view's dialogs put into the page first,
  * see `dialogOf` in `../editor/dialog.ts`, loaded only then.
  *
- * @param course - The course
  * @param type - The type, like `TU`
  * @returns Opens a group, like `06`
  */
@@ -595,7 +575,6 @@ function groupOpenOf(course: Course, type: string): (group: string) => void {
  * so it is no button of its own but answers a click
  * and the keys Enter and Space as one, its words,
  * like `Change Group 06`, its tooltip.
- * - `icon`: The icon.
  * - `act`: Opens the group, the row not picked.
  *
  * @param group - The group, like `06`
@@ -626,7 +605,6 @@ function seriesIconOf(group: string, open: () => void): HTMLElement {
  * as a box of the plan names it, see the top of this file,
  * where only its dialog and its row on the page of its module pick it.
  *
- * @param box - The box
  * @returns Its group, `null` for a box without group
  */
 export function groupNameOf(box: Box): HTMLElement | null {
@@ -650,7 +628,6 @@ export function groupNameOf(box: Box): HTMLElement | null {
  * - `start`: The start of a session.
  *
  * @param course - Its course, `null` for none
- * @param box - The box
  * @param show - Shows a pick, see {@link PickShow}
  * @param open - Opens a group to change it, like from my series, which it goes back to;
  *   in the form of a series of its own when left out, see {@link groupOpenOf}

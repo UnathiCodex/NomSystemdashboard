@@ -873,7 +873,6 @@ function modeOf<T>(values: T[], keyOf: (value: T) => string): T | undefined {
  * so a lecture pushed to the next day counts on its own day.
  * - `left`: Where it stood before its first push, `undefined` for a box never pushed.
  *
- * @param box - The box
  * @returns The box at its place in its series
  */
 function datedOf(box: Box): Dated {
@@ -891,7 +890,6 @@ function datedOf(box: Box): Dated {
 /**
  * Gives the week of a box in its series, by its Monday, see {@link datedOf}.
  *
- * @param box - The box
  * @returns Day like `2026-10-19`
  */
 function weekOf(box: Box): string {
@@ -1190,7 +1188,6 @@ function ruleOf(
  * - `day`: The day of a slot of a week.
  * - `own`: Its times, those of its slot or its own.
  *
- * @param rule - The rule
  * @returns Dates, by their days
  */
 function datesOf(rule: Rule): RuleDate[] {
@@ -1247,7 +1244,6 @@ function pinnedOf(groups: Group[], type: string): string {
  * or a week I picked for a group, by its `X-GROUP` other than the group pinned;
  * a box of the group pinned, or without group, follows the pin.
  *
- * @param box - The box
  * @param pinned - The group pinned of its type, see {@link pinnedOf}, empty for none
  * @returns Whether it is
  */
@@ -1324,7 +1320,6 @@ function lecturesBeginOf(semester: string): string | undefined {
  * - `begin`: The first day of lectures of their semester, `undefined` for none.
  * - `first`: Monday of the first week.
  * - `free`: The days the university does not teach between them.
- * - `weeks`: The weeks.
  *
  * @param groups - The groups of the course
  * @param type - The type, like `TU`
@@ -1619,7 +1614,6 @@ function seriesListOf(boxes: Box[], semester: string, groups: Group[]): Series[]
  * like that of a box of the plan whose series opens from the day,
  * see the top of this file and {@link Course}.
  * - `folder`: Name of the folder of the module.
- * - `semester`: The semester.
  * - `boxes`: Its skill boxes of the semester.
  *
  * @param module - Name of the folder of the module,
@@ -1677,7 +1671,6 @@ function timesRight(times: Pick<Slot, "start" | "end">): boolean {
  * or without times its length, a whole number of minutes,
  * more than nothing and at most a day.
  *
- * @param slot - The slot
  * @returns Whether it is
  */
 function slotRight(slot: Slot): boolean {
@@ -1802,7 +1795,6 @@ function ruleCheck(rule: Rule): void {
  * never one done, which the log points to, nor one I cancelled or pushed,
  * which are my own decisions.
  *
- * @param box - The box
  * @returns Whether a change may change or remove it
  */
 function changeable(box: Box): boolean {
@@ -1822,7 +1814,6 @@ function changeable(box: Box): boolean {
  * neither done, which the log decides,
  * nor pushed away from a day, as it shows on that day.
  *
- * @param box - The box
  * @returns Whether I may
  */
 function stateable(box: Box): boolean {
@@ -1844,7 +1835,6 @@ function stateable(box: Box): boolean {
  * so a lecture done or over takes the times it really had,
  * while its log entry keeps its own.
  *
- * @param box - The box
  * @returns Whether it does
  */
 function retimable(box: Box): boolean {
@@ -1883,7 +1873,6 @@ function stateSet(box: Box, state: BoxState | undefined): Box {
  * so a box of a day over stays as it was, open or not,
  * but for the times I typed for its day, see {@link retimable}.
  *
- * @param box - The box
  * @returns Whether it does
  */
 function ahead(box: Box): boolean {
@@ -1893,7 +1882,6 @@ function ahead(box: Box): boolean {
 /**
  * Makes the draft of a box as it stands, see {@link Draft}.
  *
- * @param box - The box
  * @returns Its draft
  */
 function draftOf(box: Box): Draft {
@@ -1948,7 +1936,6 @@ function madeDraftOf(target: Target): Draft {
  * its own once the university changed it alone, see {@link Session}, and the group.
  * - `day`: The day of the session.
  *
- * @param group - The group
  * @param session - Its session
  * @returns The date
  */

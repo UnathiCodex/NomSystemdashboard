@@ -84,7 +84,6 @@ export function pathOf(path: string): (Node | string)[] {
  * its name, a link that opens it, cut in its middle where it is too long,
  * so the ending of a file stays, like `.pdf`,
  * see `middleCutPut` in `../day/choices.ts`, whole as its tooltip.
- * - `row`: The row.
  * - `shown`: Its name as it shows.
  *
  * @param name - Its name, like `TUM_2025W` or `04_LogisticPoissonRegression.pdf`

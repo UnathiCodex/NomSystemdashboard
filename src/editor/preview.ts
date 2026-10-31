@@ -2111,7 +2111,6 @@ function itemEndOf(look: Look, node: SyntaxNode): number {
  *   from the innermost outwards.
  *
  * @param state - Text and syntax tree
- * @param line - The line
  * @returns Whether it is such a line
  */
 function listBlankIs(state: EditorState, line: Line): boolean {
@@ -2231,7 +2230,6 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
  * - `node`: A piece of syntax around the start of its text, from the innermost outwards.
  *
  * @param state - Text and syntax tree
- * @param line - The line
  * @returns Number of characters hidden at its start
  */
 function hiddenStartOf(state: EditorState, line: Line): number {
@@ -2264,7 +2262,6 @@ function hiddenStartOf(state: EditorState, line: Line): number {
  * see `typingLine` in `./keys.ts`.
  *
  * @param state - Text, cursor and syntax tree
- * @param line - The line
  * @returns Whether it is such a gap
  */
 function gapIs(state: EditorState, line: Line): boolean {
@@ -2304,7 +2301,6 @@ function pointMarkOf(text: string, box: boolean): number {
  * - `mark`: The piece of syntax where the text of the line begins, `ListMark` on a point.
  *
  * @param state - Text and syntax tree
- * @param line - The line
  * @returns The place
  */
 function textStartOf(state: EditorState, line: Line): number {
@@ -2785,7 +2781,6 @@ function invisiblesLook(look: Look): void {
  * - `named`: The person of an item under the heading, `undefined` for none.
  *
  * @param state - Text of the note and the people of `Persons.md`
- * @param line - The line
  * @returns The person and where its name begins in the line,
  *   `undefined` for a line of no such item or a name of nobody of `Persons.md`
  */
@@ -2979,7 +2974,6 @@ function tableMeasure(table: HTMLTableElement): void {
  * Scrolls the page so a row of a table stands a third down its height.
  *
  * @param scroller - The page, which scrolls
- * @param row - The row
  */
 function thirdScroll(scroller: HTMLElement, row: HTMLElement): void {
     scroller.scrollTop +=

@@ -201,9 +201,7 @@ export function personRowAddressOf(person: Person): string {
  * a link into my files, `internal-link`, without the arrow of a link out of them,
  * see `../notes/notes.css`, and `person-link`, which the editor follows in this window,
  * see `BlockWidget` in `./editor/preview.ts`.
- * - `link`: The link.
  *
- * @param person - The person
  * @param text - Its name as written, like `Bichler, Martin`
  * @returns The link
  */

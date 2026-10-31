@@ -486,7 +486,6 @@ async function carriedFetch(day: string): Promise<Box[]> {
  *   or its start alone without duration, empty for neither.
  * - `length`: Its expected duration, empty for none and where its start shows its time.
  *
- * @param box - The box
  * @param day - Day the box shows on, like `2026-10-24`
  * @returns The parts of the line, in order, none when there is nothing to write
  */
@@ -519,7 +518,6 @@ function timePartsOf(box: Box, day: string): string[] {
  * - `near`: How near it is, empty for a box not open, or one carried along.
  * - `rest`: Its time and how near it is, as far as there is something to write.
  *
- * @param box - The box
  * @param day - Day the box shows on, like `2026-10-20`
  * @param nearShown - Whether to write how near its deadline is,
  *   not for a box carried along
@@ -610,7 +608,6 @@ function timesOf(parts: string[], start: string): HTMLElement | null {
  * - `topics`: Its documents.
  * - `item`: The line of a document.
  *
- * @param box - The box
  * @param day - Day the box shows on, like `2026-10-20`
  * @param nearShown - Whether to write how near its deadline is,
  *   not for a box carried along
@@ -709,7 +706,6 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
  *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `anchor`: The link of a chapter.
  *
- * @param box - The box
  * @returns Its chapters, in order, none for none
  */
 function chaptersOf(box: Box): Node[] {
@@ -736,7 +732,6 @@ function chaptersOf(box: Box): Node[] {
  * a folder it links, which an older box may, shows as its chapter or not at all,
  * see `chaptersOf` in `reader/documents.ts`.
  *
- * @param box - The box
  * @returns Its documents, in order, none for none
  */
 function topicsOf(box: Box): string[] {
@@ -804,7 +799,6 @@ function occasionsOf(
  * - `start`, `end`: The times it is logged at.
  *
  * @param calendar - Calendar of the day
- * @param box - The box
  * @throws {Error} - When the reader does not log it, or does not answer
  */
 async function boxTap(calendar: Calendar, box: Box): Promise<void> {
@@ -826,7 +820,6 @@ async function boxTap(calendar: Calendar, box: Box): Promise<void> {
  * - `start`, `end`: The times of a tap.
  *
  * @param calendar - Calendar of the day
- * @param box - The box
  * @throws {Error} - When the reader does not answer
  */
 async function boxClick(calendar: Calendar, box: Box): Promise<void> {
@@ -972,7 +965,6 @@ function actionsOf(calendar: Calendar, box: Box): HTMLElement {
  * see {@link groupedType}, which names its group,
  * see {@link boxContentOf}.
  *
- * @param box - The box
  * @returns Whether it is
  */
 function tutorialIs(box: Box): boolean {
@@ -1007,7 +999,6 @@ function tutorialIs(box: Box): boolean {
  * - `end`: Its actions or its state at its right.
  *
  * @param calendar - Calendar of the day
- * @param box - The box
  * @param carriedShown - Whether it shows in the list carried along,
  *   else among the boxes of the shown day
  * @returns The box
@@ -1056,7 +1047,6 @@ const sections: string[] = ["Projects", "Modules", "Living", "Health"];
  * else the name of the folder, like `Health` for my sleep.
  * - `folder`: Name of the folder of its plan, like `Health`.
  *
- * @param box - The box
  * @returns Name of its section, like `Modules`
  */
 function sectionOf(box: Box): string {

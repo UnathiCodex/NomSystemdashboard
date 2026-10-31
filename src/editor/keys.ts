@@ -167,7 +167,6 @@ import type { SyntaxNode, SyntaxNodeRef } from "@lezer/common";
  * - `node`: A piece of syntax at the start of the line, from the innermost outwards.
  *
  * @param state - Text and syntax tree
- * @param line - The line
  * @returns Whether it is empty
  */
 export function emptyIs(state: EditorState, line: Line): boolean {
@@ -188,7 +187,6 @@ export function emptyIs(state: EditorState, line: Line): boolean {
  * Tells a line that starts with the `>` of a quote, not with a `>` of plain text.
  *
  * @param state - Text and syntax tree
- * @param line - The line
  * @returns Whether it does
  */
 function quoteMarkIs(state: EditorState, line: Line): boolean {
@@ -247,7 +245,6 @@ function pointStartOf(text: string): string | null {
  * - `marks`: The `>` of the quote the line stands in, without the blank after the last.
  *
  * @param state - Text
- * @param line - The line
  * @param count - How many empty lines
  * @returns Them
  */
@@ -529,7 +526,6 @@ const pointContinue: Command = (view: EditorView): boolean => {
  * - `items`: The points found so far.
  *
  * @param state - Text
- * @param line - The line
  * @returns The points, `ListItem`, none outside a list
  */
 function itemsOf(state: EditorState, line: Line): SyntaxNode[] {
@@ -945,7 +941,6 @@ const markupContinue: Command = (view: EditorView): boolean =>
  * - `node`: A piece of syntax at the start of the line, from the innermost outwards.
  *
  * @param state - Text and syntax tree
- * @param line - The line
  * @returns Whether it is code
  */
 function codeIs(state: EditorState, line: Line): boolean {
@@ -1238,7 +1233,6 @@ const quoteBackward: Command = (view: EditorView): boolean => {
  * - `node`: A piece of syntax at the start of the line, from the innermost outwards.
  *
  * @param state - Text and syntax tree
- * @param line - The line
  * @returns The table, `Table`, `null` for none
  */
 function tableOf(state: EditorState, line: Line): SyntaxNode | null {
@@ -1821,7 +1815,6 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
  * - `node`: A piece of syntax around the start of the text, from the innermost outwards.
  *
  * @param state - Text
- * @param line - The line
  * @returns The item, `ListItem`, `null` outside a list
  */
 function itemOf(state: EditorState, line: Line): SyntaxNode | null {
@@ -2130,7 +2123,6 @@ function depthOf(text: string): number | null {
  * Tells the line of a point: its `-` or number first,
  * after the `>` of a quote and the blanks;
  * never a line of code, like a list in a block of YAML, see {@link codeIs}.
- * - `line`: The line.
  * - `body`: The line after the `>` of the quote.
  *
  * @param state - Text and syntax tree
@@ -2708,7 +2700,6 @@ function blockOf(state: EditorState): { from: number; to: number } {
  * only while all it changes lies in that block, else the key goes on to the next command,
  * like going back to the block I had open before, see `roundBack` in `./round.ts`,
  * and never to the browser's own Undo.
- * - `block`: The block.
  * - `steps`: The step CodeMirror's command would take, none at the end of the history.
  * - `inside`: Whether all it changes lies in the block.
  *

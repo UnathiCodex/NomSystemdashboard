@@ -608,10 +608,8 @@ function listOfExercises(
 /**
  * Makes the row of an exercise: its name, its sets and repetitions,
  * see {@link setsOf}, its kilograms and its `×`.
- * - `row`: The row.
  * - `index`: Its place among the exercises.
  *
- * @param exercise - The exercise
  * @returns The row
  */
 function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
@@ -647,11 +645,9 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
 /**
  * Makes the row of a video:
  * its title with its channel grey in brackets, its minutes, its kcal and its `×`.
- * - `row`: The row.
  * - `name`: Its title with its channel.
  * - `kcal`: Its kcal, shown anew as its minutes change.
  *
- * @param video - The video
  * @param shown - Shows the kcal of its block anew
  * @returns The row
  */

@@ -114,7 +114,6 @@ export function dialogOf(): Promise<Dialog> {
  * the entry as the reader sends it to the day view, in the calendar of the dialog alone;
  * one the reader sends no more, or that cannot be changed,
  * like an occurrence of a series, opens nothing, as there.
- * - `dialog`: The dialog.
  * - `moment`: The start of the entry, in milliseconds.
  * - `found`: The entry as the reader sends it, `undefined` for none.
  * - `entry`: The entry in the calendar of the dialog.

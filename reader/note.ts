@@ -86,7 +86,7 @@ const pointForm: RegExp = /^[ \t]*(?:[-*+]|\d+[.)]) /;
 
 /**
  * A further line of a point as the editor writes it with Shift+Enter: indented,
- * then the spacer `⠀` (U+2800), see `spacer` in `src/editor/keys.ts`,
+ * then the spacer `⠀` (U+2800),
  * so Markdown keeps the line in its point.
  */
 const furtherForm: RegExp = /^[ \t]+⠀/;

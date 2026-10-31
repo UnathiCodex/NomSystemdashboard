@@ -328,7 +328,6 @@ export function placeEditOf(
  * a click makes it my default place at once, or none while it is,
  * see {@link standardSend}, the star filled or emptied once the reader wrote it,
  * apart from the other parts, which wait for the dialog to save.
- * - `star`: The star.
  *
  * @param place - The place as it shows, as its row holds it
  * @returns The star

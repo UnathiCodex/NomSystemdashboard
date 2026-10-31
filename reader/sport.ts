@@ -1229,7 +1229,6 @@ export function sportDayRead(date: string): SportDay {
 /**
  * Writes my weight of a day into `Weights.md`, in place of the one of that day,
  * the rows by their days, the latest first, to one decimal.
- * - `day`: The day.
  * - `kg`: The kilograms.
  * - `weights`: My weights with the new one.
  *

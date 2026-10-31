@@ -342,7 +342,6 @@ function entryDrag(calendar: Calendar, info: EventChangeInfo): void {
  * like the strip of the day after.
  * - `rect`: Where the element stands.
  *
- * @param element - The element
  * @param x - Point from the left of the window
  * @param y - Point from the top of the window
  * @returns Whether it lies in it, never for an element not shown
@@ -460,7 +459,6 @@ function turnShow(calendar: Calendar, shown: boolean): void {
  * as Google Calendar does; an entry dropped anywhere else stays
  * as FullCalendar moved it, see {@link entryDrag}.
  * - `days`: Days it moves, 0 for none.
- * - `entry`: The entry.
  * - `start`, `end`: Its start and end on the other day.
  *
  * @param calendar - Calendar of the day

@@ -57,7 +57,6 @@ import type { IconNode } from "lucide";
 /**
  * Makes one action of a box, its icon, its word as tooltip;
  * on a phone an item of its menu, its icon and then its words, but in a list.
- * - `button`: The button.
  *
  * @param icon - Icon, like `ArrowRight`
  * @param words - What it does, like `Move`

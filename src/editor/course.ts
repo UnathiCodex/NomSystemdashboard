@@ -297,7 +297,6 @@ function act(send: () => Promise<unknown>): void {
  * Gives the dialog of an entry,
  * see `./dialog.ts`, the first time also loading the course anew whenever it closes,
  * saved or not, as the plan does.
- * - `dialog`: The dialog.
  *
  * @returns The dialog
  */
@@ -315,10 +314,8 @@ async function dialogShow(): Promise<Dialog> {
  * Opens a box tapped as the day view does, see `boxClick` in `../day/boxes.ts`:
  * a box that can be changed in the dialog to change it,
  * an open one that cannot in the dialog of the log, at the times it is logged at.
- * - `dialog`: The dialog.
  * - `start`, `end`: The times it is logged at.
  *
- * @param box - The box
  * @throws {Error} - When the reader does not answer
  */
 async function boxOpen(box: Box): Promise<void> {
@@ -407,7 +404,6 @@ function stateOf(box: Box): HTMLElement {
  * which stays open, as every exam matters;
  * nothing written, its box still logging it.
  *
- * @param box - The box
  * @returns Whether it counts as skipped
  */
 function overIs(box: Box): boolean {
@@ -450,7 +446,6 @@ function groupPick(change: () => void, send: () => Promise<unknown>): void {
  * an exam, which stays light; of an exam without kind `–` where the kind stands.
  * - `over`: Whether it is open and its day over, so skipped, see {@link overIs}.
  *
- * @param box - The box
  * @param number - Its number, like `2`;
  *   its `X-NUMBER` when left out, of an exam without kind `–`,
  *   of the card `Learning` its place by date
@@ -496,7 +491,6 @@ function boxRowOf(
  * Makes the counts of a card a button while some of its rows fold,
  * see the top of this file, the card showing anew:
  * a click opening its folded rows, or closing them while open.
- * - `button`: The button.
  * - `open`: Whether its folded rows show.
  *
  * @param type - The type of the card, like `VO`
@@ -525,7 +519,6 @@ function foldOf(type: string): HTMLButtonElement {
  * and how many pushed, each also at none, apart by middle dots;
  * while some rows fold a button,
  * see {@link foldOf}, with a chevron after the counts, down while folded, up while open.
- * - `line`: The line.
  * - `counts`: The counts, a button while some rows fold, else a line alone.
  * - `states`: How many are done, how many not,
  *   and how many pushed, each with its icon and its words.
@@ -599,7 +592,6 @@ function countsOf(
  * - `next`: The next open box from today on, `undefined` for none.
  * - `cut`: How many boxes to come show while folded.
  * - `folded`: The boxes that show while folded, the earliest first.
- * - `list`: The list.
  *
  * @param type - The type, like `VO`
  * @param boxes - Its boxes, the earliest first
@@ -837,12 +829,11 @@ function learningShow(): void {
  * its type whole, its code in round brackets, like `Vorlesung (VO)`,
  * see {@link typeNames}, of my own learning just `Learning`, right after it the pencil,
  * which opens the form of the series, also for a type with groups but no series yet,
- * whose row `Group` makes and changes its groups, see `groupRowOf` in `../day/series.ts`;
+ * whose row `Group` makes and changes its groups, see `groupPickOf` in `../day/series.ts`;
  * at its right for a type with groups the menu of the group pinned,
  * see `pinnedMenuOf` in `../day/groups.ts`.
  * - `head`: The heading.
  * - `title`: The name of the type with its pencil.
- * - `pencil`: The pencil.
  *
  * @param type - The type, like `VO`, empty for my own learning,
  *   whose pencil opens its series, see {@link learningShow}
@@ -904,7 +895,6 @@ function folderLinkOf(folder: MaterialFolder): HTMLElement {
  * see {@link listOf}, the list only while it shows some.
  * - `boxes`: Its boxes.
  * - `series`: Its series, `undefined` for none.
- * - `card`: The card.
  * - `folder`: The folder of its material of the semester,
  *   `undefined` for a type whose folder has no name.
  * - `counts`, `list`: Its line of counts and its list.
@@ -939,7 +929,6 @@ function cardOf(type: string): HTMLElement {
  * a link that opens it in the scripts view,
  * then while it has sessions its line of counts and the list of them,
  * the list only while it shows some, see {@link learningListOf}.
- * - `card`: The card.
  * - `folder`: The link of the module folder.
  * - `counts`, `list`: Its line of counts and its list.
  * - `some`: Whether it has sessions, planned or logged.

@@ -460,8 +460,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
 
 /* A block right below a closed block of its level with its heading right
    below that block's heading, without the empty lines between them,
-   so closed blocks stand close below each other as a list, as in the editor,
-   see `belowFoldIs` in `../editor/preview.ts` */
+   so closed blocks stand close below each other as a list, as in the editor */
 .markdown details.fold:not([open]) + details.fold {
     margin-top: 0;
 }

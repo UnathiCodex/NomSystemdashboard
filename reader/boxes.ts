@@ -837,7 +837,6 @@ function deadlineShows(box: Box, date: string): boolean {
 /**
  * Gives the day of the log entry written from a box, in Berlin time.
  *
- * @param box - The box
  * @returns Day like `2026-10-19`, empty for a box without log entry
  */
 function loggedDayOf(box: Box): string {
@@ -1783,7 +1782,6 @@ export function boxReopen(id: string): void {
  * neither with a deadline, like a homework sheet,
  * which I log myself, nor one occurrence of a series, like a weekly lecture.
  *
- * @param box - The box
  * @param module - Module code, like `IN2028`
  * @returns Whether it is one
  */

@@ -164,7 +164,6 @@ function weightOf(kg: number | null): HTMLElement {
  * the same weight or an empty field writes nothing; Escape takes it back;
  * kilograms the reader does not take, like `abc`,
  * keep the field open and say what it takes.
- * - `field`: The field.
  * - `amount`: The field with its unit.
  * - `done`: Whether the field was written or taken back,
  *   so leaving it after Enter writes nothing twice.
@@ -247,7 +246,6 @@ function doneTextOf(exercise: Session["exercises"][number]): string {
 /**
  * Builds the line of a part of a session, indented under its kind,
  * see `.food-line` in `../food/food.css`.
- * - `line`: The line.
  * - `what`: Its name, with what stands grey after it.
  *
  * @param name - Name of the exercise or title of the video

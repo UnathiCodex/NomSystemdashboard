@@ -726,7 +726,6 @@ export function entryAdd(entry: EntryNew, id?: string): string {
  * like the slides of a lecture, see `documents.ts`,
  * and its chapters as `X-CHAPTER`s, also those whose folders an older box links;
  * more chapters and documents a skill entry gets later in the dialog.
- * - `box`: The box.
  * - `skill`: Whether it is a skill box, whose links go along.
  * - `semester`: Semester of a skill entry as it is written,
  *   see `semesterFor` in `categories.ts`, empty for any other.

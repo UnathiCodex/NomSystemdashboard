@@ -94,7 +94,6 @@ export function rowTimesOf(time: string, minutes: number | null): string {
  * as the type of a block of a section in the tree:
  * a button that opens its box while it has one, its note as tooltip, else plain;
  * empty without number, like a box a change removes.
- * - `number`: The number.
  *
  * @param text - Its number, like `2`, or of an exam its kind, empty for none
  * @param open - Opens its box, `null` for a row without box yet
@@ -185,7 +184,6 @@ function firstPersonOf(people: Attendee[], persons: Person[]): (string | Node)[]
 
 /**
  * Makes the row of a box, see the top of this file.
- * - `row`: The row.
  * - `people`: The line of its people, `null` for nobody.
  * - `day`: Its day, a button that opens its box where it opens from there.
  * - `group`: The column of its group, empty without group.

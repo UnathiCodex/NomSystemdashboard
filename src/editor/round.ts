@@ -665,7 +665,6 @@ function currentOf(shown: Round, steps: Step[]): Step | undefined {
  * the heading the log holds, the Task again once the round checked its Example off
  * after a wrong Task, see `used` of `SkillSection`.
  *
- * @param section - The section
  * @returns The key, empty for none
  */
 function atKeyOf(section: SkillSection): string {
@@ -1072,7 +1071,7 @@ export function roundShownOf(view: EditorView): string {
  * for the line of its Tasks outside the round in the tree,
  * see `roundListOf` in `../notes/tree.ts`:
  * the day its Task comes back, by the rule of the overview,
- * see `stateOf` in `./overview.ts`, `Tomorrow` for the day after today,
+ * see `dueOf` in `reader/skill.ts`, `Tomorrow` for the day after today,
  * else like `19.10.2026 (Mon)`;
  * nothing while its Task is due today,
  * since its result decides the day, or no day is known.

@@ -187,7 +187,6 @@ function insideCheck(box: string, path: string): void {
  * Lists the files of a folder, by their paths in it, parted by `/`,
  * hidden ones and symbolic links left out.
  *
- * @param folder - The folder
  * @param left - Names of folders right in it left out, like `dashboard`
  * @returns Paths, sorted
  */
@@ -230,7 +229,6 @@ async function inputRead(most: number): Promise<Buffer> {
  * Writes a new file under a hidden name beside it first, then renames it,
  * so no one sees half of it.
  *
- * @param file - The file
  * @param bytes - What it holds
  */
 function fileWrite(file: string, bytes: Buffer | string): void {

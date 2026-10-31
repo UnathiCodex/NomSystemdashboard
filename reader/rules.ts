@@ -908,7 +908,6 @@ function aheadOwnOf(id: string, from: string): string[] {
  * its day for a series without time, else its time as ISO instant.
  *
  * @param plain - The series
- * @param extra - The extra
  * @returns Start like `2026-11-14` or `2026-11-14T09:00:00.000Z`
  */
 function extraStartOf(plain: Plain, extra: Extra): string {

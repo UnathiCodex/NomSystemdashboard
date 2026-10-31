@@ -423,7 +423,6 @@ function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonE
 /**
  * Makes the button of a value in a list: its text, its star while it is starred,
  * like my default place, and its detail grey beside it, like the address of a place.
- * - `star`: The star.
  * - `detail`: The grey detail.
  *
  * @param choice - The value

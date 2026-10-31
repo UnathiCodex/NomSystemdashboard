@@ -211,7 +211,6 @@ function linkTyped(typed: string): boolean {
 /**
  * Makes the heading of a section, its name in the text of controls,
  * and the plus after it where given.
- * - `heading`: The heading.
  *
  * @param name - Name of the section, like `Workouts`
  * @param plus - The plus after it, `null` for none
@@ -228,7 +227,6 @@ function headingOf(name: string, plus: HTMLButtonElement | null): HTMLElement {
  * the brackets cut with … where they have no room,
  * like `Push (Bench press, Shoulder press, Di…)`,
  * see `.sport-name` in `sport.css`, both whole as its tooltip.
- * - `name`: The name.
  *
  * @param text - The name, like `Push`
  * @param brackets - What stands in the brackets,
@@ -343,7 +341,6 @@ function variantKeyOf(exercise: {
  * - `reps`: Its repetitions, seconds written with a space before `s`.
  * - `sets`: Its sets and repetitions.
  *
- * @param exercise - The exercise
  * @returns Text like `3 × 10 · 40 kg`, empty while nothing is set
  */
 function ruleTextOf(exercise: { sets?: string; reps?: string; kg?: string }): string {
@@ -413,7 +410,6 @@ function kindGuessOf(title: string): string {
  * its values in two columns, each its name small and grey at the left,
  * a click on the name putting the cursor into its field, then the cross and the check,
  * see `food-form` in `../food/search.css`.
- * - `form`: The form.
  * - `facts`: Its values.
  *
  * @param rows - Each name with its field or value
@@ -458,7 +454,6 @@ function valueOf(text: string): HTMLElement {
 
 /**
  * Builds the section of my workouts, see the top of this file.
- * - `section`: The section.
  * - `search`: Its search field.
  * - `list`: Place of the head and the lines of the workouts.
  * - `open`: Name of the workout opened, in small letters, empty for none.
@@ -1048,7 +1043,6 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
 
 /**
  * Builds the section of my exercises, see the top of this file.
- * - `section`: The section.
  * - `search`: Its search field.
  * - `list`: Place of the field of a new name, the head and the lines of the exercises.
  * - `asked`: Key of the variant whose `×` asked `Really remove?`, empty for none.

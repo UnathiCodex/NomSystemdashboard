@@ -1307,7 +1307,7 @@ function roundOfDocument(path: string): string {
  * or to the one shown where higher.
  * A pick, also of the round shown, is mine,
  * and the reader writes it as the line `X-ROUND` of the note,
- * see `roundPicksOf` in `reader/skill.ts`.
+ * see `marksOfEntry` in `reader/skill.ts`.
  * Without a pick nothing is written.
  * - `section`: The section of the note, `undefined` for none.
  * - `line`: The line `X-ROUND` of its section in the entry, `undefined` for none.

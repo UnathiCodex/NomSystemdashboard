@@ -942,7 +942,6 @@ function dayNameOf(weekday: number): string {
  * Writes a slot as the heading of a card,
  * a row of the table of the groups and a group in a list read it.
  *
- * @param slot - The slot
  * @returns Text like `Mon 14:00 – 16:00`
  */
 export function slotTextOf(slot: Slot): string {
@@ -969,7 +968,6 @@ export function roomOf(line: string): string {
  * which its menu and its dialog open, see the top of this file:
  * a skill box of a numbered type with its number.
  *
- * @param box - The box
  * @returns Whether it is one
  */
 export function seriesHas(box: Box): boolean {
@@ -1196,7 +1194,6 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
  * - `shown`: The days to pick, the seven weekdays, and `Month` and `Year`.
  * - `toggles`: Their toggles.
  * - `lines`: The days picked, one line each, or the length.
- * - `row`: The row.
  *
  * @param days - The days of the series
  * @param changed - Tells the form that the series changed
@@ -1372,7 +1369,6 @@ export function boxesRowOf(): HTMLElement {
  * so a series not typed enough yet has no empty row.
  * - `place`: The place of the boxes in the form, `null` for none.
  *
- * @param form - The form
  * @param shown - What the boxes show, none for nothing
  */
 function previewPut(form: HTMLElement, shown: Node[]): void {
@@ -1410,7 +1406,6 @@ function countOf(count: number, words: string): string[] {
 /**
  * Makes a part of the line of the boxes of a series that counts them by an icon,
  * like `✓ 1`, its words as tooltip and as its name for screen readers.
- * - `part`: The part.
  *
  * @param count - How many
  * @param icon - Icon of what they are, like `Check`
@@ -1575,7 +1570,6 @@ async function seriesRefresh(): Promise<void> {
  * - `entry`: The dialog of an entry.
  * - `start`, `end`: The times it is logged at.
  *
- * @param box - The box
  * @throws {Error} - When the reader cannot answer
  */
 async function boxShow(box: Box): Promise<void> {
@@ -1650,7 +1644,6 @@ async function boxesLoad(planned: Planned[]): Promise<void> {
 /**
  * Makes one action of a box of the list not written yet,
  * as an action of a box of the plan looks, see `actions.ts`.
- * - `button`: The button.
  *
  * @param icon - Icon, like `CalendarOff`
  * @param words - What it does, its tooltip, like `Cancel`
@@ -1685,7 +1678,6 @@ function pendingActionOf(
  * - `shown`: The icon of its state and its word.
  * - `take`: The same, fixed for the click.
  *
- * @param box - The box
  * @returns Its actions, or its state
  */
 function knownEndOf(box: Box): HTMLElement {
@@ -1753,7 +1745,6 @@ function knownEndOf(box: Box): HTMLElement {
  * - `buttons`: Its actions.
  * - `actions`: Its actions in their row.
  *
- * @param box - The box
  * @param preview - How the boxes show
  * @returns Its actions or its state, or nothing
  */
@@ -1868,7 +1859,6 @@ function sessionOf(box: Planned): Session | undefined {
  * and at its right edge Save,
  * which writes it at once, my box at that session following it, the list then shown anew,
  * see {@link sessionSave}, and `×`, which leaves it as it is.
- * - `row`: The row.
  * - `fields`: Its times and its room.
  * - `actions`: Save and `×`.
  *
@@ -2007,14 +1997,12 @@ async function extraAdd(start: string): Promise<void> {
  * which opens the menu of the kinds as the menu `⋯` does,
  * see `menuAnchor` in `../menu.ts`,
  * in the look of the menu of the groups on the page of a module,
- * see `groupMenuOf` in `../editor/course.ts`:
+ * see `pinnedMenuOf` in `./groups.ts`:
  * each kind of {@link examKinds}, the kind of the exam checked, the others without;
  * a click on a kind closes the menu, shows it on the button and gives it to the exam,
  * but for the one checked.
  * Asked, its menu opens once its row shows, see {@link kindAsked}.
  * - `place`: The button with its menu.
- * - `button`: The button.
- * - `menu`: The menu.
  * - `items`: The kinds in the menu.
  * - `shown`: Shows the kind on the button and checks it in the menu.
  *
@@ -2097,7 +2085,6 @@ function kindMenuOf(
  *   so that closing them goes back to it,
  *   `null` in the form of a group.
  *
- * @param box - The box
  * @param had - Whether the series had boxes before, so a new one says so
  * @param preview - How the boxes show
  * @returns The row
@@ -2242,7 +2229,6 @@ function addRowOf(preview: Preview, redraw: () => void): HTMLButtonElement {
  * and stands in the list by its day, see {@link extraJoin};
  * one taken back by its `×` never,
  * though its field loses the focus as the list shows anew.
- * - `row`: The row.
  * - `kinds`: Of the exams, the kinds I gave them, `undefined` for any other series.
  * - `number`: Where the numbers stand, of the exams its kind.
  * - `day`: The field of its day.
@@ -2335,7 +2321,6 @@ function extraJoin(days: Days, kinds: Kinds | undefined): boolean {
  * each month short at the left, like `Oct 2026`,
  * where the names of the rows stand, its rows beside it, in the order given;
  * the cards of the course on the page of a module the same, see `../editor/course.ts`.
- * - `list`: The list.
  * - `month`: The month of the row before, empty before the first.
  * - `boxes`: The rows of that month.
  *
@@ -2374,7 +2359,6 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
  * one the university cancelled showing `–`, one the change removes none.
  * - `had`: Whether the series had boxes before.
  * - `items`: Each box with its place in time and its row.
- * - `list`: The list.
  *
  * @param planned - The boxes as the reader would write them,
  *   removed ones too, the earliest first
@@ -2576,7 +2560,6 @@ function withAsked(): boolean {
  * Tells whether the form names its group, new or renamed,
  * as another group of its type is named already, see {@link groupPartOf}.
  *
- * @param form - The form
  * @returns Whether the name typed is taken
  */
 function groupTaken(form: Form): boolean {
@@ -2605,7 +2588,6 @@ function groupUnnamed(): boolean {
  * see {@link daysReady}; a new group not named as one there already,
  * see {@link groupTaken}.
  *
- * @param form - The form
  * @returns Whether it is ready
  */
 function formReady(form: Form): boolean {
@@ -2902,7 +2884,6 @@ function formElementOf(): HTMLFormElement {
  * while none is pinned, see {@link groupWaits}, empty; any other form as it is.
  *
  * @param locked - Whether to lock them
- * @param rows - The rows
  * @returns The rows
  */
 function lockedOf(locked: boolean, rows: HTMLElement[]): HTMLElement[] {
@@ -2990,7 +2971,6 @@ function keptOf(form: Form): Planned[] {
  * of my series waiting for my group my boxes there, see {@link keptOf}.
  * - `kept`: Those boxes, none for any other form.
  * - `save`: Its button Save.
- * - `form`: The form.
  */
 function formChanged(): void {
     const save: HTMLButtonElement | null = formElementOf().querySelector(".panel-main");
@@ -3020,7 +3000,6 @@ function formChanged(): void {
  * - `link`: The link to open, empty for none.
  *
  * @param address - The address below the place
- * @param form - The form
  */
 function addressShow(address: HTMLAnchorElement, form: Form): void {
     const link: string = placeEdit?.link ?? form.locationLink;
@@ -3036,7 +3015,6 @@ function addressShow(address: HTMLAnchorElement, form: Form): void {
  * as its row holds it, my place or the room of its name, else as its line says,
  * with the link of the series, see `placeOf` in `./places.ts`.
  *
- * @param form - The form
  * @returns The place
  */
 function placeOriginOf(form: Form): Place {
@@ -3074,9 +3052,7 @@ function placeOriginOf(form: Form): Place {
  * - `link`: The folder below the summary.
  * - `value`: The summary with the folder below it,
  *   or of a new series the module with the type to pick.
- * - `row`: The row.
  *
- * @param form - The form
  * @returns The row
  */
 function seriesRowOf(form: Form): HTMLElement {
@@ -3195,12 +3171,9 @@ function placeSearchOf(
  * - `field`: The field of the place of `Skill`,
  *   `undefined` while the categories are not loaded.
  * - `address`: The address below the place.
- * - `pencil`: The pencil, `✎`.
  * - `parts`: The parts, shown while the pencil opened them, see {@link placeOpen}.
  * - `nameShown`: Gives the name a place shows, the one I gave the place of the form.
- * - `row`: The row.
  *
- * @param form - The form
  * @returns The row
  */
 function placeRowOf(form: Form): HTMLElement {
@@ -3274,7 +3247,6 @@ function placeRowOf(form: Form): HTMLElement {
  * - `field`: The field `Online` of `Skill`,
  *   `undefined` while the categories are not loaded.
  *
- * @param form - The form
  * @returns The row, none while the categories are not loaded
  */
 function onlineRowsOf(form: Form): HTMLElement[] {
@@ -3310,7 +3282,6 @@ function onlineRowsOf(form: Form): HTMLElement[] {
  * - `field`: The field `With` of `Skill`,
  *   `undefined` while the categories are not loaded.
  *
- * @param form - The form
  * @returns The row, none while the categories are not loaded
  */
 function peopleRowsOf(form: Form): HTMLElement[] {
@@ -3399,7 +3370,6 @@ function groupPartOf(): HTMLElement {
  * right after it the plus, which opens the form of a new group,
  * see {@link groupFrom}, alone while the type has no group yet.
  * - `loaded`: The course of the form.
- * - `plus`: The plus.
  * - `part`: The menu and the plus.
  *
  * @param form - The form of my series
@@ -3440,7 +3410,6 @@ function groupPickOf(form: Form): HTMLElement {
  * see {@link groupPickOf}, and my boxes there,
  * which stay whatever group is pinned, see {@link keptOf}.
  *
- * @param form - The form
  * @returns Whether it waits
  */
 function groupWaits(form: Form): boolean {
@@ -3586,7 +3555,6 @@ function groupStart(type: string, group: string): void {
  * a group there already, a plain series there already,
  * and my series of a type of a module there already, the exams too; never a new one.
  *
- * @param form - The form
  * @returns Whether it has the bin
  */
 function binShows(form: Form): boolean {
@@ -3608,11 +3576,9 @@ function binShows(form: Form): boolean {
  * my series of a type of a module but its boxes done,
  * whose log entries point to them, see `courseSeriesRemove` in `reader/course.ts`.
  * When the reader does not take it, the hint above the buttons says so.
- * - `bin`: The bin.
  * - `ask`: What the first click asks.
  * - `address`: Where the reader removes it.
  *
- * @param form - The form
  * @returns The bin
  */
 function seriesBinOf(form: Form): HTMLButtonElement {
@@ -3667,7 +3633,7 @@ function seriesBinOf(form: Form): HTMLButtonElement {
  * Builds the rows of the form of a series anew from what it holds,
  * see the top of this file:
  * what it is, its place, what it does online, its days and its first and last day;
- * of a numbered type of a module its group, see {@link groupRowOf}; its boxes;
+ * of a numbered type of a module its group, see {@link groupPickOf}; its boxes;
  * then, where asked, its people, see {@link withAsked}, of a group always, its tutors;
  * below them the hint when the reader does not take it, then the plan it writes
  * into, see `fileShow` in `choices.ts`,
@@ -3680,9 +3646,7 @@ function seriesBinOf(form: Form): HTMLButtonElement {
  * not as the focus leaves it,
  * which would build the rows anew under the pointer
  * and lose the click, see {@link formSave}.
- * - `dialog`: The dialog.
  * - `scrolled`: Where it is scrolled to.
- * - `form`: The form.
  * - `rows`: Its rows.
  * - `fields`: The rows together.
  * - `buttons`: The plan, the bin of a group there, Cancel and Save.
@@ -3792,7 +3756,6 @@ function formFill(): void {
  * and after it written, so its boxes, saved with the place as it was,
  * take it with every other entry; nothing for a place I left as it is.
  *
- * @param form - The form
  * @param dry - Whether only to check it, before the series is saved
  * @throws {Error} - When the reader does not take the place, like one with an empty name
  */
@@ -3882,7 +3845,6 @@ async function groupReturn(reload: boolean): Promise<boolean> {
  * but the form of a group opened from my series, which goes back to it instead,
  * see {@link groupReturn}; once the dialog of a box closes over it, opened from its list,
  * see {@link boxShow}, its list shows anew, see {@link seriesRefresh}.
- * - `dialog`: The dialog.
  * - `back`: Goes back from the form of a group to my series on Escape,
  *   while no list of it is open,
  *   or a click beside the dialog,
@@ -3960,7 +3922,6 @@ function dialogStart(): void {
  * - `loaded`: The course, the categories, for its groups, places, platforms and people,
  *   and the people of `Persons.md`.
  * - `rule`: The rule of the series as read back, `null` for a new one.
- * - `dialog`: The dialog.
  *
  * @param module - Name of the folder of the module,
  *   like `IN2028_BusinessAnalyticsMachineLearning`,
@@ -4049,7 +4010,6 @@ export async function seriesOpen(
  * which stands as it was once this one closes.
  * - `loaded`: The course, the categories, for its places, platforms and people,
  *   and the people of `Persons.md`.
- * - `dialog`: The dialog.
  *
  * @param module - Name of the folder of the module,
  *   like `IN2028_BusinessAnalyticsMachineLearning`
@@ -4099,7 +4059,6 @@ export async function groupOpen(
  * see {@link Repeated}, which saves as a box repeated, see {@link repeatedSend}.
  * - `loaded`: The course of its module, `null` for none, the categories, for its places,
  *   platforms and people, and the people of `Persons.md`.
- * - `dialog`: The dialog.
  *
  * @param from - What its boxes are, with their summary, their folder and their plan
  * @param days - Its days, one weekday,
@@ -4616,8 +4575,6 @@ function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
  * - `title`: The field of the text of a skill.
  * - `rankOf`: Gives where a value stands in the list,
  *   the most used first, a new one after all.
- * - `pencil`: The pencil.
- * - `picker`: The picker.
  *
  * @param series - The plain series, which takes the summary picked
  * @returns The summary, its picker or its field
@@ -4691,7 +4648,6 @@ function plainSummaryOf(series: Plain): HTMLElement {
  * - `daysOf`: Gives the days of a part in the form, its weekdays, `Month` or `Year`,
  *   see {@link monthly} and {@link yearly}.
  * - `slots`: Its weekdays with their times, of all its parts.
- * - `dialog`: The dialog.
  *
  * @param series - The plain series, new or as the reader sends it
  * @param saved - Comes once the series is saved, like closing the dialog of the box
@@ -4918,7 +4874,6 @@ function courseSemesterOf(): string {
  * of my series the menu of its groups with the plus,
  * see {@link groupPickOf}, of a group its name, see {@link groupPartOf}.
  * - `picker`: The picker of the semester.
- * - `form`: The form.
  * - `module`: The skill, like `IN2028`, of a course by the code of its folder.
  * - `day`: The day whose semester comes first in the list,
  *   the first day of the form, else today.
@@ -5121,7 +5076,6 @@ async function freshFollow(): Promise<void> {
  * or with `Group` typed a group of its tutorials, see {@link formSave}.
  * - `loaded`: The categories, for the list, places, platforms and people,
  *   and the people of `Persons.md`.
- * - `dialog`: The dialog.
  *
  * @param day - The day shown, like `2026-10-24`, its first day
  * @param saved - Comes once the series is saved

@@ -475,7 +475,6 @@ function choiceListOf(
  * see `../editor/overview.ts`.
  * - `pick`: The row, a button.
  * - `name`: The name of what is picked on it, see `.tree-pick` in `./notes.css`.
- * - `menu`: The menu.
  *
  * @param kind - What it picks, `module` or `chapter`, which names its anchor,
  *   see `.tree-pick` in `./notes.css`
@@ -531,7 +530,6 @@ function pickerOf(
  * - `name`: Name of the folder of the chapter,
  *   like `01_RegressionAnalysis`, empty for none.
  *
- * @param tree - The tree
  * @param module - The module, see {@link moduleNodeOf}
  * @param chapter - A chapter of it, `null` for a module without chapters
  */
@@ -575,7 +573,6 @@ export function chapterShow(
  * - `module`: The module of a note, `null` for a file of my new system.
  * - `folder`: A folder on the way to it, from the nearest one up to its root.
  *
- * @param tree - The tree
  * @param shown - Path of the file or note shown, like `NomMetainformations/Foods.md` or
  *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/
  *   01_01_SampleMeanStandardError.md`
@@ -620,7 +617,6 @@ export function treeMark(tree: HTMLElement, shown: string): HTMLElement | null {
  * - `files`: The files of the tree.
  * - `show`: Shows the tree for the typed text.
  *
- * @param tree - The tree
  * @param search - Its search field
  */
 function searchStart(tree: HTMLElement, search: HTMLInputElement): void {
@@ -687,7 +683,6 @@ function searchStart(tree: HTMLElement, search: HTMLInputElement): void {
  * - `top`: How far the tree was scrolled.
  * - `entries`: The folders and files as they lie now.
  *
- * @param tree - The tree
  * @param search - Its search field
  * @param shown - Path of the file shown, empty for none
  * @throws {Error} - When the reader cannot answer
@@ -810,7 +805,6 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * one alone stays a line of its own, since folding it saves no room.
  * A line I opened stays open while the list is built anew,
  * and the one holding the block shown opens.
- * - `list`: The list.
  * - `kindOf`: Gives the type word of a block, empty for none.
  * - `linkOf`: Makes the link to a block.
  * - `judged`: Whether the block has a result, an Example or a Task.
@@ -928,7 +922,6 @@ export function roundListOf(
  *   like a note outside the chapter folders.
  * - `folded`: Names of the blocks folded in the outline before.
  * - `kinds`: Type words of the lines of a kind open in the list of a section before.
- * - `outline`: The outline.
  * - `lines`: Lines of the note.
  * - `older`: Whether the note is written the older way.
  * - `cold`, `ladder`: Whether a heading is that of a cold task, or of an Example.
@@ -940,7 +933,6 @@ export function roundListOf(
  * - `name`: Its name shown, as written, a task's without its type word and `(cold)`.
  * - `link`: Link to a heading, its text rendered.
  *
- * @param tree - The tree
  * @param path - Path of the note shown
  * @param text - Text of the note
  * @param round - Headings of the blocks of a section with their places in its round,

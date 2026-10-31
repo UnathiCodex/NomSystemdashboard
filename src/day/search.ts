@@ -97,7 +97,6 @@ let returning: boolean = false;
  * see `shownWhatOf` in `boxes.ts`; empty when it is its category, like an old `Sleep`.
  * - `shown`: What it was, or its category.
  *
- * @param entry - The entry
  * @returns What it was
  */
 function whatTextOf(entry: LogEntry): string {
@@ -117,7 +116,6 @@ function whatTextOf(entry: LogEntry): string {
  * so `Talk 10.2026` finds my talks of October and `Talk 16.10` those of one day;
  * never its note.
  *
- * @param entry - The entry
  * @returns Its text
  */
 function searchedOf(entry: LogEntry): string {
@@ -155,7 +153,6 @@ function searchedOf(entry: LogEntry): string {
  * - `button`: The result, which opens the entry.
  *
  * @param calendar - Calendar of the day
- * @param entry - The entry
  * @returns The result
  */
 function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {

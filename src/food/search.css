@@ -323,7 +323,7 @@ button.food-row:hover {
 /* In the values of a food, a number starts where every value of its column starts
    and its unit follows it closely, its field as wide as what is typed;
    a click on its unit puts the cursor into it too, so an empty one takes a click,
-   see `detailOf` in `search.ts` */
+   see `foodDetailOf` in `search.ts` */
 .food-facts > .food-grams > .food-inline-grams {
     width: auto;
     min-width: 1ch;

@@ -392,7 +392,6 @@ function gramsFieldOf(
  * see the top of this file, loading my meals,
  * and again after every meal changed or removed, and after every change of a file
  * of my new system while the cursor stands outside their list.
- * - `section`: The section.
  * - `search`: The search field of the meals, `Search meals` grey in it while empty.
  * - `list`: Place of the head and the lines of the meals.
  * - `dishes`: My meals.

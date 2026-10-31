@@ -115,7 +115,6 @@ export function codeLanguageOf(info: string): StreamLanguage<unknown> | null {
  * - `html`: The HTML so far.
  * - `escaped`: Gives a piece of code as text of HTML.
  *
- * @param code - The code
  * @param info - What follows the ``` of the block
  * @returns The HTML, `null` for a block of no language of my list
  */

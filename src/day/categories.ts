@@ -1280,8 +1280,6 @@ function placePartsShow(
  * which shows and hides its parts, see {@link partsToggle},
  * and its address below the label,
  * see {@link placePartsShow}.
- * - `pencil`: The pencil, `✎`.
- * - `address`: The address.
  *
  * @param field - Field of a place, like `Place`
  * @returns The pencil and the address
@@ -1467,7 +1465,6 @@ function summaryPartsShow(): void {
  * like the page of an event, which shows below it as I type,
  * see {@link summaryPartsShow};
  * a skill entry links the folder of its skill, a meal nothing typed.
- * - `pencil`: The pencil, `✎`.
  * - `link`: The link below the summary.
  * - `text`: The field of the summary as written,
  *   the same as its line while I type elsewhere,
@@ -1958,7 +1955,6 @@ function manyRowOf(field: Field): HTMLElement {
  * - `all`: The elements together.
  * - `shown`: Its param in brackets, or the plus.
  * - `found`: The value as the summary holds it, with its param, empty once it changed.
- * - `pencil`: The pencil.
  * - `at`: Place of the value among those of the summary now, -1 once it changed.
  *
  * @param field - Field of the summary
@@ -2101,7 +2097,6 @@ function paramPick(field: Field, at: number, param: string): void {
  * from a picker without line below the row, made now,
  * since the line of the summary, a button, can hold no picker.
  * - `at`: Place of the value among those of the summary now, -1 once it changed.
- * - `picker`: The picker.
  *
  * @param field - Field of the summary
  * @param home - Where the picker stands
@@ -2302,7 +2297,7 @@ function withSearchOf(
  * Gives how the list of `With` works,
  * see {@link withRowOf}, the one list of who I am with,
  * in its row and after the times of an exam added in the dialog of a series,
- * see `examinersOf` in `./series.ts`: my own people, `Family, …` and `Group, …`,
+ * see `peopleRowsOf` in `./series.ts`: my own people, `Family, …` and `Group, …`,
  * as I type every name my entries wrote and every person of `Persons.md`,
  * see {@link withSearchOf}, several of them, a typed name added as `Persons.md` names it,
  * but none with `;`, and each name of a person there a link to its row.
@@ -2486,7 +2481,6 @@ export type OnlineSetup = {
  * all three go along when the entry is saved.
  * Another platform picked empties all three, as a new meeting.
  * - `online`, `open`: What is picked and whether its parts show.
- * - `pencil`: The pencil, `✎`.
  * - `line`: The parts with a value below the platform.
  * - `label`, `provider`, `channel`, `title`, `link`:
  *   Fields of the name, the provider, the channel, the title and the link.
@@ -2495,7 +2489,6 @@ export type OnlineSetup = {
  * - `show`: Shows the pencil, the line and the parts for the platform picked.
  * - `take`: Takes what is picked and typed, shows it and saves it into the setup.
  * - `write`: Sends the name and the provider as typed and takes the platform as written.
- * - `row`: The row.
  *
  * @param setup - What it shows and what it saves into
  * @returns Its row
@@ -3286,7 +3279,6 @@ function boxFieldsRead(): BoxFields {
  * right above its buttons, see `day.html`,
  * and scrolls the dialog down to it, so a long one,
  * like a meal of many foods, shows it too instead of keeping it below its rows.
- * - `dialog`: The dialog.
  *
  * @param id - Identifier of the hint, like `entry-error`
  */
@@ -4280,7 +4272,6 @@ function timesUnmark(event: Event): void {
  * with another dialog over it, like that of a new place,
  * it leaves the key to that one.
  * - `form`: The form of the dialog.
- * - `dialog`: The dialog.
  */
 function enterTake(): void {
     const form: HTMLFormElement = document.getElementById(

@@ -251,7 +251,6 @@ export function dateParse(text: string): string | null {
  * - `start`: Its expected time, else the time of now on the shown day,
  *   moved on to the coming quarter hour.
  *
- * @param box - The box
  * @param day - A date on the shown day
  * @returns Start and end
  */
