@@ -2,40 +2,18 @@
  * ## Task
  *
  * What the views show of one task: when it is due,
- * and its history folded behind a small button that opens all its attempts,
- * each with its day, its result and my comment on what went wrong,
- * and a link to the day; in the scripts view and in a card, under the heading of a Task,
- * its row with one button `⋯` for the next attempt,
- * as a box of the day has, see `../menu.ts`;
- * in a section, the Task of a round,
- * a check and a cross on the line of its heading instead, see {@link judgeOf}.
+ * and its history folded behind a small button that opens all its attempts.
+ * In the scripts view and in a card its row has one button `⋯` for the next attempt,
+ * in a section, the Task of a round, a check and a cross instead, see {@link judgeOf}.
  * Only a cold Task has a result; an Example has none, `Next` checks it off in its round,
  * see `../editor/round.ts`.
- * Its menu writes into the skill entry of the moment,
- * through the reader's one writer of attempts,
- * the task judged as a whole:
- * Right at once, Wrong opens one short field for my comment on what went wrong,
- * which Enter writes with it, also empty, and Escape closes without writing;
- * the field takes plain text in one line only, see {@link plainKeep};
- * only in a session of its module,
- * which the dialog of a new entry starts while none runs,
- * see `../editor/session.ts`.
+ * Right writes at once, Wrong opens one short field for my comment on what went wrong,
+ * only in a session of its module, see `../editor/session.ts`.
  * Right and Wrong work only once the solution of the task is open,
  * so I judge against it, not by feeling, since self-grading runs generous (León 2023);
  * a task without a solution takes them always. A broken task I tell my tutor in the chat.
  * A card keeps the row quiet, as quiet as a box of the day:
- * only the `⋯`, after it grey the result of today once there is one,
- * like `wrong`, no state, no hint and no history.
- *
- * - `./attempts.ts`: Sends attempts, and writes days out.
- * - `../editor/session.ts`:
- *   Makes sure a session of the module of the task runs before an attempt is written.
- * - `../icons.ts`: Puts icons, alone or with words, into buttons.
- * - `../food/foods.ts`: Makes elements.
- * - `../menu.ts`: Puts the items for the next attempt behind one button `⋯`,
- *   and opens the field of my comment below the cross of a section as a menu.
- * - `lucide`: The icons of the history and of the items.
- * - `./task.css`: Look of the row and the history of a task.
+ * only the `⋯`, after it grey the result of today once there is one.
  */
 
 import { attemptSend, dayTextOf } from "./attempts.ts";
@@ -52,14 +30,8 @@ import type { Attempt } from "../../reader/skill.ts";
 
 /**
  * Tells when a task is due, as a line of its own,
- * where no group of due tasks names it, see `reader/skill.ts`:
- * a task due, a cold task ready with nothing due, an Example done, else new.
- *
- * @param task - Task
- * @param today - Today like `2026-10-10`
- * @returns Text like `Due today`, also for a task due earlier,
- *   `Due 12.10.2026 (Mon)`, `New`,
- *   `Ready` or `Done`
+ * where no group of due tasks names it, see `reader/skill.ts`.
+ * `Due today` also for a task due earlier.
  */
 export function stateTextOf(task: SkillTask, today: string): string {
     if (task.due !== "")
@@ -69,12 +41,8 @@ export function stateTextOf(task: SkillTask, today: string): string {
 }
 
 /**
- * Builds the label of a cold task,
- * to stand grey beside its heading in the scripts view in place of its `(cold)`:
+ * Builds the grey label of a cold task in place of its `(cold)` in the scripts view:
  * that it is cold, how often I tried it and how often I got it right.
- *
- * @param task - Cold task
- * @returns Label like `cold · 2 done · 1 right`
  */
 export function coldLabelOf(task: SkillTask): HTMLElement {
     const done: number = task.attempts.length;
@@ -84,12 +52,7 @@ export function coldLabelOf(task: SkillTask): HTMLElement {
     return elementOf("span", "task-cold", `cold · ${done} done · ${right} right`);
 }
 
-/**
- * Writes the result of an attempt, with my comment on what went wrong.
- *
- * @param attempt - Attempt
- * @returns Text like `right` or `wrong: weights add up to 1.2`
- */
+/** Writes the result of an attempt, with my comment on what went wrong. */
 export function resultTextOf(attempt: Attempt): string {
     return attempt.error === "" ? attempt.result : `wrong: ${attempt.error}`;
 }
@@ -99,10 +62,6 @@ export function resultTextOf(attempt: Attempt): string {
  * since it goes into the line `X-ROUND` as its `NOTE`, see `reader/skill.ts`:
  * a `"`, a line break or another control sign I type or paste never stands in it;
  * the reader replaces them once more as it writes.
- * - `plain`: The text without them.
- * - `at`: Where the cursor goes, after what stays of the text before it.
- *
- * @param input - The field
  */
 export function plainKeep(input: HTMLInputElement): void {
     input.addEventListener("input", (): void => {
@@ -117,14 +76,8 @@ export function plainKeep(input: HTMLInputElement): void {
 }
 
 /**
- * Builds the history of a task:
- * a small button with the history icon and the number of attempts, closed at first,
- * that opens all attempts, the latest first, each its day,
- * linking to the day in the day view, and its result.
- *
- * @param task - Task
- * @param counted - Whether the button shows the number of attempts beside its icon
- * @returns History, none for a task never tried
+ * Builds the history of a task, closed at first, the latest attempt first,
+ * each day linking to the day view. None for a task never tried.
  */
 export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
     if (task.attempts.length === 0) return [];
@@ -163,17 +116,7 @@ export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
  * then shows the task again,
  * once a session of its module runs, see `sessionEnsure` in `../editor/session.ts`;
  * without one nothing is written and the buttons stay as they are.
- * The buttons of the task take no clicks meanwhile, so a double click writes one attempt;
- * when the reader does not take the attempt, `failed` says so.
- * - {@link HTMLElement#inert}:
- *   Makes an element and its content take no clicks and no typing.
- *
- * @param place - The buttons of the task: its row, or its check and cross
- * @param task - Task
- * @param result - Result of the attempt
- * @param comment - My comment on what went wrong, empty for none and for right
- * @param written - Shows the task again once the attempt is written
- * @param failed - Says that saving failed, and lets the buttons take clicks again
+ * The buttons of the task take no clicks meanwhile, so a double click writes one attempt.
  */
 function attemptWrite(
     place: HTMLElement,
@@ -196,12 +139,7 @@ function attemptWrite(
         .catch(failed);
 }
 
-/**
- * Says below a task that saving failed, and lets the row take clicks again.
- *
- * @param row - Row of the task
- * @param error - Why saving failed, like a lost connection
- */
+/** Says below a task that saving failed, and lets the row take clicks again. */
 function failShow(row: HTMLElement, error: unknown): void {
     console.error(error);
     const form: HTMLElement = row.querySelector(".task-form") as HTMLElement;
@@ -212,13 +150,7 @@ function failShow(row: HTMLElement, error: unknown): void {
 
 /**
  * Opens the field for my comment on what went wrong below a task, focused:
- * Enter writes the attempt as wrong with the comment, also with none,
- * Escape closes the place of the field without writing.
- * - `input`: The field.
- *
- * @param row - Row of the task
- * @param task - Task
- * @param written - Shows the task again once the attempt is written
+ * Enter writes the attempt as wrong, also with no comment, Escape closes without writing.
  */
 function wrongShow(
     row: HTMLElement,
@@ -249,27 +181,13 @@ function wrongShow(
 }
 
 /**
- * Builds the row of a task under its heading in the scripts view: when it is due,
- * then its button `⋯` with Right and Wrong, see the top of this file,
- * then its history and the place for the field of my comment, each across the row.
+ * Builds the row of a task under its heading in the scripts view.
  * The button hides, keeping its place, until the solution is open,
- * and the row marks itself so meanwhile,
- * a grey hint after the state saying so, see `task.css`;
- * a card's row shows neither state nor hint nor history.
- * - `more`: The button `⋯` of the task with its menu.
- * - `judged`: Shows the button while the solution is open,
- *   or always when the task has none.
+ * with a grey hint after the state saying so, see `task.css`.
  * - `done`: The last attempt of today, whose result a card shows.
  *
- * @param task - Task
- * @param today - Today like `2026-10-10`
- * @param solution - Fold of the task's solution,
- *   `null` when it has none: whether it is open,
- *   and a `toggle` when that changes, like the fold of a card,
+ * @param solution - Fold of the task's solution, `null` when it has none,
  *   or as the editor draws the row anew on each fold, see `../editor/tasks.ts`
- * @param card - Whether the row stands on a card, quiet
- * @param written - Shows the task again once an attempt is written
- * @returns Row
  */
 export function taskRowOf(
     task: SkillTask,
@@ -322,10 +240,6 @@ export function taskRowOf(
 /**
  * Makes a button of the check and the cross of a task, see {@link judgeOf}:
  * one chip high and as wide, its icon in place of its word, which is its tooltip.
- *
- * @param icon - Icon, `Check` or `X`
- * @param words - What it writes, `Right` or `Wrong`
- * @returns Button
  */
 function judgeButtonOf(icon: IconNode, words: string): HTMLButtonElement {
     const button: HTMLButtonElement = document.createElement("button");
@@ -336,32 +250,15 @@ function judgeButtonOf(icon: IconNode, words: string): HTMLButtonElement {
 }
 
 /**
- * Builds the check and the cross of a task in a section, its results Right and Wrong,
- * see the top of this file:
- * two small buttons side by side, to stand at the right end of the line of its heading,
- * see `../editor/tasks.ts`.
+ * Builds the check and the cross of a task in a section,
+ * to stand at the right end of the line of its heading, see `../editor/tasks.ts`.
  * The check writes Right at once and then goes on, as `Next` does;
- * the cross opens below it the field of my comment on what went wrong,
- * in the place and look of a menu, see `menuAnchor` in `../menu.ts`,
- * which Enter writes with it, also empty,
- * and Escape or a click beside it closes without writing.
+ * the cross opens below it the field of my comment in the place and look of a menu,
+ * see `menuAnchor` in `../menu.ts`.
  * Both stay faint and off until the solution is open, so I judge against it;
- * the result of today stands pressed, in the calm grey of what is picked,
- * the cross with my comment as its tooltip.
- * - `judge`: The check and the cross.
- * - `right`, `wrong`: The check and the cross.
- * - `reason`: The menu below the cross with the field of my comment.
- * - `input`: The field.
- * - `done`: The last attempt of today, whose result stands pressed.
- * - `failed`: Says in the menu below the cross that saving failed,
- *   the field below it, to try again.
+ * the result of today stands pressed, the cross with my comment as its tooltip.
  *
- * @param task - Task
- * @param today - Today like `2026-10-17`
  * @param open - Whether its solution is open, also for a task without one
- * @param written - Shows the task again once an attempt is written
- * @param wentOn - Goes on as `Next` does, once a Right is written
- * @returns The check and the cross
  */
 export function judgeOf(
     task: SkillTask,

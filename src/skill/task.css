@@ -1,8 +1,6 @@
-/* Row of a task under its heading in the scripts view,
-   calm and airy, everything from the left:
-   when it is due, its button `⋯` after it on the same line, see `../menu.css`;
-   its history and the field of my comment below, each across the row;
-   lines one gap apart, the button a gap and a half after when it is due */
+/* Row of a task under its heading in the scripts view, everything from the left:
+   when it is due, its button `⋯` after it, see `../menu.css`;
+   its history and the field of my comment below, each across the row */
 .task-row {
     display: flex;
     flex-wrap: wrap;
@@ -17,8 +15,7 @@
 }
 
 /* A quiet row, on a card, as a box of the day: its button `⋯` at the right,
-   so its menu opens below it toward the page, the result of today grey before it,
-   and the field of my comment below them */
+   so its menu opens below it toward the page */
 .task-quiet {
     justify-content: flex-end;
     gap: 0.75rem;
@@ -49,11 +46,9 @@
 }
 
 /* Next step and Show all of a solution one chip high,
-   filled in the soft grey of a card without a frame,
-   as on the phone, with a quarter more room beside their words, their words grey,
+   filled in the soft grey of a card without a frame, their words grey,
    light under the pointer, as of every button with words, never a lighter box;
-   the button of the history the same;
-   each keeps its size, its frame there but clear */
+   the button of the history the same */
 .steps-buttons button,
 .task-history > summary {
     min-height: var(--chip-height);
@@ -92,11 +87,8 @@
     background: var(--fill);
 }
 
-/* History of a task: a small grey button with its icon
-   and the number of attempts on a line of its own,
-   filled like the buttons, closed at first,
-   opening the attempts below it, the latest first, across the whole width;
-   while open, the button light on the calm grey of what is shown */
+/* History of a task: a small grey button with its icon and the number of attempts,
+   opening the attempts below it across the whole width */
 .task-history > summary {
     display: inline-flex;
     align-items: center;
@@ -128,8 +120,7 @@ details.task-history a {
     color: inherit;
 }
 
-/* The button `⋯` of a task, which holds Right and Wrong,
-   while its solution is still closed:
+/* The button `⋯` of a task while its solution is still closed:
    hidden, keeping its place, so nothing moves when it shows,
    and I judge against the solution, not by feeling */
 .task-unjudged .menu-place {
@@ -146,14 +137,10 @@ details.task-history a {
 }
 
 /* Check and cross of a task of a section at the right end of the line of its heading,
-   see `judgeOf` in `task.ts`:
-   two small buttons a little apart,
-   as high as the heading's line and centred on it, its last line where it wraps,
+   see `judgeOf` in `task.ts`: centred on its line, its last line where it wraps,
    the room for them kept free beside the text,
    see `.task-heading` in `../editor/editor.css`;
-   small icon buttons, see `.chip-button` in `../base.css`,
-   the result of today pressed told apart only by its icon light instead of grey,
-   as the area of the rail shown */
+   the result of today pressed told apart only by its icon light instead of grey */
 .task-judge {
     position: absolute;
     right: 0;
@@ -168,10 +155,8 @@ details.task-history a {
     color: var(--text-main);
 }
 
-/* Field of my comment after Wrong in the menu below the cross,
-   see `../menu.css`: one control high,
-   as wide as a few words, filled in the soft grey of a card without a frame;
-   the hint that saving failed above it, grey */
+/* Field of my comment after Wrong in the menu below the cross, see `../menu.css`,
+   the hint that saving failed above it */
 .task-reason input {
     width: min(18rem, 80vw);
     height: var(--control-height);

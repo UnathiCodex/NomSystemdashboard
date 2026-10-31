@@ -8,9 +8,6 @@
  * and sends to the reader's one writer of skill entries:
  * an attempt from a button of a task into the skill entry of the moment,
  * and a whole skill entry from the entry by category.
- *
- * - `../day/entries.ts`: Names who I was with in a skill entry.
- * - `../reader.ts`: Asks the reader.
  */
 
 import { readerAsk } from "../reader.ts";
@@ -21,21 +18,12 @@ import type { Attendee, Online } from "../../reader/calendar.ts";
 /**
  * A task as a chapter note holds it, as the reader sends it.
  *
- * - `id`: Identity, `<module>/<name>`, like `IN2028/Airline Revenue Interval`.
- * - `name`: Name in its heading, like `Airline Revenue Interval`.
- * - `heading`: Its heading as written, like `Task. Airline Revenue Interval`.
+ * - `id`: Identity, `<module>/<name>`.
  * - `source`: Its sources as written on its source lines,
- *   each without `> ` and its mode word,
- *   joined by `, `, like
- *   `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`,
- *   empty without one.
- * - `note`: Path of its note, as the scripts view takes it.
- * - `chapter`: Name of its chapter, like `01_RegressionAnalysis`.
- * - `section`: Name of its section, its note, like `01_01_SampleMeanStandardError`.
+ *   each without `> ` and its mode word, joined by `, `, empty without one.
  * - `kind`: Its kind by the type word of its heading: example, an Example,
  *   its steps predicted one by one, or an older Completion; or cold, a Task.
- * - `parts`: Numbers of the parts of a cold task, like `1`,
- *   `2` and `3`, none for any other task.
+ * - `parts`: Numbers of the parts of a cold task, none for any other task.
  */
 export type Task = {
     id: string;
@@ -53,11 +41,9 @@ export type Task = {
  * A {@link Task} with when it is due, as the reader sends it, see `reader/skill.ts`.
  *
  * - `due`: Day it is due next, the day of the next round of its section for its cold Task
- *   of that round, like `2026-10-12`; empty for any other task and when nothing is due.
+ *   of that round; empty for any other task and when nothing is due.
  * - `done`: For an Example, whether I checked it off in a round.
  * - `level`: For a cold task, the runs of its section that count, 0 to 4.
- * - `ready`: For a cold task, whether its section has its four runs.
- * - `attempts`: All its attempts, the latest last.
  */
 export type SkillTask = Task & {
     due: string;
@@ -70,35 +56,20 @@ export type SkillTask = Task & {
 /**
  * A section of a module, a note of a chapter, as the reader sends it.
  *
- * - `title`: Its name, like `01_01_SampleMeanStandardError`.
- * - `note`: Path of its note.
- * - `chapter`: Name of its chapter.
  * - `cold`: Identity of the cold Task of the round shown, empty when it has none yet.
- * - `example`: Identity of the Example of the round shown, the next unused one,
- *   empty for none left.
- * - `algorithm`: Heading of its Algorithm as written,
- *   the one worked example; empty for none.
- * - `tasks`: Number of its tasks.
- * - `tried`: Number of its tasks I tried.
+ * - `example`: Identity of the Example of the round shown, the next unused one.
+ * - `algorithm`: Heading of its Algorithm as written, the one worked example.
  * - `round`: The round shown: one going on, or ended today, else the next one,
  *   see `sectionOf` in `reader/skill.ts`.
  * - `ladder`: Whether the round shown is round 0, its theory,
  *   one Example and its first Task.
  * - `runs`: Its runs that count, decided before today.
- * - `day`: Day the round shown began, today for one not begun.
- * - `rightDue`: Day the next round comes after a right Task today;
- *   empty without a cold task.
- * - `wrongDue`: Day it comes after a Task wrong for good today;
- *   empty without a cold task.
- * - `at`: Key of the step of the round shown I went on to with the last `Next`,
- *   where I stand, empty for none yet.
- * - `closed`: Whether I closed the round shown by hand.
- * - `results`: Results of the Task of the round shown, in order, none for none yet.
- * - `used`: Whether the round shown checked its Example off with `Next`.
- * - `days`: Days I learned it, by its lines in the log,
- *   the oldest first, like `2026-10-11`.
+ * - `rightDue`, `wrongDue`: Day the next round comes after a right Task today,
+ *   or after a Task wrong for good today.
+ * - `at`: Key of the step of the round shown I went on to with the last `Next`.
+ * - `days`: Days I learned it, by its lines in the log.
  * - `today`: What of it is due today: `task`, its Task of today, `new`, its round 0,
- *   or empty for nothing, see `todayMarked` in `reader/skill.ts`.
+ *   see `todayMarked` in `reader/skill.ts`.
  */
 export type SkillSection = {
     title: string;
@@ -123,15 +94,7 @@ export type SkillSection = {
     today: "task" | "new" | "";
 };
 
-/**
- * A module of the semester with its tasks, as the reader sends it.
- *
- * - `code`: Module code, like `IN2028`.
- * - `title`: Its name, like `IN2028_BusinessAnalyticsMachineLearning`.
- * - `exam`: Its exam.
- * - `tasks`: Its tasks in the order of the notes.
- * - `sections`: Its sections in the same order.
- */
+/** A module of the semester with its tasks in the order of the notes. */
 export type SkillModule = {
     code: string;
     title: string;
@@ -145,19 +108,12 @@ export type SkillModule = {
  * which the scripts show and the skill entries of the day pick from,
  * as the reader sends it.
  *
- * - `modules`: Modules of the semester in their order, also those without tasks yet.
- * - `skills`: The skills of the semester in their order, for the Skill picker:
- *   a module by its code, like `IN2028`, a project by its folder name, like `WokFlow`.
+ * - `modules`: Also those without tasks yet.
+ * - `skills`: For the Skill picker, a module by its code, a project by its folder name.
  * - `otherModules`: The other module folders by their codes,
- *   like `IN0024`, for the search of the Skill picker.
- * - `folders`: The whole name of the folder of each of them by its name,
- *   which the Skill picker shows,
- *   like `IN2028_BusinessAnalyticsMachineLearning` for `IN2028`.
- * - `paths`: The folder of each of them from `NomWorkspace`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`.
+ *   for the search of the Skill picker.
  * - `links`: The link of each of them, one for all its entries and boxes,
- *   shown below the skill picked, like `NomManageplannings` of `NomMasterplannings`.
- * - `types`: Types of a skill entry, like `VO`.
+ *   shown below the skill picked.
  */
 export type Skilling = {
     modules: SkillModule[];
@@ -172,11 +128,6 @@ export type Skilling = {
 /**
  * A new attempt to send, from a button of a task or as one of a skill entry:
  * the task judged as a whole.
- *
- * - `task`: Identity of the task.
- * - `result`: Its result, `right` or `wrong`.
- * - `comment`: My short comment on what went wrong,
- *   only with `wrong`, empty when not given.
  */
 export type AttemptNew = {
     task: string;
@@ -187,15 +138,6 @@ export type AttemptNew = {
 /**
  * A line `X-ROUND` of a skill entry, as the reader sends it,
  * see `RoundMark` in `reader/calendar.ts`.
- *
- * - `section`: Its section, the name of its note, like `01_02_SampleMeanEstimator`.
- * - `round`: Its round.
- * - `step`: Heading of the step I stand at, `done` once closed, empty before the first.
- * - `task`: Heading of the cold Task I solved in it, empty for none.
- * - `used`: Heading of the Example I checked off in it, empty for none.
- * - `results`: Results of that Task in it, in order.
- * - `notes`: My comment on each wrong one, in order.
- * - `due`: Day the next round comes, once the Task decided the round, empty before.
  */
 export type RoundMark = {
     section: string;
@@ -212,29 +154,14 @@ export type RoundMark = {
  * A new skill entry of the log to send from the entry by category;
  * an empty field is not written.
  *
- * - `title`: Its title, always the one its skill and type give it.
  * - `titleLink`: Its link, typed, one for all entries of its skill;
  *   left out or empty, the one they share, see `titleOf` in `documents.ts`.
- * - `type`: Its type, like `VO`, empty for none.
- * - `module`: Name of its skill, a module code like `IN2028` or a project like `WokFlow`.
- * - `semester`: Its semester, like `2026W`:
- *   from which semester the lecture or the material is, see {@link semesterOf}.
- * - `chapters`: Names of the chapters it covered, none for none.
- * - `documents`: Paths from the folder of its skill
- *   of the documents it used, none for none;
+ * - `semester`: From which semester the lecture or the material is,
+ *   see {@link semesterOf}.
+ * - `documents`: Paths from the folder of its skill of the documents it used;
  *   the reader links each with its fingerprint, see `reader/documents.ts`.
- * - `attempts`: Its attempts, none for none.
- * - `rounds`: Rounds I picked by hand for its notes,
- *   see {@link RoundPick}, none for none.
- * - `location`: Place, like the room of a lecture logged from the plan.
- * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
- *   What I did online, like the stream of a lecture,
- *   see `Online` in `reader/calendar.ts`.
- * - `attendees`: Who I was with, see `Attendee` in `reader/calendar.ts`, none for nobody.
+ * - `rounds`: Rounds I picked by hand for its notes, see {@link RoundPick}.
  * - `planned`: Identifier of the plan entry it is logged from, empty for none.
- * - `note`: Free note.
- * - `start`: Start of the entry.
- * - `end`: End of the entry, after the start.
  */
 export type SkillEntryNew = Partial<Online> & {
     title: string;
@@ -254,29 +181,16 @@ export type SkillEntryNew = Partial<Online> & {
     end: Date;
 };
 
-/**
- * Tasks that are due alike.
- *
- * - `name`: Name of the group, like `Due today`.
- * - `tasks`: Its tasks.
- */
+/** Tasks that are due alike. */
 export type Group = {
     name: string;
     tasks: SkillTask[];
 };
 
-/**
- * Category of skill entries in the entry by category.
- */
+/** Category of skill entries in the entry by category. */
 export const skillName: string = "Skill";
 
-/**
- * Loads every module of the semester with its tasks from the reader,
- * see {@link Skilling}.
- *
- * @returns Modules with their tasks and what the pickers offer
- * @throws {Error} - When the reader cannot answer
- */
+/** Loads every module of the semester with its tasks from the reader. */
 export async function skillingLoad(): Promise<Skilling> {
     return readerAsk<Skilling>("/api/skill/tasks");
 }
@@ -285,9 +199,6 @@ export async function skillingLoad(): Promise<Skilling> {
  * Loads what a skill offers a skill entry from the reader,
  * its chapters and its documents, none for a project.
  *
- * @param code - Name of the skill,
- *   a module code like `IN2028` or a project like `WokFlow`
- * @returns Chapters and documents of the skill
  * @throws {Error} - When the reader cannot answer, like for a module without folder
  */
 export async function moduleLoad(code: string): Promise<ModuleContents> {
@@ -299,9 +210,6 @@ export async function moduleLoad(code: string): Promise<ModuleContents> {
 /**
  * Sends something to write to the reader, as JSON.
  *
- * @param method - HTTP method, `POST` for something new, `PATCH` for a change
- * @param address - Address at the reader, like `/api/skill/attempt`
- * @param body - What to write
  * @throws {Error} - When the reader does not take it
  */
 async function readerSend(method: string, address: string, body: object): Promise<void> {
@@ -312,13 +220,7 @@ async function readerSend(method: string, address: string, body: object): Promis
     if (!response.ok) throw new Error(`Reader answered ${response.status}`);
 }
 
-/**
- * Sends a new attempt from a button of a task to the reader,
- * which writes it into the skill entry of the moment.
- *
- * @param attempt - Attempt to write
- * @throws {Error} - When the reader does not take the attempt
- */
+/** Sends a new attempt from a button of a task into the skill entry of the moment. */
 export async function attemptSend(attempt: AttemptNew): Promise<void> {
     await readerSend("POST", "/api/skill/attempt", attempt);
 }
@@ -326,22 +228,15 @@ export async function attemptSend(attempt: AttemptNew): Promise<void> {
 /**
  * Sends a skill entry of the log to the reader, with ISO instants: a new one to write,
  * or with the identifier of an entry the changes of that entry,
- * its attempts added after those it has,
  * only while its file holds it as the dialog opened it:
  * the reader refuses the change with 409 once the file changed it since,
  * like an attempt the learning view wrote into it,
- * see `skillEntryEdit` in `reader/skill.ts`,
- * as for any entry of the log, see `entryChange` in `../day/entries.ts`;
- * the first save wins.
- * - `body`: The entry with ISO instants.
- * - `response`: Answer of the reader to a change.
+ * see `skillEntryEdit` in `reader/skill.ts`; the first save wins.
  *
- * @param id - Identifier of the entry to change, empty for a new entry
  * @param entry - Skill entry, for a change with only the new attempts
- * @param version - Fingerprint of the entry to change as the dialog opened it,
- *   see `version` of `Entry` in `reader/calendar.ts`; empty for a new entry
- * @returns Whether it is written,
- *   `false` when the file changed the entry since the dialog opened it
+ * @param version - Fingerprint of the entry as the dialog opened it,
+ *   empty for a new entry
+ * @returns `false` when the file changed the entry since the dialog opened it
  * @throws {Error} - When the reader does not take the entry for another reason
  */
 export async function skillEntrySend(
@@ -367,26 +262,14 @@ export async function skillEntrySend(
     return true;
 }
 
-/**
- * Writes the day of a date in local time, in the form of the days of the reader.
- *
- * @param date - Date on the day
- * @returns Day like `2026-10-10`
- */
+/** Writes the day of a date in local time, in the form of the days of the reader. */
 export function dayOf(date: Date): string {
     const month: string = String(date.getMonth() + 1).padStart(2, "0");
     const day: string = String(date.getDate()).padStart(2, "0");
     return `${date.getFullYear()}-${month}-${day}`;
 }
 
-/**
- * Adds days to a day.
- * - `date`: The day at noon, moved.
- *
- * @param day - Day like `2026-10-19`
- * @param days - Number of days to add
- * @returns Day like `2026-10-26`
- */
+/** Adds days to a day, at noon so a change of summer time never moves it. */
 export function dayAdd(day: string, days: number): string {
     const date: Date = new Date(`${day}T12:00:00`);
     date.setDate(date.getDate() + days);
@@ -395,12 +278,7 @@ export function dayAdd(day: string, days: number): string {
 
 /**
  * Writes a day out as the page shows it, in my standard way with its year,
- * and its short weekday in English after it in brackets where that helps,
- * like for the day a task is due, as every day of the page shows it.
- *
- * @param day - Day like `2026-10-17`
- * @param weekday - Whether to write the weekday
- * @returns Day like `17.10.2026`, or `17.10.2026 (Sat)`
+ * and its short weekday in English after it in brackets where that helps.
  */
 export function dayTextOf(day: string, weekday: boolean): string {
     const [year, month, number]: number[] = day.split("-").map(Number);
@@ -411,15 +289,9 @@ export function dayTextOf(day: string, weekday: boolean): string {
 }
 
 /**
- * Gives the semester of a day,
- * which the dialog fills in for a skill entry until I pick another,
+ * Gives the semester of a day, which the dialog fills in for a skill entry,
  * as the reader does, see `semesterOf` in `reader/categories.ts`:
- * October to March a winter, April to September a summer;
  * January to March belong to the winter that began the year before.
- * - `year`, `month`: Year and month of the day.
- *
- * @param day - Day like `2027-02-15`
- * @returns Semester like `2026W`, or `2027S` for `2027-05-04`
  */
 export function semesterOf(day: string): string {
     const [year, month]: number[] = day.split("-").map(Number);
@@ -429,18 +301,11 @@ export function semesterOf(day: string): string {
 }
 
 /**
- * Orders tasks, like those of a module or of a chapter,
- * into groups by when they are due, see `reader/skill.ts`:
+ * Orders tasks into groups by when they are due, see `reader/skill.ts`:
  * due today, also those due earlier, the earliest first;
  * new ones, never tried, in the order of the notes;
  * later ones by their day; done ones, the Examples I checked off,
- * the Tasks tried and not due, and the ready cold tasks.
- * - `fresh`: Whether a task was never tried.
- * - `byDue`: Compares two tasks by their due day, the earliest first.
- *
- * @param tasks - Tasks in the order of the notes
- * @param today - Today like `2026-10-10`
- * @returns Groups `Due today`, `New`, `Later` and `Done`, also empty ones
+ * the Tasks tried and not due, and the ready cold tasks. Empty groups stay.
  */
 export function groupsOf(tasks: SkillTask[], today: string): Group[] {
     const fresh: (task: SkillTask) => boolean = (task: SkillTask): boolean =>
