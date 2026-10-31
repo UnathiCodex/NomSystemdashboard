@@ -92,16 +92,26 @@ import type { SyntaxNode, SyntaxNodeRef } from "@lezer/common";
  */
 export function emptyIs(state: EditorState, line: Line): boolean {
     if (!/^[ \t>]*$/.test(line.text)) return false;
+    if (
+        nodeAround(
+            state,
+            line.from,
+            /^(?:FencedCode|CodeBlock|HTMLBlock|CommentBlock|InlineMath)$/,
+        ) !== null
+    )
+        return false;
+    return /^[ \t]*$/.test(line.text) || quoteMarkIs(state, line);
+}
+
+/** Finds the innermost node right after a place whose name `name` takes, or around it. */
+function nodeAround(state: EditorState, pos: number, name: RegExp): SyntaxNode | null {
     for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.from, 1);
+        let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, 1);
         node !== null;
         node = node.parent
     )
-        if (
-            /^(?:FencedCode|CodeBlock|HTMLBlock|CommentBlock|InlineMath)$/.test(node.name)
-        )
-            return false;
-    return /^[ \t]*$/.test(line.text) || quoteMarkIs(state, line);
+        if (name.test(node.name)) return node;
+    return null;
 }
 
 /** Tells a line that starts with the `>` of a quote, not with a `>` of plain text. */
@@ -500,26 +510,39 @@ const quoteBreak: Command = (view: EditorView): boolean => {
     const textStart: boolean = /^[ \t>]*$/.test(
         view.state.sliceDoc(line.from, range.head),
     );
-    const insert: string = textStart
-        ? air + view.state.lineBreak
-        : view.state.lineBreak + air + view.state.lineBreak + marks;
+    return breakWrite(
+        view,
+        textStart,
+        textStart
+            ? air + view.state.lineBreak
+            : view.state.lineBreak + air + view.state.lineBreak + marks,
+    );
+};
+
+/**
+ * Writes a break at the cursor, see {@link quoteBreak} and {@link paragraphBreak}:
+ * before the text of its line at the start of the line,
+ * else in place of the blanks around the cursor, the cursor after it.
+ *
+ * @returns `true`, as the key is taken
+ */
+function breakWrite(view: EditorView, textStart: boolean, insert: string): boolean {
+    const range: SelectionRange = view.state.selection.main;
     const from: number = textStart
-        ? line.from
+        ? view.state.doc.lineAt(range.head).from
         : range.head - blanksBefore(view.state, range.head);
     view.dispatch({
-        changes: textStart
-            ? { from: from, insert: insert }
-            : {
-                  from: from,
-                  to: range.head + blanksAfter(view.state, range.head),
-                  insert: insert,
-              },
+        changes: {
+            from: from,
+            to: textStart ? from : range.head + blanksAfter(view.state, range.head),
+            insert: insert,
+        },
         selection: { anchor: (textStart ? range.head : from) + insert.length },
         scrollIntoView: true,
         userEvent: "input",
     });
     return true;
-};
+}
 
 /**
  * Finds the point whose line the cursor stands on right after its `-` or number,
@@ -671,13 +694,7 @@ const markupContinue: Command = (view: EditorView): boolean =>
 
 /** Tells a line of code, of a fenced or an indented code block, whose blanks are text. */
 function codeIs(state: EditorState, line: Line): boolean {
-    for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.from, 1);
-        node !== null;
-        node = node.parent
-    )
-        if (/^(?:FencedCode|CodeBlock)$/.test(node.name)) return true;
-    return false;
+    return nodeAround(state, line.from, /^(?:FencedCode|CodeBlock)$/) !== null;
 }
 
 /**
@@ -897,13 +914,7 @@ const quoteBackward: Command = (view: EditorView): boolean => {
 
 /** Tells a line of a table, whose rows a line break would tear apart. */
 function tableOf(state: EditorState, line: Line): SyntaxNode | null {
-    for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.from, 1);
-        node !== null;
-        node = node.parent
-    )
-        if (node.name === "Table") return node;
-    return null;
+    return nodeAround(state, line.from, /^Table$/);
 }
 
 /**
@@ -920,26 +931,20 @@ function tableBreak(lines: number): Command {
         const line: Line = view.state.doc.lineAt(range.head);
         const table: SyntaxNode | null = tableOf(view.state, line);
         if (table === null) return false;
-        if (
+        const end: boolean =
             range.empty &&
             range.head === line.to &&
-            view.state.doc.lineAt(table.to).number === line.number
-        )
+            view.state.doc.lineAt(table.to).number === line.number;
+        const breaks: number = end
+            ? lines
+            : range.empty && range.head === line.from && table.from === line.from
+              ? lines - 1
+              : 0;
+        const at: number = end ? line.to : line.from;
+        if (breaks > 0)
             view.dispatch({
-                changes: { from: line.to, insert: view.state.lineBreak.repeat(lines) },
-                selection: { anchor: line.to + view.state.lineBreak.length * lines },
-                scrollIntoView: true,
-                userEvent: "input",
-            });
-        else if (range.empty && range.head === line.from && table.from === line.from)
-            view.dispatch({
-                changes: {
-                    from: line.from,
-                    insert: view.state.lineBreak.repeat(lines - 1),
-                },
-                selection: {
-                    anchor: line.from + view.state.lineBreak.length * (lines - 1),
-                },
+                changes: { from: at, insert: view.state.lineBreak.repeat(breaks) },
+                selection: { anchor: at + view.state.lineBreak.length * breaks },
                 scrollIntoView: true,
                 userEvent: "input",
             });
@@ -1325,23 +1330,13 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
         (node.name === "Paragraph" ? /^[ \t]*$/ : /^[ \t]*#*[ \t]*$/).test(
             view.state.sliceDoc(line.from, range.head),
         );
-    const insert: string = textStart
-        ? airOf(view.state, line, 1)
-        : view.state.lineBreak + view.state.lineBreak;
-    const from: number = textStart
-        ? line.from
-        : range.head - blanksBefore(view.state, range.head);
-    view.dispatch({
-        changes: {
-            from: from,
-            to: textStart ? from : range.head + blanksAfter(view.state, range.head),
-            insert: insert,
-        },
-        selection: { anchor: (textStart ? range.head : from) + insert.length },
-        scrollIntoView: true,
-        userEvent: "input",
-    });
-    return true;
+    return breakWrite(
+        view,
+        textStart,
+        textStart
+            ? airOf(view.state, line, 1)
+            : view.state.lineBreak + view.state.lineBreak,
+    );
 };
 
 /**
@@ -1349,16 +1344,11 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
  * after the `>` of a quote, so a further line of a point or a sub-point is found too.
  */
 function itemOf(state: EditorState, line: Line): SyntaxNode | null {
-    for (
-        let node: SyntaxNode | null = syntaxTree(state).resolveInner(
-            line.from + (/^(?:[ \t]*>[ \t]?)*[ \t]*/.exec(line.text)?.[0].length ?? 0),
-            1,
-        );
-        node !== null;
-        node = node.parent
-    )
-        if (node.name === "ListItem") return node;
-    return null;
+    return nodeAround(
+        state,
+        line.from + (/^(?:[ \t]*>[ \t]?)*[ \t]*/.exec(line.text)?.[0].length ?? 0),
+        /^ListItem$/,
+    );
 }
 
 /**
