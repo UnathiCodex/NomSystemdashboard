@@ -86,6 +86,7 @@
  *   `Exercises.md` and `Videos.md`, and reads `Weights.md`.
  * - `node:path`: Gives the folder of the files.
  * - `./calendar.ts`: Reads the log and gives the day of an instant in Berlin time.
+ * - `./markdown.ts`: Cuts a row of a table into its cells and cleans a name for it.
  * - `./sources.ts`: Names the four files, the log and the address of YouTube's oEmbed,
  *   and tells which files the reader may write.
  */
@@ -93,6 +94,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { berlinDateOf, entriesRead, summaryBaseOf } from "./calendar.ts";
+import { cellsOf, nameOf } from "./markdown.ts";
 import { sport, writeAllowed } from "./sources.ts";
 
 import type { Entry } from "./calendar.ts";
@@ -485,18 +487,6 @@ const answerTime: number = 5000;
 const dayLength: number = 24 * 60 * 60 * 1000;
 
 /**
- * Cleans a name for a table and the log:
- * `|` and `;` become spaces, spaces in a row one, none at the ends.
- *
- * @param name - Name as typed or as YouTube writes it,
- *   like `30 MIN FULL BODY | No Equipment`
- * @returns Clean name, like `30 MIN FULL BODY No Equipment`
- */
-function nameOf(name: string): string {
-    return name.replace(/[|;]/g, " ").replace(/\s+/g, " ").trim();
-}
-
-/**
  * Cleans the name of a workout or an exercise:
  * as a name, see {@link nameOf}, and without a comma,
  * which parts the names of a list, like `(Bench press, Dips)`;
@@ -577,25 +567,6 @@ function dayOf(text: string): string {
     if (german !== null)
         return `${german[3]}-${german[2].padStart(2, "0")}-${german[1].padStart(2, "0")}`;
     return /^\d{4}-\d{2}-\d{2}$/.test(text.trim()) ? text.trim() : "";
-}
-
-/**
- * Cuts a row of a table into its cells,
- * without the empty texts before its first `|` and after its last,
- * each without spaces at its ends:
- * parted only by a `|` that is no `\|`, as the editor writes a `|` typed into a cell,
- * see `cellWritten` in `src/editor/table.ts`,
- * so such a cell never moves the cells after it one column on;
- * the cell keeps its `\|` as written, so it stays one when its file is written anew.
- *
- * @param line - Row like `| Push | Exercise | Bench press |  |`
- * @returns Its cells
- */
-function cellsOf(line: string): string[] {
-    return line
-        .split(/(?<!\\)\|/)
-        .slice(1, -1)
-        .map((cell: string): string => cell.trim());
 }
 
 /**

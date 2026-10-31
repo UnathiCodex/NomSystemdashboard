@@ -6,6 +6,8 @@
  * two empty lines before a heading, one below it and one between paragraphs;
  * none at the start of a file, one after its front matter, and none at its end,
  * which is one line break. Only empty lines change, every other line stays as it is.
+ * Cuts a row of a table into its cells, see {@link cellsOf},
+ * and cleans a name for a table, see {@link nameOf}.
  */
 
 /**
@@ -88,4 +90,37 @@ export function markdownFormOf(text: string): string {
     while (written.length > matter && emptyForm.test(written[written.length - 1]))
         written.pop();
     return written.length === 0 ? "" : `${written.join("\n")}\n`;
+}
+
+/**
+ * Cuts a row of a table into its cells,
+ * without the empty texts before its first `|` and after its last,
+ * each without spaces at its ends:
+ * parted only by a `|` that is no `\|`, as the editor writes a `|` typed into a cell,
+ * see `cellWritten` in `src/editor/table.ts`,
+ * so such a cell never moves the cells after it one column on,
+ * like a link into the column of the country of `Places.md`;
+ * the cell keeps its `\|` as written, so it stays one when its row is written back.
+ *
+ * @param line - Row like `| Push | Exercise | Bench press |  |`
+ * @returns Its cells
+ */
+export function cellsOf(line: string): string[] {
+    return line
+        .split(/(?<!\\)\|/)
+        .slice(1, -1)
+        .map((cell: string): string => cell.trim());
+}
+
+/**
+ * Cleans a name for a table and the log,
+ * like a food of a meal, the pack of a food or a video:
+ * `|` and `;` become spaces, spaces in a row one, none at the ends.
+ *
+ * @param name - Name as typed or as Open Food Facts or YouTube write it,
+ *   like `30 MIN FULL BODY | No Equipment`
+ * @returns Clean name, like `30 MIN FULL BODY No Equipment`
+ */
+export function nameOf(name: string): string {
+    return name.replace(/[|;]/g, " ").replace(/\s+/g, " ").trim();
 }

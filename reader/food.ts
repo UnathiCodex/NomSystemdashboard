@@ -77,7 +77,8 @@
  * - `node:path`: Gives the folder of `Foods.md` and `Meals.md`.
  * - `./calendar.ts`: Reads the log, finds the file of an entry,
  *   writes the foods of an entry anew and gives the day of an instant in Berlin time.
- * - `./markdown.ts`: Gives `Meals.md` the empty lines of my Markdown.
+ * - `./markdown.ts`: Gives `Meals.md` the empty lines of my Markdown,
+ *   cuts a row of a table into its cells and cleans a name for it.
  * - `./sources.ts`: Names `Foods.md`, `Meals.md`,
  *   the log and the addresses of Open Food Facts,
  *   and tells which files the reader may write.
@@ -86,7 +87,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { berlinDateOf, entriesRead, entryLookup, propertiesPut } from "./calendar.ts";
-import { markdownFormOf } from "./markdown.ts";
+import { cellsOf, markdownFormOf, nameOf } from "./markdown.ts";
 import { food, writeAllowed } from "./sources.ts";
 
 import type { Entry } from "./calendar.ts";
@@ -606,18 +607,6 @@ function nutrientsOf(values: Nutrients): Nutrients {
 }
 
 /**
- * Cleans a name for a table and the lines `X-FOOD`,
- * like a food of a meal or the pack of a food:
- * `|` and `;` become spaces, spaces in a row one, none at the ends.
- *
- * @param name - Name as typed or as Open Food Facts writes it, like `SUPREME  RICE`
- * @returns Clean name, like `SUPREME RICE`
- */
-function nameOf(name: string): string {
-    return name.replace(/[|;]/g, " ").replace(/\s+/g, " ").trim();
-}
-
-/**
  * Cleans the name of a food as it goes into `Foods.md`,
  * from Open Food Facts or typed by hand, and the name of a meal:
  * as a name, see {@link nameOf}, and without a comma, since the comma is ours:
@@ -736,26 +725,6 @@ function kindOf(text: unknown): Kind {
  */
 function portionOf(given: number | null): number {
     return given !== null && given > 0 ? roundOf(given, 1) : 100;
-}
-
-/**
- * Cuts a row of a table into its cells,
- * without the empty texts before its first `|` and after its last,
- * each without spaces at its ends:
- * parted only by a `|` that is no `\|`, as the editor writes a `|` typed into a cell,
- * see `cellWritten` in `src/editor/table.ts`,
- * so such a cell never moves the cells after it one column on;
- * the cell keeps its `\|` as written, so it stays one when its row is written back.
- *
- * @param line - Row
- *   like `| Gouda | 356 | 25 |  |  | 4056489012345 | Milbona | Lidl | 30 | 400 | Eat |`
- * @returns Its cells
- */
-function cellsOf(line: string): string[] {
-    return line
-        .split(/(?<!\\)\|/)
-        .slice(1, -1)
-        .map((cell: string): string => cell.trim());
 }
 
 /**

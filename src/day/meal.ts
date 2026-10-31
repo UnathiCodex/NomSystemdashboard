@@ -77,10 +77,10 @@
  * - `../skill/attempts.ts`: Gives the day of an instant,
  *   and writes a day with its weekday.
  * - `../food/foods.ts`: Finds my foods, loads my meals,
- *   sends a meal, writes amounts and the key of a food, and makes elements and buttons.
+ *   sends a meal, writes amounts, kcal and the key of a food,
+ *   and makes elements and buttons.
  * - `../food/meals.ts`: Finds my meals for a search,
- *   writes the name of a meal as the reader does,
- *   and kcal as the page writes them.
+ *   and writes the name of a meal as the reader does.
  * - `../food/search.ts`: The food search, the lines of every list,
  *   and a food of mine opened to change it.
  * - `../icons.ts`: Puts the one plus, the one `×` and the pencil into the buttons,
@@ -100,11 +100,12 @@ import {
     elementOf,
     foodsFind,
     keyOf,
+    kcalTextOf,
     portionGramsOf,
     summaryOf,
     unitOf,
 } from "../food/foods.ts";
-import { dishesFound, dishNameOf, kcalTextOf, mealNameOf } from "../food/meals.ts";
+import { dishesFound, dishNameOf, mealNameOf } from "../food/meals.ts";
 import {
     foodDetailOf,
     foodSearchClear,

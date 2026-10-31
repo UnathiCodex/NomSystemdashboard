@@ -165,6 +165,7 @@ import {
     fileEntriesRead,
     groupPropertyOf,
     icsTextOf,
+    minutesOf,
     occurrenceLookup,
     occurrenceOwn,
     occurrencesTidy,
@@ -175,6 +176,7 @@ import {
     skillName,
     todoAppend,
     todoChange,
+    weekdayOf,
 } from "./calendar.ts";
 import { attendeesAllow, semesterOf, skillTypes } from "./categories.ts";
 import { skillLinkOf, titleOf } from "./documents.ts";
@@ -787,16 +789,6 @@ const lectureFreeTitles: string[] = [
 ];
 
 /**
- * Gives the weekday of a day.
- *
- * @param day - Day like `2026-10-19`
- * @returns 1 for Monday to 7 for Sunday, like 1
- */
-function weekdayOf(day: string): number {
-    return ((new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
-}
-
-/**
  * Gives the Monday of the week of a day, which names its week.
  *
  * @param day - Day like `2026-10-22`
@@ -804,18 +796,6 @@ function weekdayOf(day: string): number {
  */
 function mondayOf(day: string): string {
     return dayAdd(day, 1 - weekdayOf(day));
-}
-
-/**
- * Reads a time of day as minutes after midnight.
- * - `hours`, `minutes`: Its hours and minutes.
- *
- * @param time - Time like `14:15`
- * @returns Minutes like 855
- */
-function minutesOf(time: string): number {
-    const [hours, minutes]: number[] = time.split(":").map(Number);
-    return hours * 60 + minutes;
 }
 
 /**

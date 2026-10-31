@@ -944,7 +944,7 @@ function pushOf(property: ICAL.Property, now: ICAL.Time | null): Push {
  * @param component - The to-do
  * @returns Minutes, `null` when it has none
  */
-function minutesOf(component: ICAL.Component): number | null {
+function estimatedMinutesOf(component: ICAL.Component): number | null {
     const value: unknown = component.getFirstPropertyValue("estimated-duration");
     return value === null
         ? null
@@ -1151,7 +1151,7 @@ function entryOf(
         note: event.description ?? "",
         todo: todo,
         status: String(event.component.getFirstPropertyValue("status") ?? ""),
-        minutes: todo ? minutesOf(event.component) : null,
+        minutes: todo ? estimatedMinutesOf(event.component) : null,
         deadline: todo ? deadlineOf(event.component) : "",
         pushed: event.component
             .getAllProperties("x-pushed")
@@ -2441,6 +2441,28 @@ export function dayAdd(day: string, days: number): string {
     const date: Date = new Date(`${day}T00:00:00Z`);
     date.setUTCDate(date.getUTCDate() + days);
     return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Gives the weekday of a day.
+ *
+ * @param day - Day like `2026-10-19`
+ * @returns 1 for Monday to 7 for Sunday, like 1
+ */
+export function weekdayOf(day: string): number {
+    return ((new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
+}
+
+/**
+ * Reads a time of day as minutes after midnight.
+ * - `hours`, `minutes`: Its hours and minutes.
+ *
+ * @param time - Time like `14:15`
+ * @returns Minutes like 855
+ */
+export function minutesOf(time: string): number {
+    const [hours, minutes]: number[] = time.split(":").map(Number);
+    return hours * 60 + minutes;
 }
 
 /**

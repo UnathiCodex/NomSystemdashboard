@@ -42,13 +42,20 @@
  * A study day is a day with an entry `Skill` in the log,
  * like a lecture or a study session.
  *
- * - `./calendar.ts`: Reads the log and writes instants and their days in Berlin time.
+ * - `./calendar.ts`: Reads the log, writes instants and their days in Berlin time,
+ *   and reads a time of day as minutes.
  * - `./categories.ts`: Names the neck routines and the category of skill entries.
  * - `./food.ts`: Reads the meals of a day with what they give.
  * - `./sources.ts`: Names the log of the trackers.
  */
 
-import { berlinDateOf, berlinTimeOf, entriesRead, summaryBaseOf } from "./calendar.ts";
+import {
+    berlinDateOf,
+    berlinTimeOf,
+    entriesRead,
+    minutesOf,
+    summaryBaseOf,
+} from "./calendar.ts";
 import { neckRoutines, skillName } from "./categories.ts";
 import { foodDayRead } from "./food.ts";
 import { trackerLog } from "./sources.ts";
@@ -264,17 +271,6 @@ const dayMinutes: number = 24 * 60;
  * Milliseconds of a day.
  */
 const dayLength: number = dayMinutes * 60 * 1000;
-
-/**
- * Turns a time of day into minutes after midnight.
- *
- * @param time - Time like `23:30`
- * @returns Minutes, like 1410
- */
-function minutesOf(time: string): number {
-    const [hours, minutes]: number[] = time.split(":").map(Number);
-    return hours * 60 + minutes;
-}
 
 /**
  * Gives how long an entry lasts.

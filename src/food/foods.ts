@@ -12,9 +12,11 @@
  * for the food view and the entry by category of the day alike.
  *
  * - `../reader.ts`: Asks the reader.
+ * - `../icons.ts`: Puts the one plus into its button, its words as tooltip.
  */
 
 import { readerAsk } from "../reader.ts";
+import { plusPut } from "../icons.ts";
 import type { Food, FoodDay, FoodsFound, Kind } from "../../reader/food.ts";
 
 /**
@@ -296,6 +298,17 @@ export function amountOf(value: number | null, digits: number): string {
 }
 
 /**
+ * Writes kcal as the page shows them, whole, with their unit,
+ * 0 while none are known, like burned without my weight.
+ *
+ * @param kcal - kcal, `null` for none known
+ * @returns Text like `520 kcal` or `0 kcal`
+ */
+export function kcalTextOf(kcal: number | null): string {
+    return `${amountOf(kcal ?? 0, 0)} kcal`;
+}
+
+/**
  * Writes the key of a food, by which a line `X-FOOD` finds it, as the reader does:
  * its name, brand and store parted by `;`, in small letters.
  *
@@ -425,5 +438,20 @@ export function buttonOf(
     button.className = className;
     button.textContent = text;
     button.addEventListener("click", click);
+    return button;
+}
+
+/**
+ * Makes the one plus of every list that adds one more,
+ * see `plusPut` in `../icons.ts`, its words as tooltip.
+ * - `button`: The +.
+ *
+ * @param words - What it adds, like `Add a food to Chili con Carne`
+ * @param click - What a click does
+ * @returns The +
+ */
+export function plusOf(words: string, click: () => void): HTMLButtonElement {
+    const button: HTMLButtonElement = buttonOf("", "", click);
+    plusPut(button, words);
     return button;
 }

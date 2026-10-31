@@ -380,6 +380,20 @@ export function dayOf(date: Date): string {
 }
 
 /**
+ * Adds days to a day.
+ * - `date`: The day at noon, moved.
+ *
+ * @param day - Day like `2026-10-19`
+ * @param days - Number of days to add
+ * @returns Day like `2026-10-26`
+ */
+export function dayAdd(day: string, days: number): string {
+    const date: Date = new Date(`${day}T12:00:00`);
+    date.setDate(date.getDate() + days);
+    return dayOf(date);
+}
+
+/**
  * Writes a day out as the page shows it, in my standard way with its year,
  * and its short weekday in English after it in brackets where that helps,
  * like for the day a task is due, as every day of the page shows it.

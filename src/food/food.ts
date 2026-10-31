@@ -45,7 +45,7 @@
  *   then on Open Food Facts, adds new ones and changes mine.
  * - `./meals.ts`: The section of my meals.
  * - `../day/places.ts`: Gives the name of the place of a meal.
- * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader,
+ * - `../skill/attempts.ts`: Adds days to a day in the form of the reader,
  *   and a day with its weekday for the bar.
  * - `../today.ts`: Gives today's calendar date and the day a link asks for,
  *   and moves the food view on to the new day while it shows today.
@@ -68,7 +68,7 @@ import {
 import { foodNewShow, foodSearchOf, foodShow } from "./search.ts";
 import { mealsSectionOf } from "./meals.ts";
 import { labelOf } from "../day/places.ts";
-import { dayOf, dayTextOf } from "../skill/attempts.ts";
+import { dayAdd, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { summaryShownOf } from "../persons.ts";
@@ -92,17 +92,6 @@ let shown: string = "";
  */
 function amountTextOf(value: number, unit: string): string {
     return `${amountOf(value, 0)} ${unit}`;
-}
-
-/**
- * Turns a day into its date at midnight in local time.
- *
- * @param day - Day like `2026-10-10`
- * @returns Date
- */
-function dateOf(day: string): Date {
-    const [year, month, date]: number[] = day.split("-").map(Number);
-    return new Date(year, month - 1, date);
 }
 
 /**
@@ -410,18 +399,6 @@ function dayOpen(day: string): void {
 }
 
 /**
- * Shows the day some days before or after the one shown.
- * - `date`: Date of the day to show.
- *
- * @param days - Days to go, like -1 for the day before
- */
-function dayMove(days: number): void {
-    const date: Date = dateOf(shown);
-    date.setDate(date.getDate() + days);
-    dayOpen(dayOf(date));
-}
-
-/**
  * Starts the food view after the router has put its HTML into the page:
  * the arrows and the icon back to today,
  * the day a link asks for or today's calendar date,
@@ -437,8 +414,8 @@ export function foodStart(): void {
     iconPut(before, ChevronLeft, "Day before");
     iconPut(after, ChevronRight, "Day after");
     iconPut(today, CalendarCheck, "Back to today");
-    before.addEventListener("click", (): void => dayMove(-1));
-    after.addEventListener("click", (): void => dayMove(1));
+    before.addEventListener("click", (): void => dayOpen(dayAdd(shown, -1)));
+    after.addEventListener("click", (): void => dayOpen(dayAdd(shown, 1)));
     today.addEventListener("click", (): void => dayOpen(calendarTodayOf()));
     const search: HTMLElement = foodSearchOf({
         pick: null,

@@ -173,7 +173,7 @@
  *   with the menu of the groups of its week.
  * - `./rows.ts`: Makes the row of a box of the list, its number and its times,
  *   as every list of boxes has them.
- * - `../skill/attempts.ts`: Writes a date as a day,
+ * - `../skill/attempts.ts`: Writes a date as a day, adds days to a day,
  *   and names the category of skill boxes.
  * - `../food/foods.ts`: Makes elements.
  * - `../icons.ts`: Puts the icons into the buttons,
@@ -247,7 +247,7 @@ import { boxesFetch } from "./boxes.ts";
 import { boxGroupOf, pinnedMenuOf } from "./groups.ts";
 import { whereLinkedOf } from "./places.ts";
 import { listRowOf, numberOf, rowTimesOf } from "./rows.ts";
-import { dayOf, semesterOf, skillName } from "../skill/attempts.ts";
+import { dayAdd, dayOf, semesterOf, skillName } from "../skill/attempts.ts";
 import { semestersOf, skillNamesOf, skillPairOf } from "./skill.ts";
 import { elementOf } from "../food/foods.ts";
 import {
@@ -766,20 +766,6 @@ let entryBack: Box | null = null;
  */
 export function weekdayOf(day: string): number {
     return ((new Date(`${day}T12:00:00`).getDay() + 6) % 7) + 1;
-}
-
-/**
- * Adds days to a day.
- * - `date`: The day at noon, moved.
- *
- * @param day - Day like `2026-10-19`
- * @param days - Number of days to add
- * @returns Day like `2026-10-26`
- */
-export function dayAdd(day: string, days: number): string {
-    const date: Date = new Date(`${day}T12:00:00`);
-    date.setDate(date.getDate() + days);
-    return dayOf(date);
 }
 
 /**

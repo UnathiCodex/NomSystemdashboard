@@ -44,7 +44,7 @@
  *   loaded anew after my weight changed.
  * - `../food/foods.ts`: Writes amounts and makes elements.
  * - `../day/times.ts`: Writes a length of time, like `01h 10m`.
- * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader,
+ * - `../skill/attempts.ts`: Adds days to a day in the form of the reader,
  *   and a day with its weekday for the bar.
  * - `../today.ts`: Gives today's calendar date and the day a link asks for,
  *   and moves the sport view on to the new day while it shows today.
@@ -59,9 +59,9 @@
 
 import { sportDayLoad, weightSend } from "./mine.ts";
 import { listsOf, mineReload } from "./lists.ts";
-import { amountOf, buttonOf, elementOf } from "../food/foods.ts";
+import { amountOf, buttonOf, elementOf, kcalTextOf } from "../food/foods.ts";
 import { lengthOf } from "../day/times.ts";
-import { dayOf, dayTextOf } from "../skill/attempts.ts";
+import { dayAdd, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { iconOf, iconPut } from "../icons.ts";
@@ -78,28 +78,6 @@ import type { SportDay } from "../../reader/sport.ts";
  * Day shown, like `2026-10-17`.
  */
 let shown: string = "";
-
-/**
- * Writes kcal burned as the page shows them, whole,
- * 0 while none are known, like without my weight.
- *
- * @param kcal - kcal, `null` for none known
- * @returns Text like `175 kcal` or `0 kcal`
- */
-function kcalTextOf(kcal: number | null): string {
-    return `${amountOf(kcal ?? 0, 0)} kcal`;
-}
-
-/**
- * Turns a day into its date at midnight in local time.
- *
- * @param day - Day like `2026-10-17`
- * @returns Date
- */
-function dateOf(day: string): Date {
-    const [year, month, date]: number[] = day.split("-").map(Number);
-    return new Date(year, month - 1, date);
-}
 
 /**
  * Shows the totals of a day:
@@ -369,18 +347,6 @@ function dayOpen(day: string): void {
 }
 
 /**
- * Shows the day some days before or after the one shown.
- * - `date`: Date of the day to show.
- *
- * @param days - Days to go, like -1 for the day before
- */
-function dayMove(days: number): void {
-    const date: Date = dateOf(shown);
-    date.setDate(date.getDate() + days);
-    dayOpen(dayOf(date));
-}
-
-/**
  * Starts the sport view after the router has put its HTML into the page:
  * the arrows and the icon back to today,
  * the day a link asks for or today's calendar date,
@@ -396,8 +362,8 @@ export function sportStart(): void {
     iconPut(before, ChevronLeft, "Day before");
     iconPut(after, ChevronRight, "Day after");
     iconPut(today, CalendarCheck, "Back to today");
-    before.addEventListener("click", (): void => dayMove(-1));
-    after.addEventListener("click", (): void => dayMove(1));
+    before.addEventListener("click", (): void => dayOpen(dayAdd(shown, -1)));
+    after.addEventListener("click", (): void => dayOpen(dayAdd(shown, 1)));
     today.addEventListener("click", (): void => dayOpen(calendarTodayOf()));
     document.getElementById("sport-lists")?.append(...listsOf());
     dayOpen(askedDayOf() ?? calendarTodayOf());

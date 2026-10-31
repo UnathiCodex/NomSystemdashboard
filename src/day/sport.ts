@@ -64,7 +64,7 @@
 
 import { choicesOf, rowOf, searchOf } from "./choices.ts";
 import { mineLoad } from "../sport/mine.ts";
-import { amountOf, buttonOf, elementOf } from "../food/foods.ts";
+import { buttonOf, elementOf, kcalTextOf } from "../food/foods.ts";
 import { crossPut } from "../icons.ts";
 import "./sport.css";
 
@@ -323,16 +323,6 @@ function valuesTextOf(exercise: { sets: string; reps: string; kg: string }): str
     return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
         .filter((part: string): boolean => part !== "")
         .join(" · ");
-}
-
-/**
- * Writes kcal as a row shows them, whole, like `180 kcal`.
- *
- * @param kcal - kcal
- * @returns Text of the kcal
- */
-function kcalTextOf(kcal: number): string {
-    return `${amountOf(kcal, 0)} kcal`;
 }
 
 /**

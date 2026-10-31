@@ -61,14 +61,15 @@
  *
  * - `./mine.ts`: Loads, sends and removes my workouts and exercises, sends my videos,
  *   and asks YouTube for a link.
- * - `../food/foods.ts`: Makes elements and buttons, the brackets of a list kept alike.
+ * - `../food/foods.ts`: Makes elements, buttons and the one plus,
+ *   the brackets of a list kept alike.
  * - `../food/search.ts`: The head and the lines of every list,
  *   the fields of a change in place and the cross and the check of a form.
  * - `../day/times.ts`: Writes a length of time.
  * - `../search.ts`: Compares the text typed in a search with the names of a list.
  * - `../changes.ts`: Loads everything
  *   of mine anew the moment a file of my new system changes.
- * - `../icons.ts`: Puts the one plus and the one `×` into the buttons,
+ * - `../icons.ts`: Puts the one `×` into the buttons,
  *   and the plain question mark, their words as tooltip, and makes every search field.
  * - `lucide`: The plus of a new workout or exercise,
  *   and the pencil that renames a workout.
@@ -84,7 +85,7 @@ import {
     workoutDelete,
     workoutSend,
 } from "./mine.ts";
-import { bracketsWatch, buttonOf, elementOf } from "../food/foods.ts";
+import { bracketsWatch, buttonOf, elementOf, plusOf } from "../food/foods.ts";
 import {
     editButtonsOf,
     editFieldOf,
@@ -95,14 +96,7 @@ import {
 import { lengthOf } from "../day/times.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
-import {
-    crossPut,
-    iconOf,
-    iconPut,
-    plusPut,
-    QuestionMark,
-    searchFieldOf,
-} from "../icons.ts";
+import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Pencil, Plus } from "lucide";
 
 import type { Exercise, Mine, Part, Workout } from "./mine.ts";
@@ -148,21 +142,6 @@ function mineShow(sent: Mine): void {
  */
 function failed(error: unknown): void {
     console.error(error);
-}
-
-/**
- * Makes the one plus of every list that adds one more,
- * see `plusPut` in `../icons.ts`, its words as tooltip.
- * - `button`: The +.
- *
- * @param words - What it adds, like `New workout`
- * @param click - What a click does
- * @returns The +
- */
-function plusOf(words: string, click: () => void): HTMLButtonElement {
-    const button: HTMLButtonElement = buttonOf("", "", click);
-    plusPut(button, words);
-    return button;
 }
 
 /**

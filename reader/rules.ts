@@ -61,6 +61,7 @@ import {
     entryRemove,
     fileEntriesRead,
     fileOfId,
+    minutesOf,
     occurrenceLookup,
     occurrenceMove,
     occurrenceOwn,
@@ -75,6 +76,7 @@ import {
     seriesSiblingPut,
     seriesTitlePut,
     seriesWrite,
+    weekdayOf,
 } from "./calendar.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
 import { titleOf } from "./documents.ts";
@@ -185,27 +187,6 @@ const previewDays: number = 42;
  * Most minutes a series may last without time: a day.
  */
 const dayMinutes: number = 24 * 60;
-
-/**
- * Gives the weekday of a day.
- *
- * @param date - Day like `2026-10-19`
- * @returns Weekday from 1 for Monday to 7 for Sunday
- */
-function weekdayOf(date: string): number {
-    return ((new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7) + 1;
-}
-
-/**
- * Gives the minutes of a time of day.
- *
- * @param time - Time like `14:15`
- * @returns Minutes since midnight, like 855
- */
-function minutesOf(time: string): number {
-    const [hour, minute]: number[] = time.split(":").map(Number);
-    return hour * 60 + minute;
-}
 
 /**
  * Tells whether a series happens on a day by its rule:

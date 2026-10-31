@@ -54,21 +54,20 @@
  *   so the section never shows, nor writes back, a meal as `Meals.md` held it before.
  *
  * - `./foods.ts`: Loads my meals, sends and removes meals,
- *   writes amounts and makes elements and buttons.
+ *   and makes elements, buttons and the one plus.
  * - `./search.ts`: The search of my foods and of Open Food Facts,
  *   which adds a food to a meal,
  *   and the head and lines of every list.
  * - `../search.ts`: Compares the text typed in the search
  *   of the meals with their names and foods.
  * - `../changes.ts`: Loads my meals anew the moment a file of my new system changes.
- * - `../icons.ts`: Puts the one plus and the one `×` into the buttons,
+ * - `../icons.ts`: Puts the one `×` into the buttons,
  *   and the plain question mark, their words as tooltip,
  *   and makes the search field of the meals.
  * - `./meals.css`: Look of the section and of a meal opened.
  */
 
 import {
-    amountOf,
     bracketsWatch,
     buttonOf,
     dishDelete,
@@ -77,6 +76,7 @@ import {
     dishSend,
     elementOf,
     foodNameOf,
+    plusOf,
     portionGramsOf,
     unitOf,
 } from "./foods.ts";
@@ -88,14 +88,7 @@ import {
     listHeadOf,
     listLineOf,
 } from "./search.ts";
-import {
-    crossPut,
-    iconOf,
-    iconPut,
-    plusPut,
-    QuestionMark,
-    searchFieldOf,
-} from "../icons.ts";
+import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Plus } from "lucide";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
@@ -120,16 +113,6 @@ export function mealNameOf(typed: string): string {
         .replace(/[|;]/g, " ")
         .replace(/\s+/g, " ")
         .trim();
-}
-
-/**
- * Writes kcal as the page shows them in an entry, whole, with their unit.
- *
- * @param kcal - kcal
- * @returns Text like `520 kcal`
- */
-export function kcalTextOf(kcal: number): string {
-    return `${amountOf(kcal, 0)} kcal`;
 }
 
 /**
@@ -273,21 +256,6 @@ export function dishesFound(dishes: Dish[], typed: string): Dish[] {
             wordsOf(typed),
         ),
     );
-}
-
-/**
- * Makes the one plus of every list that adds one more,
- * see `plusPut` in `../icons.ts`, its words as tooltip.
- * - `button`: The +.
- *
- * @param words - What it adds, like `Add a food to Chili con Carne`
- * @param click - What a click does
- * @returns The +
- */
-function plusOf(words: string, click: () => void): HTMLButtonElement {
-    const button: HTMLButtonElement = buttonOf("", "", click);
-    plusPut(button, words);
-    return button;
 }
 
 /**
