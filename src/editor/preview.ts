@@ -853,32 +853,23 @@ class BlockWidget extends WidgetType {
             });
         };
         block.addEventListener("mousedown", (event: MouseEvent): void => {
-            if (
-                event.button !== 0 ||
-                (event.target as Element).closest("select") !== null
-            )
-                return;
+            if (event.button !== 0 || targetIn(event, "select")) return;
             event.preventDefault();
-            if (
-                !scrollbarHit(event) &&
-                (event.target as Element).closest("a, summary, button, table") === null
-            )
+            if (!scrollbarHit(event) && !targetIn(event, "a, summary, button, table"))
                 place(event);
         });
         block.addEventListener("dblclick", (event: MouseEvent): void => {
             if (
                 event.button === 0 &&
                 !scrollbarHit(event) &&
-                (event.target as Element).closest("table") !== null &&
-                (event.target as Element).closest("a, button") === null
+                targetIn(event, "table") &&
+                !targetIn(event, "a, button")
             )
                 place(event);
         });
         block.addEventListener("mouseover", cellTitleShow);
         block.addEventListener("toggle", (): void => view.requestMeasure(), true);
-        block.addEventListener("click", (event: MouseEvent): void => {
-            follow(event);
-        });
+        block.addEventListener("click", follow);
         return block;
     }
 
@@ -967,6 +958,11 @@ function blockRender(view: EditorView, markdown: string, links: Links): HTMLDivE
     peopleLink(block);
     mathRender(block);
     return block;
+}
+
+/** Tells whether an event happened within an element of a selector. */
+function targetIn(event: Event, selector: string): boolean {
+    return (event.target as Element).closest(selector) !== null;
 }
 
 /**
@@ -1136,19 +1132,6 @@ function touched(look: Look, from: number, to: number): boolean {
     return (
         look.focused &&
         look.cursors.some((cursor: number): boolean => cursor >= from && cursor <= to)
-    );
-}
-
-/**
- * Tells whether a block is a callout,
- * a quote whose first line is like `> [!note] Title`, see {@link calloutRule}.
- */
-function calloutIs(look: Look, node: SyntaxNode): boolean {
-    return (
-        node.name === "Blockquote" &&
-        calloutRule.test(
-            look.state.sliceDoc(node.from, look.state.doc.lineAt(node.from).to),
-        )
     );
 }
 
@@ -1742,13 +1725,14 @@ function hiddenStartOf(state: EditorState, line: Line): number {
  * see `emptyIs` in `./keys.ts`, no place to write, see {@link caretPlace};
  * not the empty line a key just put the cursor on to write,
  * see `typingLine` in `./keys.ts`.
+ * - `lower`: Tells instead the lower of two empty lines, see {@link stop}.
  */
-function gapIs(state: EditorState, line: Line): boolean {
+function gapIs(state: EditorState, line: Line, lower: boolean = false): boolean {
     return (
         line.number > 1 &&
         line.from !== (state.field(typingLine, false) ?? null) &&
         emptyIs(state, line) &&
-        !emptyIs(state, state.doc.line(line.number - 1))
+        emptyIs(state, state.doc.line(line.number - 1)) === lower
     );
 }
 
@@ -1887,12 +1871,15 @@ function taskBoxLook(look: Look, node: SyntaxNode): boolean {
  * lines of only `>` at its end are air after it, as a list's is not,
  * see {@link itemLook}, but the line a key just put the cursor on to write,
  * see `typingLine` in `./keys.ts`.
- * A callout, a quote whose first line is like `> [!note] Title`,
+ * A callout, a quote whose first line is like `> [!note] Title`, see {@link calloutRule},
  * renders whole as in the scripts view while the cursor is on none of its lines,
  * see {@link blockLook}, else shows as a quote.
  */
 function quoteLook(look: Look, node: SyntaxNode): boolean {
-    if (calloutIs(look, node) && !blockLook(look, node)) return false;
+    const callout: boolean = calloutRule.test(
+        look.state.sliceDoc(node.from, look.state.doc.lineAt(node.from).to),
+    );
+    if (callout && !blockLook(look, node)) return false;
     const typing: number | null = look.state.field(typingLine, false) ?? null;
     let last: Line = look.state.doc.lineAt(node.to);
     while (last.from > node.from && last.from !== typing && emptyIs(look.state, last))
@@ -2058,10 +2045,7 @@ function spaceLook(look: Look): void {
         if (listBlankIs(look.state, line)) hide(look, line.from, line.to);
         if (line.from !== typing && emptyIs(look.state, line))
             look.decorations.push(
-                (number > 1 && emptyIs(look.state, look.state.doc.line(number - 1))
-                    ? stop
-                    : gap
-                ).range(line.from),
+                (gapIs(look.state, line, true) ? stop : gap).range(line.from),
             );
     }
 }
@@ -2077,11 +2061,7 @@ function spaceLook(look: Look): void {
 function stopCursorOf(view: EditorView): { class: string } | null {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
-    return range.empty &&
-        line.number > 1 &&
-        line.from !== (view.state.field(typingLine, false) ?? null) &&
-        emptyIs(view.state, line) &&
-        emptyIs(view.state, view.state.doc.line(line.number - 1))
+    return range.empty && gapIs(view.state, line, true)
         ? { class: "cm-stop-cursor" }
         : null;
 }
@@ -2418,12 +2398,10 @@ function addressFollow(view: EditorView, address: string): boolean {
     const target: string = (hash === -1 ? address : address.slice(0, hash)).trim();
     const heading: string = hash === -1 ? "" : address.slice(hash + 1).trim();
     const opened: string | null = linkAddressOf(view.state, target, heading);
-    if (target === "") {
-        if (!roundHeadingShow(view, heading)) headingShow(view, heading);
-    } else if (opened !== null && opened !== "") {
-        location.assign(opened);
-    }
-    return target === "" || (opened !== null && opened !== "");
+    if (opened === null || opened === "") return false;
+    if (target !== "") location.assign(opened);
+    else if (!roundHeadingShow(view, heading)) headingShow(view, heading);
+    return true;
 }
 
 /**
@@ -2451,10 +2429,9 @@ function linkClicked(event: MouseEvent, view: EditorView): boolean {
         return true;
     }
     followed = false;
-    const target: Element = event.target as Element;
     if (
         event.button !== 0 ||
-        (target.closest(".cm-follow") === null && !event.ctrlKey && !event.metaKey)
+        (!targetIn(event, ".cm-follow") && !event.ctrlKey && !event.metaKey)
     )
         return false;
 
@@ -2566,8 +2543,7 @@ function selectionCopied(event: ClipboardEvent, view: EditorView): boolean {
  * letting it go follows it; any other click goes on.
  */
 function personClicked(event: MouseEvent, view: EditorView): boolean {
-    if (event.button !== 0 || (event.target as Element).closest(".cm-person") === null)
-        return false;
+    if (event.button !== 0 || !targetIn(event, ".cm-person")) return false;
 
     const pos: number | null = view.posAtCoords({ x: event.clientX, y: event.clientY });
     const person: Person | undefined =
@@ -2652,7 +2628,7 @@ function marginSelect(event: MouseEvent, view: EditorView): void {
  * a click on the name edits it as before.
  */
 function kindClicked(event: MouseEvent): boolean {
-    if ((event.target as Element).closest(".block-kind") === null) return false;
+    if (!targetIn(event, ".block-kind")) return false;
     event.preventDefault();
     return true;
 }
