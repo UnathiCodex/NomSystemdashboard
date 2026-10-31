@@ -116,15 +116,8 @@ import { whereLinkedOf } from "./places.ts";
 import { listRowOf, numberOf, rowTimesOf } from "./rows.ts";
 import { dayAdd, dayOf, semesterOf, skillName } from "../skill/attempts.ts";
 import { semestersOf, skillNamesOf, skillPairOf } from "./skill.ts";
-import { elementOf } from "../food/foods.ts";
-import {
-    crossPut,
-    iconOf,
-    iconPut,
-    iconWordsOf,
-    plusPut,
-    QuestionMark,
-} from "../icons.ts";
+import { buttonOf, elementOf, plusOf } from "../food/foods.ts";
+import { crossPut, iconOf, iconPut, iconWordsOf, QuestionMark } from "../icons.ts";
 import { menuAnchor, menuItemOf } from "../menu.ts";
 import { readerAsk } from "../reader.ts";
 import { folderLinkShow, modulesFolder } from "../skill/links.ts";
@@ -644,44 +637,26 @@ function timesRangeOf(
     times: Pick<Slot, "start" | "end">,
     changed: () => void,
 ): HTMLElement {
-    return rangeOf(
-        fieldOf(
-            "time-field",
-            times.start,
-            "Start",
-            (time: string): void => {
-                times.start = time;
-            },
-            changed,
-        ),
-        fieldOf(
-            "time-field",
-            times.end,
-            "End",
-            (time: string): void => {
-                times.end = time;
-            },
-            changed,
-        ),
+    const [start, end]: HTMLInputElement[] = (["start", "end"] as const).map(
+        (key: "start" | "end"): HTMLInputElement =>
+            fieldOf(
+                "time-field",
+                times[key],
+                key === "start" ? "Start" : "End",
+                (time: string): void => {
+                    times[key] = time;
+                },
+                changed,
+            ),
     );
+    return rangeOf(start, end);
 }
 
 /** Makes the button `×` that takes a day or an extra of a series back. */
 function removeOf(words: string, click: () => void): HTMLButtonElement {
-    const remove: HTMLButtonElement = document.createElement("button");
-    remove.type = "button";
+    const remove: HTMLButtonElement = buttonOf("", "", click);
     crossPut(remove, words);
-    remove.addEventListener("click", click);
     return remove;
-}
-
-/** Makes the plus beside the name of a row that adds one more. */
-function plusOf(words: string, click: () => void): HTMLButtonElement {
-    const plus: HTMLButtonElement = document.createElement("button");
-    plus.type = "button";
-    plusPut(plus, words);
-    plus.addEventListener("click", click);
-    return plus;
 }
 
 /**
@@ -799,23 +774,17 @@ function slotToggle(days: Days, weekday: number): void {
  * each saying grey `dd.mm.yyyy` while empty, as the day of a deadline.
  */
 export function datesRowOf(days: Days, changed: () => void): HTMLElement {
-    const first: HTMLInputElement = fieldOf(
-        "date-field",
-        days.first === "" ? "" : weekdayDateTextOf(days.first),
-        "First day",
-        (day: string): void => {
-            days.first = day;
-        },
-        changed,
-    );
-    const last: HTMLInputElement = fieldOf(
-        "date-field",
-        days.last === "" ? "" : weekdayDateTextOf(days.last),
-        "Last day",
-        (day: string): void => {
-            days.last = day;
-        },
-        changed,
+    const [first, last]: HTMLInputElement[] = (["first", "last"] as const).map(
+        (key: "first" | "last"): HTMLInputElement =>
+            fieldOf(
+                "date-field",
+                days[key] === "" ? "" : weekdayDateTextOf(days[key]),
+                key === "first" ? "First day" : "Last day",
+                (day: string): void => {
+                    days[key] = day;
+                },
+                changed,
+            ),
     );
     return rowOf("Dates", rangeOf(first, last));
 }
@@ -891,22 +860,13 @@ function summaryOf(planned: Planned[], toggle: () => void): HTMLButtonElement {
         keep: (box: Planned) => boolean,
     ): number => planned.filter(keep).length;
     const line: HTMLButtonElement = document.createElement("button");
-    const parts: string[] = [
-        ...(had
-            ? countOf(
-                  counted((box: Planned): boolean => box.change === "new"),
-                  "new",
-              )
-            : []),
-        ...countOf(
-            counted((box: Planned): boolean => box.change === "changed"),
-            "changed",
-        ),
-        ...countOf(
-            counted((box: Planned): boolean => box.change === "removed"),
-            "removed",
-        ),
-    ];
+    const parts: string[] = [...(had ? ["new"] : []), "changed", "removed"].flatMap(
+        (change: string): string[] =>
+            countOf(
+                counted((box: Planned): boolean => box.change === change),
+                change,
+            ),
+    );
     const states: [number, IconNode, string][] = [
         [
             counted(
@@ -1062,11 +1022,8 @@ function pendingActionOf(
     words: string,
     click: () => void,
 ): HTMLButtonElement {
-    const button: HTMLButtonElement = document.createElement("button");
-    button.type = "button";
-    button.className = "box-action";
+    const button: HTMLButtonElement = buttonOf("box-action", "", click);
     iconPut(button, icon, words);
-    button.addEventListener("click", click);
     return button;
 }
 
@@ -1207,7 +1164,7 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
  * of one cancelled or removed, and none while the form moved the row from its session.
  */
 function sessionOf(box: Planned): Session | undefined {
-    const group: { group: string; made: boolean; was: string } | null = grouped;
+    const group: typeof grouped = grouped;
     return group === null ||
         group.made ||
         typing === null ||
@@ -1653,40 +1610,37 @@ function boxListOf(
  */
 async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
     const asked: number = ++previewsAsked;
-    if (preview.ask === null) {
-        previewShown = [];
+    const put: (shown: Node[]) => void = (shown: Node[]): void => {
+        previewShown = shown;
         previewPut(form, previewShown);
+    };
+    if (preview.ask === null) {
+        put([]);
         return;
     }
     let answer: Planned[] | HTMLElement;
     try {
         answer = await preview.ask();
     } catch (error: unknown) {
-        if (asked === previewsAsked) {
-            previewShown = [];
-            previewPut(form, previewShown);
-        }
+        if (asked === previewsAsked) put([]);
         throw error;
     }
     if (asked !== previewsAsked) return;
     if (answer instanceof HTMLElement) {
-        previewShown = [answer];
-        previewPut(form, previewShown);
+        put([answer]);
         return;
     }
     const planned: Planned[] = answer;
     await boxesLoad(planned);
     if (asked !== previewsAsked) return;
-    const draw: () => void = (): void => {
-        previewShown = [
+    const draw: () => void = (): void =>
+        put([
             summaryOf(planned, (): void => {
                 listOpened = !listOpened;
                 draw();
             }),
             ...(listOpened ? [boxListOf(planned, preview, draw)] : []),
-        ];
-        previewPut(form, previewShown);
-    };
+        ]);
     draw();
 }
 
@@ -1755,6 +1709,20 @@ async function categoriesLoad(): Promise<Category[]> {
 }
 
 /**
+ * Forgets which series the form was, as the form of another series opens:
+ * no new box repeated, no plain series, no group, the bin not asking,
+ * and what saving it does next.
+ */
+function formsForget(saved: () => void): void {
+    repeated = null;
+    plain = null;
+    grouped = null;
+    groupBack = null;
+    removeAsked = false;
+    done = saved;
+}
+
+/**
  * Forgets what the form showed and opened, as the form of another series opens,
  * see {@link previewForget}.
  */
@@ -1765,6 +1733,46 @@ function formReset(): void {
     onlineOpen = false;
     withOpen = [];
     slotsFreed = [];
+}
+
+/** Gives what something does online, each part empty where it has none. */
+function onlineOf(source: Partial<Online> | null | undefined): Online {
+    return {
+        online: source?.online ?? "",
+        onlineLink: source?.onlineLink ?? "",
+        onlineChannel: source?.onlineChannel ?? "",
+        onlineTitle: source?.onlineTitle ?? "",
+    };
+}
+
+/** Gives the link of a place of mine or a room, empty for none. */
+function placeLinkOf(line: string): string {
+    return skillFieldOf("location")?.places[line]?.link ?? "";
+}
+
+/**
+ * Gives the form of a series as its rule reads back, see {@link seriesOpen},
+ * of a new one with no rule its type alone and one slot without weekday.
+ */
+function formOf(type: string, rule: Rule | null): Form {
+    return {
+        type: rule?.type ?? type,
+        old: rule,
+        slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [
+            { weekday: 0, start: "", end: "" },
+        ],
+        before: rule?.slots.map((slot: Slot): number => slot.weekday) ?? [0],
+        extras: rule?.extras.map((extra: Extra): Extra => ({ ...extra })) ?? [],
+        location: rule?.location ?? "",
+        locationLink: rule?.locationLink ?? "",
+        ...onlineOf(rule),
+        attendees: rule?.attendees ?? [],
+        first: rule?.first ?? "",
+        last: rule?.last ?? "",
+        times: { ...(rule?.times ?? {}) },
+        states: {},
+        kinds: {},
+    };
 }
 
 /** Gives the groups of a type of the course of the dialog. */
@@ -1880,10 +1888,7 @@ function examRuleOf(loaded: Course): Rule {
         extras: [],
         location: "",
         locationLink: "",
-        online: "",
-        onlineLink: "",
-        onlineChannel: "",
-        onlineTitle: "",
+        ...onlineOf(null),
         attendees: [],
         first: days[0] ?? dayOf(new Date()),
         last: days[days.length - 1] ?? dayOf(new Date()),
@@ -2012,6 +2017,17 @@ async function examSend(form: Form, dry: boolean): Promise<Planned[]> {
  */
 async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
     if (plain !== null) return plainSend(plain, form, dry);
+    const rule: Omit<Rule, "times" | "group" | "semester"> = {
+        type: form.type,
+        slots: form.slots,
+        extras: form.extras,
+        location: form.location,
+        locationLink: form.locationLink,
+        ...onlineOf(form),
+        attendees: form.attendees,
+        first: form.first,
+        last: form.last,
+    };
     if (grouped !== null)
         return courseSend<Planned[]>("/api/course/groups", {
             module: course?.module ?? "",
@@ -2020,18 +2036,8 @@ async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
             states: form.states,
             dry: dry,
             rule: {
-                type: form.type,
-                slots: form.slots,
+                ...rule,
                 extras: [],
-                location: form.location,
-                locationLink: form.locationLink,
-                online: form.online,
-                onlineLink: form.onlineLink,
-                onlineChannel: form.onlineChannel,
-                onlineTitle: form.onlineTitle,
-                attendees: form.attendees,
-                first: form.first,
-                last: form.last,
                 group: grouped.group,
                 semester: course?.semester ?? "",
             },
@@ -2045,18 +2051,7 @@ async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
         states: form.states,
         dry: dry,
         rule: {
-            type: form.type,
-            slots: form.slots,
-            extras: form.extras,
-            location: form.location,
-            locationLink: form.locationLink,
-            online: form.online,
-            onlineLink: form.onlineLink,
-            onlineChannel: form.onlineChannel,
-            onlineTitle: form.onlineTitle,
-            attendees: form.attendees,
-            first: form.first,
-            last: form.last,
+            ...rule,
             times: form.times,
             group: form.old?.group ?? "",
             semester: course?.semester ?? "",
@@ -2081,10 +2076,7 @@ async function repeatedSend(
         {
             ...box,
             location: form.location,
-            online: form.online,
-            onlineLink: form.onlineLink,
-            onlineChannel: form.onlineChannel,
-            onlineTitle: form.onlineTitle,
+            ...onlineOf(form),
             attendees: form.attendees,
         },
         form,
@@ -2123,10 +2115,7 @@ function waitingFill(form: Form): void {
     Object.assign(form, {
         location: "",
         locationLink: "",
-        online: "",
-        onlineLink: "",
-        onlineChannel: "",
-        onlineTitle: "",
+        ...onlineOf(null),
         attendees: [],
         slots: [],
     });
@@ -2399,12 +2388,7 @@ function onlineRowsOf(form: Form): HTMLElement[] {
               onlineRowOf({
                   field: field,
                   categories: categories,
-                  online: {
-                      online: form.online,
-                      onlineLink: form.onlineLink,
-                      onlineChannel: form.onlineChannel,
-                      onlineTitle: form.onlineTitle,
-                  },
+                  online: onlineOf(form),
                   open: onlineOpen,
                   opened: (open: boolean): void => {
                       onlineOpen = open;
@@ -2493,7 +2477,6 @@ function groupPickOf(form: Form): HTMLElement {
         groupFrom(form, ""),
     );
     const part: HTMLElement = elementOf("span", "series-group-pick", "");
-    plus.classList.add("plus-quiet");
     if (loaded !== null && groupsOf(form.type).length > 0)
         part.append(
             pinnedMenuOf(
@@ -2599,28 +2582,17 @@ function groupStart(type: string, group: string): void {
     removeAsked = false;
     formReset();
     typing = {
-        type: type,
-        old: rule ?? null,
-        slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [
-            { weekday: 0, start: "", end: "" },
-        ],
-        before: rule?.slots.map((slot: Slot): number => slot.weekday) ?? [0],
+        ...formOf(type, rule ?? null),
         extras: [],
-        location: rule?.location ?? standardLineOf(),
-        locationLink:
-            rule?.locationLink ??
-            skillFieldOf("location")?.places[standardLineOf()]?.link ??
-            "",
-        online: rule?.online ?? "",
-        onlineLink: rule?.onlineLink ?? "",
-        onlineChannel: rule?.onlineChannel ?? "",
-        onlineTitle: rule?.onlineTitle ?? "",
-        attendees: rule?.attendees ?? [],
-        first: rule?.first ?? weeks?.first ?? "",
-        last: rule?.last ?? weeks?.last ?? "",
         times: {},
-        states: {},
-        kinds: {},
+        ...(rule === undefined
+            ? {
+                  location: standardLineOf(),
+                  locationLink: placeLinkOf(standardLineOf()),
+                  first: weeks?.first ?? "",
+                  last: weeks?.last ?? "",
+              }
+            : {}),
     };
     formFill();
 }
@@ -2931,12 +2903,7 @@ export async function seriesOpen(
 ): Promise<void> {
     dialogStart();
     fresh = null;
-    repeated = null;
-    plain = null;
-    grouped = null;
-    groupBack = null;
-    removeAsked = false;
-    done = saved;
+    formsForget(saved);
     const loaded: [Course, Category[], Person[]] = await Promise.all([
         courseLoad(module, semester),
         categoriesLoad(),
@@ -2948,27 +2915,7 @@ export async function seriesOpen(
             ?.rule ?? (type === examType ? examRuleOf(course) : null);
     formReset();
     listOpened = type === examType;
-    typing = {
-        type: rule?.type ?? type,
-        old: rule,
-        slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [
-            { weekday: 0, start: "", end: "" },
-        ],
-        before: rule?.slots.map((slot: Slot): number => slot.weekday) ?? [0],
-        extras: rule?.extras.map((extra: Extra): Extra => ({ ...extra })) ?? [],
-        location: rule?.location ?? "",
-        locationLink: rule?.locationLink ?? "",
-        online: rule?.online ?? "",
-        onlineLink: rule?.onlineLink ?? "",
-        onlineChannel: rule?.onlineChannel ?? "",
-        onlineTitle: rule?.onlineTitle ?? "",
-        attendees: rule?.attendees ?? [],
-        first: rule?.first ?? "",
-        last: rule?.last ?? "",
-        times: { ...(rule?.times ?? {}) },
-        states: {},
-        kinds: {},
-    };
+    typing = formOf(type, rule);
     kindTyped = "";
     kindAsked = "";
     extraTyped = null;
@@ -3034,23 +2981,16 @@ async function seriesRepeat(
     }
     dialogStart();
     [course, categories, persons] = loaded;
+    formsForget(saved);
     repeated = from;
-    plain = null;
-    grouped = null;
-    groupBack = null;
-    removeAsked = false;
-    done = saved;
     formReset();
     typing = {
         ...days,
         type: from.box.type,
         old: null,
         location: from.box.location,
-        locationLink: skillFieldOf("location")?.places[from.box.location]?.link ?? "",
-        online: from.box.online ?? "",
-        onlineLink: from.box.onlineLink ?? "",
-        onlineChannel: from.box.onlineChannel ?? "",
-        onlineTitle: from.box.onlineTitle ?? "",
+        locationLink: placeLinkOf(from.box.location),
+        ...onlineOf(from.box),
         attendees: from.box.attendees ?? [],
         states: {},
         kinds: {},
@@ -3065,20 +3005,17 @@ async function seriesRepeat(
  * and its first day on or before its last, or no last day.
  */
 function plainReady(series: Plain, form: Form): boolean {
-    const days: boolean = plainTimed
-        ? form.slots.length > 0 &&
-          form.slots.every(
-              (slot: Slot): boolean => slot.weekday > 0 && timesReady(slot),
-          ) &&
-          new Set(form.slots.map((slot: Slot): number => slot.weekday)).size ===
-              form.slots.length
-        : form.slots.length > 0 &&
-          form.slots.every((slot: Slot): boolean => slot.weekday > 0) &&
-          new Set(form.slots.map((slot: Slot): number => slot.weekday)).size ===
-              form.slots.length &&
-          form.slots.every(
-              (slot: Slot): boolean => (plainLengths.get(slot.weekday) ?? 0) > 0,
-          );
+    const days: boolean =
+        form.slots.length > 0 &&
+        form.slots.every(
+            (slot: Slot): boolean =>
+                slot.weekday > 0 &&
+                (plainTimed
+                    ? timesReady(slot)
+                    : (plainLengths.get(slot.weekday) ?? 0) > 0),
+        ) &&
+        new Set(form.slots.map((slot: Slot): number => slot.weekday)).size ===
+            form.slots.length;
     const named: boolean =
         series.category === skillName ? series.module !== "" : series.title.trim() !== "";
     return (
@@ -3107,10 +3044,7 @@ function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
     const texts: Plain = {
         ...series,
         location: form.location,
-        online: form.online,
-        onlineLink: form.onlineLink,
-        onlineChannel: form.onlineChannel,
-        onlineTitle: form.onlineTitle,
+        ...onlineOf(form),
         attendees: form.attendees,
         first: form.first,
         last: form.last,
@@ -3488,11 +3422,8 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     dialogStart();
     [categories, persons] = loaded;
     course = null;
-    repeated = null;
+    formsForget(saved);
     plain = series;
-    grouped = null;
-    groupBack = null;
-    removeAsked = false;
     plainTimed = series.start !== "";
     plainLengths = new Map(
         parts.flatMap((part: Plain): [number, number | null][] =>
@@ -3502,7 +3433,6 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
             ]),
         ),
     );
-    done = saved;
     formReset();
     const slots: Slot[] = parts
         .flatMap((part: Plain): Slot[] =>
@@ -3514,8 +3444,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
         )
         .sort((first: Slot, second: Slot): number => first.weekday - second.weekday);
     typing = {
-        type: "",
-        old: null,
+        ...formOf("", null),
         slots: slots,
         before: slots.map((): number => 0),
         extras: parts
@@ -3526,17 +3455,11 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
                 first.day.localeCompare(second.day),
             ),
         location: series.location,
-        locationLink: skillFieldOf("location")?.places[series.location]?.link ?? "",
-        online: series.online,
-        onlineLink: series.onlineLink,
-        onlineChannel: series.onlineChannel,
-        onlineTitle: series.onlineTitle,
+        locationLink: placeLinkOf(series.location),
+        ...onlineOf(series),
         attendees: series.attendees,
         first: parts.map((part: Plain): string => part.first).sort()[0],
         last: series.last,
-        times: {},
-        states: {},
-        kinds: {},
     };
     formFill();
     dialogShow();
@@ -3558,6 +3481,42 @@ export async function plainOpen(id: string, saved: () => void): Promise<void> {
 }
 
 /**
+ * Gives a new plain series starting on a day, on its weekday, without times,
+ * at my default place, see {@link standardLineOf}.
+ */
+function plainNewOf(
+    category: string,
+    module: string,
+    type: string,
+    semester: string,
+    day: string,
+): Plain {
+    return {
+        id: "",
+        category: category,
+        title: "",
+        module: module,
+        type: type,
+        semester: semester,
+        location: standardLineOf(),
+        ...onlineOf(null),
+        attendees: [],
+        weekdays: [weekdayOf(day)],
+        monthDay: 0,
+        month: 0,
+        start: "",
+        end: "",
+        minutes: null,
+        first: day,
+        last: "",
+        extras: [],
+        file: "",
+        series: "",
+        parts: [],
+    };
+}
+
+/**
  * Opens the dialog of my own learning of a module as a series,
  * from the card `Learning` on the page of the module, see `../editor/course.ts`:
  * the plain series its planned boxes belong to,
@@ -3576,35 +3535,7 @@ export async function learningOpen(
         return;
     }
     const today: string = dayOf(new Date());
-    await plainStart(
-        {
-            id: "",
-            category: skillName,
-            title: "",
-            module: module,
-            type: "",
-            semester: semester,
-            location: standardLineOf(),
-            online: "",
-            onlineLink: "",
-            onlineChannel: "",
-            onlineTitle: "",
-            attendees: [],
-            weekdays: [weekdayOf(today)],
-            monthDay: 0,
-            month: 0,
-            start: "",
-            end: "",
-            minutes: null,
-            first: today,
-            last: "",
-            extras: [],
-            file: "",
-            series: "",
-            parts: [],
-        },
-        (): void => {},
-    );
+    await plainStart(plainNewOf(skillName, module, "", semester, today), (): void => {});
 }
 
 /**
@@ -3747,12 +3678,7 @@ async function freshFollow(): Promise<void> {
     }
     if (skill && numberedTypes.includes(picked.type)) {
         const names: { title: string; link: string; file: string } = skillNamesOf(picked);
-        const kept: {
-            day: string;
-            category: string;
-            picked: ModuleType;
-            semester: string;
-        } = fresh;
+        const kept: NonNullable<typeof fresh> = fresh;
         await seriesRepeat(
             {
                 box: {
@@ -3798,32 +3724,9 @@ async function freshFollow(): Promise<void> {
         return;
     }
     await plainStart(
-        {
-            id: "",
-            category: fresh.category,
-            title: "",
-            module: skill ? picked.module : "",
-            type: skill ? picked.type : "",
-            semester: skill ? fresh.semester : "",
-            location: standardLineOf(),
-            online: "",
-            onlineLink: "",
-            onlineChannel: "",
-            onlineTitle: "",
-            attendees: [],
-            weekdays: [weekdayOf(day)],
-            monthDay: 0,
-            month: 0,
-            start: "",
-            end: "",
-            minutes: null,
-            first: day,
-            last: "",
-            extras: [],
-            file: "",
-            series: "",
-            parts: [],
-        },
+        skill
+            ? plainNewOf(skillName, picked.module, picked.type, fresh.semester, day)
+            : plainNewOf(fresh.category, "", "", "", day),
         done,
     );
 }
@@ -3848,31 +3751,14 @@ export async function seriesNew(day: string, saved: () => void): Promise<void> {
         semester: semesterOf(day),
     };
     course = null;
-    repeated = null;
-    plain = null;
-    grouped = null;
-    groupBack = null;
-    removeAsked = false;
-    done = saved;
+    formsForget(saved);
     formReset();
     typing = {
-        type: "",
-        old: null,
+        ...formOf("", null),
         slots: [{ weekday: weekdayOf(day), start: "", end: "" }],
-        before: [0],
-        extras: [],
         location: standardLineOf(),
-        locationLink: skillFieldOf("location")?.places[standardLineOf()]?.link ?? "",
-        online: "",
-        onlineLink: "",
-        onlineChannel: "",
-        onlineTitle: "",
-        attendees: [],
+        locationLink: placeLinkOf(standardLineOf()),
         first: day,
-        last: "",
-        times: {},
-        states: {},
-        kinds: {},
     };
     formFill();
     dialogShow();
