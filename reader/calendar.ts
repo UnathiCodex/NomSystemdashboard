@@ -389,30 +389,16 @@ ICAL.design.icalendar.param.result = { multiValue: "," };
 ICAL.design.icalendar.param.note = { multiValue: ",", multiValueSeparateDQuote: true };
 
 /**
- * Every `X-` property of my own the reader writes or reads, as text of the standard:
+ * Every `X-` property of my own of {@link lineOrder}, as text of the standard:
  * written with each `\`, `;` and `,` escaped by a `\` and a line break as `\n`.
  * `ical.js` wrote every `X-` value raw,
  * so a strict reader of the standard split them at each `;` and `,`,
  * and a line break in one broke the file, which then could not be read at all.
  * `X-PUSHED` names its own type, `VALUE=DATE-TIME`, see `pushAdd`.
  */
-const ownTexts: string[] = [
-    "x-from",
-    "x-semester",
-    "x-chapter",
-    "x-round",
-    "x-food",
-    "x-cooked",
-    "x-pain",
-    "x-workout",
-    "x-exercise",
-    "x-video",
-    "x-number",
-    "x-group",
-    "x-planned",
-    "x-online",
-    "x-series",
-];
+const ownTexts: string[] = lineOrder
+    .filter((name: string): boolean => name.startsWith("X-") && name !== "X-PUSHED")
+    .map((name: string): string => name.toLowerCase());
 ownTexts.forEach((name: string): void => {
     ICAL.design.icalendar.property[name] = { defaultType: "text" };
 });
