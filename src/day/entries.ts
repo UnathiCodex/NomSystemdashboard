@@ -15,15 +15,7 @@
  * which are done once a log entry points to them, see `boxes.ts`;
  * after a change of a box alone, its sender loads the boxes again itself.
  *
- * The standard address of a name of `With` is made here, beside who I was with,
- * see {@link standardAddressOf}.
- *
- * - `../search.ts`: Writes a name without accents for its standard address in `With`.
- * - `../persons.ts`: Gives a name of `Persons.md` in the order it is spoken,
- *   for its standard address in `With`.
- * - `./series.ts`: The days of a series, the states of its boxes and the boxes it makes,
- *   for the type checker only.
- * - `fullcalendar`: Calendar that shows the log.
+ * The standard address of a name of `With` is made here, see {@link standardAddressOf}.
  */
 
 import { searchTextOf } from "../search.ts";
@@ -36,42 +28,18 @@ import type { Planned } from "../../reader/course.ts";
 
 /**
  * Fields and times of an entry of the log to send; an empty field is not written.
+ * A field left out keeps what the file holds.
  *
- * - `category`: Category picked, `CATEGORIES`.
- * - `title`: What picked, `SUMMARY`.
- * - `titleLink`: Link of what it was, typed, like the page of an event,
- *   the `ALTREP` of its `SUMMARY`, empty for none; left out, it keeps its link.
- * - `location`: Place picked, `LOCATION`, where I physically was,
- *   whose link the reader finds itself.
- * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
- *   What I did online, see {@link Online}; left out, it keeps them.
- * - `from`: Where a way starts, `X-FROM`.
- * - `attendees`: Who I was with, one `ATTENDEE` each, none for nobody;
- *   left out, it keeps its people.
- * - `module`: Module of a skill entry, like `IN2028`,
- *   written by the reader only in its `SUMMARY`,
- *   like `IN2028_BusinessAnalyticsMachineLearning (VO)`.
- * - `type`: Type of a skill entry, like `VO`, written only in its `SUMMARY`.
- * - `semester`: Semester of a skill entry, `X-SEMESTER`,
- *   like `2026W`, empty for any other entry;
- *   the reader fills in the semester of its day for a skill entry sent without one.
- * - `note`: Free note, `DESCRIPTION`.
- * - `foods`: Foods of a meal, its lines `X-FOOD` like `Reis;150`,
- *   none for any other entry.
- * - `planned`: Identifier of the box a new log entry is logged from,
- *   written as `RELATED-TO`, empty for none;
+ * - `titleLink`: The `ALTREP` of its `SUMMARY`.
+ * - `location`: Where I physically was, whose link the reader finds itself.
+ * - `module`, `type`: Of a skill entry, written by the reader only in its `SUMMARY`.
+ * - `semester`: The reader fills in the semester of its day
+ *   for a skill entry sent without one.
+ * - `planned`: The box a new log entry is logged from, `RELATED-TO`,
  *   the reader writes it only for a new entry.
- * - `pain`: My neck pain from 0 to 10 after `Neck long`, `X-PAIN`, empty for none;
- *   left out, it stays as it is.
- * - `cooked`: For a meal drawn from a cooking, the identifier of that entry `Cook`,
- *   `X-COOKED`, empty for none;
- *   left out, it stays as it is.
- * - `workout`, `exercises`, `videos`:
- *   What a session of sport did, its `X-WORKOUT` of before,
- *   like `Push`, and its lines `X-EXERCISE` and `X-VIDEO`, see `sport.ts`;
- *   empty and none for any other entry; left out, they stay as they are.
- * - `start`: Start of the entry.
- * - `end`: End of the entry, after the start.
+ * - `pain`: My neck pain from 0 to 10 after `Neck long`.
+ * - `cooked`: For a meal drawn from a cooking, the identifier of that entry `Cook`.
+ * - `workout`, `exercises`, `videos`: What a session of sport did, see `sport.ts`.
  */
 export type EntryFields = Partial<Online> & {
     category: string;
@@ -97,21 +65,12 @@ export type EntryFields = Partial<Online> & {
 
 /**
  * Fields of a box of the plan to send; an empty field is not written.
+ * Those it shares with {@link EntryFields} mean the same.
  *
- * - `category`, `title`, `titleLink`, `location`,
- *   `online`, `onlineLink`, `onlineChannel`, `onlineTitle`,
- *   `from`, `attendees`, `module`, `type`, `semester`, `note`:
- *   As those of {@link EntryFields}.
- * - `day`: Day of the box, like `2026-10-13`;
- *   for a box with a deadline the day of its deadline.
- * - `time`: Expected time on its day, `null` for none and for a box with a deadline.
- * - `minutes`: Expected duration in minutes, `null` for none.
- * - `deadline`: Deadline as the reader takes it: ISO instant,
- *   or its day like `2026-10-23` without time;
- *   empty for none.
- * - `chapters`, `documents`: Chapters and documents of a skill box,
- *   see `SkillLinks` in `skill.ts`;
- *   none for any other box.
+ * - `day`: For a box with a deadline the day of its deadline.
+ * - `time`: `null` for none and for a box with a deadline.
+ * - `deadline`: ISO instant, or its day without time, empty for none.
+ * - `chapters`, `documents`: Of a skill box, see `SkillLinks` in `skill.ts`.
  */
 export type BoxFields = Partial<Online> & {
     category: string;
@@ -134,21 +93,11 @@ export type BoxFields = Partial<Online> & {
 
 /**
  * Gives the standard address of a name of `With`:
- * the name in the order it is spoken, a person of `Persons.md` `Vorname Nachname`,
- * see `spokenOf` in `../persons.ts`,
- * so a person has one address in either order of its name, in small letters, ä, ö,
- * ü and ß as ae, oe, ue and ss,
- * every other letter with an accent plainly, like é as e,
- * see `searchTextOf` in `../search.ts`, every other character but a–z and 0–9 a dot,
- * like a space, never two in a row and none at either end,
+ * the name in the order it is spoken, see `spokenOf` in `../persons.ts`,
+ * so a person has one address in either order of its name, in small letters,
+ * ä, ö, ü and ß as ae, oe, ue and ss, other accents plainly, every other character a dot,
  * then `@invalid`, the ending reserved for addresses that never work,
- * so nothing reaches anybody,
- * like `herr.mueller@invalid` of `Herr Müller`,
- * `jose.garcia@invalid` of `José García` and `philip.zimmer@invalid` of `Zimmer, Philip`.
- * - `local`: The part before `@`.
- *
- * @param name - Name, like `Herr Müller`
- * @returns Address, like `herr.mueller@invalid`
+ * so nothing reaches anybody.
  */
 export function standardAddressOf(name: string): string {
     const local: string = searchTextOf(
@@ -165,12 +114,8 @@ export function standardAddressOf(name: string): string {
 }
 
 /**
- * Sends a request to the reader.
+ * Sends a request to the reader, gives its answer.
  *
- * @param method - HTTP method, like `POST`
- * @param address - Address of the request
- * @param body - Data to send, or `null`
- * @returns Answer of the reader, like the identifier of a new entry, `null` for none
  * @throws {Error} - When the reader does not take the request
  */
 async function requestSend(
@@ -188,13 +133,7 @@ async function requestSend(
 
 /**
  * Sends a request that changes the log, then loads the log of the shown day again.
- * - {@link EventSourceApi#refetch}: Loads the entries of a calendar of the reader again.
  *
- * @param calendar - Calendar of the day
- * @param method - HTTP method, like `POST`
- * @param address - Address of the request
- * @param body - Data to send, or `null`
- * @returns Answer of the reader, like the identifier of a new entry, `null` for none
  * @throws {Error} - When the reader does not take the request
  */
 async function logSend(
@@ -208,12 +147,7 @@ async function logSend(
     return answer;
 }
 
-/**
- * Turns the fields of an entry into the form the reader takes, with ISO instants.
- *
- * @param fields - Fields and times
- * @returns Fields to send
- */
+/** Turns the fields of an entry into the form the reader takes, with ISO instants. */
 function bodyOf(fields: EntryFields): object {
     return {
         ...fields,
@@ -222,23 +156,14 @@ function bodyOf(fields: EntryFields): object {
     };
 }
 
-/**
- * Turns the fields of a box into the form the reader takes:
- * its time as ISO instant, empty for none.
- *
- * @param fields - Fields of the box
- * @returns Fields to send
- */
+/** Turns the fields of a box into the form the reader takes, its time empty for none. */
 function boxBodyOf(fields: BoxFields): object {
     return { ...fields, time: fields.time === null ? "" : fields.time.toISOString() };
 }
 
 /**
- * Adds an entry to the log.
+ * Adds an entry to the log, gives its identifier.
  *
- * @param calendar - Calendar of the day
- * @param fields - Fields and times of the new entry
- * @returns Identifier of the new entry
  * @throws {Error} - When the reader does not take the entry
  */
 export async function entryAdd(calendar: Calendar, fields: EntryFields): Promise<string> {
@@ -246,20 +171,12 @@ export async function entryAdd(calendar: Calendar, fields: EntryFields): Promise
 }
 
 /**
- * Changes fields and times of an entry of the log,
- * only while its file holds it as the dialog opened it:
+ * Changes an entry of the log, only while its file holds it as the dialog opened it:
  * the reader refuses the change with 409 once the file changed it since,
  * like a food renamed in every entry, see `entryEdit` in `reader/day.ts`;
  * the first save wins.
- * - `response`: Answer of the reader.
  *
- * @param calendar - Calendar of the day
- * @param id - Identifier of the entry
- * @param fields - New fields and times
- * @param version - Fingerprint of the entry as the dialog opened it,
- *   see `version` of `Entry` in `reader/calendar.ts`
- * @returns Whether it is changed,
- *   `false` when its file changed it since the dialog opened it
+ * @returns Whether it is changed
  * @throws {Error} - When the reader does not take the change for another reason
  */
 export async function entryChange(
@@ -279,18 +196,13 @@ export async function entryChange(
 }
 
 /**
- * Moves an entry of the log to a new start and end,
- * after a drag: sends its new times alone,
- * and the reader keeps every other field as its file holds it,
- * see `entryMove` in `reader/day.ts`.
+ * Moves an entry of the log after a drag: sends its new times alone,
+ * and the reader keeps every other field as its file holds it.
  * The log does not load again here, since FullCalendar shows it moved already
  * and the change of its file loads it anyway, see `changesFollow` in `../changes.ts`:
  * two loads at once showed the entry twice for a moment,
  * at its old place and its new one.
  *
- * @param id - Identifier of the entry
- * @param start - Its new start
- * @param end - Its new end
  * @throws {Error} - When the reader does not move it,
  *   like a meal moved before the cooking it draws from
  */
@@ -305,8 +217,6 @@ export async function entryMove(id: string, start: Date, end: Date): Promise<voi
 /**
  * Removes an entry of the log; the reader opens the box it was logged from again.
  *
- * @param calendar - Calendar of the day
- * @param id - Identifier of the entry
  * @throws {Error} - When the reader does not remove the entry
  */
 export async function entryDelete(calendar: Calendar, id: string): Promise<void> {
@@ -314,15 +224,11 @@ export async function entryDelete(calendar: Calendar, id: string): Promise<void>
 }
 
 /**
- * Logs a box at its real time, dropped into the log or tapped:
- * the reader writes a log entry like it, pointing to it;
- * the change of its file loads the log and the boxes again, so the box shows as done,
+ * Logs a box at its real time: the reader writes a log entry pointing to it.
+ * The change of its file loads the log and the boxes again,
  * see `changesFollow` in `../changes.ts`, once only,
  * so the entry never shows twice for a moment.
  *
- * @param box - Identifier of the box
- * @param start - Real start
- * @param end - Real end
  * @throws {Error} - When the reader does not log it, like for a box done already
  */
 export async function boxLog(box: string, start: Date, end: Date): Promise<void> {
@@ -334,14 +240,10 @@ export async function boxLog(box: string, start: Date, end: Date): Promise<void>
 }
 
 /**
- * Takes a done box back to open, with one click on its check:
- * the reader removes the log entry written from it, or,
- * when that holds what I added since,
- * like attempts or a note, only lets it go of the box, see `boxUndo` in `reader/day.ts`;
- * then the log of the shown day loads again, and with it the boxes.
+ * Takes a done box back to open: the reader removes the log entry written from it, or,
+ * when that holds what I added since, only lets it go of the box,
+ * see `boxUndo` in `reader/day.ts`.
  *
- * @param calendar - Calendar of the day
- * @param id - Identifier of the box
  * @throws {Error} - When the reader does not take it back,
  *   like for a box that is not done
  */
@@ -350,10 +252,8 @@ export async function boxUndo(calendar: Calendar, id: string): Promise<void> {
 }
 
 /**
- * Adds a box to the plan.
+ * Adds a box to the plan, gives its identifier.
  *
- * @param fields - Fields of the new box
- * @returns Identifier of the new box
  * @throws {Error} - When the reader does not take the box
  */
 export async function boxAdd(fields: BoxFields): Promise<string> {
@@ -361,23 +261,12 @@ export async function boxAdd(fields: BoxFields): Promise<string> {
 }
 
 /**
- * Adds a new box to the plan once per date of its weekly days,
- * as the dialog of a series gives them for a box repeated by its row `Series`,
- * see `seriesRepeat` in `series.ts` and `repeatApply` in `reader/course.ts`,
- * or only tells what that would make, for the preview of the dialog;
- * the reader refuses it with 409 for a series of a type
- * that has a box in its semester already.
- * - `response`: Answer of the reader.
+ * Adds a new box once per date of its weekly days,
+ * see `repeatApply` in `reader/course.ts`,
+ * or with `dry` only tells what that would make, for the preview of the dialog.
  *
- * @param fields - Fields of the box, as of one made once;
- *   each date sets its own day, time and length
- * @param days - Its days with their times, its extras,
- *   its first and last day and the dates with times of their own
- * @param states - The states I gave its boxes, by their days, like a lecture cancelled,
- *   see `States` in `series.ts`
- * @param dry - Whether only to tell what it would make, writing nothing
  * @returns The boxes it makes, by their days,
- *   `null` when the reader refuses it since its series is there already
+ *   `null` when the reader refuses it with 409 since the type has a box in its semester
  * @throws {Error} - When the reader does not take it for another reason
  */
 export async function boxRepeat(
@@ -407,8 +296,6 @@ export async function boxRepeat(
 /**
  * Changes a box of the plan.
  *
- * @param id - Identifier of the box
- * @param fields - New fields
  * @throws {Error} - When the reader does not take the change
  */
 export async function boxChange(id: string, fields: BoxFields): Promise<void> {
@@ -418,7 +305,6 @@ export async function boxChange(id: string, fields: BoxFields): Promise<void> {
 /**
  * Removes a box of the plan, one planned by mistake.
  *
- * @param id - Identifier of the box
  * @throws {Error} - When the reader does not remove the box, like a done one
  */
 export async function boxDelete(id: string): Promise<void> {
@@ -426,9 +312,8 @@ export async function boxDelete(id: string): Promise<void> {
 }
 
 /**
- * Pushes an open box to the next day, one whose day is over to tomorrow.
+ * Pushes an open box to the next day.
  *
- * @param id - Identifier of the box
  * @throws {Error} - When the reader does not take it
  */
 export async function boxPush(id: string): Promise<void> {
@@ -436,12 +321,9 @@ export async function boxPush(id: string): Promise<void> {
 }
 
 /**
- * Marks a box cancelled by the university,
- * like a lecture that does not take place, or takes that back;
+ * Marks a box cancelled by the university, or takes that back;
  * the reader renumbers the later boxes of its series.
  *
- * @param id - Identifier of the box
- * @param cancelled - Whether the university cancelled it, else taking that back
  * @throws {Error} - When the reader does not take it
  */
 export async function boxUniversity(id: string, cancelled: boolean): Promise<void> {
@@ -452,8 +334,6 @@ export async function boxUniversity(id: string, cancelled: boolean): Promise<voi
  * Ticks a box with a deadline submitted, or takes the tick back;
  * its sessions stay in the log.
  *
- * @param id - Identifier of the box
- * @param submitted - Whether to tick it submitted, else to take the tick back
  * @throws {Error} - When the reader does not take it
  */
 export async function boxSubmit(id: string, submitted: boolean): Promise<void> {
@@ -463,8 +343,6 @@ export async function boxSubmit(id: string, submitted: boolean): Promise<void> {
 /**
  * Drops a box, or takes a dropped box back.
  *
- * @param id - Identifier of the box
- * @param dropped - Whether to drop it, else to take it back
  * @throws {Error} - When the reader does not take it
  */
 export async function boxDrop(id: string, dropped: boolean): Promise<void> {

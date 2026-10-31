@@ -3,17 +3,11 @@
  *
  * Shows the daily note of a day, read only,
  * below my gratitude and my points about the day,
- * which the lists above it show,
- * so the note leaves their two sections out, `## Gratitude` and `## About`:
- * what is left shows as Markdown, nothing for a note that holds only them,
- * as the dashboard writes it.
- * Loads and writes those two sections;
- * the reader writes them into the note of the day, see `reader/note.ts`.
+ * which the lists above it show, so the note leaves out `## Gratitude` and `## About`.
+ * Loads and writes those two sections, which the reader writes, see `reader/note.ts`.
  *
- * - `marked`: Turns Markdown into HTML.
- * - `dompurify`: Takes scripts and the like out of that HTML, as the scripts view does,
+ * - `dompurify`: Takes scripts and the like out of the HTML, as the scripts view does,
  *   see `../notes/markdown.ts`.
- * - `../reader.ts`: Asks the reader.
  */
 
 import { Marked } from "marked";
@@ -21,19 +15,12 @@ import DOMPurify from "dompurify";
 import { readerAsk } from "../reader.ts";
 import type { SectionTitle } from "../../reader/note.ts";
 
-/**
- * Markdown reader of the daily note.
- */
+/** Markdown reader of the daily note. */
 const markdown: Marked = new Marked();
 
 /**
- * Takes my gratitude and my points about the day out of a note,
- * its sections `## Gratitude` and `## About`,
- * each its heading and every line below it up to the next heading,
- * since the lists above the note show them.
- *
- * @param note - Text of the note file
- * @returns Markdown of the rest of the note, which `marked` reads
+ * Takes my sections `## Gratitude` and `## About` out of a note,
+ * each its heading and every line below it up to the next heading.
  */
 function markdownOf(note: string): string {
     return note.replace(
@@ -44,11 +31,9 @@ function markdownOf(note: string): string {
 
 /**
  * Shows the daily note of a date, nothing when the day has none.
- * - {@link Marked#parse}: Turns Markdown into HTML, with `async: false` directly as text.
- * - {@link DOMPurify.sanitize}: Takes out scripts, event handlers and the like,
+ * - {@link DOMPurify.sanitize}: Takes out scripts and event handlers,
  *   like those of HTML pasted into a note.
  *
- * @param date - Date like `2026-07-03`
  * @throws {Error} - When the reader gives no valid answer
  */
 export async function noteShow(date: string): Promise<void> {
@@ -63,12 +48,9 @@ export async function noteShow(date: string): Promise<void> {
 }
 
 /**
- * Loads my gratitude and my points about the day
- * of the daily note of a date from the reader.
+ * Loads my gratitude and my points about the day of the daily note of a date.
  *
- * @param date - Date like `2026-07-03`
- * @returns Text of each section by its title, the Markdown of its points,
- *   see `reader/note.ts`; empty for none
+ * @returns Markdown of each section by its title, empty for none
  * @throws {Error} - When the reader gives no valid answer
  */
 export async function sectionsLoad(
@@ -80,13 +62,9 @@ export async function sectionsLoad(
 }
 
 /**
- * Sends the text of a section to the reader,
- * which writes it into the daily note of its date;
+ * Sends the text of a section to the reader, which writes it into the daily note.
  * `keepalive` lets it arrive also when the page closes meanwhile.
  *
- * @param date - Date like `2026-07-03`
- * @param title - Title of the section
- * @param text - Text of the section, the Markdown of its points
  * @throws {Error} - When the reader does not take the text
  */
 export async function sectionSend(

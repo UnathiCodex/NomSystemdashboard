@@ -1,17 +1,12 @@
 /* Session of sport in the entry by category, see `sport.ts`:
-   its rows stand in one place, filled anew on every change,
-   which counts as no box of its own,
-   so they stand as every row of the dialog;
-   each part as a food of a meal, see `meal.css` */
+   its rows stand in one place, which counts as no box of its own,
+   so they stand as every row of the dialog, each part as a food, see `meal.css` */
 .sport-rows {
     display: contents;
 }
 
-/* Kilograms of an exercise where a food has its kcal:
-   a small field with `kg` after it, its digits at the right, as the grams of a food are,
-   see `.meal-grams` in `meal.css`, but staying where it stands on a phone,
-   so the sets come first there and the kilograms after the name,
-   like `3 × 10  Bench press  40 kg` */
+/* Kilograms of an exercise where a food has its kcal, as the grams of a food are,
+   but staying where it stands on a phone, so the kilograms come after the name */
 .sport-kg {
     display: flex;
     align-items: center;
@@ -29,7 +24,7 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Phone: the kilograms just wide enough for four digits, as the grams of a food */
+/* Phone: the kilograms just wide enough for four digits */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .panel .sport-kg input {
         flex: none;
@@ -38,19 +33,15 @@
     }
 }
 
-/* The list of the plus of a workout below its parts,
-   as the search of a meal stands, only its menu,
+/* The list of the plus of a workout, only its menu,
    whose plus went up after the name of the workout,
    so it takes no room between the parts and the next row */
 .sport-rows .meal-parts > .picker {
     display: contents;
 }
 
-/* Sets and repetitions of an exercise, see `setsOf` in `sport.ts`:
-   two small fields of whole numbers,
-   the `×` between them and the unit after them always shown,
-   so an empty row says what to type, like `  ×   reps`;
-   the unit, `reps` or `s`, a switch as plain as the units beside it,
+/* Sets and repetitions of an exercise, see `setsOf` in `sport.ts`.
+   The unit a switch as plain as the units beside it,
    a thin line below it under the pointer, so I see that a click changes it */
 .sport-sets {
     justify-content: flex-end;
@@ -78,9 +69,7 @@
     border-bottom-color: var(--line);
 }
 
-/* The rows of a session in the columns of the rows of a meal,
-   see `.meal-row` in `meal.css`,
-   with the room of `3 × 10 reps` where a food has its grams */
+/* The rows of a session in the columns of a meal, with the room of `3 × 10 reps` */
 .sport-rows .meal-row {
     grid-template-columns: minmax(0, 1fr) 10rem 6rem auto;
 }
