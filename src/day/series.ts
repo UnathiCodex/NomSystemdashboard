@@ -520,10 +520,12 @@ export type Learned = Online & {
  * - `folders`: The folder of the material of the semester of each type,
  *   like `VO_UniversityLectureLessons/TUM_2026W` for `VO`, also one not there yet.
  * - `links`: The folder a box of each type links, as the reader writes it now, like
- *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons`
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/
+ *   VO_UniversityLectureLessons`
  *   for `VO`.
  * - `file`: Its plan from `NomWorkspace` on, like
- *   `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
+ *   `NomManageplannings/NomManagecalendar/Modules/
+ *   IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
  */
 export type Course = {
     module: string;
@@ -571,7 +573,8 @@ type Form = Days &
  *   like `IN2028_BusinessAnalyticsMachineLearning (VO)`,
  *   of any other its text, like `Gym`.
  * - `link`: The folder its summary links, as that dialog shows it below the summary, like
- *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons`,
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/
+ *   VO_UniversityLectureLessons`,
  *   empty for none.
  * - `file`: The plan it writes into,
  *   like that of its skill, empty while its boxes may fill several, like those of months.
@@ -3985,7 +3988,8 @@ export async function seriesOpen(
     done = saved;
     const loaded: [Course, Category[], Person[]] = await Promise.all([
         readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(module)}&semester=${semester}`,
+            `/api/course/module?module=${encodeURIComponent(module)}` +
+                `&semester=${semester}`,
         ),
         readerAsk<Category[]>(
             `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
@@ -4067,7 +4071,8 @@ export async function groupOpen(
     done = (): void => {};
     const loaded: [Course, Category[], Person[]] = await Promise.all([
         readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(module)}&semester=${semester}`,
+            `/api/course/module?module=${encodeURIComponent(module)}` +
+                `&semester=${semester}`,
         ),
         readerAsk<Category[]>(
             `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,

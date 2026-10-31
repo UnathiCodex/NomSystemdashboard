@@ -11,7 +11,8 @@
  * so nothing I typed is lost, and the editor gets the text written back,
  * see {@link Written}.
  * Paths are those of the scripts view, from `NomSkillingmodules`, like
- * `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`.
+ * `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/
+ * 01_02_SampleMeanEstimator.md`.
  *
  * - `node:fs`: Reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
@@ -199,7 +200,8 @@ export function changesOf(before: string, after: string): TextChange[] {
  *   so no link leads outside.
  *
  * @param path - Path like
- *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`
+ *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/
+ *   01_02_SampleMeanEstimator.md`
  * @returns File on the disk
  * @throws {Error} - When the path lies outside `NomSkillingmodules`,
  *   has a hidden part like `.obsidian` or `..`, is no note `.md`, or nothing lies there

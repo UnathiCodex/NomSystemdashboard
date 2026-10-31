@@ -128,7 +128,8 @@ export async function logEntryOpen(id: string, start: string): Promise<void> {
     const moment: number = Date.parse(start);
     const found: FullCalendar.EventInput | undefined = (
         await readerAsk<FullCalendar.EventInput[]>(
-            `/api/day/log?start=${new Date(moment).toISOString()}&end=${new Date(moment + 1).toISOString()}`,
+            `/api/day/log?start=${new Date(moment).toISOString()}` +
+                `&end=${new Date(moment + 1).toISOString()}`,
         )
     ).find((entry: FullCalendar.EventInput): boolean => entry.id === id);
     dialog.calendar.removeAllEvents();

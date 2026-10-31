@@ -18,7 +18,8 @@
  * and `ESTIMATED-DURATION:PT2H` for 01.03 on round 0 with the Tasks of 01.01 and 01.02,
  * see `boxes.ts`, and one `ATTACH` per note of the chapter with something due,
  * at most one Task each, like
- * `ATTACH:NomSkillingmodules/IN2028_…/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`,
+ * `ATTACH:NomSkillingmodules/IN2028_…/01_RegressionAnalysis/
+ * 01_02_SampleMeanEstimator.md`,
  * as it stands when the box is written; its real length the log keeps.
  * A chapter gets no box while the plan of today holds a study box of it,
  * one without time and deadline,
@@ -84,7 +85,8 @@ let written: string = "";
  */
 export function suggestionsWrite(): void {
     const today: string = berlinDateOf(new Date());
-    const key: string = `${today} ${changesVersion()} ${Math.floor(Date.now() / (5 * 60 * 1000))}`;
+    const key: string =
+        `${today} ${changesVersion()} ` + Math.floor(Date.now() / (5 * 60 * 1000));
     if (key === written) return;
     const boxes: Box[] = boxesRead(today, dayAdd(today, 1))[0].boxes.filter(
         (box: Box): boolean =>

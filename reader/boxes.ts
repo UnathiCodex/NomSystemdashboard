@@ -101,7 +101,8 @@
  *   see {@link boxPush} and {@link boxEdit},
  *   in one `X-PUSHED` with its start and its length as they stood before,
  *   since the standard has nothing for it, like
- *   `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`,
+ *   `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
+ *   VALUE=DATE-TIME:20261016T150000`,
  *   see `pushAdd` in `calendar.ts`;
  *   a push stays, also once the box moves back, which is one more push;
  * - when it got its day in `DTSTAMP`,
@@ -1059,7 +1060,8 @@ function boxCheck(box: BoxNew, old: Entry | null): void {
             : berlinDateOf(new Date(box.deadline));
     if (box.deadline !== "" && (deadlineDay !== box.day || box.time !== ""))
         throw new Error(
-            `${box.title}: a box with a deadline lies on the day of its deadline, without expected time`,
+            `${box.title}: a box with a deadline lies on the day of its deadline, ` +
+                "without expected time",
         );
     const folder: string | undefined = moduleFolderOf(box.module);
     const offered: string[] = [
@@ -1405,7 +1407,8 @@ export function boxUniversity(id: string, cancelled: boolean): void {
  * An open box without deadline whose day moves, later or earlier, is pushed,
  * like with its arrow, see {@link boxPush}:
  * its start and its length as they stood go into one more `X-PUSHED`, like
- * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261017T150000`
+ * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
+ * VALUE=DATE-TIME:20261017T150000`
  * for one moved from 17.10.2026 (Sat), 15:00 to 19.10.2026 (Mon),
  * or one from tomorrow done today instead;
  * every push stays, so the box shows greyed on each day it left, see {@link leftBoxesOf};

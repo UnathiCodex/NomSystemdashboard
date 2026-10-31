@@ -594,7 +594,8 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * A request as the page sends it:
  *
  * ```
- * GET /api/day/log?start=2026-07-03T00%3A00%3A00%2B02%3A00&end=2026-07-04T00%3A00%3A00%2B02%3A00 HTTP/1.1
+ * GET /api/day/log?start=2026-07-03T00%3A00%3A00%2B02%3A00
+ *     &end=2026-07-04T00%3A00%3A00%2B02%3A00 HTTP/1.1
  * Host: 127.0.0.1:3000
  * ```
  *

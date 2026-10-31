@@ -451,7 +451,8 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
     const error: HTMLElement = elementOf(
         "p",
         "food-error",
-        "Not changed: it needs a name, numbers only, and no other food of mine may have this name, brand and store",
+        "Not changed: it needs a name, numbers only, " +
+            "and no other food of mine may have this name, brand and store",
     );
     const save: () => void = (): void => {
         const [protein, carbs, fat, portion, pack]: (number | null)[] = [

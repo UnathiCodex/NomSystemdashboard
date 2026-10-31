@@ -406,7 +406,10 @@
    the arrow of a link out of my modules, `--arrow-out`, see below */
 .markdown {
     --empty-line: calc(var(--reading-line-height) * 1rem);
-    --arrow-out: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23888888' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
+    --arrow-out: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 32 32' fill='none' stroke='%23888888' stroke-width='3' \
+stroke-linecap='round' stroke-linejoin='round'><path \
+d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
     line-height: var(--reading-line-height);
     overflow-wrap: break-word;
 }
@@ -562,7 +565,11 @@
 /* Callout as in my Obsidian:
    grey card, Obsidian's pencil before its title, info's circle for an info */
 .markdown .callout {
-    --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><path d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/><path d='m15 5 4 4'/></svg>");
+    --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' \
+stroke-linecap='round' stroke-linejoin='round'><path \
+d='M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 \
+0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'/><path d='m15 5 4 4'/></svg>");
     overflow: hidden;
     padding: 0.75rem 0.75rem 0.75rem 1.5rem;
     border-radius: 0.25rem;
@@ -570,7 +577,10 @@
 }
 
 .markdown .callout[data-callout="info"] {
-    --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
+    --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' \
+stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path \
+d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
 }
 
 /* Title of a callout grey and bold in Obsidian's tighter lines,

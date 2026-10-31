@@ -1097,7 +1097,10 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
  */
 function cookingTextOf(cooking: Cooking): string {
     const start: Date = new Date(cooking.start);
-    return `${summaryShownOf(cooking.title)} · ${dayTextOf(dayOf(start), true)} ${timeOf(start)}`;
+    return (
+        `${summaryShownOf(cooking.title)} · ` +
+        `${dayTextOf(dayOf(start), true)} ${timeOf(start)}`
+    );
 }
 
 /**

@@ -1232,7 +1232,8 @@ function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
 /**
  * Gives the link of a chapter picked,
  * which opens it in the scripts view in this window at its first note, like
- * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning%2F01_RegressionAnalysis%2F01_01_….md`,
+ * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning%2F
+ * 01_RegressionAnalysis%2F01_01_….md`,
  * the module already named by the summary above;
  * none for a chapter without notes, like one whose folder has another name now.
  * - `module`: Name of the module folder, like `IN2028_BusinessAnalyticsMachineLearning`.
@@ -1424,7 +1425,8 @@ function documentRowsOf(
             rowOf(
                 "",
                 hintOf(
-                    "Not in the module any more, not even by its fingerprint; the link stays as written",
+                    "Not in the module any more, not even by its fingerprint; " +
+                        "the link stays as written",
                 ),
             ),
         );
@@ -1612,7 +1614,8 @@ export async function skillPairOf(
  * the link of the skill, whatever the type,
  * like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
  * and the plan their boxes go into, like
- * `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
+ * `NomManageplannings/NomManagecalendar/Modules/
+ * IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
  * - `path`: The folder of the skill, empty for none.
  * - `name`: Its last part, the skill by its name without folder.
  *
@@ -1631,7 +1634,9 @@ export function skillNamesOf(picked: ModuleType): {
     return {
         title: picked.type === "" ? name : `${name} (${picked.type})`,
         link: skilling.links[picked.module] ?? path,
-        file: `NomManageplannings/NomManagecalendar/${/^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
+        file:
+            "NomManageplannings/NomManagecalendar/" +
+            `${/^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
     };
 }
 

@@ -83,7 +83,10 @@ export async function sessionOf(module: string): Promise<Session | null> {
  */
 export function sessionTextOf(session: Session): string {
     const start: Date = new Date(session.start);
-    return `${dayTextOf(dayOf(start), true)} · ${timeOf(start)}${rangeDash}${timeOf(new Date(session.end))}`;
+    return (
+        `${dayTextOf(dayOf(start), true)} · ` +
+        `${timeOf(start)}${rangeDash}${timeOf(new Date(session.end))}`
+    );
 }
 
 /**

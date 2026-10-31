@@ -13,7 +13,8 @@
  * or that changes its category or its skill, moves into the log it belongs into then.
  * A skill entry names its skill and its type in its `SUMMARY`, its link one I set:
  * `CATEGORIES:Skill`,
- * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons":IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons":
+ * IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * also one logged from a box, which takes its title, see `titleOf` in `documents.ts`;
  * its chapters, documents and rounds only `skill.ts` writes.
  * A change from the dialog is written
@@ -448,7 +449,8 @@ function sportCheck(
 ): void {
     if (!sportPartsAllow(category, workout, exercises, videos))
         throw new Error(
-            `No session ${JSON.stringify({ workout, exercises, videos })} for ${category}`,
+            `No session ${JSON.stringify({ workout, exercises, videos })} ` +
+                `for ${category}`,
         );
 }
 
@@ -585,7 +587,8 @@ function cookedShare(cooked: string, before?: string[]): void {
                         (had.has(keyOf(line)) && drawnGrams.get(keyOf(line)) === parts[3])
                     )
                         return had.get(keyOf(line)) ?? line;
-                    parts[3] = `${grams[1]}${Math.round((Number(grams[2]) / eaters.length) * 10) / 10}`;
+                    const share: number = Number(grams[2]) / eaters.length;
+                    parts[3] = `${grams[1]}${Math.round(share * 10) / 10}`;
                     return parts.join(";");
                 }),
             ...entry.foods.filter(

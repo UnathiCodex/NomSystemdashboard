@@ -73,7 +73,8 @@ export function codeColorsRead(): { [kind: string]: string } {
             readFileSync(
                 join(
                     vault,
-                    "NomTechnicalsettings/EditorThemes/intellij-dark/themes/intellij-dark.json",
+                    "NomTechnicalsettings/EditorThemes/intellij-dark/" +
+                        "themes/intellij-dark.json",
                 ),
                 "utf8",
             ),

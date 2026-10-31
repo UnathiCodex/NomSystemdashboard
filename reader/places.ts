@@ -211,7 +211,8 @@ function cellOf(text: string): string {
  * like a link into the column of the country.
  *
  * @param line - Row like
- *   `| TUM Innenstadt | Arcisstraße 21 | 80333 | München | Deutschland | https://nav.tum.de |`
+ *   `| TUM Innenstadt | Arcisstraße 21 | 80333 | München | Deutschland |
+ *   https://nav.tum.de |`
  * @returns Its cells
  */
 function cellsOf(line: string): string[] {
@@ -448,12 +449,13 @@ function placeLinesRead(file: string): string[] {
  *
  * @param place - Place cleaned
  * @returns Row like
- *   `| Home Munich | Burg-Eltz-Weg | 81375 | München | Deutschland | https://www.google.com/… | ★ |`
+ *   `| Home Munich | Burg-Eltz-Weg | 81375 | München | Deutschland |
+ *   https://www.google.com/… | ★ |`
  */
 function rowOf(place: Place): string {
     return (
-        `| ${place.name} | ${place.street} | ${place.code} | ${place.city} | ${place.country} | ${place.link} ` +
-        `| ${place.standard ? "★" : ""} |`
+        `| ${place.name} | ${place.street} | ${place.code} | ${place.city} ` +
+        `| ${place.country} | ${place.link} | ${place.standard ? "★" : ""} |`
     );
 }
 

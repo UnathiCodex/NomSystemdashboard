@@ -561,7 +561,8 @@ function plainCheck(plain: Plain): void {
         )
     )
         throw new Error(
-            `${plain.title}: no extras ${plain.extras.map((extra: Extra): string => extra.day).join(", ")}`,
+            `${plain.title}: no extras ` +
+                plain.extras.map((extra: Extra): string => extra.day).join(", "),
         );
     if (plain.category === skillName && numberedTypes.includes(plain.type))
         throw new Error(`${plain.title}: a series of my course, no plain series`);
@@ -930,7 +931,10 @@ function extraStartOf(plain: Plain, extra: Extra): string {
 function durationOf(minutes: number): string {
     const hours: number = Math.floor(minutes / 60);
     const rest: number = minutes % 60;
-    return `PT${hours > 0 ? `${hours}H` : ""}${rest > 0 || hours === 0 ? `${rest}M` : ""}`;
+    return (
+        `PT${hours > 0 ? `${hours}H` : ""}` +
+        `${rest > 0 || hours === 0 ? `${rest}M` : ""}`
+    );
 }
 
 /**

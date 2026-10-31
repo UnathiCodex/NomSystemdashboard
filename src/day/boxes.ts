@@ -499,7 +499,9 @@ function timePartsOf(box: Box, day: string): string[] {
     const start: Date | null = box.time === "" ? null : new Date(box.time);
     let when: string = start === null ? "" : timeOf(start);
     if (start !== null && box.minutes !== null)
-        when = `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + box.minutes * 60 * 1000))}`;
+        when =
+            `${timeOf(start)}${rangeDash}` +
+            timeOf(new Date(start.getTime() + box.minutes * 60 * 1000));
     const length: string =
         box.minutes === null || start !== null ? "" : lengthOf(box.minutes);
     return [over, when, length].filter((part: string): boolean => part !== "");
@@ -698,7 +700,8 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
  * like `01_RegressionAnalysis`,
  * each a link that opens the page of the chapter in the scripts view in this window,
  * the chapter picked in the tree, never a second one, like
- * `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`,
+ * `/scripts?module=IN2028_BusinessAnalyticsMachineLearning
+ * &chapter=01_RegressionAnalysis`,
  * instead of the box, as the place opens its link;
  * plain on a phone, which has no scripts view,
  * and for a box whose summary names no module.
@@ -715,7 +718,9 @@ function chaptersOf(box: Box): Node[] {
         if (phone || !/^[A-Z]+\d+_/.test(module)) return document.createTextNode(chapter);
         const anchor: HTMLAnchorElement = document.createElement("a");
         anchor.className = "chapter-link";
-        anchor.href = `/scripts?module=${encodeURIComponent(module)}&chapter=${encodeURIComponent(chapter)}`;
+        anchor.href =
+            `/scripts?module=${encodeURIComponent(module)}` +
+            `&chapter=${encodeURIComponent(chapter)}`;
         anchor.textContent = chapter;
         anchor.addEventListener("click", (event: MouseEvent): void =>
             event.stopPropagation(),

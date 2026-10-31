@@ -834,7 +834,9 @@ function rowsWritten(old: string[], data: string[][], count: number): string[] {
     }
 
     const lines: string[] = [];
-    const empty: string = `${/^[ \t>]*/.exec(old[0] ?? "")?.[0] ?? ""}| ${Array<string>(count).fill("").join(" | ")} |`;
+    const empty: string =
+        `${/^[ \t>]*/.exec(old[0] ?? "")?.[0] ?? ""}| ` +
+        `${Array<string>(count).fill("").join(" | ")} |`;
     let left: string[] = [];
     at = 0;
     for (const part of parts) {
@@ -948,7 +950,10 @@ function cellWritten(text: string, column: number, value: string): string {
         const old: string = text.slice(bars[column] + 1, bars[column + 1]);
         const before: string = old.trim() === "" ? " " : (/^\s*/.exec(old)?.[0] ?? "");
         const after: string = old.trim() === "" ? " " : (/\s*$/.exec(old)?.[0] ?? "");
-        return `${text.slice(0, bars[column] + 1)}${before}${escaped}${after}${text.slice(bars[column + 1])}`;
+        return (
+            `${text.slice(0, bars[column] + 1)}${before}${escaped}${after}` +
+            text.slice(bars[column + 1])
+        );
     }
 
     let written: string = text.trimEnd();

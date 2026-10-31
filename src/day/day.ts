@@ -797,7 +797,8 @@ function linesFit(lines: HTMLElement, grid: HTMLElement): void {
     const room: number = Math.floor(
         (bottom - top) / parseFloat(getComputedStyle(lines).lineHeight),
     );
-    lines.style.maxHeight = `${Math.max(0, Math.min(Number(lines.dataset.lines), room))}lh`;
+    const shownLines: number = Math.max(0, Math.min(Number(lines.dataset.lines), room));
+    lines.style.maxHeight = `${shownLines}lh`;
     const depth: number = Number(getComputedStyle(harness).zIndex);
     const over: DOMRect[] = [...(harness.parentElement?.children ?? [])]
         .filter(

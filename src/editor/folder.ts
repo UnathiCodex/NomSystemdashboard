@@ -2,7 +2,8 @@
  * ## Folder
  *
  * A folder of my modules in the scripts view, at its address, like
- * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2FVO_UniversityLectureLessons%2FTUM_2026W`,
+ * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2F
+ * VO_UniversityLectureLessons%2FTUM_2026W`,
  * which the folder of the material of a card of the course opens, see `./course.ts`,
  * and so does the folder of a skill below its summary in the dialog of an entry,
  * see `skillPathShow` in `../day/skill.ts`;

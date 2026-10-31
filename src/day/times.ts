@@ -74,7 +74,10 @@ export function timeOf(date: Date): string {
  * @returns Length like `07h 30m`
  */
 export function lengthOf(minutes: number): string {
-    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}h\u00a0${String(minutes % 60).padStart(2, "0")}m`;
+    return (
+        `${String(Math.floor(minutes / 60)).padStart(2, "0")}h\u00a0` +
+        `${String(minutes % 60).padStart(2, "0")}m`
+    );
 }
 
 /**
@@ -85,7 +88,10 @@ export function lengthOf(minutes: number): string {
  * @returns Length like `08:00`
  */
 export function lengthTextOf(minutes: number): string {
-    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+    return (
+        `${String(Math.floor(minutes / 60)).padStart(2, "0")}:` +
+        String(minutes % 60).padStart(2, "0")
+    );
 }
 
 /**
@@ -227,7 +233,8 @@ export function dateParse(text: string): string | null {
         .trim()
         .match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s*\([a-z]+\))?$/i);
     if (match === null) return null;
-    const day: string = `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+    const day: string =
+        `${match[3]}-${match[2].padStart(2, "0")}-` + match[1].padStart(2, "0");
     const date: Date = new Date(`${day}T12:00:00`);
     return date.getDate() === Number(match[1]) && date.getMonth() + 1 === Number(match[2])
         ? day

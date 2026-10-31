@@ -109,7 +109,9 @@ async function timerShow(): Promise<void> {
         ),
     );
     timer.replaceChildren(what, entryPartOf("span", "session-left", [lengthOf(left)]));
-    timer.title = `${what.textContent ?? ""}\n${timeOf(new Date(running.start))}${rangeDash}${timeOf(new Date(running.end))}`;
+    timer.title =
+        `${what.textContent ?? ""}\n${timeOf(new Date(running.start))}${rangeDash}` +
+        timeOf(new Date(running.end));
 }
 
 /**

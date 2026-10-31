@@ -103,8 +103,12 @@ const wikiLinkRule: RegExp = /^(!?)\[\[([^\]]+)\]\]/;
  * like `<table>`, up to the end of the line where the tag closes,
  * with no empty line in it.
  */
-const htmlBlockRule: RegExp =
-    /^ {0,3}<(table|div|details|figure|center)\b(?:(?!\n[ \t]*\n)[\s\S])*?<\/\1>[^\n]*(?:\n|$)/i;
+const htmlBlockRule: RegExp = new RegExp(
+    /^ {0,3}/.source +
+        /<(table|div|details|figure|center)\b(?:(?!\n[ \t]*\n)[\s\S])*?<\/\1>/.source +
+        /[^\n]*(?:\n|$)/.source,
+    "i",
+);
 
 /**
  * Front matter of a note, between `---` lines at its start;
@@ -360,7 +364,9 @@ const mathInline: TokenizerAndRendererExtension = {
         };
     },
     renderer: (token: Tokens.Generic): string => {
-        const math: string = `<span class="math math-${token.display ? "block" : "inline"}">${escaped(token.tex)}</span>`;
+        const math: string =
+            `<span class="math math-${token.display ? "block" : "inline"}">` +
+            `${escaped(token.tex)}</span>`;
         return token.punctuation === ""
             ? math
             : `<span class="math-unbroken">${math}${escaped(token.punctuation)}</span>`;
@@ -411,13 +417,18 @@ const callout: TokenizerAndRendererExtension = {
     },
     renderer(this: RendererThis, token: Tokens.Generic): string {
         const kind: string = escaped(token.kind);
-        const title: string = `<span class="callout-title-inner">${this.parser.parseInline(token.title)}</span>`;
+        const title: string =
+            `<span class="callout-title-inner">` +
+            `${this.parser.parseInline(token.title)}</span>`;
         const content: string = this.parser.parse(token.tokens ?? []);
         return token.fold === ""
-            ? `<div class="callout" data-callout="${kind}"><div class="callout-title">${title}</div>` +
+            ? `<div class="callout" data-callout="${kind}">` +
+                  `<div class="callout-title">${title}</div>` +
                   `<div class="callout-content">${content}</div></div>`
-            : `<details class="callout" data-callout="${kind}"${token.fold === "+" ? " open" : ""}>` +
-                  `<summary class="callout-title">${title}</summary><div class="callout-content">${content}</div></details>`;
+            : `<details class="callout" data-callout="${kind}"` +
+                  `${token.fold === "+" ? " open" : ""}>` +
+                  `<summary class="callout-title">${title}</summary>` +
+                  `<div class="callout-content">${content}</div></details>`;
     },
     childTokens: ["title"],
 };
@@ -451,7 +462,9 @@ const wikiLink: TokenizerAndRendererExtension = {
         };
     },
     renderer: (token: Tokens.Generic): string => {
-        const data: string = `data-link="${escaped(token.target)}" data-heading="${escaped(token.heading)}"`;
+        const data: string =
+            `data-link="${escaped(token.target)}" ` +
+            `data-heading="${escaped(token.heading)}"`;
         const ending: string =
             /\.([a-z\d]+)$/i.exec(token.target)?.[1].toLowerCase() ?? "md";
         const name: string = [token.target, token.heading]
@@ -460,7 +473,10 @@ const wikiLink: TokenizerAndRendererExtension = {
 
         if (token.embed && ending === "md")
             return `<div class="markdown-embed" ${data}></div>`;
-        return `<a class="internal-link" ${data}>${escaped(token.text === "" ? name : token.text)}</a>`;
+        return (
+            `<a class="internal-link" ${data}>` +
+            `${escaped(token.text === "" ? name : token.text)}</a>`
+        );
     },
 };
 
@@ -606,7 +622,10 @@ function blocksMade(tokens: Token[] | TokensList): Token[] | TokensList {
  * @returns HTML of the heading
  */
 function headingOf(this: Renderer, token: Tokens.Heading): string {
-    return `<h${token.depth} data-heading="${escaped(token.text)}">${this.parser.parseInline(token.tokens)}</h${token.depth}>\n`;
+    return (
+        `<h${token.depth} data-heading="${escaped(token.text)}">` +
+        `${this.parser.parseInline(token.tokens)}</h${token.depth}>\n`
+    );
 }
 
 /**
@@ -622,7 +641,8 @@ function linkOf(this: Renderer, token: Tokens.Link): string | false {
 
     const [target, heading]: [string, string] = linkPartsOf(token.href);
     return (
-        `<a class="internal-link" data-link="${escaped(target)}" data-heading="${escaped(heading)}">` +
+        `<a class="internal-link" data-link="${escaped(target)}" ` +
+        `data-heading="${escaped(heading)}">` +
         `${this.parser.parseInline(token.tokens)}</a>`
     );
 }
@@ -640,7 +660,8 @@ function codeOf(token: Tokens.Code): string | false {
     const html: string | null = codeHtmlOf(token.text, token.lang ?? "");
     return html === null
         ? false
-        : `<pre><code class="language-${escaped(token.lang ?? "")}">${html}</code></pre>\n`;
+        : `<pre><code class="language-${escaped(token.lang ?? "")}">` +
+              `${html}</code></pre>\n`;
 }
 
 /**

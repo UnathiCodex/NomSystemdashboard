@@ -528,7 +528,8 @@ export function whereLinkedOf(
  * Gives the link of the search of an address in Google Maps,
  * in the form Google gives for a link to it,
  * the address encoded for an address of the web, like
- * `https://www.google.com/maps/search/?api=1&query=Burg-Eltz-Weg%2C%2081375%20M%C3%BCnchen%2C%20Deutschland`
+ * `https://www.google.com/maps/search/?api=1&query=
+ * Burg-Eltz-Weg%2C%2081375%20M%C3%BCnchen%2C%20Deutschland`
  * of `Burg-Eltz-Weg, 81375, München, Deutschland`.
  *
  * @param address - Address as typed
@@ -537,7 +538,8 @@ export function whereLinkedOf(
 export function mapsLinkOf(address: string): string {
     return address.trim() === ""
         ? ""
-        : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
+        : "https://www.google.com/maps/search/?api=1&query=" +
+              encodeURIComponent(address.trim());
 }
 
 /**

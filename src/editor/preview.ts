@@ -647,7 +647,9 @@ export class FoldWidget extends WidgetType {
      */
     toDOM(view: EditorView): HTMLElement {
         const arrow: HTMLSpanElement = document.createElement("span");
-        arrow.className = `cm-fold ${this.item ? "cm-fold-item" : "cm-fold-heading"}${this.folded ? " cm-folded" : ""}`;
+        arrow.className =
+            `cm-fold ${this.item ? "cm-fold-item" : "cm-fold-heading"}` +
+            (this.folded ? " cm-folded" : "");
         arrow.title = this.folded ? "Unfold" : "Fold";
         arrow.setAttribute("aria-label", arrow.title);
         arrow.addEventListener("mousedown", (event: MouseEvent): void => {

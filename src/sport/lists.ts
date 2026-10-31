@@ -585,7 +585,8 @@ function workoutsSectionOf(): HTMLElement {
                       elementOf(
                           "p",
                           "food-none",
-                          "A video goes into a workout: open it and paste the link into its search",
+                          "A video goes into a workout: " +
+                              "open it and paste the link into its search",
                       ),
                   ]
                 : []),

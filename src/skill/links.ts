@@ -44,7 +44,8 @@ export function linkNameOf(link: Link): string {
  * as the folder of a card on the page of the module, for a project,
  * which the scripts view has not, its path alone; hidden for none.
  * It shows its whole path from `NomWorkspace` on, like
- * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`;
+ * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/
+ * VO_UniversityLectureLessons/TUM_2026W`;
  * on one line, cut in its middle where it is wider than its row, as on a phone,
  * so its last folder stays, see `middleCutPut` in `../day/choices.ts`;
  * its whole path as its tooltip.
@@ -55,7 +56,8 @@ export function linkNameOf(link: Link): string {
  *
  * @param link - The link below the summary
  * @param path - The folder, like
- *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/
+ *   VO_UniversityLectureLessons/TUM_2026W`
  *   or `NomManageplannings/NomFrequencediary`, empty for none
  */
 export function folderLinkShow(link: HTMLAnchorElement, path: string): void {
@@ -65,7 +67,8 @@ export function folderLinkShow(link: HTMLAnchorElement, path: string): void {
     link.replaceChildren(shown);
     link.removeAttribute("target");
     if (path.startsWith(`${modulesFolder}/`))
-        link.href = `/scripts?folder=${encodeURIComponent(path.slice(modulesFolder.length + 1))}`;
+        link.href =
+            "/scripts?folder=" + encodeURIComponent(path.slice(modulesFolder.length + 1));
     else link.removeAttribute("href");
     link.hidden = path === "";
 }

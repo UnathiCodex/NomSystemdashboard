@@ -14,13 +14,15 @@
  * its `ALTREP` a link I set, by default the folder of the skill,
  * for a module with a type on into the folder of the material of its type
  * and of its semester, see {@link skillLinkOf}, like
- * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W":
+ * IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * my own learning, without type, the module folder, a project its folder,
  * like `SUMMARY;ALTREP="NomProgramprojects/AsiaWok_Wokflow_2026":AsiaWok_Wokflow_2026`.
  * Every real document a skill entry used is one `ATTACH` holding just its path,
  * see `Link` in `calendar.ts`, as many as it used, in the same form for every kind:
  * a lecture its slides, like
- * `ATTACH;X-SHA256=9f86d081…:NomSkillingmodules/IN2028_…/VO_…/TUM_2026W/04_LogisticRegression.pdf`,
+ * `ATTACH;X-SHA256=9f86d081…:NomSkillingmodules/IN2028_…/VO_…/TUM_2026W/
+ * 04_LogisticRegression.pdf`,
  * an exercise or a tutorial its sheet in `TU_UniversityTutorExercises`,
  * a homework its sheet in `HU_UniversityHomeExercises`,
  * and my own learning the notes of its chapters,
@@ -294,7 +296,8 @@ export function skillLinkOf(code: string): string {
  *   like the entry being changed or the box a log entry is logged from, `null` for none
  * @returns `SUMMARY` and `ALTREP`,
  *   like `IN2028_BusinessAnalyticsMachineLearning (VO)` and
- *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`,
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/
+ *   VO_UniversityLectureLessons/TUM_2026W`,
  *   or `Planungen` and an empty link
  */
 export function titleOf(
@@ -565,7 +568,8 @@ function repairPrint(entry: Entry, old: string, path: string): void {
     console.log(
         new Date().toISOString(),
         `Repaired a link of ${entry.title}` +
-            ` on ${berlinDateOf(new Date(entry.start))} at ${berlinTimeOf(new Date(entry.start))}:` +
+            ` on ${berlinDateOf(new Date(entry.start))}` +
+            ` at ${berlinTimeOf(new Date(entry.start))}:` +
             ` ${old} is now ${path}`,
     );
 }

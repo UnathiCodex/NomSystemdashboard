@@ -220,8 +220,10 @@ function ruleTextOf(value: string): string | null {
         frequencies[parts.get("FREQ")?.toUpperCase() ?? ""];
     if (frequency === undefined) return null;
     const every: number = Number(parts.get("INTERVAL") ?? 1);
-    const ordinalOf: (place: number) => string = (place: number): string =>
-        `${place}${["th", "st", "nd", "rd"][place % 100 > 10 && place % 100 < 14 ? 0 : place % 10] ?? "th"}`;
+    const ordinalOf: (place: number) => string = (place: number): string => {
+        const teen: boolean = place % 100 > 10 && place % 100 < 14;
+        return `${place}${["th", "st", "nd", "rd"][teen ? 0 : place % 10] ?? "th"}`;
+    };
     const placeOf: (place: number) => string = (place: number): string =>
         place === -1
             ? "last"
@@ -568,7 +570,8 @@ function boxOf(block: Block): HTMLElement {
         date?.[4] === undefined
             ? null
             : new Date(
-                  `${date[1]}-${date[2]}-${date[3]}T${date[4]}:${date[5]}:${date[6]}${date[7]}`,
+                  `${date[1]}-${date[2]}-${date[3]}` +
+                      `T${date[4]}:${date[5]}:${date[6]}${date[7]}`,
               );
     const end: RegExpExecArray | null = dateRule.exec(values.get("DTEND") ?? "");
     const duration: RegExpExecArray | null = lengthRule.exec(
@@ -598,7 +601,8 @@ function boxOf(block: Block): HTMLElement {
         parts.push(
             length === null
                 ? timeOf(start)
-                : `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + length * 60000))}`,
+                : `${timeOf(start)}${rangeDash}` +
+                      timeOf(new Date(start.getTime() + length * 60000)),
         );
     else if (length !== null) parts.push(lengthOf(length));
     const place: string = values.get("X-ONLINE") || roomOf(values.get("LOCATION") ?? "");
@@ -688,7 +692,8 @@ const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
                     shown = boxOf(block);
                     document.body.append(shown);
                     const room: number = innerWidth - shown.offsetWidth - 8;
-                    shown.style.left = `${Math.min(dash.getBoundingClientRect().left, room)}px`;
+                    const left: number = dash.getBoundingClientRect().left;
+                    shown.style.left = `${Math.min(left, room)}px`;
                     shown.style.top = `${overview.getBoundingClientRect().bottom + 8}px`;
                 });
                 dash.addEventListener("mouseleave", boxHide);

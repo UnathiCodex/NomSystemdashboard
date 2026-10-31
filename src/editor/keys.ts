@@ -557,10 +557,11 @@ function itemsOf(state: EditorState, line: Line): SyntaxNode[] {
  * @returns The start of the next point, `null` for a point written otherwise
  */
 function nextPointOf(state: EditorState, item: SyntaxNode): string | null {
-    const point: RegExpExecArray | null =
-        /^((?:[ \t]*>[ \t]?)*[ \t]*)(?:([-*+])|(\d+)([.)]))(?:[ \t]+(\[[ xX]\]))?(?:[ \t]|$)/.exec(
-            state.doc.lineAt(item.from).text,
-        );
+    const point: RegExpExecArray | null = new RegExp(
+        /^((?:[ \t]*>[ \t]?)*[ \t]*)/.source +
+            /(?:([-*+])|(\d+)([.)]))/.source +
+            /(?:[ \t]+(\[[ xX]\]))?(?:[ \t]|$)/.source,
+    ).exec(state.doc.lineAt(item.from).text);
     if (point === null) return null;
     const mark: string = point[2] ?? `${Number(point[3]) + 1}${point[4]}`;
     return `${point[1]}${mark} ${point[5] !== undefined ? "[ ] " : ""}`;
@@ -2475,7 +2476,8 @@ function sourcePieceOf(state: EditorState, pos: number): SyntaxNode | null {
  * and the rows of the link or formula the cursor stands on,
  * which shows as its text there,
  * see {@link sourcePieceOf}, on more rows than drawn, like
- * `#### [[01_02_SampleMeanEstimator#Algorithm. Check an Estimator for Bias|Ice Cream Kiosk]]`
+ * `#### [[01_02_SampleMeanEstimator#Algorithm. Check an Estimator for Bias|
+ * Ice Cream Kiosk]]`
  * or a long formula, so a step stopped on its next row instead of the next line.
  * - `line`: The line the cursor stood on.
  * - `piece`: The link or formula it stood on, `null` for none.

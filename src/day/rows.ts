@@ -85,7 +85,8 @@ export function rowTimesOf(time: string, minutes: number | null): string {
     if (start === null) return minutes === null ? "" : lengthOf(minutes);
     return minutes === null
         ? timeOf(start)
-        : `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + minutes * 60 * 1000))}`;
+        : `${timeOf(start)}${rangeDash}` +
+              timeOf(new Date(start.getTime() + minutes * 60 * 1000));
 }
 
 /**

@@ -922,7 +922,10 @@ function entryFileOf(): string {
  * @returns Path of the file from `NomWorkspace` on
  */
 export function topicFileOf(category: string, day: string, ending: string): string {
-    return `NomManageplannings/NomManagecalendar/${topics[category] ?? "Living/Living"}_${day.slice(0, 4)}${ending}`;
+    return (
+        `NomManageplannings/NomManagecalendar/${topics[category] ?? "Living/Living"}` +
+        `_${day.slice(0, 4)}${ending}`
+    );
 }
 
 /**

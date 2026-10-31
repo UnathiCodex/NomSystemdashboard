@@ -8,7 +8,8 @@
  * since `~/.ssh/authorized_keys` of my server names it before the key with `restrict`,
  * which allows no shell, no forwarding and no terminal,
  * my name first, then the person's, like
- * `restrict,command="/usr/bin/node /home/sopha/NomWorkspace/NomSystemdashboard/reader/gate.ts Sopha Vu" ssh-ed25519 …`.
+ * `restrict,command="/usr/bin/node
+ * /home/sopha/NomWorkspace/NomSystemdashboard/reader/gate.ts Sopha Vu" ssh-ed25519 …`.
  * What the key asks stands in `SSH_ORIGINAL_COMMAND`,
  * a command and maybe a path after one space,
  * like `get to_vu/2026-10-20_2113_gemeinsame-listen-und-with.md`;
@@ -76,7 +77,8 @@ import type { Dirent } from "node:fs";
 const usage: string = [
     "Allowed: readme | list | get <path> | put <path> | delete <path> | share <name>",
     "  | inbox | take <name> | done <name>",
-    "  A path starts with its box, like to_vu/2026-10-22_0930_antwort.md; both boxes are open to both of us.",
+    "  A path starts with its box, like to_vu/2026-10-22_0930_antwort.md; " +
+        "both boxes are open to both of us.",
 ].join("\n");
 
 /**
@@ -249,7 +251,8 @@ async function gateRun(): Promise<void> {
     const [me, caller]: string[] = process.argv.slice(2);
     if (!nameForm.test(me ?? "") || !nameForm.test(caller ?? ""))
         refuse(
-            "The gate needs the name of the owner and of the caller, like gate.ts Sopha Vu",
+            "The gate needs the name of the owner and of the caller, " +
+                "like gate.ts Sopha Vu",
         );
     const theirs: string = join(kommunikationRoot, `to_${caller.toLowerCase()}`);
     const mine: string = join(kommunikationRoot, `to_${me.toLowerCase()}`);

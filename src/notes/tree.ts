@@ -294,7 +294,8 @@ function fileNodeOf(node: FileNode): HTMLElement {
     name.className = "tree-file tree-closed";
     name.dataset.path = node.path;
     middleCutPut(name, node.name);
-    name.title = `${node.name}\nOnly .md and .ics files of the folders of my new system open`;
+    name.title =
+        `${node.name}\n` + "Only .md and .ics files of the folders of my new system open";
     return name;
 }
 
@@ -576,7 +577,8 @@ export function chapterShow(
  *
  * @param tree - The tree
  * @param shown - Path of the file or note shown, like `NomMetainformations/Foods.md` or
- *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanStandardError.md`
+ *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/
+ *   01_01_SampleMeanStandardError.md`
  * @returns Its entry, `null` while it is not in the tree,
  *   like a note outside the chapter folders of its module
  */

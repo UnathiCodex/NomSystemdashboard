@@ -152,7 +152,9 @@ export function middleCutPut(line: HTMLElement, name: string): void {
     const fit: () => void = (): void => {
         if (room === 0) return;
         const style: CSSStyleDeclaration = getComputedStyle(line);
-        measurer.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        measurer.font =
+            `${style.fontStyle} ${style.fontWeight} ` +
+            `${style.fontSize} ${style.fontFamily}`;
         let start: number = cut;
         let text: string = name;
         while (measurer.measureText(text).width > room && start > 0) {
@@ -1132,7 +1134,8 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
 export function fileShow(link: HTMLAnchorElement, file: string): void {
     link.textContent = pathBreakableOf(`…/${file.split("/").slice(-2).join("/")}`);
     link.title = file;
-    link.href = `/edit?file=${encodeURIComponent(file.replace(/^NomManageplannings\//, ""))}`;
+    link.href =
+        "/edit?file=" + encodeURIComponent(file.replace(/^NomManageplannings\//, ""));
     link.hidden = file === "";
 }
 

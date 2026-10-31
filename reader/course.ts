@@ -252,7 +252,8 @@ export type Times = { [day: string]: Pick<Slot, "start" | "end"> };
  *   like a session on a Saturday, by their days;
  *   none for none, as for every group.
  * - `location`: Its place as an entry writes it, see `lineOf` in `places.ts`, like
- *   `5416.01.003 (Hörsaal 2 "Interims II"), Lichtenbergstraße 2b, 85748, Garching bei München, Deutschland`,
+ *   `5416.01.003 (Hörsaal 2 "Interims II"), Lichtenbergstraße 2b, 85748,
+ *   Garching bei München, Deutschland`,
  *   empty for none.
  * - `locationLink`: Link of its place,
  *   like `https://nav.tum.de/room/5416.01.003`,
@@ -369,7 +370,8 @@ export type Group = {
  *   see {@link learnedRead}, the earliest first;
  *   what I learned from a box shows as that box, among `boxes`, without type.
  * - `file`: Its plan from `NomWorkspace` on, see `vaultPathOf` in `sources.ts`, like
- *   `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
+ *   `NomManageplannings/NomManagecalendar/Modules/
+ *   IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
  */
 export type Course = {
     module: string;
@@ -2796,7 +2798,8 @@ export function groupMine(change: MineChange): Planned[] {
     );
     if (group === undefined || coming.length === 0)
         throw new Error(
-            `No group ${change.type} ${change.group} with sessions to come in ${change.module}`,
+            `No group ${change.type} ${change.group} ` +
+                `with sessions to come in ${change.module}`,
         );
     const from: string = mondayOf(berlinDateOf(new Date(coming[0].start)));
     const own: Box[] = typed.filter((box: Box): boolean => box.group === change.group);
@@ -2916,7 +2919,8 @@ export function weekPick(change: PickChange): void {
     );
     if (group === undefined || session === undefined)
         throw new Error(
-            `No session of group ${change.type} ${change.group} at ${change.start} in ${change.module}`,
+            `No session of group ${change.type} ${change.group} ` +
+                `at ${change.start} in ${change.module}`,
         );
     const weekOfSession: (one: Session) => string = (one: Session): string =>
         mondayOf(dayOfStart(one.start));
@@ -2932,7 +2936,8 @@ export function weekPick(change: PickChange): void {
     if (change.extra === true) {
         if (typed.some(at))
             throw new Error(
-                `A box of ${change.type} of ${change.module} is there already at ${change.start}`,
+                `A box of ${change.type} of ${change.module} ` +
+                    `is there already at ${change.start}`,
             );
         const drafts: Draft[] = [
             ...typed.map(draftOf),
@@ -2974,7 +2979,8 @@ export function weekPick(change: PickChange): void {
     }
     if (typed.some((one: Box): boolean => weekOf(one) === week))
         throw new Error(
-            `The ${change.type} of ${change.module} in the week of ${week} is done or may not change`,
+            `The ${change.type} of ${change.module} in the week of ${week} ` +
+                "is done or may not change",
         );
     const later: boolean = typed.some((one: Box): boolean => weekOf(one) > week);
     const firsts: Session[] = later
@@ -3656,7 +3662,8 @@ export function sessionApply(change: SessionChange): void {
             : occurrenceLookup(sources, change.id.slice(0, at), change.id.slice(at + 1));
     if (found === undefined || !timesRight(change))
         throw new Error(
-            `No session ${change.id} of group ${change.type} ${change.group} in ${change.module}`,
+            `No session ${change.id} of group ${change.type} ${change.group} ` +
+                `in ${change.module}`,
         );
     const day: string = dayOfStart(found[1].start);
     occurrenceOwn(file, found[1]);

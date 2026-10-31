@@ -292,7 +292,8 @@ export async function foodsFind(
     products: boolean,
 ): Promise<FoodsFound> {
     return readerAsk<FoodsFound>(
-        `/api/food/search?q=${encodeURIComponent(query)}&page=${page}&products=${products ? 1 : 0}`,
+        `/api/food/search?q=${encodeURIComponent(query)}&page=${page}` +
+            `&products=${products ? 1 : 0}`,
     );
 }
 

@@ -140,7 +140,8 @@ export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
     summary.title = "History";
     summary.setAttribute(
         "aria-label",
-        `History, ${task.attempts.length} ${task.attempts.length === 1 ? "attempt" : "attempts"}`,
+        `History, ${task.attempts.length} ` +
+            (task.attempts.length === 1 ? "attempt" : "attempts"),
     );
     list.append(
         ...task.attempts.toReversed().map((attempt: Attempt): HTMLElement => {

@@ -278,7 +278,8 @@ function waterOf(calendar: Calendar, trackers: Trackers, day: string): HTMLEleme
     const row: HTMLElement = elementOf("div", "tracker-row tracker-water", "");
     const add: HTMLButtonElement = document.createElement("button");
     const less: HTMLButtonElement = document.createElement("button");
-    const litres: string = `${amountOf((trackers.glasses.length * trackers.settings.glassMl) / 1000, 2)} l`;
+    const drunk: number = (trackers.glasses.length * trackers.settings.glassMl) / 1000;
+    const litres: string = `${amountOf(drunk, 2)} l`;
     const last: Glass | undefined = trackers.glasses
         .filter((glass: Glass): boolean => glass.water && glass.editable)
         .at(-1);

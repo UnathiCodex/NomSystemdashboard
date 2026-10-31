@@ -193,7 +193,8 @@ function totalsShow(day: FoodDay): void {
                 `Not counted, ${lacks} unknown: ${names.join(", ")}`,
         ),
         empty > 0
-            ? `Not counted: ${empty} ${empty === 1 ? "meal lists" : "meals list"} no foods`
+            ? `Not counted: ${empty} ` +
+              `${empty === 1 ? "meal lists" : "meals list"} no foods`
             : "",
     ];
     document

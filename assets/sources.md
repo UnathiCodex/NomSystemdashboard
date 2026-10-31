@@ -27,8 +27,10 @@ the five areas stand written into `index.html`, so they show at once.
 | [folder-open.svg](icons/folder-open.svg) | Area NomManageplannings |
 | [graduation-cap.svg](icons/graduation-cap.svg) | Area Skill |
 | [utensils.svg](icons/utensils.svg) | Area NomMetafoods |
-| [chevron-left.svg](icons/chevron-left.svg), [chevron-right.svg](icons/chevron-right.svg) | Day, month and food before and after |
-| [chevrons-left.svg](icons/chevrons-left.svg), [chevrons-right.svg](icons/chevrons-right.svg) | Year before and after in the month |
+| [chevron-left.svg](icons/chevron-left.svg) | Day, month and food before and after |
+| [chevron-right.svg](icons/chevron-right.svg) | Day, month and food before and after |
+| [chevrons-left.svg](icons/chevrons-left.svg) | Year before and after in the month |
+| [chevrons-right.svg](icons/chevrons-right.svg) | Year before and after in the month |
 | [calendar-check.svg](icons/calendar-check.svg) | Back to today |
 | [plus.svg](icons/plus.svg) | New box, entry or food, a glass of water more |
 | [minus.svg](icons/minus.svg) | A glass of water less |

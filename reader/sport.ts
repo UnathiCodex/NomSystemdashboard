@@ -362,7 +362,8 @@ export const videoKinds: SportKind[] = [
 const workoutsHead: string[] = [
     "# Workouts",
     "",
-    "My workouts, each a name of mine and its parts in their order, each an exercise with the sets, repetitions and",
+    "My workouts, each a name of mine and its parts in their order, " +
+        "each an exercise with the sets, repetitions and",
     "kilograms it brings, or one of my videos of `Videos.md` by its title and its link.",
     "",
     "| Workout | Kind | Part | Sets | Reps | Kg | Link |",
@@ -376,8 +377,11 @@ const workoutsHead: string[] = [
 const videosHead: string[] = [
     "# Videos",
     "",
-    "My videos: the title and the channel as YouTube gives them, the minutes I do, the kind, which tells what a minute",
-    `burns, one of ${videoKinds.map((kind: SportKind): string => kind.name).join(", ")}, and the link, by which`,
+    "My videos: the title and the channel as YouTube gives them, " +
+        "the minutes I do, the kind, which tells what a minute",
+    "burns, one of " +
+        videoKinds.map((kind: SportKind): string => kind.name).join(", ") +
+        ", and the link, by which",
     "a video stays the same whatever its title.",
     "",
     "| Video | Channel | Minutes | Kind | Link |",
@@ -391,8 +395,10 @@ const videosHead: string[] = [
 const weightsHead: string[] = [
     "# Weights",
     "",
-    "My weight, a row whenever I weigh myself, like once a month or two: the day and the kilograms.",
-    "The sport area counts the kcal of a session with the last weight on or before its day.",
+    "My weight, a row whenever I weigh myself, like once a month or two: " +
+        "the day and the kilograms.",
+    "The sport area counts the kcal of a session " +
+        "with the last weight on or before its day.",
     "",
     "| Day | Weight |",
     "| --- | ---: |",
@@ -405,8 +411,10 @@ const weightsHead: string[] = [
 const exercisesHead: string[] = [
     "# Exercises",
     "",
-    "My exercises, each by its name, those I add by themselves and those of my workouts, with the sets, repetitions",
-    "and kilograms I do as a rule, which an entry brings every time; repetitions with `s` are seconds, like `60s`.",
+    "My exercises, each by its name, those I add by themselves " +
+        "and those of my workouts, with the sets, repetitions",
+    "and kilograms I do as a rule, which an entry brings every time; " +
+        "repetitions with `s` are seconds, like `60s`.",
     "",
     "| Exercise | Sets | Reps | Kg |",
     "| --- | ---: | ---: | ---: |",

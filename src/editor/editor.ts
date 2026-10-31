@@ -38,20 +38,23 @@
  * since the plan of the day says what is due;
  * for the address of a module or of one of its chapters,
  * which a click on its name in the tree opens, like
- * `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`,
+ * `/scripts?module=IN2028_BusinessAnalyticsMachineLearning
+ * &chapter=01_RegressionAnalysis`,
  * it shows the page of the module, its course of the university, see `./course.ts`,
  * or that of the chapter, where each of its sections stands,
  * see `./overview.ts`, the chapter picked in the tree;
  * for the address of a folder of my modules,
  * which the folder of the material of a card of the course opens, like
- * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2FVO_UniversityLectureLessons%2FTUM_2026W`,
+ * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2F
+ * VO_UniversityLectureLessons%2FTUM_2026W`,
  * it shows its folders and files, see `./folder.ts`, its module picked in the tree.
  * A file of my modules that is no Markdown,
  * like an `.ics` file a folder opens, shows as its plain text, to read only,
  * as an `.ics` file of my new system.
  * The address names a note by its path in the scripts view
  * and the heading to scroll to, like
- * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md#…`,
+ * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/
+ * 01_02_SampleMeanEstimator.md#…`,
  * so a reload and the back button of the browser stay on it,
  * and a file of my new system by its path in the tree,
  * like `/edit?file=NomMetainformations/Foods.md`,
@@ -534,7 +537,8 @@ function selectionRowsOf(view: EditorView): RectangleMarker[] {
     const rows: Box[] = [];
     if (ranges.length > 0)
         for (const element of view.contentDOM.querySelectorAll<HTMLElement>(
-            ".cm-line, [contenteditable=false]:not(.cm-line *, [contenteditable=false] *)",
+            ".cm-line, " +
+                "[contenteditable=false]:not(.cm-line *, [contenteditable=false] *)",
         )) {
             const line: boolean = element.classList.contains("cm-line");
             const from: number = view.posAtDOM(element, 0);

@@ -155,7 +155,8 @@ export type NotesFolder = {
  * - `note`: Path of the note, see the top of this file.
  * - `link`: The link as written,
  *   like `VO_UniversityLectureLessons/TUM_2025W/04_LogisticPoissonRegression.pdf` of
- *   `[[VO_UniversityLectureLessons/TUM_2025W/04_LogisticPoissonRegression.pdf#page=10|lecture 04 slide 10]]`.
+ *   `[[VO_UniversityLectureLessons/TUM_2025W/04_LogisticPoissonRegression.pdf#page=10|
+ *   lecture 04 slide 10]]`.
  */
 export type BrokenLink = {
     note: string;
@@ -324,7 +325,8 @@ function diskPathOf(path: string): string {
  * Gives the module of a path, the vault its links stay in.
  *
  * @param path - Path like
- *   `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/05_07_TrigonometrischeFunktionen.md`
+ *   `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/
+ *   05_07_TrigonometrischeFunktionen.md`
  * @returns Path of its module, like `MA0902_ReelleAnalysisInformatik`
  */
 function moduleOf(path: string): string {
@@ -558,7 +560,8 @@ export function moduleFoldersRead(): string[] {
  * `Modules.md`, see {@link notes}:
  * of each row the folder its column `Nom` links, the last part of the link,
  * like `IN2028_BusinessAnalyticsMachineLearning` of
- * `[BusinessAnalyticsMachineLearning](../../NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning)`,
+ * `[BusinessAnalyticsMachineLearning](../../NomSkillingmodules/
+ * IN2028_BusinessAnalyticsMachineLearning)`,
  * and the newest semester its column `Attempt` names,
  * of every semester I seriously took it in, graded or not,
  * like `2026S` of `2025S, 2026S`;
@@ -849,7 +852,8 @@ export function moduleContentsRead(module: string): ModuleContents {
  * like the folder an older skill entry links.
  *
  * @param path - Path of the folder of a chapter from `NomWorkspace`, like
- *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/02_LogisticPoissonRegression`
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/
+ *   02_LogisticPoissonRegression`
  * @returns Name like `02_LogisticPoissonRegression`
  */
 export function chapterNameOf(path: string): string {
@@ -902,7 +906,8 @@ function linksOf(
  * which takes up to a few hundred milliseconds in a module with code.
  *
  * @param path - Path of the note, like
- *   `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/05_07_TrigonometrischeFunktionen.md`
+ *   `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/
+ *   05_07_TrigonometrischeFunktionen.md`
  * @returns Note with its links
  * @throws {Error} - When the note lies outside `NomSkillingmodules`, or is missing
  */
@@ -981,7 +986,8 @@ export function fileRead(path: string): NotesFile {
  * like a book as PDF, never lies in the reader's memory whole; read only.
  *
  * @param path - Path like
- *   `IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2025W/01_….pdf`
+ *   `IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/
+ *   TUM_2025W/01_….pdf`
  * @returns File with its content type, opened to be read
  * @throws {Error} - When the file lies outside `NomSkillingmodules`,
  *   is missing, or is a folder

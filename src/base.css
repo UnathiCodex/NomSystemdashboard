@@ -318,7 +318,9 @@ textarea {
 /* Fold arrow of every folding thing, Lucide's chevron as Obsidian draws it,
    for a mask in the grey of its place */
 :root {
-    --fold-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    --fold-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' \
+viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' \
+stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
 }
 
 /* Hover is soft everywhere, with the one timing of `variants.css`:

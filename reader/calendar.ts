@@ -159,7 +159,8 @@ import type { CalendarSource } from "./sources.ts";
  * - `pushed`: Where a box stood before each push to another day,
  *   its `X-PUSHED`s in order,
  *   see {@link Push}, like Fri, 16.10.2026, 15:00 for 195 minutes of
- *   `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`;
+ *   `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
+ *   VALUE=DATE-TIME:20261016T150000`;
  *   none when it has none.
  * - `number`: Number of a lecture, an exercise, a tutorial or a sheet in its series,
  *   its `X-NUMBER`, like `3`, `NONE` for one the university cancelled,
@@ -345,7 +346,9 @@ export type Link = {
  * A line `X-ROUND` of a skill entry: where I stand in the round of a section
  * and what I did in it in this entry, its section as value, the rest as parameters,
  * an empty one left out, see `RoundLine` in `skill.ts`, like
- * `X-ROUND;ROUND=1;STEP=done;TASK=Task. Food Truck;USED=Example. Canteen Double Count;RESULT=wrong,right;NOTE=Varianz vergessen;DUE=20261106:01_02_SampleMeanEstimator`.
+ * `X-ROUND;ROUND=1;STEP=done;TASK=Task. Food Truck;
+ * USED=Example. Canteen Double Count;RESULT=wrong,right;NOTE=Varianz vergessen;
+ * DUE=20261106:01_02_SampleMeanEstimator`.
  *
  * - `section`: Its section, the name of its note, like `01_02_SampleMeanEstimator`,
  *   with its module before `/` once the entry's skill changed, like `IN2028/01_02_…`.
@@ -869,7 +872,8 @@ function plannedOf(component: ICAL.Component): string {
 
 /**
  * Reads the day of one `X-PUSHED`, see {@link pushAdd}: of its start in Berlin time, like
- * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`,
+ * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
+ * VALUE=DATE-TIME:20261016T150000`,
  * of its date, like `X-PUSHED;VALUE=DATE:20261012`,
  * or of an older box written like `X-PUSHED:2026-10-12`.
  *
@@ -886,7 +890,8 @@ function pushedDayOf(value: unknown): string {
 /**
  * Reads one `X-PUSHED` of a box, see {@link pushAdd}, into a {@link Push}:
  * its day, its start and its length, like Fri, 16.10.2026, 15:00 and 195 minutes of
- * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`;
+ * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
+ * VALUE=DATE-TIME:20261016T150000`;
  * a push that noted only its day,
  * like `X-PUSHED;VALUE=DATE:20261016` or `X-PUSHED:2026-10-16` of an older box,
  * at the time of day the box has now, without time for a box without.
@@ -2479,7 +2484,10 @@ export function berlinDayStartOf(day: string): string {
         zone,
     );
     const offset: number = zone.utcOffset(start) / 60;
-    return `${day}T00:00:00+${String(Math.floor(offset / 60)).padStart(2, "0")}:${String(offset % 60).padStart(2, "0")}`;
+    return (
+        `${day}T00:00:00+${String(Math.floor(offset / 60)).padStart(2, "0")}:` +
+        String(offset % 60).padStart(2, "0")
+    );
 }
 
 /**
@@ -2529,9 +2537,11 @@ function propertyOf(name: string, value: string | ICAL.Time | Link): ICAL.Proper
  * Builds the property of a text field of an entry, see {@link textsOf}:
  * its `LOCATION` with the link of its place
  * as the standard parameter `ALTREP`, when it has one, like
- * `LOCATION;ALTREP="https://nav.tum.de/room/0509.EG.980":Audimax 0509.EG.980\, Arcisstraße 21\, 80333 München…`,
+ * `LOCATION;ALTREP="https://nav.tum.de/room/0509.EG.980":
+ * Audimax 0509.EG.980\, Arcisstraße 21\, 80333 München…`,
  * and its `SUMMARY` with its link the same way, like the folder of a skill,
- * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…":IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…":
+ * IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * and its `X-ONLINE` with the link, the channel and the title of its meeting or video,
  * see {@link Online};
  * every other one as its text.
@@ -3277,7 +3287,8 @@ export function statusPut(file: string, id: string, status: string): void {
  * its length as the parameter `X-ESTIMATED-DURATION`,
  * named and written as the `ESTIMATED-DURATION` of a to-do, which it is,
  * or the time between start and end of an event, like
- * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;VALUE=DATE-TIME:20261016T150000`,
+ * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
+ * VALUE=DATE-TIME:20261016T150000`,
  * and for a box without time `X-PUSHED;X-ESTIMATED-DURATION=PT1H15M;VALUE=DATE:20261013`,
  * without `X-ESTIMATED-DURATION` for one without length.
  * `VALUE` says it is a time or a date,
@@ -4101,9 +4112,15 @@ export function attendeesRename(
                         /^mailto:/i,
                         "",
                     );
+                    const target: string =
+                        mail !== ""
+                            ? mail
+                            : address.endsWith("@invalid")
+                              ? invalidAddressOf(name)
+                              : address;
                     const property: ICAL.Property = propertyOf(
                         "attendee",
-                        `mailto:${mail !== "" ? mail : address.endsWith("@invalid") ? invalidAddressOf(name) : address}`,
+                        `mailto:${target}`,
                     );
                     property.setParameter("cn", name);
                     return property;
@@ -4255,7 +4272,8 @@ export function paramRename(sent: ParamRenamed): number {
  * @param sources - Calendars, each the files of a folder with a name ending
  * @param old - Name of the place, like `5610.01.011 (Seminarraum (Inf. 18/19)`
  * @param place - The line it takes, see `lineOf` in `places.ts`, like
- *   `5610.01.011 (Seminarraum (Inf. 18/19)), Boltzmannstraße 3, 85748, Garching bei München, Deutschland`
+ *   `5610.01.011 (Seminarraum (Inf. 18/19)), Boltzmannstraße 3, 85748,
+ *   Garching bei München, Deutschland`
  * @param link - The link a `LOCATION` takes,
  *   like `https://nav.tum.de/room/5610.01.011`, empty for none;
  *   an `X-FROM` has none

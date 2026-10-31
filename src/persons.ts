@@ -189,7 +189,10 @@ export function personOf(persons: Person[], name: string): Person | undefined {
  *   like `/edit?file=NomMetainformations%2FPersons.md&row=Bichler%2C%20Martin`
  */
 export function personRowAddressOf(person: Person): string {
-    return `/edit?file=${encodeURIComponent(personsPath)}&row=${encodeURIComponent(person.name)}`;
+    return (
+        `/edit?file=${encodeURIComponent(personsPath)}` +
+        `&row=${encodeURIComponent(person.name)}`
+    );
 }
 
 /**

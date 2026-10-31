@@ -408,7 +408,8 @@ export const foodName: string = "Food";
  */
 function tableHeadOf(): string[] {
     return [
-        "| Food | kcal | Protein | Carbs | Fat | Barcode | Brand | Store | Portion | Pack | Kind |",
+        "| Food | kcal | Protein | Carbs | Fat | Barcode " +
+            "| Brand | Store | Portion | Pack | Kind |",
         "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | ---: | ---: | --- |",
     ];
 }
@@ -449,8 +450,12 @@ const mealHead: string[] = [
  * `Eier` or `Hackfleisch;62.5;Chili con Carne;0.5;09.10.2026`;
  * see {@link lineOf} for the line of today.
  */
-const foodLine: RegExp =
-    /^([^;]+?)(?:;\s*(~)?\s*(\d+(?:[.,]\d+)?))?(?:;\s*([^;|]+?)\s*;\s*(\d+(?:[.,]\d+)?)(?:\s*;\s*([^;|]*?))?)?\s*$/;
+const foodLine: RegExp = new RegExp(
+    /^([^;]+?)/.source +
+        /(?:;\s*(~)?\s*(\d+(?:[.,]\d+)?))?/.source +
+        /(?:;\s*([^;|]+?)\s*;\s*(\d+(?:[.,]\d+)?)(?:\s*;\s*([^;|]*?))?)?/.source +
+        /\s*$/.source,
+);
 
 /**
  * Grams as a part of a line `X-FOOD`, `~` before grams guessed,
@@ -479,7 +484,8 @@ const agent: string = "NomSystemDashboard/0.1";
  * Fields of a product the reader asks Open Food Facts for, see {@link ProductSent}.
  */
 const productFields: string =
-    "code,product_name,brands,stores,quantity,serving_quantity,nutrition_data_per,nutriments";
+    "code,product_name,brands,stores,quantity,serving_quantity," +
+    "nutrition_data_per,nutriments";
 
 /**
  * Languages of the names a search looks in: German, since I shop in Germany, and English.
@@ -1184,7 +1190,10 @@ function rowOf(food: Food): string {
         food.pack,
         food.kind,
     ];
-    return `| ${cells.map((cell: string | number | null): string => String(cell ?? "")).join(" | ")} |`;
+    const texts: string[] = cells.map((cell: string | number | null): string =>
+        String(cell ?? ""),
+    );
+    return `| ${texts.join(" | ")} |`;
 }
 
 /**
@@ -1211,8 +1220,10 @@ function tableHeadPut(lines: string[], header: number): void {
                 head,
                 line,
             );
-            lines[index] =
-                `| ${columns.map((name: string): string => cells[name] ?? "").join(" | ")} |`;
+            const row: string[] = columns.map(
+                (name: string): string => cells[name] ?? "",
+            );
+            lines[index] = `| ${row.join(" | ")} |`;
         }
     });
     lines.splice(header, tableHead, ...tableHeadOf());
@@ -1927,7 +1938,10 @@ function compositionsWrite(meals: Composition[]): void {
         ...meal.foods.map((line: string, index: number): string => {
             const read: Line = lineOf(line);
             const grams: number | null = meal.standard[index] ?? null;
-            return `| ${read.name} | ${read.brand} | ${read.store} | ${grams === null ? "" : roundOf(grams, 1)} |`;
+            return (
+                `| ${read.name} | ${read.brand} | ${read.store} ` +
+                `| ${grams === null ? "" : roundOf(grams, 1)} |`
+            );
         }),
     ]);
     mkdirSync(dirname(food.meals), { recursive: true });

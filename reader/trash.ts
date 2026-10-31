@@ -43,7 +43,8 @@ function dateOf(moment: Date): string {
     const two: (value: number) => string = (value: number): string =>
         String(value).padStart(2, "0");
     return (
-        `${moment.getFullYear()}-${two(moment.getMonth() + 1)}-${two(moment.getDate())}T${two(moment.getHours())}:` +
+        `${moment.getFullYear()}-${two(moment.getMonth() + 1)}-${two(moment.getDate())}` +
+        `T${two(moment.getHours())}:` +
         `${two(moment.getMinutes())}:${two(moment.getSeconds())}`
     );
 }
@@ -75,7 +76,8 @@ export function trashPut(thing: string): void {
         try {
             writeFileSync(
                 info,
-                `[Trash Info]\nPath=${encodeURI(path)}\nDeletionDate=${dateOf(new Date())}\n`,
+                `[Trash Info]\nPath=${encodeURI(path)}\n` +
+                    `DeletionDate=${dateOf(new Date())}\n`,
                 { flag: "wx" },
             );
         } catch {

@@ -23,7 +23,8 @@
  * and each plain `## Task. <name>` there an example.
  * Its sources are the `>` lines right below its heading, one per source,
  * each starting with its mode word, `Original:` or `Generated:`, which is left out, like
- * `> Generated: [[VO_UniversityLectureLessons/TUM_2025W/01_CourseOverview.pdf#page=45|VO 2025W 01 CourseOverview (45)]]`.
+ * `> Generated: [[VO_UniversityLectureLessons/TUM_2025W/01_CourseOverview.pdf#page=45|
+ * VO 2025W 01 CourseOverview (45)]]`.
  * The parts of a cold task, one per idea,
  * are its numbered list items at the start of a line,
  * like `1. Sales $X_1,X_2,X_3$ of three days`, before its solution.
@@ -35,7 +36,8 @@
  * `CATEGORIES:Skill`, its `SUMMARY` the name of the folder of its module
  * with its type in round brackets, which names both,
  * by default linking the folder, for a type on into that of its material, as `ALTREP`,
- * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_…/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_…/TUM_2026W":
+ * IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * see `documents.ts`; or a block of work on a project of the semester,
  * see `activeSkillsRead` in `notes.ts`,
  * which behaves like a module without chapters and tasks, linking its folder,
@@ -48,7 +50,8 @@
  *   so the link survives a rename, a note without, since I change my notes too often,
  *   see `documents.ts`;
  *   the learning view attaches the note of each section I learn in it, like
- *   `ATTACH:NomSkillingmodules/IN2028_…/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`;
+ *   `ATTACH:NomSkillingmodules/IN2028_…/01_RegressionAnalysis/
+ *   01_02_SampleMeanEstimator.md`;
  *   its `DESCRIPTION` is only my free note;
  * - its semester, `X-SEMESTER`, see `semesterFor` in `categories.ts`;
  * - one `X-CHAPTER` per chapter of my system it belongs to, of any type,
@@ -61,7 +64,8 @@
  * - one `X-ROUND` per section it works on, of any type, also logged by hand,
  *   where I stand in its round and what I did in it, see {@link RoundLine}
  *   and `RoundMark` in `calendar.ts`, written anew in its place as I go on, like
- *   `X-ROUND;ROUND=1;STEP=Task. Food Truck;USED=Example. Canteen Double Count;RESULT=wrong:01_02_SampleMeanEstimator`,
+ *   `X-ROUND;ROUND=1;STEP=Task. Food Truck;USED=Example. Canteen Double Count;
+ *   RESULT=wrong:01_02_SampleMeanEstimator`,
  *   then with `STEP=done` once I closed the round;
  *   the order of the lines is the order I did it in.
  * Every attempt stands in the line of its section, so no task is solved outside a round:
@@ -200,7 +204,8 @@ export type Kind = "example" | "cold";
  *   `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`,
  *   empty without one.
  * - `note`: Path of its note, as the scripts view takes it, like
- *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`.
+ *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/
+ *   01_02_SampleMeanEstimator.md`.
  * - `chapter`: Name of its chapter, like `01_RegressionAnalysis`.
  * - `section`: Name of its section, its note, like `01_01_SampleMeanStandardError`.
  * - `parts`: Numbers of the parts of a cold task,
@@ -2150,7 +2155,9 @@ function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string)
         throw new Error(`No chapter ${unknown} in ${entry.module}`);
     if (!attendeesAllow(entry.attendees ?? []))
         throw new Error(
-            `No people ${(entry.attendees ?? []).map((attendee: Attendee): string => attendee.name)}`,
+            `No people ${(entry.attendees ?? []).map(
+                (attendee: Attendee): string => attendee.name,
+            )}`,
         );
     if (!(new Date(entry.start) < new Date(entry.end)))
         throw new Error("A skill entry needs an end after its start");
@@ -2609,7 +2616,8 @@ export function sessionRead(module: string): Session | null {
  * or `USED` gets the new heading,
  * every other line stays as it is.
  * For the AI, not for a button; run in the folder of the dashboard like
- * `node -e 'import("./reader/skill.ts").then((skill) => console.log(skill.taskRename("IN2028/Old Name", "IN2028/New Name")))'`.
+ * `node -e 'import("./reader/skill.ts").then((skill) =>
+ * console.log(skill.taskRename("IN2028/Old Name", "IN2028/New Name")))'`.
  * - `tasks`: Tasks of the modules of the semester.
  * - `task`: The task by its new identity.
  * - `before`, `after`: Its heading before and after,
@@ -2633,7 +2641,8 @@ export function taskRename(from: string, to: string): number {
     )
         throw new Error(`Rename the heading in its note first: ${from} to ${to}`);
     const after: string = task.heading;
-    const before: string = `${after.slice(0, after.indexOf(". ") + 2)}${from.slice(from.indexOf("/") + 1)}`;
+    const before: string =
+        after.slice(0, after.indexOf(". ") + 2) + from.slice(from.indexOf("/") + 1);
     let renamed: number = 0;
     skillEntriesRead("1970-01-01T00:00:00Z", new Date().toISOString()).forEach(
         (entry: Entry): void => {

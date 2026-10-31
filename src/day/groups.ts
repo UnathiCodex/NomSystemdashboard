@@ -144,7 +144,10 @@ function dayIs(session: Session): boolean {
 function sessionTimesOf(session: Session): string {
     if (dayIs(session)) return lengthOf(session.minutes);
     const start: Date = new Date(session.start);
-    return `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + session.minutes * 60 * 1000))}`;
+    return (
+        `${timeOf(start)}${rangeDash}` +
+        timeOf(new Date(start.getTime() + session.minutes * 60 * 1000))
+    );
 }
 
 /**
