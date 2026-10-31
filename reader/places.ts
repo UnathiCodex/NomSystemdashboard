@@ -1,64 +1,34 @@
 /**
  * ## Places
  *
- * Reads and writes my places in `Places.md`, as `food.ts` does my foods in `Foods.md`:
- * one Markdown table with one row per place,
- * `| Place | Street | Code | City | Country | Link | Default |`,
- * the fields of the dialog,
- * like `TUM Innenstadt` with `Arcisstraße 21`, `80333`, `München` and `Deutschland`,
- * each part empty for none.
- * The column `Default` marks my default place by `★`,
- * at most one row, like `Home Munich`,
- * which a new entry starts with, see `lastPlaceFill` in `src/day/categories.ts`;
- * only its star in the dialog sets it, see {@link placeStandardSet},
- * and every other change of a row keeps it.
- * Every field of a place, the place of an entry
- * and where a way starts, offers only these,
- * see `categories.ts`, and an entry writes its place as Google Calendar does,
- * its name and its address in one line, see {@link lineOf},
- * like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`, as its `LOCATION`,
+ * Reads and writes my places in `Places.md`, as `./food.ts` does my foods in `Foods.md`:
+ * one Markdown table with one row per place, its name, address parts, link and default.
+ * The column `Default` marks my default place by `★`, at most one row,
+ * which a new entry starts with, see `lastPlaceFill` in `src/day/categories.ts`.
+ * Only its star in the dialog sets it, and every other change of a row keeps it.
+ * Every field of a place offers only these, see `./categories.ts`,
+ * and an entry writes its place as Google Calendar does,
+ * its name and its address in one line, see {@link lineOf}, as its `LOCATION`,
  * and where its way starts as its `X-FROM`,
- * so it keeps the address it had then, also once the address in `Places.md` changes;
- * its name is the part before the first comma, see {@link labelOf},
- * so a name never holds a comma:
- * one typed or read with a comma loses it, see {@link nameOf}.
- * An older entry keeps the name alone, like `Home Munich`,
- * or its code and town in one part,
- * like `TUM Innenstadt, Arcisstraße 21, 80333 München, Deutschland`, see {@link lineIs}.
- * The last column, `Link`, may hold a link of a place,
- * like `https://nav.tum.de/room/0509.EG.980`,
- * which an entry writes with it
- * as the standard parameter `ALTREP` of its `LOCATION`, see {@link placeLinkOf}.
- * The file starts without places:
- * I add each place with its address from the dialog of the day the first time I need it,
- * and the reader creates the file with that first place;
- * the pencil beside a place picked in a dialog shows its parts below it,
- * the columns of its row,
- * which change it everywhere once the dialog saves,
- * its row and every entry that names it,
- * see {@link placeRename}; a change of its row alone, as Vu shares one,
- * see `shared.ts`, leaves every entry written before with the line
- * and the link it had, see {@link placeChange}.
+ * so it keeps the address it had then, also once the address in `Places.md` changes.
+ * Its name is the part before the first comma, see {@link labelOf},
+ * so a name never holds a comma, see {@link nameOf}.
+ * An older entry keeps the name alone, or its code and town in one part,
+ * see {@link lineIs}.
+ * The link of a place an entry writes as the `ALTREP` of its `LOCATION`.
+ * The reader creates the file with the first place I add from the dialog of the day.
+ * The pencil beside a place picked in a dialog changes it everywhere,
+ * its row and every entry that names it, see {@link placeRename}.
+ * A change of its row alone, as Vu shares one, see `./shared.ts`,
+ * leaves every entry written before with the line and the link it had.
  * Beside it `Rooms.md` holds the rooms of the university in one table of the same form,
- * its first column `Room`, like `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)`
- * with its address in its four parts
- * and `https://nav.tum.de/room/0509.EG.980`, read the same way,
- * see {@link roomsRead}; an entry writes a room as a place.
- * A new place goes into `Rooms.md` when its name starts
- * like the code of a room, digits and a dot,
- * see {@link roomForm}, otherwise into `Places.md`; a name is unique over both files.
- * Both tables stay sorted by name, see {@link rowsSort}.
+ * read the same way. An entry writes a room as a place.
+ * A new place goes into `Rooms.md` when its name starts like the code of a room,
+ * otherwise into `Places.md`. A name is unique over both files.
+ * Both tables stay sorted by name.
  * A place is only where I physically am: what I do online,
  * like a meeting on Zoom or a video on YouTube, an entry writes apart from its place,
- * see `Online` in `calendar.ts`,
- * its platform one row of `Online.md`, see {@link Platform}.
- *
- * - `node:fs`: Reads and writes `Places.md` and `Rooms.md`.
- * - `node:path`: Gives the folder of a file.
- * - `./calendar.ts`: Writes a place anew in every entry of my calendars that names it.
- * - `./markdown.ts`: Cuts a row of a table into its cells.
- * - `./sources.ts`: Names `Places.md`, `Rooms.md`, `Online.md`, the plan,
- *   the log and the folder of my calendars, and tells which files the reader may write.
+ * see `Online` in `./calendar.ts`, its platform one row of `Online.md`.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -71,21 +41,11 @@ import type { Online } from "./calendar.ts";
 
 /**
  * A place, one row of `Places.md`, or a room, one row of `Rooms.md`.
- *
- * - `name`: Name, like `TUM Innenstadt`;
- *   unique, ignoring case, without `|` and without a comma,
- *   which ends it in a line, see {@link nameOf}.
- * - `street`: Its street with the number of the house,
- *   which may stay out, like `Arcisstraße 21`.
- * - `code`: Its code, the postcode, like `80333`.
- * - `city`: Its town, like `München`.
- * - `country`: Its country, like `Deutschland`.
- * - `link`: Its link, like `https://nav.tum.de/room/0509.EG.980`,
- *   a web address without spaces; empty for none.
- * - `standard`: Whether it is my default place, `★` in its column `Default`.
- *
- * The four parts of the address are each empty for none, without `|` and without a comma,
+ * Its name is unique, ignoring case.
+ * The name and the four parts of the address hold no `|` and no comma,
  * which parts them in a line, see {@link lineOf}.
+ * - `street`: Its street with the number of the house, which may stay out.
+ * - `standard`: Whether it is my default place, `★` in its column `Default`.
  */
 export type Place = {
     name: string;
@@ -98,13 +58,9 @@ export type Place = {
 };
 
 /**
- * A platform of what I do online, one row of `Online.md`,
- * like `Zoom` by `Zoom Video Communications` with `https://zoom.us`.
- *
- * - `name`: Name, like `Zoom`; unique, ignoring case, without `|`.
- * - `provider`: Who offers it, like `Zoom Video Communications`, empty for none.
- * - `link`: The link of its web app, like `https://zoom.us`, empty for none;
- *   an entry links its own meeting or video, see `Online` in `calendar.ts`.
+ * A platform of what I do online, one row of `Online.md`.
+ * - `link`: The link of its web app.
+ *   An entry links its own meeting or video, see `Online` in `./calendar.ts`.
  */
 export type Platform = {
     name: string;
@@ -112,12 +68,7 @@ export type Platform = {
     link: string;
 };
 
-/**
- * A changed place, as the page sends it: its name, maybe new,
- * like `TUM Stammgelände`, and its parts as typed.
- *
- * - `old`: Name of the place as it was, like `TUM Innenstadt`.
- */
+/** A changed place, as the page sends it, with its old name. */
 export type PlaceChanged = Place & {
     old: string;
 };
@@ -125,58 +76,39 @@ export type PlaceChanged = Place & {
 /**
  * A place changed everywhere,
  * as the page sends it from the pencil beside a place in a dialog,
- * see {@link placeRename}:
- * its old name, the name of the place as the entry or the box names it,
- * the part of its line before the first comma,
- * like `5610.01.011 (Seminarraum (Inf. 18/19)`,
- * and its name, address and link as typed,
- * like `5610.01.011 (Seminarraum (Inf. 18/19))`.
- *
- * - `dry`: Whether only to check the change, writing nothing; false when left out.
+ * its old name as the entry or the box names it, the part of its line before the first
+ * comma, and its name, address and link as typed.
+ * - `dry`: Whether only to check the change, writing nothing.
  */
 export type PlaceRenamed = PlaceChanged & {
     dry?: boolean;
 };
 
-/**
- * Lines a new `Places.md` starts with: the head of its table,
- * the header and the line below it.
- */
+/** Lines a new `Places.md` starts with: the head of its table. */
 const fileHead: string[] = [
     "| Place | Street | Code | City | Country | Link | Default |",
     "|---|---|---|---|---|---|---|",
 ];
 
-/**
- * Head of the table of a new `Rooms.md`, its header and the line below it.
- */
+/** Head of the table of a new `Rooms.md`. */
 const roomHead: string[] = [
     "| Room | Street | Code | City | Country | Link | Default |",
     "|---|---|---|---|---|---|---|",
 ];
 
-/**
- * Beginning of the name of a room, the code of a room of the TUM: digits and a dot,
- * like `0509.EG.980` of `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)`
- * or `8120.01.101` of `8120.01.101 (Audimax im Galileo)`.
- */
+/** Beginning of the name of a room, the code of a room of the TUM: digits and a dot. */
 const roomForm: RegExp = /^\d+\./;
 
 /**
- * A link typed, of a place or of what an entry was, see `titleOf` in `documents.ts`:
- * a web address without spaces, like `https://nav.tum.de/room/0509.EG.980`.
+ * A link typed, of a place or of what an entry was, see `titleOf` in `./documents.ts`:
+ * a web address without spaces.
  */
 export const linkForm: RegExp = /^https?:\/\/\S+$/;
 
-/**
- * Lines of the table of `Places.md` before its rows: the header and the line below it.
- */
+/** Lines of the table of `Places.md` before its rows: the header and the line below. */
 const tableHead: number = 2;
 
-/**
- * Compares names as a German dictionary orders them, ignoring case,
- * like `itestra GmbH` between `Home Munich` and `McDonald's Hohenzollernstraße`.
- */
+/** Compares names as a German dictionary orders them, ignoring case. */
 const nameOrder: Intl.Collator = new Intl.Collator("de");
 
 /**
@@ -192,42 +124,25 @@ const platformHead: string[] = [
     "|---|---|---|",
 ];
 
-/**
- * Cleans a text for a cell of `Places.md`:
- * `|` and line breaks become spaces, spaces in a row one, none at the ends.
- *
- * @param text - Text as typed, like `Arcisstraße 21,  80333 München`
- * @returns Clean text, like `Arcisstraße 21, 80333 München`
- */
+/** Cleans a text for a cell: `|` and line breaks become spaces, spaces in a row one. */
 function cellOf(text: string): string {
     return text.replace(/\|/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /**
  * Cleans the name or a part of the address of a place, which never holds a comma,
- * since an entry writes its place as one line whose commas part it: as a cell,
- * see {@link cellOf}, each comma dropped, leaving a space,
- * as for a name of a room from NavigaTUM,
- * `0509.EG.980 (Audimax, Werner-von-Siemens-Hörsaal)` becoming
- * `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)`, and for a name typed with a comma.
- *
- * @param text - Name or part as typed or read,
- *   like `0509.EG.980 (Audimax, Werner-von-Siemens-Hörsaal)`
- * @returns It without comma, like `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)`
+ * since an entry writes its place as one line whose commas part it:
+ * each comma dropped, leaving a space,
+ * as for a name of a room from NavigaTUM and for a name typed with a comma.
  */
 function nameOf(text: string): string {
     return cellOf(text.replace(/,/g, " "));
 }
 
 /**
- * Writes a place as an entry writes it,
- * its name and its address in one line, as Google Calendar does:
+ * Writes a place as an entry writes it, as Google Calendar does:
  * its name, its street, its code, its town and its country, parted by commas,
  * a part left out while empty.
- *
- * @param place - A place of `Places.md`
- * @returns Line like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
- *   the name alone without address
  */
 export function lineOf(place: Place): string {
     return [place.name, place.street, place.code, place.city, place.country]
@@ -238,12 +153,7 @@ export function lineOf(place: Place): string {
 /**
  * Tells whether a line is the one of a place,
  * as {@link lineOf} writes it or as an older entry wrote it,
- * its code and town in one part,
- * like `TUM Innenstadt, Arcisstraße 21, 80333 München, Deutschland`.
- *
- * @param place - A place of `Places.md` or a room of `Rooms.md`
- * @param line - Place as an entry writes it
- * @returns Whether it is the line of the place
+ * its code and town in one part.
  */
 function lineIs(place: Place, line: string): boolean {
     return (
@@ -260,31 +170,17 @@ function lineIs(place: Place, line: string): boolean {
     );
 }
 
-/**
- * Gives the name of the place of a line, the part before its first comma.
- *
- * @param line - Place as an entry writes it,
- *   like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
- *   or only its name, like `Home Munich`
- * @returns Name like `TUM Innenstadt`
- */
+/** Gives the name of the place of a line, the part before its first comma. */
 export function labelOf(line: string): string {
     return line.split(",")[0].trim();
 }
 
 /**
  * Gives the link to write with a place as the `ALTREP` of `LOCATION`:
- * the link it had in the entry or box it comes from,
- * like the box a log entry is logged from or the entry being changed,
- * while it is that same place, else the link of my place or the room of that line,
- * see {@link lineIs}, in `Places.md` or `Rooms.md`, else none;
- * never one typed for the entry, since a place is only where I am,
- * see `Online` in `calendar.ts`.
- *
- * @param line - Place as an entry writes it,
- *   like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`
- * @param from - The entry or box it comes from, `null` for none
- * @returns Link like `https://nav.tum.de/room/0509.EG.980`, empty for none
+ * the link it had in the entry or box it comes from while it is that same place,
+ * else the link of my place or the room of that line, else none.
+ * Never one typed for the entry, since a place is only where I am,
+ * see `Online` in `./calendar.ts`.
  */
 export function placeLinkOf(
     line: string,
@@ -298,14 +194,7 @@ export function placeLinkOf(
     );
 }
 
-/**
- * Reads a row of the table of `Places.md` or `Rooms.md`; a row without link has none.
- * - `cells`: Its cells, see {@link cellsOf}.
- *
- * @param line - Row, like
- *   `| Home Munich | Burg-Eltz-Weg | 81375 | München | Deutschland | https://… | ★ |`
- * @returns The place, its name empty for a row without one
- */
+/** Reads a row of the table of `Places.md` or `Rooms.md`, its name empty for none. */
 function rowPlaceOf(line: string): Place {
     const cells: string[] = cellsOf(line);
     return {
@@ -320,12 +209,8 @@ function rowPlaceOf(line: string): Place {
 }
 
 /**
- * Reads the rows of the table of `Places.md` or `Rooms.md`:
- * its lines starting with `|`, after the head of the table, see {@link rowPlaceOf}.
- * A row without a name stays out.
- *
- * @param file - Path of the file, like that of `Rooms.md`
- * @returns Places in the order of the table, none while the file does not exist
+ * Reads the rows of the table of `Places.md` or `Rooms.md`, in their order,
+ * none while the file does not exist. A row without a name stays out.
  */
 function tableRead(file: string): Place[] {
     if (!existsSync(file)) return [];
@@ -338,40 +223,22 @@ function tableRead(file: string): Place[] {
         .filter((place: Place): boolean => place.name !== "");
 }
 
-/**
- * Reads my places, the rows of `Places.md`, see {@link tableRead}.
- *
- * @returns Places in the order of the table, none while `Places.md` does not exist
- */
+/** Reads my places, the rows of `Places.md`. */
 export function placesRead(): Place[] {
     return tableRead(day.places);
 }
 
-/**
- * Reads the rooms of the university, the rows of `Rooms.md`, see {@link tableRead}, like
- * `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)` with its address
- * and its link to NavigaTUM.
- *
- * @returns Rooms in the order of the table, none while `Rooms.md` does not exist
- */
+/** Reads the rooms of the university, the rows of `Rooms.md`. */
 export function roomsRead(): Place[] {
     return tableRead(day.rooms);
 }
 
 /**
- * Cleans a place as the page sends it,
- * see {@link cellOf}, a comma in its name
- * or a part of its address dropped, see {@link nameOf},
- * and checks it against my other places and the rooms:
+ * Cleans a place as the page sends it, and checks it against my other places and rooms:
  * its name is needed, its address and its link may stay empty,
- * and an address needs no number of a house, like `Burg-Eltz-Weg`;
- * never my default place, which only {@link placeStandardSet} sets.
- * - `clean`: The place cleaned.
+ * and an address needs no number of a house.
+ * Never my default place, which only {@link placeStandardSet} sets.
  *
- * @param sent - Place as the page sends it, its name,
- *   the parts of its address and its link as typed
- * @param others - My other places and the rooms, whose names it may not have
- * @returns The place cleaned
  * @throws {Error} - When the name is empty, another place has the name, ignoring case,
  *   or the link is no web address
  */
@@ -399,14 +266,9 @@ function placeCleanOf(sent: Place, others: Place[]): Place {
 }
 
 /**
- * Reads the lines of `Places.md` or `Rooms.md` to write a place into;
- * those of a new file, the head of its table, see {@link fileHead} and {@link roomHead},
- * when it does not exist yet.
- * - `lines`: Lines of the file.
- * - `first`, `last`: Index of the first line of its table, its header, and of its last.
+ * Reads the lines of `Places.md` or `Rooms.md` to write a place into,
+ * the head of a new table when the file does not exist yet.
  *
- * @param file - Path of the file, like that of `Places.md`
- * @returns Lines of the file
  * @throws {Error} - When the file lies outside the new system or holds no table
  */
 function placeLinesRead(file: string): string[] {
@@ -425,14 +287,7 @@ function placeLinesRead(file: string): string[] {
     return lines;
 }
 
-/**
- * Writes a place as a row of the table of `Places.md` or `Rooms.md`.
- *
- * @param place - Place cleaned
- * @returns Row like
- *   `| Home Munich | Burg-Eltz-Weg | 81375 | München | Deutschland |
- *   https://www.google.com/… | ★ |`
- */
+/** Writes a place as a row of the table of `Places.md` or `Rooms.md`. */
 function rowOf(place: Place): string {
     return (
         `| ${place.name} | ${place.street} | ${place.code} | ${place.city} ` +
@@ -441,12 +296,8 @@ function rowOf(place: Place): string {
 }
 
 /**
- * Sorts the rows of the table of `Places.md` or `Rooms.md` by name,
- * see {@link nameOrder}, every other line staying where it is.
- * - `first`: Index of the first row, after the head of the table.
- * - `last`: Index of the last line of the table.
- *
- * @param lines - Lines of the file, sorted in place
+ * Sorts the rows of a table by name, see {@link nameOrder},
+ * every other line staying where it is.
  */
 function rowsSort(lines: string[]): void {
     const first: number =
@@ -469,20 +320,11 @@ function rowsSort(lines: string[]): void {
 }
 
 /**
- * Adds a place as the last row of the table of `Rooms.md` when its name starts
- * like the code of a room, see {@link roomForm},
- * like `5602.EG.001 (Hörsaal 1)`, else of `Places.md`, with its link or an empty cell,
- * then sorts the rows, see {@link rowsSort}, every other line staying as it is,
- * see {@link placeLinesRead};
- * creates the file when it does not exist yet.
- * - `added`: The place as written, cleaned, see {@link placeCleanOf}.
- * - `file`: `Rooms.md` or `Places.md`.
- * - `lines`: Lines of the file.
- * - `last`: Index of the last line of its table.
+ * Adds a place as a row of `Rooms.md` when its name starts
+ * like the code of a room, else of `Places.md`, then sorts the rows,
+ * every other line staying as it is.
+ * Creates the file when it does not exist yet.
  *
- * @param sent - Place as the page sends it, its name,
- *   the parts of its address and its link as typed
- * @returns The place as written
  * @throws {Error} - When the name is empty,
  *   another place or a room has the name, ignoring case,
  *   the link is no web address, or the file lies outside the new system or holds no table
@@ -502,23 +344,11 @@ export function placeAdd(sent: Place): Place {
 }
 
 /**
- * Changes my place of a name in `Places.md`,
- * or a room in `Rooms.md`, its name, its address and its link,
- * in its own row, its star kept,
- * the rows sorted anew, see {@link rowsSort}, every other line staying as it is,
- * see {@link placeLinesRead}, and nothing else:
+ * Changes my place of a name in `Places.md`, or a room in `Rooms.md`,
+ * in its own row, its star kept, the rows sorted anew, and nothing else:
  * every entry written before keeps the line and the link it had,
  * since each writes its place itself.
- * - `old`: The old name in small letters, as names compare, ignoring case.
- * - `file`: `Places.md`, or `Rooms.md` for a room.
- * - `changed`: The place as written, cleaned, see {@link placeCleanOf}.
- * - `lines`: Lines of the file.
- * - `first`: Index of the first line of its table, its header.
- * - `row`: Index of the row of the place, -1 for none.
  *
- * @param sent - The place as the page sends it, its old name and its name,
- *   address and link as typed
- * @returns The place as written
  * @throws {Error} - When no place has the old name, the name is empty,
  *   another place or a room has the name, ignoring case, the link is no web address,
  *   or the file lies outside the new system
@@ -554,46 +384,24 @@ export function placeChange(sent: PlaceChanged): Place {
 }
 
 /**
- * Changes a place everywhere, as its pencil in a dialog asks once the dialog saves,
- * see `src/day/categories.ts`:
+ * Changes a place everywhere, as its pencil in a dialog asks once the dialog saves:
  * every row of its old name in `Places.md` and `Rooms.md`,
- * and every line of my calendars that names it,
- * each `LOCATION` and `X-FROM` in every `.ics` file of `NomManagecalendar`,
- * see `placeLinesRename` in `calendar.ts`.
+ * and each `LOCATION` and `X-FROM` in every `.ics` file of `NomManagecalendar`,
+ * see `placeLinesRename` in `./calendar.ts`.
  * While no other row has its new name,
- * the place takes its name, address and link as sent,
- * cleaned as those of a place added, see {@link placeCleanOf}:
+ * the place takes its name, address and link as sent, cleaned as for a place added:
  * each row of the old name becomes its row, its star kept, the rows sorted anew,
- * see {@link rowsSort}, and each line its line with its link, see {@link lineOf}, like
- * `TUM Stammgelände, Arcisstraße 21, 80333, München, Deutschland`;
- * a place without row gets none.
+ * and each line its line with its link. A place without row gets none.
  * While another row has the new name, ignoring case, the place moves to that row:
  * each line takes the line and the link of that row,
  * the address and the link sent counting not,
- * and each row of the old name goes, so no second row of the name is made;
- * my default place moved so makes that row my default place,
- * see {@link placeStandardSet}.
+ * and each row of the old name goes, so no second row of the name is made.
+ * My default place moved so makes that row my default place.
  * Works out every file first and writes only then,
- * so nothing is written while one file cannot be;
- * a row or a line written so already, and every other line of every file, stays as it is.
- * - `old`: The old name, as the entries write it.
- * - `name`: The new name, cleaned, see {@link nameOf}.
- * - `rows`: My places and the rooms.
- * - `target`: The row of another place with the new name,
- *   ignoring case, `undefined` for none.
- * - `changed`: The place as its rows and lines take it,
- *   that row or the place as sent, cleaned.
- * - `tables`: `Places.md` and `Rooms.md` while a row of the old name changes,
- *   each with its text as written then.
- * - `lines`: Lines of such a file.
- * - `first`: Index of the first line of its table, its header.
- * - `named`: Index of each row of the old name in it, the last first.
+ * so nothing is written while one file cannot be.
+ * Gives the place as written with its old name, to send to Vu,
+ * `null` for a dry run, a place moved to another row and while no row changes.
  *
- * @param sent - The place changed, as the page sends it
- * @returns The place as written with its old name,
- *   as {@link placeChange} takes it, to send to Vu,
- *   see `listShare` in `shared.ts`;
- *   `null` for a dry run, a place moved to another row and while no row changes
  * @throws {Error} - When the old or the new name is empty, the link is no web address,
  *   a line of a place cannot be read, or a file lies outside the new system
  */
@@ -664,17 +472,11 @@ export function placeRename(sent: PlaceRenamed): PlaceChanged | null {
 
 /**
  * Makes a place my default place, as its star in the dialog asks,
- * see `placeEditOf` in `src/day/places.ts`:
- * `★` in the column `Default` of its row in `Places.md` or `Rooms.md`,
- * and none in any other row,
- * so at most one place is it; an empty name leaves none.
- * Writes only a file that changes, every other line staying as it is.
- * Mine alone: never sent to Vu, see `shared.ts`.
- * - `first`: Index of the first row of a table, after its head.
- * - `text`: The text of a file as it is.
- * - `marked`: Its text with the star set.
+ * see `placeEditOf` in `src/day/places.ts`,
+ * and no other, so at most one place is it. An empty name leaves none.
+ * Writes only a file that changes.
+ * Mine alone: never sent to Vu, see `./shared.ts`.
  *
- * @param name - Name of the place, like `Home Munich`, empty for none
  * @throws {Error} - When no place or room has the name,
  *   or a file lies outside the new system
  */
@@ -706,13 +508,8 @@ export function placeStandardSet(name: string): void {
 }
 
 /**
- * Reads my platforms online, the rows of the table of `Online.md`:
- * its lines starting with `|`, after the head of the table;
- * a row without a name stays out.
- * - `cells`: Cells of a row, without the empty texts
- *   before its first `|` and after its last.
- *
- * @returns Platforms in the order of the table, none while `Online.md` does not exist
+ * Reads my platforms online, the rows of the table of `Online.md`, in their order,
+ * none while it does not exist. A row without a name stays out.
  */
 export function platformsRead(): Platform[] {
     if (!existsSync(day.online)) return [];
@@ -730,15 +527,9 @@ export function platformsRead(): Platform[] {
 }
 
 /**
- * Gives the platform of a link,
- * the one whose web app lies on the same host, `www.` left out,
- * like `YouTube` of `https://www.youtube.com/watch?v=…`,
- * so an older entry that linked a video or a meeting
- * as the `ALTREP` of its `SUMMARY` shows it online, see `entryOf` in `calendar.ts`.
- * - `host`: Gives the host of a link without `www.`, empty for no web address.
- *
- * @param link - A web address, like `https://www.youtube.com/watch?v=…`
- * @returns The platform, `undefined` for none
+ * Gives the platform of a link, the one whose web app lies on the same host,
+ * `www.` left out, so an older entry that linked a video or a meeting
+ * as the `ALTREP` of its `SUMMARY` shows it online, see `entryOf` in `./calendar.ts`.
  */
 export function platformOfLink(link: string): Platform | undefined {
     const host: (text: string) => string = (text: string): string =>
@@ -752,17 +543,11 @@ export function platformOfLink(link: string): Platform | undefined {
 
 /**
  * Adds a platform that is none of mine yet as a row of the table of `Online.md`,
- * as typed in the field `Online`,
- * its provider and link then empty for me to fill in there,
- * or as it came from Vu with them, see `shared.ts`;
- * the rows sorted by name, see {@link rowsSort}, every other line staying as it is;
- * creates the file with its head, see {@link platformHead}, when it does not exist yet.
- * - `added`: The platform cleaned, see {@link cellOf}.
- * - `lines`: Lines of the file.
- * - `last`: Index of the last line of its table.
+ * as typed in the field `Online`, its provider and link then empty for me to fill in,
+ * or as it came from Vu with them, see `./shared.ts`.
+ * The rows sorted by name, every other line staying as it is.
+ * Creates the file with its head when it does not exist yet.
  *
- * @param sent - Its name, like `Webex`, and maybe its provider and link
- * @returns The platform as written
  * @throws {Error} - When the name is empty or another platform has it, ignoring case,
  *   the link is no web address, or the file lies outside the new system
  */
@@ -799,20 +584,11 @@ export function platformAdd(sent: Platform): Platform {
 
 /**
  * Gives what an entry or a box did online as it is written,
- * see `Online` in `calendar.ts`:
- * as sent, its platform, the link of its meeting or video,
- * its channel and its title cleaned,
- * see {@link cellOf}, all four empty without a platform;
- * from a sender that knows none, like the calendar after a drag,
- * as the entry or box it comes from has it,
- * like the box a log entry is logged from or the entry being changed.
- * - `online`: The platform as sent, cleaned.
- * - `link`: The link as sent, cleaned.
+ * see `Online` in `./calendar.ts`:
+ * as sent, cleaned, all four empty without a platform.
+ * From a sender that knows none, like the calendar after a drag,
+ * as the entry or box it comes from has it.
  *
- * @param sent - What it did online, as sent;
- *   its platform `undefined` from a sender that knows none
- * @param from - The entry or box it comes from, `null` for none
- * @returns What it did online
  * @throws {Error} - When the link is no web address
  */
 export function onlineFor(
@@ -843,30 +619,16 @@ export function onlineFor(
     };
 }
 
-/**
- * A changed platform, as the page sends it: its name, maybe new, like `MS Teams`,
- * and its provider as typed.
- *
- * - `old`: Name of the platform as it was, like `Teams`.
- */
+/** A changed platform, as the page sends it, with its old name. */
 export type PlatformChanged = Platform & {
     old: string;
 };
 
 /**
  * Changes my platform of a name in `Online.md`, its name and who offers it,
- * as typed in the parts of `Online` in the dialog,
- * in its own row, the link of its web app kept,
- * the rows sorted anew, see {@link rowsSort}, every other line staying as it is;
- * entries written before keep the platform they name, as they keep their places.
- * - `old`: The old name in small letters, as names compare, ignoring case.
- * - `lines`: Lines of the file.
- * - `first`: Index of the first line of its table, its header.
- * - `row`: Index of the row of the platform, -1 for none.
- * - `changed`: The platform as written.
+ * in its own row, the link of its web app kept, the rows sorted anew.
+ * Entries written before keep the platform they name, as they keep their places.
  *
- * @param sent - Its old name, like `Teams`, its name and its provider as typed
- * @returns The platform as written
  * @throws {Error} - When no platform has the old name,
  *   the name is empty or another platform has it, ignoring case,
  *   or the file lies outside the new system

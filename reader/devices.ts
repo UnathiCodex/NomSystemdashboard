@@ -3,30 +3,15 @@
  *
  * Writes what each of my devices shows of the page into `Devices.md`,
  * so the dashboard is shaped for each of them:
- * one Markdown table, as `Places.md`, one row per device, its name in my tailnet,
- * like `vuenvy`, its page in CSS pixels, like `1920 × 1003`, its scale,
- * like `2` for a 4K screen at 200 %, its screen in CSS pixels, like `1920 × 1080`,
- * whether it runs as the installed app,
- * and since when its row holds these sizes, like `13.10.2026 23:20`.
- * A device is what Tailscale names it:
- * `tailscale serve` hands every request of my devices on to the reader with the Tailscale
+ * one Markdown table, one row per device, by its name in my tailnet.
+ * `tailscale serve` hands every request on to the reader with the Tailscale
  * address of its device in `X-Forwarded-For`, which `tailscale whois` names.
  * A report with other sizes writes the row of its device anew,
- * the same sizes leave the file as it is,
- * and a device without row yet gets one at the end;
- * the reader creates the file with the first report.
+ * the same sizes leave the file as it is.
  * A request without that address, which reached the reader without Tailscale,
  * like the browser of Claude's screenshots on skriptum,
  * and one of skriptum itself write nothing,
  * since I never look at the dashboard on skriptum.
- *
- * - `node:child_process`: Asks Tailscale for the name of a device.
- * - `node:util`: Lets that be awaited.
- * - `node:os`: Gives the name of skriptum, which writes nothing.
- * - `node:fs`: Reads and writes `Devices.md`.
- * - `node:path`: Gives the folder of the file.
- * - `./calendar.ts`: Writes the day and the time of now in Berlin time.
- * - `./sources.ts`: Names `Devices.md` and tells which files the reader may write.
  */
 
 import { execFile } from "node:child_process";
@@ -38,12 +23,8 @@ import { berlinDateOf, berlinTimeOf } from "./calendar.ts";
 import { devicesFile, writeAllowed } from "./sources.ts";
 
 /**
- * What a device shows of the page, as the page sends it.
- *
- * - `width`, `height`: Size of the page in CSS pixels, like 1920 and 1003.
- * - `scale`: Device pixels per CSS pixel, like 2 for a 4K screen at 200 %.
- * - `screenWidth`, `screenHeight`: Size of the screen in CSS pixels, like 1920 and 1080.
- * - `app`: Whether the page runs as the installed app, in a window of its own.
+ * What a device shows of the page, as the page sends it, sizes in CSS pixels.
+ * `scale` is device pixels per CSS pixel, `app` whether it runs as the installed app.
  */
 export type DeviceReport = {
     width: number;
@@ -54,9 +35,7 @@ export type DeviceReport = {
     app: boolean;
 };
 
-/**
- * Head of a new `Devices.md`, its table without rows.
- */
+/** Head of a new `Devices.md`, its table without rows. */
 const fileHead: string[] = [
     "| Device | Page | Scale | Screen | App | Since |",
     "|---|---|---|---|---|---|",
@@ -64,10 +43,7 @@ const fileHead: string[] = [
 
 /**
  * Names a device by its Tailscale address, as my tailnet names it.
- * - `whois`: What Tailscale knows of the address, its `Node.ComputedName` the name.
  *
- * @param address - Tailscale address of the device, like `100.125.80.0`
- * @returns Its name, like `vuenvy`
  * @throws {Error} - When Tailscale does not know the address
  */
 async function deviceNameOf(address: string): Promise<string> {
@@ -80,14 +56,7 @@ async function deviceNameOf(address: string): Promise<string> {
     return whois.Node.ComputedName;
 }
 
-/**
- * Gives the cells of a row of `Devices.md`, without the edges of the table.
- *
- * @param row - Row,
- *   like `| vuenvy | 1601 × 822 | 1.2 | 1600 × 900 | yes | 19.10.2026 00:06 |`
- * @returns Its cells, like `vuenvy`, `1601 × 822`, `1.2`, `1600 × 900`,
- *   `yes` and `19.10.2026 00:06`
- */
+/** Gives the cells of a row of `Devices.md`, without the edges of the table. */
 function cellsOf(row: string): string[] {
     return row
         .split("|")
@@ -97,17 +66,9 @@ function cellsOf(row: string): string[] {
 
 /**
  * Writes the report of a device into its row of `Devices.md`,
- * see the top of this file, every other line staying as it is.
- * - `name`: Name of the device in my tailnet.
- * - `sizes`: The numbers of the report, each checked.
- * - `now`: The moment, whose day and time in Berlin time the row holds.
- * - `row`: The row of the device as the report gives it.
- * - `lines`: Lines of the file.
- * - `index`: Index of the row of the device, -1 for none.
+ * every other line staying as it is.
  *
- * @param report - Report as the page sends it
- * @param address - Tailscale address of the device, from `X-Forwarded-For`,
- *   empty for a request without Tailscale
+ * @param address - Tailscale address of the device, empty for a request without Tailscale
  * @throws {Error} - When Tailscale does not know the address,
  *   a size is no number above 0,
  *   or the file lies outside the new system

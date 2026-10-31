@@ -2,25 +2,15 @@
  * ## Changes
  *
  * Tells every open page the moment a file of my new system changes,
- * whoever changed it: the reader,
- * like a food renamed in every entry that holds it, a page of another device,
- * or Syncthing bringing a change,
+ * whoever changed it: the reader, a page of another device, or Syncthing,
  * so each page loads anew what it shows, see `src/changes.ts`,
  * and never shows, nor writes back, what the files held before.
  * A page asks `GET /api/changes` and keeps the answer open,
- * a stream of server-sent events,
- * one `data: changed` per change;
- * changes coming within a tenth of a second of each other,
+ * a stream of server-sent events, one `data: changed` per change.
+ * Changes within a tenth of a second of each other,
  * like the entries a rename writes one by one, are told once, after the last.
- * `Devices.md`, which a page writes when its size changes,
- * see `devices.ts`, tells nothing, since no page shows it.
- * Nor does a file of a folder the reader does not use, see `systemRoots` in `sources.ts`,
- * like `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`,
- * since only the editor opens it, reading it anew each time.
- *
- * - `node:fs`: Watches the folders the reader uses, every folder in them too.
- * - `node:path`: Builds the path of a file changed.
- * - `./sources.ts`: Names the folders the reader uses and `Devices.md`.
+ * `Devices.md`, which a page writes when its size changes, tells nothing,
+ * since no page shows it.
  */
 
 import { existsSync, watch } from "node:fs";
@@ -30,9 +20,7 @@ import { devicesFile, systemRoots } from "./sources.ts";
 import type { WatchEventType } from "node:fs";
 import type { ServerResponse } from "node:http";
 
-/**
- * The open pages, each by the answer the reader keeps open for it.
- */
+/** The open pages, each by the answer the reader keeps open for it. */
 const pages: Set<ServerResponse> = new Set();
 
 /**
@@ -41,26 +29,18 @@ const pages: Set<ServerResponse> = new Set();
  */
 const quiet: number = 100;
 
-/**
- * Timer of the next telling, waiting for {@link quiet}; `undefined` while none waits.
- */
+/** Timer of the next telling, waiting for {@link quiet}. */
 let waiting: NodeJS.Timeout | undefined = undefined;
 
 /**
  * How many changes of the new system the reader has seen,
- * counted the moment each happens,
- * see {@link changesWatch},
- * so what is worked out of its files may be kept until the next change,
- * like the boxes `suggestions.ts` writes.
+ * so what is worked out of its files may be kept until the next change.
  */
 let version: number = 0;
 
 /**
- * Keeps the answer to a page open as a stream of server-sent events, one per change,
- * until the page goes, see the top of this file;
- * its head goes out at once, so the page knows it hears the reader.
- *
- * @param response - Answer to the page
+ * Keeps the answer to a page open as a stream of server-sent events, one per change.
+ * Its head goes out at once, so the page knows it hears the reader.
  */
 export function changesSend(response: ServerResponse): void {
     response.writeHead(200, {
@@ -75,9 +55,8 @@ export function changesSend(response: ServerResponse): void {
 }
 
 /**
- * Watches those of the folders the reader uses that exist, as long as the reader runs:
- * every change of a file in them but `Devices.md` waits for {@link quiet},
- * then tells every open page.
+ * Watches the folders the reader uses that exist, as long as the reader runs,
+ * and tells every open page of each change but `Devices.md` after {@link quiet}.
  */
 export function changesWatch(): void {
     systemRoots
@@ -102,11 +81,7 @@ export function changesWatch(): void {
         });
 }
 
-/**
- * Tells how many changes of the new system the reader has seen, see {@link version}.
- *
- * @returns The count, like `12`
- */
+/** Tells how many changes of the new system the reader has seen. */
 export function changesVersion(): number {
     return version;
 }

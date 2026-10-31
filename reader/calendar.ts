@@ -3,45 +3,23 @@
  *
  * Reads `.ics` files into entries, their events, `VEVENT`,
  * and their to-dos, `VTODO`, the boxes of the plan, see `boxes.ts`;
- * appends events and to-dos to them, changes and removes single ones,
- * and moves one from one file into another, like into the log of another year;
- * renames a place in all of them, see {@link placeLinesRename},
- * and reads and writes a series whole, see {@link seriesLookup} and {@link seriesWrite}.
- * Keeps each read file until it changes on disk,
- * so a file is read again only once it changed.
+ * appends, changes, removes and moves entries, renames a place in all of them,
+ * and reads and writes a series whole.
+ * Keeps each read file until it changes on disk.
  * Every entry states its facts in its own lines, for every field, now and later:
  * a link, the `ALTREP` of a `SUMMARY` or a `LOCATION` or an `ATTACH`,
  * only points to more and is never the only place of a fact,
- * since a folder may be renamed or vanish;
- * so a skill entry names its semester in its `X-SEMESTER`,
- * a place its label and address in its `LOCATION`,
- * what I did online its platform in its `X-ONLINE`.
- * A skill entry names its skill and its type in its `SUMMARY`, see {@link skillPartsOf},
- * its `ALTREP` a link of mine, by default the folder of its skill;
- * a module folder renamed is found again by its code,
+ * since a folder may be renamed or vanish.
+ * A module folder renamed is found again by its code,
  * see `folderRepair` in `documents.ts`.
  * Writes only into the three folders of the new system, with times in Berlin time,
- * those of the two hours around a change of the clocks in UTC,
- * see {@link writtenOf}, every date and time in the form
- * of the iCalendar format, also in a property or a parameter of my own,
- * like `20261026T130000Z` or `20261026`, never like `2026-10-26T13:00:00.000Z`,
- * and every duration so, like `PT25M`, never like `25`, see {@link sportIcsOf};
- * puts the lines of every entry it writes, new or changed, into one fixed
- * order, see {@link lineOrder}, folds each line over 90 characters, see {@link foldedOf},
+ * those of the two hours around a change of the clocks in UTC, see {@link writtenOf},
+ * every date, time and duration in the form of the iCalendar format,
+ * also in a property or a parameter of my own.
+ * Puts the lines of every entry it writes into one fixed order, see {@link lineOrder},
+ * folds each line over 90 characters,
  * and leaves every other line as it is, byte for byte,
- * but for the order of the entries of a file,
- * which it keeps so it reads well, see {@link componentsSorted}.
- *
- * - `node:fs`: Works with files and folders on the disk.
- * - `node:path`: Builds file paths for the operating system.
- * - `node:crypto`: Creates random identifiers and the fingerprint of each entry.
- * - `ical.js`: Reads and writes the iCalendar format of `.ics` files.
- * - `./persons.ts`: Gives the mail of a person of `Persons.md` for its `ATTENDEE`.
- * - `./places.ts`: Tells a link I typed, a web address,
- *   the platform of a link and the name of the place of a line.
- * - `./sources.ts`: Names the files of a calendar and a skill by its folder
- *   and the folder of the modules, tells a module from a project,
- *   and tells which files the reader may write.
+ * but for the order of the entries of a file, see {@link componentsSorted}.
  */
 
 import {
@@ -64,150 +42,66 @@ import type { CalendarSource } from "./sources.ts";
 /**
  * One calendar entry, as the page shows it.
  *
- * - `id`: Identifier of the event, its `UID`,
- *   like `b8f1e81f-15b4-460e-910d-ef6b1b3d09b3@nomsystem`;
- *   all occurrences of a series share it, like those of a birthday.
- * - `category`: Category of the entry, its `CATEGORIES`, like `Way`;
- *   empty for an entry without one, like a birthday.
- * - `title`: Summary of the entry, what it was, like `U-Bahn`, for a skill entry
- *   the name of the folder of its skill with its type in round brackets,
- *   like `IN2028_BusinessAnalyticsMachineLearning (VO)`,
- *   see `skillTitleOf` in `documents.ts`;
- *   empty for an entry without `SUMMARY`.
- * - `titleLink`: Link of what it was, the standard parameter `ALTREP` of its `SUMMARY`:
- *   for a skill entry the folder of its skill from `NomWorkspace`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
- *   for a type on into the folder of its material,
- *   like `…/VO_UniversityLectureLessons/TUM_2026W`,
- *   see `skillLinkOf` in `documents.ts`;
- *   in an older entry a web address I typed, like the page of an event, which it keeps,
- *   while one of a platform of `Online.md` reads as its {@link Online};
- *   empty when it has none.
- * - `location`: Place of the entry, where I physically was, its `LOCATION`,
- *   like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
- *   or `Home Munich` in an older entry,
- *   empty when the event has none and for an older place online,
- *   which reads as its {@link Online}.
- * - `locationLink`: Link of its place, the standard parameter `ALTREP` of its `LOCATION`,
- *   like `https://nav.tum.de/room/0509.EG.980`, empty when it has none.
- * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
- *   What I did online, see {@link Online}.
- * - `from`: Where a way starts, its `X-FROM`, empty when the event has none.
- * - `attendees`: Who I was with, its `ATTENDEE`s in order,
- *   see {@link Attendee}, none when the event has none.
- * - `module`: Skill of a skill entry from its `SUMMARY`, the code of a module,
- *   like `IN2028`, or a project, like `NomSystemdashboard`, see {@link skillPartsOf};
- *   empty for any other entry.
- * - `type`: Type of a skill entry from its `SUMMARY`, like `VO`, empty for none,
- *   like my own learning or a project, and for any other entry.
- * - `semester`: Semester of a skill entry, its `X-SEMESTER`, like `2026W`:
- *   from which semester the lecture or the material is, not when I did it,
- *   see `semesterOf` in `categories.ts`;
- *   empty when the event has none, like an older skill entry, and for any other entry.
- * - `chapters`: Chapters of an older skill entry of the log, its `X-CHAPTER`s in order,
- *   each by its name, like `01_RegressionAnalysis`, none when the event has none;
- *   a skill entry now links the folders of its chapters,
- *   see `chaptersOf` in `documents.ts`.
- * - `links`: Links of a skill entry of the log to the folder of its skill
- *   and the document it used,
- *   its `ATTACH`es in order, see {@link Link} and `documents.ts`;
- *   none when the event has none.
- * - `rounds`: Where I am in the rounds of my sections and what I did in them,
- *   of a skill entry of the log, its `X-ROUND`s in order, see {@link RoundMark};
- *   none when the event has none.
- * - `foods`: Foods of a meal or a cooking, its `X-FOOD`s in order,
- *   each a food of `Foods.md` by its name, brand and store with the grams,
- *   like `Skyr natur;K-Classic;Kaufland;150`,
- *   an older one by its name alone, like `Reis;150`;
- *   none when the event has none.
- * - `cooked`: For a meal drawn from a cooking,
- *   the identifier of that entry `Cook`, its `X-COOKED`;
- *   empty when the event has none.
- * - `pain`: My neck pain from 0 to 10 after a long neck session, its `X-PAIN`,
- *   like `5`, empty when the event has none.
- * - `workout`: Workout of mine a session of sport did, its `X-WORKOUT`,
- *   like `Push`, empty when the event has none, see `sport.ts`.
- * - `exercises`: Exercises of a session, its `X-EXERCISE`s in order, each its name, sets,
- *   repetitions and kilograms, like `Bench press;3;10;40`, or seconds,
- *   like `Plank;2;60s;;` of `Plank;2;PT1M;;` in the file, see {@link sportLineOf};
- *   none when the event has none.
- * - `videos`: Videos of a session, its `X-VIDEO`s in order, each its title, channel,
- *   minutes and link,
- *   like `Full Body Pilates;Lidia Mera;25;https://www.youtube.com/watch?v=…`
- *   of `PT25M` in the file;
- *   none when the event has none.
- * - `planned`: Identifier of the box a log entry was logged from, see {@link plannedOf}:
- *   the `UID` of its `RELATED-TO`,
- *   like `study-13@nomsystem`, for one date of a series with that date after `#`,
- *   like `weekly-lecture@nomsystem#2026-10-13T08:00:00.000Z` of
- *   `RELATED-TO;X-RECURRENCE-ID=20261013T080000Z:weekly-lecture@nomsystem`,
- *   see {@link entryIdOf};
- *   for an older entry its `X-PLANNED`, which holds the identifier so;
- *   empty when the event has neither.
- * - `note`: Free note, its `DESCRIPTION`, empty when the event has none.
- * - `todo`: Whether the entry is a to-do, a `VTODO`, a box of the plan;
- *   else it is an event, a `VEVENT`.
- * - `status`: Its `STATUS`,
- *   like `CANCELLED` for a dropped box or `COMPLETED` for a done one,
- *   empty when it has none.
- * - `minutes`: Expected duration of a to-do in minutes,
- *   its `ESTIMATED-DURATION`, like 75 of `PT1H15M`;
- *   `null` for none and for an event, whose length lies between its start and its end.
- * - `deadline`: Deadline of a to-do, its `DUE`, as ISO instant,
- *   or as date like `2026-10-23` when it has no time;
- *   empty for none and for an event.
- * - `pushed`: Where a box stood before each push to another day,
- *   its `X-PUSHED`s in order,
- *   see {@link Push}, like Fri, 16.10.2026, 15:00 for 195 minutes of
- *   `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
- *   VALUE=DATE-TIME:20261016T150000`;
- *   none when it has none.
- * - `number`: Number of a lecture, an exercise, a tutorial or a sheet in its series,
- *   its `X-NUMBER`, like `3`, `NONE` for one the university cancelled,
- *   see `boxUniversity` in `boxes.ts`; empty for none.
- * - `group`: Group of a tutorial, its `X-GROUP`, like `03`, as TUMonline names it:
- *   of a group of the course of a module, and of the box of a tutorial,
- *   which goes to the session of that group, see `course.ts`;
- *   empty for none.
+ * - `id`: Its `UID`, shared by all occurrences of a series.
+ * - `category`: Its `CATEGORIES`.
+ * - `title`: Its `SUMMARY`, for a skill entry the folder of its skill
+ *   with its type in round brackets, see `skillTitleOf` in `documents.ts`.
+ * - `titleLink`: The `ALTREP` of its `SUMMARY`,
+ *   for a skill entry the folder of its skill,
+ *   see `skillLinkOf` in `documents.ts`.
+ *   One of a platform of `Online.md` reads as its {@link Online}.
+ * - `location`: Its `LOCATION`, where I physically was.
+ *   An older place online reads as its {@link Online}.
+ * - `locationLink`: The `ALTREP` of its `LOCATION`.
+ * - `from`: Where a way starts, its `X-FROM`.
+ * - `module`, `type`: Skill and type of a skill entry from its `SUMMARY`,
+ *   see {@link skillPartsOf}.
+ * - `semester`: Its `X-SEMESTER`, from which semester the lecture or the material is,
+ *   not when I did it, see `semesterOf` in `categories.ts`.
+ * - `chapters`: Its `X-CHAPTER`s, only in an older skill entry of the log,
+ *   a skill entry now links the folders of its chapters.
+ * - `links`: Its `ATTACH`es, see {@link Link}.
+ * - `rounds`: Its `X-ROUND`s, see {@link RoundMark}.
+ * - `foods`: Its `X-FOOD`s, each a food of `Foods.md` by name,
+ *   brand and store with grams,
+ *   an older one by its name alone.
+ * - `cooked`: For a meal drawn from a cooking, the identifier of that entry,
+ *   its `X-COOKED`.
+ * - `pain`: My neck pain from 0 to 10 after a long neck session, its `X-PAIN`.
+ * - `workout`: Its `X-WORKOUT`, see `sport.ts`.
+ * - `exercises`, `videos`: Its `X-EXERCISE`s and `X-VIDEO`s, see {@link sportLineOf}.
+ * - `planned`: Identifier of the box a log entry was logged from, see {@link plannedOf}.
+ * - `note`: Its `DESCRIPTION`.
+ * - `todo`: Whether it is a `VTODO`, a box of the plan, else a `VEVENT`.
+ * - `minutes`: Its `ESTIMATED-DURATION`, `null` for an event,
+ *   whose length lies between its start and its end.
+ * - `deadline`: Its `DUE`.
+ * - `pushed`: Its `X-PUSHED`s, see {@link Push}.
+ * - `number`: Its `X-NUMBER` in its series, `NONE` for one the university cancelled,
+ *   see `boxUniversity` in `boxes.ts`.
+ * - `group`: Its `X-GROUP` as TUMonline names it, see `course.ts`.
  * - `pinned`: Whether a group of the course is the one I pinned,
- *   the group my tutorials go to, its `X-GROUP;X-PINNED=TRUE`,
- *   see `pinPut` in `course.ts`; false for any other entry.
- * - `written`: When the entry got its day, its `DTSTAMP`, as ISO instant,
- *   which the reader sets as it adds an entry
- *   and anew whenever its `DTSTART` or its `DUE` changes,
- *   see {@link componentWrite}, or a box of a day over is taken back to open,
- *   see {@link stampPut},
- *   so a box is carried along
- *   only while it lies on its day or before, see `carriedOf` in `boxes.ts`;
- *   empty when the event has none.
- * - `version`: Fingerprint of the entry as its file holds it,
- *   the SHA-256 of its lines as read,
- *   in hexadecimal digits, which changes with any change of the entry, by the dashboard,
- *   another device, Claude or by hand, and with no change of another entry;
- *   the dialog sends it back, so the reader writes nothing older than the file,
- *   see `entryEdit` in `day.ts`; for an occurrence that of its series.
+ *   see `pinPut` in `course.ts`.
+ * - `written`: When the entry got its day, its `DTSTAMP`,
+ *   set anew whenever its `DTSTART` or its `DUE` changes, see {@link componentWrite},
+ *   or a box of a day over is taken back to open, see {@link stampPut},
+ *   so a box is carried along only while it lies on its day or before,
+ *   see `carriedOf` in `boxes.ts`.
+ * - `version`: SHA-256 of its lines as read, for an occurrence that of its series.
+ *   The dialog sends it back, so the reader writes nothing older than the file,
+ *   see `entryEdit` in `day.ts`.
  * - `editable`: Whether the dashboard may change the entry:
- *   it lies in the new system and has times or is a to-do;
+ *   it lies in the new system and has times or is a to-do,
  *   also one occurrence of a series,
- *   which becomes a component of its own once it is changed alone,
  *   see {@link occurrenceOwn}. FullCalendar lets only these events be dragged.
- * - `start`: Start as ISO instant like `2026-07-03T09:15:00.000Z`,
- *   or as date like `2026-07-03` when all-day;
- *   a to-do starts at its `DTSTART`, a day or a time,
- *   and a to-do with a deadline but no `DTSTART` on the day
- *   of its deadline, as a whole day.
- * - `end`: End, excluded, in the same form as `start`;
- *   a to-do of a day ends with the day,
- *   a to-do with a time where it starts, since how long it takes is its `minutes`.
- * - `allDay`: Whether the entry covers whole days, for a to-do whether it has no time.
+ * - `start`: ISO instant, or a date when all-day.
+ *   A to-do with a deadline but no `DTSTART` starts on the day of its deadline,
+ *   a whole day.
+ * - `end`: End, excluded, in the same form as `start`.
+ *   A to-do with a time ends where it starts, since how long it takes is its `minutes`.
  * - `recurrence`: For an occurrence of a series its start as the series has it,
- *   like `2026-10-13T08:00:00.000Z`,
- *   or `2026-10-13` for a series of whole days,
- *   for a changed occurrence its `RECURRENCE-ID`;
- *   empty for an entry that happens once.
- * - `file`: Its `.ics` file from `NomWorkspace` on, see `vaultPathOf` in `sources.ts`,
- *   which its dialog shows,
- *   like `NomManageplannings/NomManagecalendar/Health/Sleep_2026_Log.ics`.
+ *   for a changed occurrence its `RECURRENCE-ID`.
+ * - `file`: Its `.ics` file from `NomWorkspace` on, which its dialog shows.
  */
 export type Entry = {
     id: string;
@@ -255,27 +149,12 @@ export type Entry = {
 };
 
 /**
- * What an entry or a box did online, apart from where I physically was, its place:
- * one `X-ONLINE`, its platform as value, a row of `Online.md`,
- * see `Platform` in `places.ts`,
- * the link of its own meeting or video as the standard parameter `ALTREP`,
- * its channel as the parameter `X-CHANNEL` and its title as `X-TITLE`,
- * each left out while empty,
- * like `X-ONLINE;ALTREP="https://zoom.us/j/123";X-CHANNEL=1234567890;X-TITLE=4f9K2:Zoom`,
- * see {@link textPropertyOf}.
- * An older entry wrote it as its place, which reads so, see {@link onlineOf}:
- * `LOCATION:Online, Zoom` or `Online, Teams, Microsoft` with the link as `ALTREP`,
- * or as a place named after its platform with `Online` among its parts,
- * like `Zoom, Zoom Video Communications, 4f9K2, Online, USA`;
- * and as the `ALTREP` of its `SUMMARY` a link of a platform
- * of `Online.md`, like a video on YouTube.
- *
- * - `online`: The platform, like `Zoom`, empty for none.
- * - `onlineLink`: The link of its meeting or video, a web address, empty for none.
- * - `onlineChannel`: Its channel, like the channel of a video on YouTube
- *   or the ID of a meeting, empty for none.
- * - `onlineTitle`: Its title, like the title of a video
- *   or the passcode of a meeting, empty for none.
+ * What an entry or a box did online, apart from where I physically was:
+ * one `X-ONLINE`, its platform a row of `Online.md` as value,
+ * see `Platform` in `places.ts`, the link of its own meeting or video as `ALTREP`,
+ * its channel as `X-CHANNEL` and its title as `X-TITLE`, each left out while empty.
+ * An older entry wrote it as its place or the `ALTREP` of its `SUMMARY`,
+ * which reads so, see {@link onlineOf}.
  */
 export type Online = {
     online: string;
@@ -285,18 +164,11 @@ export type Online = {
 };
 
 /**
- * A person or a group I was with, one `ATTENDEE` of an entry or a box,
- * its name as parameter `CN` and its address as value,
- * like `ATTENDEE;CN=Sophale:mailto:sophale@invalid`, see {@link attendeePropertyOf}:
- * the address ends in `.invalid`, reserved for addresses that never work,
+ * A person or a group I was with, one `ATTENDEE`,
+ * its name as `CN` and its address as value.
+ * The address ends in `.invalid`, reserved for addresses that never work,
  * unless I typed a real one or `Persons.md` has the mail of the person,
- * see {@link attendeePropertyOf}, so the line keeps to the standard
- * and nothing is ever sent.
- *
- * - `name`: Its name, like `Sophale` or `Socials`,
- *   a person of `Persons.md` as it names it,
- *   like `Bichler, Martin`, without `;`; the address for a line without `CN`.
- * - `address`: Its address without `mailto:`, like `sophale@invalid`.
+ * so the line keeps to the standard and nothing is ever sent.
  */
 export type Attendee = {
     name: string;
@@ -306,13 +178,8 @@ export type Attendee = {
 /**
  * Where a box stood before one push to a later day, one `X-PUSHED`, see {@link pushOf}.
  *
- * - `day`: Its day before, like `2026-10-16`.
- * - `time`: Its start before as ISO instant,
- *   like `2026-10-16T13:00:00.000Z`, empty for a box without time;
- *   for a push that noted only its day,
- *   like `X-PUSHED;VALUE=DATE:20261016`, that day at the time of day the box has now.
- * - `minutes`: Its length before in minutes, its parameter `X-ESTIMATED-DURATION`,
- *   like 195 of `PT3H15M`, `null` where the push noted none.
+ * - `time`: For a push that noted only its day, that day at the time the box has now.
+ * - `minutes`: Its parameter `X-ESTIMATED-DURATION`, `null` where the push noted none.
  */
 export type Push = {
     day: string;
@@ -324,18 +191,9 @@ export type Push = {
  * A link of an entry to a file or a folder, one `ATTACH`:
  * its value a path from `NomWorkspace`, never absolute,
  * since `NomWorkspace` lies elsewhere on each computer,
- * and for a file the fingerprint of its content as parameter,
- * so the link survives a rename, see `documents.ts`, like
- * `ATTACH;X-SHA256=9f86d081…:NomSkillingmodules/IN2028_…/VO_…/04_LogisticRegression.pdf`,
- * or `ATTACH:NomSkillingmodules/IN2028_…/02_LogisticPoissonRegression` for the folder
- * of a chapter in an older entry;
- * nothing more, the name of the file says what it is.
+ * and for a file the SHA-256 of its content as `X-SHA256`,
+ * so the link survives a rename, see `documents.ts`.
  * The value is no full URI, so other calendar apps may ignore it.
- *
- * - `path`: Path from `NomWorkspace`, parted by `/`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`.
- * - `fingerprint`: SHA-256 of the file's bytes, its parameter `X-SHA256`,
- *   as 64 hexadecimal digits; empty for a folder.
  */
 export type Link = {
     path: string;
@@ -345,25 +203,15 @@ export type Link = {
 /**
  * A line `X-ROUND` of a skill entry: where I stand in the round of a section
  * and what I did in it in this entry, its section as value, the rest as parameters,
- * an empty one left out, see `RoundLine` in `skill.ts`, like
- * `X-ROUND;ROUND=1;STEP=done;TASK=Task. Food Truck;
- * USED=Example. Canteen Double Count;RESULT=wrong,right;NOTE=Varianz vergessen;
- * DUE=20261106:01_02_SampleMeanEstimator`.
+ * an empty one left out, see `RoundLine` in `skill.ts`.
  *
- * - `section`: Its section, the name of its note, like `01_02_SampleMeanEstimator`,
- *   with its module before `/` once the entry's skill changed, like `IN2028/01_02_…`.
- * - `round`: Its round, `ROUND`, from 0.
- * - `step`: Key of the step I stand at, `STEP`, a heading as written, `done` once closed,
- *   empty before the first.
- * - `task`: Heading of the cold Task I solved in it as written,
- *   `TASK`, like `Task. Food Truck`,
- *   empty for none.
- * - `used`: Heading of the Example I checked off in it with `Next`, `USED`,
- *   like `Example. Canteen Double Count`, empty for none.
- * - `results`: Results of that Task in it, `RESULT`, in order, `right` or `wrong`.
- * - `notes`: My comment on each wrong one, `NOTE`, in order.
- * - `due`: Day the next round comes, `DUE`, like `2026-11-06`,
- *   written once the Task decided the round, empty before.
+ * - `section`: Name of its note,
+ *   with its module before `/` once the entry's skill changed.
+ * - `step`: Heading of the step I stand at, `done` once closed, empty before the first.
+ * - `task`: Heading of the cold Task I solved in it.
+ * - `used`: Heading of the Example I checked off in it with `Next`.
+ * - `notes`: My comment on each wrong one.
+ * - `due`: Day the next round comes, written once the Task decided the round.
  */
 export type RoundMark = {
     section: string;
@@ -377,29 +225,9 @@ export type RoundMark = {
 };
 
 /**
- * Text fields of an event or a to-do to write; an empty field is not written.
- *
- * - `category`: Category of the entry, `CATEGORIES`.
- * - `title`: What, `SUMMARY`.
- * - `titleLink`: Link of what it was, the parameter `ALTREP` of `SUMMARY`,
- *   the folder of the skill of a skill entry,
- *   or the one an older entry kept, written only with its `SUMMARY`, empty for none.
- * - `location`: Place, `LOCATION`.
- * - `locationLink`: Link of the place, the parameter `ALTREP` of `LOCATION`,
- *   written only with its place, empty for none.
- * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
- *   What it did online, `X-ONLINE`, written only with its platform, see {@link Online}.
- * - `from`: Where a way starts, `X-FROM`.
- * - `attendees`: Who I was with, one `ATTENDEE` each,
- *   see {@link Attendee}; none for nobody.
- * - `module`: Skill of a skill entry, not written,
- *   since the `ALTREP` of its `SUMMARY` names it,
- *   see {@link skillPartsOf}.
- * - `type`: Type of a skill entry, not written,
- *   since the `ALTREP` of its `SUMMARY` names it.
- * - `semester`: Semester of a skill entry, `X-SEMESTER`, like `2026W`;
- *   empty for any other entry.
- * - `note`: Free note, `DESCRIPTION`.
+ * Text fields of an event or a to-do to write, see {@link Entry}.
+ * An empty field is not written, nor a link or an {@link Online} without its value.
+ * `module` and `type` are not written, since the `ALTREP` of its `SUMMARY` names them.
  */
 export type EntryTexts = Online & {
     category: string;
@@ -415,29 +243,18 @@ export type EntryTexts = Online & {
     note: string;
 };
 
-/**
- * Fields and times of an event to write: its {@link EntryTexts}, its start and its end.
- *
- * - `start`: Start of the entry.
- * - `end`: End of the entry, after the start.
- */
+/** Fields and times of an event to write. */
 export type EntryFields = EntryTexts & {
     start: Date;
     end: Date;
 };
 
 /**
- * Fields of a to-do to write, a box of the plan: its {@link EntryTexts}, its day and,
- * when it has them, its expected time, its expected duration and its deadline.
+ * Fields of a to-do to write, a box of the plan.
  *
- * - `day`: Day of the to-do, like `2026-10-13`,
- *   its `DTSTART;VALUE=DATE` when it has no time;
- *   with a deadline the day of its deadline, and no `DTSTART`, see {@link todoAppend}.
- * - `time`: Expected time, its `DTSTART` in Berlin time, on its day;
- *   `null` for none and with a deadline.
- * - `minutes`: Expected duration in minutes, its `ESTIMATED-DURATION`; `null` for none.
- * - `deadline`: Deadline, its `DUE`, as ISO instant,
- *   or as day like `2026-10-23` without time; empty for none.
+ * - `day`: Its `DTSTART;VALUE=DATE` when it has no time,
+ *   with a deadline the day of its deadline and no `DTSTART`, see {@link todoAppend}.
+ * - `time`: Its `DTSTART` in Berlin time, `null` for none and with a deadline.
  */
 export type TodoFields = EntryTexts & {
     day: string;
@@ -446,46 +263,29 @@ export type TodoFields = EntryTexts & {
     deadline: string;
 };
 
-/**
- * A read `.ics` file.
- *
- * - `modified`: Time of the last change on disk in milliseconds.
- * - `entries`: {@link Entry}s that happen once, events and to-dos.
- * - `series`: Recurring events, each knowing its replaced occurrences.
- */
+/** A read `.ics` file, its series knowing their replaced occurrences. */
 type Calendar = {
     modified: number;
     entries: Entry[];
     series: ICAL.Event[];
 };
 
-/**
- * Range of time in both forms of {@link Entry}, so entries compare as plain text.
- *
- * - `days`: First day and day after the last, like `2026-07-03` and `2026-07-04`.
- * - `instants`: Start and end as ISO instants.
- */
+/** Range of time in both forms of {@link Entry}, so entries compare as plain text. */
 type Range = {
     days: [string, string];
     instants: [string, string];
 };
 
 /**
- * Text of an `.ics` file as lines.
- *
- * - `lines`: Lines of the file, one per property;
- *   a folded line is joined to the line before as it is read, see {@link linesRead},
- *   and folded anew as it is written, see {@link foldedOf}.
- * - `newline`: Line break of the file, `\r\n` as the reader writes new files, or `\n`.
+ * Text of an `.ics` file as lines, a folded line joined to the line before.
+ * `newline` is `\r\n` as the reader writes new files, or `\n`.
  */
 type FileLines = {
     lines: string[];
     newline: string;
 };
 
-/**
- * Read {@link Calendar}s by their file path.
- */
+/** Read {@link Calendar}s by their file path. */
 const calendars: Map<string, Calendar> = new Map();
 
 /**
@@ -493,14 +293,11 @@ const calendars: Map<string, Calendar> = new Map();
  */
 const writtenFollowers: ((module: string, kinds: [string, string][]) => void)[] = [];
 
-/**
- * Time zone of the times the dashboard writes, while I live in Germany.
- */
+/** Time zone of the times the dashboard writes, while I live in Germany. */
 const zoneName: string = "Europe/Berlin";
 
 /**
- * Definition of {@link zoneName} as the iCalendar format writes it into each new file,
- * with summer time from the last Sunday of March to the last Sunday of October.
+ * Definition of {@link zoneName} as the iCalendar format writes it into each new file.
  */
 const zoneComponent: ICAL.Component = new ICAL.Component(
     ICAL.parse(
@@ -526,35 +323,16 @@ const zoneComponent: ICAL.Component = new ICAL.Component(
     ),
 );
 
-/**
- * Time zone {@link zoneName}, to turn instants into Berlin time.
- */
+/** Time zone {@link zoneName}, to turn instants into Berlin time. */
 const zone: ICAL.Timezone = new ICAL.Timezone(zoneComponent);
 
 /**
  * The one order of the lines of every event and to-do in every file of mine,
  * by the names of their properties,
- * so I find each line where I expect it when I read a file by hand;
- * the reader writes every entry, new or changed, in it, see {@link linesOrdered}:
- * who it is, `UID` and `DTSTAMP`;
- * when, `DTSTART`, `DTEND`, for a to-do `DUE`,
- * `DURATION` and `ESTIMATED-DURATION` after them,
- * then `RRULE`, `RDATE`, `EXDATE` and `RECURRENCE-ID`;
- * what, `CATEGORIES`, `SUMMARY`, `STATUS`; where, `LOCATION`, where a way started,
- * `X-FROM`, and online, `X-ONLINE`; with whom, `ATTENDEE`;
- * more about it, `DESCRIPTION`, `ATTACH`, `RELATED-TO`,
- * the box of the plan a log entry did,
- * `X-PLANNED`, the pushes of a box, `X-PUSHED`,
- * and the series a part of a plain series belongs to, `X-SERIES`;
- * then the lines of each kind of entry:
- * a box of a course, `X-NUMBER` and `X-GROUP`,
- * of the group I pinned with `X-PINNED=TRUE`;
- * a meal, `X-FOOD` and `X-COOKED`;
- * sport, `X-WORKOUT`, `X-EXERCISE`, `X-VIDEO` and `X-PAIN`;
- * a skill entry, `X-SEMESTER`, `X-CHAPTER` and `X-ROUND`.
+ * so I find each line where I expect it when I read a file by hand.
+ * The reader writes every entry, new or changed, in it, see {@link linesOrdered}.
  * Every other line comes after them, in the order it had,
- * and the lines of a property that repeats,
- * like `X-FOOD`, `ATTENDEE` or `EXDATE`, stay together in the order they had.
+ * and the lines of a property that repeats stay together in the order they had.
  */
 const lineOrder: string[] = [
     "UID",
@@ -595,33 +373,24 @@ const lineOrder: string[] = [
 ];
 
 /**
- * The parameter `ALTREP` in double quotes,
- * as the standard writes a link there, also one without `:`,
- * like `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…":…`:
+ * The parameter `ALTREP` in double quotes, as the standard writes a link there,
+ * also one without `:`.
  * `ical.js` quotes on its own only a value with `,`, `:` or `;`,
  * and every value of a parameter of several values that asks for it,
- * so `ALTREP` is described as one, of one value here, see {@link textPropertyOf};
- * one value still reads as its text.
+ * so `ALTREP` is described as one, of one value here.
  */
 ICAL.design.icalendar.param.altrep = { multiValue: ",", multiValueSeparateDQuote: true };
 
 /**
- * The parameters `RESULT` and `NOTE` of an `X-ROUND`,
- * lists of several values, see {@link RoundMark}:
- * `RESULT=wrong,right`, and each note in double quotes, `NOTE="Varianz vergessen","…"`,
- * a `"` in one written `^'` and a line break `^n` (RFC 6868),
- * which `ical.js` writes and reads back.
+ * The parameters `RESULT` and `NOTE` of an `X-ROUND`, lists of several values,
+ * each note in double quotes, a `"` in one written `^'` and a line break `^n` (RFC 6868).
  */
 ICAL.design.icalendar.param.result = { multiValue: "," };
 ICAL.design.icalendar.param.note = { multiValue: ",", multiValueSeparateDQuote: true };
 
 /**
- * Every `X-` property of my own the reader writes or reads,
- * as text of the standard, the value type of every `X-` property without one:
- * written with each `\`, `;` and `,` escaped by a `\` and a line break as `\n`,
- * like `X-FOOD:Skyr natur\;K-Classic\;Kaufland\;150`, and read back without them, as
- * `Skyr natur;K-Classic;Kaufland;150`;
- * a line written raw before reads as it is, since it holds no `\` before such a sign.
+ * Every `X-` property of my own the reader writes or reads, as text of the standard:
+ * written with each `\`, `;` and `,` escaped by a `\` and a line break as `\n`.
  * `ical.js` wrote every `X-` value raw,
  * so a strict reader of the standard split them at each `;` and `,`,
  * and a line break in one broke the file, which then could not be read at all.
@@ -648,27 +417,15 @@ ownTexts.forEach((name: string): void => {
     ICAL.design.icalendar.property[name] = { defaultType: "text" };
 });
 
-/**
- * Most characters of a line of an `.ics` file, as of every document of mine,
- * its line break not counted.
- */
+/** Most characters of a line of an `.ics` file, its line break not counted. */
 const lineMost: number = 90;
 
 /**
  * Folds a line of an `.ics` file as the format folds one, into parts of at most
- * {@link lineMost} characters, each after the first starting with the space of the fold,
- * which every reader of the format takes out again with the line break before it:
+ * {@link lineMost} characters, each after the first starting with the space of the fold:
  * right after a space of the text where one fits, so a place stays whole,
- * like `Burg-Eltz-Weg\, ` and ` 81375 München`, that space ending its line,
- * since the space of the fold never counts as text;
+ * that space ending its line, since the space of the fold never counts as text;
  * else after the last character that fits, like inside a long link.
- * - `folded`: The parts so far.
- * - `rest`: The characters left, a next part with the space of the fold before them.
- * - `space`: Place of the last space of the text that fits, -1 for none.
- * - `end`: Where the part ends.
- *
- * @param line - Line of the file, a whole property
- * @returns Its parts, the line itself when it fits
  */
 function foldedOf(line: string): string[] {
     const folded: string[] = [];
@@ -685,15 +442,8 @@ function foldedOf(line: string): string[] {
 /**
  * Gives the lines of a component, one line per property, unfolded:
  * `ical.js` folds a line after 75 bytes, which the standard only recommends, for e-mail,
- * and which cut a place in two, like `Burg-Eltz-Weg\, 81` and ` 375 München`;
- * so each fold, a line break and the space after it, is taken back,
- * as every reader of the format unfolds it,
+ * and which cut a place in two, so each fold is taken back
  * and folded anew as it is written, see {@link foldedOf}.
- * - {@link ICAL.Component#toString}:
- *   Writes a component in the iCalendar format, lines parted by `\r\n`.
- *
- * @param component - Event, to-do or calendar
- * @returns Its lines, each a whole property
  */
 function linesOf(component: ICAL.Component): string[] {
     return component
@@ -703,23 +453,15 @@ function linesOf(component: ICAL.Component): string[] {
 }
 
 /**
- * Category of skill entries, `CATEGORIES:Skill`,
- * whose `ALTREP` of the `SUMMARY` names their skill and type, see {@link skillPartsOf};
- * the categories of `categories.ts` name it too.
+ * Category of skill entries, whose `ALTREP` of the `SUMMARY` names their skill and type.
  */
 export const skillName: string = "Skill";
 
 /**
  * Reads the skill and the type of a skill entry from its `SUMMARY`,
- * as `skillTitleOf` in `documents.ts` writes it: the name of the folder of its skill,
- * then its type in round brackets, like `IN2028_BusinessAnalyticsMachineLearning (VO)`,
- * a module named by its code, the part before the first `_`, like `IN2028`,
- * a project by its name, like `NomSystemdashboard`, without type, like my own learning.
- * - `parts`: The name and the type.
- *
- * @param summary - The `SUMMARY`, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
- * @returns Skill and type, like `IN2028` and `VO`,
- *   or `NomSystemdashboard` and an empty type
+ * as `skillTitleOf` in `documents.ts` writes it,
+ * a module named by its code, the part before the first `_`,
+ * a project by its name, without type, like my own learning.
  */
 function skillPartsOf(summary: string): [string, string] {
     const parts: RegExpExecArray | null = /^(.*?)\s*(?:\(([A-Z]{2})\))?$/.exec(
@@ -729,13 +471,7 @@ function skillPartsOf(summary: string): [string, string] {
     return [/^[A-Z]+\d+_/.test(name) ? name.split("_")[0] : name, parts?.[2] ?? ""];
 }
 
-/**
- * Turns an `ical.js` time into the form of {@link Entry}.
- * - {@link ICAL.Time#toJSDate}: Converts into a JS date in the time zone of the event.
- *
- * @param time - Start or end of an event
- * @returns Date for an all-day time, else ISO instant
- */
+/** Turns an `ical.js` time into the form of {@link Entry}. */
 function textOf(time: ICAL.Time): string {
     return time.isDate ? time.toString() : time.toJSDate().toISOString();
 }
@@ -743,12 +479,6 @@ function textOf(time: ICAL.Time): string {
 /**
  * Reads a date or a time in the form of the iCalendar format,
  * as a parameter of my own holds it.
- * - {@link ICAL.design}: Turns a value of the iCalendar format
- *   into the form `ical.js` reads,
- *   like `2026-10-26T13:00:00Z` of `20261026T130000Z`.
- *
- * @param value - Date like `20261026`, or time in UTC like `20261026T130000Z`
- * @returns The date or the time
  */
 function icsTimeRead(value: string): ICAL.Time {
     return /^\d{8}$/.test(value)
@@ -760,14 +490,8 @@ function icsTimeRead(value: string): ICAL.Time {
 
 /**
  * Writes a date or an instant of the form of {@link Entry}
- * in the form of the iCalendar format,
- * an instant in UTC, as a parameter of my own holds it, see {@link relatedOf},
- * and the end of a weekly series its `RRULE`, see `groupPut` in `course.ts`.
- * - `time`: The date or the instant in UTC.
- * - {@link ICAL.Time#toICALString}: Writes a time in the iCalendar format.
- *
- * @param text - Date like `2026-10-26`, or ISO instant like `2026-10-26T13:00:00.000Z`
- * @returns Date like `20261026`, or time like `20261026T130000Z`
+ * in the form of the iCalendar format, an instant in UTC,
+ * as a parameter of my own holds it and the end of a weekly series its `RRULE`.
  */
 export function icsTextOf(text: string): string {
     const time: ICAL.Time = /^\d{4}-\d{2}-\d{2}$/.test(text)
@@ -780,22 +504,9 @@ export function icsTextOf(text: string): string {
  * Writes a line of a session of sport,
  * an `X-EXERCISE` or an `X-VIDEO` as `sport.ts` gives it,
  * with its time as a duration of the iCalendar format, as `ESTIMATED-DURATION` holds one:
- * the seconds of an exercise on time,
- * like `Plank;2;PT1M;;Morning` of `Plank;2;60s;;Morning`,
- * and the minutes of a video,
- * like `Full Body Pilates;Lidia Mera;PT25M;https://…;Morning` of `25`;
- * the repetitions of an exercise, like `10`, and a part left empty stay as they are.
+ * the seconds of an exercise on time and the minutes of a video.
+ * The repetitions of an exercise and a part left empty stay as they are.
  * {@link sportLineOf} reads it back.
- * - `parts`: Parts of the line, parted by `;`.
- * - `time`: Its third part, the repetitions or seconds of an exercise,
- *   the minutes of a video.
- * - `seconds`: The seconds of its time, `null` when it holds none.
- * - {@link ICAL.Duration#toString}: Writes a duration in the iCalendar format,
- *   like `PT1M30S` of 90 seconds.
- *
- * @param line - Line as `sport.ts` gives it
- * @param video - Whether it is an `X-VIDEO`, else an `X-EXERCISE`
- * @returns Line to write
  */
 export function sportIcsOf(line: string, video: boolean): string {
     const parts: string[] = line.split(";");
@@ -814,16 +525,8 @@ export function sportIcsOf(line: string, video: boolean): string {
 
 /**
  * Reads a line of a session of sport as {@link sportIcsOf} writes it,
- * back in the form of `sport.ts`:
- * `Plank;2;60s;;Morning` of `Plank;2;PT1M;;Morning`, `…;Lidia Mera;25;…` of `PT25M`;
- * a line written before, with `60s` or `25`,
- * and a time no duration can be read of stay as they are.
- * - `parts`: Parts of the line, parted by `;`.
- * - `seconds`: The seconds of the duration.
- *
- * @param line - Line of the file, like `Plank;2;PT1M;;Morning`
- * @param video - Whether it is an `X-VIDEO`, else an `X-EXERCISE`
- * @returns Line as `sport.ts` reads it
+ * back in the form of `sport.ts`.
+ * A line written before, and a time no duration can be read of, stay as they are.
  */
 function sportLineOf(line: string, video: boolean): string {
     const parts: string[] = line.split(";");
@@ -838,20 +541,13 @@ function sportLineOf(line: string, video: boolean): string {
 }
 
 /**
- * Reads the identifier of the box a log entry was logged from, see {@link Entry}:
+ * Reads the identifier of the box a log entry was logged from:
  * the `UID` of its `RELATED-TO`,
  * and for one date of a series that date, its parameter `X-RECURRENCE-ID`, after `#`,
- * as {@link entryIdOf} writes it;
- * else, for an older entry, its `X-PLANNED`, which holds the identifier so.
+ * as {@link entryIdOf} writes it; else, for an older entry, its `X-PLANNED`.
  * Only a `RELATED-TO` without `RELTYPE`, the standard parent, names that box;
  * one with `RELTYPE=SIBLING` is the series a series of the plan goes on from,
  * see {@link seriesPut}, and names none.
- * - `related`: Its first `RELATED-TO` to a parent, `undefined` for none.
- * - `recurrence`: Its date of a series, like `20261013T080000Z`, empty for none.
- *
- * @param component - The event
- * @returns Identifier like `study-13@nomsystem`
- *   or `weekly-lecture@nomsystem#2026-10-13T08:00:00.000Z`, empty for none
  */
 function plannedOf(component: ICAL.Component): string {
     const related: ICAL.Property | undefined = component
@@ -870,14 +566,8 @@ function plannedOf(component: ICAL.Component): string {
 }
 
 /**
- * Reads the day of one `X-PUSHED`, see {@link pushAdd}: of its start in Berlin time, like
- * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
- * VALUE=DATE-TIME:20261016T150000`,
- * of its date, like `X-PUSHED;VALUE=DATE:20261012`,
- * or of an older box written like `X-PUSHED:2026-10-12`.
- *
- * @param value - Its value, a time, a date or a text
- * @returns Day like `2026-10-12`
+ * Reads the day of one `X-PUSHED`, see {@link pushAdd}:
+ * of its start in Berlin time, of its date, or of an older box written as a day.
  */
 function pushedDayOf(value: unknown): string {
     if (value instanceof ICAL.Time) return value.toString().slice(0, 10);
@@ -887,23 +577,9 @@ function pushedDayOf(value: unknown): string {
 }
 
 /**
- * Reads one `X-PUSHED` of a box, see {@link pushAdd}, into a {@link Push}:
- * its day, its start and its length, like Fri, 16.10.2026, 15:00 and 195 minutes of
- * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
- * VALUE=DATE-TIME:20261016T150000`;
- * a push that noted only its day,
- * like `X-PUSHED;VALUE=DATE:20261016` or `X-PUSHED:2026-10-16` of an older box,
- * at the time of day the box has now, without time for a box without.
- * - `value`: Its value, a time, a date or a text.
- * - `day`: Its day, see {@link pushedDayOf}.
- * - `duration`: Its `X-ESTIMATED-DURATION`, empty for none.
- * - `time`: The time of day it stood at, `null` for a box without time.
- * - {@link ICAL.Time.fromData}: Builds a time from its parts, in a time zone.
- * - {@link ICAL.Duration.fromString}: Reads a duration of the iCalendar format.
- *
- * @param property - The `X-PUSHED`
- * @param now - Start of the box now in Berlin time, `null` for a box without time
- * @returns Where the box stood before the push
+ * Reads one `X-PUSHED` of a box into a {@link Push}.
+ * A push that noted only its day stands at the time of day the box has now,
+ * without time for a box without.
  */
 function pushOf(property: ICAL.Property, now: ICAL.Time | null): Push {
     const value: unknown = property.getFirstValue();
@@ -936,13 +612,9 @@ function pushOf(property: ICAL.Property, now: ICAL.Time | null): Push {
 }
 
 /**
- * Reads the expected duration of a to-do, its `ESTIMATED-DURATION`:
+ * Reads the expected duration of a to-do, its `ESTIMATED-DURATION`, in minutes:
  * the property of the task extensions of iCalendar, which `ical.js` does not know yet,
- * so it gives its value as text, like `PT1H15M`.
- * - {@link ICAL.Duration.fromString}: Reads a duration of the iCalendar format.
- *
- * @param component - The to-do
- * @returns Minutes, `null` when it has none
+ * so it gives its value as text.
  */
 function estimatedMinutesOf(component: ICAL.Component): number | null {
     const value: unknown = component.getFirstPropertyValue("estimated-duration");
@@ -951,12 +623,7 @@ function estimatedMinutesOf(component: ICAL.Component): number | null {
         : ICAL.Duration.fromString(String(value)).toSeconds() / 60;
 }
 
-/**
- * Reads the deadline of a to-do, its `DUE`, in the form of {@link Entry}.
- *
- * @param component - The to-do
- * @returns Date for a deadline without time, else ISO instant; empty when it has none
- */
+/** Reads the deadline of a to-do, its `DUE`, in the form of {@link Entry}. */
 function deadlineOf(component: ICAL.Component): string {
     const due: unknown = component.getFirstPropertyValue("due");
     return due instanceof ICAL.Time ? textOf(due) : "";
@@ -965,13 +632,6 @@ function deadlineOf(component: ICAL.Component): string {
 /**
  * Gives the day of a to-do with a deadline but no `DTSTART`,
  * the day of its deadline in Berlin time, as the start and the end of a whole day.
- * - `due`: Its `DUE`, a day or a time.
- * - `day`: Its day, like `2026-10-23`.
- * - {@link ICAL.Time.fromDateString}:
- *   Reads a day like `2026-10-23` into a time without time of day.
- *
- * @param component - The to-do
- * @returns Start of its day and start of the next
  */
 function deadlineDayOf(component: ICAL.Component): [ICAL.Time, ICAL.Time] {
     const due: ICAL.Time = component.getFirstPropertyValue("due") as ICAL.Time;
@@ -979,36 +639,19 @@ function deadlineDayOf(component: ICAL.Component): [ICAL.Time, ICAL.Time] {
     return [ICAL.Time.fromDateString(day), ICAL.Time.fromDateString(dayAdd(day, 1))];
 }
 
-/**
- * Where an entry was and what it did online,
- * with the link of its summary, see {@link onlineOf}.
- */
+/** Where an entry was and what it did online, with the link of its summary. */
 type Placed = Online & Pick<Entry, "titleLink" | "location" | "locationLink">;
 
 /**
  * Reads where an event or a to-do was, its place with its link, what it did online,
- * see {@link Online}, and the link of its summary:
- * from its `X-ONLINE` and its `LOCATION`,
- * and from what an older entry wrote, as one place:
- * `Online, Zoom` or `Online, Teams, Microsoft`, its platform after `Online`,
- * `Online` alone for none named,
- * or a place named after its platform with `Online` among its parts, like
- * `Zoom, Zoom Video Communications, 4f9K2, Online, USA`, both read as what it did online,
+ * and the link of its summary, from its `X-ONLINE` and its `LOCATION`.
+ * What an older entry wrote reads too:
+ * a place `Online, <platform>`, `Online` alone for none named,
+ * or a place named after its platform with `Online` among its parts,
  * the link of the place as that of its meeting, its place then empty;
  * and as the `ALTREP` of its `SUMMARY` a link of a platform of `Online.md`,
- * see `platformOfLink` in `places.ts`, read as its link online,
- * its summary then without link.
+ * read as its link online, its summary then without link.
  * Its own `X-ONLINE` wins over both.
- * - `summaryLink`: The `ALTREP` of its `SUMMARY`, empty for none.
- * - `line`: Its `LOCATION`, empty for none.
- * - `lineLink`: The `ALTREP` of its `LOCATION`, empty for none.
- * - `own`: Its `X-ONLINE`, `null` for none.
- * - `parts`: The parts of its `LOCATION`.
- * - `placed`: Whether its `LOCATION` was what it did online.
- * - `linked`: Whether the link of its summary is one of a platform.
- *
- * @param component - Event or to-do
- * @returns Its place with its link, what it did online and the link of its summary
  */
 function onlineOf(component: ICAL.Component): Placed {
     const summaryLink: string = String(
@@ -1064,24 +707,9 @@ function onlineOf(component: ICAL.Component): Placed {
  * Turns an event or a to-do with a start and an end into an {@link Entry}.
  * `ical.js` reads a to-do as it reads an event:
  * its start from `DTSTART`, its end the end of its day,
- * or its start when it has a time, see {@link Entry}.
- * - `todo`: Whether it is a to-do.
- * - `category`: Its `CATEGORIES`, empty for none.
- * - `module`, `type`: Skill and type of a skill entry from the `ALTREP` of its `SUMMARY`,
- *   see {@link skillPartsOf}, else empty.
- * - `stamp`: Its `DTSTAMP`, an `ical.js` time when it has one.
- * - `recurrence`: For a changed occurrence its `RECURRENCE-ID`,
- *   for an occurrence of a series its start, empty for an event that happens once.
- * - `online`: Its place, the link of its summary
- *   and what it did online, see {@link onlineOf}.
- * - {@link createHash}: Computes its fingerprint, the SHA-256 of its lines as read,
- *   written out by {@link ICAL.Component#toString}, see `version` of {@link Entry}.
+ * or its start when it has a time.
  *
  * @param event - Event with title and place, or the series of an occurrence, or a to-do
- * @param start - Start of the event or the occurrence
- * @param end - End of the event or the occurrence
- * @param file - Path of the `.ics` file of the event
- * @returns Entry as the page shows it
  */
 function entryOf(
     event: ICAL.Event,
@@ -1177,25 +805,15 @@ function entryOf(
 }
 
 /**
- * Reads an `.ics` file into a {@link Calendar}, its events and its to-dos;
- * a to-do without `DTSTART` lies on the day of its deadline,
- * its `DUE`, see {@link deadlineDayOf},
+ * Reads an `.ics` file into a {@link Calendar}, its events and its to-dos.
+ * A to-do without `DTSTART` lies on the day of its deadline, see {@link deadlineDayOf},
  * and one with neither, which would belong to every day until done,
  * has no day of the plan and is left out.
  * Registers the time zones of the file first, so times with a `TZID` convert correctly.
- * A changed occurrence has the `UID` of its series and a `RECURRENCE-ID`.
- * It stays an entry of its own at its new time,
+ * A changed occurrence stays an entry of its own at its new time,
  * and its series learns that it replaces the occurrence at the old time.
- * - {@link ICAL.parse}: Parses the text of the file into nested arrays.
- * - {@link ICAL.Event}: Reads an event,
- *   and a to-do the same way, by their common properties.
- * - {@link ICAL.Event#relateException}:
- *   Marks one occurrence of a series as replaced by a changed one.
  *
- * @param file - Path of the `.ics` file
- * @param modified - Time of the last change on disk
  * @param text - What the file holds, read from it when left out
- * @returns Calendar of the file
  */
 function calendarRead(
     file: string,
@@ -1242,9 +860,6 @@ function calendarRead(
 
 /**
  * Gives the {@link Calendar} of a file, read again only when the file changed on disk.
- *
- * @param file - Path of the `.ics` file
- * @returns Calendar of the file
  */
 function calendarOf(file: string): Calendar {
     const modified: number = statSync(file).mtimeMs;
@@ -1258,11 +873,8 @@ function calendarOf(file: string): Calendar {
 
 /**
  * Lists the `.ics` files of calendar sources.
- * A folder that does not exist yet,
- * like the new system before its first entry, gives no files.
- *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @returns Paths of the `.ics` files
+ * A folder that does not exist yet, like the new system before its first entry,
+ * gives none.
  */
 function filesOf(sources: CalendarSource[]): string[] {
     return sources
@@ -1274,13 +886,7 @@ function filesOf(sources: CalendarSource[]): string[] {
         );
 }
 
-/**
- * Gives the bounds of a {@link Range} in the form of an {@link Entry}.
- *
- * @param allDay - Whether the entry covers whole days
- * @param range - Range in both forms
- * @returns Days for an all-day entry, else instants
- */
+/** Gives the bounds of a {@link Range} in the form of an {@link Entry}. */
 function boundsOf(allDay: boolean, range: Range): [string, string] {
     return allDay ? range.days : range.instants;
 }
@@ -1288,16 +894,6 @@ function boundsOf(allDay: boolean, range: Range): [string, string] {
 /**
  * Lists the occurrences of a series that start before the end of a range, in order.
  * Leaves out the replaced ones, their changed versions are entries of their own.
- * - {@link ICAL.Event#iterator}: Walks the starts of all occurrences,
- *   without the excluded ones.
- * - {@link ICAL.Event#getOccurrenceDetails}: Gives start and end of one occurrence,
- *   and as `item` the changed version when the occurrence is replaced.
- *
- * @param series - Recurring event
- * @param range - Range whose end stops the walk
- * @param file - Path of the `.ics` file of the series,
- *   whose occurrence may be changed alone while it may be written
- * @returns {@link Entry} of each occurrence that is not replaced
  */
 function occurrencesOf(series: ICAL.Event, range: Range, file: string): Entry[] {
     const occurrences: Entry[] = [];
@@ -1317,20 +913,13 @@ function occurrencesOf(series: ICAL.Event, range: Range, file: string): Entry[] 
 /**
  * Reads the entries of calendar sources that start in a range or overlap it,
  * the first so a to-do with a time but no length,
- * which ends where it starts, is found too;
- * a source whose folder or files are missing gives none.
+ * which ends where it starts, is found too.
  * Compares all-day entries by their dates and timed entries by their instants,
  * so a birthday stays on its date in every time zone.
  *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param start - Start of the range with offset, like `2026-07-03T00:00:00+02:00`
- * @param end - End of the range, excluded, in the same form
  * @param kept - Tells whether an entry is wanted,
  *   a series by its first occurrence before its occurrences are walked,
- *   so a series not wanted costs no time,
- *   like the groups of a tutorial in the plan of a module,
- *   see `groupIs` in `boxes.ts`; every entry when left out
- * @returns {@link Entry}s overlapping the range
+ *   so a series not wanted costs no time, see `groupIs` in `boxes.ts`
  */
 export function entriesRead(
     sources: CalendarSource[],
@@ -1362,36 +951,21 @@ export function entriesRead(
 
 /**
  * Reads the entries of calendar sources that happen once, events,
- * to-dos and changed occurrences of a series,
- * whenever they lie, without walking a series;
- * a source whose folder or files are missing gives none.
- *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @returns The {@link Entry}s, file by file in the order they were read
+ * to-dos and changed occurrences of a series, whenever they lie,
+ * without walking a series.
  */
 export function entriesOnceRead(sources: CalendarSource[]): Entry[] {
     return filesOf(sources).flatMap((file: string): Entry[] => calendarOf(file).entries);
 }
 
-/**
- * Reads the entries of one `.ics` file that happen once,
- * like an entry Vu's dashboard shared, see `shared.ts`.
- *
- * @param file - Path of the file
- * @returns The {@link Entry}s of the file, none for none
- */
+/** Reads the entries of one `.ics` file that happen once, see `shared.ts`. */
 export function fileEntriesRead(file: string): Entry[] {
     return calendarOf(file).entries;
 }
 
 /**
  * Reads the entries that happen once of the text of an `.ics` file
- * that lies nowhere on my disk,
- * like an entry that came by SSH from the server that holds our boxes, see `shared.ts`.
- *
- * @param text - What the file holds
- * @param name - Its name, like `20261021T093000123Z_Sopha_entry_….ics`
- * @returns The {@link Entry}s of the text, none for none
+ * that lies nowhere on my disk, like one that came by SSH, see `shared.ts`.
  */
 export function textEntriesRead(text: string, name: string): Entry[] {
     return calendarRead(name, 0, text).entries;
@@ -1401,11 +975,6 @@ export function textEntriesRead(text: string, name: string): Entry[] {
  * Looks for the entry of the one event or to-do with an identifier in calendar sources.
  * An occurrence of a series has the identifier of its series,
  * so it counts as none, a changed one too, see {@link occurrenceLookup}.
- *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param id - Identifier of the event or to-do
- * @returns Path of its `.ics` file and its {@link Entry},
- *   `undefined` when no entry that happens once has the identifier
  */
 export function entryLookup(
     sources: CalendarSource[],
@@ -1423,12 +992,7 @@ export function entryLookup(
 
 /**
  * Finds the `.ics` file of the event,
- * to-do or series with an identifier in calendar sources,
- * like a birthday of `Birthdays.ics`, a yearly series.
- *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param id - Identifier, its `UID`, like `birthday-anna@nomsystem`
- * @returns Path of the file, `undefined` when none holds the identifier
+ * to-do or series with an identifier in calendar sources.
  */
 export function fileOfId(sources: CalendarSource[], id: string): string | undefined {
     return filesOf(sources).find(
@@ -1442,25 +1006,11 @@ export function fileOfId(sources: CalendarSource[], id: string): string | undefi
 
 /**
  * Looks for an occurrence of a series in calendar sources by the identifier of the series
- * and the start of the occurrence as the series has it, see {@link Entry}:
+ * and the start of the occurrence as the series has it:
  * a changed occurrence among the entries of a file,
  * else the occurrence the series itself has at that start.
- * - `calendar`: A file read.
- * - `changed`: The changed occurrence with that `RECURRENCE-ID`, `undefined` for none.
- * - `series`: The series with the identifier, `undefined` for none in the file.
- * - `day`: Day of the occurrence, like `2026-10-13`.
- * - `range`: From the start of the occurrence to a moment later,
- *   or to the next day for a series of whole days,
- *   so walking the series stops right after it,
- *   see {@link occurrencesOf}.
- * - `occurrence`: The occurrence of the series at that start, `undefined` for none.
- *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param id - Identifier of the series, like `weekly-lecture@nomsystem`
- * @param recurrence - Start of the occurrence as the series has it,
- *   like `2026-10-13T08:00:00.000Z`
- * @returns Path of its `.ics` file and its {@link Entry},
- *   `undefined` when no series has such an occurrence
+ * Its range ends a moment after that start,
+ * so walking the series stops right after it, see {@link occurrencesOf}.
  */
 export function occurrenceLookup(
     sources: CalendarSource[],
@@ -1495,13 +1045,8 @@ export function occurrenceLookup(
 }
 
 /**
- * Finds the entry of the one event
- * or to-do with an identifier in calendar sources, see {@link entryLookup}.
- * - `found`: Path and entry, `undefined` for none.
+ * Finds the entry of the one event or to-do with an identifier, see {@link entryLookup}.
  *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param id - Identifier of the event or to-do
- * @returns Path of its `.ics` file and its {@link Entry}
  * @throws {Error} - When no entry that happens once has the identifier
  */
 export function entryFind(sources: CalendarSource[], id: string): [string, Entry] {
@@ -1513,7 +1058,6 @@ export function entryFind(sources: CalendarSource[], id: string): [string, Entry
 /**
  * Stops a write outside the folders of the new system, like into my modules.
  *
- * @param file - Path of the file to write
  * @throws {Error} - When the file lies outside the folders of the new system
  */
 function writeCheck(file: string): void {
@@ -1522,16 +1066,8 @@ function writeCheck(file: string): void {
 }
 
 /**
- * Reads an `.ics` file as {@link FileLines}, one line per property:
- * a folded line, one that starts with a space or a tab,
- * is joined to the line before without that first space or tab, as the format unfolds it,
+ * Reads an `.ics` file as {@link FileLines}, a folded line joined to the line before,
  * so a file written back is folded anew, see {@link foldedOf}.
- * - `text`: The file.
- * - `newline`: Its line break.
- * - `lines`: Its lines, unfolded.
- *
- * @param file - Path of the `.ics` file
- * @returns Lines of the file with its line break
  */
 function linesRead(file: string): FileLines {
     const text: string = readFileSync(file, "utf8");
@@ -1545,49 +1081,22 @@ function linesRead(file: string): FileLines {
     return { lines: lines, newline: newline };
 }
 
-/**
- * Types of the entries of the plan
- * or the log of a module in the order they stand in its file,
- * see {@link componentsSorted}:
- * lectures, exercises, central exercises, tutorials, homework, then exams.
- */
+/** Types of the entries of a module in the order they stand in its file. */
 const typeOrder: string[] = ["VO", "UE", "ZU", "TU", "HU", "FA"];
 
 /**
  * Puts the events and to-dos of an `.ics` file into one order,
  * so the file reads well for me too, each with its lines exactly as they are,
  * the lines before the first of them, its header and its time zone, first,
- * and every other line after them, like `END:VCALENDAR`.
- * In the plan or the log of a module by type,
- * see {@link typeOrder}, any other type after them by its name,
- * an entry without type last,
- * like a box of my own learning,
+ * and every other line after them.
+ * In the plan or the log of a module by type, see {@link typeOrder},
+ * any other type after them by its name, an entry without type last,
  * and within a type by start, the groups of a tutorial,
  * to-dos with `X-GROUP` and without `X-NUMBER`, after the boxes of their type;
- * in every other file by start alone, like `Sleep_2026_Log.ics`.
- * A series is followed right by the occurrences changed alone,
- * with its `UID` and their `RECURRENCE-ID`, the earliest first.
+ * in every other file by start alone.
+ * A series is followed right by the occurrences changed alone, the earliest first.
  * Entries of the same place keep the order they had.
  * A file it cannot read so, like one whose last entry has no end, stays as it is.
- * - `head`: The lines before the first event or to-do.
- * - `blocks`: The lines of each event or to-do, in the order they stood.
- * - `rest`: Every other line after the first event or to-do.
- * - `block`: The lines of the event or to-do being read, `null` between two.
- * - `depth`: Number of components the line is in, 1 in the calendar itself.
- * - `timeOf`: Gives a time of an event or a to-do as its line holds it,
- *   see {@link textOf}, empty for none.
- * - `typeOf`: Gives the type of a skill entry, see {@link skillPartsOf}, empty for none.
- * - `starts`: The start of each, its `DTSTART`, of a to-do with a deadline its `DUE`.
- * - `units`: Each series with its changed occurrences,
- *   or an entry alone, by its place in the file.
- * - `series`: The unit of each series by its `UID`.
- * - `keyOf`: Gives the place of a unit, of its first entry: its type's place, that type,
- *   whether it is a group and its start.
- *
- * @param lines - Lines of the file, unfolded, see {@link linesRead}
- * @param module - Whether it is the plan or the log of a module,
- *   see `modulesRoot` in `sources.ts`
- * @returns The same lines in that order
  */
 export function componentsSorted(lines: string[], module: boolean): string[] {
     const head: string[] = [];
@@ -1694,13 +1203,7 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
 
 /**
  * A summary of an event or a to-do of a file, see {@link summariesOf}.
- *
- * - `index`: Index of its line `SUMMARY` in the lines of the file.
- * - `category`: Category of the event or the to-do, its `CATEGORIES`, empty for none.
- * - `base`: The summary without what stands in round brackets at its end,
- *   like `IN2028_BusinessAnalyticsMachineLearning`
- *   of `IN2028_BusinessAnalyticsMachineLearning (VO)`.
- * - `link`: Its link, the `ALTREP`, empty for none.
+ * `index` is that of its line `SUMMARY`, `base` the summary without its round brackets.
  */
 type Summed = {
     index: number;
@@ -1717,27 +1220,13 @@ let spreading: boolean = false;
 
 /**
  * Gives a summary without what stands in round brackets at its end,
- * which a link is shared by,
- * see {@link linesWrite}.
- *
- * @param summary - Summary, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
- * @returns Summary like `IN2028_BusinessAnalyticsMachineLearning`
+ * which a link is shared by, see {@link linesWrite}.
  */
 export function summaryBaseOf(summary: string): string {
     return summary.replace(/\s*\([^()]*\)\s*$/, "").trim();
 }
 
-/**
- * Gives the summaries of the events
- * and to-dos of the lines of a file, see {@link Summed}.
- * - `found`: The summaries found so far.
- * - `category`, `index`, `depth`: Category and line `SUMMARY` of the event being read,
- *   and how many components the line is in.
- * - `property`: The line `SUMMARY` read.
- *
- * @param lines - Lines of the file, unfolded
- * @returns Its summaries
- */
+/** Gives the summaries of the events and to-dos of the lines of a file. */
 function summariesOf(lines: string[]): Summed[] {
     const found: Summed[] = [];
     let category: string = "";
@@ -1768,11 +1257,7 @@ function summariesOf(lines: string[]): Summed[] {
     return found;
 }
 
-/**
- * Gives every `.ics` file of plan and log, all in {@link calendarRoot}.
- *
- * @returns Their paths
- */
+/** Gives every `.ics` file of plan and log, all in {@link calendarRoot}. */
 function calendarFilesOf(): string[] {
     return readdirSync(calendarRoot, { recursive: true, encoding: "utf8" })
         .filter((path: string): boolean => path.endsWith(".ics"))
@@ -1781,13 +1266,7 @@ function calendarFilesOf(): string[] {
 
 /**
  * Gives the link every entry and box of a category with the same summary shares,
- * the summary counted without what stands in round brackets at its end,
- * see {@link linesWrite};
- * never the link of a platform online of an older entry, see {@link onlineOf}.
- *
- * @param category - Category, like `Event`
- * @param summary - Summary, like `TUM Speaker Series`
- * @returns The link, `undefined` when none of them has one
+ * see {@link linesWrite}, never the link of a platform online of an older entry.
  */
 export function sharedLinkOf(category: string, summary: string): string | undefined {
     const base: string = summaryBaseOf(summary);
@@ -1809,20 +1288,12 @@ export function sharedLinkOf(category: string, summary: string): string | undefi
 
 /**
  * Writes {@link FileLines} into an `.ics` file, creating its folders when missing,
- * its events and to-dos in their order, see {@link componentsSorted},
- * every line folded, see {@link foldedOf}.
+ * its events and to-dos in their order, see {@link componentsSorted}, every line folded.
  * A summary written anew in plan or log, with a link or another one,
  * gives its link to every entry and box of its category with the same summary,
- * counted without what stands in round brackets at its end,
- * like `IN2028_BusinessAnalyticsMachineLearning (VO)` and `… (TU)`, in every file,
- * so one summary has one link everywhere and a link changed once changes for all;
- * a summary without link or with the link of a platform online gives none,
- * see {@link onlineOf}.
- * - `before`: The lines of the file before, none for a new file.
- * - `changed`: Its summaries written anew.
- *
- * @param file - Path of the `.ics` file
- * @param text - Lines with their line break
+ * counted without what stands in round brackets at its end, in every file,
+ * so one summary has one link everywhere and a link changed once changes for all.
+ * A summary without link or with the link of a platform online gives none.
  */
 function linesWrite(file: string, text: FileLines): void {
     const before: string[] = existsSync(file) ? linesRead(file).lines : [];
@@ -1860,14 +1331,8 @@ function linesWrite(file: string, text: FileLines): void {
 
 /**
  * Gives the summaries of a file the links of summaries written anew,
- * see {@link linesWrite},
- * each to those of its category with the same summary, counted without its brackets;
- * writes the file only when one of them changed, and only where the reader may write.
- * - `text`: Lines of the file.
- * - `spread`: Whether a link changed.
- *
- * @param file - Path of the `.ics` file
- * @param changed - The summaries written anew
+ * see {@link linesWrite}.
+ * Writes the file only when one of them changed, and only where the reader may write.
  */
 function linkSpread(file: string, changed: Summed[]): void {
     if (!writeAllowed(file)) return;
@@ -1891,15 +1356,8 @@ function linkSpread(file: string, changed: Summed[]): void {
 
 /**
  * Takes what runs each time a plan or a log of a module is written,
- * see {@link linesWrite},
- * like the folders of the material of its types being made,
- * see `typeFoldersMake` in `notes.ts`,
- * which registers itself here,
+ * like `typeFoldersMake` in `notes.ts`, which registers itself here,
  * since `notes.ts` reads this file and this file may not read it in turn.
- *
- * @param follower - Takes the name of the module folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`,
- *   and the type and semester of each of its entries, see {@link kindsOf}
  */
 export function writtenFollow(
     follower: (module: string, kinds: [string, string][]) => void,
@@ -1909,14 +1367,7 @@ export function writtenFollow(
 
 /**
  * Gives the type and the semester of each skill entry of the lines of a file,
- * the type from its `SUMMARY`,
- * see {@link skillPartsOf}, its semester from its `X-SEMESTER`,
  * so the folders of their material are made, see `typeFoldersMake` in `notes.ts`.
- * - `kinds`: The type and the semester of each entry read so far.
- * - `type`, `semester`: Those of the entry being read, empty for none.
- *
- * @param lines - Lines of a plan or a log of a module
- * @returns Type and semester of each entry with both, like `TU` and `2026W`
  */
 function kindsOf(lines: string[]): [string, string][] {
     const kinds: [string, string][] = [];
@@ -1943,14 +1394,10 @@ function kindsOf(lines: string[]): [string, string][] {
 
 /**
  * Creates an empty calendar with only the header the standard asks for,
- * `PRODID` and `VERSION`,
  * and the time zone {@link zoneName}, which every `DTSTART` names.
- * No `X-WR-CALNAME`, since its name is the name of its file,
- * like `Sleep_2026_Log`, no `X-WR-TIMEZONE`, no `CALSCALE`,
- * since `GREGORIAN` is the default,
+ * No `X-WR-CALNAME`, since its name is the name of its file, no `X-WR-TIMEZONE`,
+ * no `CALSCALE`, since `GREGORIAN` is the default,
  * and no `METHOD`, which only invitations need.
- *
- * @returns Calendar without events
  */
 function calendarCreate(): ICAL.Component {
     const root: ICAL.Component = new ICAL.Component("vcalendar");
@@ -1961,14 +1408,8 @@ function calendarCreate(): ICAL.Component {
 }
 
 /**
- * Gives the place of a line of an event or a to-do in the fixed order:
- * the place of its property in {@link lineOrder}, after them every other line.
- * - `name`: Name of its property,
- *   like `DTSTART` of `DTSTART;TZID=Europe/Berlin:20261013T100000`.
- * - `place`: Its place in the list, -1 for none.
- *
- * @param line - First line of a property
- * @returns Its rank, the lower the earlier
+ * Gives the place of a line of an event or a to-do in {@link lineOrder},
+ * every other line after them.
  */
 function lineRankOf(line: string): number {
     const name: string = line.split(/[;:]/)[0].toUpperCase();
@@ -1980,15 +1421,7 @@ function lineRankOf(line: string): number {
  * Puts the lines of an event or a to-do into the fixed order, see {@link lineOrder}:
  * each property with the lines that continue it,
  * lines of the same rank in the order they had,
- * and the components inside it,
- * like an alarm, at its end as they are, before its last line, like `END:VEVENT`.
- * - `properties`: Each property, its rank and its lines, in the order they stood.
- * - `inner`: Lines of the components inside it.
- * - `depth`: Number of components inside it the line is in.
- * - {@link Array#sort}: Keeps the order of lines of the same rank.
- *
- * @param component - Lines from `BEGIN:VEVENT` to `END:VEVENT`, or of a to-do
- * @returns The same lines in the fixed order
+ * and the components inside it, like an alarm, at its end as they are.
  */
 function linesOrdered(component: string[]): string[] {
     const properties: [number, string[]][] = [];
@@ -2017,16 +1450,10 @@ function linesOrdered(component: string[]): string[] {
 
 /**
  * Puts the lines of an event or a to-do, in the fixed order,
- * see {@link linesOrdered}, before the last line `END:VCALENDAR` of an `.ics` file,
+ * before the last line `END:VCALENDAR` of an `.ics` file,
  * so everything already in the file stays as it is, byte for byte.
- * A missing file is created with the header of a new calendar,
- * see {@link calendarCreate}.
- * - {@link ICAL.Component#toString}:
- *   Writes a component in the iCalendar format, lines parted by `\r\n`.
+ * A missing file is created with the header of a new calendar.
  *
- * @param file - Path of the `.ics` file
- * @param event - Lines from `BEGIN:VEVENT` to `END:VEVENT`,
- *   or from `BEGIN:VTODO` to `END:VTODO`
  * @throws {Error} - When the file has no line `END:VCALENDAR`
  */
 function componentInsert(file: string, event: string[]): void {
@@ -2043,12 +1470,8 @@ function componentInsert(file: string, event: string[]): void {
 /**
  * Finds the first property of a name among the lines of an event or a to-do,
  * leaving out the components inside it, like an alarm.
- * - `depth`: Number of components inside the event the line is in.
  *
- * @param event - Lines from `BEGIN:VEVENT` to `END:VEVENT`, or of a to-do
- * @param name - Name of the property, like `DTSTART`
- * @returns Index of its first line and of the line after its last,
- *   or `null` when the event has none
+ * @returns Index of its first line and of the line after its last, `null` for none
  */
 function propertyFind(event: string[], name: string): [number, number] | null {
     const head: RegExp = new RegExp(`^${name}[;:]`, "i");
@@ -2066,27 +1489,15 @@ function propertyFind(event: string[], name: string): [number, number] | null {
 }
 
 /**
- * Gives the identifier of an entry:
- * its `UID`, for one occurrence of a series the `UID` of its series
- * and its start in the series after `#`, see {@link Entry},
- * since each occurrence is a box of its own in the plan,
- * like `weekly-lecture@nomsystem#2026-10-26T09:00:00.000Z`.
- *
- * @param entry - Entry of the plan or the log
- * @returns Identifier, like `study-13@nomsystem`
+ * Gives the identifier of an entry: its `UID`, for one occurrence of a series
+ * the `UID` of its series and its start in the series after `#`,
+ * since each occurrence is a box of its own in the plan.
  */
 export function entryIdOf(entry: Entry): string {
     return entry.recurrence === "" ? entry.id : `${entry.id}#${entry.recurrence}`;
 }
 
-/**
- * Gives a property of an event or a to-do as one line, unfolded.
- * - `place`: Index of its first line and of the line after its last, `null` for none.
- *
- * @param event - Lines from `BEGIN:VEVENT` to `END:VEVENT`, or of a to-do
- * @param name - Name of the property, like `UID`
- * @returns Line like `UID:weekly-lecture@nomsystem`, empty when the event has none
- */
+/** Gives a property of an event or a to-do as one line, unfolded, empty for none. */
 function unfoldedOf(event: string[], name: string): string {
     const place: [number, number] | null = propertyFind(event, name);
     return place === null
@@ -2100,20 +1511,9 @@ function unfoldedOf(event: string[], name: string): string {
 /**
  * Finds the lines of every event or to-do with an identifier, see {@link entryIdOf}:
  * with its `UID` and without `RECURRENCE-ID`, or, for an identifier with `#`,
- * with the `UID` before it and the `RECURRENCE-ID` after it, compared as instants,
- * like `RECURRENCE-ID;TZID=Europe/Berlin:20261026T100000`
- * for `weekly-lecture@nomsystem#2026-10-26T09:00:00.000Z`.
- * - {@link ICAL.Property.fromString}:
- *   Reads one line of a property, its time in the time zone it names.
- * - `at`: Place of the last `#`, -1 for none.
- * - `uid`, `recurrence`: `UID` and `RECURRENCE-ID` looked for, the latter empty for none.
- * - `changed`: Line of the `RECURRENCE-ID` of an event, empty for none.
- * - `start`: Its `RECURRENCE-ID` as instant or day, see {@link textOf}, empty for none.
+ * with the `UID` before it and the `RECURRENCE-ID` after it, compared as instants.
  *
- * @param lines - Lines of an `.ics` file
- * @param id - Identifier of the event or to-do
- * @returns Index of each line `BEGIN:VEVENT` or `BEGIN:VTODO`
- *   and of the line after its `END:VEVENT` or `END:VTODO`
+ * @returns Index of each line `BEGIN:` and of the line after its `END:`
  */
 function componentsOf(lines: string[], id: string): [number, number][] {
     const at: number = id.lastIndexOf("#");
@@ -2144,12 +1544,7 @@ function componentsOf(lines: string[], id: string): [number, number][] {
 
 /**
  * Finds the lines of the one event or to-do with an identifier, see {@link componentsOf}.
- * - `found`: Lines of each event or to-do with the identifier.
  *
- * @param lines - Lines of an `.ics` file
- * @param id - Identifier of the event or to-do
- * @returns Index of its line `BEGIN:VEVENT` or `BEGIN:VTODO`
- *   and of the line after its `END:VEVENT` or `END:VTODO`
  * @throws {Error} - When no event or to-do, or more than one, has the identifier
  */
 function componentFind(lines: string[], id: string): [number, number] {
@@ -2160,15 +1555,8 @@ function componentFind(lines: string[], id: string): [number, number] {
 
 /**
  * Builds a property of a time of an occurrence in the form
- * of the `DTSTART` of its series:
- * with the same `TZID`, like `TZID=Europe/Berlin`,
- * in UTC with `Z`, or a day with `VALUE=DATE`,
+ * of the `DTSTART` of its series, the same `TZID`, UTC or a day,
  * so calendar apps and `ical.js` match the `RECURRENCE-ID` with the occurrence.
- * - `zoneId`: `TZID` of the `DTSTART` of the series, empty for none.
- *
- * @param name - Name of the property, like `recurrence-id`
- * @param time - The time, in the time zone of the series
- * @returns Property to write
  */
 function seriesTimeOf(series: ICAL.Event, name: string, time: ICAL.Time): ICAL.Property {
     const property: ICAL.Property = new ICAL.Property(name);
@@ -2184,25 +1572,12 @@ function seriesTimeOf(series: ICAL.Event, name: string, time: ICAL.Time): ICAL.P
  * Makes one occurrence of a series a component of its own,
  * so it can be dropped, pushed or changed alone,
  * the way the standard changes one occurrence:
- * a copy of its series with the same `UID` right after it,
- * without `RRULE`, `RDATE` and `EXDATE`,
- * its `DTSTART` and its `DTEND` those of the occurrence,
+ * a copy of its series with the same `UID` right after it, see {@link occurrenceLinesOf},
  * its `DTSTAMP` that of its series,
- * since it got its day with the series, see `written` of {@link Entry},
- * and as `RECURRENCE-ID` the start it has in the series,
- * like `RECURRENCE-ID;TZID=Europe/Berlin:20261026T100000`;
- * its lines in the fixed order, see {@link linesOrdered};
- * the series stays as it is, every other line of the file too.
- * From then on the occurrence is that component,
- * found by its identifier with `#`, see {@link entryIdOf}.
+ * since it got its day with the series, see `written` of {@link Entry}.
+ * The series stays as it is, every other line of the file too.
  * An occurrence that is a component of its own already stays.
- * - `text`: Lines of the file.
- * - `series`: The series, `undefined` when the file holds none of the identifier.
- * - `start`: The start of the occurrence in the series.
- * - `place`: Index of the first line of the series and of the line after its last.
  *
- * @param file - Path of the `.ics` file of the series
- * @param entry - The occurrence, see {@link Entry}
  * @throws {Error} - When the file lies outside the new system,
  *   or holds no such series or occurrence
  */
@@ -2227,14 +1602,7 @@ export function occurrenceOwn(file: string, entry: Entry): void {
     linesWrite(file, text);
 }
 
-/**
- * Finds a start of a series, walking its starts up to it.
- * - `walk`, `start`: Walk through the starts of the series.
- *
- * @param recurrence - The start looked for, in the form of {@link Entry},
- *   like `2026-10-24` or an instant
- * @returns The start, `undefined` when the series has none such
- */
+/** Finds a start of a series, walking its starts up to it, `undefined` for none. */
 function seriesStartOf(series: ICAL.Event, recurrence: string): ICAL.Time | undefined {
     const walk: ICAL.RecurExpansion = series.iterator();
     let start: ICAL.Time | undefined = walk.next();
@@ -2246,17 +1614,9 @@ function seriesStartOf(series: ICAL.Event, recurrence: string): ICAL.Time | unde
  * Gives the lines of the component of its own of one occurrence as its series gives it,
  * see {@link occurrenceOwn}:
  * a copy of the series without `RRULE`, `RDATE` and `EXDATE`,
- * its `DTSTAMP` that of the series,
  * its `DTSTART` the start of the occurrence, its `DTEND`,
  * while the series has one, that start and the length of the series,
- * as `ical.js` gives an occurrence, and as `RECURRENCE-ID` that start;
- * in the fixed order, see {@link linesOrdered}.
- * - `own`: The lines.
- * - `end`: The end of the occurrence.
- *
- * @param lines - Lines of the series in its file
- * @param start - The start of the occurrence in the series
- * @returns The lines
+ * as `ical.js` gives an occurrence, and as `RECURRENCE-ID` that start.
  */
 function occurrenceLinesOf(
     series: ICAL.Event,
@@ -2278,8 +1638,7 @@ function occurrenceLinesOf(
 }
 
 /**
- * Takes out each occurrence of a series that is a component of its own,
- * see {@link occurrenceOwn},
+ * Takes out each occurrence of a series that is a component of its own
  * but holds nothing of its own any more: its lines are those its series gives it,
  * see {@link occurrenceLinesOf}, but its `DTSTAMP`,
  * an open `STATUS:NEEDS-ACTION` the same as none,
@@ -2289,27 +1648,9 @@ function occurrenceLinesOf(
  * One done, dropped, pushed, carried along or changed in anything stays,
  * since a line of its own tells it;
  * a log entry pointing to it keeps pointing to its day, see {@link relatedOf}.
- * Every other line of the file stays as it is; the file is written only when one goes.
- * - `text`: Lines of the file.
- * - `series`: The series, `undefined` when the file holds none of the identifier.
- * - `master`: Index of the first line of the series
- *   and of the line after its last, `undefined` for none.
- * - `lines`: Lines of the series.
- * - `plain`: Gives the lines of a component that say something, unfolded,
- *   see {@link unfoldedOf}, without `DTSTAMP` and an open status.
- * - `places`: Index of the line `BEGIN:VEVENT`
- *   or `BEGIN:VTODO` of each occurrence of its own of the series
- *   and of the line after its end,
- *   the last first, so one taken out leaves those before it where they are.
- * - `begin`: Index of the last line `BEGIN:VEVENT`
- *   or `BEGIN:VTODO` read, -1 before the first.
- * - `gone`: How many occurrences went.
- * - `own`: Lines of an occurrence of its own.
- * - `start`: Its start in the series, `undefined` when the series has it no more.
+ * The occurrences are walked from the last,
+ * so one taken out leaves those before it where they are.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series,
- *   like `037dba76-43d3-4e42-b85d-8e39c5ab8478@nomsystem`
  * @throws {Error} - When the file lies outside the new system
  */
 export function occurrencesTidy(file: string, uid: string): void {
@@ -2373,35 +1714,20 @@ export function occurrencesTidy(file: string, uid: string): void {
     if (gone > 0) linesWrite(file, text);
 }
 
-/**
- * Turns an instant into Berlin time.
- * - {@link ICAL.Time.fromJSDate}:
- *   Turns a JS date into an `ical.js` time, in UTC with `true`.
- * - {@link ICAL.Time#convertToZone}: Gives the same instant in another time zone.
- *
- * @param instant - Start or end of an entry
- * @returns Time in {@link zoneName}
- */
+/** Turns an instant into Berlin time. */
 function berlinOf(instant: Date): ICAL.Time {
     return ICAL.Time.fromJSDate(instant, true).convertToZone(zone);
 }
 
 /**
- * Turns an instant into the time the reader writes into a file: Berlin time, like
- * `DTSTART;TZID=Europe/Berlin:20261025T013000`, but in UTC,
- * like `DTSTART:20261025T003000Z`,
- * for an instant whose Berlin time `ical.js` reads back as another instant,
+ * Turns an instant into the time the reader writes into a file: Berlin time,
+ * but in UTC for an instant whose Berlin time `ical.js` reads back as another instant,
  * those of the two hours around a change of the clocks:
  * 02:30 of 25.10.2026 comes twice, at 00:30 and at 01:30 UTC,
  * and `ical.js` reads it as the second,
  * while it writes 01:30 UTC as 03:30,
  * so a sleep from 02:30 began an hour later and one until 02:30 ended an hour later;
  * every reader of the format takes a time in UTC as the very instant.
- * - `time`: The instant in Berlin time, see {@link berlinOf}.
- *
- * @param instant - A start, an end or a deadline
- * @returns Time in {@link zoneName},
- *   or in UTC where Berlin time would not read back as the instant
  */
 function writtenOf(instant: Date): ICAL.Time {
     const time: ICAL.Time = berlinOf(instant);
@@ -2410,56 +1736,29 @@ function writtenOf(instant: Date): ICAL.Time {
         : ICAL.Time.fromJSDate(instant, true);
 }
 
-/**
- * Writes the date of an instant in Berlin time.
- *
- * @param instant - Start of an entry
- * @returns Date like `2026-07-03`
- */
+/** Writes the date of an instant in Berlin time. */
 export function berlinDateOf(instant: Date): string {
     return berlinOf(instant).toString().slice(0, 10);
 }
 
-/**
- * Writes the time of day of an instant in Berlin time.
- *
- * @param instant - An instant, like the start of a sleep
- * @returns Time like `23:30`
- */
+/** Writes the time of day of an instant in Berlin time. */
 export function berlinTimeOf(instant: Date): string {
     return berlinOf(instant).toString().slice(11, 16);
 }
 
-/**
- * Adds days to a day.
- *
- * @param day - Day like `2026-10-10`
- * @param days - Number of days to add
- * @returns Day like `2026-10-12`
- */
+/** Adds days to a day. */
 export function dayAdd(day: string, days: number): string {
     const date: Date = new Date(`${day}T00:00:00Z`);
     date.setUTCDate(date.getUTCDate() + days);
     return date.toISOString().slice(0, 10);
 }
 
-/**
- * Gives the weekday of a day.
- *
- * @param day - Day like `2026-10-19`
- * @returns 1 for Monday to 7 for Sunday, like 1
- */
+/** Gives the weekday of a day, 1 for Monday to 7 for Sunday. */
 export function weekdayOf(day: string): number {
     return ((new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7) + 1;
 }
 
-/**
- * Reads a time of day as minutes after midnight.
- * - `hours`, `minutes`: Its hours and minutes.
- *
- * @param time - Time like `14:15`
- * @returns Minutes like 855
- */
+/** Reads a time of day as minutes after midnight. */
 export function minutesOf(time: string): number {
     const [hours, minutes]: number[] = time.split(":").map(Number);
     return hours * 60 + minutes;
@@ -2467,14 +1766,7 @@ export function minutesOf(time: string): number {
 
 /**
  * Moves an instant by whole days in Berlin time, keeping its time of day,
- * also over a day the clocks change, like a box at 12:00 pushed to the next day.
- * - `time`: The instant in Berlin time, moved.
- * - {@link ICAL.Time#adjust}: Adds days, hours,
- *   minutes and seconds to a time, in its time zone.
- *
- * @param instant - An instant, like the expected time of a box
- * @param days - Number of days to move it by
- * @returns The instant at the same time of day, days later
+ * also over a day the clocks change.
  */
 export function berlinLater(instant: Date, days: number): Date {
     const time: ICAL.Time = berlinOf(instant);
@@ -2486,13 +1778,6 @@ export function berlinLater(instant: Date, days: number): Date {
  * Writes the start of a day in Berlin time with its offset,
  * the form of a range of {@link entriesRead},
  * so whole-day entries compare by the day and timed ones by the instant.
- * - `start`: Midnight of the day in Berlin time.
- * - `offset`: Minutes Berlin time is ahead of UTC then, 120 in summer.
- * - {@link ICAL.Timezone#utcOffset}:
- *   Gives the offset of a time zone at a time, in seconds.
- *
- * @param day - Day like `2026-10-13`
- * @returns Start like `2026-10-13T00:00:00+02:00`
  */
 export function berlinDayStartOf(day: string): string {
     const [year, month, date]: number[] = day.split("-").map(Number);
@@ -2508,16 +1793,8 @@ export function berlinDayStartOf(day: string): string {
 }
 
 /**
- * Turns an hour of a day in Berlin time into an instant,
- * right also on the days the clocks change,
- * with its minutes, like 14:15 of a lecture.
- * - {@link ICAL.Time.fromData}: Builds a time from its parts, in a time zone.
- * - {@link ICAL.Time#toJSDate}: Gives the instant of a time.
- *
- * @param day - Day like `2026-10-12`
- * @param hour - Hour of the day, from 0 to 23, like 9 for 09:00
- * @param minute - Minute of the hour, from 0 to 59, like 15 for 09:15; 0 when left out
- * @returns The instant, like `2026-10-12T07:00:00.000Z` for 09:00 in summer time
+ * Turns an hour and minute of a day in Berlin time into an instant,
+ * right also on the days the clocks change.
  */
 export function berlinInstantOf(day: string, hour: number, minute: number = 0): Date {
     const [year, month, date]: number[] = day.split("-").map(Number);
@@ -2529,13 +1806,7 @@ export function berlinInstantOf(day: string, hour: number, minute: number = 0): 
 
 /**
  * Builds a property; a time in Berlin time gets the parameter `TZID`,
- * like `DTSTART;TZID=Europe/Berlin:…`,
- * a link its path as value and the fingerprint of a file
- * as parameter `X-SHA256`, see {@link Link}.
- *
- * @param name - Name of the property, like `dtstart`, `attach` for a link
- * @param value - Value of the property
- * @returns Property to write
+ * a link its path as value and the fingerprint of a file as `X-SHA256`, see {@link Link}.
  */
 function propertyOf(name: string, value: string | ICAL.Time | Link): ICAL.Property {
     const property: ICAL.Property = new ICAL.Property(name);
@@ -2552,22 +1823,9 @@ function propertyOf(name: string, value: string | ICAL.Time | Link): ICAL.Proper
 
 /**
  * Builds the property of a text field of an entry, see {@link textsOf}:
- * its `LOCATION` with the link of its place
- * as the standard parameter `ALTREP`, when it has one, like
- * `LOCATION;ALTREP="https://nav.tum.de/room/0509.EG.980":
- * Audimax 0509.EG.980\, Arcisstraße 21\, 80333 München…`,
- * and its `SUMMARY` with its link the same way, like the folder of a skill,
- * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…":
- * IN2028_BusinessAnalyticsMachineLearning (VO)`,
- * and its `X-ONLINE` with the link, the channel and the title of its meeting or video,
- * see {@link Online};
+ * its `LOCATION` and its `SUMMARY` with their link as the standard parameter `ALTREP`,
+ * and its `X-ONLINE` with the link, the channel and the title, see {@link Online},
  * every other one as its text.
- *
- * @param name - Name of the property, like `location`
- * @param value - Its text,
- *   like `Audimax 0509.EG.980, Arcisstraße 21, 80333 München, Deutschland`
- * @param fields - Text fields of the entry, with the link of its place
- * @returns Property to write
  */
 function textPropertyOf(name: string, value: string, fields: EntryTexts): ICAL.Property {
     const property: ICAL.Property = propertyOf(name, value);
@@ -2585,18 +1843,11 @@ function textPropertyOf(name: string, value: string, fields: EntryTexts): ICAL.P
 }
 
 /**
- * Builds the `ATTENDEE` of a person I was with, see {@link Attendee}, like
- * `ATTENDEE;CN=Herr Müller:mailto:herr.mueller@invalid`;
- * a name with a comma, `;` or `:` in double quotes, as the standard asks,
- * which `ical.js` writes itself;
- * a person of `Persons.md` with a mail there with that mail in place of an address ending
- * in `@invalid`, see `mailOf` in `./persons.ts`, like
- * `ATTENDEE;CN="Bichler, Martin":mailto:m.bichler@tum.de`.
- * - `mail`: The mail of the person in `Persons.md`,
- *   empty for none and for an address I typed.
- *
- * @param attendee - The person, like `Herr Müller` with `herr.mueller@invalid`
- * @returns Property to write
+ * Builds the `ATTENDEE` of a person I was with, see {@link Attendee}.
+ * A name with a comma, `;` or `:` goes in double quotes, as the standard asks,
+ * which `ical.js` writes itself.
+ * A person of `Persons.md` with a mail there gets that mail in place of an address ending
+ * in `@invalid`, see `mailOf` in `./persons.ts`.
  */
 function attendeePropertyOf(attendee: Attendee): ICAL.Property {
     const mail: string = attendee.address.endsWith("@invalid")
@@ -2612,18 +1863,9 @@ function attendeePropertyOf(attendee: Attendee): ICAL.Property {
 
 /**
  * Builds the `RELATED-TO` of a log entry,
- * which points to the box it was logged from by its `UID`, the standard way,
- * like `RELATED-TO:study-13@nomsystem`;
- * for one date of a series that date goes along
- * as parameter `X-RECURRENCE-ID` in the form of the iCalendar format,
- * see {@link icsTextOf},
- * since the `UID` names the whole series,
- * like `RELATED-TO;X-RECURRENCE-ID=20261026T130000Z:weekly-lecture@nomsystem`.
- * - `at`: Place of the last `#` in the identifier, -1 for none.
- *
- * @param box - Identifier of the box, see {@link entryIdOf},
- *   like `weekly-lecture@nomsystem#2026-10-26T13:00:00.000Z`
- * @returns Property to write
+ * which points to the box it was logged from by its `UID`, the standard way.
+ * For one date of a series that date goes along as parameter `X-RECURRENCE-ID`,
+ * since the `UID` names the whole series.
  */
 function relatedOf(box: string): ICAL.Property {
     const at: number = box.lastIndexOf("#");
@@ -2637,23 +1879,12 @@ function relatedOf(box: string): ICAL.Property {
 
 /**
  * Builds a property of a new entry beyond its fields, see {@link entryAppend}:
- * the box a log entry was logged from as its `RELATED-TO`,
- * see {@link relatedOf}, the rule of a series as its `RRULE`, read from its text,
- * like `FREQ=WEEKLY;UNTIL=20270202T090000Z`, a moment in Berlin time,
- * like a date a series leaves out as `EXDATE`,
- * `EXDATE;TZID=Europe/Berlin:20261110T100000`,
- * or a day of a series without times,
- * like `2026-11-10` as `EXDATE;VALUE=DATE:20261110`,
+ * the box a log entry was logged from as its `RELATED-TO`, see {@link relatedOf},
+ * the rule of a series as its `RRULE`, a moment in Berlin time,
+ * or a day of a series without times as `EXDATE;VALUE=DATE`,
  * every other one with its value as it is, see {@link propertyOf}.
- * - `rule`: The `RRULE`.
- * - {@link ICAL.Recur.fromString}:
- *   Reads the rule of a series into the form `ical.js` writes it from,
- *   since it writes a rule given as text letter by letter.
- *
- * @param name - Name of the property, like `x-food`, `related-to` for the box
- * @param value - Value of the property, the identifier of the box for `related-to`,
- *   the rule as text for `rrule`
- * @returns Property to write
+ * The rule is read by {@link ICAL.Recur.fromString},
+ * since `ical.js` writes a rule given as text letter by letter.
  */
 function ownPropertyOf(name: string, value: string | Link | Date): ICAL.Property {
     if (value instanceof Date) return propertyOf(name, writtenOf(value));
@@ -2678,18 +1909,8 @@ function ownPropertyOf(name: string, value: string | Link | Date): ICAL.Property
  * takes out all its old lines and puts the new ones where the first old one stood,
  * or before the end of the event when there was none;
  * no value removes the property.
- * Most properties have one value, the `X-ROUND`s of a skill entry one per section,
- * its `ATTACH`es one per link, the `ATTENDEE`s of an entry one per person,
- * see {@link attendeePropertyOf}.
- * - `at`: Line of the first old value, or the end of the event.
- * - {@link ICAL.Property#toICALString}: Writes a property in the iCalendar format,
- *   as one line, never folded, see {@link linesOf}.
  *
- * @param event - Lines from `BEGIN:VEVENT` to `END:VEVENT`, changed in place
- * @param name - Name of the property, like `dtstart`
- * @param values - New values, none to remove the property;
- *   a property built already, like a `LOCATION` with its `ALTREP`,
- *   see {@link textPropertyOf}, goes in as it is
+ * @param values - New values, a property built already goes in as it is
  */
 function propertyPut(
     event: string[],
@@ -2719,13 +1940,9 @@ function propertyPut(
 
 /**
  * Text fields of an entry with the names of their properties,
- * in the order they are written;
- * the skill and type of a skill entry stand only in the `ALTREP` of its `SUMMARY`,
- * see {@link skillPartsOf}, and who I was with in one `ATTENDEE` per person after them,
- * see {@link attendeePropertyOf}.
- *
- * @param fields - Text fields of an event or a to-do
- * @returns Name of each property with its value, empty when it is not written
+ * in the order they are written.
+ * The skill and type of a skill entry stand only in the `ALTREP` of its `SUMMARY`,
+ * and who I was with in one `ATTENDEE` per person after them.
  */
 function textsOf(fields: EntryTexts): [string, string][] {
     return [
@@ -2742,27 +1959,12 @@ function textsOf(fields: EntryTexts): [string, string][] {
 /**
  * Appends an entry to an `.ics` file, creating file and folders when missing.
  * Writes start and end in Berlin time,
- * and only the text fields and the properties beyond them that are not empty,
- * its place with its link, see {@link textPropertyOf},
- * one `ATTENDEE` per person I was with,
- * see {@link attendeePropertyOf}, the box it was logged from as `RELATED-TO`,
- * and the rule of a series with the dates it leaves out, like a group of a tutorial,
- * see {@link ownPropertyOf}.
+ * and only the text fields and the properties beyond them that are not empty.
  *
- * @param file - Path of the `.ics` file
- * @param fields - Fields and times of the entry
  * @param own - Properties beyond the fields, each its name with its value,
- *   like `["x-chapter", "01_StatisticsFoundations"]` of a skill entry
- *   or `["x-food", "Reis;150"]` of a meal, a property built already,
- *   like an `X-ROUND`, `["attach", link]` for a link,
- *   see {@link Link}, `["related-to", "study-13@nomsystem"]`
- *   for the box it was logged from,
- *   or `["rrule", "FREQ=WEEKLY;UNTIL=20270202T090000Z"]`
- *   and one `["exdate", date]` per date left out for a weekly series
- * @param id - Identifier of the new event, its `UID`: a new one,
- *   or the one an entry brought from Vu's log, see `shared.ts`
- * @returns Identifier of the new entry,
- *   like `b8f1e81f-15b4-460e-910d-ef6b1b3d09b3@nomsystem`
+ *   see {@link ownPropertyOf}
+ * @param id - Its `UID`: a new one, or the one an entry brought from Vu's log,
+ *   see `shared.ts`
  * @throws {Error} - When the file lies outside the new system
  *   or has no line `END:VCALENDAR`
  */
@@ -2781,12 +1983,6 @@ export function entryAppend(
  * Gives the text of a new `.ics` file that holds one entry and nothing else,
  * the same as {@link entryAppend} writes into a file missing,
  * like the copy of an entry I share, see `shared.ts`.
- * - `lines`: The lines of the new calendar, the entry before its `END:VCALENDAR`.
- *
- * @param fields - Fields and times of the entry
- * @param own - Properties beyond the fields, see {@link entryAppend}
- * @param id - Identifier of the entry, its `UID`
- * @returns The text, lines parted by `\r\n`
  */
 export function entryIcsOf(
     fields: EntryFields,
@@ -2802,14 +1998,7 @@ export function entryIcsOf(
     return componentsSorted(lines, false).flatMap(foldedOf).join("\r\n");
 }
 
-/**
- * Builds the event of an entry, see {@link entryAppend}.
- *
- * @param fields - Fields and times of the entry
- * @param own - Properties beyond the fields, see {@link entryAppend}
- * @param id - Identifier of the entry, its `UID`
- * @returns The event
- */
+/** Builds the event of an entry, see {@link entryAppend}. */
 function eventOf(
     fields: EntryFields,
     own: [string, string | Link | Date | ICAL.Property][],
@@ -2839,29 +2028,14 @@ function eventOf(
     return event;
 }
 
-/**
- * Gives the `DTSTART` of a to-do: its day, written as `DTSTART;VALUE=DATE:20261013`,
- * when it has no time, else its time in Berlin time.
- * - {@link ICAL.Time.fromDateString}:
- *   Reads a day like `2026-10-13` into a time without time of day.
- *
- * @param fields - Fields of the to-do
- * @returns Value of its `DTSTART`
- */
+/** Gives the `DTSTART` of a to-do: its day when it has no time, else its time. */
 function todoStartOf(fields: TodoFields): ICAL.Time {
     return fields.time === null
         ? ICAL.Time.fromDateString(fields.day)
         : writtenOf(fields.time);
 }
 
-/**
- * Gives the `DUE` of a to-do:
- * its deadline, written as `DUE;VALUE=DATE:20261023` when it has no time,
- * else its time in Berlin time, like `DUE;TZID=Europe/Berlin:20261023T120000`.
- *
- * @param deadline - Deadline as ISO instant, or as day like `2026-10-23`
- * @returns Value of its `DUE`
- */
+/** Gives the `DUE` of a to-do: its deadline, a day or a time in Berlin time. */
 function deadlineTimeOf(deadline: string): ICAL.Time {
     return /^\d{4}-\d{2}-\d{2}$/.test(deadline)
         ? ICAL.Time.fromDateString(deadline)
@@ -2869,12 +2043,7 @@ function deadlineTimeOf(deadline: string): ICAL.Time {
 }
 
 /**
- * Writes minutes as a duration of the iCalendar format,
- * the value of an `ESTIMATED-DURATION`.
- * - {@link ICAL.Duration.fromSeconds}: Builds a duration from seconds.
- *
- * @param minutes - Minutes, like 75
- * @returns Duration like `PT1H15M`
+ * Writes minutes as a duration of the iCalendar format, as `ESTIMATED-DURATION` holds it.
  */
 function durationOf(minutes: number): string {
     return ICAL.Duration.fromSeconds(minutes * 60).toString();
@@ -2883,31 +2052,16 @@ function durationOf(minutes: number): string {
 /**
  * Appends a to-do to an `.ics` file, a box of the plan,
  * creating file and folders when missing:
- * its day or its time as `DTSTART`,
- * or instead its deadline as `DUE`,
- * its expected duration as `ESTIMATED-DURATION` when it has one,
- * `STATUS:NEEDS-ACTION`, since it is open, and only the text fields that are not empty,
- * then one `ATTENDEE` per person I will be with, see {@link attendeePropertyOf},
- * and the properties beyond them, as an entry writes them, see {@link entryAppend};
- * a group of a tutorial, which is no box I do, without `STATUS`,
- * see `groupPut` in `course.ts`.
+ * its day or its time as `DTSTART`, or instead its deadline as `DUE`,
+ * `STATUS:NEEDS-ACTION`, since it is open, and only the fields that are not empty,
+ * as an entry writes them, see {@link entryAppend}.
  * A to-do with a deadline has no `DTSTART`:
  * iCalendar (RFC 5545) wants `DUE` of the same kind as `DTSTART`,
- * both days or both times,
- * and later, so the day of its deadline is its day, see {@link deadlineDayOf}.
- * - `id`: Identifier of the new to-do, its `UID`.
+ * both days or both times, and later,
+ * so the day of its deadline is its day, see {@link deadlineDayOf}.
  *
- * @param file - Path of the `.ics` file
- * @param fields - Fields of the to-do
- * @param own - Properties beyond the fields, each its name with its value, like
- *   `["rrule", "FREQ=WEEKLY;UNTIL=20270202T090000Z"]`
- *   and one `["exdate", date]` per date left out of a group,
- *   its day for a group without times;
- *   none when left out
  * @param open - Whether it is a box, open, `STATUS:NEEDS-ACTION`;
- *   false for a group, without `STATUS`
- * @returns Identifier of the new to-do,
- *   like `b8f1e81f-15b4-460e-910d-ef6b1b3d09b3@nomsystem`
+ *   false for a group of a tutorial, which is no box I do, see `groupPut` in `course.ts`
  * @throws {Error} - When the file lies outside the new system
  *   or has no line `END:VCALENDAR`
  */
@@ -2946,24 +2100,14 @@ export function todoAppend(
 }
 
 /**
- * Puts the text fields that changed into the lines of an event or a to-do,
- * a new place with its link, see {@link textPropertyOf};
- * a place that stays keeps its line as it is, with its `ALTREP`.
- * Who I was with, once changed, replaces all its `ATTENDEE`s,
- * see {@link attendeePropertyOf}.
+ * Puts the text fields that changed into the lines of an event or a to-do.
+ * A place that stays keeps its line as it is, with its `ALTREP`.
+ * Who I was with, once changed, replaces all its `ATTENDEE`s.
  * A `SUMMARY` whose link alone changed is written anew too,
  * like that of a skill entry moved to another semester,
- * whose link names the folder of its semester, see `skillLinkOf` in `documents.ts`,
  * and so is an `X-ONLINE` whose link, channel or title alone changed;
  * once what it did online changes, its `LOCATION` and its `SUMMARY` are written anew too,
  * since an older entry wrote it there, see {@link onlineOf}.
- * - `textsOld`: Its text fields as read, with the names of their properties.
- * - `relinked`: Whether the link of its `SUMMARY` changed.
- * - `reonline`: Whether what it did online changed, its platform, link, channel or title.
- *
- * @param component - Lines of the event or the to-do, changed in place
- * @param entry - Its entry as read
- * @param fields - New text fields
  */
 function textsPut(component: string[], entry: Entry, fields: EntryTexts): void {
     const textsOld: [string, string][] = textsOf(entry);
@@ -2990,13 +2134,8 @@ function textsPut(component: string[], entry: Entry, fields: EntryTexts): void {
 }
 
 /**
- * Sets the `DTSTAMP` of an event or a to-do anew to now once its day changed,
- * its `DTSTART` or its `DUE`, so it tells when it got its day,
- * see `written` of {@link Entry};
- * any other change keeps it.
- *
- * @param old - Its lines as its file holds them
- * @param component - Its changed lines, changed in place
+ * Sets the `DTSTAMP` of an event or a to-do anew to now once its `DTSTART` or `DUE`
+ * changed, so it tells when it got its day, see `written` of {@link Entry}.
  */
 function stampRenew(old: string[], component: string[]): void {
     if (
@@ -3011,15 +2150,9 @@ function stampRenew(old: string[], component: string[]): void {
 /**
  * Writes the changed lines of an event or a to-do back where they stood in their file,
  * or moves them into another file, like the log of another year: writes them there first,
- * so a failure in between leaves them twice instead of losing them;
- * its lines in the fixed order, see {@link linesOrdered},
- * its `DTSTAMP` now once its day changed,
- * see {@link stampRenew}. Every other line of both files stays as it is, byte for byte.
+ * so a failure in between leaves them twice instead of losing them.
+ * Its `DTSTAMP` turns now once its day changed, see {@link stampRenew}.
  *
- * @param file - Path of the `.ics` file of the event or the to-do
- * @param text - Lines of that file as read
- * @param place - Index of its first line and of the line after its last in the file
- * @param component - Its changed lines
  * @param target - Path of the `.ics` file it belongs into, `file` when it stays
  */
 function componentWrite(
@@ -3044,12 +2177,7 @@ function componentWrite(
  * Changes fields and times of the event of an entry,
  * writing only the properties that changed,
  * and moves it into another file when one is given, see {@link componentWrite}.
- * - `place`: Index of its first line and of the line after its last in the file.
  *
- * @param file - Path of the `.ics` file of the event
- * @param entry - Entry of the event as read
- * @param fields - New fields and times
- * @param target - Path of the `.ics` file the event belongs into, `file` when it stays
  * @throws {Error} - When a file lies outside the new system
  *   or does not hold the event once
  */
@@ -3075,22 +2203,11 @@ export function entryChange(
 
 /**
  * Changes the fields of a to-do, a box of the plan,
- * writing only the properties that changed:
- * its texts, its `DTSTART` when its day or its time changed,
- * its `DUE` when its deadline changed,
- * its `ESTIMATED-DURATION` when its expected duration changed;
- * a to-do that gets a deadline loses its `DTSTART`,
- * and one that loses its deadline gets one,
- * see {@link todoAppend}; moves it into another file when one is given,
- * see {@link componentWrite}.
- * - `place`: Index of its first line and of the line after its last in the file.
- * - `start`: Its new start in the form of {@link Entry},
- *   its day without time, else its instant.
+ * writing only the properties that changed.
+ * A to-do that gets a deadline loses its `DTSTART`, and one that loses its deadline
+ * gets one, see {@link todoAppend}.
+ * Moves it into another file when one is given, see {@link componentWrite}.
  *
- * @param file - Path of the `.ics` file of the to-do
- * @param entry - Entry of the to-do as read
- * @param fields - New fields
- * @param target - Path of the `.ics` file the to-do belongs into, `file` when it stays
  * @throws {Error} - When a file lies outside the new system
  *   or does not hold the to-do once
  */
@@ -3127,13 +2244,8 @@ export function todoChange(
 }
 
 /**
- * Makes the `X-GROUP` of a group of a course, its name,
- * with the parameter `X-PINNED=TRUE` while it is the group I pinned,
- * like `X-GROUP;X-PINNED=TRUE:06`, none while not, see `pinPut` in `course.ts`.
- *
- * @param group - The group, like `06`
- * @param pinned - Whether it is the group I pinned
- * @returns The property
+ * Makes the `X-GROUP` of a group of a course, with `X-PINNED=TRUE`
+ * while it is the group I pinned, see `pinPut` in `course.ts`.
  */
 export function groupPropertyOf(group: string, pinned: boolean): ICAL.Property {
     const property: ICAL.Property = new ICAL.Property("x-group");
@@ -3142,14 +2254,7 @@ export function groupPropertyOf(group: string, pinned: boolean): ICAL.Property {
     return property;
 }
 
-/**
- * Reads an `X-ROUND`, see {@link RoundMark};
- * a parameter of one value reads as a list of one.
- * - `listOf`: The values of a parameter, none for none.
- *
- * @param property - The `X-ROUND`
- * @returns Its line
- */
+/** Reads an `X-ROUND`, a parameter of one value as a list of one. */
 function roundMarkOf(property: ICAL.Property): RoundMark {
     const listOf: (name: string) => string[] = (name: string): string[] => {
         const value: unknown = property.getParameter(name);
@@ -3172,12 +2277,7 @@ function roundMarkOf(property: ICAL.Property): RoundMark {
     };
 }
 
-/**
- * Makes an `X-ROUND`, see {@link RoundMark}, each parameter only when it holds something.
- *
- * @param mark - Its line
- * @returns The property
- */
+/** Makes an `X-ROUND`, each parameter only when it holds something. */
 export function roundPropertyOf(mark: RoundMark): ICAL.Property {
     const property: ICAL.Property = new ICAL.Property("x-round");
     property.setValue(mark.section);
@@ -3195,15 +2295,8 @@ export function roundPropertyOf(mark: RoundMark): ICAL.Property {
  * Puts new values into properties of the event or to-do with an identifier,
  * replacing all old lines of each,
  * like the end, the `X-CHAPTER`s and the `X-ROUND`s of a skill entry
- * that goes on in a round;
- * a date goes in Berlin time, a link as `ATTACH`, see {@link Link}.
- * Every other line of the file stays as it is, byte for byte.
+ * that goes on in a round, a date in Berlin time.
  *
- * @param file - Path of the `.ics` file
- * @param id - Identifier of the event or to-do
- * @param properties - Properties, each its name with its new values,
- *   like `["x-chapter", ["01_StatisticsFoundations", …]]`, a property built already,
- *   like an `X-GROUP` with its parameter, see {@link groupPropertyOf}, as it is
  * @throws {Error} - When the file lies outside the new system
  *   or does not hold the event once
  */
@@ -3234,12 +2327,9 @@ export function propertiesPut(
 
 /**
  * Sets the `DTSTAMP` of an event or a to-do to now, as if it got its day now,
- * see `written` of {@link Entry}, like a box of a day over taken back to open,
+ * like a box of a day over taken back to open,
  * which so stays on its day, missed, see `overKeep` in `boxes.ts`.
- * Every other line of the file stays as it is.
  *
- * @param file - Path of the `.ics` file
- * @param id - Identifier of the to-do or the event
  * @throws {Error} - When the file lies outside the new system
  *   or does not hold the to-do or the event once
  */
@@ -3254,11 +2344,7 @@ export function stampPut(file: string, id: string): void {
 
 /**
  * Sets the summary of a to-do or an event with its link.
- * Every other line of the file stays as it is, byte for byte.
  *
- * @param file - Path of the `.ics` file
- * @param id - Identifier of the to-do or the event
- * @param fields - Text fields with its summary and the link of it
  * @throws {Error} - When the file lies outside the new system
  *   or does not hold the to-do or the event once
  */
@@ -3275,12 +2361,8 @@ export function titlePut(file: string, id: string, fields: EntryTexts): void {
  * Sets the state of a box of the plan, its `STATUS`, `COMPLETED` for a done one,
  * without the moment it was done, the `COMPLETED` line iCalendar offers for it,
  * since the log entry written from the box holds its real time.
- * Every other line of the file stays as it is, byte for byte.
  *
- * @param file - Path of the `.ics` file
- * @param id - Identifier of the to-do or the event
- * @param status - New `STATUS`, like `CANCELLED`, empty to take it out,
- *   as for an event of the plan that is open again
+ * @param status - New `STATUS`, empty to take it out
  * @throws {Error} - When the file lies outside the new system
  *   or does not hold the to-do or the event once
  */
@@ -3296,25 +2378,13 @@ export function statusPut(file: string, id: string, status: string): void {
 /**
  * Notes one more push of a box to a later day, before its start and length change,
  * after its `X-PUSHED`s from before, which stay as they are:
- * its start and its length as they stood, its start as its `DTSTART` holds it,
+ * its start as its `DTSTART` holds it,
  * its length as the parameter `X-ESTIMATED-DURATION`,
  * named and written as the `ESTIMATED-DURATION` of a to-do, which it is,
- * or the time between start and end of an event, like
- * `X-PUSHED;TZID=Europe/Berlin;X-ESTIMATED-DURATION=PT3H15M;
- * VALUE=DATE-TIME:20261016T150000`,
- * and for a box without time `X-PUSHED;X-ESTIMATED-DURATION=PT1H15M;VALUE=DATE:20261013`,
- * without `X-ESTIMATED-DURATION` for one without length.
+ * or the time between start and end of an event.
  * `VALUE` says it is a time or a date,
  * since iCalendar reads a property of my own as text without it.
- * Every other line of the file stays as it is, byte for byte.
- * - `before`: The `X-PUSHED`s it has.
- * - `minutes`: Its length in minutes, `null` for none.
- * - `pushed`: The new `X-PUSHED`.
- * - {@link ICAL.parse}: Reads the lines of the box into the form `ical.js` reads.
  *
- * @param file - Path of the `.ics` file
- * @param id - Identifier of the to-do or the event
- * @param entry - The box as it stands before the push
  * @throws {Error} - When the file lies outside the new system
  *   or does not hold the to-do or the event once
  */
@@ -3343,10 +2413,7 @@ export function pushAdd(file: string, id: string, entry: Entry): void {
 
 /**
  * Removes the event or to-do with an identifier from an `.ics` file.
- * Every other line of the file stays as it is, byte for byte.
  *
- * @param file - Path of the `.ics` file
- * @param id - Identifier of the event or to-do
  * @throws {Error} - When the file lies outside the new system
  *   or does not hold the event once
  */
@@ -3361,18 +2428,10 @@ export function entryRemove(file: string, id: string): void {
 /**
  * Removes a series whole from an `.ics` file, as the bin of its dialog asks,
  * see `plainRemove` in `rules.ts`:
- * every component of its `UID`, the series and every occurrence changed alone,
- * with its `RECURRENCE-ID`.
- * Every other line of the file stays as it is, byte for byte.
- * - `text`: Lines of the file.
- * - `all`: Index of the first line of each component of the series
- *   and of the line after its last,
- *   the last first, so one taken out leaves those before it where they are.
- * - `begin`: Index of the last line `BEGIN:VEVENT` or `BEGIN:VTODO` read,
- *   -1 outside a component.
+ * every component of its `UID`, the series and every occurrence changed alone.
+ * The components are taken out from the last,
+ * so one taken out leaves those before it where they are.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
  * @returns Whether the file holds no event and no to-do any more
  * @throws {Error} - When the file lies outside the new system, or holds no such series
  */
@@ -3408,24 +2467,11 @@ export function seriesRemove(file: string, uid: string): boolean {
 /**
  * Takes one day out of a series, as the bin of the dialog of one of its boxes asks,
  * see `boxDelete` in `boxes.ts`:
- * its start in the series as one more `EXDATE` of the series,
- * in the form of its `DTSTART`,
- * see {@link seriesTimeOf}, a single date of it,
- * one of its `RDATE`s, taken out of them instead,
- * see {@link seriesDatesRead}, and its component of its own, when it has one, taken out,
+ * its start as one more `EXDATE` in the form of its `DTSTART`, see {@link seriesTimeOf},
+ * or, for one of its `RDATE`s, taken out of them instead,
+ * and its component of its own, when it has one, taken out,
  * so the day shows no more and every other day of the series stays.
- * - `series`: The series in the file.
- * - `start`: The start of the day in the series.
- * - `text`: Lines of the file.
- * - `place`: Index of the first line of the series and of the line after its last.
- * - `component`: Lines of the series.
- * - `dates`: Its single dates, its `RDATE`s.
- * - `excluded`: Its `EXDATE`s as they are, and the new one.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param recurrence - Start of the day in the series,
- *   see {@link Entry}, like `2026-10-24`
  * @throws {Error} - When the file lies outside the new system,
  *   or holds no such series or day
  */
@@ -3474,19 +2520,8 @@ export function seriesDayRemove(file: string, uid: string, recurrence: string): 
 /**
  * Gives a day back to a series that left it out, its `EXDATE` at that start taken out,
  * as a session of a group marked cancelled is open again,
- * see `groupApply` in `course.ts`;
- * every other line of the file stays as it is.
- * - `series`: The series in the file, `undefined` for none.
- * - `excluded`: Its `EXDATE`s.
- * - `kept`: Those at another start.
- * - `text`: Lines of the file.
- * - `place`: Index of the first line of the series and of the line after its last.
- * - `component`: Lines of the series.
+ * see `groupApply` in `course.ts`.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param recurrence - Start of the day in the series, see {@link Entry},
- *   like `2026-11-10T09:00:00.000Z`
  * @throws {Error} - When the file lies outside the new system,
  *   or holds no such series or day left out
  */
@@ -3523,18 +2558,8 @@ export function seriesDayRestore(file: string, uid: string, recurrence: string):
  * its rule with `UNTIL` that start, in UTC for a series with times,
  * as the standard wants it beside a time zone,
  * its `EXDATE`s after it and every occurrence of it changed alone after it taken out,
- * so nothing of it stays after its end; every other line of the file stays as it is.
- * - `series`: The series in the file, `undefined` for none.
- * - `end`: The start it ends at, `undefined` when the series has none such.
- * - `rule`: Its rule ending there.
- * - `text`: Lines of the file.
- * - `place`: Index of the first line of the series and of the line after its last.
- * - `component`: Lines of the series.
+ * so nothing of it stays after its end.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param last - Start of its last day in the series, see {@link Entry},
- *   like `2026-10-20T08:00:00.000Z`
  * @throws {Error} - When the file lies outside the new system,
  *   or holds no such series or start
  */
@@ -3587,11 +2612,8 @@ export function seriesCut(file: string, uid: string, last: string): void {
 }
 
 /**
- * Gives the single dates of a series besides its rule, its `RDATE`s,
- * each value of each line, the earliest first;
- * a period, `VALUE=PERIOD`, left out, since `ical.js` cannot give its occurrence.
- *
- * @returns The dates, as days or times
+ * Gives the single dates of a series besides its rule, its `RDATE`s, the earliest first.
+ * A period, `VALUE=PERIOD`, is left out, since `ical.js` cannot give its occurrence.
  */
 function seriesDatesRead(series: ICAL.Event): ICAL.Time[] {
     return series.component
@@ -3602,15 +2624,8 @@ function seriesDatesRead(series: ICAL.Event): ICAL.Time[] {
 }
 
 /**
- * Gives the single dates of a series of calendar sources besides its rule, its `RDATE`s,
- * see {@link seriesDatesRead}, like the extras of a plain series, see `rules.ts`.
- * - `found`: Its file, its first occurrence and its rule, `undefined` for none.
- * - `series`: The series in its file.
- *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param uid - The `UID` of the series
- * @returns The starts in the form of {@link Entry},
- *   like `2026-11-14` or `2026-11-14T09:00:00.000Z`, none for no series
+ * Gives the single dates of a series of calendar sources, see {@link seriesDatesRead},
+ * like the extras of a plain series, see `rules.ts`.
  */
 export function seriesDatesOf(sources: CalendarSource[], uid: string): string[] {
     const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(sources, uid);
@@ -3625,18 +2640,9 @@ export function seriesDatesOf(sources: CalendarSource[], uid: string): string[] 
 
 /**
  * Writes the single dates of a series besides its rule, its `RDATE`s, one line each,
- * in the form of its `DTSTART`:
- * a day for a series of days, like `RDATE;VALUE=DATE:20261114`, else a time in Berlin
- * time, like `RDATE;TZID=Europe/Berlin:20261114T100000`; none takes them all out.
- * Every other line stays as it is.
- * - `text`: Lines of the file.
- * - `place`: Index of the first line of the series and of the line after its last.
- * - `component`: Lines of the series.
+ * in the form of its `DTSTART`, a day or a time in Berlin time.
+ * None takes them all out.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param starts - The starts in the form of {@link Entry},
- *   like `2026-11-14` or `2026-11-14T09:00:00.000Z`
  * @throws {Error} - When the file lies outside the new system,
  *   or does not hold the series once
  */
@@ -3659,20 +2665,12 @@ export function seriesDatesPut(file: string, uid: string, starts: string[]): voi
 }
 
 /**
- * Moves one day of a series changed alone,
- * its component of its own with its `RECURRENCE-ID`,
+ * Moves one day of a series changed alone, its component of its own,
  * to another series, as a plain series going on from today takes its extras along,
  * see `plainApply` in `rules.ts`: its lines with the `UID` of that series, into its file,
- * then taken out of its own;
- * its `RECURRENCE-ID` stays, the start of the same single date in the other series.
- * - `text`: Lines of the file.
- * - `place`: Index of the first line of the day and of the line after its last.
- * - `own`: Its lines with the other `UID`.
+ * then taken out of its own.
+ * Its `RECURRENCE-ID` stays, the start of the same single date in the other series.
  *
- * @param file - Path of the `.ics` file of the day
- * @param id - Its identifier, like `037dba76…@nomsystem#2026-11-14T09:00:00.000Z`
- * @param uid - The `UID` of the other series
- * @param target - Path of the `.ics` file of the other series
  * @throws {Error} - When a file lies outside the new system,
  *   or does not hold the day once
  */
@@ -3699,19 +2697,10 @@ export function occurrenceMove(
 }
 
 /**
- * Finds a series of calendar sources by its `UID`,
- * like my sleep of every night, see `rules.ts`:
- * its file, its first occurrence as an {@link Entry}, see {@link entryOf},
+ * Finds a series of calendar sources by its `UID`, see `rules.ts`:
+ * its file, its first occurrence as an {@link Entry},
  * which holds what the series is, and its rule.
- * - `series`: The series in a file, `undefined` for none.
- * - `rule`: Its `RRULE`, `undefined` for a series without one,
- *   like one of `RDATE`s alone.
- *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param uid - The `UID` of the series,
- *   like `037dba76-43d3-4e42-b85d-8e39c5ab8478@nomsystem`
- * @returns Path of its `.ics` file, its first occurrence and its rule,
- *   `undefined` when no file holds such a series
+ * A series without `RRULE`, like one of `RDATE`s alone, counts as none.
  */
 export function seriesLookup(
     sources: CalendarSource[],
@@ -3731,26 +2720,14 @@ export function seriesLookup(
 /**
  * Writes a to-do that repeats, a series of the plan, as its dialog changes it whole,
  * see `rules.ts`: its `DTSTART`, its `ESTIMATED-DURATION` and its `RRULE`,
- * and its texts but its note, see {@link textsOf}, with who I am with;
- * every occurrence changed alone, with its `RECURRENCE-ID`, takes the same texts,
+ * and its texts but its note, with who I am with.
+ * Every occurrence changed alone takes the same texts,
  * so a new summary or place of the series holds on every day,
  * its own times and its own note kept;
  * one left with nothing of its own goes, see {@link occurrencesTidy}.
- * Lines in the fixed order, see {@link linesOrdered};
- * every other line of the file stays as it is.
- * - `text`: Lines of the file.
- * - `put`: Writes the texts into the lines of a component,
- *   of the series also its times and its rule.
- * - `places`: Index of the line `BEGIN:VTODO` of each component of the series
- *   and of the line after its end, the last first,
- *   so one written anew leaves those before it where they are.
- * - `begin`: Index of the last line `BEGIN:VEVENT`
- *   or `BEGIN:VTODO` read, -1 before the first.
+ * The components are written from the last,
+ * so one written anew leaves those before it where they are.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param fields - Its fields, its day that of its first occurrence
- * @param rule - Its rule, like `FREQ=WEEKLY;BYDAY=MO,TH;UNTIL=20270131`
  * @throws {Error} - When the file lies outside the new system,
  *   or holds no such series once
  */
@@ -3811,26 +2788,13 @@ export function seriesWrite(
 
 /**
  * Puts a property into a series of the plan alone,
- * its occurrences changed alone left as they are,
- * lines in the fixed order, see {@link linesOrdered};
- * every other line of the file stays as it is.
+ * its occurrences changed alone left as they are.
  * Splits a series from a day on, as its dialog asks for a change from today on,
- * see `plainApply` in `rules.ts`: the series ends the day before, its rule with `UNTIL`,
- * see {@link ownPropertyOf}, its texts
- * and every occurrence changed alone staying as they are;
+ * see `plainApply` in `rules.ts`: the series ends the day before, see {@link seriesEnd},
  * and each new series that goes on from that day points back to it as its sibling,
- * `RELATED-TO;RELTYPE=SIBLING:<UID>`,
- * the standard parameter that tells it apart from the `RELATED-TO` of a log entry,
- * which points to the box it was logged from,
- * see {@link relatedOf} and {@link plannedOf}.
- * - `text`: Lines of the file.
- * - `place`: Index of the line `BEGIN:VTODO` of the series and of the line after its end.
- * - `series`: Its lines.
+ * see {@link seriesSiblingPut}, the standard parameter that tells it apart
+ * from the `RELATED-TO` of a log entry, see {@link relatedOf}.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param property - The property, its rule, see {@link seriesEnd}, or its sibling,
- *   see {@link seriesSiblingPut}
  * @throws {Error} - When the file lies outside the new system,
  *   or does not hold the series once
  */
@@ -3848,9 +2812,6 @@ function seriesPut(file: string, uid: string, property: ICAL.Property): void {
  * Ends a series of the plan, its rule with `UNTIL` put into it alone,
  * see {@link seriesPut}.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param rule - Its rule ending the day before, like `FREQ=DAILY;UNTIL=20261023`
  * @throws {Error} - When the file lies outside the new system,
  *   or does not hold the series once
  */
@@ -3861,11 +2822,7 @@ export function seriesEnd(file: string, uid: string, rule: string): void {
 /**
  * Points a series of the plan to the series it goes on from,
  * `RELATED-TO;RELTYPE=SIBLING:<UID>`, see {@link seriesPut}.
- * - `link`: The property.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param sibling - The `UID` of the series it goes on from
  * @throws {Error} - When the file lies outside the new system,
  *   or does not hold the series once
  */
@@ -3878,17 +2835,10 @@ export function seriesSiblingPut(file: string, uid: string, sibling: string): vo
 /**
  * Finds the parts of a plain series, see `plainRead` in `rules.ts`:
  * a series whose weekdays have other times or lengths is one to-do per time,
- * all of them with the same `X-SERIES`, like `X-SERIES:5f0c…`,
- * since a rule has one time for all its days;
+ * all of them with the same `X-SERIES`, since a rule has one time for all its days;
  * a series of one time has no `X-SERIES` and is its one part.
- * - `masters`: Every series of the sources.
- * - `own`: The series of the `UID`, `undefined` for none.
- * - `key`: Its `X-SERIES`, empty for none.
  *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param uid - The `UID` of one of its parts
- * @returns Its `X-SERIES`, empty for none,
- *   and the `UID`s of its parts, the one of the `UID` among them, none for no such series
+ * @returns Its `X-SERIES`, empty for none, and the `UID`s of its parts
  */
 export function seriesPartsOf(
     sources: CalendarSource[],
@@ -3918,18 +2868,11 @@ export function seriesPartsOf(
 }
 
 /**
- * Finds every series of calendar sources one series goes on from or goes on as,
- * see {@link seriesSiblingPut}:
+ * Finds every series of calendar sources one series goes on from or goes on as:
  * the series itself and, link by link,
  * every series its `RELATED-TO;RELTYPE=SIBLING` names or that names it,
  * so a summary changed renames them all, see `plainApply` in `rules.ts`.
- * - `masters`: Every series of the sources with its file.
- * - `linked`: Gives the `UID`s a series names as its siblings.
- * - `found`: The series found so far, by `UID`, with its file.
- * - `waiting`: The `UID`s whose links are still to follow.
  *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param uid - The `UID` of a series
  * @returns Each series of the chain, its file and its `UID`, the series itself first
  */
 export function seriesChainOf(
@@ -3979,19 +2922,8 @@ export function seriesChainOf(
 /**
  * Writes the summary of a series into every component of its `UID`,
  * the series and every day of it changed alone, past ones too,
- * as a summary changed renames a series whole, see `plainApply` in `rules.ts`:
- * its `SUMMARY` with its link, see {@link textPropertyOf};
- * every other line stays as it is.
- * - `text`: Lines of the file.
- * - `summary`: The `SUMMARY` to write.
- * - `all`: Index of the first line of each component of the series
- *   and of the line after its last, the last first.
- * - `begin`: Index of the last line `BEGIN:VEVENT` or `BEGIN:VTODO` read,
- *   -1 outside a component.
+ * as a summary changed renames a series whole, see `plainApply` in `rules.ts`.
  *
- * @param file - Path of the `.ics` file of the series
- * @param uid - The `UID` of the series
- * @param fields - Text fields with its summary and the link of it
  * @throws {Error} - When the file lies outside the new system
  */
 export function seriesTitlePut(file: string, uid: string, fields: EntryTexts): void {
@@ -4025,13 +2957,7 @@ export function seriesTitlePut(file: string, uid: string, fields: EntryTexts): v
  * Gives the address a name has while nobody typed a real one, as the page gives it,
  * see `standardAddressOf` in `src/day/entries.ts`:
  * the name in small letters, umlauts written out and accents plainly,
- * every other character but a–z and 0–9 a dot, never two in a row and none at either end,
- * `Vorname` first, then `@invalid`.
- * - `parts`: `Nachname` and `Vorname` of a name written so, one part for a single name.
- * - `local`: The part before `@`.
- *
- * @param name - Name, like `Cuzic, Mihovil`
- * @returns Address, like `mihovil.cuzic@invalid`
+ * every other character but a–z and 0–9 a dot, `Vorname` first, then `@invalid`.
  */
 function invalidAddressOf(name: string): string {
     const parts: string[] = name.split(", ");
@@ -4053,30 +2979,11 @@ function invalidAddressOf(name: string): string {
  * see `personRename` in `persons.ts`:
  * each `ATTENDEE` whose `CN` is the old name takes the new name and,
  * while the person has a mail, that mail, else the address it had,
- * one that never works made anew for the new name, see {@link invalidAddressOf};
- * a person it names twice so, once moved to the name of another, stays once;
- * the lines of its event or to-do go into the fixed order, see {@link linesOrdered}.
- * Reads every file and works out
- * each of its lines first, and writes only then, as {@link placeLinesRename} does.
- * - `changes`: Each file to write with its lines.
- * - `count`: How many lines change.
- * - `text`: Lines of a file.
- * - `places`: Index of the line `BEGIN:VEVENT` or `BEGIN:VTODO` of each event
- *   and to-do of a file and of the line after its end, the last first.
- * - `begin`: Index of the last line `BEGIN:VEVENT`
- *   or `BEGIN:VTODO` read, -1 before the first.
- * - `named`: How many lines changed before the file.
- * - `component`: Lines of an event or a to-do.
- * - `unfolded`: Its lines, a folded property as one line.
- * - `people`: Its `ATTENDEE`s, each read as a property.
- * - `renamed`: Whether one of them is the person.
- * - `written`: Its `ATTENDEE`s as written, the person renamed.
- * - `address`: The address the person had.
+ * one that never works made anew for the new name, see {@link invalidAddressOf}.
+ * A person it names twice so, once moved to the name of another, stays once.
+ * Reads every file and works out each of its lines first, and writes only then,
+ * as {@link placeLinesRename} does.
  *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param old - Old name, like `Cuzic, Mihovil`
- * @param name - New name
- * @param mail - Its mail, like `mihovil.cuzic@tum.de`, empty for none
  * @param dry - Whether only to count the lines, writing nothing
  * @returns How many lines change
  * @throws {Error} - When a file to write lies outside the new system
@@ -4167,14 +3074,8 @@ export function attendeesRename(
 }
 
 /**
- * A param changed by the pencil of a value,
- * as the page sends it, see {@link paramRename}.
- *
- * - `category`: Category of the value, like `Body`.
- * - `value`: The value without param, like `Caring`.
- * - `old`: Its param as it was, like `Shower`.
- * - `name`: Its new param, like `Dusche`.
- * - `dry`: Whether only to count the lines, writing nothing.
+ * A param changed by the pencil of a value, as the page sends it,
+ * see {@link paramRename}.
  */
 export type ParamRenamed = {
     category: string;
@@ -4186,24 +3087,13 @@ export type ParamRenamed = {
 
 /**
  * Writes a param anew in every event and to-do of its category
- * that gives it to its value,
- * as the pencil of a value sends it, see `paramsRename` in `src/day/categories.ts`,
- * like `Caring (Dusche)` for every `Caring (Shower)`,
- * alone or among the values of a summary;
- * the same param of another value stays, since each value has its own list of params,
+ * that gives it to its value, as the pencil of a value sends it,
+ * see `paramsRename` in `src/day/categories.ts`,
+ * alone or among the values of a summary.
+ * The same param of another value stays, since each value has its own list of params,
  * see `paramsOf` in `categories.ts`.
- * Reads every file and works out each of its lines first, and writes only then,
- * as {@link attendeesRename} does.
- * - `from`, `to`: The value with its param as it was and with the new one.
- * - `changes`: Each file to write with its lines.
- * - `count`: How many lines change.
- * - `text`: Lines of a file.
- * - `named`: How many lines changed before the file.
- * - `property`: A line `SUMMARY` read.
- * - `summary`: Its text.
- * - `written`: Its text with the param changed.
+ * Reads every file and works out each of its lines first, and writes only then.
  *
- * @param sent - The param, see {@link ParamRenamed}
  * @returns How many lines change
  * @throws {Error} - When the new param is none or would part the value,
  *   or a file to write lies outside the new system
@@ -4253,42 +3143,18 @@ export function paramRename(sent: ParamRenamed): number {
 /**
  * Writes a place anew in every event and to-do of calendar sources that names it,
  * see `placeRename` in `places.ts`:
- * each `LOCATION` and each `X-FROM`, where a way starts,
- * whose name, the part of its line before the first comma,
- * see `labelOf` in `places.ts`, is the old name takes the line of the place,
- * a `LOCATION` with its link as `ALTREP`, as {@link textPropertyOf} writes them,
- * and the lines of its event or to-do go into the fixed order, see {@link linesOrdered};
- * a line written so already, and every other line of every file,
- * stays as it is, byte for byte.
+ * each `LOCATION` and each `X-FROM` whose name, see `labelOf` in `places.ts`,
+ * is the old name takes the line of the place,
+ * a `LOCATION` with its link as `ALTREP`, as {@link textPropertyOf} writes them.
+ * A line written so already stays as it is.
  * Reads every file and works out each of its lines first, and writes only then,
  * so a line that cannot be read
  * or a file outside the new system stops it before anything is written.
- * - `changes`: Each file to write with its lines.
- * - `count`: How many lines change.
- * - `text`: Lines of a file.
- * - `places`: Index of the line `BEGIN:VEVENT` or `BEGIN:VTODO` of each event
- *   and to-do of a file and of the line after its end, the last first,
- *   so one written anew leaves those before it where they are.
- * - `begin`: Index of the last line `BEGIN:VEVENT`
- *   or `BEGIN:VTODO` read, -1 before the first.
- * - `named`: How many lines changed before the file.
- * - `component`: Lines of an event or a to-do.
- * - `found`: How many lines changed before the event or the to-do.
- * - `line`: Its `LOCATION` or `X-FROM` as one line, unfolded,
- *   see {@link unfoldedOf}, empty for none.
- * - `value`: Its place as written, without the `\` before a comma,
- *   like `Home Munich, Burg-Eltz-Weg, …`.
- * - `written`: The property written anew.
- * - {@link ICAL.Property.fromString}: Reads one line of a property.
+ * The components are written from the last,
+ * so one written anew leaves those before it where they are.
  *
- * @param sources - Calendars, each the files of a folder with a name ending
- * @param old - Name of the place, like `5610.01.011 (Seminarraum (Inf. 18/19)`
- * @param place - The line it takes, see `lineOf` in `places.ts`, like
- *   `5610.01.011 (Seminarraum (Inf. 18/19)), Boltzmannstraße 3, 85748,
- *   Garching bei München, Deutschland`
- * @param link - The link a `LOCATION` takes,
- *   like `https://nav.tum.de/room/5610.01.011`, empty for none;
- *   an `X-FROM` has none
+ * @param place - The line it takes, see `lineOf` in `places.ts`
+ * @param link - The link a `LOCATION` takes, empty for none, an `X-FROM` has none
  * @param dry - Whether only to count the lines, writing nothing
  * @returns How many lines change
  * @throws {Error} - When a file to write lies outside the new system,

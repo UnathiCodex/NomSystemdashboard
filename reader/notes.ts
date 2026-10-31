@@ -3,35 +3,22 @@
  *
  * Reads my modules for the scripts view, read only but for a folder a click makes,
  * see {@link folderMake}, and the folder of a new module, see {@link moduleMake}:
- * every module with its chapters and notes for the menu,
- * those of the semester first, see {@link menuRead},
- * the modules of the semester for their tasks,
- * see `skill.ts`, a note with the files its links lead to,
- * single files,
- * like the images of a note, a file to send piece by piece, like a PDF,
- * and a folder with its folders and files, see {@link folderRead};
- * for the skill entries of the day,
- * every module folder with its chapters and the university's documents in it;
- * for the course of a module, the folders of its material of a semester,
- * also those not there yet, see `course.ts`.
+ * every module with its chapters and notes for the menu, see {@link menuRead},
+ * the modules of the semester for their tasks, see `skill.ts`,
+ * a note with the files its links lead to, single files, and a folder,
+ * see {@link folderRead}.
+ * For the skill entries of the day it reads every module folder with its chapters
+ * and the university's documents in it,
+ * for the course of a module the folders of its material of a semester, see `course.ts`.
  * Each module is a vault of its own, as in Obsidian,
  * so a link leads to a file of the same module.
- * A note of any module can be read, also one the menu does not list,
- * like one outside the chapter folders.
- * Paths come and go with `/` from `NomSkillingmodules`,
- * like `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/Tangens.svg`.
+ * A note of any module can be read, also one the menu does not list.
+ * Paths come and go with `/` from `NomSkillingmodules`.
  * Hidden files and folders, like `.obsidian`, stay out, as in Obsidian.
  * A missing folder counts as empty,
  * like a module of the semester whose folder is not made yet,
- * or `NomSkillingmodules` itself;
- * a missing note or file is an error, and so is a missing folder to show.
- *
- * - `node:fs`: Reads files and folders on the disk, streams a file and makes a folder.
- * - `node:path`: Builds file paths, `posix` with `/` for paths inside the modules.
- * - `./sources.ts`: Names the folder of my modules for the scripts view,
- *   the overview of my modules, `Modules.md`, and the projects of the semester.
- * - `./calendar.ts`, `./categories.ts`:
- *   Give the day of today in Berlin time and its semester, for the menu.
+ * or `NomSkillingmodules` itself.
+ * A missing note or file is an error, and so is a missing folder to show.
  */
 
 import {
@@ -53,9 +40,6 @@ import type { Dirent, ReadStream } from "node:fs";
 
 /**
  * A note of a chapter, as the menu lists it.
- *
- * - `name`: Name of the file, like `01_01_EstimatorConfidenceInterval.md`.
- * - `path`: Path, see the top of this file.
  */
 export type NoteEntry = {
     name: string;
@@ -63,10 +47,7 @@ export type NoteEntry = {
 };
 
 /**
- * A chapter of a module with its notes.
- *
- * - `title`: Its name, the name of its folder as it is, like `01_RegressionAnalysis`.
- * - `notes`: Its notes, sorted as Obsidian's file explorer does.
+ * A chapter of a module with its notes, sorted as Obsidian's file explorer does.
  */
 export type Chapter = {
     title: string;
@@ -74,12 +55,7 @@ export type Chapter = {
 };
 
 /**
- * A module with its chapters.
- *
- * - `name`: Name of its folder, like `IN2028_BusinessAnalyticsMachineLearning`.
- * - `title`: Its name, the name of its folder as it is,
- *   like `IN2028_BusinessAnalyticsMachineLearning`.
- * - `chapters`: Its chapters that hold notes, in the order of their folders.
+ * A module with its chapters that hold notes, its `title` the name of its folder.
  */
 export type NotesModule = {
     name: string;
@@ -88,12 +64,10 @@ export type NotesModule = {
 };
 
 /**
- * A module as the menu of the scripts view lists it:
- * with its chapters, see {@link NotesModule},
- * and the semester it stands under there, see {@link menuRead}.
+ * A module as the menu of the scripts view lists it, see {@link menuRead}.
  *
  * - `semester`: For a module of the semester the semester of today,
- *   like `2026W`, else the last I took it in, like `2026S`, empty for none.
+ *   else the last I took it in, empty for none.
  */
 export type MenuModule = NotesModule & {
     semester: string;
@@ -102,11 +76,7 @@ export type MenuModule = NotesModule & {
 /**
  * A note with the files its links lead to.
  *
- * - `path`: Path of the note, see the top of this file.
- * - `text`: Markdown text of the note.
- * - `links`: For each link of the note as written, like `05_06_EulerTrigonometrie` of
- *   `[[05_06_EulerTrigonometrie#05.06. Definition. Eulersche Formel|Eulersche Formel]]`
- *   or `./img/Singleton.png` of `![Singleton](./img/Singleton.png)`:
+ * - `links`: For each link of the note as written,
  *   path of the file it leads to, `null` when it leads nowhere.
  */
 export type LinkedNote = {
@@ -117,9 +87,6 @@ export type LinkedNote = {
 
 /**
  * A file with its content type, as the browser gets it.
- *
- * - `type`: Content type, like `image/svg+xml`.
- * - `content`: Bytes of the file.
  */
 export type NotesFile = {
     type: string;
@@ -129,9 +96,6 @@ export type NotesFile = {
 /**
  * A file with its content type,
  * as the browser gets it piece by piece, see {@link fileOpen}.
- *
- * - `type`: Content type, like `application/pdf`.
- * - `content`: Bytes of the file, read from the disk as they are sent.
  */
 export type NotesStream = {
     type: string;
@@ -140,9 +104,6 @@ export type NotesStream = {
 
 /**
  * What a folder of my modules holds, as its view shows it, see {@link folderRead}.
- *
- * - `folders`: Names of its folders, like `TUM_2025W`.
- * - `files`: Names of its files, like `04_LogisticPoissonRegression.pdf`.
  */
 export type NotesFolder = {
     folders: string[];
@@ -152,19 +113,12 @@ export type NotesFolder = {
 /**
  * What a module folder holds besides its notes, for a skill entry of the day.
  *
- * - `folder`: The module folder from `NomWorkspace`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
- *   empty for a project.
- * - `chapters`: Names of its chapter folders, also of the empty ones,
- *   like `05_DecisionTreesEnsembles`, in order.
+ * - `folder`: The module folder from `NomWorkspace`, empty for a project.
+ * - `chapters`: Names of its chapter folders, also of the empty ones.
  * - `documents`: Its files outside the chapter folders, the university's material,
- *   and the notes of its chapters, by their paths from the module folder,
- *   like `VO_UniversityLectureLessons/TUM_2025W/04_….pdf`
- *   or `01_RegressionAnalysis/01_01_SampleMeanStandardError.md`, in order.
- * - `materials`: The folder of the material of each type, see {@link materialFoldersOf},
- *   like `VO_UniversityLectureLessons` for `VO`, none for a project.
+ *   and the notes of its chapters, by their paths from the module folder.
+ * - `materials`: The folder of the material of each type, see {@link materialFoldersOf}.
  * - `inner`: The folders of a semester in those folders, also empty ones,
- *   by their paths from the module folder, like `VO_UniversityLectureLessons/TUM_2026W`,
  *   which the link of an entry of that semester goes on into.
  */
 export type ModuleContents = {
@@ -177,13 +131,8 @@ export type ModuleContents = {
 
 /**
  * The folder of the material of a type of one semester in a module,
- * for the course of the module,
- * see {@link semesterFoldersRead}.
- *
- * - `path`: Its path from the module folder,
- *   like `VO_UniversityLectureLessons/TUM_2026W`.
- * - `exists`: Whether it is there;
- *   one that is not a click on it makes, see {@link folderMake}.
+ * for the course of the module, see {@link semesterFoldersRead}.
+ * One that does not exist a click on it makes, see {@link folderMake}.
  */
 export type MaterialFolder = {
     path: string;
@@ -211,8 +160,8 @@ const external: RegExp = /^[a-z][a-z\d+.-]*:/i;
 
 /**
  * Content types of the files the scripts view shows or opens,
- * and of the files skill entries link,
- * by their ending; any other file comes as bytes.
+ * and of the files skill entries link, by their ending.
+ * Any other file comes as bytes.
  */
 const types: { [ending: string]: string } = {
     ".md": "text/markdown; charset=utf-8",
@@ -241,22 +190,14 @@ const collator: Intl.Collator = new Intl.Collator(undefined, {
 const chapterFolder: RegExp = /^\d{2}_/;
 
 /**
- * Module folder, like `IN2028_BusinessAnalyticsMachineLearning`:
- * its code, capitals and then digits, and `_` first, so a folder like `_Inbox` is none.
+ * Module folder: its code, capitals and then digits, and `_` first,
+ * so a folder like `_Inbox` is none.
  */
 const moduleFolder: RegExp = /^[A-Z]+\d+_/;
 
 /**
- * The folder of the material of each type in a module,
- * by its type, as my modules name it:
- * a lecture's slides in `VO_UniversityLectureLessons`,
- * a central exercise's sheets in `ZU_UniversityCentralExercises`,
- * an exercise's in `UE_UniversityModuleExercises`,
- * a tutorial's in `TU_UniversityTutorExercises`,
- * a homework's in `HU_UniversityHomeExercises`,
- * a practical course's in `PR_UniversityPracticalExercises`
- * and the exams in `FA_UniversityModuleExaminations`;
- * the name of the folder of a type in a module that has none yet,
+ * The folder of the material of each type in a module, as my modules name it.
+ * The name of the folder of a type in a module that has none yet,
  * see {@link materialFoldersOf}.
  */
 const materialFolders: { [type: string]: string } = {
@@ -277,10 +218,6 @@ const tableHead: number = 2;
 /**
  * Builds the place of a path on the disk, inside `NomSkillingmodules`,
  * as written, without following links.
- *
- * @param path - Path like `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis`
- * @returns Place on the disk, like
- *   `…/NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis`
  */
 function placeOf(path: string): string {
     return join(notes.modules, path);
@@ -288,11 +225,8 @@ function placeOf(path: string): string {
 
 /**
  * Turns a path into the path on the disk, only when it stays inside `NomSkillingmodules`.
- * - {@link realpathSync}: Makes a path absolute and follows symbolic links,
- *   so no link leads outside.
+ * {@link realpathSync} follows symbolic links, so no link leads outside.
  *
- * @param path - Path like `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen`
- * @returns Path on the disk
  * @throws {Error} - When a part of the path starts with `.`, like `..` or `.obsidian`,
  *   when it leads outside its folder, or when nothing lies there
  */
@@ -309,11 +243,6 @@ function diskPathOf(path: string): string {
 
 /**
  * Gives the module of a path, the vault its links stay in.
- *
- * @param path - Path like
- *   `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/
- *   05_07_TrigonometrischeFunktionen.md`
- * @returns Path of its module, like `MA0902_ReelleAnalysisInformatik`
  */
 function moduleOf(path: string): string {
     return path.split("/")[0];
@@ -321,20 +250,14 @@ function moduleOf(path: string): string {
 
 /**
  * Gives the module code of a module folder, the part of its name before `_`.
- *
- * @param name - Folder name, like `IN2028_BusinessAnalyticsMachineLearning`
- * @returns Code, like `IN2028`
  */
 export function codeOf(name: string): string {
     return name.split("_")[0];
 }
 
 /**
- * Reads the entries of a folder without hidden ones, as Obsidian lists a vault;
- * a missing folder counts as empty.
- *
- * @param folder - Path of the folder, like `MA0902_ReelleAnalysisInformatik`
- * @returns Entries of the folder, none for a missing folder
+ * Reads the entries of a folder without hidden ones, as Obsidian lists a vault.
+ * A missing folder counts as empty.
  */
 function entriesRead(folder: string): Dirent[] {
     if (!existsSync(placeOf(folder))) return [];
@@ -346,9 +269,6 @@ function entriesRead(folder: string): Dirent[] {
 /**
  * Lists every file below a folder, without hidden files and folders,
  * as Obsidian lists a vault.
- *
- * @param folder - Path of the folder, like `MA0902_ReelleAnalysisInformatik`
- * @returns Paths of the files
  */
 function filesRead(folder: string): string[] {
     return entriesRead(folder).flatMap((entry: Dirent): string[] => {
@@ -358,15 +278,8 @@ function filesRead(folder: string): string[] {
 }
 
 /**
- * Lists the files the links of a note may lead to,
- * the files of its module, by their paths in it,
- * each with its path, see the top of this file.
- *
- * @param module - Path of the module of the note,
- *   like `IN2028_BusinessAnalyticsMachineLearning`
- * @returns Path of each file, like
- *   `IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2025W/…`,
- *   by its path in the module, like `VO_UniversityLectureLessons/TUM_2025W/…`
+ * Lists the files of a module the links of a note may lead to,
+ * each full path by its path in the module.
  */
 function vaultFilesRead(module: string): Map<string, string> {
     return new Map(
@@ -389,11 +302,8 @@ function vaultFilesRead(module: string): Map<string, string> {
  * - else the candidate whose path ends with the link,
  *   the note's folder first, the shortest path first.
  *
- * @param link - Link as Obsidian reads it,
- *   like `03_05_AbsoluteKonvergenz` or `./img/Singleton.png`
- * @param note - Path of the note in its module,
- *   like `05_WichtigeFunktionstypen/05_07_TrigonometrischeFunktionen.md`
- * @param files - Paths of all files in the module
+ *
+ * @param note - Path of the note in its module
  * @returns Path of the file in the module, or `null` when the link leads nowhere
  */
 function linkResolve(link: string, note: string, files: string[]): string | null {
@@ -440,9 +350,6 @@ function linkResolve(link: string, note: string, files: string[]): string | null
 /**
  * Reads a link as Obsidian does: with `%20` and the like decoded,
  * as written when it cannot be decoded.
- *
- * @param link - Link as written, like `Note%20One.md`
- * @returns Decoded link, like `Note One.md`
  */
 function linkDecode(link: string): string {
     try {
@@ -453,13 +360,7 @@ function linkDecode(link: string): string {
 }
 
 /**
- * Cuts a row of a table into its cells,
- * without the empty texts before its first `|` and after its last,
- * each without spaces at its ends.
- *
- * @param line - Row
- *   like `| [IN2028](…) | [BusinessAnalyticsMachineLearning](…) | … | 2026W | … |`
- * @returns Its cells
+ * Cuts a row of a table into its cells, each without spaces at its ends.
  */
 function cellsOf(line: string): string[] {
     return line
@@ -469,15 +370,10 @@ function cellsOf(line: string): string[] {
 }
 
 /**
- * Reads the chapters of a module with their notes: its chapter folders,
- * like `01_RegressionAnalysis`, each with its notes, the `.md` files right in it.
+ * Reads the chapters of a module with their notes, the `.md` files right in each.
  * Chapters without notes stay out, and so do the other folders,
  * like `FA_UniversityModuleExaminations` with the university's material,
  * and the other files, like images.
- *
- * @param module - Name of the module folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`
- * @returns Chapters in the order of their folders, none for a missing folder
  */
 function chaptersRead(module: string): Chapter[] {
     return entriesRead(module)
@@ -507,12 +403,8 @@ function chaptersRead(module: string): Chapter[] {
 }
 
 /**
- * Reads the modules of the semester,
- * see {@link activeModulesRead}, each with its chapters and their notes,
- * see {@link chaptersRead}, for their tasks, see `skill.ts`.
- *
- * @returns Modules in the order of the list,
- *   a module whose folder is missing without chapters
+ * Reads the modules of the semester, see {@link activeModulesRead},
+ * each with its chapters and their notes, for their tasks, see `skill.ts`.
  */
 export function modulesRead(): NotesModule[] {
     return activeModulesRead().map((module: string): NotesModule => ({
@@ -524,10 +416,8 @@ export function modulesRead(): NotesModule[] {
 
 /**
  * Lists every module folder in `NomSkillingmodules`,
- * like `IN0024_OperationsResearch`, also of the modules that are not of the semester,
+ * also of the modules that are not of the semester,
  * as Obsidian's file explorer sorts them.
- *
- * @returns Names of the module folders
  */
 export function moduleFoldersRead(): string[] {
     return entriesRead("")
@@ -543,23 +433,14 @@ export function moduleFoldersRead(): string[] {
  * Reads the semester of each module from the overview of my modules,
  * `Modules.md`, see {@link notes}:
  * of each row the folder its column `Nom` links, the last part of the link,
- * like `IN2028_BusinessAnalyticsMachineLearning` of
- * `[BusinessAnalyticsMachineLearning](../../NomSkillingmodules/
- * IN2028_BusinessAnalyticsMachineLearning)`,
  * and the newest semester its column `Attempt` names,
- * of every semester I seriously took it in, graded or not,
- * like `2026S` of `2025S, 2026S`;
- * its column `Registered (not attempt)`,
+ * of every semester I seriously took it in, graded or not.
+ * Its column `Registered (not attempt)`,
  * every semester I was registered in, stays unread.
  * Each column found by its name in the head of the table, so the columns may move.
  * A row without such a link or without a semester stays out.
- * - `rows`: The rows of the table, the head first, each cut into its cells.
- * - `head`: Names of the columns.
- * - `folder`: The folder a row links, `undefined` for none.
- * - `last`: The newest semester of a row, `undefined` for none.
  *
- * @returns The semester of each module, like `2026S`,
- *   by its folder, in the order of the rows,
+ * @returns The semester of each module by its folder, in the order of the rows,
  *   none while `Modules.md` does not exist
  */
 function semestersRead(): Map<string, string> {
@@ -588,18 +469,12 @@ function semestersRead(): Map<string, string> {
 }
 
 /**
- * Reads the modules of the semester, by their folders in `NomSkillingmodules`, like
- * `IN2028_BusinessAnalyticsMachineLearning`:
+ * Reads the modules of the semester, by their folders in `NomSkillingmodules`:
  * those whose newest `Attempt` in `Modules.md` is the semester of today in Berlin time,
- * see {@link semestersRead} and `semesterOf` in `categories.ts`,
- * also one whose folder is missing yet, in the order of the rows;
- * read anew each time, so a changed `Modules.md` changes them at once.
+ * also one whose folder is missing yet, in the order of the rows.
+ * Read anew each time, so a changed `Modules.md` changes them at once.
  * Only these have tasks, see `skill.ts`,
- * and the menu of the scripts view shows them first, in this order,
- * under the semester of today, see {@link menuRead}.
- * - `today`: The semester of today, like `2026W`.
- *
- * @returns Names of their folders, none while `Modules.md` does not exist
+ * and the menu of the scripts view shows them first, see {@link menuRead}.
  */
 export function activeModulesRead(): string[] {
     const today: string = semesterOf(berlinDateOf(new Date()));
@@ -611,19 +486,14 @@ export function activeModulesRead(): string[] {
 /**
  * Reads the skills of the semester of this reader,
  * each by its folder from `NomWorkspace`, written with `/`:
- * the modules of the semester first, see {@link activeModulesRead}, like
- * `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`, then its projects,
+ * the modules of the semester first, see {@link activeModulesRead}, then its projects,
  * see `activeProjects` in `sources.ts`.
- * The Skill picker offers them first, in this order, a module by its code,
- * the part of its folder name before `_`, like `IN2028`, a project by its folder name,
- * like `WokFlow`; the menu of the scripts view shows the modules first, and no project,
+ * The Skill picker offers them first, in this order.
+ * The menu of the scripts view shows no project,
  * since a project has no chapters and no tasks.
- * Each skill entry names the folder of its skill in its `SUMMARY`
- * and links it by this path,
- * for a type on into the folder of its material, see `skillLinkOf` in `documents.ts`.
+ * Each skill entry links the folder of its skill by this path,
+ * see `skillLinkOf` in `documents.ts`.
  * A link in a note still opens a note of any module.
- *
- * @returns Folders of the skills
  */
 export function activeSkillsRead(): string[] {
     return [
@@ -636,23 +506,12 @@ export function activeSkillsRead(): string[] {
 
 /**
  * Reads every module for the menu of the scripts view,
- * each with its chapters and their notes, see {@link chaptersRead},
- * and the semester it stands under, see {@link MenuModule}:
- * the modules of the semester, see {@link activeModulesRead},
- * also one whose folder is missing yet,
- * then every other module folder, see {@link moduleFoldersRead}, each with its semester,
- * see {@link semestersRead}.
- * In the order of the menu:
+ * each with its chapters and the semester it stands under:
  * the modules under the semester of today first, in the order of their list,
+ * also one whose folder is missing yet,
  * then those of the other semesters, the newest first,
  * then those without a semester, each group else in the order of its folders,
- * as Obsidian's file explorer sorts them,
  * since a sort keeps the order of what it ranks the same.
- * - `today`: The semester of today in Berlin time, like `2026W`,
- *   see `semesterOf` in `categories.ts`.
- * - `taken`: The semester of each module, by its folder.
- *
- * @returns Modules in the order of the menu
  */
 export function menuRead(): MenuModule[] {
     const today: string = semesterOf(berlinDateOf(new Date()));
@@ -672,27 +531,15 @@ export function menuRead(): MenuModule[] {
 }
 
 /**
- * Lists the folders of the material of a module of one semester,
- * by the type of their material,
- * for the course of the module, see `course.ts`: in each folder of material,
- * like `VO_UniversityLectureLessons`, the folder of the semester,
- * like `TUM_2026W`, also while it holds nothing yet;
- * of two of one type, like `LMU_2026W` beside `TUM_2026W`, the first by name,
- * as the tree lists them; for every other type of {@link materialFolders} the folder
- * a click on it makes, see {@link folderMake}: `TUM_` and the semester,
- * like `TUM_2026W`, in the folder of the material of the type,
- * see {@link materialFoldersOf}.
- * - `materials`: Names of the folders of material of the module, in order.
- * - `folders`: The folders found so far, by type.
- * - `type`: The type of a folder of material, like `VO` of `VO_UniversityLectureLessons`.
- * - `inner`: The folder of the semester in it, `undefined` for none.
- * - `material`: The folder of the material of a type without a folder of the semester.
+ * Lists the folders of the material of a module of one semester, by type,
+ * for the course of the module, see `course.ts`:
+ * in each folder of material the folder of the semester, also while it holds nothing yet.
+ * Of two of one type, like `LMU_2026W` beside `TUM_2026W`, the first by name,
+ * as the tree lists them.
+ * For every other type of {@link materialFolders} the folder
+ * a click on it makes, see {@link folderMake}: `TUM_` and the semester.
  *
- * @param module - Name of the module folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`
- * @param semester - Semester, like `2026W`
- * @returns Folders by type, each its path from the module folder,
- *   like `VO_UniversityLectureLessons/TUM_2026W` for `VO`, and whether it is there
+ * @returns Folders by type, each its path from the module folder, and whether it is there
  */
 export function semesterFoldersRead(
     module: string,
@@ -728,17 +575,11 @@ export function semesterFoldersRead(
 }
 
 /**
- * Gives the folder of the material of each type in a module, by its type:
+ * Gives the folder of the material of each type in a module:
  * the folder starting with the type and `_` as the module names it, the first by name,
  * else as my modules name it, see {@link materialFolders},
  * so a skill entry of a type links the folder of its material also
- * while the module has none yet,
- * see `skillLinkOf` in `documents.ts`.
- * - `materials`: Names of the folders of material of the module, in order.
- *
- * @param module - Name of the module folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`
- * @returns Folders by type, like `VO_UniversityLectureLessons` for `VO`
+ * while the module has none yet, see `skillLinkOf` in `documents.ts`.
  */
 export function materialFoldersOf(module: string): { [type: string]: string } {
     const materials: string[] = entriesRead(module)
@@ -761,12 +602,8 @@ export function materialFoldersOf(module: string): { [type: string]: string } {
 }
 
 /**
- * Finds the folder of a module in `NomSkillingmodules` by its code.
- *
- * @param code - Module code, like `IN2028`
- * @returns Name of its folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`,
- *   `undefined` when no folder has the code
+ * Finds the folder of a module in `NomSkillingmodules` by its code,
+ * `undefined` when no folder has the code.
  */
 export function moduleFolderOf(code: string): string | undefined {
     return moduleFoldersRead().find((name: string): boolean => codeOf(name) === code);
@@ -774,19 +611,8 @@ export function moduleFolderOf(code: string): string | undefined {
 
 /**
  * Reads what a module folder holds for a skill entry, see {@link ModuleContents}:
- * the chapter folders of the module,
- * and as documents every file of the module outside them,
- * like the lecture's slides, and the notes of its chapters,
- * like `01_RegressionAnalysis/01_01_SampleMeanStandardError.md`, but not their images.
- * - `chapters`: Names of the chapter folders, in order.
- * - `notes`: Paths of the notes of every chapter from the module folder.
- * - `material`: Paths of the files of the module outside its chapter folders.
- * - `inner`: Paths of the folders of a semester in the folders
- *   of its material, like `VO_…/TUM_2026W`.
- *
- * @param module - Name of the module folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`
- * @returns Chapters and documents of the module, none for a missing folder
+ * as documents every file of the module outside its chapter folders,
+ * and the notes of its chapters, but not their images.
  */
 export function moduleContentsRead(module: string): ModuleContents {
     const chapters: string[] = entriesRead(module)
@@ -834,11 +660,6 @@ export function moduleContentsRead(module: string): ModuleContents {
 /**
  * Gives the name of the chapter whose folder a path leads to,
  * like the folder an older skill entry links.
- *
- * @param path - Path of the folder of a chapter from `NomWorkspace`, like
- *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/
- *   02_LogisticPoissonRegression`
- * @returns Name like `02_LogisticPoissonRegression`
  */
 export function chapterNameOf(path: string): string {
     return path.split("/").at(-1) ?? "";
@@ -847,16 +668,7 @@ export function chapterNameOf(path: string): string {
 /**
  * Finds the files the wiki links, embeds,
  * Markdown links and images of a note lead to, see {@link linkResolve}.
- * - `note`: Path of the note in its module.
- * - `inModule`: Paths in the module of the files the links may lead to.
- * - `links`: Links of the note as written,
- *   without links out of the vault, like `https://…`.
- *
- * @param text - Text of the note
- * @param path - Path of the note
- * @param files - Files the links of the note may lead to, see {@link vaultFilesRead}
- * @returns For each link as written, path of the file it leads to,
- *   `null` when it leads nowhere
+ * Links out of the vault, like `https://…`, stay out.
  */
 function linksOf(
     text: string,
@@ -883,16 +695,10 @@ function linksOf(
 }
 
 /**
- * Reads a note with the files its wiki links, embeds,
- * Markdown links and images lead to, see {@link linksOf}:
- * within its module, see {@link vaultFilesRead}.
+ * Reads a note with the files its links lead to within its module, see {@link linksOf}.
  * Lists the files of its module once,
  * which takes up to a few hundred milliseconds in a module with code.
  *
- * @param path - Path of the note, like
- *   `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/
- *   05_07_TrigonometrischeFunktionen.md`
- * @returns Note with its links
  * @throws {Error} - When the note lies outside `NomSkillingmodules`, or is missing
  */
 export function linkedNoteRead(path: string): LinkedNote {
@@ -906,10 +712,6 @@ export function linkedNoteRead(path: string): LinkedNote {
 
 /**
  * Gives the content type of a file by its ending, see {@link types}.
- *
- * @param file - Path of the file, like `…/04_LogisticPoissonRegression.pdf`
- * @returns Content type, like `application/pdf`,
- *   `application/octet-stream` for any other ending
  */
 function contentTypeOf(file: string): string {
     return types[extname(file).toLowerCase()] ?? "application/octet-stream";
@@ -919,9 +721,6 @@ function contentTypeOf(file: string): string {
  * Reads a file of my modules with its content type,
  * like an image of a note or a PDF to open.
  *
- * @param path - Path
- *   like `MA0902_ReelleAnalysisInformatik/05_WichtigeFunktionstypen/Tangens.svg`
- * @returns File with its content type
  * @throws {Error} - When the file lies outside `NomSkillingmodules`, or is missing
  */
 export function fileRead(path: string): NotesFile {
@@ -930,15 +729,9 @@ export function fileRead(path: string): NotesFile {
 }
 
 /**
- * Opens a file of my modules with its content type
- * to send it piece by piece as it is read,
- * like a PDF of its folder, see {@link folderRead}, so a large file,
- * like a book as PDF, never lies in the reader's memory whole; read only.
+ * Opens a file of my modules with its content type to send it piece by piece,
+ * so a large file, like a book as PDF, never lies in the reader's memory whole.
  *
- * @param path - Path like
- *   `IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/
- *   TUM_2025W/01_….pdf`
- * @returns File with its content type, opened to be read
  * @throws {Error} - When the file lies outside `NomSkillingmodules`,
  *   is missing, or is a folder
  */
@@ -949,15 +742,10 @@ export function fileOpen(path: string): NotesStream {
 }
 
 /**
- * Lists a folder of my modules for its view, see `src/editor/folder.ts`:
- * its folders and its files, each by name as Obsidian's file explorer sorts them,
- * without hidden ones, as in Obsidian, and without symbolic links,
- * which are neither, so nothing leads out.
- * - `entries`: What it holds but the hidden.
+ * Lists a folder of my modules for its view, see `src/editor/folder.ts`,
+ * as Obsidian's file explorer sorts it, without hidden ones,
+ * and without symbolic links, which are neither, so nothing leads out.
  *
- * @param path - Path of the folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons`
- * @returns Its folders and files
  * @throws {Error} - When the folder lies outside `NomSkillingmodules`,
  *   is missing, or is a file
  */
@@ -979,20 +767,13 @@ export function folderRead(path: string): NotesFolder {
 
 /**
  * Makes a folder of a module of mine on a click on it,
- * like the folder of the material of a type of the semester a card of its course names,
- * see {@link semesterFoldersRead}:
- * it and the folders on the way to it that are missing, one after another,
- * only inside the folder of the module, never through a symbolic link, and nothing else;
- * nothing for a folder that is there.
- * - `parts`: Its folders from `NomSkillingmodules` on, the module first.
- * - `folder`: A folder on the way, on the disk.
+ * like the folder of the material of the semester a card of its course names:
+ * it and the missing folders on the way to it,
+ * only inside the folder of the module, never through a symbolic link, and nothing else.
  *
- * @param path - Path of the folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning/TU_UniversityTutorExercises/TUM_2026W`
  * @throws {Error} - When it lies in no folder of a module of mine,
  *   a part of it is empty or starts with `.`, like `..`,
- *   or a part on the way is no folder,
- *   like a file or a symbolic link
+ *   or a part on the way is no folder, like a file or a symbolic link
  */
 export function folderMake(path: string): void {
     const parts: string[] = path.split("/");
@@ -1017,24 +798,13 @@ export function folderMake(path: string): void {
  * of a module a written plan or log of it holds,
  * so folder and type always go together
  * and the link of every skill entry leads to a folder that is there,
- * see `linesWrite` in `calendar.ts`:
- * for each of its entries and boxes of a type with a folder of material,
- * like `TU` with its semester,
- * like `2026W`, the folder of that semester in it as the course names it,
- * see {@link semesterFoldersRead},
- * like `TU_UniversityTutorExercises/TUM_2026W`,
- * made while it is not there, see {@link folderMake};
- * nothing else, no folder renamed or removed.
+ * see `linesWrite` in `calendar.ts`.
+ * For each type with a folder of material and its semester,
+ * the folder of that semester as the course names it, see {@link semesterFoldersRead}.
+ * No folder renamed or removed.
  * A folder that cannot be made is left out, since writing the entry matters more.
- * - `made`: The folders made, each its path from `NomSkillingmodules`.
- * - `folder`: The folder of the type of that semester,
- *   `undefined` for a type without folder of material.
  *
- * @param module - Name of the module folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`
- * @param kinds - The type and semester of each entry, like `TU` and `2026W`
- * @returns The folders made,
- *   like `IN2028_BusinessAnalyticsMachineLearning/TU_UniversityTutorExercises/TUM_2026W`
+ * @returns The folders made, each its path from `NomSkillingmodules`
  */
 export function typeFoldersMake(module: string, kinds: [string, string][]): string[] {
     const made: string[] = [];
@@ -1064,12 +834,11 @@ writtenFollow((module: string, kinds: [string, string][]): void => {
 /**
  * Makes the empty folder of a new module in `NomSkillingmodules`,
  * picked new in the Skill list of an entry,
- * see `moduleFolderNameOf` in `src/day/skill.ts`, named as my module folders are:
- * its code, two to four capitals and then three to six digits, `_`,
- * and its name in CamelCase of letters and digits, like `IN2346_DeepLearning`;
- * nothing else, no row of `Modules.md` and no note.
+ * see `moduleFolderNameOf` in `src/day/skill.ts`.
+ * Named as my module folders are: its code, two to four capitals and three to six digits,
+ * `_`, and its name in CamelCase.
+ * No row of `Modules.md` and no note.
  *
- * @param folder - Name of the folder, like `IN2346_DeepLearning`
  * @throws {Error} - When the name is not named so,
  *   or a module folder has its code already
  */

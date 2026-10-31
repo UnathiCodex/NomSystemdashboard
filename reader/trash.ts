@@ -3,41 +3,26 @@
  *
  * Puts a file or a folder into the trash of the user the reader runs as,
  * never removing anything for good,
- * as the desktop does it, by the Trash specification of freedesktop.org:
- * the thing goes into `~/.local/share/Trash/files/`,
- * and beside it into `info/` a file `<name>.trashinfo`
- * with the path it had and when it went,
+ * by the Trash specification of freedesktop.org,
  * so `gio trash --restore` and a file manager can bring it back.
- * A name the trash holds already gets a number before its ending, like `Tabelle 2.tsv`.
+ * A name the trash holds already gets a number before its ending.
  * What Vu and I share and our messages go there once done, see `shared.ts` and `gate.ts`.
- *
- * - `node:fs`: Moves the thing and writes its information.
- * - `node:os`: Gives the home folder.
- * - `node:path`: Builds the paths of the trash.
  */
 
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, extname, join, resolve } from "node:path";
 
-/**
- * The trash of the user, `Trash` in `XDG_DATA_HOME`, else in `~/.local/share`.
- */
+/** The trash of the user, `Trash` in `XDG_DATA_HOME`, else in `~/.local/share`. */
 const trashRoot: string = join(
     process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"),
     "Trash",
 );
 
-/**
- * Most numbers tried for a name the trash holds already.
- */
+/** Most numbers tried for a name the trash holds already. */
 const triesMost: number = 1000;
 
-/**
- * Writes a moment in local time as the specification asks, like `2026-10-22T21:50:07`.
- *
- * @returns The moment written
- */
+/** Writes a moment in local time as the specification asks. */
 function dateOf(moment: Date): string {
     const two: (value: number) => string = (value: number): string =>
         String(value).padStart(2, "0");
@@ -49,16 +34,11 @@ function dateOf(moment: Date): string {
 }
 
 /**
- * Puts a file or a folder into the trash, see the top of this file:
+ * Puts a file or a folder into the trash:
  * first its information under a name no other thing of the trash has,
- * written only if that name is free, then the thing itself under that name;
- * the information goes again when the thing cannot move.
- * - `path`: The thing, absolute.
- * - `stem`, `ending`: Its name without its ending, and its ending, like `.md`.
- * - `name`: Its name in the trash.
- * - `info`: Its information.
+ * written only if that name is free, then the thing itself under that name.
+ * The information goes again when the thing cannot move.
  *
- * @param thing - Path of the file or folder
  * @throws {Error} - When the trash holds every name tried,
  *   or the thing cannot move, like one on another disk
  */

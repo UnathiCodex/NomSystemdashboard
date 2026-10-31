@@ -5,23 +5,11 @@
  * reads one and writes one back as I saved it.
  * The tree is `NomManageplannings` with every folder in it, also one I add later,
  * but never my old system, `NomSystemprevious`,
- * at any depth, nor a hidden file or folder,
- * like `.obsidian`, nor a symbolic link.
- * Reads and writes only the files of the tree, see `systemFiles` in `sources.ts`:
- * a Markdown file, like `NomMetainformations/Foods.md`, a daily note
- * or `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`, to edit,
- * written exactly as sent, without a diff, since only the notes of my modules keep diffs,
- * see `edit.ts`; an `.ics` file only to read.
- * Paths are written from `NomManageplannings` with `/`,
- * like `NomManagecalendar/Health/Sleep_2026_Log.ics`.
- *
- * - `node:fs`: Lists folders, reads and writes files.
- * - `node:path`: Builds file paths for the operating system.
- * - `./edit.ts`: Gives the form of a file as I saved it in the editor,
- *   merges it with a change of its file on the disk
- *   and tells the editor what that changed.
- * - `./sources.ts`: Names the tree and the folder left out of it,
- *   and tells which files the reader may write.
+ * at any depth, nor a hidden file or folder, nor a symbolic link.
+ * A Markdown file is written exactly as sent, without a diff,
+ * since only the notes of my modules keep diffs, see `edit.ts`.
+ * An `.ics` file is only read.
+ * Paths are written from `NomManageplannings` with `/`.
  */
 
 import {
@@ -40,13 +28,7 @@ import type { NoteChange, Written } from "./edit.ts";
 
 /**
  * A folder or file of the tree, as the editor shows it.
- *
- * - `name`: Its name, like `2026_10` or `Foods.md`.
- * - `path`: Its path, see the top of this file, like `NomMetainformations/Foods.md`.
- * - `folder`: Whether it is a folder.
- * - `opens`: Whether the editor opens it: a Markdown or `.ics` file, never a folder.
- * - `children`: What a folder holds, its folders first,
- *   each part by name; none for a file.
+ * - `children`: What a folder holds, its folders first, each part by name.
  */
 export type FileNode = {
     name: string;
@@ -56,61 +38,36 @@ export type FileNode = {
     children: FileNode[];
 };
 
-/**
- * A file of my new system, as the editor shows it.
- *
- * - `path`: Its path, like `NomMetainformations/Foods.md`.
- * - `text`: Its text, as it lies in the file.
- * - `editable`: Whether I may change it: a Markdown file, not an `.ics` file.
- */
+/** A file of my new system, as the editor shows it, editable when Markdown. */
 export type SystemFile = {
     path: string;
     text: string;
     editable: boolean;
 };
 
-/**
- * Endings of the files I edit: Markdown.
- */
+/** Endings of the files I edit. */
 const editEndings: string[] = [".md"];
 
-/**
- * Endings of the files the editor opens: Markdown to edit, `.ics` to read only.
- */
+/** Endings of the files the editor opens: Markdown to edit, `.ics` to read only. */
 const openEndings: string[] = [...editEndings, ".ics"];
 
 /**
  * Tells whether a part of a path is left out of the tree and never read: my old system,
  * or a hidden one, like `.obsidian` or `..`.
- *
- * @param part - Name of a folder or file, like `NomSystemprevious`
- * @returns Whether it is left out
  */
 function leftOut(part: string): boolean {
     return part === systemFiles.previous || part.startsWith(".");
 }
 
-/**
- * Tells whether the editor opens a file of the tree: it is Markdown or `.ics`.
- *
- * @param path - Path like `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`
- * @returns Whether it opens
- */
+/** Tells whether the editor opens a file of the tree. */
 function opensOf(path: string): boolean {
     return openEndings.includes(extname(path).toLowerCase());
 }
 
 /**
  * Lists a folder of the tree, its folders first,
- * then its files the editor opens, each part by name,
- * any other file and the left out ones not,
- * see {@link leftOut}; a symbolic link is neither a folder nor a file here,
- * so it is left out too.
- * - `entries`: Folders and files in it.
- *
- * @param folder - Folder on the disk, like `NomManageplannings/NomManagecalendar`
- * @param path - Its path, see the top of this file, empty for `NomManageplannings` itself
- * @returns What it holds
+ * then its files the editor opens, each part by name.
+ * A symbolic link is neither a folder nor a file here, so it is left out too.
  */
 function nodesOf(folder: string, path: string): FileNode[] {
     const entries: Dirent[] = readdirSync(folder, { withFileTypes: true })
@@ -139,11 +96,7 @@ function nodesOf(folder: string, path: string): FileNode[] {
         .filter((node: FileNode): boolean => node.folder || node.opens);
 }
 
-/**
- * Reads the tree of the editor, see the top of this file.
- *
- * @returns The folders and files in `NomManageplannings`, none while it is missing
- */
+/** Reads the tree of the editor, none while `NomManageplannings` is missing. */
 export function treeRead(): FileNode[] {
     try {
         return nodesOf(systemFiles.tree, "");
@@ -156,15 +109,9 @@ export function treeRead(): FileNode[] {
 /**
  * Turns the path of a file of my new system into its file on the disk,
  * only for a file with one of the endings that lies in the tree and exists.
- * - {@link realpathSync}: Makes a path absolute and follows symbolic links,
- *   so no link leads outside the tree or into a part left out of it.
- * - `parts`: The parts of the path as sent.
- * - `file`: The file on the disk.
- * - `root`: The tree on the disk.
+ * {@link realpathSync} follows symbolic links,
+ * so no link leads outside the tree or into a part left out of it.
  *
- * @param path - Path like `NomStudysciences/learning/adesope-2017-practice-tests-meta.md`
- * @param endings - Endings it may have, like `.md`
- * @returns File on the disk
  * @throws {Error} - When the path has a part left out,
  *   like `NomSystemprevious`, `.obsidian` or `..`,
  *   or a `\`, has none of the endings,
@@ -194,11 +141,8 @@ function systemFileOf(path: string, endings: string[]): string {
 }
 
 /**
- * Reads a file of my new system for the editor:
- * a Markdown file to edit, an `.ics` file to read only.
+ * Reads a file of my new system for the editor.
  *
- * @param path - Path like `NomManagecalendar/Health/Sleep_2026_Log.ics`
- * @returns The file with its text
  * @throws {Error} - When it is no such file, see {@link systemFileOf}
  */
 export function systemFileRead(path: string): SystemFile {
@@ -211,15 +155,10 @@ export function systemFileRead(path: string): SystemFile {
 }
 
 /**
- * Writes a Markdown file of my new system as I saved it, exactly the text sent,
- * merged with a change of its file on the disk since the editor read it,
- * see `textMerged` in `edit.ts`; without a diff. A text without change writes nothing.
- * - `file`: The file on the disk.
- * - `bytes`, `old`: What it holds now, as bytes and as text.
- * - `text`: The text to write.
+ * Writes a Markdown file of my new system as I saved it,
+ * merged with a change on the disk, see `textMerged` in `./edit.ts`.
+ * A text without change writes nothing.
  *
- * @param change - File as saved
- * @returns The file as written, see `Written` in `edit.ts`
  * @throws {Error} - When it is no Markdown file of the folders of the new system,
  *   see {@link systemFileOf}, or its file is no UTF-8 text,
  *   which could not be written back exactly
