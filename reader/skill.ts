@@ -370,6 +370,9 @@ type LoggedAttempt = {
     attempt: Attempt;
 };
 
+/** Where the decided rounds of a section leave it, see {@link levelsOf}. */
+type Levels = { level: number; runs: number; due: string };
+
 /** Step of a line `X-ROUND` once I closed its round. */
 const roundDone: string = "done";
 
@@ -579,24 +582,9 @@ function roundsRead(): RoundLine[] {
     return skillEntriesRead("1970-01-01T00:00:00Z", new Date().toISOString()).flatMap(
         (entry: Entry): RoundLine[] => {
             const day: string = berlinDateOf(new Date(entry.start));
-            return entry.rounds.map((mark: RoundMark): RoundLine => {
-                const section: string = mark.section.includes("/")
-                    ? mark.section
-                    : `${entry.module}/${mark.section}`;
-                const module: string = section.split("/")[0];
-                return {
-                    entry: entry.id,
-                    day: day,
-                    section: section,
-                    round: mark.round,
-                    step: mark.step,
-                    task: mark.task === "" ? "" : `${module}/${nameOf(mark.task)}`,
-                    example: mark.used === "" ? "" : `${module}/${nameOf(mark.used)}`,
-                    results: mark.results,
-                    notes: mark.notes,
-                    due: mark.due,
-                };
-            });
+            return entry.rounds.map((mark: RoundMark): RoundLine =>
+                lineOf(mark, entry.module, entry.id, day),
+            );
         },
     );
 }
@@ -718,10 +706,7 @@ function dueAfter(level: number, day: string, exam: ExamDate): string {
  * One wrong for good starts the spacing over,
  * since all other rounds planned for the section fall away (`session-learn.md`).
  */
-function levelsOf(
-    rounds: Round[],
-    before: string,
-): { level: number; runs: number; due: string } {
+function levelsOf(rounds: Round[], before: string): Levels {
     let level: number = 0;
     let runs: number = 0;
     let due: string = "";
@@ -747,10 +732,7 @@ function levelsOf(
  */
 function dueOf(earlier: Round[], result: Result, day: string, exam: ExamDate): string {
     if (result !== "right") return dayAdd(day, retryDays);
-    const { level, due }: { level: number; due: string } = levelsOf(
-        earlier,
-        "9999-12-31",
-    );
+    const { level, due }: Levels = levelsOf(earlier, "9999-12-31");
     if (due !== "" && day < due) return due;
     return dueAfter(Math.min(level + 1, spacingDays.length + 1), day, exam);
 }
@@ -817,11 +799,8 @@ function sectionOf(
             ? last
             : undefined;
     const round: number = shown?.round ?? (last === undefined ? 0 : last.round + 1);
-    const all: { level: number; runs: number; due: string } = levelsOf(
-        rounds,
-        "9999-12-31",
-    );
-    const before: { level: number; runs: number; due: string } = levelsOf(rounds, today);
+    const all: Levels = levelsOf(rounds, "9999-12-31");
+    const before: Levels = levelsOf(rounds, today);
     const cold: string = coldOf(colds, rounds, shown);
     const days: string[] = [
         ...new Set(lines.map((line: RoundLine): string => line.day)),
@@ -1026,28 +1005,22 @@ export function skillingRead(): Skilling {
     const others: string[] = moduleFoldersRead()
         .filter((name: string): boolean => !active.includes(name))
         .map(codeOf);
+    const byName: (valueOf: (name: string) => string) => { [name: string]: string } = (
+        valueOf: (name: string) => string,
+    ): { [name: string]: string } =>
+        Object.fromEntries(
+            [...skills, ...others].map((name: string): [string, string] => [
+                name,
+                valueOf(name),
+            ]),
+        );
     return {
         modules: modules,
         skills: skills,
         otherModules: others,
-        folders: Object.fromEntries(
-            [...skills, ...others].map((name: string): [string, string] => [
-                name,
-                skillTitleOf(name, ""),
-            ]),
-        ),
-        paths: Object.fromEntries(
-            [...skills, ...others].map((name: string): [string, string] => [
-                name,
-                skillFolderOf(name) ?? "",
-            ]),
-        ),
-        links: Object.fromEntries(
-            [...skills, ...others].map((name: string): [string, string] => [
-                name,
-                skillLinkOf(name),
-            ]),
-        ),
+        folders: byName((name: string): string => skillTitleOf(name, "")),
+        paths: byName((name: string): string => skillFolderOf(name) ?? ""),
+        links: byName(skillLinkOf),
         types: skillTypes,
     };
 }
@@ -1120,11 +1093,9 @@ function markStartOf(
     };
 }
 
-/** Gives a line `X-ROUND` as read, for a line about to be written. */
+/** Gives a line `X-ROUND` as read, also for a line about to be written. */
 function lineOf(mark: RoundMark, module: string, entry: string, day: string): RoundLine {
-    const section: string = mark.section.includes("/")
-        ? mark.section
-        : `${module}/${mark.section}`;
+    const section: string = markSectionOf(mark, module);
     const own: string = section.split("/")[0];
     return {
         entry: entry,
@@ -1223,12 +1194,7 @@ function markWith(
         exam: ExamDate;
     },
 ): RoundMark {
-    const section: string = lineOf(
-        mark,
-        context.module,
-        context.entry,
-        context.day,
-    ).section;
+    const section: string = markSectionOf(mark, context.module);
     const earlier: RoundLine[] = othersOf(context.lines, context.entry).filter(
         (line: RoundLine): boolean => line.section === section,
     );
@@ -1239,9 +1205,7 @@ function markWith(
         ]).at(-1)?.decided !== "";
     let now: RoundMark = mark;
     change.attempts.forEach((attempt: AttemptNew): void => {
-        const task: Task | undefined = context.tasks.find(
-            (candidate: Task): boolean => candidate.id === attempt.task,
-        );
+        const task: Task | undefined = taskOf(context.tasks, attempt.task);
         if (task === undefined) throw new Error(`No task ${attempt.task}`);
         now = markTried(now, task, attempt, decided(now));
     });
@@ -1274,7 +1238,7 @@ function markStepped(
     const left: Task | undefined = tasks.find(
         (task: Task): boolean =>
             task.kind === "example" &&
-            `${task.id.split("/")[0]}/${task.section}` === section &&
+            sectionKeyOf(task) === section &&
             task.heading === mark.step,
     );
     const now: RoundMark =
@@ -1319,9 +1283,7 @@ function markOf(
     day: string,
 ): RoundMark {
     const own: RoundMark | undefined = kept.findLast(
-        (mark: RoundMark): boolean =>
-            (mark.section.includes("/") ? mark.section : `${module}/${mark.section}`) ===
-            section,
+        (mark: RoundMark): boolean => markSectionOf(mark, module) === section,
     );
     if (own === undefined || own.step === roundDone)
         return markStartOf(section, module, lines, picked, day);
@@ -1350,6 +1312,26 @@ function sectionKeyOf(task: Task): string {
     return `${task.id.split("/")[0]}/${task.section}`;
 }
 
+/**
+ * Gives the section of a line `X-ROUND` with its module,
+ * the module of its entry unless it names its own.
+ */
+function markSectionOf(mark: RoundMark, module: string): string {
+    return mark.section.includes("/") ? mark.section : `${module}/${mark.section}`;
+}
+
+/** Gives the first task of the section of a line `X-ROUND`, see {@link markSectionOf}. */
+function markTaskOf(mark: RoundMark, module: string, tasks: Task[]): Task | undefined {
+    return tasks.find(
+        (task: Task): boolean => sectionKeyOf(task) === markSectionOf(mark, module),
+    );
+}
+
+/** Gives the task of an identity, the first that has it. */
+function taskOf(tasks: Task[], id: string): Task | undefined {
+    return tasks.find((task: Task): boolean => task.id === id);
+}
+
 /** Gives the sections of the notes a skill entry links, each once. */
 function linkedSectionsOf(links: Link[], tasks: Task[]): string[] {
     return [
@@ -1376,12 +1358,7 @@ function linksWith(
     const notes: string[] = [
         ...new Set(
             marks.flatMap((mark: RoundMark): string[] => {
-                const section: string = mark.section.includes("/")
-                    ? mark.section
-                    : `${module}/${mark.section}`;
-                const task: Task | undefined = tasks.find(
-                    (candidate: Task): boolean => sectionKeyOf(candidate) === section,
-                );
+                const task: Task | undefined = markTaskOf(mark, module, tasks);
                 return task === undefined ? [] : [notePathOf(task)];
             }),
         ),
@@ -1403,12 +1380,7 @@ function linksWith(
  */
 function markTasksOf(marks: RoundMark[], module: string, tasks: Task[]): string[] {
     return marks.flatMap((mark: RoundMark): string[] => {
-        const section: string = mark.section.includes("/")
-            ? mark.section
-            : `${module}/${mark.section}`;
-        const task: Task | undefined = tasks.find(
-            (candidate: Task): boolean => sectionKeyOf(candidate) === section,
-        );
+        const task: Task | undefined = markTaskOf(mark, module, tasks);
         return task === undefined ? [] : [task.id];
     });
 }
@@ -1466,25 +1438,19 @@ function marksOfEntry(
         skillBoxesRead(dayAdd(berlinDateOf(new Date()), planDays)),
     );
     const linked: string[] = linkedSectionsOf(links, tasks);
-    const kept: RoundMark[] = old.marks.filter((mark: RoundMark): boolean => {
-        const section: string = mark.section.includes("/")
-            ? mark.section
-            : `${entry.module}/${mark.section}`;
-        return (
-            linked.includes(section) ||
+    const kept: RoundMark[] = old.marks.filter(
+        (mark: RoundMark): boolean =>
+            linked.includes(markSectionOf(mark, entry.module)) ||
             mark.task !== "" ||
             mark.used !== "" ||
-            mark.results.length > 0
-        );
-    });
+            mark.results.length > 0,
+    );
     const sections: string[] = [
         ...new Set([
             ...entry.rounds.map((pick: RoundPick): string => pick.section),
             ...linked,
             ...entry.attempts.flatMap((attempt: AttemptNew): string[] => {
-                const task: Task | undefined = tasks.find(
-                    (candidate: Task): boolean => candidate.id === attempt.task,
-                );
+                const task: Task | undefined = taskOf(tasks, attempt.task);
                 return task === undefined ? [] : [sectionKeyOf(task)];
             }),
         ]),
@@ -1530,13 +1496,10 @@ function marksOfEntry(
  * A task no note holds any more gives no chapter.
  */
 function chaptersWith(chapters: string[], worked: string[], tasks: Task[]): string[] {
-    const solved: string[] = [];
-    for (const id of worked) {
-        const task: Task | undefined = tasks.find(
-            (candidate: Task): boolean => candidate.id === id,
-        );
-        if (task !== undefined) solved.push(task.chapter);
-    }
+    const solved: string[] = worked.flatMap((id: string): string[] => {
+        const task: Task | undefined = taskOf(tasks, id);
+        return task === undefined ? [] : [task.chapter];
+    });
     return [...new Set([...chapters, ...solved])];
 }
 
@@ -1569,6 +1532,69 @@ function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string)
         );
     if (!(new Date(entry.start) < new Date(entry.end)))
         throw new Error("A skill entry needs an end after its start");
+}
+
+/**
+ * Gives the fields of a skill entry as the dialog sends it:
+ * its place keeping the link of the place of what it comes from while the same,
+ * what it does online and its people those of that while it sends none.
+ *
+ * @param from - The box a new entry is logged from, or the entry before a change
+ * @param titled - The entry before a change, whose link of its summary it keeps
+ */
+function skillFieldsOf(
+    entry: SkillEntryNew,
+    from: Box | Entry | null,
+    titled: Entry | null,
+): EntryFields {
+    const [title, titleLink]: [string, string] = titleOf(
+        { ...entry, category: skillName },
+        titled,
+    );
+    return {
+        category: skillName,
+        title: title,
+        titleLink: titleLink,
+        location: entry.location,
+        locationLink: placeLinkOf(entry.location, from),
+        ...onlineFor(entry, from),
+        from: "",
+        attendees: entry.attendees ?? from?.attendees ?? [],
+        module: entry.module,
+        type: entry.type,
+        semester: semesterFor(
+            skillName,
+            entry.semester,
+            berlinDateOf(new Date(entry.start)),
+        ),
+        note: entry.note.trim(),
+        start: new Date(entry.start),
+        end: new Date(entry.end),
+    };
+}
+
+/**
+ * Gives the properties of a new skill entry beyond its fields:
+ * its links, its chapters, its lines `X-ROUND`,
+ * and the box it is logged from with the group of that box.
+ */
+function ownOf(
+    links: Link[],
+    chapters: string[],
+    marks: RoundMark[],
+    plan: Box | undefined,
+): [string, string | Link | ICAL.Property][] {
+    const own: [string, string | Link | ICAL.Property][] = [
+        ...links.map((link: Link): [string, Link] => ["attach", link]),
+        ...chapters.map((chapter: string): [string, string] => ["x-chapter", chapter]),
+        ...marks.map((mark: RoundMark): [string, ICAL.Property] => [
+            "x-round",
+            roundPropertyOf(mark),
+        ]),
+    ];
+    if (plan !== undefined) own.push(["related-to", plan.id]);
+    if ((plan?.group ?? "") !== "") own.push(["x-group", plan?.group ?? ""]);
+    return own;
 }
 
 /**
@@ -1609,45 +1635,12 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
               : null;
     skillEntryCheck(entry, plan?.chapters ?? [], plan?.type ?? "");
 
-    const [title, titleLink]: [string, string] = titleOf(
-        { ...entry, category: skillName },
-        null,
+    const fields: EntryFields = skillFieldsOf(entry, plan, null);
+    const id: string = entryAppend(
+        logFileOf(fields),
+        fields,
+        ownOf(links, chapters, marks, plan ?? undefined),
     );
-    const fields: EntryFields = {
-        category: skillName,
-        title: title,
-        titleLink: titleLink,
-        location: entry.location,
-        locationLink: placeLinkOf(entry.location, plan),
-        ...onlineFor(entry, plan),
-        from: "",
-        attendees: entry.attendees ?? plan?.attendees ?? [],
-        module: entry.module,
-        type: entry.type,
-        semester: semesterFor(
-            skillName,
-            entry.semester,
-            berlinDateOf(new Date(entry.start)),
-        ),
-        note: entry.note.trim(),
-        start: new Date(entry.start),
-        end: new Date(entry.end),
-    };
-    const own: [string, string | Link | ICAL.Property][] = links.map(
-        (link: Link): [string, Link] => ["attach", link],
-    );
-    own.push(
-        ...chapters.map((chapter: string): [string, string] => ["x-chapter", chapter]),
-    );
-    own.push(
-        ...marks.map((mark: RoundMark): [string, ICAL.Property] => [
-            "x-round",
-            roundPropertyOf(mark),
-        ]),
-    );
-    if (plan !== null) own.push(["related-to", plan.id]);
-    if ((plan?.group ?? "") !== "") own.push(["x-group", plan?.group ?? ""]);
-    const id: string = entryAppend(logFileOf(fields), fields, own);
     if (plan !== null) boxDone(plan.id);
     return id;
 }
@@ -1693,30 +1686,7 @@ export function skillEntryEdit(change: SkillEntryChange): boolean {
         (task: string): boolean => task.split("/")[0] === change.module,
     );
     const chapters: string[] = chaptersWith(change.chapters, worked, tasks);
-    const [title, titleLink]: [string, string] = titleOf(
-        { ...change, category: skillName },
-        old,
-    );
-    const fields: EntryFields = {
-        category: skillName,
-        title: title,
-        titleLink: titleLink,
-        location: change.location,
-        locationLink: placeLinkOf(change.location, old),
-        ...onlineFor(change, old),
-        from: "",
-        attendees: change.attendees ?? old.attendees,
-        module: change.module,
-        type: change.type,
-        semester: semesterFor(
-            skillName,
-            change.semester,
-            berlinDateOf(new Date(change.start)),
-        ),
-        note: change.note.trim(),
-        start: new Date(change.start),
-        end: new Date(change.end),
-    };
+    const fields: EntryFields = skillFieldsOf(change, old, old);
     propertiesPut(file, old.id, [
         ["x-chapter", chapters],
         ["attach", links],
@@ -1790,19 +1760,6 @@ function momentWrite(
         const box: Box | undefined = skillBoxOf(module, now, chapters);
         const plan: Box | undefined = box?.type === "" ? box : undefined;
         const type: string = "";
-        const own: [string, string | Link | ICAL.Property][] = [
-            ...links.map((link: Link): [string, Link] => ["attach", link]),
-            ...chapters.map((chapter: string): [string, string] => [
-                "x-chapter",
-                chapter,
-            ]),
-            ...marks.map((line: RoundMark): [string, ICAL.Property] => [
-                "x-round",
-                roundPropertyOf(line),
-            ]),
-        ];
-        if (plan !== undefined) own.push(["related-to", plan.id]);
-        if ((plan?.group ?? "") !== "") own.push(["x-group", plan?.group ?? ""]);
         const semester: string = semesterFor(
             skillName,
             plan?.semester ?? "",
@@ -1837,7 +1794,7 @@ function momentWrite(
             start: start,
             end: quarter,
         };
-        entryAppend(logFileOf(fields), fields, own);
+        entryAppend(logFileOf(fields), fields, ownOf(links, chapters, marks, plan));
         if (plan !== undefined) boxDone(plan.id);
         return;
     }
@@ -1880,9 +1837,7 @@ function momentOf(module: string, now: Date): Entry | undefined {
  */
 export function attemptAdd(attempt: AttemptNew): void {
     const tasks: Task[] = tasksRead();
-    const task: Task | undefined = tasks.find(
-        (candidate: Task): boolean => candidate.id === attempt.task,
-    );
+    const task: Task | undefined = taskOf(tasks, attempt.task);
     if (task === undefined) throw new Error(`No task ${attempt.task}`);
     momentWrite(sectionKeyOf(task), { attempts: [attempt], step: "" }, tasks);
 }
@@ -1937,13 +1892,8 @@ export function sessionRead(module: string): Session | null {
  */
 export function taskRename(from: string, to: string): number {
     const tasks: Task[] = tasksRead();
-    const task: Task | undefined = tasks.find(
-        (candidate: Task): boolean => candidate.id === to,
-    );
-    if (
-        tasks.some((candidate: Task): boolean => candidate.id === from) ||
-        task === undefined
-    )
+    const task: Task | undefined = taskOf(tasks, to);
+    if (taskOf(tasks, from) !== undefined || task === undefined)
         throw new Error(`Rename the heading in its note first: ${from} to ${to}`);
     const after: string = task.heading;
     const before: string =
@@ -1952,10 +1902,7 @@ export function taskRename(from: string, to: string): number {
     skillEntriesRead("1970-01-01T00:00:00Z", new Date().toISOString()).forEach(
         (entry: Entry): void => {
             const marks: RoundMark[] = entry.rounds.map((mark: RoundMark): RoundMark => {
-                const section: string = mark.section.includes("/")
-                    ? mark.section
-                    : `${entry.module}/${mark.section}`;
-                if (section !== sectionKeyOf(task)) return mark;
+                if (markSectionOf(mark, entry.module) !== sectionKeyOf(task)) return mark;
                 return {
                     ...mark,
                     task: mark.task === before ? after : mark.task,
