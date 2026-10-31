@@ -173,6 +173,12 @@
     background: var(--chosen);
 }
 
+/* Row the arrow keys stand on, see `listStep` in `choices.ts`:
+   the line of the focus of the keyboard inside the row, since its list cuts off what leaves it */
+.picker-box button:focus-visible {
+    outline-offset: -2px;
+}
+
 /* Detail of a value grey beside it, like the address of a place */
 /* The star after a value starred in a list, like my default place,
    see `valueButtonOf` in `choices.ts`: as small and filled as the star of the place itself,

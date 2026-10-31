@@ -21,6 +21,8 @@
  * a value matches when each typed word stands somewhere in its name,
  * so `mensa garch` finds `Mensa-Garching`;
  * Enter picks the first match.
+ * The arrow key down goes to the first value, then on from value to value,
+ * and Enter picks the one it stands on, see {@link listStep}.
  * Each value shows its whole name, its detail grey beside it, like the address of a place;
  * where a list takes new values, the small grey plus with the typed text, like `+ “Zz”`,
  * or with what it makes of it,
@@ -1034,8 +1036,33 @@ export function fileShow(link: HTMLAnchorElement, file: string): void {
 }
 
 /**
+ * Moves through the open list by the arrow keys, wherever the focus stood when it opened:
+ * down from its search field to its first value and on to the plus at its end, up back again,
+ * stopping at both ends, each row in sight as the focus reaches it,
+ * so Enter takes it as a click does.
+ * A field outside these rows, like the name of a new food, keeps its arrows for its own text.
+ * - `focused`: What holds the focus.
+ * - `rows`: The search field of the list, then each button that shows.
+ * - `at`: Where the focus stands among them, `-1` for nowhere.
+ *
+ * @param event - The arrow key
+ */
+function listStep(event: KeyboardEvent): void {
+    if (openBox === null || !listOpen(openBox)) return;
+    const focused: Element = document.activeElement ?? document.body;
+    const rows: HTMLElement[] = [
+        ...openBox.querySelectorAll<HTMLElement>("input[type=search], button:not([hidden])"),
+    ];
+    const at: number = rows.indexOf(focused as HTMLElement);
+    if (at < 0 && focused.matches("input, textarea, [contenteditable]")) return;
+    event.preventDefault();
+    rows[at + (event.key === "ArrowDown" ? 1 : -1)]?.focus();
+}
+
+/**
  * Starts the lists of the pickers once for the page, however often the day starts:
  * Esc closes the open list and not the dialog around it,
+ * the arrow keys move through it, see {@link listStep},
  * and a click beside the picker of the open list closes it, see {@link listOf}.
  * - `keydown`: Comes before the dialog sees Esc, since it listens first;
  *   a list whose picker left the page meanwhile,
@@ -1050,6 +1077,7 @@ export function listsStart(): void {
     document.addEventListener(
         "keydown",
         (event: KeyboardEvent): void => {
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") listStep(event);
             if (event.key !== "Escape" || openClose === null) return;
             const shown: boolean = openBox !== null && listOpen(openBox);
             openClose();
