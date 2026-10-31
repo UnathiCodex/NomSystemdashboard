@@ -9,7 +9,7 @@
  * while the reader runs, see `reader.ts`.
  * Chromium without a window draws the file in the editor of the page,
  * with its own look, see `src/editor/preview.ts`, as my laptop shows it:
- * a page 1600 px wide, the text column `--reading-width` 920 px of it, see `src/variants.css`;
+ * a page 1600 px wide, the text column `--reading-width` 1000 px of it, see `src/variants.css`;
  * a wider page, like that of my desktop, grows as a whole, so its lines break at the same words.
  * Every line shows, rendered as while I do not edit it, the solutions and the hidden blocks too;
  * the heading of an Example or a Task keeps the room of its check and cross free,

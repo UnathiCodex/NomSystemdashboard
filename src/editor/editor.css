@@ -10,14 +10,14 @@
 
 /* The file: the page of it in the middle, scrolls alone,
    the same room at its left and at its right on every page, a note, a file of my new system,
-   an `.ics` file and the page of a module alike, `--edge-room`, 4rem,
+   an `.ics` file and the page of a module alike, `--edge-room`, 2rem,
    so the check and the cross at the right end of a heading keep air to the edge of the screen,
    and the dashes of an `.ics` file at its left never cover the text, see `.ics-overview`;
    where the screen has room, as on my PC, the page stays in the middle;
    the room of the scrollbar kept also for a file too short to scroll,
    so the page stands at the same place in every file */
 .editor-file {
-    --edge-room: 4rem;
+    --edge-room: 2rem;
     display: grid;
     grid-template-columns: minmax(var(--edge-room), 1fr) minmax(0, var(--reading-width)) minmax(
             var(--edge-room),
@@ -650,12 +650,12 @@
     flex-direction: column;
     max-height: 25vh;
     overflow: hidden;
-    margin-left: 0.75rem;
+    margin-left: 0.5rem;
 }
 
 .ics-dash {
     flex: none;
-    width: 1.25rem;
+    width: 0.75rem;
     height: 0.5rem;
     padding: 0;
     border: 0;
@@ -666,8 +666,8 @@
 .ics-dash::before {
     content: "";
     display: block;
-    height: 2px;
-    border-radius: 1px;
+    height: 4px;
+    border-radius: 2px;
     background: var(--chosen-line);
 }
 
