@@ -585,7 +585,6 @@ function pushOf(property: ICAL.Property, now: ICAL.Time | null): Push {
     const value: unknown = property.getFirstValue();
     const day: string = pushedDayOf(value);
     const duration: string = String(property.getParameter("x-estimated-duration") ?? "");
-    const [year, month, date]: number[] = day.split("-").map(Number);
     const time: ICAL.Time | null =
         value instanceof ICAL.Time && !value.isDate ? value : now;
     return {
@@ -593,17 +592,7 @@ function pushOf(property: ICAL.Property, now: ICAL.Time | null): Push {
         time:
             time === null
                 ? ""
-                : ICAL.Time.fromData(
-                      {
-                          year: year,
-                          month: month,
-                          day: date,
-                          hour: time.hour,
-                          minute: time.minute,
-                          second: time.second,
-                      },
-                      zone,
-                  )
+                : berlinAt(day, time.hour, time.minute, time.second)
                       .toJSDate()
                       .toISOString(),
         minutes:
@@ -639,6 +628,11 @@ function deadlineDayOf(component: ICAL.Component): [ICAL.Time, ICAL.Time] {
     return [ICAL.Time.fromDateString(day), ICAL.Time.fromDateString(dayAdd(day, 1))];
 }
 
+/** Whether a link is that of a platform of `Online.md`. */
+function platformLinkIs(link: string): boolean {
+    return linkForm.test(link) && platformOfLink(link) !== undefined;
+}
+
 /** Where an entry was and what it did online, with the link of its summary. */
 type Placed = Online & Pick<Entry, "titleLink" | "location" | "locationLink">;
 
@@ -669,8 +663,7 @@ function onlineOf(component: ICAL.Component): Placed {
             .some(
                 (part: string): boolean => part === "Online" || part.endsWith(" Online"),
             ) || parts[0] === "Online";
-    const linked: boolean =
-        linkForm.test(summaryLink) && platformOfLink(summaryLink) !== undefined;
+    const linked: boolean = platformLinkIs(summaryLink);
     const online: Online =
         own !== null
             ? {
@@ -1273,10 +1266,7 @@ export function sharedLinkOf(category: string, summary: string): string | undefi
                 summed.category === category &&
                 summed.base === base &&
                 summed.link !== "" &&
-                !(
-                    linkForm.test(summed.link) &&
-                    platformOfLink(summed.link) !== undefined
-                ),
+                !platformLinkIs(summed.link),
         );
         if (found !== undefined) return found.link;
     }
@@ -1315,7 +1305,7 @@ function linesWrite(file: string, text: FileLines): void {
             summed.category !== "" &&
             summed.link !== "" &&
             !before.includes(text.lines[summed.index]) &&
-            !(linkForm.test(summed.link) && platformOfLink(summed.link) !== undefined),
+            !platformLinkIs(summed.link),
     );
     if (changed.length === 0) return;
     spreading = true;
@@ -1390,18 +1380,18 @@ function kindsOf(lines: string[]): [string, string][] {
 }
 
 /**
- * Creates an empty calendar with only the header the standard asks for,
+ * Gives the lines of an empty calendar with only the header the standard asks for,
  * and the time zone {@link zoneName}, which every `DTSTART` names.
  * No `X-WR-CALNAME`, since its name is the name of its file, no `X-WR-TIMEZONE`,
  * no `CALSCALE`, since `GREGORIAN` is the default,
  * and no `METHOD`, which only invitations need.
  */
-function calendarCreate(): ICAL.Component {
+function newLinesOf(): string[] {
     const root: ICAL.Component = new ICAL.Component("vcalendar");
     root.addPropertyWithValue("prodid", "-//NomSystem//Dashboard//DE");
     root.addPropertyWithValue("version", "2.0");
     root.addSubcomponent(zoneComponent);
-    return root;
+    return [...linesOf(root), ""];
 }
 
 /**
@@ -1456,7 +1446,7 @@ function linesOrdered(component: string[]): string[] {
 function componentInsert(file: string, event: string[]): void {
     const text: FileLines = existsSync(file)
         ? linesRead(file)
-        : { lines: [...linesOf(calendarCreate()), ""], newline: "\r\n" };
+        : { lines: newLinesOf(), newline: "\r\n" };
     const calendarEnd: number = text.lines.lastIndexOf("END:VCALENDAR");
     if (calendarEnd === -1) throw new Error(`No END:VCALENDAR in ${file}`);
 
@@ -1775,12 +1765,7 @@ export function berlinLater(instant: Date, days: number): Date {
  * so whole-day entries compare by the day and timed ones by the instant.
  */
 export function berlinDayStartOf(day: string): string {
-    const [year, month, date]: number[] = day.split("-").map(Number);
-    const start: ICAL.Time = ICAL.Time.fromData(
-        { year: year, month: month, day: date, hour: 0, minute: 0, second: 0 },
-        zone,
-    );
-    const offset: number = zone.utcOffset(start) / 60;
+    const offset: number = zone.utcOffset(berlinAt(day, 0, 0)) / 60;
     return (
         `${day}T00:00:00+${String(Math.floor(offset / 60)).padStart(2, "0")}:` +
         String(offset % 60).padStart(2, "0")
@@ -1792,11 +1777,28 @@ export function berlinDayStartOf(day: string): string {
  * right also on the days the clocks change.
  */
 export function berlinInstantOf(day: string, hour: number, minute: number = 0): Date {
+    return berlinAt(day, hour, minute).toJSDate();
+}
+
+/** Gives a time of a day in Berlin time. */
+function berlinAt(
+    day: string,
+    hour: number,
+    minute: number,
+    second: number = 0,
+): ICAL.Time {
     const [year, month, date]: number[] = day.split("-").map(Number);
     return ICAL.Time.fromData(
-        { year: year, month: month, day: date, hour: hour, minute: minute, second: 0 },
+        {
+            year: year,
+            month: month,
+            day: date,
+            hour: hour,
+            minute: minute,
+            second: second,
+        },
         zone,
-    ).toJSDate();
+    );
 }
 
 /**
@@ -1984,7 +1986,7 @@ export function entryIcsOf(
     own: [string, string | Link | Date | ICAL.Property][],
     id: string,
 ): string {
-    const lines: string[] = [...linesOf(calendarCreate()), ""];
+    const lines: string[] = newLinesOf();
     lines.splice(
         lines.lastIndexOf("END:VCALENDAR"),
         0,
@@ -2486,13 +2488,12 @@ export function seriesDayRemove(file: string, uid: string, recurrence: string): 
                 ),
         );
     else {
-        const excluded: string[] = series.component
-            .getAllProperties("exdate")
-            .map((property: ICAL.Property): string => property.toICALString());
         propertyPut(component, "exdate", [
-            ...excluded.map((line: string): ICAL.Property =>
-                ICAL.Property.fromString(line),
-            ),
+            ...series.component
+                .getAllProperties("exdate")
+                .map((property: ICAL.Property): ICAL.Property =>
+                    ICAL.Property.fromString(property.toICALString()),
+                ),
             seriesTimeOf(series, "exdate", start),
         ]);
     }
