@@ -11,18 +11,24 @@
  * so the log stays a log, not calorie control;
  * then each meal of the log: its start, linking to the day in the day view, where,
  * and its kcal in bold, below it what it holds, each meal of mine with its kcal,
- * the sum of its foods, each food by its name alone with its grams grey in brackets and its kcal,
+ * the sum of its foods, each food by its name alone
+ * with its grams grey in brackets and its kcal,
  * like `Rigatoni (230 g) 363 kcal`, a drink with its millilitres;
- * a click on it opens the day view's dialog of its entry, the same as a click on it in the log,
+ * a click on it opens the day view's dialog of its entry,
+ * the same as a click on it in the log,
  * to change, copy or remove it there, see {@link mealBlockOf}.
- * A food listed without grams counts nothing; every amount is rounded and an estimate anyway,
- * so none is marked as one. A food not in `Foods.md` and a meal that lists no foods count nothing,
+ * A food listed without grams counts nothing;
+ * every amount is rounded and an estimate anyway,
+ * so none is marked as one.
+ * A food not in `Foods.md` and a meal that lists no foods count nothing,
  * and a line below the totals says so;
  * so does a nutrient a food does not know, the totals adding what is known,
  * like `Not counted, fat unknown: Gouda`.
- * My meals and my foods, built alike, each list its search field and a flat line per meal or food,
+ * My meals and my foods, built alike,
+ * each list its search field and a flat line per meal or food,
  * a click opening it below:
- * my meals under their head, each only its foods, with what it gave the last time I ate it,
+ * my meals under their head, each only its foods,
+ * with what it gave the last time I ate it,
  * see `meals.ts`, above my foods, the food search, which finds mine at once,
  * then those of Open Food Facts below them, adds a product with a click,
  * opens one of mine to change its name, brand and store,
@@ -127,7 +133,8 @@ function lacksOf(eaten: Eaten): string {
  * each the sum of what is known;
  * below them a line for each kind of food or meal they leave out,
  * like `Not counted, not in my foods: Brot`,
- * `Not counted, no grams: Reis` for a food logged without its grams, and per what my foods lack,
+ * `Not counted, no grams: Reis` for a food logged without its grams,
+ * and per what my foods lack,
  * like `Not counted, fat unknown: Gouda`.
  * - `totals`: The totals side by side.
  * - `tiles`: Name and amount of each total.
@@ -217,8 +224,10 @@ function kcalOf(foods: Eaten[]): number | null {
 
 /**
  * Builds a line of what an entry holds, a name: a meal of mine alone,
- * or a food alone, without its brand and store, which only tell which one it is when I pick it;
- * in the two columns of numbers what it gives, a food its grams grey in brackets and its kcal last,
+ * or a food alone, without its brand and store,
+ * which only tell which one it is when I pick it;
+ * in the two columns of numbers what it gives,
+ * a food its grams grey in brackets and its kcal last,
  * like `(230 g) 363 kcal`, the millilitres of a drink,
  * like `(330 ml)`, a meal its kcal alone, the sum of its foods, like `842 kcal`;
  * a food not in my foods only its grams, and a food without grams nothing,
@@ -230,7 +239,8 @@ function kcalOf(foods: Eaten[]): number | null {
  * @param name - Name of the meal or the food, like `Chili con Carne` or `Semmel`
  * @param kcal - What it gives, see {@link kcalOf}, `null` for nothing known
  * @param eaten - The food with its grams, `null` for a meal, which has none
- * @param item - Whether it stands at the top of its entry, as a meal or a food eaten by itself
+ * @param item - Whether it stands at the top of its entry,
+ *   as a meal or a food eaten by itself
  * @returns Line in the columns of the meals
  */
 function whatLineOf(
@@ -259,12 +269,15 @@ function whatLineOf(
 }
 
 /**
- * Builds the lines of an entry: its start in grey above it, linking to its day in the day view,
+ * Builds the lines of an entry: its start in grey above it,
+ * linking to its day in the day view,
  * so no column of times takes room beside the names, and where,
- * and in the column of kcal what the whole entry gives, in bold, the sum of the lines below it,
+ * and in the column of kcal what the whole entry gives,
+ * in bold, the sum of the lines below it,
  * always where it gives anything known;
  * then what it holds, each line a name with what it gives, see {@link whatLineOf}:
- * each meal of mine with the kcal of its foods, below it its foods with their kcal and grams,
+ * each meal of mine with the kcal of its foods,
+ * below it its foods with their kcal and grams,
  * and each food eaten by itself with its kcal and grams,
  * like bread beside the chili or an apple alone,
  * so a food never stands under a meal it does not belong to;
@@ -273,7 +286,8 @@ function whatLineOf(
  * an entry without foods stands by its summary with a hint.
  * - `entry`: Line of its start and place, and of its kcal.
  * - `when`: Its start and place.
- * - `meals`: Foods of each meal of mine, by the name of the meal, in the order of the lines.
+ * - `meals`: Foods of each meal of mine,
+ *   by the name of the meal, in the order of the lines.
  * - `alone`: Foods eaten by themselves.
  *
  * @param meal - Entry with what it gives
@@ -327,9 +341,12 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
 
 /**
  * Builds an entry as one block of its lines, see {@link mealLinesOf},
- * which a click opens in the day view's dialog of the entry, the same as a click on it in the log,
- * see `logEntryOpen` in `../editor/dialog.ts`; a click on its start shows its day instead.
- * A change saved there loads the day anew, as every change of a file does, see {@link foodStart}.
+ * which a click opens in the day view's dialog of the entry,
+ * the same as a click on it in the log,
+ * see `logEntryOpen` in `../editor/dialog.ts`;
+ * a click on its start shows its day instead.
+ * A change saved there loads the day anew,
+ * as every change of a file does, see {@link foodStart}.
  * - `block`: The block.
  *
  * @param meal - Entry with what it gives
@@ -408,7 +425,8 @@ function dayMove(days: number): void {
 
 /**
  * Starts the food view after the router has put its HTML into the page:
- * the arrows and the icon back to today, the day a link asks for or today's calendar date,
+ * the arrows and the icon back to today,
+ * the day a link asks for or today's calendar date,
  * which moves on to the new day by itself while it is shown, see `today.ts`,
  * and loads anew after every change of the files,
  * see `../changes.ts`, my meals and the food search.

@@ -33,7 +33,8 @@
    the grey fold arrow of a chapter of a skill before it, pointing down while open,
    the arrow light under the pointer, softly, as everything turns lighter, see `base.css`,
    since the name is light already;
-   a click on either name folds both lists and the note, see `foldToggle` in `evening.ts` */
+   a click on either name folds both lists and the note,
+   see `foldToggle` in `evening.ts` */
 .note-fold {
     display: inline-flex;
     align-items: center;

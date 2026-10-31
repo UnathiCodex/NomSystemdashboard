@@ -1,7 +1,9 @@
-/* Search of the log: its dialog, always as high, its row to type in and below it its results,
+/* Search of the log: its dialog, always as high,
+   its row to type in and below it its results,
    each what it was and small and grey its day, time, place and people; none on a phone */
 /* Search of the log: as wide as the entry by category,
-   always 40rem high or as high as the screen with a gap around, so it never jumps while I type;
+   always 40rem high or as high as the screen with a gap around,
+   so it never jumps while I type;
    its row to type in on top, its results below it, scrolling alone */
 .search-panel[open] {
     display: flex;

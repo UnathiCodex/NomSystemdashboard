@@ -5,14 +5,16 @@
  * like every field, with the fewest steps and nothing nested:
  * - Summary: what I ate, written by itself, never typed: the meals,
  *   then the foods eaten beside them, parted by `, `,
- *   like `Chili con Carne, Weißbrot`, drinks left out, like a `Coca-Cola`, see {@link mealTitle},
+ *   like `Chili con Carne, Weißbrot`, drinks left out,
+ *   like a `Coca-Cola`, see {@link mealTitle},
  *   and after it in brackets what they give together, drinks too,
  *   as a type stands after its skill, like
  *   `Chili con Carne, Weißbrot (660 kcal)`.
  *   A drink's amount is in millilitres, like `330 ml`, any other in grams.
  * - Foods: what I ate, the one plus beside its name opening one list,
  *   a menu over the dialog right under the plus, see `listOf` in `choices.ts`,
- *   whose one search finds, as I type, my meals by their names and foods first, then my foods,
+ *   whose one search finds, as I type,
+ *   my meals by their names and foods first, then my foods,
  *   then the products of Open Food Facts by name or barcode,
  *   see `../food/search.ts`; one click takes one:
  *   a meal brings its block, a row with its name, its kcal and a small grey `×`,
@@ -26,13 +28,16 @@
  *   and every food added or removed changes it there, see {@link freshSend}.
  *   Last among my foods stands `+ New food “Linsensuppe”`,
  *   which opens the form of a food by hand named as typed;
- *   when nothing is found, like a barcode Open Food Facts does not know, one grey line says so.
- *   A food is a row with its name alone, its grams, its kcal and its `×`, which removes it,
+ *   when nothing is found, like a barcode Open Food Facts does
+ *   not know, one grey line says so.
+ *   A food is a row with its name alone, its grams,
+ *   its kcal and its `×`, which removes it,
  *   like a food I did not eat of a cooking;
  *   a food of mine has a pencil beside its name,
  *   which opens it below its row as the food view opens it,
  *   to change it right there, see {@link foodRowOf}.
- *   Its grams start at one portion of it, its `Portion` in `Foods.md`, white like every fact,
+ *   Its grams start at one portion of it,
+ *   its `Portion` in `Foods.md`, white like every fact,
  *   which I type over; without a portion they start empty, and I type my amount;
  *   the cursor goes into the grams of what was picked,
  *   the first empty one first.
@@ -49,16 +54,19 @@
  * so the log keeps what the meal held that day, whatever I change in `Meals.md` later;
  * and the summary as its what, see {@link mealTitle}.
  * A meal whose summary names more than its foods,
- * like `Bortzeit` written by hand, opens as that one meal with its foods, so its name stays.
- * A cooking of the log, `Cook`, lists what went into the pot in the same rows, Summary and Foods,
+ * like `Bortzeit` written by hand,
+ * opens as that one meal with its foods, so its name stays.
+ * A cooking of the log, `Cook`,
+ * lists what went into the pot in the same rows, Summary and Foods,
  * each food with its grams, like `Hackfleisch;Gut & Günstig;Edeka;500;Chili con Carne`,
  * and counts no kcal, see `reader/food.ts`.
  * A meal may draw from one of my cookings of the days before it in a row
  * of its own, see {@link cookedRowOf}:
  * its meals and foods come along, each food with its grams of the pot,
  * which I type over with what I ate, no total for the pot,
- * and the meal writes `X-COOKED` with the cooking's identifier and its foods with their grams
- * as its own lines, so meal and cooking each keep their foods, see {@link mealCooked}.
+ * and the meal writes `X-COOKED` with the cooking's identifier
+ * and its foods with their grams as its own lines,
+ * so meal and cooking each keep their foods, see {@link mealCooked}.
  * A meal eaten out, where nothing can be weighed, I log by photo through Claude,
  * who writes its entry through the reader;
  * the dialog itself takes no photo.
@@ -66,10 +74,12 @@
  * - `./choices.ts`: Rows of the dialog, the lists that open as menus over it,
  *   and the picker of a cooking.
  * - `./times.ts`: Writes the time of a cooking.
- * - `../skill/attempts.ts`: Gives the day of an instant, and writes a day with its weekday.
+ * - `../skill/attempts.ts`: Gives the day of an instant,
+ *   and writes a day with its weekday.
  * - `../food/foods.ts`: Finds my foods, loads my meals,
  *   sends a meal, writes amounts and the key of a food, and makes elements and buttons.
- * - `../food/meals.ts`: Finds my meals for a search, writes the name of a meal as the reader does,
+ * - `../food/meals.ts`: Finds my meals for a search,
+ *   writes the name of a meal as the reader does,
  *   and kcal as the page writes them.
  * - `../food/search.ts`: The food search, the lines of every list,
  *   and a food of mine opened to change it.
@@ -114,9 +124,11 @@ import type { Dish, Food, FoodsFound, Kind } from "../food/foods.ts";
  *
  * - `name`, `brand`, `store`:
  *   Name of the food in `Foods.md`, its brand and the store I bought it in,
- *   like `Skyr natur`, `K-Classic` and `Kaufland`; brand and store empty where none is known.
+ *   like `Skyr natur`, `K-Classic` and `Kaufland`;
+ *   brand and store empty where none is known.
  * - `grams`: Grams as typed, like `150` or `7,5`; empty for none, which counts nothing.
- * - `fromCooking`: Whether it came with the cooking the meal draws from, see {@link drawnShow}.
+ * - `fromCooking`: Whether it came with the cooking the meal draws from,
+ *   see {@link drawnShow}.
  */
 type FoodPick = {
     name: string;
@@ -167,10 +179,12 @@ type Cooking = {
  * What a meal needs to draw from a cooking, see {@link cookedRowOf};
  * a cooking itself draws from none.
  *
- * - `cooked`: Identifier of the cooking it draws from as written, its `X-COOKED`, empty for none.
+ * - `cooked`: Identifier of the cooking it draws from as written,
+ *   its `X-COOKED`, empty for none.
  * - `start`: Start of the meal, whose cookings of the days before it are offered.
  * - `id`: Identifier of the meal when it is changed, empty for a new one,
- *   so it does not count itself among the meals that share a cooking, see {@link Cooking}.
+ *   so it does not count itself among the meals
+ *   that share a cooking, see {@link Cooking}.
  */
 export type Drawing = {
     cooked: string;
@@ -183,7 +197,8 @@ export type Drawing = {
  *
  * - `name`: Name of the meal, like `Chili con Carne`.
  * - `foods`: Its foods with their grams.
- * - `fromCooking`: Whether it came with the cooking the meal draws from, see {@link drawnShow}.
+ * - `fromCooking`: Whether it came with the cooking the meal draws from,
+ *   see {@link drawnShow}.
  * - `fresh`: Whether it is a new meal, named in this entry,
  *   which `Meals.md` holds as its foods are, see {@link freshSend}.
  */
@@ -238,7 +253,8 @@ let cookedRow: HTMLElement | null = null;
 
 /**
  * My foods by their keys, see {@link keyOf},
- * and by their names alone in small letters, for lines written before foods had brand and store;
+ * and by their names alone in small letters,
+ * for lines written before foods had brand and store;
  * loaded when the meal was built, with every food added since.
  */
 let mine: Map<string, Food> = new Map();
@@ -250,7 +266,8 @@ let mine: Map<string, Food> = new Map();
 let foodOpen: string = "";
 
 /**
- * My meals of `Meals.md`, loaded when the meal was built, as they are after every meal kept since.
+ * My meals of `Meals.md`, loaded when the meal was built,
+ * as they are after every meal kept since.
  */
 let dishes: Dish[] = [];
 
@@ -270,7 +287,8 @@ let picks: FoodPick[] = [];
 let summaryLine: HTMLElement = document.createElement("span");
 
 /**
- * Place of the blocks of the meals picked, then of the rows of the foods picked beside them.
+ * Place of the blocks of the meals picked,
+ * then of the rows of the foods picked beside them.
  */
 let foodsRows: HTMLElement = document.createElement("div");
 
@@ -314,7 +332,8 @@ function pickOf(read: Line, grams: string): FoodPick {
 }
 
 /**
- * Writes grams to one decimal at most, as `X-FOOD` and the fields take them, like `62.5` or `125`.
+ * Writes grams to one decimal at most,
+ * as `X-FOOD` and the fields take them, like `62.5` or `125`.
  *
  * @param grams - Grams
  * @returns Text
@@ -324,7 +343,8 @@ function gramsTextOf(grams: number): string {
 }
 
 /**
- * Makes a food picked newly, its grams one portion of it, empty for a food without portion.
+ * Makes a food picked newly, its grams one portion of it,
+ * empty for a food without portion.
  *
  * @param food - Food of `Foods.md`
  * @returns The food picked
@@ -368,11 +388,13 @@ function gramsIs(part: string): boolean {
  * Turns a line `X-FOOD` into its parts, as the reader reads it:
  * one of today names its food's name, brand and store, then its grams, empty for none,
  * and for the food of one of my meals the meal, like
- * `Skyr natur;K-Classic;Kaufland;150` or `Hackfleisch;Gut & Günstig;Edeka;125;Chili con Carne`,
+ * `Skyr natur;K-Classic;Kaufland;150`
+ * or `Hackfleisch;Gut & Günstig;Edeka;125;Chili con Carne`,
  * told by its second part being no grams and its fourth grams or empty;
  * a food of a meal of `Meals.md` only its name, brand and store,
  * like `Hackfleisch;Gut & Günstig;Edeka`;
- * an older line names its food alone, its grams after it, and for the food of a meal the meal,
+ * an older line names its food alone, its grams after it,
+ * and for the food of a meal the meal,
  * then its servings eaten and its variant, which no longer count, like
  * `Hackfleisch;62.5;Chili con Carne;0.5;09.10.2026`.
  * - `parts`: The parts of the line, without spaces at their ends.
@@ -420,7 +442,8 @@ function numberOf(text: string): number | null {
 }
 
 /**
- * Tells what a food picked gives: its grams times its kcal per 100 g; nothing without grams.
+ * Tells what a food picked gives: its grams times its kcal per 100 g;
+ * nothing without grams.
  * - `counted`: Grams counted, 0 for none.
  *
  * @param pick - Food picked
@@ -465,9 +488,11 @@ function portionsOf(text: string, portion: number | null): string {
  * see `unitOf` in `../food/foods.ts`, starting at the grams given, which a click selects
  * so I type over them, empty for none;
  * portions typed, like `2x`, become grams once I leave the field or press Enter,
- * see {@link portionsOf}; marking itself invalid while its text is no number of 0 or more,
+ * see {@link portionsOf}; marking itself invalid
+ * while its text is no number of 0 or more,
  * so the dialog does not send it;
- * 0 is a food I did not put in this time, which the entry leaves out, see {@link mealFoods}.
+ * 0 is a food I did not put in this time,
+ * which the entry leaves out, see {@link mealFoods}.
  * - `portions`: Turns portions in the field into grams and tells of the change.
  *
  * @param value - Grams as typed, empty for none
@@ -515,10 +540,13 @@ function gramsFieldOf(
 }
 
 /**
- * Takes a food of mine as the reader wrote it after a change in the dialog, see {@link foodRowOf}:
+ * Takes a food of mine as the reader wrote it after a change in the dialog,
+ * see {@link foodRowOf}:
  * among my foods in place of the food as it was,
- * and every food picked of it, beside the meals and in a meal, under its new name, brand and store,
- * so the entry writes its lines `X-FOOD` so; my meals load anew, which the reader renamed it in.
+ * and every food picked of it, beside the meals and in a meal,
+ * under its new name, brand and store,
+ * so the entry writes its lines `X-FOOD` so;
+ * my meals load anew, which the reader renamed it in.
  * - `renamed`: The foods picked of it.
  *
  * @param old - The food as `Foods.md` held it
@@ -549,11 +577,15 @@ function foodTake(old: Food, written: Food): void {
 
 /**
  * Builds the row of a food, beside the meals or of one: its name alone,
- * like `Skyr natur`, without its brand and store, which only tell which one it is when I pick it,
- * as everywhere a food stands as eaten, marked when `Foods.md` does not hold it, its grams,
- * its kcal and a small grey `×`, which removes it, as a value picked in every list of the dialog.
+ * like `Skyr natur`, without its brand and store,
+ * which only tell which one it is when I pick it,
+ * as everywhere a food stands as eaten,
+ * marked when `Foods.md` does not hold it, its grams,
+ * its kcal and a small grey `×`, which removes it,
+ * as a value picked in every list of the dialog.
  * A food of mine has a pencil beside its name, as a place and a summary have,
- * which opens below its row the food as the food view opens it, its name, brand and store,
+ * which opens below its row the food as the food view opens it,
+ * its name, brand and store,
  * its nutrients, its portion, its pack and its kind, with all its rules,
  * see `foodDetailOf` in `../food/search.ts`, and closes it again;
  * a change shows the rows anew at once,
@@ -642,7 +674,8 @@ function foodRowOf(
 }
 
 /**
- * Puts the cursor into the grams of foods just picked: the first of them whose grams are empty,
+ * Puts the cursor into the grams of foods just picked:
+ * the first of them whose grams are empty,
  * since those I type the first time, else the first of them.
  *
  * @param picked - Foods just picked, in their order
@@ -657,10 +690,12 @@ function gramsFocus(picked: FoodPick[]): void {
  * Builds the rows of a meal picked, as a chapter of a skill entry has its documents:
  * its row, its name with the one plus right after it,
  * like `Chili con Carne +`, its kcal and a small grey `×`, which removes it;
- * below it its parts, indented with a thin grey line at their left, see `.meal-parts` in `day.css`:
+ * below it its parts, indented with a thin grey line at their left,
+ * see `.meal-parts` in `day.css`:
  * its foods, each a row of a food, see {@link foodRowOf}.
  * The plus, `Add a food to Chili con Carne` as its tooltip,
- * opens the search of my foods and of Open Food Facts as a menu of its own right under the meal,
+ * opens the search of my foods and of Open Food Facts
+ * as a menu of its own right under the meal,
  * like every list, see `listOf` in `choices.ts`,
  * which a click on the plus again, Escape or a click beside it closes;
  * a food picked goes into this meal of this entry only,
@@ -767,7 +802,8 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
 }
 
 /**
- * Shows the summary, see {@link mealTitle}, and after it the kcal of the whole meal in brackets,
+ * Shows the summary, see {@link mealTitle},
+ * and after it the kcal of the whole meal in brackets,
  * as a type stands after its skill,
  * like `Chili con Carne · Weißbrot (660 kcal)`, white like the summary;
  * no kcal while no food has grams, as a food without grams shows none.
@@ -793,7 +829,8 @@ function summaryShow(): void {
 }
 
 /**
- * Shows the blocks of the meals picked, then the rows of the foods beside them, then the summary.
+ * Shows the blocks of the meals picked,
+ * then the rows of the foods beside them, then the summary.
  *
  * @param changed - Tells the dialog that the meal changed
  */
@@ -824,7 +861,8 @@ function rowsShow(changed: () => void): void {
 
 /**
  * Picks a food from the search as one more food beside the meals,
- * unless it is picked already, its grams as a food picked newly starts them, see {@link pickNewOf};
+ * unless it is picked already, its grams as a food picked newly starts them,
+ * see {@link pickNewOf};
  * then closes the list and puts the cursor into its grams.
  * - `pick`: The food picked.
  *
@@ -847,12 +885,15 @@ function foodPick(food: Food, changed: () => void): void {
 }
 
 /**
- * Picks one of my meals with its foods, each at its standard grams, which I set in the food view,
+ * Picks one of my meals with its foods, each at its standard grams,
+ * which I set in the food view,
  * see `../food/meals.ts`, a food I rarely put in at 0, one without standard grams empty,
  * unless it is picked already;
- * then closes the list and puts the cursor into the grams of its foods, see {@link gramsFocus}.
+ * then closes the list and puts the cursor into the grams of its foods,
+ * see {@link gramsFocus}.
  * A meal I cooked in the days before comes from its cooking instead,
- * in a meal that draws from none yet: the nearest cooking holding it is picked in the row `Cooked`,
+ * in a meal that draws from none yet:
+ * the nearest cooking holding it is picked in the row `Cooked`,
  * which brings its pot at this meal's share, see {@link drawnShow},
  * since a cooked meal is eaten only from what I cooked.
  * - `cooking`: The nearest cooking holding the meal,
@@ -912,7 +953,8 @@ function dishPick(dish: Dish, changed: () => void): void {
  * the foods picked there go into it with their grams.
  * - `meal`: The new meal.
  *
- * @param name - Name of the meal, as the reader writes it, see `mealNameOf` in `../food/meals.ts`
+ * @param name - Name of the meal, as the reader writes it,
+ *   see `mealNameOf` in `../food/meals.ts`
  * @param changed - Tells the dialog that the meal changed
  */
 function mealNew(name: string, changed: () => void): void {
@@ -929,7 +971,8 @@ function mealNew(name: string, changed: () => void): void {
  * so it is mine the moment it holds one, whether the entry is saved or not:
  * its composition, its foods by name, brand and store without grams,
  * see `dishAdd` in `reader/food.ts`;
- * with its last food removed it leaves `Meals.md` again, which holds no meal without food.
+ * with its last food removed it leaves `Meals.md` again,
+ * which holds no meal without food.
  * Its block removed by its `×`, it stays mine, only this entry dropping it.
  * A meal I had before stays as it is.
  *
@@ -954,12 +997,15 @@ function freshSend(meal: MealPick): void {
 
 /**
  * Builds my meals as the search of the row `Foods` shows them above my foods,
- * see `../food/search.ts`: the line of each meal whose name or foods hold the words typed,
+ * see `../food/search.ts`: the line of each meal
+ * whose name or foods hold the words typed,
  * see `dishesFound` in `../food/meals.ts`, its name with its short title in brackets,
  * see `dishNameOf` there, and what it gave the last time I ate it, a click picking it,
  * see {@link dishPick}; then, while the text typed is no meal of mine nor of this entry,
- * nor a barcode, last, the one plus with it, `+ New meal “Chili con Carne”`, see {@link mealNew},
- * so `chili` offers Chili con Carne before a new meal and Enter takes a meal or food found first,
+ * nor a barcode, last, the one plus with it,
+ * `+ New meal “Chili con Carne”`, see {@link mealNew},
+ * so `chili` offers Chili con Carne before a new meal
+ * and Enter takes a meal or food found first,
  * see `firstPick` in `../food/search.ts`.
  * - `name`: The text typed as the name of a meal.
  * - `lines`: Lines of the meals found.
@@ -1041,7 +1087,8 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
 }
 
 /**
- * Writes a cooking as the list of the cookings offers it: what it was and when it started,
+ * Writes a cooking as the list of the cookings offers it:
+ * what it was and when it started,
  * like `Hackfleisch · Kidneybohnen · Tomaten · 13.10.2026 (Tue) 16:00`.
  * - `start`: Its start.
  *
@@ -1054,10 +1101,12 @@ function cookingTextOf(cooking: Cooking): string {
 }
 
 /**
- * Puts the meals and foods of the cooking the meal draws from first among its meals and foods,
+ * Puts the meals and foods of the cooking the meal draws
+ * from first among its meals and foods,
  * in place of those it brought before, each at its share of the pot:
  * the pot shared evenly among every meal drawing from it, this one too, halves for two,
- * thirds for three, as the reader writes it once saved, see `cookedShare` in `reader/day.ts`;
+ * thirds for three, as the reader writes it once saved,
+ * see `cookedShare` in `reader/day.ts`;
  * none while no cooking is picked.
  * - `cooking`: The cooking picked, `undefined` for none.
  * - `share`: Part of the pot of each meal, like 0.5 for two.
@@ -1166,7 +1215,8 @@ function cookedRowOf(changed: () => void): HTMLElement {
 }
 
 /**
- * Gives the identifier of the cooking the meal draws from, for its `X-COOKED`; empty for none.
+ * Gives the identifier of the cooking the meal draws from,
+ * for its `X-COOKED`; empty for none.
  *
  * @returns Identifier, empty for none
  */
@@ -1215,7 +1265,8 @@ function foodsRowOf(
  * - `cooks`: My cookings of the days before a meal, none for a cooking.
  * - `last`: The meal the lines so far went to.
  * - `drawnLines`: The lines of the cooking the meal draws from, none for none.
- * - `brought`: Keys of the foods of that cooking beside its meals, whose lines came with it.
+ * - `brought`: Keys of the foods of that cooking beside its meals,
+ *   whose lines came with it.
  * - `broughtMeals`: Names of the meals of that cooking, which came with it.
  * - `foodsLine`: The plus beside the name `Foods`, which opens the list.
  * - `foodsSearch`: The search in the list of the row `Foods`, emptied as the list opens.
@@ -1228,7 +1279,8 @@ function foodsRowOf(
  *   like `Chili con Carne, Brot`; empty for a new meal
  * @param changed - Tells the dialog that the meal changed
  * @param drawing - The cooking a meal draws from and its start, see {@link Drawing};
- *   `null` for a cooking, which shows its summary and its foods, and draws from no cooking
+ *   `null` for a cooking, which shows its summary and its foods,
+ *   and draws from no cooking
  * @returns The rows of summary and foods, to put into the dialog in place of the summary
  * @throws {Error} - When the reader cannot answer
  */
@@ -1324,7 +1376,8 @@ export async function mealOf(
 /**
  * Writes a food picked as a line `X-FOOD`: its name, brand and store,
  * then its grams typed, a decimal comma as a point, empty for none, parted by `;`,
- * like `Skyr natur;K-Classic;Kaufland;150`, so every line says which product it was and how much.
+ * like `Skyr natur;K-Classic;Kaufland;150`,
+ * so every line says which product it was and how much.
  *
  * @param pick - Food picked
  * @returns The line, without a meal
@@ -1336,7 +1389,8 @@ function lineTextOf(pick: FoodPick): string {
 /**
  * Gives the meal as lines `X-FOOD`, see {@link lineTextOf}:
  * first the foods of each meal, its name after each,
- * like `Hackfleisch;Gut & Günstig;Edeka;125;Chili con Carne`, then the foods beside the meals;
+ * like `Hackfleisch;Gut & Günstig;Edeka;125;Chili con Carne`,
+ * then the foods beside the meals;
  * a food at 0 g, like one I rarely put into a meal and did not this time,
  * left out, since I did not eat it.
  *
@@ -1357,8 +1411,10 @@ export function mealFoods(): string[] {
 
 /**
  * Gives the summary of the meal: the names of the meals that hold a food,
- * then of the foods beside them without brand and store, in the order picked, parted by `, `,
- * like `Chili con Carne, Weißbrot`, drinks left out, like a `Coca-Cola`, whose kcal still count,
+ * then of the foods beside them without brand and store,
+ * in the order picked, parted by `, `,
+ * like `Chili con Carne, Weißbrot`, drinks left out,
+ * like a `Coca-Cola`, whose kcal still count,
  * see `summaryOf` in `../food/foods.ts`.
  *
  * @returns Summary, empty while nothing is picked

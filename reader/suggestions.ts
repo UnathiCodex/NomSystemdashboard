@@ -2,15 +2,19 @@
  * ## Suggestions
  *
  * Puts what I learn today into the plan of today as real boxes, without asking:
- * one box per chapter with something due today, a Task by its spacing or a section on round 0,
- * see `today` of `SkillSection` in `skill.ts`, the same chapters the module overview shows;
+ * one box per chapter with something due today,
+ * a Task by its spacing or a section on round 0,
+ * see `today` of `SkillSection` in `skill.ts`,
+ * the same chapters the module overview shows;
  * a section on round 0 only in an open chapter, see `todayMarked` in `skill.ts`.
  * A box of my own learning, without type and without time,
  * like a to-do, since only its length matters, not when:
  * 30 minutes for the Task of each section with something due,
- * and 30 more for the theory of a section on round 0, its Definitions, Algorithm and Example,
+ * and 30 more for the theory of a section on round 0,
+ * its Definitions, Algorithm and Example,
  * see `taskMinutes` and `theoryMinutes` in `trackers.ts`,
- * like `SUMMARY:IN2028_BusinessAnalyticsMachineLearning` with `X-CHAPTER:01_RegressionAnalysis`
+ * like `SUMMARY:IN2028_BusinessAnalyticsMachineLearning`
+ * with `X-CHAPTER:01_RegressionAnalysis`
  * and `ESTIMATED-DURATION:PT2H` for 01.03 on round 0 with the Tasks of 01.01 and 01.02,
  * see `boxes.ts`, and one `ATTACH` per note of the chapter with something due,
  * at most one Task each, like
@@ -29,11 +33,13 @@
  * and the attempts of a session are logged from it, see `studyBoxOf` in `boxes.ts`.
  * Written before the plan of today or the learning view is read, see `reader.ts`,
  * so the box stands there before I begin; nothing written is taken out again.
- * Worked out once per day, change of the new system and five minutes, see {@link written},
+ * Worked out once per day, change of the new system
+ * and five minutes, see {@link written},
  * since every request of the plan asks for it,
  * and working it out reads every note of my modules, about 0.2 s.
  *
- * - `./boxes.ts`: Reads the boxes of today, those carried along among them, and adds a box.
+ * - `./boxes.ts`: Reads the boxes of today,
+ *   those carried along among them, and adds a box.
  * - `./calendar.ts`: Gives today in Berlin time and adds a day to a day.
  * - `./changes.ts`: Counts the changes of the new system.
  * - `./categories.ts`: Names the category of skill entries.
@@ -54,14 +60,16 @@ import type { SkillModule, SkillSection } from "./skill.ts";
 /**
  * When the boxes were last worked out:
  * today, the count of changes of the new system and the five minutes then,
- * see `changesVersion` in `changes.ts`, like `2026-10-24 12 5847`; empty before the first time.
+ * see `changesVersion` in `changes.ts`, like `2026-10-24 12 5847`;
+ * empty before the first time.
  * The five minutes catch a note
  * of my modules changed outside the new system, which tells no change.
  */
 let written: string = "";
 
 /**
- * Writes the boxes of the chapters due today into the plan of today, see the top of this file,
+ * Writes the boxes of the chapters due today into the plan of today,
+ * see the top of this file,
  * but while nothing changed since the last time, see {@link written}.
  * - `today`: Today in Berlin time.
  * - `key`: When it is worked out now, in the form of {@link written}.

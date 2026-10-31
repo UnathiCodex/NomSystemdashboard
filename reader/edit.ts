@@ -8,7 +8,8 @@
  * so the AI can turn them into rules of my style, see `editor` in `sources.ts`.
  * When its file changed on the disk since the editor read it, like by a Claude session,
  * the text sent and that change are merged, see {@link textMerged},
- * so nothing I typed is lost, and the editor gets the text written back, see {@link Written}.
+ * so nothing I typed is lost, and the editor gets the text written back,
+ * see {@link Written}.
  * Paths are those of the scripts view, from `NomSkillingmodules`, like
  * `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`.
  *
@@ -60,8 +61,10 @@ export type TextChange = {
 /**
  * A file as written, as the editor gets it back after saving.
  *
- * - `text`: Its text as written: the text sent, merged with a change of the file on the disk.
- * - `changes`: What that merge changed in the text sent, none without a change on the disk.
+ * - `text`: Its text as written: the text sent,
+ *   merged with a change of the file on the disk.
+ * - `changes`: What that merge changed in the text sent,
+ *   none without a change on the disk.
  */
 export type Written = {
     text: string;
@@ -89,7 +92,8 @@ function linesOf(text: string): string[] {
 }
 
 /**
- * Gives what another text changed in the lines of a text, each run of changed lines one hunk.
+ * Gives what another text changed in the lines of a text,
+ * each run of changed lines one hunk.
  * - `at`: Number of the line of the text reached.
  * - `last`: The hunk before, which a change right at its end goes on.
  *
@@ -118,13 +122,16 @@ function hunksOf(base: string[], other: string[]): Hunk[] {
 }
 
 /**
- * Merges what I typed with what changed on the disk meanwhile, both against the text the editor
- * read: each change on the disk goes in where I left its lines and those beside them as they were,
+ * Merges what I typed with what changed on the disk meanwhile,
+ * both against the text the editor read: each change on the disk goes
+ * in where I left its lines and those beside them as they were,
  * mine stands where we both changed the same lines or lines right beside each other,
  * so nothing I typed is ever lost; lines are compared whole, with their line breaks.
  * - `original`: Lines of the text the editor read.
- * - `mine`, `theirs`: What I changed, and what changed on the disk but where I changed too.
- * - `merged`: The lines merged so far, and `at` the number of the line of the text reached.
+ * - `mine`, `theirs`: What I changed,
+ *   and what changed on the disk but where I changed too.
+ * - `merged`: The lines merged so far,
+ *   and `at` the number of the line of the text reached.
  *
  * @param base - The text the editor read or saved last
  * @param text - The text I saved
@@ -153,7 +160,8 @@ export function textMerged(base: string, text: string, disk: string): string {
 
 /**
  * Gives the changes that turn one text into another, line by line, for the editor,
- * like the change on the disk a merge brought into the text I saved, see {@link textMerged}.
+ * like the change on the disk a merge brought into the text I saved,
+ * see {@link textMerged}.
  * - `at`: Place in the first text reached.
  * - `last`: The change before, which a change right at its end goes on.
  *
@@ -190,7 +198,8 @@ export function changesOf(before: string, after: string): TextChange[] {
  * - {@link realpathSync}: Makes a path absolute and follows symbolic links,
  *   so no link leads outside.
  *
- * @param path - Path like `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`
+ * @param path - Path like
+ *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`
  * @returns File on the disk
  * @throws {Error} - When the path lies outside `NomSkillingmodules`,
  *   has a hidden part like `.obsidian` or `..`, is no note `.md`, or nothing lies there
@@ -228,9 +237,10 @@ function stampOf(): string {
  * its head naming the note and the time,
  * like `--- a/IN2028_…/01_RegressionAnalysis/01_02_SampleMeanEstimator.md` and,
  * after a tab, `2026-10-17 14:40:19`;
- * then the text, exactly as sent where the file did not change. A text without change writes nothing.
- * - {@link createTwoFilesPatch}: Writes the change as `diff -u` does, with the path of the note
- *   in `NomSkillingmodules` and the time.
+ * then the text, exactly as sent where the file did not change.
+ * A text without change writes nothing.
+ * - {@link createTwoFilesPatch}: Writes the change as `diff -u` does,
+ *   with the path of the note in `NomSkillingmodules` and the time.
  * - `text`: The text to write.
  *
  * @param change - Note as saved

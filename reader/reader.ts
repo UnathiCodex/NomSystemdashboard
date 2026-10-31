@@ -3,9 +3,11 @@
  *
  * Start with `npm start`.
  *
- * Reads the vault named in `sources.ts` and waits at `127.0.0.1:3000`, IPv4 by its address,
+ * Reads the vault named in `sources.ts`
+ * and waits at `127.0.0.1:3000`, IPv4 by its address,
  * not `localhost`, which some servers turn into `::1` first
- * while `tailscale serve` hands requests to `127.0.0.1:3000`, to answer the browser page with data,
+ * while `tailscale serve` hands requests to `127.0.0.1:3000`,
+ * to answer the browser page with data,
  * and with the page itself.
  *
  * - Node may read from disk but browser cannot.
@@ -24,23 +26,28 @@
  *   the boxes carried along to a day and one box, adds, changes and removes boxes,
  *   pushes them to the next day and drops them
  * - `./course.ts`: Reads the course of a module, its boxes,
- *   its series and the groups of its tutorials, changes a series by its rule, makes a group mine,
+ *   its series and the groups of its tutorials,
+ *   changes a series by its rule, makes a group mine,
  *   picks one session of a group for its week, writes and removes groups,
- *   adds a new box once per date of its weekly days, and gives an exam its kind and its times
- * - `./rules.ts`: Reads a plain series of the plan by its rule, like my sleep of every night,
+ *   adds a new box once per date of its weekly days,
+ *   and gives an exam its kind and its times
+ * - `./rules.ts`: Reads a plain series of the plan by its rule,
+ *   like my sleep of every night,
  *   and writes it new or whole
  * - `./gifts.ts`: Writes my gift idea for a birthday or holiday
  *   as its `DESCRIPTION` into `Birthdays.ics` or `Holidays.ics`
  * - `./note.ts`: Reads the daily notes,
  *   and writes my gratitude and my points about the day into them
- * - `./categories.ts`: Offers the categories with the values of their fields, and my places
+ * - `./categories.ts`: Offers the categories with the values
+ *   of their fields, and my places
  * - `./places.ts`: Adds a place with its address to `Places.md`, changes its row,
  *   and changes one everywhere
  * - `./persons.ts`: Reads the people I name from `Persons.md`, read only
  * - `./notes.ts`: Reads every module for the menu of the scripts view, the notes,
  *   files and folders of my modules and the links that lead nowhere, read only,
  *   streams a file of them, and makes a folder of a module on a click on it
- * - `./edit.ts`: Writes a note of my modules as I edited it, at its place in `NomSkillingmodules`,
+ * - `./edit.ts`: Writes a note of my modules as I edited it,
+ *   at its place in `NomSkillingmodules`,
  *   and keeps the change as a diff
  * - `./files.ts`: Lists the files of my new system for the editor,
  *   reads one and writes a Markdown file back
@@ -49,9 +56,11 @@
  *   attempts and where I stand in rounds into the log, and reads the session running now
  * - `./documents.ts`: Checks the links of the skill entries at the start and every night,
  *   repairing what it can, and reads a file a skill entry links
- * - `./suggestions.ts`: Writes the chapters due today into the plan of today, one box each
+ * - `./suggestions.ts`: Writes the chapters due today
+ *   into the plan of today, one box each
  * - `./food.ts`: Finds foods, mine first,
- *   then on Open Food Facts, adds foods to `Foods.md` and renames them, adds meals to `Meals.md`,
+ *   then on Open Food Facts, adds foods to `Foods.md` and renames them,
+ *   adds meals to `Meals.md`,
  *   reads the meals of a day and my meals
  * - `./sport.ts`: Reads the sessions of a day with what they burned,
  *   keeps my workouts in `Workouts.md`, my exercises in `Exercises.md`,
@@ -213,11 +222,13 @@ import type { AttemptNew, RoundNew, SkillEntryChange, SkillEntryNew } from "./sk
 import type { Dish, Food, FoodChanged } from "./food.ts";
 
 /**
- * Sends an answer as JSON text, packed as `gzip` when the browser takes it, as every browser does,
+ * Sends an answer as JSON text, packed as `gzip` when the browser takes it,
+ * as every browser does,
  * which makes the categories with the values of their fields 31 KB instead of 506 KB.
  * - `Cache-Control`: Tells the browser with `no-store` to not keep the answer,
  *   because the files may change any time.
- * - `Content-Encoding`: Tells the browser that the answer comes packed, which it unpacks by itself.
+ * - `Content-Encoding`: Tells the browser that the answer comes packed,
+ *   which it unpacks by itself.
  *
  * @param response - Answer to the browser
  * @param status - HTTP status code
@@ -320,13 +331,17 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   Sends the boxes whose deadline lies on a day before the date and that are open,
  *   see `boxesCarried` in `boxes.ts`.
  * - `GET /api/day/box?id=…`: Sends the box of the identifier with its state,
- *   like the box a log entry was logged from, whose series the pencil of its summary opens,
+ *   like the box a log entry was logged from,
+ *   whose series the pencil of its summary opens,
  *   see `src/day/categories.ts`.
- * - `GET /api/day/note?date=…`: Sends the daily note of the date, or `null` for a day without note.
+ * - `GET /api/day/note?date=…`: Sends the daily note of the date,
+ *   or `null` for a day without note.
  * - `GET /api/day/sections?date=…`:
- *   Sends my gratitude and my points about the day of the daily note of the date as texts,
+ *   Sends my gratitude and my points about the day
+ *   of the daily note of the date as texts,
  *   empty ones for a day without note.
- * - `GET /api/day/categories?now=…`: Sends the categories with the values of their fields.
+ * - `GET /api/day/categories?now=…`:
+ *   Sends the categories with the values of their fields.
  * - `GET /api/day/last-place?before=…`: Sends where I was last before the instant.
  * - `GET /api/day/plain?id=…`:
  *   Sends the plain series of the `UID` of one of its parts, its rule, times and texts,
@@ -344,7 +359,8 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   places and platforms send each change to Vu, see `listShare` there.
  * - `PATCH /api/day/log`: Changes entry of the body,
  *   refused with 409 when its file changed it since the dialog opened it.
- * - `POST /api/day/moved`: Moves the entry named in the body to the start and end in the body,
+ * - `POST /api/day/moved`: Moves the entry named in the body
+ *   to the start and end in the body,
  *   every other field as its file holds it.
  * - `DELETE /api/day/log?id=…`: Removes entry of the identifier.
  * - `POST /api/day/boxes`: Adds the box of the body, numbers the boxes of its type anew,
@@ -352,19 +368,25 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `PATCH /api/day/boxes`: Changes box of the body.
  * - `DELETE /api/day/boxes?id=…`:
  *   Removes box of the identifier, of one day of a series that day alone.
- * - `DELETE /api/day/plain?id=…`: Removes the plain series of the `UID` whole, every part of it,
+ * - `DELETE /api/day/plain?id=…`:
+ *   Removes the plain series of the `UID` whole, every part of it,
  *   see `plainRemove` in `rules.ts`.
  * - `POST /api/day/repeat`: Adds box of the body once per date of its weekly days,
- *   as the dialog of a series gives them for a box repeated by the row `Repeat` of its dialog,
+ *   as the dialog of a series gives them for a box repeated
+ *   by the row `Repeat` of its dialog,
  *   and sends the boxes it makes, see `repeatApply` in `course.ts`;
  *   refused with 409 for a series of a type that has a box in its semester already;
  *   when the body says `dry: true` only sends what it would make, writing nothing,
  *   for the preview of the dialog.
- * - `POST /api/day/plain`: Writes a part of a plain series as the body has it, new, whole,
- *   or from today on, or ends it when the body says `gone: true`, and sends the boxes it makes,
+ * - `POST /api/day/plain`: Writes a part of a plain series
+ *   as the body has it, new, whole,
+ *   or from today on, or ends it when the body says `gone: true`,
+ *   and sends the boxes it makes,
  *   see `plainApply` in `rules.ts`;
- *   when the body says `dry: true` only sends them, writing nothing, for the preview of the dialog.
- * - `POST /api/day/logged`: Logs the box named in the body at the start and end in the body,
+ *   when the body says `dry: true` only sends them, writing nothing,
+ *   for the preview of the dialog.
+ * - `POST /api/day/logged`:
+ *   Logs the box named in the body at the start and end in the body,
  *   and sends the identifier of the log entry.
  * - `POST /api/day/undone`:
  *   Takes the done box named in the body back to open,
@@ -378,13 +400,16 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `POST /api/day/submitted`: Ticks the box with a deadline named in the body submitted,
  *   or takes the tick back when the body says `submitted: false`.
  * - `POST /api/day/sections`:
- *   Writes the section of the body into its daily note, my gratitude or my points about the day.
+ *   Writes the section of the body into its daily note,
+ *   my gratitude or my points about the day.
  * - `POST /api/day/gifts`: Writes the gift idea of the body for its birthday
- *   or holiday into its file, `Birthdays.ics` or `Holidays.ics`, or takes it out when it is empty.
+ *   or holiday into its file, `Birthdays.ics` or `Holidays.ics`,
+ *   or takes it out when it is empty.
  * - `POST /api/day/places`:
  *   Adds the place of the body with its address to `Places.md`,
  *   a room to `Rooms.md`, and sends it as written.
- * - `PATCH /api/day/places`: Changes the place of the old name of the body in `Places.md`,
+ * - `PATCH /api/day/places`:
+ *   Changes the place of the old name of the body in `Places.md`,
  *   or the room in `Rooms.md`, and nothing else, and sends it as written.
  * - `POST /api/day/renamed`:
  *   Changes the place of the old name of the body everywhere to the name,
@@ -412,38 +437,48 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   the columns that name people and every person of my calendars,
  *   see `personRename` in `persons.ts`;
  *   when the body says `dry: true` only checks it, writing nothing.
- * - `GET /api/course/module?module=…&semester=…`: Sends the course of the module of the folder,
- *   like `IN2028_BusinessAnalyticsMachineLearning`, or of the code, like `IN2028`, in the semester,
+ * - `GET /api/course/module?module=…&semester=…`:
+ *   Sends the course of the module of the folder,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`, or of the code,
+ *   like `IN2028`, in the semester,
  *   like `2026W`, that of today while none is named:
  *   its boxes, its series, the groups of its tutorials,
  *   the folders of its material and its plan, see `course.ts`.
  * - `POST /api/course/series`:
- *   Changes the series of the body by its rule and the states of its boxes, as its form typed them,
+ *   Changes the series of the body by its rule and the states of its boxes,
+ *   as its form typed them,
  *   and sends its boxes after the change;
- *   when the body says `dry: true` only sends what the change would make, writing nothing,
+ *   when the body says `dry: true` only sends
+ *   what the change would make, writing nothing,
  *   for the preview of the form.
  * - `POST /api/course/mine`:
- *   Makes the group of the body mine, my boxes of its type from its next session on going to it,
+ *   Makes the group of the body mine,
+ *   my boxes of its type from its next session on going to it,
  *   or with no group takes my group back, my open boxes of its type from today on going,
  *   and sends the boxes of the series after it;
  *   when the body says `dry: true` only sends what that would make.
  * - `POST /api/course/pick`:
  *   Picks the session of the body, its module, type, group and start, for its week,
- *   the box of that week going to it, or with `extra: true` as a box of its own besides it,
+ *   the box of that week going to it,
+ *   or with `extra: true` as a box of its own besides it,
  *   see `weekPick` in `course.ts`.
- * - `POST /api/course/exam`: Gives the exam of the body the kind and the times of the body,
+ * - `POST /api/course/exam`:
+ *   Gives the exam of the body the kind and the times of the body,
  *   see `examSet` in `course.ts`.
  * - `PUT /api/course/groups`:
- *   Writes the group of the body into the plan of its module, in place of one of the same type,
+ *   Writes the group of the body into the plan of its module,
+ *   in place of one of the same type,
  *   group and semester, and sends its identifier.
  * - `POST /api/course/groups`:
- *   Makes or changes the group of the body as the form of a series typed it, its slots, place,
+ *   Makes or changes the group of the body
+ *   as the form of a series typed it, its slots, place,
  *   tutors, weeks and the dates I cancelled, and sends its sessions after it,
  *   see `groupApply` in `course.ts`;
  *   when the body says `dry: true` only sends what it would make, writing nothing,
  *   for the preview of the form.
  * - `POST /api/course/session`: Changes the session of a group of the body alone,
- *   as the university changed it, its times and its room, see `sessionApply` in `course.ts`.
+ *   as the university changed it, its times and its room,
+ *   see `sessionApply` in `course.ts`.
  * - `DELETE /api/course/groups?module=…&type=…&group=…&semester=…`:
  *   Removes the group from the plan of the module.
  * - `DELETE /api/course/series?module=…&type=…&semester=…`:
@@ -457,7 +492,8 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   see `codeColorsRead` in `theme.ts`.
  * - `GET /api/notes/file?path=…`: Sends a file of my modules, like an image of a note.
  * - `GET /api/notes/stream?path=…`: Streams a file of my modules,
- *   like a PDF of a folder, piece by piece as it is read, read only, see `fileOpen` in `notes.ts`.
+ *   like a PDF of a folder, piece by piece as it is read,
+ *   read only, see `fileOpen` in `notes.ts`.
  * - `GET /api/notes/folder?path=…`:
  *   Sends the folders and files of a folder of my modules, for its view.
  * - `POST /api/notes/folder`:
@@ -469,13 +505,16 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   see `moduleMake` in `notes.ts`.
  * - `GET /api/notes/broken`:
  *   Sends the links that lead nowhere in the notes of the semester, each with its note.
- * - `PUT /api/edit/note`: Writes note of my modules of the body, its change kept as a diff,
+ * - `PUT /api/edit/note`: Writes note of my modules of the body,
+ *   its change kept as a diff,
  *   merged with a change of its file since the editor read it,
  *   and sends it back as written, see `Written` in `edit.ts`.
  * - `GET /api/edit/tree`: Sends the tree of `NomManageplannings` for the editor,
  *   without my old system, read only.
- * - `GET /api/edit/file?path=…`: Sends a file of the folders of my new system, Markdown or `.ics`.
- * - `PUT /api/edit/file`: Writes Markdown file of the body into the folders of my new system,
+ * - `GET /api/edit/file?path=…`:
+ *   Sends a file of the folders of my new system, Markdown or `.ics`.
+ * - `PUT /api/edit/file`: Writes Markdown file of the body
+ *   into the folders of my new system,
  *   without a diff, merged with a change of its file since the editor read it,
  *   and sends it back as written.
  * - `GET /api/skill/tasks`: Sends the modules with their tasks,
@@ -488,37 +527,47 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `POST /api/skill/attempt`: Writes the result of the cold Task of the body
  *   into the line `X-ROUND` of its section in the skill entry of the moment.
  * - `POST /api/skill/round`:
- *   Writes where I am in a round, a line `X-ROUND` of the body, into the skill entry of the moment.
+ *   Writes where I am in a round, a line `X-ROUND` of the body,
+ *   into the skill entry of the moment.
  * - `GET /api/skill/opened?path=…`:
  *   Sends the block I opened last in the section of the note, see {@link openedBlocks}.
- * - `POST /api/skill/opened`: Keeps the block of the body as the one I opened in its section.
+ * - `POST /api/skill/opened`: Keeps the block of the body
+ *   as the one I opened in its section.
  * - `POST /api/skill/entry`: Writes skill entry of the body into the log.
  * - `PATCH /api/skill/entry`:
- *   Changes skill entry of the body, adding its new attempts to the lines of their sections,
+ *   Changes skill entry of the body,
+ *   adding its new attempts to the lines of their sections,
  *   refused with 409 when its file changed it since the dialog opened it.
- * - `GET /api/skill/session?module=…`: Sends the session of the module running now, or `null`.
+ * - `GET /api/skill/session?module=…`:
+ *   Sends the session of the module running now, or `null`.
  * - `GET /api/food/search?q=…&page=…&products=…`:
  *   Sends my foods for a name or barcode, the most eaten first,
  *   then a page of those of Open Food Facts, none for `products=0`.
  * - `POST /api/food/foods`: Adds food of the body to `Foods.md` and sends it as written.
- * - `PATCH /api/food/foods`: Renames food of the body wherever it stands and sends it as written.
+ * - `PATCH /api/food/foods`:
+ *   Renames food of the body wherever it stands and sends it as written.
  * - `DELETE /api/food/foods?name=…&brand=…&store=…`: Removes the food from `Foods.md`.
  * - `GET /api/food/day?date=…`: Sends the meals of the date with what they give.
- * - `GET /api/food/meals`: Sends my meals of `Meals.md`, each with its foods and what it gave.
+ * - `GET /api/food/meals`: Sends my meals of `Meals.md`,
+ *   each with its foods and what it gave.
  * - `POST /api/food/meals`: Writes the meal of the body, its name and foods,
  *   and where sent its short title and the standard grams of its foods, into `Meals.md`,
  *   new or changed, and sends all my meals.
  * - `PATCH /api/food/meals`:
  *   Renames the meal of the body, its old name and its new one,
  *   wherever it stands, and sends all my meals.
- * - `DELETE /api/food/meals?meal=…`: Removes the meal from `Meals.md` and sends all my meals.
+ * - `DELETE /api/food/meals?meal=…`:
+ *   Removes the meal from `Meals.md` and sends all my meals.
  * - `GET /api/sport/day?date=…`:
  *   Sends the sessions of the date with what they took, and my weight on it.
  * - `POST /api/sport/weight`:
- *   Writes my weight of the day of the body into `Weights.md` and sends the sessions of the day.
- * - `GET /api/sport/mine`: Sends my workouts, exercises and videos, and the kinds of a video.
+ *   Writes my weight of the day of the body into `Weights.md`
+ *   and sends the sessions of the day.
+ * - `GET /api/sport/mine`: Sends my workouts,
+ *   exercises and videos, and the kinds of a video.
  * - `POST /api/sport/workouts`: Writes the workout of the body, its name and parts,
- *   and where sent its old name, into `Workouts.md`, new or changed, and sends all of mine.
+ *   and where sent its old name, into `Workouts.md`,
+ *   new or changed, and sends all of mine.
  * - `DELETE /api/sport/workouts?name=…`:
  *   Removes the workout from `Workouts.md` and sends all of mine.
  * - `GET /api/sport/video?link=…`:
@@ -528,16 +577,18 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `DELETE /api/sport/videos?link=…&title=…`:
  *   Removes the video from `Videos.md` and from my workouts, and sends all of mine.
  * - `POST /api/sport/exercises`:
- *   Adds the exercise of the body, a variant of its own, to `Exercises.md` and sends all of mine.
+ *   Adds the exercise of the body, a variant of its own,
+ *   to `Exercises.md` and sends all of mine.
  * - `PATCH /api/sport/exercises`:
  *   Writes the new sets, repetitions and kilograms of the variant of the body,
  *   as it was, into `Exercises.md` and my workouts, and sends all of mine.
  * - `DELETE /api/sport/exercises?name=…&sets=…&reps=…&kg=…`:
  *   Removes the variant from `Exercises.md` and from my workouts, and sends all of mine.
- * - `POST /api/devices`: Writes what the device of the body shows of the page into `Devices.md`,
+ * - `POST /api/devices`: Writes what the device of the body shows
+ *   of the page into `Devices.md`,
  *   the device named by Tailscale from the address `tailscale serve` adds to the request.
- * - `GET /api/changes`: Keeps the answer open and tells each change of a file of my new system
- *   as it comes, see `changes.ts`.
+ * - `GET /api/changes`: Keeps the answer open and tells
+ *   each change of a file of my new system as it comes, see `changes.ts`.
  * - Any other address: Hands request to the page.
  *
  * A request as the page sends it:

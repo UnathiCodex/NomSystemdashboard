@@ -3,7 +3,8 @@
  *
  * The course of a module on its page, above its chapters, see `./overview.ts`,
  * as the reader reads it in the semester of today, see `reader/course.ts`:
- * on top the card `Learning`, my own learning of the module, its skill entries without type,
+ * on top the card `Learning`, my own learning of the module,
+ * its skill entries without type,
  * planned or logged, numbered by date, its pencil opening it as a series,
  * see {@link learningCardOf};
  * then one card per type, in the order {@link typeNames}, a thin line between two cards,
@@ -25,22 +26,27 @@
  * its weekday and date, which name its month and year, like `29.10.2026 (Thu)`,
  * then grey its group while it has one,
  * like `05`, first on its grey line,
- * the menu of the groups of its date while it may still go to another, as in the dialog of the box,
+ * the menu of the groups of its date while it may still go to another,
+ * as in the dialog of the box,
  * see `boxGroupOf` in `../day/groups.ts`;
  * right of them grey two lines, one below the other: its times,
- * like `10:00 – 12:00`, without times its length, like `01h 00m`, its place, like `5610.01.011`,
+ * like `10:00 – 12:00`, without times its length, like `01h 00m`,
+ * its place, like `5610.01.011`,
  * which opens its link, its chapters, like `01_RegressionAnalysis`,
  * and right below all the people I am with, each a link to its row in `Persons.md`,
- * see `../persons.ts`, cut by `…` where it is too long, on a phone going on over the next line;
+ * see `../persons.ts`, cut by `…` where it is too long,
+ * on a phone going on over the next line;
  * and at its right edge, beside both lines,
  * the actions of an open box as small icon buttons in one row, on a phone below the row,
  * the same as in the plan, see `../day/actions.ts`;
  * an open box whose day is over counts as skipped, its box still logging it;
- * a box no longer open, or skipped so, shows in that place the icon of its state, as in the plan,
+ * a box no longer open, or skipped so,
+ * shows in that place the icon of its state, as in the plan,
  * which takes it back with one click:
  * the check of a box logged, the cross of one I skipped,
  * the calendar crossed out of one the university cancelled.
- * A box no longer open is greyed as in the plan, and so is a box not done whose day is over,
+ * A box no longer open is greyed as in the plan,
+ * and so is a box not done whose day is over,
  * which stays in sight; an exam never, since every exam matters.
  * Above the rows one calm line counts the boxes by icons,
  * as the dialog of a series, each also at none,
@@ -53,21 +59,28 @@
  * the counts, down while folded, up while open,
  * and a click on the counts opens and closes all of them, the rest going on in place,
  * so what stands above what I click never moves.
- * A tap on the number of a row opens its box as the day view does, in the day view's own dialog,
+ * A tap on the number of a row opens its box as the day view does,
+ * in the day view's own dialog,
  * see `./dialog.ts`; the card loads anew once it closes.
  *
- * The heading of a card names its type whole, its code in round brackets, like `Vorlesung (VO)`,
- * see {@link typeNames}, right after it the one pencil, which opens the dialog of the series,
+ * The heading of a card names its type whole,
+ * its code in round brackets, like `Vorlesung (VO)`,
+ * see {@link typeNames}, right after it the one pencil,
+ * which opens the dialog of the series,
  * see {@link seriesShow}, also of a card with nothing yet, a new series of its type,
  * its row `Group` empty for my own series and typed for a group of the university,
  * for the exams their dates, which it adds to, see `examRuleOf` in `../day/series.ts`;
  * no times and no room,
  * since its rows show them.
- * Below the heading, small and grey, the folder of the material of the type of the semester,
+ * Below the heading, small and grey,
+ * the folder of the material of the type of the semester,
  * like `…/VO_UniversityLectureLessons/TUM_2026W`,
- * `…/` before it since it is no whole path from `NomWorkspace` on, as the reader names it,
- * see `semesterFoldersRead` in `reader/notes.ts`: a link that opens the folder in the scripts view,
- * see `./folder.ts`; one not there yet greyed, no link, until the first box of its type makes it,
+ * `…/` before it since it is no whole path from `NomWorkspace` on,
+ * as the reader names it,
+ * see `semesterFoldersRead` in `reader/notes.ts`:
+ * a link that opens the folder in the scripts view,
+ * see `./folder.ts`; one not there yet greyed, no link,
+ * until the first box of its type makes it,
  * see {@link folderLinkOf}; showing the page makes nothing.
  * The card of the tutorials of a module with groups names the group pinned at the right
  * of its heading, the pin before it,
@@ -94,7 +107,8 @@
  * - `../persons.ts`: Gives the people of `Persons.md`.
  * - `../day/rows.ts`: Makes the row of a box, its number and its times,
  *   as every list of boxes has them.
- * - `../day/series.ts`: Opens the dialog of a series, names the numbered types, writes a room,
+ * - `../day/series.ts`: Opens the dialog of a series,
+ *   names the numbered types, writes a room,
  *   and counts boxes by an icon.
  * - `../day/groups.ts`: Makes the menu of the group pinned of a heading,
  *   and the group of a box with its menu.
@@ -186,7 +200,8 @@ const typeNames: Map<string, string> = new Map([
 const alwaysTypes: string[] = [...numberedTypes, "FA"];
 
 /**
- * Rows of a card that show after the next open box, itself included, before the rest folds.
+ * Rows of a card that show after the next open box,
+ * itself included, before the rest folds.
  */
 const shownAhead: number = 3;
 
@@ -211,12 +226,14 @@ let place: HTMLElement | null = null;
 let module: string = "";
 
 /**
- * Cards whose folded rows show, opened by a click on their counts, by their types, like `VO`.
+ * Cards whose folded rows show, opened by a click on their counts,
+ * by their types, like `VO`.
  */
 const opened: Set<string> = new Set();
 
 /**
- * Whether the course loads anew once the dialog of an entry closes, see {@link dialogShow}.
+ * Whether the course loads anew once the dialog of an entry closes,
+ * see {@link dialogShow}.
  */
 let dialogFollowed: boolean = false;
 
@@ -317,8 +334,10 @@ async function boxOpen(box: Box): Promise<void> {
 }
 
 /**
- * Makes the actions of an open box as the plan does, see `boxActionsOf` in `../day/actions.ts`:
- * `Log` logs it as expected, every action sends its change and then loads the course anew,
+ * Makes the actions of an open box as the plan does,
+ * see `boxActionsOf` in `../day/actions.ts`:
+ * `Log` logs it as expected, every action sends its change
+ * and then loads the course anew,
  * see {@link act}; no `Series`, which the pencil of its card opens.
  * - `log`: Logs the box as expected, at its times, see `boxTimesOf` in `../day/times.ts`.
  *
@@ -337,7 +356,8 @@ function actionsOf(box: Box): HTMLElement {
 }
 
 /**
- * Makes the state of a box no longer open in the place of its actions, as the plan shows it,
+ * Makes the state of a box no longer open in the place of its actions,
+ * as the plan shows it,
  * see `stateOf` in `../day/boxes.ts`: the check of a box logged, `Logged`,
  * or ticked submitted, `Submitted`, the cross of one I skipped, `Skipped`,
  * the calendar crossed out of one the university cancelled, `Cancelled`;
@@ -397,7 +417,8 @@ function overIs(box: Box): boolean {
 /**
  * Shows a pick of a group at once,
  * see `PickShow` in `../day/groups.ts`, the boxes it moved in their order,
- * then sends it to the reader, which confirms it as the course loads anew, see {@link act}.
+ * then sends it to the reader,
+ * which confirms it as the course loads anew, see {@link act}.
  *
  * @param change - Changes the course shown as the pick does
  * @param send - Sends the pick
@@ -412,14 +433,16 @@ function groupPick(change: () => void, send: () => Promise<unknown>): void {
 }
 
 /**
- * Makes the row of a box, see the top of this file, with the one row of a box of every list,
+ * Makes the row of a box, see the top of this file,
+ * with the one row of a box of every list,
  * see `listRowOf` in `../day/rows.ts`, so it stands as a box of the list of a series:
  * its number, an exam its kind there, like `Endterm`, a button that opens the box,
  * see {@link boxOpen}, its note as tooltip;
  * its day, its group grey, its menu where it may still go to another,
  * see `boxGroupOf` in `../day/groups.ts`, a pick shown at once, see {@link groupPick};
  * its times, without times its length, its place short,
- * see {@link roomOf}, its platform in its place while it does something online, its chapters,
+ * see {@link roomOf}, its platform in its place
+ * while it does something online, its chapters,
  * its first person; then its actions while open and its day not over,
  * see {@link actionsOf}, else its state,
  * see {@link stateOf}, an open one whose day is over skipped;
@@ -495,7 +518,8 @@ function foldOf(type: string): HTMLButtonElement {
 
 /**
  * Makes the line of counts of a card, see the top of this file,
- * as the line of the boxes in the dialog of a series, see `summaryOf` in `../day/series.ts`:
+ * as the line of the boxes in the dialog of a series,
+ * see `summaryOf` in `../day/series.ts`:
  * how many boxes it has, by the icon of a calendar,
  * then by the icons of their states how many are done, how many skipped or cancelled,
  * and how many pushed, each also at none, apart by middle dots;
@@ -509,7 +533,8 @@ function foldOf(type: string): HTMLButtonElement {
  * @param type - The type, like `TU`, empty for the card `Learning`
  * @param boxes - Its boxes
  * @param folds - Whether some of its rows fold
- * @param learned - How many sessions of the card `Learning` it counts besides its boxes, all done,
+ * @param learned - How many sessions
+ *   of the card `Learning` it counts besides its boxes, all done,
  *   see {@link learningListOf}; none when left out
  * @returns The line
  */
@@ -561,11 +586,13 @@ function countsOf(
 }
 
 /**
- * Makes the line of counts of a card and the list of its boxes, see the top of this file: the line,
+ * Makes the line of counts of a card and the list of its boxes,
+ * see the top of this file: the line,
  * see {@link countsOf}; the list one row per box, see {@link boxRowOf}, by month,
  * see `monthListOf` in `../day/series.ts`, folded by the one rule of every card:
  * of the days over the open exams, the others only while opened;
- * then from today on the next open box and the rows up to two after it, the rest only while opened,
+ * then from today on the next open box and the rows up to two after it,
+ * the rest only while opened,
  * going on in place, so nothing above what I click moves.
  * - `today`: Today's calendar date.
  * - `past`, `coming`: The boxes of the days over and those from today on.
@@ -636,9 +663,11 @@ function foldedOf(type: string, count: number, done: boolean): HTMLButtonElement
 }
 
 /**
- * Makes the row of a session of my own learning logged without a box, in the card `Learning`,
+ * Makes the row of a session of my own learning logged without a box,
+ * in the card `Learning`,
  * see {@link learningListOf}:
- * as the row of a box done, see {@link boxRowOf}, its number its place by date, no button,
+ * as the row of a box done, see {@link boxRowOf},
+ * its number its place by date, no button,
  * since a log entry opens in the day;
  * its day, its times and its place, its people below them,
  * the check of a session done at its right, greyed.
@@ -680,7 +709,8 @@ function learnedRowOf(learned: Learned, number: number): HTMLElement {
  * Makes the line of counts and the list of the card `Learning`, see the top of this file:
  * my own learning of the module in the semester, its boxes without type, planned or done,
  * and the sessions logged without a box,
- * see `learned` of `Course` in `../day/series.ts`, together by date, numbered by date from 1 on,
+ * see `learned` of `Course` in `../day/series.ts`,
+ * together by date, numbered by date from 1 on,
  * as many as there are, like `142`;
  * folded by the one rule of every card, see {@link listOf}: of the days over none,
  * then from today on the next open box and two more, the rest only while opened.
@@ -844,7 +874,8 @@ function headOf(type: string, series: Series | undefined): HTMLElement {
 }
 
 /**
- * Makes the folder of the material of a type of the semester below the heading of its card,
+ * Makes the folder of the material of a type of the semester
+ * below the heading of its card,
  * see the top of this file:
  * its path from the module folder after `…/`,
  * a link in the grey of a link of the page that opens the folder in the scripts view;
@@ -868,7 +899,8 @@ function folderLinkOf(folder: MaterialFolder): HTMLElement {
 /**
  * Makes the card of a type, see the top of this file: its heading,
  * see {@link headOf}, below it the folder of its material of the semester,
- * see {@link folderLinkOf}, then while it has boxes its line of counts and the list of its boxes,
+ * see {@link folderLinkOf}, then while it has boxes its line of counts
+ * and the list of its boxes,
  * see {@link listOf}, the list only while it shows some.
  * - `boxes`: Its boxes.
  * - `series`: Its series, `undefined` for none.
@@ -937,7 +969,8 @@ function learningCardOf(): HTMLElement {
 /**
  * Shows the course of the module as loaded last, see the top of this file:
  * the card `Learning`, then its cards.
- * - `types`: The types of its cards, in their order: those it always has, see {@link alwaysTypes},
+ * - `types`: The types of its cards, in their order:
+ *   those it always has, see {@link alwaysTypes},
  *   and any other with boxes, groups or a folder of its material.
  */
 function cardsShow(): void {
@@ -959,7 +992,8 @@ function cardsShow(): void {
  * or the dialog of an entry closes.
  *
  * @param element - Where the cards go, see `.overview-course` in `./editor.html`
- * @param folder - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param folder - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @throws {Error} - When the reader cannot answer
  */
 export async function courseShow(element: HTMLElement, folder: string): Promise<void> {

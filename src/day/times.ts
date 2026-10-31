@@ -6,11 +6,13 @@
  * gives the times a box is logged at with one tap, and writes how near a day is.
  * A time field is one text field, typed in 24-hour form whatever the browser's language:
  * `14` is 14:00, `1415` and `14:15` are 14:15, `915` and `9:15` are 09:15.
- * When the field loses focus, its time shows as `HH:MM`; any other text marks the field invalid,
+ * When the field loses focus, its time shows as `HH:MM`;
+ * any other text marks the field invalid,
  * so the browser does not send the form and says what it takes instead.
  * An empty field is left to its `required`:
  * start and end of a log entry need a time, the expected time of a box may stay empty.
- * A date field, like the day of a deadline, shows its day with its weekday short after it,
+ * A date field, like the day of a deadline,
+ * shows its day with its weekday short after it,
  * as every day of the page is written, `23.10.2026 (Fri)`, see {@link weekdayDateTextOf},
  * and says grey while empty what I type, `dd.mm.yyyy`;
  * it takes a date in my standard way with its year, `23.10.2026`,
@@ -42,7 +44,8 @@ export const boxMinutes: number = 30;
 
 /**
  * The dash between the start and the end of a range written as text,
- * like `14:00 – 16:00`, with a space on each side, as the dot between two parts of a line has it,
+ * like `14:00 – 16:00`, with a space on each side,
+ * as the dot between two parts of a line has it,
  * in the plan, in the log and everywhere else,
  * and as far as the dash between two fields stands from them,
  * see `--range-gap` in `../variants.css`.
@@ -60,7 +63,8 @@ export function timeOf(date: Date): string {
 }
 
 /**
- * Writes a length of time in hours and minutes, each two digits, like `07h 30m` or `08h 00m`,
+ * Writes a length of time in hours and minutes,
+ * each two digits, like `07h 30m` or `08h 00m`,
  * as every length of the page shows it:
  * the sleep, the timer of a session,
  * a box without times and the real minutes in the dialog of a box;
@@ -146,8 +150,10 @@ export function nowOn(day: Date): Date {
 }
 
 /**
- * Reads a typed time: the hours, then, with or without `:`, two digits of minutes if there are any.
- * - `match`: Hours and minutes of the text, the minutes `undefined` when only hours are typed.
+ * Reads a typed time: the hours, then, with or without `:`,
+ * two digits of minutes if there are any.
+ * - `match`: Hours and minutes of the text,
+ *   the minutes `undefined` when only hours are typed.
  *
  * @param text - Typed text, like `915`
  * @returns Time like `09:15`, or `null` when the text is no time of the day
@@ -163,7 +169,8 @@ function timeParse(text: string): string | null {
  * Shows the time of a date in a time field and marks the field valid.
  *
  * @param field - Time field, like `<input id="entry-start">`
- * @param date - Date with the time, `null` for an empty field, like a box without expected time
+ * @param date - Date with the time, `null` for an empty field,
+ *   like a box without expected time
  */
 export function timeFieldShow(field: HTMLInputElement, date: Date | null): void {
     field.value = date === null ? "" : timeOf(date);
@@ -191,7 +198,8 @@ export function dateTextOf(day: string): string {
 }
 
 /**
- * Writes a day with its weekday short after it, like `23.10.2026 (Fri)`, the value of a date field,
+ * Writes a day with its weekday short after it,
+ * like `23.10.2026 (Fri)`, the value of a date field,
  * as every day of the page is written, see `dayTextOf` in `../skill/attempts.ts`.
  *
  * @param day - Day like `2026-10-23`
@@ -203,7 +211,8 @@ export function weekdayDateTextOf(day: string): string {
 
 /**
  * Reads a typed date in my standard way: day, month and year with dots between,
- * like `23.10.2026` or `1.2.2027`, also with its weekday after it, as a date field shows it,
+ * like `23.10.2026` or `1.2.2027`,
+ * also with its weekday after it, as a date field shows it,
  * like `23.10.2026 (Fri)`, the weekday not read, since the date says it.
  * - `match`: Day, month and year of the text.
  * - `day`: The day, like `2026-10-23`.
@@ -252,7 +261,8 @@ export function boxTimesOf(box: Box, day: Date): [Date, Date] {
 
 /**
  * Writes how near a day is, seen from another day: `today`, `tomorrow` or `in 3 days`,
- * like the deadline of a box on the day it shows on, see `boxes.ts`, or an exam of a module,
+ * like the deadline of a box on the day it shows on,
+ * see `boxes.ts`, or an exam of a module,
  * see `../editor/course.ts`.
  * - `days`: Whole days from the one day to the other, from noon to noon,
  *   so a day the clocks change counts right.
@@ -273,7 +283,8 @@ export function nearOf(day: string, from: string): string {
 
 /**
  * Starts a time field: while empty it says grey what it takes, `hh:mm`,
- * as a date field says `dd.mm.yyyy`, so an empty time reads as one left open, not as a gap;
+ * as a date field says `dd.mm.yyyy`,
+ * so an empty time reads as one left open, not as a gap;
  * it marks itself invalid while its text is neither empty nor a time,
  * and writes its time as `HH:MM` when it loses focus, like `14:15` of `1415`.
  * - {@link HTMLInputElement#setCustomValidity}: Marks a field invalid with a message,
@@ -301,7 +312,8 @@ export function timeFieldStart(field: HTMLInputElement): void {
  * Starts a date field: while empty it says grey what it takes, `dd.mm.yyyy`,
  * as a time field says `hh:mm`;
  * it marks itself invalid while its text is neither empty nor a date,
- * and writes its date with its weekday when it loses focus, like `01.02.2027 (Mon)` of `1.2.2027`,
+ * and writes its date with its weekday when it loses focus,
+ * like `01.02.2027 (Mon)` of `1.2.2027`,
  * see {@link weekdayDateTextOf}.
  * - `change`: Comes when a changed field loses focus.
  * - `day`: Typed date as day, `null` when it is no date.

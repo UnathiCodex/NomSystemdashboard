@@ -1,7 +1,8 @@
 /**
  * ## Gifts
  *
- * Writes my gift idea for a birthday or holiday as its `DESCRIPTION` in its file, `Birthdays.ics`,
+ * Writes my gift idea for a birthday or holiday
+ * as its `DESCRIPTION` in its file, `Birthdays.ics`,
  * the file of my birthdays I write by hand, or `Holidays.ics`,
  * like `DESCRIPTION:Buch über Rom` in the yearly series `Karlbauer Florian`,
  * so it shows below it every year, see `boxes.ts`;

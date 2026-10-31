@@ -1,23 +1,28 @@
-<!-- Editor: the tree on the left, the file on the right, a note of my modules or a file of my new system as its text,
+<!-- Editor: the tree on the left, the file on the right,
+     a note of my modules or a file of my new system as its text,
      its Markdown shown as in the notes away from the cursor, saved exactly as edited -->
 <div class="editor" id="editor">
-    <!-- Tree of NomManageplannings for a file of my new system and at /plannings, of NomSkillingmodules for a note,
-         see notes/tree.ts -->
+    <!-- Tree of NomManageplannings for a file of my new system and at /plannings,
+         of NomSkillingmodules for a note, see notes/tree.ts -->
     <nav class="notes-tree" id="notes-tree"></nav>
 
     <!-- The file, scrolls alone -->
     <div class="editor-file">
-        <!-- Page of the file as wide as the room beside the tree, with little room left and right -->
+        <!-- Page of the file as wide as the room beside the tree,
+             with little room left and right -->
         <div class="editor-page">
-            <!-- Status line above the text, quiet: for a section its round in a small grey box, see round.ts, then
-                 the session the round writes into, the file named only by the tree; at the right whether the changes are saved,
-                 then the head; stays on top while scrolling -->
+            <!-- Status line above the text, quiet:
+                 for a section its round in a small grey box, see round.ts,
+                 then the session the round writes into, the file named only by the tree;
+                 at the right whether the changes are saved, then the head;
+                 stays on top while scrolling -->
             <div class="editor-status" id="editor-status">
                 <p class="editor-title"><span class="block-kind" id="editor-round" hidden><span
                         id="editor-round-label"></span></span><span
                         id="editor-session"></span></p>
                 <span class="editor-state" id="editor-state"></span>
-                <!-- Head: the save button, and for a section the close of its round and Next, see round.ts -->
+                <!-- Head: the save button, and for a section the close of its round
+                     and Next, see round.ts -->
                 <div class="editor-head" id="editor-head">
                     <button type="button" class="editor-save" id="editor-save"></button>
                     <button type="button" class="editor-close" id="editor-close" hidden></button>
@@ -25,9 +30,11 @@
                 </div>
             </div>
 
-            <!-- Page of a module or of one of its chapters, once its name in the tree is picked: of the module on top
-                 its name, above it the path to it, as a folder has them, see folder.ts, then its course of the
-                 university, one card per type, see course.ts; of a chapter its sections, see overview.ts -->
+            <!-- Page of a module or of one of its chapters,
+                 once its name in the tree is picked: of the module on top its name,
+                 above it the path to it, as a folder has them, see folder.ts,
+                 then its course of the university, one card per type, see course.ts;
+                 of a chapter its sections, see overview.ts -->
             <section class="editor-overview" id="editor-overview" hidden>
                 <div class="day-bar overview-title">
                     <h2 class="day-title"><span class="day-weekday folder-path"></span><span
@@ -37,9 +44,11 @@
                 <div class="overview-list"></div>
             </section>
 
-            <!-- A folder of my modules, once the folder of the material of a card of the course is clicked: on top,
-                 where a module names itself, its name, above it as the weekday above the date of the day the path
-                 to it, each folder on the way a link to it; then its folders and files, see folder.ts -->
+            <!-- A folder of my modules, once the folder of the material of a card
+                 of the course is clicked: on top, where a module names itself, its name,
+                 above it as the weekday above the date of the day the path to it,
+                 each folder on the way a link to it;
+                 then its folders and files, see folder.ts -->
             <section class="editor-overview" id="editor-folder" hidden>
                 <div class="day-bar">
                     <h2 class="day-title"><span class="day-weekday folder-path"></span><span
@@ -48,8 +57,9 @@
                 <div class="overview-card folder-list"></div>
             </section>
 
-            <!-- Text of the file, CodeMirror inside; `markdown` gives the rendered pieces of a Markdown file the look
-                 of the scripts view, `editor-plain` shows any other file as its plain text -->
+            <!-- Text of the file, CodeMirror inside; `markdown` gives the rendered pieces
+                 of a Markdown file the look of the scripts view,
+                 `editor-plain` shows any other file as its plain text -->
             <div class="editor-text markdown" id="editor-text"></div>
         </div>
     </div>

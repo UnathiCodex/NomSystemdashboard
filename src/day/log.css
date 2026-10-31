@@ -1,6 +1,7 @@
 /* Log of the day: the time grid with its hour labels, its entries in grey,
    a glass of water as a short tick and the line of now;
-   inside an entry its lines, what, time and place, which a box of the plan shares in part */
+   inside an entry its lines, what, time and place,
+   which a box of the plan shares in part */
 /* Hour labels of the time grid, their margin sets the height of every slot */
 .slot-label {
     margin: var(--slot-margin) 0.5rem;
@@ -47,12 +48,13 @@
     background-color: var(--chosen);
 }
 
-/* Entries of the time grid end 1rem before the right edge of the column, as in Google Calendar,
+/* Entries of the time grid end 1rem before the right edge of the column,
+   as in Google Calendar,
    so beside each one a free strip stays to select a new entry,
    like Sleep from 23:00 ending 1rem left of the glass marks;
    the theme ends them 2.5 % before it, 1 px in a narrow column.
-   The theme puts that margin on the layer of the entries and on the layer of an entry being dragged
-   or of a range being selected,
+   The theme puts that margin on the layer of the entries
+   and on the layer of an entry being dragged or of a range being selected,
    each a child of the column and the parent of the parent of an entry;
    the glass marks lie beside these layers and keep the edge */
 .day-calendar [role="gridcell"] > :has(> * > .entry) {
@@ -63,7 +65,8 @@
    so the line never runs through their text and shows between them:
    their layer, the parent of the line, below the layer of the entries.
    The dot, 12 px wide in the theme and centred on the left edge of the column,
-   moves left by half its width more, into the gap before the column, where no entry covers it;
+   moves left by half its width more,
+   into the gap before the column, where no entry covers it;
    `.day-calendar .now-line` wins over the theme's grey and margin, being more exact */
 .day-calendar :has(> .now-line) {
     z-index: 0;
@@ -90,7 +93,8 @@
    so 45 minutes hold what and its time with its place beside it on two lines,
    each 1.015625rem high at a line height of 1.25, 14.86 minutes of the time grid,
    see `lineMinutes` in `day.ts`;
-   a short one keeps no space above and below its one line, 0.975rem high at a line height of 1.2,
+   a short one keeps no space above and below its one line,
+   0.975rem high at a line height of 1.2,
    so a quarter hour, 1.025rem high less the 1px below it, holds it */
 .entry-inner {
     overflow: clip;
@@ -111,9 +115,11 @@
    An entry scrolled partly out of sight at the top keeps its lines in sight,
    0.42rem below the top of the grid, as far as the entry reaches,
    so a night from 01:45, scrolled to 06:00, still says `Sleep: Night`;
-   those its rest has no more room for hide as a whole from the bottom, see `linesFit` in `day.ts`,
+   those its rest has no more room for hide as a whole from the bottom,
+   see `linesFit` in `day.ts`,
    so none is ever cut at the top;
-   a line that an entry on top of it covers ends before that entry, as wide as `linesFit` lets it,
+   a line that an entry on top of it covers ends before that entry,
+   as wide as `linesFit` lets it,
    like `13:00 – 13:45 · TUM Klinikum Augen…` under a way from 13:30 */
 .entry-lines {
     position: sticky;
@@ -121,8 +127,10 @@
     overflow: hidden;
 }
 
-/* One line in parts, alone in an entry of a quarter hour or half an hour: what, then the time,
-   then the place, parted by a middle dot, like `Skill: WI1059 (HU) · 05:15 – 05:45 · Home Munich`;
+/* One line in parts, alone in an entry of a quarter hour
+   or half an hour: what, then the time,
+   then the place, parted by a middle dot,
+   like `Skill: WI1059 (HU) · 05:15 – 05:45 · Home Munich`;
    what and the time keep their width and only the place gives way, cut with an ellipsis;
    where what and the time are wider than the entry, the time moves onto a next line,
    which `.entry-lines` hides, so what stays whole;
@@ -142,7 +150,8 @@
     text-overflow: ellipsis;
 }
 
-/* What on its own line on top of an entry with room for two lines or more, always one line:
+/* What on its own line on top of an entry with room for two lines
+   or more, always one line:
    where it is wider than the entry, it ends with an ellipsis,
    like `Food: Pasta mit Kürbis-Carbonara-Sauce, Sahne-Pud…` */
 .entry-whole {
@@ -169,9 +178,12 @@
 }
 
 /* Time in normal weight and the one grey of the page, never cut:
-   after what on one line, like `· 05:15 – 05:45`, or on a line of its own, like `20:00 – 23:45`,
-   as wide as its text, at most as wide as its line; only a line narrower than the time alone,
-   beside others in a narrow column or before an entry on top of it, ends it with an ellipsis */
+   after what on one line, like `· 05:15 – 05:45`,
+   or on a line of its own, like `20:00 – 23:45`,
+   as wide as its text, at most as wide as its line;
+   only a line narrower than the time alone,
+   beside others in a narrow column or before an entry on top of it,
+   ends it with an ellipsis */
 .entry-time {
     flex: none;
     max-width: 100%;
@@ -205,7 +217,8 @@
     text-overflow: ellipsis;
 }
 
-/* Arrow of a route between where a way starts and its goal, like `Home Munich → TUM Garching`:
+/* Arrow of a route between where a way starts and its goal,
+   like `Home Munich → TUM Garching`:
    drawn as an icon as high as a letter, in the grey of its line,
    with a third of a letter of room on both sides, see `routeArrowOf` in `places.ts`;
    every line puts the icon on the foot of the letters, a flex line too, which ignores
@@ -219,7 +232,8 @@ svg.route-arrow {
     margin-inline: 0.3em;
 }
 
-/* Place with a link, its `ALTREP`, in an entry or a box, like `8120.01.101 (Audimax im Galileo)`,
+/* Place with a link, its `ALTREP`, in an entry or a box,
+   like `8120.01.101 (Audimax im Galileo)`,
    and the chapter of a box, like `01 Regression Analysis`:
    in the grey of its line, never underlined, lighter under a pointer,
    so it shows that a click opens its link,
@@ -235,7 +249,8 @@ svg.route-arrow {
     color: var(--text-main);
 }
 
-/* Phone: the lines of an entry closer to its edges, 0.5rem left of them and 0.375rem right of them,
+/* Phone: the lines of an entry closer to its edges,
+   0.5rem left of them and 0.375rem right of them,
    so a narrow entry, like `Food: Pizza Salami` over the right part of a workshop,
    keeps more of its width for its words; else its lines as on the computer */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {

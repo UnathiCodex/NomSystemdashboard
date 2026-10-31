@@ -5,20 +5,27 @@
  * they go before CodeMirror's usual keys,
  * each the same within a line as at its end, decided by the text before the cursor,
  * the text after it carried along, the blanks at a break gone:
- * - In plain text and in a heading Enter writes one empty line more, wherever the cursor stands,
+ * - In plain text and in a heading Enter writes one empty line more,
+ *   wherever the cursor stands,
  *   before a new paragraph a line break and an empty line, see {@link paragraphBreak}.
- * - The air of a line, two empty lines, is the most air any key writes, see {@link airMost}.
+ * - The air of a line, two empty lines,
+ *   is the most air any key writes, see {@link airMost}.
  * - Lists are written as my notes write them, see §6.4, §6.5 and §6.12 of
  *   `.claude/skills/learn/3-chapter-write/document-style.md`:
  *   one tab per level, never spaces, a further line of a point in spaces under its text,
  *   see {@link textIndentationOf}.
- * - Every key keeps a point in the point it stands in, with its own sub-points and further lines:
- *   none writes, moves or leaves a point between a point and its sub-points or further lines,
- *   where Markdown would take them into it, like an empty `- ` among the points of a sub-list;
+ * - Every key keeps a point in the point it stands in,
+ *   with its own sub-points and further lines:
+ *   none writes, moves or leaves a point between a point
+ *   and its sub-points or further lines,
+ *   where Markdown would take them into it,
+ *   like an empty `- ` among the points of a sub-list;
  *   only Tab and Shift+Tab change the level of a point;
  *   the cursor stands on the line of a point only from where its text begins,
- *   see `caretPlace` in `./preview.ts`, so no key of CodeMirror's own takes or rewrites its tabs.
- * - Enter continues a list or a task list with the next point of the same level, without air;
+ *   see `caretPlace` in `./preview.ts`,
+ *   so no key of CodeMirror's own takes or rewrites its tabs.
+ * - Enter continues a list or a task list with the next point
+ *   of the same level, without air;
  *   right after the `-` of a point with text after it a new empty point above it,
  *   on a still empty point out one step, as Shift+Tab, below the points after it,
  *   from the outermost level the end of the list, see {@link pointEnter};
@@ -28,23 +35,30 @@
  *   the air of a half line, also with the text right of the cursor,
  *   right after the `-` one empty line above the point, see {@link pointAir},
  *   in plain text and in a quote it is Enter twice, see {@link airBreak};
- *   within a further line of a point it starts the next point too, see {@link furtherContinue};
- *   on a line of only blanks, like a paragraph of a point, and before the text of a further line
- *   it puts one more empty line above it, as on an empty line, see {@link paragraphBreak};
+ *   within a further line of a point it starts the next point too,
+ *   see {@link furtherContinue};
+ *   on a line of only blanks, like a paragraph of a point,
+ *   and before the text of a further line it puts one more empty line above it,
+ *   as on an empty line, see {@link paragraphBreak};
  *   a new point there comes by typing `- `.
  * - In a quote Shift+Enter writes its next `> ` line, Enter a new paragraph in the quote,
- *   a line of only `>` and a `> ` line, and on an empty `> ` line more air, see {@link quoteBreak}.
- * - Shift+Enter goes on in the same paragraph or point on the next line, a single line break;
+ *   a line of only `>` and a `> ` line,
+ *   and on an empty `> ` line more air, see {@link quoteBreak}.
+ * - Shift+Enter goes on in the same paragraph
+ *   or point on the next line, a single line break;
  *   twice it leaves an empty line, see {@link pointContinue}.
  * - Text typed first on an empty line below another becomes a paragraph of its own,
  *   in the air between two points one of the point above, see {@link paragraphTyping};
- *   a line of only blanks keeps them only while the cursor stands on it, see {@link blanksLeft}.
+ *   a line of only blanks keeps them only while the cursor stands on it,
+ *   see {@link blanksLeft}.
  * - Backspace takes away one line or one step, and nothing else moves:
  *   at the start of a line an empty line above it, then the line break,
- *   joining two texts with one blank between, as Markdown shows them, see {@link textBackward},
+ *   joining two texts with one blank between,
+ *   as Markdown shows them, see {@link textBackward},
  *   before the text of a heading too, see {@link headingBackward};
  *   on an empty line the line, the cursor at the end of the line above;
- *   right after the `-` of an item or the `>` of a quote the `-` or `>`; never outdenting.
+ *   right after the `-` of an item or the `>` of a quote the `-` or `>`;
+ *   never outdenting.
  *   A quote goes down its stairs as a point: a new paragraph in it, Enter,
  *   a paragraph after it with the same air, its next `> ` line, Shift+Enter, and joined,
  *   see {@link quoteBackward}.
@@ -56,32 +70,41 @@
  *   the cursor always where text typed will stand.
  *   Delete does the same forwards, at the end of a line with the next one,
  *   see {@link markupForward}.
- * - Tab moves a list item one step in, Shift+Tab one step out, an empty line of a list too,
- *   Shift+Tab from the outermost level to the left edge, from right below text with air above it,
+ * - Tab moves a list item one step in, Shift+Tab one step out,
+ *   an empty line of a list too,
+ *   Shift+Tab from the outermost level to the left edge,
+ *   from right below text with air above it,
  *   see {@link blankIndent};
- *   always with its sub-points and further lines, taking the `-` or number of the list it joins,
+ *   always with its sub-points and further lines,
+ *   taking the `-` or number of the list it joins,
  *   out right after the point it stood in, below the points after it, which stay in it,
  *   see {@link itemIndent} and {@link itemShift}; every change of a list counts
  *   its numbered points in order again, a sub-list from `1.`, see {@link listChange};
  *   outside a list Tab does nothing, in code it writes a tab, see {@link tabWrite},
  *   on several lines picked the points of one list together as one, see {@link itemsAt},
  *   other lines all one step in, and Shift+Tab one step out.
- * - Alt+Up and Alt+Down move the line of the cursor or the lines picked one line up or down,
+ * - Alt+Up and Alt+Down move the line of the cursor
+ *   or the lines picked one line up or down,
  *   as in VS Code: a point with its sub-points and further lines as one line,
  *   past the text of a point of a lower level as one line too, a further line alone,
  *   see {@link linesMove}.
  * - Ctrl+Shift+Up and Ctrl+Shift+Down move the line of the cursor,
- *   or the lines picked, one line up or down, only them, as CodeMirror's Move line up and down.
- * - Ctrl+B and Ctrl+I make the text picked bold or italic, `**…**` and `*…*`, or take it back;
+ *   or the lines picked, one line up or down, only them,
+ *   as CodeMirror's Move line up and down.
+ * - Ctrl+B and Ctrl+I make the text picked bold or italic,
+ *   `**…**` and `*…*`, or take it back;
  *   with nothing picked the word at the cursor, see {@link markupToggle}.
- * - Ctrl+D takes away the line of the cursor, or the lines picked, as Obsidian's Delete paragraph,
+ * - Ctrl+D takes away the line of the cursor, or the lines picked,
+ *   as Obsidian's Delete paragraph,
  *   a point with its sub-points and further lines, as Alt+Up and Alt+Down move it,
  *   see {@link linesDelete}.
  * - Ctrl+Z undoes and Ctrl+Shift+Z redoes only within the block of the cursor,
- *   never a change of another part of the note, see {@link historyIn}; Ctrl+Y does nothing.
+ *   never a change of another part of the note,
+ *   see {@link historyIn}; Ctrl+Y does nothing.
  *   With nothing left there, Ctrl+Z in a round goes back to the block I had open before.
  * - Arrow Up and Arrow Down go past the rows of a link or formula the cursor shows
- *   as its text in one step, and Arrow Down past a folded heading or point, see {@link lineMove};
+ *   as its text in one step, and Arrow Down past a folded heading
+ *   or point, see {@link lineMove};
  *   End goes past the hidden `]]` of a link that ends the line, see {@link lineEnd}.
  *
  * - `@codemirror/state`, `@codemirror/view`: The text with its cursor, and the keys.
@@ -91,7 +114,8 @@
  * - `@codemirror/language`: The syntax tree of the note,
  *   which tells where a list item begins and ends and where a link
  *   or formula stands, and what is folded.
- * - `@codemirror/lang-markdown`: Continues a list on Enter and takes its markup away on Backspace.
+ * - `@codemirror/lang-markdown`:
+ *   Continues a list on Enter and takes its markup away on Backspace.
  */
 
 import {
@@ -218,7 +242,8 @@ function pointStartOf(text: string): string | null {
 
 /**
  * Gives empty lines to write above a line as its air, see {@link airMost}:
- * line breaks, within a quote each after the `>` of the quote, like `>`, so the air stays in it.
+ * line breaks, within a quote each after the `>` of the quote,
+ * like `>`, so the air stays in it.
  * - `marks`: The `>` of the quote the line stands in, without the blank after the last.
  *
  * @param state - Text
@@ -233,7 +258,8 @@ function airOf(state: EditorState, line: Line, count: number): string {
 
 /**
  * Counts the blanks right before a place on its line, which a line break there takes away
- * with those right after it, see {@link blanksAfter}, so the text keeps no blanks at a break,
+ * with those right after it, see {@link blanksAfter},
+ * so the text keeps no blanks at a break,
  * within a line as at its end.
  *
  * @param state - Text
@@ -258,7 +284,8 @@ function blanksAfter(state: EditorState, pos: number): number {
 }
 
 /**
- * Tells a cursor right after the `-` or number of a point on its line, see {@link emptyPointRule},
+ * Tells a cursor right after the `-` or number of a point on its line,
+ * see {@link emptyPointRule},
  * within a quote too: a still empty point, or one with its text after the cursor,
  * so a key does the same at the end of a line and within it.
  *
@@ -276,7 +303,8 @@ function markEndIs(state: EditorState, line: Line, head: number): boolean {
 }
 
 /**
- * Tells a cursor right before the text of a further line of a point, only its blanks before it,
+ * Tells a cursor right before the text of a further line of a point,
+ * only its blanks before it,
  * like a paragraph of a point, which a key then treats as a line of only blanks,
  * so it does the same within a line as at its end; a line of code is none.
  *
@@ -295,9 +323,11 @@ function furtherStartIs(state: EditorState, line: Line, head: number): boolean {
 }
 
 /**
- * Joins the line of the cursor to the end of the line above, with one blank between two texts,
+ * Joins the line of the cursor to the end of the line above,
+ * with one blank between two texts,
  * as Markdown shows the two lines, so a line break and Backspace give the text back;
- * what stands before the cursor goes, like the blanks of a further line or the `> ` of a quote.
+ * what stands before the cursor goes,
+ * like the blanks of a further line or the `> ` of a quote.
  * - `rest`: The text right of the cursor.
  * - `blank`: The blank between the two texts, nothing where one of them is missing.
  *
@@ -334,8 +364,10 @@ export function columnsOf(text: string): number {
 }
 
 /**
- * Counts the points of the numbered lists a change touched in order again, as Obsidian does:
- * a sub-list from `1.`, a list at the left edge on from the number its first place had before,
+ * Counts the points of the numbered lists a change touched
+ * in order again, as Obsidian does:
+ * a sub-list from `1.`, a list at the left edge
+ * on from the number its first place had before,
  * each point one more than the one before it, its `.` or `)` kept.
  * So a point moved in by Tab under `1.` becomes `1.` of its sub-list
  * and the `3.` after it `2.` again, `2.` moved above `1.` becomes `1.`;
@@ -345,7 +377,8 @@ export function columnsOf(text: string): number {
  *   whose list it may have made a sub-list.
  * - `changes`: The numbers to write, each over a number that differs.
  * - `before`: Number on the first place of a list before the change, `null` for none.
- * - `number`: Number the next point of the list should have, `null` until its first point is read.
+ * - `number`: Number the next point of the list should have,
+ *   `null` until its first point is read.
  * - `mark`: The number of a point with its `.` or `)`, `ListMark`.
  * - `written`: That number as written, like `3.`.
  * - `wanted`: The number it should have, like `2.`.
@@ -412,7 +445,8 @@ function listChange(view: EditorView, spec: TransactionSpec): void {
 
 /**
  * Gives what the next line of the quote at a place begins with:
- * the indentation and every `>` of its line, of a quote in a quote too, and a space, like `> `.
+ * the indentation and every `>` of its line,
+ * of a quote in a quote too, and a space, like `> `.
  * - `node`: A piece of syntax at the place, from the innermost outwards.
  * - `marks`: The indentation and the `>` of the line.
  *
@@ -445,13 +479,16 @@ function quoteMarksOf(state: EditorState, pos: number): string | null {
  * see {@link textIndentationOf}, in a quote with its `> `, see {@link quoteMarksOf},
  * as I write source lines, else with the `>` and the indentation of the line.
  * The blanks at the break go, see {@link blanksBefore};
- * a line left with nothing but blanks, like the one a Shift+Enter just wrote, becomes empty,
- * so Shift+Enter twice leaves an empty line, and the cursor goes on under the text of the point,
+ * a line left with nothing but blanks,
+ * like the one a Shift+Enter just wrote, becomes empty,
+ * so Shift+Enter twice leaves an empty line,
+ * and the cursor goes on under the text of the point,
  * where Markdown keeps the next text in the point.
  * - `range`: The cursor, or what is picked, which the line break replaces.
  * - `line`: Its line.
  * - `before`: The text of the line before the cursor without blanks at its end.
- * - `own`: The `>` and the blanks the line begins with, kept by a further line of a point.
+ * - `own`: The `>` and the blanks the line begins with,
+ *   kept by a further line of a point.
  * - `start`: What the new line begins with.
  *
  * @param view - The editor
@@ -486,7 +523,8 @@ const pointContinue: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Gives the points a line stands in, from the outermost to the innermost, see {@link itemOf}.
+ * Gives the points a line stands in,
+ * from the outermost to the innermost, see {@link itemOf}.
  * - `item`: A point it stands in, from the innermost outwards.
  * - `items`: The points found so far.
  *
@@ -509,7 +547,8 @@ function itemsOf(state: EditorState, line: Line): SyntaxNode[] {
  * Gives the start of the next point after a point: the `>` of a quote around it,
  * its indentation and its `-`, or its number counted on, like `2. ` after `1. `,
  * after a task an empty box, like `- [ ] `.
- * - `point`: The `>` and the indentation, then its `-`, or its number and the `.` or `)` after it,
+ * - `point`: The `>` and the indentation, then its `-`,
+ *   or its number and the `.` or `)` after it,
  *   then its box.
  * - `mark`: The `-` or the number counted on of the next point.
  *
@@ -559,7 +598,8 @@ function foldedPointOf(
  * @param state - Text and syntax tree
  * @param item - The point, `ListItem`
  * @param head - The cursor, at the end of a line of the point's text
- * @returns The first sub-point, `ListItem`, `null` for none there or text right of the cursor
+ * @returns The first sub-point, `ListItem`,
+ *   `null` for none there or text right of the cursor
  */
 function subPointOf(
     state: EditorState,
@@ -579,21 +619,25 @@ function subPointOf(
 }
 
 /**
- * Starts the next point with Enter on a further line of a point, the lines written below its text,
+ * Starts the next point with Enter on a further line of a point,
+ * the lines written below its text,
  * see {@link pointContinue}, as Obsidian does, as Enter does on the line of its `-`:
  * the next point after that point, with what stood right of the cursor,
  * the points after it counted on, see {@link listChange}, the blanks at the break gone,
  * see {@link blanksBefore}.
- * A new point never stands between a point and its sub-points, where it would take them all:
+ * A new point never stands between a point and its sub-points,
+ * where it would take them all:
  * at the end of the text of a point right above its sub-points, on its line too,
  * it is the first of them, see {@link subPointOf}, as Workflowy writes it;
  * at a folded point, its line showing alone, the next point after it,
  * below all it folds, see {@link foldedPointOf}.
  * With only blanks before the cursor, on a line of only blanks, like the line Backspace
- * left of a point, see {@link markerBackward}, and before the text of a further line alike,
+ * left of a point, see {@link markerBackward},
+ * and before the text of a further line alike,
  * Enter writes more air, see {@link paragraphBreak};
  * right after the `-` of a point it leaves the key to the next, see {@link pointEnter},
- * and so anywhere else, to CodeMirror's Markdown, which continues a list from the line of a `-`.
+ * and so anywhere else, to CodeMirror's Markdown,
+ * which continues a list from the line of a `-`.
  * - `range`: The cursor.
  * - `line`: Its line.
  * - `folded`: The folded point the cursor stands at, `null` for none.
@@ -647,17 +691,22 @@ const furtherContinue: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Starts a new paragraph within a quote with Enter, as in plain text, see {@link paragraphBreak}:
- * a line of only `>`, the half line of air of a quote, then the next `> ` line, the cursor after it,
+ * Starts a new paragraph within a quote with Enter,
+ * as in plain text, see {@link paragraphBreak}:
+ * a line of only `>`, the half line of air of a quote,
+ * then the next `> ` line, the cursor after it,
  * with the rest of the line; with nothing but the `>` before the cursor,
  * like on an empty `> ` line, one more line of only `>` above it, more air.
  * Shift+Enter writes the next `> ` line of the same paragraph, see {@link pointContinue};
- * Backspace right after the `> ` of a new paragraph takes the `>` away and leaves the quote,
+ * Backspace right after the `> ` of a new paragraph takes the `>` away
+ * and leaves the quote,
  * the air kept, see {@link quoteBackward}.
- * A list in a quote it leaves to the next, CodeMirror's Markdown, which continues the list.
+ * A list in a quote it leaves to the next,
+ * CodeMirror's Markdown, which continues the list.
  * - `range`: The cursor.
  * - `line`: Its line.
- * - `marks`: What the next line of the quote begins with, like `> `, see {@link quoteMarksOf}.
+ * - `marks`: What the next line of the quote begins with,
+ *   like `> `, see {@link quoteMarksOf}.
  * - `air`: The line of only `>`.
  * - `textStart`: Whether nothing but the `>` stands before the cursor.
  * - `insert`: What it writes.
@@ -724,7 +773,8 @@ function markedItemOf(state: EditorState): SyntaxNode | null {
  * Enter with the cursor right after the `-` or number of a point, as Obsidian does:
  * before its text a new empty point above it, of the same level, its `-` or number,
  * the cursor staying before the text, the numbers counted on, see {@link listChange};
- * on a still empty point out one step from a sub-point, as Shift+Tab, see {@link itemShift},
+ * on a still empty point out one step from a sub-point,
+ * as Shift+Tab, see {@link itemShift},
  * right after the point it stood in, below the points after it, which stay sub-points,
  * so no empty point at a lower level splits a sub-list and takes the rest of it,
  * else the list ends there: the `-` gone, its line the empty line below the list,
@@ -734,7 +784,8 @@ function markedItemOf(state: EditorState): SyntaxNode | null {
  * - `line`: Its line.
  * - `head`: The cursor.
  * - `prefix`: The `>` of a quote around it, which stays.
- * - `point`: The start of the new point, the `-` or number with its blank, a task box empty.
+ * - `point`: The start of the new point,
+ *   the `-` or number with its blank, a task box empty.
  * - `parent`: The point it stands in, `null` for none.
  * - `insert`: The empty line and the start of the new line, in a quote each with its `>`.
  *
@@ -778,7 +829,8 @@ const pointEnter: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Ctrl+Enter with the cursor right after the `-` or number of a point, see {@link markedItemOf}:
+ * Ctrl+Enter with the cursor right after the `-` or number of a point,
+ * see {@link markedItemOf}:
  * one empty line above it, the air of a half line, the point staying where it is,
  * see {@link airBreak}; never more than the air of a line, see {@link airMost}.
  *
@@ -803,8 +855,10 @@ const pointAir: Command = (view: EditorView): boolean => {
  * and {@link markupContinue}, with one empty line above it, the air of a half line,
  * whatever text of the line it takes along, also within a line, from a further line
  * and in a nested or numbered list, see {@link airAbove};
- * right after the `-` or number of a point one more empty line above it, see {@link pointAir};
- * in plain text, in a quote and with only blanks before the cursor Enter twice, within a line too,
+ * right after the `-` or number of a point one more empty line above it,
+ * see {@link pointAir};
+ * in plain text, in a quote and with only blanks
+ * before the cursor Enter twice, within a line too,
  * see {@link paragraphBreak} and {@link quoteBreak}.
  * - `enter`: Enter once outside a list.
  * - `line`: The line of the cursor.
@@ -826,7 +880,8 @@ const airBreak: Command = (view: EditorView): boolean => {
 
 /**
  * Puts one empty line above the line of the cursor, the new point Ctrl+Enter wrote,
- * see {@link airBreak}, the cursor staying in its text; none where an empty line stands there.
+ * see {@link airBreak}, the cursor staying in its text;
+ * none where an empty line stands there.
  * - `line`: The line of the cursor.
  *
  * @param view - The editor
@@ -903,16 +958,21 @@ function codeIs(state: EditorState, line: Line): boolean {
 }
 
 /**
- * Backspace with nothing but blanks before the cursor, outside code, only deletes, never outdents,
- * one step back each: below an empty line it takes that empty line away, the line staying,
- * so a paragraph of a point, like the one a `-` taken away left, see {@link markerBackward},
- * becomes its next line, as Shift+Enter writes it, the cursor staying where its text begins,
+ * Backspace with nothing but blanks before the cursor,
+ * outside code, only deletes, never outdents,
+ * one step back each: below an empty line it takes
+ * that empty line away, the line staying,
+ * so a paragraph of a point, like the one a `-` taken away left,
+ * see {@link markerBackward},
+ * becomes its next line, as Shift+Enter writes it,
+ * the cursor staying where its text begins,
  * see {@link typingLine}; below text it takes the line break before the line away
  * with those blanks, so such a line of only blanks goes whole,
  * the cursor at the end of the line above, and the text of a further line of a point
  * joins the line above, see {@link lineJoin}.
  * Before the `-` or number of a point it leaves the key to the next.
- * Moving such a line a level in or out is the job of Tab and Shift+Tab, see {@link blankIndent}.
+ * Moving such a line a level in or out is the job of Tab and Shift+Tab,
+ * see {@link blankIndent}.
  * - `range`: The cursor.
  * - `line`: Its line.
  * - `above`: The line above it.
@@ -973,8 +1033,10 @@ const textBackward: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Moves an empty line or a line of blanks within a list one level in, Tab, or out, Shift+Tab,
- * a further line of a point too with the cursor before its text, see {@link furtherStartIs}:
+ * Moves an empty line or a line of blanks within a list one level in,
+ * Tab, or out, Shift+Tab,
+ * a further line of a point too with the cursor before its text,
+ * see {@link furtherStartIs}:
  * to the indentation of the text of the next deeper or the next outer point of the line
  * with text above it, see {@link itemsOf}, out from the outermost to the left edge;
  * in it does nothing where there is no deeper point.
@@ -987,7 +1049,8 @@ const textBackward: Command = (view: EditorView): boolean => {
  * - `prefix`: The `>` of a quote around it, see {@link quotePrefixOf}, which it keeps.
  * - `body`: The line after them.
  * - `above`: The nearest line with text above it.
- * - `indentationOf`: Gives the indentation of the text of a point after the `>` of its quote.
+ * - `indentationOf`: Gives the indentation of the text of a point
+ *   after the `>` of its quote.
  * - `levels`: Columns of the text of the points that line stands in, from the outermost.
  * - `column`: Column of the line's own blanks.
  * - `item`: The point whose text the line moves under, `null` for the left edge.
@@ -1054,9 +1117,11 @@ function blankIndent(inward: boolean): Command {
 }
 
 /**
- * Takes away one empty line above a heading with Backspace right before its text, after its `#`,
+ * Takes away one empty line above a heading with Backspace right
+ * before its text, after its `#`,
  * as Backspace does before any text: the heading moves up a line and stays a heading.
- * With text right above it it leaves the key to the next, which takes away the blank after the `#`.
+ * With text right above it it leaves the key to the next,
+ * which takes away the blank after the `#`.
  * - `range`: The cursor.
  * - `line`: Its line.
  *
@@ -1090,7 +1155,8 @@ const headingBackward: Command = (view: EditorView): boolean => {
  * each line of only `>` right above it an empty line, so the air stays, after the quote;
  * below one empty line after the quote the line becomes the next `> ` line of the quote,
  * as Shift+Enter writes it, not text Markdown would take into the quote without its `>`;
- * right after the `>` of a line below text it joins the line to that text, see {@link lineJoin}.
+ * right after the `>` of a line below text it joins the line to that text,
+ * see {@link lineJoin}.
  * The `>` of the first line of a quote it leaves to the next, CodeMirror's Markdown.
  * - `range`: The cursor.
  * - `line`: Its line.
@@ -1099,8 +1165,10 @@ const headingBackward: Command = (view: EditorView): boolean => {
  * - `top`: The first of the lines of only `>` right above it.
  * - `changes`: Those lines emptied and the `>` of the line taken away.
  * - `quote`: The line with text of the quote above the empty line.
- * - `marks`: What the next line of that quote begins with, like `> `, see {@link quoteMarksOf}.
- * - `block`: The block of the note the line stands in, a paragraph only to go into the quote.
+ * - `marks`: What the next line of that quote begins with,
+ *   like `> `, see {@link quoteMarksOf}.
+ * - `block`: The block of the note the line stands in,
+ *   a paragraph only to go into the quote.
  *
  * @param view - The editor
  * @returns Whether it took the key
@@ -1184,7 +1252,8 @@ function tableOf(state: EditorState, line: Line): SyntaxNode | null {
 
 /**
  * Enter, Shift+Enter and Ctrl+Enter in a table, which its widget edits, see `./table.ts`:
- * at the end of its last row a new paragraph after it, as Enter at the end of a paragraph,
+ * at the end of its last row a new paragraph after it,
+ * as Enter at the end of a paragraph,
  * see {@link paragraphBreak}, Ctrl+Enter with the air of a line;
  * at the start of its first row an empty line above it, the table moved down by it,
  * as Enter at the start of a paragraph, Ctrl+Enter two;
@@ -1260,7 +1329,8 @@ function tableJoin(forward: boolean): Command {
 }
 
 /**
- * Tab outside a list, see {@link itemIndent}: a tab only in code, the lines picked one step in,
+ * Tab outside a list, see {@link itemIndent}:
+ * a tab only in code, the lines picked one step in,
  * else nothing, as a tab in text would stand there as a stray blank or begin code.
  * - `line`: The line of the cursor.
  *
@@ -1275,13 +1345,15 @@ const tabWrite: Command = (view: EditorView): boolean => {
 };
 
 /**
- * An empty point: its indentation and its `-` or number, of a task with its box, nothing after it.
+ * An empty point: its indentation and its `-` or number,
+ * of a task with its box, nothing after it.
  */
 const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+\[[ xX]\])?[ \t]*$/;
 
 /**
  * Takes the `-` or number of a point below another point away with Backspace
- * right after it, see {@link markEndIs}, of a still empty point or one with its text after it,
+ * right after it, see {@link markEndIs},
+ * of a still empty point or one with its text after it,
  * a step down the stairs of a point, see the top of this file,
  * its text staying at its depth, never a level out, the job of Shift+Tab:
  * the line keeps the air above it, none or as much as stood there;
@@ -1289,10 +1361,12 @@ const emptyPointRule: RegExp = /^[ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+\[[ xX]\])?[ \t
  * see {@link textIndentationOf}, as Shift+Enter writes it;
  * after Ctrl+Enter a paragraph of it with the air of a half line,
  * in the point's tabs and its `-` or number as spaces, the blanks Markdown wants
- * for a paragraph to stay in a sub-point, where those of a further line put it a level out;
- * right below a line of a sub-point of the point above, as after Shift+Tab, one empty line
- * and such a paragraph, as Markdown would take the line on into that sub-point,
- * told by the points, not by the blanks, since a further line stands in spaces and a point in tabs;
+ * for a paragraph to stay in a sub-point,
+ * where those of a further line put it a level out;
+ * right below a line of a sub-point of the point above, as after Shift+Tab, one empty
+ * line and such a paragraph, as Markdown would take the line on into that sub-point,
+ * told by the points, not by the blanks,
+ * since a further line stands in spaces and a point in tabs;
  * see {@link markerTaken}, as Delete before it does, see {@link markupForward};
  * the cursor stands where text typed on it will stand, see {@link typingLine},
  * which writes nothing more, see {@link paragraphTyping}.
@@ -1356,8 +1430,10 @@ const markerBackward: Command = (view: EditorView): boolean => {
  *
  * @param state - Text and syntax tree
  * @param line - The line of the point
- * @param head - Right after its `-` or number and the blanks after it, see {@link markEndIs}
- * @returns The change, `null` for any other `-` or number, like that of the first point of a list
+ * @param head - Right after its `-` or number and the blanks
+ *   after it, see {@link markEndIs}
+ * @returns The change, `null` for any other `-` or number,
+ *   like that of the first point of a list
  */
 function markerTaken(
     state: EditorState,
@@ -1397,11 +1473,14 @@ function markerTaken(
 /**
  * Takes away the markup of the next line with Delete at the end of a line,
  * as Backspace right after it does, see {@link markerBackward}:
- * the `>` of a quote, the `-` or number of a point, below another point with the same blanks,
+ * the `>` of a quote, the `-` or number of a point,
+ * below another point with the same blanks,
  * see {@link markerTaken}, the numbers counted in order again, see {@link listChange},
- * what CodeMirror's Markdown does not take, like a bare `>`, one character as Backspace does,
+ * what CodeMirror's Markdown does not take, like a bare `>`,
+ * one character as Backspace does,
  * the cursor staying where it is; a next line of blanks it takes away whole,
- * the blanks before the text of a next line with the line break, see {@link blankBackward},
+ * the blanks before the text of a next line with the line break,
+ * see {@link blankBackward},
  * a line without markup it joins to the line, as CodeMirror does,
  * and on an empty line it takes the line away, as Backspace does.
  * - `range`: The cursor.
@@ -1466,14 +1545,17 @@ const markupForward: Command = (view: EditorView): boolean => {
  * On the air between two points, which `./preview.ts` draws
  * as the air of the point above, under its text, the cursor too, see {@link airPointOf},
  * it writes the text with the blanks of that point's text, a paragraph of the point,
- * so text typed stands where the cursor stood, not on the left edge, which would end the list.
+ * so text typed stands where the cursor stood,
+ * not on the left edge, which would end the list.
  * On a single empty line between two paragraphs it writes nothing more,
- * on the blanks of a point's text, like a paragraph of a point, see {@link markerBackward},
+ * on the blanks of a point's text, like a paragraph of a point,
+ * see {@link markerBackward},
  * nothing at all, as the air stands there already, also where Shift+Tab put it,
  * see {@link blankIndent}, so text typed stands where the cursor stood.
  * - `line`: The line typed on.
  * - `point`: The point whose air it is, `null` for none
- *   or for the line a key just put the cursor on, drawn by its own blanks, see {@link typingLine}.
+ *   or for the line a key just put the cursor on,
+ *   drawn by its own blanks, see {@link typingLine}.
  * - `indentation`: The blanks of that point's text, nothing for none.
  * - `below`: Empty lines right below it.
  * - `next`: The first line with text below it, `null` for none.
@@ -1624,8 +1706,9 @@ const paragraphUntyped: Extension = EditorState.transactionFilter.of(
 
 /**
  * Finds the point an empty line between two points of a list is the air of,
- * as `./preview.ts` draws it, see `itemLook` there: the innermost point of the nearest line
- * with text above it whose `li` reaches on over the empty lines up to its next point,
+ * as `./preview.ts` draws it, see `itemLook` there:
+ * the innermost point of the nearest line with text above it whose `li` reaches
+ * on over the empty lines up to its next point,
  * so the line stands under the text of that point.
  * - `above`: The nearest line with text above it.
  *
@@ -1648,21 +1731,27 @@ function airPointOf(state: EditorState, line: Line): SyntaxNode | null {
 }
 
 /**
- * Starts a new paragraph with Enter in plain text and in a heading, outside lists and quotes,
+ * Starts a new paragraph with Enter in plain text and in a heading,
+ * outside lists and quotes,
  * as a word processor does: one empty line more wherever the cursor stands,
- * the text below moved down by it, each empty line drawn as half a line, see `./preview.ts`,
- * so one is a small gap and two are the air of a line, the cursor on the line to write on,
+ * the text below moved down by it,
+ * each empty line drawn as half a line, see `./preview.ts`,
+ * so one is a small gap and two are the air of a line,
+ * the cursor on the line to write on,
  * see {@link typingLine};
  * Shift+Enter stays in the paragraph on the next line, see {@link pointContinue}.
- * Within or at the end of a line a line break and an empty line, the cursor on the line after it,
+ * Within or at the end of a line a line break and an empty line,
+ * the cursor on the line after it,
  * where Markdown begins the next paragraph, with the rest of the line,
  * also with an empty line below it, which stays the air below the new paragraph;
- * before the text of a line, at the start of a paragraph or heading too, the empty line above it;
+ * before the text of a line, at the start of a paragraph or heading too,
+ * the empty line above it;
  * on an empty line one more, up to the air of a line, see {@link airMost}, in a list too,
  * in code as many as I press,
  * and on a line of only blanks outside code, like the line of a point
- * Backspace left, see {@link markerBackward}, one more above it, the cursor staying where its text
- * will begin, so Shift+Enter, Enter on a point gives what Ctrl+Enter, Backspace gives;
+ * Backspace left, see {@link markerBackward}, one more above it,
+ * the cursor staying where its text will begin, so Shift+Enter,
+ * Enter on a point gives what Ctrl+Enter, Backspace gives;
  * before the text of a further line of a point alike, so within a line as at its end.
  * Within a line the blanks at the break go, see {@link blanksBefore}.
  * On a line of a list, a quote, a table, code or an HTML block,
@@ -1671,7 +1760,8 @@ function airPointOf(state: EditorState, line: Line): SyntaxNode | null {
  * - `line`: Its line.
  * - `node`: A piece of syntax at the cursor,
  *   from the innermost outwards up to the block of the note it stands in.
- * - `blank`: Whether the line holds only blanks, at least one, outside code, see {@link emptyIs},
+ * - `blank`: Whether the line holds only blanks, at least one,
+ *   outside code, see {@link emptyIs},
  *   or the cursor stands right before the text of a further line of a point,
  *   see {@link furtherStartIs}.
  * - `textStart`: Whether the cursor stands before the text of its line,
@@ -1725,7 +1815,8 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
 
 /**
  * Finds the list item a line stands in: the innermost item around the start of its text,
- * after the `>` of a quote around it, so a further line of a point or a sub-point is found too.
+ * after the `>` of a quote around it,
+ * so a further line of a point or a sub-point is found too.
  * - `node`: A piece of syntax around the start of the text, from the innermost outwards.
  *
  * @param state - Text
@@ -1751,7 +1842,8 @@ function itemOf(state: EditorState, line: Line): SyntaxNode | null {
  * - `item`: The item of the first line of what is picked.
  *
  * @param state - Text and cursor
- * @returns The item, `ListItem`, `null` outside a list or when the lines picked reach beyond it
+ * @returns The item, `ListItem`, `null` outside a list
+ *   or when the lines picked reach beyond it
  */
 function itemAt(state: EditorState): SyntaxNode | null {
     const item: SyntaxNode | null = itemOf(
@@ -1769,7 +1861,8 @@ function itemAt(state: EditorState): SyntaxNode | null {
  * - `range`: The cursor or what is picked.
  * - `end`: The last line picked, not the line where what is picked ends at its start.
  * - `first`: The point of the first line.
- * - `last`: The point of the last line, then the point of the list of `first` it stands in.
+ * - `last`: The point of the last line,
+ *   then the point of the list of `first` it stands in.
  *
  * @param state - Text and cursor
  * @returns The first and the last of the points, `ListItem`, the same for one,
@@ -1797,7 +1890,8 @@ function itemsAt(state: EditorState): [SyntaxNode, SyntaxNode] | null {
  * each further line in spaces under the text of its point, see {@link textIndentationOf},
  * a line of blanks as it stands;
  * the `-` or number of each point moved that of the list it joins,
- * taken from the start of a point of that list, my cursor staying where it was in the text.
+ * taken from the start of a point of that list,
+ * my cursor staying where it was in the text.
  * Out they stand right after the point they stood in, as their `-` or number says,
  * below the points after them in its list, which stay in it,
  * so no point takes the points of another list as its sub-points,
@@ -1809,12 +1903,14 @@ function itemsAt(state: EditorState): [SyntaxNode, SyntaxNode] | null {
  * - `line`: A line of them.
  * - `prefix`, `body`: The `>` of a quote around the line, and the rest of it.
  * - `blanks`, `from`: The blanks the rest begins with, and where they start.
- * - `point`: The point the line stands in, and `head` the tabs and `-` or number of its line.
+ * - `point`: The point the line stands in,
+ *   and `head` the tabs and `-` or number of its line.
  * - `moved`: Whether that point is one of the points moved, not a sub-point of one.
  * - `mark`: Its `-` or number, `ListMark`.
  * - `tabs`: Tabs of that point after the move.
  * - `parent`: The point they stood in, out only, `null` for none.
- * - `below`: The last line of that point, `null` where no point of their list comes after them.
+ * - `below`: The last line of that point,
+ *   `null` where no point of their list comes after them.
  * - `shifted`: The changes of their lines, and `text` the lines changed.
  * - `at`: Where their lines begin after the move.
  * - `place`: Gives where a place in their lines or after them stands after the move.
@@ -1921,16 +2017,19 @@ function itemShift(
  * Moves a list item one step in, Tab,
  * or out, Shift+Tab, with its sub-points and further lines, as Obsidian does,
  * and so the points of one list picked together:
- * in only below an item of its own list, under which it then stands, out only from a sub-point,
+ * in only below an item of its own list,
+ * under which it then stands, out only from a sub-point,
  * right after the point it stood in, see {@link itemShift}.
  * It takes the `-` or number of the list it joins, see {@link nextPointOf}:
  * out after the point it stood in, like `4.` after `3.`,
  * in after the last sub-point of the item above, like `- ` below `- a`,
  * where it starts a sub-list it keeps its own, a number counted from `1.` again;
  * its lines written as my notes write a list, see {@link itemShift}.
- * Outside a list, and on lines picked beyond the points of one list, it leaves the key to the next,
+ * Outside a list, and on lines picked beyond the points of one list,
+ * it leaves the key to the next,
  * see {@link markdownKeys}.
- * - `items`: The first and the last point of the cursor or the lines picked, see {@link itemsAt}.
+ * - `items`: The first and the last point of the cursor
+ *   or the lines picked, see {@link itemsAt}.
  * - `item`: The first of them.
  * - `parent`: The point it stands in, `null` for none.
  * - `last`: The last piece of the item above it, a list for sub-points.
@@ -2027,7 +2126,8 @@ function depthOf(text: string): number | null {
 }
 
 /**
- * Tells the line of a point: its `-` or number first, after the `>` of a quote and the blanks;
+ * Tells the line of a point: its `-` or number first,
+ * after the `>` of a quote and the blanks;
  * never a line of code, like a list in a block of YAML, see {@link codeIs}.
  * - `line`: The line.
  * - `body`: The line after the `>` of the quote.
@@ -2066,8 +2166,10 @@ function pointLastOf(doc: Text, number: number): number {
 }
 
 /**
- * Finds the last line of the text of a point, its line and further lines without its sub-points:
- * the lines right below it that stand further in, see {@link depthOf}, and start no point.
+ * Finds the last line of the text of a point,
+ * its line and further lines without its sub-points:
+ * the lines right below it that stand further in,
+ * see {@link depthOf}, and start no point.
  * - `depth`: How far the point stands in.
  * - `last`: Number of the last line found.
  *
@@ -2088,8 +2190,10 @@ function textLastOf(state: EditorState, number: number): number {
 }
 
 /**
- * Gives the lines a key moves or takes away, see {@link linesMove} and {@link linesDelete}:
- * the line of the cursor or the lines picked, not the line where what is picked ends at its start,
+ * Gives the lines a key moves or takes away,
+ * see {@link linesMove} and {@link linesDelete}:
+ * the line of the cursor or the lines picked,
+ * not the line where what is picked ends at its start,
  * each point with its sub-points and further lines, see {@link pointLastOf}.
  * - `range`: The cursor or what is picked.
  * - `first`, `last`: Numbers of the first and the last line.
@@ -2110,12 +2214,14 @@ function linesOf(state: EditorState): { first: number; last: number } {
 }
 
 /**
- * Moves the line of the cursor or the lines picked one line up, Alt+Up, or down, Alt+Down,
+ * Moves the line of the cursor or the lines picked one line up,
+ * Alt+Up, or down, Alt+Down,
  * as VS Code does, past an empty line too.
  * A point counts as one line with its sub-points and further lines, see {@link linesOf}:
  * it moves with them, and it goes past a point of its level with that point's own;
  * a line of no point goes past a whole point of its level too.
- * A further line moves alone, like a line of code, so I put the lines of a point in order.
+ * A further line moves alone, like a line of code,
+ * so I put the lines of a point in order.
  * The first point of a sub-list goes up past the text of the point it stands in,
  * the last one down past the line below, past the text of a point of a lower level there,
  * see {@link textLastOf}, keeping its level in the point it then stands in,
@@ -2188,7 +2294,8 @@ function linesMove(down: boolean): Command {
 }
 
 /**
- * Takes away the line of the cursor or the lines picked, Ctrl+D, as Obsidian's Delete paragraph,
+ * Takes away the line of the cursor or the lines picked, Ctrl+D,
+ * as Obsidian's Delete paragraph,
  * a point with its sub-points and further lines, as Alt+Up and Alt+Down move it,
  * see {@link linesOf}, so none of its lines stays behind for the point above to take;
  * numbered points count in order again, see {@link listChange}.
@@ -2197,7 +2304,8 @@ function linesMove(down: boolean): Command {
  * - `doc`: Text.
  * - `first`, `last`: Numbers of the first and the last line that go.
  * - `below`: The line below them, `null` at the end of the text.
- * - `from`, `to`: What goes, with the line break after it, at the end of the text the one before.
+ * - `from`, `to`: What goes, with the line break after it,
+ *   at the end of the text the one before.
  *
  * @param view - The editor
  * @returns Whether it took the key, not in a file to read only
@@ -2262,7 +2370,8 @@ function marksCount(
  * or loses it when it is already bold or italic, so the same key takes it back;
  * `***` counts as both. In empty space it writes the markup twice
  * with the cursor between, to type into.
- * - `word`: The text to mark: the text picked, or the word at the cursor, `null` for none.
+ * - `word`: The text to mark: the text picked,
+ *   or the word at the cursor, `null` for none.
  * - `before`, `after`: The markup characters right before and after it.
  * - `marked`: Whether it is marked already:
  *   bold with two or three on both sides, italic with one or three.
@@ -2363,9 +2472,10 @@ function sourcePieceOf(state: EditorState, pos: number): SyntaxNode | null {
  * but in one step past what held it on its line: the end of a folded heading or point,
  * where CodeMirror's step down ends first, on the same line,
  * so a first Arrow Down seemed to do nothing;
- * and the rows of the link or formula the cursor stands on, which shows as its text there,
- * see {@link sourcePieceOf}, on more rows than drawn,
- * like `#### [[01_02_SampleMeanEstimator#Algorithm. Check an Estimator for Bias|Ice Cream Kiosk]]`
+ * and the rows of the link or formula the cursor stands on,
+ * which shows as its text there,
+ * see {@link sourcePieceOf}, on more rows than drawn, like
+ * `#### [[01_02_SampleMeanEstimator#Algorithm. Check an Estimator for Bias|Ice Cream Kiosk]]`
  * or a long formula, so a step stopped on its next row instead of the next line.
  * - `line`: The line the cursor stood on.
  * - `piece`: The link or formula it stood on, `null` for none.
@@ -2406,17 +2516,21 @@ function lineMove(command: Command): Command {
 /**
  * Moves the cursor to the end of its line, End,
  * or picks up to there, Shift+End, by CodeMirror's own command,
- * but past the hidden end of a link drawn as its name, like its `]]`, when the link ends the line:
+ * but past the hidden end of a link drawn as its name,
+ * like its `]]`, when the link ends the line:
  * CodeMirror's step ends where the drawn line ends, before that hidden end,
- * so the cursor stood in the link, which then showed as its text with the cursor before its `]]`,
+ * so the cursor stood in the link,
+ * which then showed as its text with the cursor before its `]]`,
  * and Shift+End with Backspace left the `]]` behind.
- * Not in a link the cursor already stood on, which shows as its text, see {@link sourcePieceOf}.
+ * Not in a link the cursor already stood on,
+ * which shows as its text, see {@link sourcePieceOf}.
  * - `before`: The link or formula the cursor stood on, `null` for none.
  * - `range`: The cursor or what is picked after the step.
  * - `line`: Its line.
  * - `piece`: The link or formula the step put it in, `null` for none.
  *
- * @param command - CodeMirror's command, `cursorLineBoundaryForward` or `selectLineBoundaryForward`
+ * @param command - CodeMirror's command,
+ *   `cursorLineBoundaryForward` or `selectLineBoundaryForward`
  * @returns The command
  */
 function lineEnd(command: Command): Command {
@@ -2447,17 +2561,20 @@ function lineEnd(command: Command): Command {
 }
 
 /**
- * Marks the line of the cursor as the line a key just put it on to write, see {@link typingLine},
+ * Marks the line of the cursor as the line a key just put it on to write,
+ * see {@link typingLine},
  * where the key took text away, like the `-` of a point, see {@link markerBackward}.
  */
 const typingSet: StateEffectType<null> = StateEffect.define<null>();
 
 /**
- * The empty line a key just put the cursor on to write, like the new line of Enter or Shift+Enter,
+ * The empty line a key just put the cursor on to write,
+ * like the new line of Enter or Shift+Enter,
  * the `> ` line of a quote or the blanks Backspace left of a point:
  * drawn as high as a line of text, not as the half line of an empty line,
  * see `spaceLook` in `./preview.ts`,
- * so the cursor stands where text typed on it will stand, not in the air between paragraphs;
+ * so the cursor stands where text typed on it will stand,
+ * not in the air between paragraphs;
  * while the cursor stays on it and it is empty, also after Backspace took its `>` away.
  * An empty line clicked into stays a half line.
  * - `line`: The line of the cursor after the change.
@@ -2485,11 +2602,12 @@ export const typingLine: StateField<number | null> = StateField.define<number | 
 /**
  * Takes the blanks of a line of only blanks away when the cursor alone moves off it,
  * of an empty line of a quote those after its `>`,
- * like the line of a point Backspace left, see {@link markerBackward}, or Shift+Enter wrote:
+ * like the line of a point Backspace left,
+ * see {@link markerBackward}, or Shift+Enter wrote:
  * only the line of the cursor holds the blanks where its text will begin,
  * every other empty line of the note stays empty; a line of code keeps its blanks.
- * Where the empty line it leaves stands among more than two, like the line Enter wrote above
- * the air below a paragraph, that line goes, then the ones below it, then above it,
+ * Where the empty line it leaves stands among more than two, like the line Enter wrote
+ * above the air below a paragraph, that line goes, then the ones below it, then above it,
  * down to two, the air of a line, the most there is, see {@link airMost}.
  * After the moves of the cursor, see `caretPlace` in `./preview.ts`.
  * - `cursor`: The cursor before the move.
@@ -2638,7 +2756,8 @@ const historyInput: Extension = EditorView.domEventHandlers({
  * Keys of a Markdown file, see the top of this file;
  * Enter, Tab and Shift+Tab try the list item first,
  * Enter then a new paragraph in a quote, a new paragraph and CodeMirror's list,
- * Enter on an empty point air above it before CodeMirror's list, Ctrl+Enter a block with air,
+ * Enter on an empty point air above it before CodeMirror's list,
+ * Ctrl+Enter a block with air,
  * Backspace an empty line above a heading before CodeMirror's markup,
  * Delete the markup below,
  * then the key goes on to the next command, CodeMirror's own;

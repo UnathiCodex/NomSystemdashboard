@@ -1,16 +1,21 @@
 /**
  * ## Steps
  *
- * The solutions of a note in the editor one step at a time, so I predict each step before I see it:
+ * The solutions of a note in the editor one step at a time,
+ * so I predict each step before I see it:
  * an Example, `## Example. …`, shows its scene and question and none of its steps,
- * its solution from its first numbered line, like `1. Find the weights $a_i$`, to its end;
- * a solution of a Task, the section under `#### Solution…`, shows its first step once unfolded.
+ * its solution from its first numbered line,
+ * like `1. Find the weights $a_i$`, to its end;
+ * a solution of a Task, the section under `#### Solution…`,
+ * shows its first step once unfolded.
  * Below a solution `Next step` shows the next one and `Show all` the rest.
- * Its steps are the items of its lists in the order of the text, a parent before its own items,
+ * Its steps are the items of its lists in the order of the text,
+ * a parent before its own items,
  * and its other blocks, like a formula of its own or the answer in words;
  * an empty line between two steps goes with the step after it.
  * Hiding is only for reading:
- * the text stays as it is, the cursor stays at the end of the last step shown, also after End,
+ * the text stays as it is, the cursor stays at the end
+ * of the last step shown, also after End,
  * and the cursor going into a hidden step,
  * like by the arrow keys or a new line, shows the whole solution, so I edit it as before.
  *
@@ -18,7 +23,8 @@
  *   Hold how many steps of each solution show, hide the others,
  *   and draw the buttons below the solution as a widget.
  * - `@codemirror/language`:
- *   Gives the syntax tree of the note, the section of a solution and whether it is folded.
+ *   Gives the syntax tree of the note,
+ *   the section of a solution and whether it is folded.
  */
 
 import { EditorSelection, EditorState, StateEffect, StateField } from "@codemirror/state";
@@ -44,7 +50,8 @@ import type { SyntaxNodeRef } from "@lezer/common";
  *   which names it while the text around it changes.
  * - `to`: End of its section, below which its buttons stand.
  * - `first`: Number of its first line.
- * - `steps`: For each of its lines from the first, the number of the step it belongs to, from 0.
+ * - `steps`: For each of its lines from the first,
+ *   the number of the step it belongs to, from 0.
  * - `count`: Number of its steps.
  * - `initial`: How many of its steps show at first: none of an Example, one of a Task,
  *   whose unfolding asked for it.
@@ -63,7 +70,8 @@ type Solution = {
  *
  * - `shown`: How many steps of each solution show, by the start of its heading;
  *   its `initial` for a solution not in it.
- * - `decorations`: The hidden steps and the buttons below each solution with steps hidden.
+ * - `decorations`: The hidden steps
+ *   and the buttons below each solution with steps hidden.
  */
 type Steps = {
     shown: Map<number, number>;
@@ -71,7 +79,8 @@ type Steps = {
 };
 
 /**
- * A click on `Next step`, or on `Show all` for `all`, below the solution that ends at `at`.
+ * A click on `Next step`, or on `Show all` for `all`,
+ * below the solution that ends at `at`.
  */
 type More = {
     at: number;
@@ -111,8 +120,8 @@ const hidden: Decoration = Decoration.replace({});
 const stepsMore: StateEffectType<More> = StateEffect.define<More>();
 
 /**
- * `Next step` and `Show all` below a solution with steps hidden; a click shows one step more
- * or all of them.
+ * `Next step` and `Show all` below a solution with steps hidden;
+ * a click shows one step more or all of them.
  */
 class StepsWidget extends WidgetType {
     /**
@@ -126,7 +135,8 @@ class StepsWidget extends WidgetType {
     /**
      * Builds the buttons.
      * - `buttons`: Row of `Next step` and `Show all`.
-     * - `more`: Tells the solution below which the buttons stand to show one step more, or all.
+     * - `more`: Tells the solution below which the buttons stand
+     *   to show one step more, or all.
      */
     toDOM(view: EditorView): HTMLElement {
         const buttons: HTMLElement = document.createElement("div");
@@ -353,7 +363,8 @@ function hiddenOf(
 }
 
 /**
- * Builds the hidden steps of the solutions, and below each solution with steps hidden its buttons,
+ * Builds the hidden steps of the solutions,
+ * and below each solution with steps hidden its buttons,
  * which stand outside the elements of its lines, see `wrap` in `./preview.ts`.
  * - `decorations`: The hidden steps and buttons found so far.
  *
@@ -393,7 +404,8 @@ function decorationsOf(
  * Takes a transaction into the steps:
  * their headings moved with the text,
  * one step more or all for a click on `Next step` or `Show all`, see {@link stepsMore},
- * and all once the cursor goes into a hidden step or to its end, see also {@link endAvoid};
+ * and all once the cursor goes into a hidden step or to its end,
+ * see also {@link endAvoid};
  * the look built again when the text, the cursor, the syntax tree or the folds change.
  * - `solutions`: The unfolded solutions after the transaction.
  * - `head`: Where the cursor stands.
@@ -478,10 +490,12 @@ const hiddenSteps: StateField<Steps> = StateField.define<Steps>({
  * Keeps the cursor at the end of the last step shown
  * where it would stand at the end of the hidden steps after it, which go on that line,
  * like after End there: what I type then shows where I type it.
- * - `ends`: The start of each hidden stretch, at the end of the line above it, by its end.
+ * - `ends`: The start of each hidden stretch,
+ *   at the end of the line above it, by its end.
  * - `selection`: The cursors and selections of the transaction.
  * - `moved`: Each of them, a cursor at the end of hidden steps moved to their start.
- * - `start`: Start of the hidden steps a cursor stands at the end of, `undefined` for none.
+ * - `start`: Start of the hidden steps a cursor stands at the end of,
+ *   `undefined` for none.
  *
  * @param transaction - Transaction that moves the cursor, without changing the text
  * @returns The transaction, and after it the cursor moved,

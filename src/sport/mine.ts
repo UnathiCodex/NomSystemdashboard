@@ -85,7 +85,8 @@ export type Part = {
  *
  * - `name`: Its name, like `Push`.
  * - `parts`: Its parts in their order.
- * - `kcal`: What its videos burn, when all its parts are videos with minutes, `null` else.
+ * - `kcal`: What its videos burn,
+ *   when all its parts are videos with minutes, `null` else.
  */
 export type Workout = {
     name: string;
@@ -119,7 +120,8 @@ export type Exercise = {
  * - `minutes`: The minutes I do it, `null` while none are written.
  * - `kind`: Its kind, like `HIIT`.
  * - `link`: Its link, empty for a video added by hand.
- * - `kcal`: What it burns above rest at my weight of today, `null` without minutes or weight.
+ * - `kcal`: What it burns above rest at my weight of today,
+ *   `null` without minutes or weight.
  */
 export type Video = {
     title: string;
@@ -293,7 +295,8 @@ export async function videoSend(
 
 /**
  * Sends a new exercise to the reader,
- * which adds it to `Exercises.md` as a variant of its own, empty, beside those of the same name.
+ * which adds it to `Exercises.md` as a variant of its own,
+ * empty, beside those of the same name.
  *
  * @param name - Its name as typed
  * @returns All of mine after
@@ -314,7 +317,8 @@ export async function exerciseSend(name: string): Promise<Mine> {
  * and into the workouts that hold it.
  *
  * @param old - The variant as it was, its name, sets, repetitions and kilograms
- * @param values - Its new sets, repetitions, like `10` or `60s`, and kilograms, each empty for none
+ * @param values - Its new sets, repetitions, like `10` or `60s`,
+ *   and kilograms, each empty for none
  * @returns All of mine after
  * @throws {Error} - When the reader does not take it, like sets that are no whole number
  */

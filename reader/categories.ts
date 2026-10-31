@@ -2,14 +2,17 @@
  * ## Categories
  *
  * Entry by category, for plan and log alike:
- * a fixed list of categories, each with its fields, named as the file names them, its `Summary`,
- * its `SUMMARY`, its `Place`, its `LOCATION`, `Online`, what I did online, its `X-ONLINE`,
+ * a fixed list of categories, each with its fields,
+ * named as the file names them, its `Summary`,
+ * its `SUMMARY`, its `Place`, its `LOCATION`, `Online`,
+ * what I did online, its `X-ONLINE`,
  * and `With`, who I was with, its `ATTENDEE`s,
  * like `Way` with `Summary`, `From`, `Place`, `Online` and `With`.
  * Each field of a what offers its values from the log itself,
  * the what of its entries of the category, after those the code offers, in their order,
  * the most used first, equal ones alphabetical.
- * Places are one list for every field of a place, the place of an entry and where a way starts:
+ * Places are one list for every field of a place,
+ * the place of an entry and where a way starts:
  * only my places of `Places.md`, each as a line with its address,
  * like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
  * see `places.ts`, only where I physically am;
@@ -22,11 +25,13 @@
  * which parts them, mostly one group, like `Socials`, sometimes several,
  * like `Bichler, Martin; Willi`, a person by its name in `Persons.md`,
  * see `persons.ts`, offering the names the entries of the log wrote, the most used first,
- * equal ones alphabetical, with the address the last of them wrote, see {@link addressesOf},
+ * equal ones alphabetical, with the address the last of them wrote,
+ * see {@link addressesOf},
  * and Vu, with whom I share, before I ever log with Vu, see `partners` in `sources.ts`;
  * an entry with Vu goes to Vu, see `shared.ts`;
  * the dialog offers every person of `Persons.md` besides, see `src/day/categories.ts`.
- * A value offered in the code may come with steps, which the dialog shows while it is picked,
+ * A value offered in the code may come with steps,
+ * which the dialog shows while it is picked,
  * and below them the note of the last entry of it,
  * like `Last time: band red · 3×10`, so the load can rise.
  * `Body` is my body care, showering and any care, offering `Caring` first,
@@ -36,23 +41,31 @@
  * like `Caring, Augenheilkunde`, its list offering each once; my neck routine,
  * `Neck short` and `Neck long`, is no what of it any more, also where the log holds it,
  * see {@link retiredWhats}.
- * A dish, the what of `Food` and `Cook`, names its foods parted by `, `, like `Reis, Bohnen, Eier`.
- * `Shopping` is what I buy, its what as I type it, like `Brot, Milch`, its place the shop,
+ * A dish, the what of `Food` and `Cook`,
+ * names its foods parted by `, `, like `Reis, Bohnen, Eier`.
+ * `Shopping` is what I buy, its what as I type it,
+ * like `Brot, Milch`, its place the shop,
  * like `Edeka Center Hadern`.
  * `Manage` takes several, parted by `, `, as `Body`, its whats as I type them.
  * `Event` is what I go to that is no skill,
  * like an evening at a company, its what as I type it, its place where it is,
  * which I add with its address and link like any place of mine.
- * `Sleep` offers `Night` and `Day`, a nap, first, see {@link sleepWhats}, and takes new ones,
- * the sleep tracker telling a nap from a night by `Day` and the length, see `trackers.ts`;
+ * `Sleep` offers `Night` and `Day`, a nap, first,
+ * see {@link sleepWhats}, and takes new ones,
+ * the sleep tracker telling a nap from a night by `Day`
+ * and the length, see `trackers.ts`;
  * `Way` takes only my means of transport, see {@link transports}.
- * `Sport` is a session of sport, not the moving of every day, which ways on foot or by bike are:
+ * `Sport` is a session of sport, not the moving of every day,
+ * which ways on foot or by bike are:
  * it takes only its kinds, `Gym` and `Home workout`, see `sportKinds` in `sport.ts`,
- * so the sport area knows what each burns, and its place, but no `With`, since I do sport alone;
+ * so the sport area knows what each burns, and its place,
+ * but no `With`, since I do sport alone;
  * a box of the plan may have it, since a session is something I intend.
  * `Skill` has only the fields `Place`, like the room of a lecture, and `With`:
- * in plan and log a skill, a module by its code or a project by its name, and a type or none,
- * which the dialog picks itself, written as the folder of its skill with the type in brackets,
+ * in plan and log a skill, a module by its code
+ * or a project by its name, and a type or none,
+ * which the dialog picks itself,
+ * written as the folder of its skill with the type in brackets,
  * like `IN2028_BusinessAnalyticsMachineLearning (VO)` or `WokFlow`,
  * see `activeSkillsRead` in `notes.ts` and {@link skillTypes};
  * in the log also its documents and its attempts, which only `skill.ts` writes.
@@ -61,10 +74,13 @@
  * whose counter writes each glass as an entry `Drink` of five minutes, see `trackers.ts`,
  * and takes no time of mine, so the dialog leaves it out, see {@link hiddenNames}.
  *
- * - `./calendar.ts`: Reads `.ics` files into entries, and names the category of skill entries.
- * - `./places.ts`: Reads my places from `Places.md` and my platforms online from `Online.md`.
+ * - `./calendar.ts`: Reads `.ics` files into entries,
+ *   and names the category of skill entries.
+ * - `./places.ts`: Reads my places from `Places.md`
+ *   and my platforms online from `Online.md`.
  * - `./sport.ts`: Names the category of a session and its kinds.
- * - `./sources.ts`: Names every folder and file the reader reads, and the people I share with.
+ * - `./sources.ts`: Names every folder and file the reader reads,
+ *   and the people I share with.
  * - `./persons.ts`: Names a person I share with as `Persons.md` names it.
  */
 
@@ -128,11 +144,13 @@ export type Category = {
 /**
  * A {@link Field} as the page gets it, with the rooms and the rows of its places.
  *
- * - `rooms`: For a field of a place, the rooms of `Rooms.md`, each as the line an entry writes,
+ * - `rooms`: For a field of a place, the rooms of `Rooms.md`,
+ *   each as the line an entry writes,
  *   in the order of the table, which the list offers only as I search, see `places.ts`;
  *   none for any other field.
  * - `places`: For a field of a place, each of my places and rooms as its row holds it,
- *   its address in its parts and its link, by its line, see `places.ts`; none for any other field.
+ *   its address in its parts and its link, by its line, see `places.ts`;
+ *   none for any other field.
  * - `links`: For `With` the address of each name, as its last entry wrote it,
  *   like `sophale@invalid`, see {@link addressesOf}; none for any other field.
  * - `params`: For a summary the params each value had before, see {@link paramsOf};
@@ -160,17 +178,20 @@ export type CategoryShown = Category & {
 
 /**
  * My neck routine, once offered as the what of `Body`, each with its steps,
- * which the trackers still count, their neck hidden, see `trackers.ts`, but no longer offered,
+ * which the trackers still count, their neck hidden,
+ * see `trackers.ts`, but no longer offered,
  * see {@link retiredWhats}:
  * strengthening of the neck, shoulders and shoulder blades, chosen by research
  * (`.claude/studies/science.md`, point 16).
  * `Neck short` every study day, about 5 minutes:
- * lateral raises with an elastic band eased neck pain with 2 minutes a day as much as with 12.
+ * lateral raises with an elastic band eased neck pain
+ * with 2 minutes a day as much as with 12.
  * `Neck long` on three of those days, about 20 minutes:
  * the short one and four exercises more, three sets each,
  * the load rising from about 12 repetitions toward 8,
  * as in a trial in trapezius myalgia (Gross 2015).
- * Regularity is the dose, so the trackers count the sessions of seven days against my goal,
+ * Regularity is the dose, so the trackers count the sessions
+ * of seven days against my goal,
  * see `trackers.ts`; strengthening helped after 10 to 20 weeks, not yet after 4,
  * so the routine is judged after 10 to 12 weeks.
  */
@@ -204,7 +225,8 @@ const withField: Field = {
 };
 
 /**
- * Field `Online` of every category, what I did online, below its place, see the top of this file;
+ * Field `Online` of every category, what I did online,
+ * below its place, see the top of this file;
  * its values the reader gives from `Online.md`, see {@link categoriesRead}.
  */
 const onlineField: Field = {
@@ -245,7 +267,8 @@ function categoryOf(name: string): Category {
 export { skillName };
 
 /**
- * Types of a skill entry, each written in round brackets after its skill in its `SUMMARY`,
+ * Types of a skill entry, each written in round brackets
+ * after its skill in its `SUMMARY`,
  * like `IN2028_BusinessAnalyticsMachineLearning (VO)`;
  * a type names only a fixed form I take part in:
  * `VO` a lecture, `UE` an exercise, `ZU` a central exercise, `TU` a tutorial,
@@ -256,13 +279,15 @@ export { skillName };
 export const skillTypes: string[] = ["VO", "UE", "ZU", "TU", "HU", "FA", "PR"];
 
 /**
- * Semester of a skill entry, its `X-SEMESTER`, like `2026W` or `2027S`: the year it begins in,
+ * Semester of a skill entry, its `X-SEMESTER`,
+ * like `2026W` or `2027S`: the year it begins in,
  * then `W` for a winter, October to March, or `S` for a summer, April to September.
  */
 const semesterForm: RegExp = /^\d{4}[WS]$/;
 
 /**
- * The whats `Sleep` offers first, in this order: `Night`, the sleep of a night, and `Day`, a nap,
+ * The whats `Sleep` offers first, in this order:
+ * `Night`, the sleep of a night, and `Day`, a nap,
  * which the sleep tracker never counts as a night, see `trackers.ts`.
  */
 const sleepWhats: string[] = ["Night", "Day"];
@@ -286,7 +311,8 @@ const transports: string[] = [
 
 /**
  * Categories the dialog leaves out, though the reader takes them: `Drink`,
- * whose glasses of water only the counter of the trackers writes, see the top of this file.
+ * whose glasses of water only the counter of the trackers writes,
+ * see the top of this file.
  */
 const hiddenNames: string[] = ["Drink"];
 
@@ -401,7 +427,8 @@ const categories: Category[] = [
 ];
 
 /**
- * Gives the semester of a day, which the dashboard fills in for a skill entry until I pick another:
+ * Gives the semester of a day,
+ * which the dashboard fills in for a skill entry until I pick another:
  * October to March a winter, April to September a summer;
  * January to March belong to the winter that began the year before.
  * - `year`, `month`: Year and month of the day.
@@ -418,7 +445,8 @@ export function semesterOf(day: string): string {
 
 /**
  * Gives the semester an entry states in its `X-SEMESTER`:
- * for a skill entry the one sent or kept, else the semester of its day, see {@link semesterOf},
+ * for a skill entry the one sent or kept,
+ * else the semester of its day, see {@link semesterOf},
  * so every skill entry the reader writes carries one; none for any other entry.
  *
  * @param category - Category of the entry, like `Skill`
@@ -447,13 +475,15 @@ function logsRead(now: string): Entry[] {
 }
 
 /**
- * Lists the places of log entries by their names: their places and where their ways start,
+ * Lists the places of log entries by their names:
+ * their places and where their ways start,
  * see `labelOf` in `places.ts`,
  * so `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`
  * and an older `TUM Innenstadt` count alike.
  *
  * @param logs - Log entries
- * @returns Every use of a place by its name, like `TUM Innenstadt`, a place as often as it was used
+ * @returns Every use of a place by its name, like `TUM Innenstadt`,
+ *   a place as often as it was used
  */
 function placeUsesOf(logs: Entry[]): string[] {
     return logs.flatMap((log: Entry): string[] => [
@@ -463,7 +493,8 @@ function placeUsesOf(logs: Entry[]): string[] {
 }
 
 /**
- * Lists the platforms of log entries, what they did online, see `Online` in `calendar.ts`.
+ * Lists the platforms of log entries, what they did online,
+ * see `Online` in `calendar.ts`.
  *
  * @param logs - Log entries
  * @returns Every use of a platform, like `Zoom`, a platform as often as it was used
@@ -489,7 +520,8 @@ function titleUsesOf(logs: Entry[], name: string, many: boolean): string[] {
 }
 
 /**
- * Gives the params each value of a summary had in log entries, in round brackets at its end,
+ * Gives the params each value of a summary had in log entries,
+ * in round brackets at its end,
  * like `Sehtest` of `Augenheilkunde (Sehtest)`, the most used first.
  * - `uses`: The values with a param, a value as often as it was used.
  *
@@ -522,7 +554,8 @@ function paramsOf(
 }
 
 /**
- * Lists the people of log entries, who I was with, by their names, see `Attendee` in `calendar.ts`.
+ * Lists the people of log entries, who I was with, by their names,
+ * see `Attendee` in `calendar.ts`.
  *
  * @param logs - Log entries
  * @returns Every use of a name, like `Sophale`, a name as often as it was used
@@ -534,7 +567,8 @@ function peopleUsesOf(logs: Entry[]): string[] {
 }
 
 /**
- * Gives the address of each person of log entries as the last entry with the person wrote it,
+ * Gives the address of each person of log entries
+ * as the last entry with the person wrote it,
  * so a name picked again takes it, like `sophale@invalid`, or a real one I typed.
  *
  * @param logs - Log entries, in any order
@@ -556,7 +590,8 @@ function addressesOf(logs: Entry[]): { [name: string]: string } {
 }
 
 /**
- * Orders values by how often they were used, the most used first, equal ones alphabetical.
+ * Orders values by how often they were used,
+ * the most used first, equal ones alphabetical.
  *
  * @param uses - Every use of a value
  * @param offered - Values offered even when never used
@@ -584,7 +619,8 @@ function valuesOrder(uses: string[], offered: string[]): string[] {
  * Gives the steps of each value with steps,
  * and after them the note of the last log entry of the value,
  * like `Last time: band red · 3×10` for `Neck long`.
- * - `last`: Last log entry of the category and the value with a note, `undefined` for none.
+ * - `last`: Last log entry of the category and the value with a note,
+ *   `undefined` for none.
  *
  * @param logs - Log entries up to now, in any order
  * @param name - Name of the category, like `Body`
@@ -621,7 +657,8 @@ function stepsWithNoteOf(
 
 /**
  * Reads the categories with the values of their fields,
- * see {@link valuesOrder}, a field that takes no new values only those of the code in their order,
+ * see {@link valuesOrder}, a field that takes no new values
+ * only those of the code in their order,
  * like `Night` and `Day` of `Sleep`,
  * each telling whether a box of the plan may have it;
  * a value with steps gets the note of its last entry, see {@link stepsWithNoteOf};
@@ -630,8 +667,10 @@ function stepsWithNoteOf(
  * - `logs`: Log entries up to now.
  * - `mine`: My places.
  * - `names`: Their names.
- * - `places`: One list of places for every field of a place: my places, the most used first,
- *   see {@link placeUsesOf}, each as the line an entry writes, see `lineOf` in `places.ts`.
+ * - `places`: One list of places for every field of a place:
+ *   my places, the most used first,
+ *   see {@link placeUsesOf}, each as the line an entry writes,
+ *   see `lineOf` in `places.ts`.
  * - `platformNames`: The names of my platforms online, in the order of `Online.md`.
  * - `platforms`: The same, the most used first, see {@link onlineUsesOf}.
  * - `rowsOnline`: Each of them as its row holds it, by its name.
@@ -728,7 +767,8 @@ export function categoriesRead(now: string): CategoryShown[] {
 
 /**
  * Finds where I was last before an instant:
- * the place of the last entry at one of my places as it wrote it, with the address it had then,
+ * the place of the last entry at one of my places as it wrote it,
+ * with the address it had then,
  * like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`;
  * a way's place is its goal, and a place I changed by hand counts as a way there,
  * like `TUM Garching` after a way to `Mensa Garching`;
@@ -750,7 +790,8 @@ export function lastPlaceRead(before: string): string {
 }
 
 /**
- * Tells whether the people of an entry or a box are well formed, see `Attendee` in `calendar.ts`:
+ * Tells whether the people of an entry or a box are well formed,
+ * see `Attendee` in `calendar.ts`:
  * each a name without `;`, which parts the names of `With`, and without spaces around it,
  * like `Bichler, Martin` or `Herr Müller`, and an address without spaces and commas,
  * like `martin.bichler@invalid`.
@@ -772,11 +813,14 @@ export function attendeesAllow(attendees: Attendee[]): boolean {
  * Tells whether the fields of an entry fit its category, in plan and log alike:
  * the category is in the list, what is picked, never empty,
  * one of its values for a field that takes no new ones,
- * like `Night` or `Day` of `Sleep`, or, without a field `title`, the name of the category,
+ * like `Night` or `Day` of `Sleep`, or,
+ * without a field `title`, the name of the category,
  * `from` is only set when the category has the field,
  * and module and type stay empty, the people of every category well formed,
- * see {@link attendeesAllow}; every other field but the category and the times may stay empty.
- * `Skill` is a skill, never none, a module code like `IN2028` or a project like `WokFlow`,
+ * see {@link attendeesAllow};
+ * every other field but the category and the times may stay empty.
+ * `Skill` is a skill, never none,
+ * a module code like `IN2028` or a project like `WokFlow`,
  * and one of the {@link skillTypes} or none,
  * and its title free, at first what the reader writes from both,
  * see `skillTitleOf` in `documents.ts`,

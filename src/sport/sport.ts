@@ -7,21 +7,26 @@
  * The bar of the day, as the day has it: its date with its weekday short after it,
  * like `17.10.2026 (Sat)`, between the arrows to the day before and after,
  * a small icon beside it back to today, faded and off on today.
- * The day: the number of its sessions, their time together and the kcal they burned above rest,
+ * The day: the number of its sessions,
+ * their time together and the kcal they burned above rest,
  * an estimate, see `reader/sport.ts`, written whole without `~`,
  * since every kcal of the page is rounded anyway, without goals, so the log stays a log;
  * then each session of the log: its start,
  * linking to the day in the day view,
- * and its kcal in bold, below it its kind and its workout with its time, like `Gym · Push`,
- * and below that, indented, what I did: each exercise with its sets, repetitions and kilograms,
+ * and its kcal in bold, below it its kind
+ * and its workout with its time, like `Gym · Push`,
+ * and below that, indented, what I did:
+ * each exercise with its sets, repetitions and kilograms,
  * like `3 × 10 · 40 kg`, and each video with its channel grey and its minutes.
- * A session counts 0 kcal while I have no weight, and so do the totals, never an empty place.
+ * A session counts 0 kcal while I have no weight,
+ * and so do the totals, never an empty place.
  * Last among the totals, also on a day without sessions, my weight on the day,
  * the last one I wrote on or before it,
  * like `60.5 kg`, with a small grey pencil, only the pencil while I have none:
  * a click turns it into a field in its place,
  * Enter or leaving it writes the weight of the shown day, Escape takes it back,
- * see {@link weightEdit}; I change it every month or two, so it needs no place of its own,
+ * see {@link weightEdit}; I change it every month or two,
+ * so it needs no place of its own,
  * and the kcal of the day and of my videos count with it anew.
  * Beside the day my workouts and exercises, see `lists.ts`.
  * It opens on today's calendar date, which turns at 00:00, also after a reload,
@@ -33,7 +38,8 @@
  * not while I type my weight, which the field would lose,
  * and which shows the day anew itself once written or taken back.
  *
- * - `./mine.ts`: Loads the sessions of a day with what they took, and sends my weight of a day.
+ * - `./mine.ts`: Loads the sessions of a day with what they took,
+ *   and sends my weight of a day.
  * - `./lists.ts`: The sections of my workouts, exercises and videos,
  *   loaded anew after my weight changed.
  * - `../food/foods.ts`: Writes amounts and makes elements.
@@ -73,7 +79,8 @@ import type { Session, SportDay } from "./mine.ts";
 let shown: string = "";
 
 /**
- * Writes kcal burned as the page shows them, whole, 0 while none are known, like without my weight.
+ * Writes kcal burned as the page shows them, whole,
+ * 0 while none are known, like without my weight.
  *
  * @param kcal - kcal, `null` for none known
  * @returns Text like `175 kcal` or `0 kcal`
@@ -155,7 +162,8 @@ function weightOf(kg: number | null): HTMLElement {
  * Enter or leaving it writes the weight of the shown day, see `weightSend` in `mine.ts`,
  * and shows the day with it and my lists anew, whose kcal count with it;
  * the same weight or an empty field writes nothing; Escape takes it back;
- * kilograms the reader does not take, like `abc`, keep the field open and say what it takes.
+ * kilograms the reader does not take, like `abc`,
+ * keep the field open and say what it takes.
  * - `field`: The field.
  * - `amount`: The field with its unit.
  * - `done`: Whether the field was written or taken back,
@@ -256,7 +264,8 @@ function partLineOf(name: string, grey: string, value: string): HTMLElement {
 }
 
 /**
- * Builds the lines of a session: its start in grey above it, linking to its day in the day view,
+ * Builds the lines of a session: its start in grey above it,
+ * linking to its day in the day view,
  * and at the right its kcal in bold, 0 while none are known;
  * then its kind and its workout with its time; then each exercise and each video.
  * - `entry`: Line of its start and its kcal.
@@ -374,7 +383,8 @@ function dayMove(days: number): void {
 
 /**
  * Starts the sport view after the router has put its HTML into the page:
- * the arrows and the icon back to today, the day a link asks for or today's calendar date,
+ * the arrows and the icon back to today,
+ * the day a link asks for or today's calendar date,
  * which moves on to the new day by itself while it is shown, see `today.ts`,
  * and loads anew after every change of the files, see `../changes.ts`,
  * unless the field of my weight is open, see {@link weightEdit}, and my lists.

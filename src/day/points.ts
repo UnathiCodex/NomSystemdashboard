@@ -1,8 +1,10 @@
 /**
  * ## Points
  *
- * A list of points for the sections of the daily note, my gratitude and my points about the day:
- * a small editor of its own per section, the same as that of my files, see `../editor/editor.ts`,
+ * A list of points for the sections of the daily note,
+ * my gratitude and my points about the day:
+ * a small editor of its own per section,
+ * the same as that of my files, see `../editor/editor.ts`,
  * so a point is written here exactly as there.
  * Its text is the Markdown of the section, one `- ` line per point,
  * shown as Obsidian's live preview shows it, see `../editor/preview.ts`:
@@ -10,14 +12,19 @@
  * its `- ` shown on the line of the cursor.
  * Its keys are those of the editor, see `../editor/keys.ts`:
  * Enter starts the next point, on an empty one ends the list;
- * Shift+Enter goes on in the same point on a new line, a further line `  ⠀` under its text;
- * Backspace right after the `-` of a new, empty point makes it such a further line, and so on.
- * A list without points shows one empty point, `- `, so there is always a bullet to write at;
+ * Shift+Enter goes on in the same point on a new line,
+ * a further line `  ⠀` under its text;
+ * Backspace right after the `-` of a new,
+ * empty point makes it such a further line, and so on.
+ * A list without points shows one empty point, `- `,
+ * so there is always a bullet to write at;
  * a click beside the points goes to the end of the last.
- * The reader writes the text into the note as it is, only keeping the points of the section points,
+ * The reader writes the text into the note as it is,
+ * only keeping the points of the section points,
  * see `reader/note.ts`.
  *
- * - `@codemirror/state`, `@codemirror/view`: The editor, CodeMirror 6, as in `../editor/editor.ts`.
+ * - `@codemirror/state`, `@codemirror/view`:
+ *   The editor, CodeMirror 6, as in `../editor/editor.ts`.
  * - `@codemirror/commands`: Undo, redo and the usual keys.
  * - `@codemirror/language`: Indents with tabs, as my notes do.
  * - `../editor/syntax.ts`, `../editor/keys.ts`, `../editor/preview.ts`:
@@ -75,7 +82,8 @@ function viewOf(list: HTMLElement): EditorView {
 }
 
 /**
- * Shows the text of a section as points, one empty point for none, with an undo history of its own,
+ * Shows the text of a section as points, one empty point for none,
+ * with an undo history of its own,
  * so undo never brings back the text of the day shown before.
  *
  * @param list - List of points

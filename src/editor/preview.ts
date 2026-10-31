@@ -2,13 +2,15 @@
  * ## Live preview
  *
  * Shows a note in the editor as Obsidian's live preview does:
- * the text of the file as it is, its Markdown drawn as in the scripts view with the markup hidden,
+ * the text of the file as it is,
+ * its Markdown drawn as in the scripts view with the markup hidden,
  * and the markup shown where the cursor is, to edit it.
  * Only the look changes, never the text:
  * every hidden or rendered piece stays in the text as written.
- * Away from the cursor a note looks as in the scripts view, drawn by the rules of the scripts view
- * in `../notes/notes.css`:
- * - Headings, lists and quotes stand in the elements the scripts view draws them in, `h1` to `h6`,
+ * Away from the cursor a note looks as in the scripts view,
+ * drawn by the rules of the scripts view in `../notes/notes.css`:
+ * - Headings, lists and quotes stand in the elements the scripts view draws them in,
+ *   `h1` to `h6`,
  *   `ul`, `ol`, `li` and `blockquote`,
  *   so they get its sizes, its bullets and numbers,
  *   its indentation per level with an item's wrapped and further lines under its text,
@@ -29,7 +31,8 @@
  *   as written on the line of the cursor, see {@link headingLook};
  *   a click on the box does nothing, see {@link kindClicked}.
  * - Bold, italic, struck and code without `**`, `*`,
- *   `~~` and `` ` ``, Markdown links and wiki links `[[Note#Heading|Text]]` as their text; the markup of the piece the cursor touches shows.
+ *   `~~` and `` ` ``, Markdown links and wiki links `[[Note#Heading|Text]]`
+ *   as their text; the markup of the piece the cursor touches shows.
  * - Line breaks `<br>` and break opportunities `<wbr>` drawn as in the scripts view,
  *   so `<br><wbr>` at the end of a line leaves an empty line below it;
  *   as their text while the cursor touches them.
@@ -41,10 +44,12 @@
  *   a formula `$$…$$` being edited shows rendered below its TeX, as in Obsidian;
  *   a double click on a rendered formula selects its whole TeX, without its `$`, to copy,
  *   see {@link formulaClicked}.
- * - Images `![kiosk mean bell](Visualizations/KioskMeanBell.svg)` shown, see {@link imageLook};
+ * - Images `![kiosk mean bell](Visualizations/KioskMeanBell.svg)` shown,
+ *   see {@link imageLook};
  *   tables, callouts `> [!note] Title`,
  *   code blocks and HTML blocks like `<table>` rendered as in the scripts view,
- *   those right below each other as one, as their text while the cursor is on one of their lines,
+ *   those right below each other as one,
+ *   as their text while the cursor is on one of their lines,
  *   as Obsidian shows a callout;
  *   a table opens whole over the file by the button at its top right,
  *   to edit as a spreadsheet, see `./table.ts`.
@@ -63,18 +68,22 @@
  * - Each heading folds its section, up to the next heading of its level or higher,
  *   by a click on its arrow after its text, as in the scripts view,
  *   and each list item with sub-points folds them
- *   and its further lines by its arrow left of its bullet, shown under the pointer, as in Obsidian;
+ *   and its further lines by its arrow left of its bullet,
+ *   shown under the pointer, as in Obsidian;
  *   one click folds, one click unfolds, see {@link FoldWidget};
- *   a solution, the section under `#### Solution`, comes folded, see {@link solutionsFold},
+ *   a solution, the section under `#### Solution`,
+ *   comes folded, see {@link solutionsFold},
  *   so I try a task before I see its solution.
  * A click on a rendered piece puts the cursor there,
- * so it shows as text, on a rendered table a double click, so a single one leaves it to scroll,
+ * so it shows as text, on a rendered table a double click,
+ * so a single one leaves it to scroll,
  * see {@link BlockWidget}; while the editor is not focused,
  * like before the first click, the whole note shows rendered.
  * A click on a rendered link follows it, as in Obsidian, in a heading too,
  * whose text a click after its end edits,
  * and so does a click with Ctrl held on a link shown as text, see {@link linkFollow}:
- * a note opens in the scripts view at its heading, a heading of the same note scrolls into sight,
+ * a note opens in the scripts view at its heading,
+ * a heading of the same note scrolls into sight,
  * in a section its block shows alone, as a click in the tree shows it, any other file,
  * like a PDF at its page, opens in this window, in Chrome's own viewer,
  * and an address of the web in a new tab.
@@ -84,13 +93,16 @@
  * Links resolve as the reader found them when the note was read or saved last,
  * see {@link linksSet}: a link that leads nowhere fades and leads nowhere,
  * a link or image written since works once the note is saved.
- * A relative link, like `../NomModulesuniversity/IN2028_BusinessAnalyticsMachineLearning.md`
- * in a file of my new system, leads where VSCodium follows it, see {@link linkAddressOf}:
+ * A relative link,
+ * like `../NomModulesuniversity/IN2028_BusinessAnalyticsMachineLearning.md` in a file
+ * of my new system, leads where VSCodium follows it, see {@link linkAddressOf}:
  * a file of my new system opens in the editor, a note in the scripts view,
- * the folder of a module as its overview; any other place fades, opening only on the computer.
+ * the folder of a module as its overview;
+ * any other place fades, opening only on the computer.
  * A name of a person in the column `Lecturers`, `Tutor` or `Head` of a rendered table,
  * like `Bichler, Martin` of the courses of a module,
- * is a link to its row in `Persons.md`, see `../persons.ts`, a name of nobody there plain text,
+ * is a link to its row in `Persons.md`, see `../persons.ts`,
+ * a name of nobody there plain text,
  * and so is the name of an item under `## Modulverantwortliche` of a module file,
  * like `- Bichler, Martin`, see {@link responsiblesLook};
  * the row an address names,
@@ -103,7 +115,8 @@
  *   and folds its sections, as CodeMirror's Markdown finds them:
  *   a heading's up to the next heading of its level or higher,
  *   a list item's from the end of its first line.
- * - `@lezer/highlight`: Gives pieces of the syntax the classes of their look, see `./editor.css`.
+ * - `@lezer/highlight`: Gives pieces of the syntax the classes of their look,
+ *   see `./editor.css`.
  * - `lucide`, `../icons.ts`: The arrows that open a table over the file.
  * - `../notes/math.ts`: Renders formulas as the scripts view does.
  * - `../notes/markdown.ts`:
@@ -116,7 +129,8 @@
  *   `Tutor` and `Head` of a table into links to their rows,
  *   and gives the people, a person by its name
  *   and the address of its row for the names under `## Modulverantwortliche`.
- * - `./keys.ts`: Tells an empty line and the empty line a key just put the cursor on to write,
+ * - `./keys.ts`: Tells an empty line
+ *   and the empty line a key just put the cursor on to write,
  *   and the indentation of the text of a list item, for the lines of blanks below it.
  * - `./round.ts`: Shows a block of a section alone, for a link to its heading.
  * - `./table.ts`: Opens a table over the file, to edit as a spreadsheet.
@@ -200,7 +214,8 @@ export type Links = {
  * - `cursors`: Where the cursors stand, whose places show as text, see {@link cursorsOf}.
  * - `decorations`: Decorations found so far.
  * - `wrappers`: Elements found so far that lines stand in, like the `li` of a list item.
- * - `rendered`: Starts of the blocks rendered whole so far, like a table, see {@link blockLook}.
+ * - `rendered`: Starts of the blocks rendered whole so far,
+ *   like a table, see {@link blockLook}.
  */
 type Look = {
     state: EditorState;
@@ -238,17 +253,20 @@ const imageEndings: string[] = [
 ];
 
 /**
- * Pieces of syntax drawn in an element of their own, see {@link wrap}, nesting in each other.
+ * Pieces of syntax drawn in an element of their own,
+ * see {@link wrap}, nesting in each other.
  */
 const wrapped: string[] = ["BulletList", "OrderedList", "ListItem", "Blockquote"];
 
 /**
- * Blocks rendered whole while the cursor is on none of their lines, see {@link blockLook}.
+ * Blocks rendered whole while the cursor is on none of their lines,
+ * see {@link blockLook}.
  */
 const renderedWhole: string[] = ["Table", "FencedCode", "HTMLBlock"];
 
 /**
- * First line of a callout from its `>`, like `> [!note] Title`, as the scripts view reads it,
+ * First line of a callout from its `>`, like `> [!note] Title`,
+ * as the scripts view reads it,
  * see `../notes/markdown.ts`.
  */
 const calloutRule: RegExp = /^>[ \t]?\[![^\]]+\]/;
@@ -272,7 +290,8 @@ const headingRule: RegExp = /^#{1,6}[ \t]+(.*?)[ \t]*$/;
 
 /**
  * Heading of the section of a module file that names the people responsible for it,
- * one item `- Nachname, Vorname` each, as `Persons.md` names them, see {@link responsibleOf}.
+ * one item `- Nachname, Vorname` each,
+ * as `Persons.md` names them, see {@link responsibleOf}.
  */
 const responsiblesHeading: string = "## Modulverantwortliche";
 
@@ -283,8 +302,9 @@ const responsiblesHeading: string = "## Modulverantwortliche";
 const responsibleRule: RegExp = /^- (\S.*?)[ \t]*$/;
 
 /**
- * Item of a list that names a person by its role, see `peopleRoles` in `../persons.ts`, like
- * `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`: its role and the name.
+ * Item of a list that names a person by its role, see `peopleRoles` in `../persons.ts`,
+ * like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`:
+ * its role and the name.
  */
 const roleRule: RegExp = new RegExp(`^- (${peopleRoles.join("|")}): (\\S.*?)[ \\t]*$`);
 
@@ -323,7 +343,8 @@ const numberMark: Decoration = Decoration.mark({ class: "cm-list-mark cm-list-nu
 const hanging: Decoration = Decoration.mark({ class: "cm-hanging" });
 
 /**
- * Type word of a block at the start of its heading, like `Definition`, as a small grey box,
+ * Type word of a block at the start of its heading,
+ * like `Definition`, as a small grey box,
  * see `../notes/notes.css`.
  */
 const kindBox: Decoration = Decoration.mark({ class: "block-kind" });
@@ -347,7 +368,8 @@ const markedRule: RegExp = /\t/g;
 
 /**
  * Tab within a selection where it takes its room, its mark drawn faintly over it,
- * taking no room of its own, see `./editor.css`, by the character, see {@link invisibleMarks}.
+ * taking no room of its own, see `./editor.css`,
+ * by the character, see {@link invisibleMarks}.
  */
 const invisibleShown: { [char: string]: Decoration } = Object.fromEntries(
     Object.entries(invisibleMarks).map(
@@ -389,7 +411,8 @@ const computerOnly: Decoration = Decoration.mark({
 });
 
 /**
- * Empty line, drawn half as high as a line of text, see {@link spaceLook} and `./editor.css`.
+ * Empty line, drawn half as high as a line of text,
+ * see {@link spaceLook} and `./editor.css`.
  */
 const gap: Decoration = Decoration.line({ class: "cm-gap" });
 
@@ -440,8 +463,10 @@ const focused: StateField<boolean> = StateField.define<boolean>({
 });
 
 /**
- * Tells {@link focused} the focus right after any update of the editor that leaves it behind,
- * not by CodeMirror's news of the focus, which it drops once another transaction comes first,
+ * Tells {@link focused} the focus right
+ * after any update of the editor that leaves it behind,
+ * not by CodeMirror's news of the focus,
+ * which it drops once another transaction comes first,
  * like the press held by {@link pressHold} when I come back from another window
  * by a click into the text: no heading or formula opened then,
  * the whole note staying rendered until the page loaded anew.
@@ -481,7 +506,8 @@ const pressChange: StateEffectType<number[] | null> = StateEffect.define<
 >();
 
 /**
- * Places of the cursors that show as text while the mouse button is down after a press in the text:
+ * Places of the cursors that show as text
+ * while the mouse button is down after a press in the text:
  * those of the moment of the press,
  * so a click or a drag changes nothing of the look until the button goes up,
  * see {@link cursorsOf}; `null` while it is up.
@@ -537,7 +563,8 @@ const personsLoaded: StateField<Person[]> = StateField.define<Person[]>({
 });
 
 /**
- * Loads the people of `Persons.md` once the editor stands, see `personsKept` in `../persons.ts`,
+ * Loads the people of `Persons.md` once the editor stands,
+ * see `personsKept` in `../persons.ts`,
  * and hands them to {@link personsLoaded}, unless the editor is gone by then.
  * - {@link ViewPlugin}: Runs with the editor, from when it stands until it is destroyed.
  * - `open`: Whether the editor still stands.
@@ -560,7 +587,8 @@ const personsLoad: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
 
 /**
  * Path of the note in `NomWorkspace`,
- * like `NomManageplannings/NomMetainformations/Modules.md`, from which its relative links lead,
+ * like `NomManageplannings/NomMetainformations/Modules.md`,
+ * from which its relative links lead,
  * see {@link linkAddressOf}; given once by {@link livePreview}.
  */
 const notePlace: Facet<string, string> = Facet.define<string, string>({
@@ -585,11 +613,13 @@ const highlighter: Highlighter = tagHighlighter([
  * Fold arrow of a heading or a list item, see the top of this file,
  * and of the time zone of a calendar file, see `./ics.ts`:
  * down while open, turned right while folded;
- * a click on it folds or unfolds, see {@link foldToggle}, and leaves the cursor where it is.
+ * a click on it folds or unfolds, see {@link foldToggle},
+ * and leaves the cursor where it is.
  */
 export class FoldWidget extends WidgetType {
     /**
-     * Whether it belongs to a list item, else to a heading or the time zone of a calendar file.
+     * Whether it belongs to a list item,
+     * else to a heading or the time zone of a calendar file.
      */
     readonly item: boolean;
 
@@ -691,7 +721,8 @@ class MathWidget extends WidgetType {
     }
 
     /**
-     * Lets a click reach the editor, which puts the cursor at the formula, so it shows as TeX,
+     * Lets a click reach the editor,
+     * which puts the cursor at the formula, so it shows as TeX,
      * and a double click, which selects its TeX, see {@link formulaClicked}.
      */
     override ignoreEvent(): boolean {
@@ -732,7 +763,8 @@ class ImageWidget extends WidgetType {
     }
 
     /**
-     * Lets a click reach the editor, which puts the cursor at the image, so it shows as text.
+     * Lets a click reach the editor,
+     * which puts the cursor at the image, so it shows as text.
      */
     override ignoreEvent(): boolean {
         return false;
@@ -827,7 +859,8 @@ class BreakWidget extends WidgetType {
     }
 
     /**
-     * Lets a click reach the editor, which puts the cursor at the break, so it shows as text.
+     * Lets a click reach the editor,
+     * which puts the cursor at the break, so it shows as text.
      */
     override ignoreEvent(): boolean {
         return false;
@@ -849,7 +882,8 @@ class InvisiblesWidget extends WidgetType {
     readonly marks: string;
 
     /**
-     * What the hidden stretch stands before: `bullet` or `number` for the indentation of a point,
+     * What the hidden stretch stands before:
+     * `bullet` or `number` for the indentation of a point,
      * whose marks go left of its bullet or number, else `text`.
      */
     readonly before: string;
@@ -927,36 +961,47 @@ class BlockWidget extends WidgetType {
     }
 
     /**
-     * Renders the blocks; once an image of them is loaded, the editor measures its lines again.
-     * A table of them wider than the page, like that of `Foods.md`, scrolls sideways on its own,
+     * Renders the blocks; once an image of them is loaded,
+     * the editor measures its lines again.
+     * A table of them wider than the page, like that of `Foods.md`,
+     * scrolls sideways on its own,
      * see {@link tableMeasure}, measured again whenever its size changes,
      * like when the window narrows, and the editor measures its lines again;
-     * every code block of them names its language by the list at its top right, see {@link fencesOf},
-     * the languages of `../notes/code.ts`, picking one writes it after its ```, `–` takes it away;
+     * every code block of them names its language by the list at its top right,
+     * see {@link fencesOf},
+     * the languages of `../notes/code.ts`,
+     * picking one writes it after its ```, `–` takes it away;
      * every table of them opens whole over the file by the button at its top right,
      * to edit as a spreadsheet,
-     * see {@link tableOpen}, the button standing in a frame around the table, `table-frame`.
+     * see {@link tableOpen}, the button standing in a frame
+     * around the table, `table-frame`.
      * A click on a link of them follows it,
-     * see {@link addressFollow}, a click on the title of a callout that folds opens or closes it,
+     * see {@link addressFollow}, a click on the title of a callout
+     * that folds opens or closes it,
      * as in the scripts view, and the editor measures its lines again;
-     * a press on a scrollbar of a part too wide or too high, like a code block, only scrolls it;
+     * a press on a scrollbar of a part too wide or too high,
+     * like a code block, only scrolls it;
      * any other click or tap puts the cursor at the place of their text I pressed,
-     * see {@link blockPlaceOf}, so they show as text with the cursor there, ready to type;
+     * see {@link blockPlaceOf}, so they show
+     * as text with the cursor there, ready to type;
      * but a click or tap on a table leaves it rendered,
      * so I can scroll it, by its scrollbars too, by the wheel, the touchpad or a swipe,
      * and only a double click or double tap on it puts the cursor there.
-     * - {@link ResizeObserver}: Calls back once a table is laid out and whenever its size changes.
+     * - {@link ResizeObserver}: Calls back once a table is laid out
+     *   and whenever its size changes.
      * - `runs`: First line of each table of them, see {@link tableRunsOf}.
      * - `fences`: The ``` of each code block of them, in the order of its `pre`.
      * - `frame`: Frame around a code block and its list, `code-frame`.
      * - `pick`: The list of the languages, `code-language`, the one written picked.
      * - `place`: Puts the cursor at the place of their text pressed.
      * - `mousedown`: Its default, focusing the editor with the cursor beside them,
-     *   so they show as text, prevented, but on the list of a code block, which then opens;
+     *   so they show as text, prevented,
+     *   but on the list of a code block, which then opens;
      *   a scrollbar still drags. Puts the cursor there, not on a scrollbar,
      *   see {@link scrollbarHit},
      *   nor on a link, the title of a callout, the button of a table or a table.
-     * - `dblclick`: Puts the cursor in a table, not on its scrollbars, a link or its button.
+     * - `dblclick`: Puts the cursor in a table,
+     *   not on its scrollbars, a link or its button.
      * - `mouseover`: Shows the whole text of a cell of a table cut by `…`,
      *   see {@link cellTitleShow}.
      * - `from`: Start of their first line.
@@ -1087,7 +1132,8 @@ class BlockWidget extends WidgetType {
     }
 
     /**
-     * Keeps clicks in the blocks from the editor, which would put the cursor at their start or end:
+     * Keeps clicks in the blocks from the editor,
+     * which would put the cursor at their start or end:
      * the blocks place the cursor themselves, in a table on a double click.
      */
     override ignoreEvent(): boolean {
@@ -1107,7 +1153,8 @@ type Fence = { from: number; to: number; info: string };
  * - `fences`: Those found.
  * - `open`: The ``` of the block open, `null` outside a block.
  * - `at`: Start of the line.
- * - `fence`: The `>` and blanks before it, it and what follows it, `null` for a line without one.
+ * - `fence`: The `>` and blanks before it, it and what follows it,
+ *   `null` for a line without one.
  *
  * @param markdown - Markdown of whole lines, like that of a {@link BlockWidget}
  * @returns The ``` that open, in the order of the blocks
@@ -1152,9 +1199,11 @@ function fileAddressOf(path: string): string {
 /**
  * Renders Markdown as the scripts view does, with its images, formulas and links,
  * a link that leads nowhere faded,
- * and so is one to a place the dashboard does not open, without the dots, see {@link computerOnly},
+ * and so is one to a place the dashboard does not open,
+ * without the dots, see {@link computerOnly},
  * and the names of people in the columns `Lecturers`,
- * `Tutor` and `Head` of a table as links to their rows, see `peopleLink` in `../persons.ts`;
+ * `Tutor` and `Head` of a table as links to their rows,
+ * see `peopleLink` in `../persons.ts`;
  * once an image is loaded, the editor measures its lines again.
  * Renders rendered blocks, see {@link BlockWidget},
  * and a table opened over the file, see `./table.ts`.
@@ -1191,7 +1240,8 @@ function blockRender(view: EditorView, markdown: string, links: Links): HTMLDivE
 }
 
 /**
- * Tells whether a click hit a scrollbar of a part of rendered blocks too wide or too high,
+ * Tells whether a click hit a scrollbar of a part
+ * of rendered blocks too wide or too high,
  * like the table of `Foods.md`, see {@link BlockWidget}:
  * below or right of its rows, within its box.
  * - `target`: What the click hit, the table itself where it hit a scrollbar.
@@ -1209,11 +1259,14 @@ function scrollbarHit(event: MouseEvent): boolean {
 }
 
 /**
- * Finds the place in the text of rendered blocks that a click hit, see {@link BlockWidget}:
+ * Finds the place in the text of rendered blocks that a click hit,
+ * see {@link BlockWidget}:
  * in a table the cell clicked, see {@link cellPlaceOf};
  * elsewhere, like in a code block, the letter clicked, found by the text around it;
- * else the end of the blocks, after a code block's closing fence, so typing never breaks it.
- * - {@link Document#caretPositionFromPoint}: Gives the text and the letter under the pointer.
+ * else the end of the blocks, after a code block's closing fence,
+ * so typing never breaks it.
+ * - {@link Document#caretPositionFromPoint}:
+ *   Gives the text and the letter under the pointer.
  * - `caret`: The letter clicked, `null` beside any text.
  * - `cell`: The cell of a table clicked, `null` for none.
  * - `text`: The text around the letter clicked, empty for none.
@@ -1352,7 +1405,8 @@ function tableRunsOf(view: EditorView, from: number, to: number): number[] {
  * none of a selection made by the pointer, which keeps the look,
  * but of one inside a formula, made in its TeX, which so stays its text to edit,
  * see {@link formulaHolds};
- * while the mouse button is down after a press in the text those of the moment of the press,
+ * while the mouse button is down
+ * after a press in the text those of the moment of the press,
  * see {@link frozen}, so no text moves under the pointer while I click or drag,
  * and a click shows what it touches as text once I let go.
  *
@@ -1448,7 +1502,8 @@ function hide(look: Look, from: number, to: number): void {
 }
 
 /**
- * Gives the end of markup like `##` or `>`, with the space or tab after it, which goes with it.
+ * Gives the end of markup like `##` or `>`,
+ * with the space or tab after it, which goes with it.
  *
  * @param look - Look being built
  * @param mark - Markup
@@ -1479,7 +1534,8 @@ function linesMark(look: Look, from: number, to: number, line: Decoration): void
 }
 
 /**
- * Puts the lines of a piece of syntax into an element, as the scripts view draws the piece,
+ * Puts the lines of a piece of syntax into an element,
+ * as the scripts view draws the piece,
  * like a list item into an `li`, so the rules of the scripts view give it their look.
  * Pieces inside each other nest by rank:
  * the deeper a piece lies among those of {@link wrapped}, the lower its rank.
@@ -1524,7 +1580,8 @@ function wrap(
  * or of a list item at the start of its line,
  * from where `./editor.css` moves it left of its bullet,
  * when the line folds something, see {@link FoldWidget}.
- * - {@link foldable}: Gives what a line folds, by CodeMirror's Markdown, `null` for nothing.
+ * - {@link foldable}: Gives what a line folds,
+ *   by CodeMirror's Markdown, `null` for nothing.
  *
  * @param look - Look being built
  * @param line - Line of the heading or the list item
@@ -1546,11 +1603,14 @@ function foldLook(look: Look, line: Line, item: boolean): void {
  * on the line of the cursor shown left of the text, which keeps its place;
  * its fold arrow after its text.
  * The type word of a block at its start,
- * like `Definition` of `## Definition. Population and Sample`, a small grey box before the name,
+ * like `Definition` of `## Definition. Population and Sample`,
+ * a small grey box before the name,
  * its dot and space hidden, also while the cursor stands in the name,
- * so a click into a heading moves none of its text; as written only while the cursor touches it,
+ * so a click into a heading moves none of its text;
+ * as written only while the cursor touches it,
  * see {@link kindRule}; no text to click into, see {@link kindClicked}.
- * - `kind`: The type word with the dot and space after it, `null` for a heading without one.
+ * - `kind`: The type word with the dot and space after it,
+ *   `null` for a heading without one.
  * - `start`: Where the text of the heading starts.
  *
  * @param look - Look being built
@@ -1633,7 +1693,8 @@ function linkLook(look: Look, node: SyntaxNode): boolean {
 }
 
 /**
- * Address of the web written as it is, like `https://…`, which GitHub's Markdown takes as a link:
+ * Address of the web written as it is, like `https://…`,
+ * which GitHub's Markdown takes as a link:
  * followed by a click while the cursor does not touch it,
  * with an arrow after it as a link out of my modules;
  * the address of a Markdown link is hidden there anyway.
@@ -1684,7 +1745,8 @@ function imageLook(look: Look, node: SyntaxNode): boolean {
  * Wiki link or embed, while the cursor does not touch it: only its text after `|`,
  * or its target without one, which a click follows, faded when it leads nowhere
  * or opens only on the computer, see {@link linkMarkOf}.
- * Its target is the link before `#`, `|` or the `\|` written in tables, as the reader lists it.
+ * Its target is the link before `#`,
+ * `|` or the `\|` written in tables, as the reader lists it.
  *
  * @param look - Look being built
  * @param node - `WikiLink` like `[[Note#Heading|Text]]` or `WikiEmbed` like `![[Note]]`
@@ -1717,20 +1779,23 @@ function wikiLinkLook(look: Look, node: SyntaxNode): boolean {
  * like `../NomModulesuniversity/IN2028_BusinessAnalyticsMachineLearning.md` of a file
  * of my new system, see `linkPlaceOf` and `placeAddressOf` in `../notes/tree.ts`,
  * as VSCodium follows it. A link of a note of my modules the reader found nothing
- * for leads nowhere, but for one leading out of its module, where the reader does not look.
+ * for leads nowhere, but for one leading out of its module,
+ * where the reader does not look.
  * - `path`: The file the reader found the link to lead to, `null` for none,
  *   `undefined` for a link it did not look at,
  *   like every link of a file of my new system, or one written since.
  * - `file`: Path of the note in `NomWorkspace`.
  * - `place`: The place in `NomWorkspace` it leads to as a relative link, `null` for none.
- * - `module`: Folder of the module of a note of my modules, like `NomSkillingmodules/IN2028_…/`.
+ * - `module`: Folder of the module of a note of my modules,
+ *   like `NomSkillingmodules/IN2028_…/`.
  *
  * @param state - Text, links and path of the note
  * @param target - The link to a file, before `#`, empty for the note itself,
  *   like `../NomModulesuniversity/IN2028_BusinessAnalyticsMachineLearning.md`
  * @param heading - The place in it after `#`, empty for none
  * @returns Address, `null` for a link that leads nowhere,
- *   empty for one to a place the dashboard does not open, like the folder of a module's lectures,
+ *   empty for one to a place the dashboard does not open,
+ *   like the folder of a module's lectures,
  *   which opens only on the computer
  */
 function linkAddressOf(
@@ -1779,7 +1844,8 @@ function linkMarkOf(state: EditorState, target: string): Decoration {
  * as in the scripts view, its tooltip naming what it looked for,
  * so a broken source stands out, and no click follows it.
  *
- * @param target - What the link looked for, like `VO_UniversityLectureLessons/TUM_2025W/04_….pdf`
+ * @param target - What the link looked for,
+ *   like `VO_UniversityLectureLessons/TUM_2025W/04_….pdf`
  * @returns Its look
  */
 function unresolvedOf(target: string): Decoration {
@@ -1794,8 +1860,10 @@ function unresolvedOf(target: string): Decoration {
  * a formula `$…$` with the punctuation right after it, like `,`, on its line,
  * as in the scripts view, see `mathInline` in `../notes/markdown.ts`;
  * else its TeX, also while a selection by the pointer lies in it, see {@link cursorsOf},
- * a formula `$$…$$` rendered above its TeX, where it stood, so the formula I click stays in place,
- * from the start of its line, before blanks hidden there, which would push it down a line.
+ * a formula `$$…$$` rendered above its TeX, where it stood,
+ * so the formula I click stays in place,
+ * from the start of its line, before blanks hidden there,
+ * which would push it down a line.
  * - `after`: The rest of its line.
  * - `punctuation`: How many characters of punctuation follow it.
  *
@@ -1832,21 +1900,27 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
 }
 
 /**
- * List: its lines in a `ul` or `ol`, up to where its last item ends, see {@link itemEndOf},
+ * List: its lines in a `ul` or `ol`,
+ * up to where its last item ends, see {@link itemEndOf},
  * as the scripts view draws them;
- * in two around the empty line a key just put the cursor on left of the text of its points,
+ * in two around the empty line a key just put the cursor
+ * on left of the text of its points,
  * see {@link typingCutOf}, so that line stands outside it at once.
  * A list within a point, whose guide line `../notes/notes.css` draws,
- * tells the empty lines right below it that stand outside that point, see {@link airBelowOf},
- * so `./editor.css` draws its guide line on through them, as through the air within the point,
+ * tells the empty lines right below it that stand outside
+ * that point, see {@link airBelowOf},
+ * so `./editor.css` draws its guide line on through them,
+ * as through the air within the point,
  * while the list around it goes on below them, see {@link listOnIs},
  * not before a heading or text after the list.
  * - `tagName`: Its element, `ul` or `ol`.
  * - `end`: Where its lines end.
  * - `parent`: The point it stands in, `null` for none.
- * - `air`: Empty lines right below it outside that point, the air its guide line runs through.
+ * - `air`: Empty lines right below it outside that point,
+ *   the air its guide line runs through.
  * - `attributes`: Attributes of its element: those empty lines.
- * - `cut`: The empty line the cursor stands on left of the text of its points, `null` for none.
+ * - `cut`: The empty line the cursor stands on left of the text
+ *   of its points, `null` for none.
  * - `after`: Its first point below that line, `null` for none.
  *
  * @param look - Look being built
@@ -1881,7 +1955,8 @@ function listLook(look: Look, node: SyntaxNode): boolean {
 }
 
 /**
- * Tells whether the outermost list around a list goes on below the empty lines after a line,
+ * Tells whether the outermost list around a list goes
+ * on below the empty lines after a line,
  * with a point or a paragraph of a point, not a heading or text after the list,
  * see {@link listLook}.
  * - `root`: The outermost list around it.
@@ -1937,7 +2012,8 @@ function airBelowOf(look: Look, end: number): number {
  * below the first line of a point or list and up to where it ends,
  * when its blanks stand left of the text of the point or of the points of the list,
  * like a paragraph of a point outside, where Shift+Tab moved it:
- * the point or list then ends right before it, see {@link itemDrawEndOf} and {@link listLook}.
+ * the point or list then ends right before it,
+ * see {@link itemDrawEndOf} and {@link listLook}.
  * - `typing`: Start of that line, `null` for none.
  * - `item`: The point, or the first point of the list.
  * - `text`: The line of that point.
@@ -1972,8 +2048,10 @@ function typingCutOf(look: Look, node: SyntaxNode, end: number): Line | null {
 
 /**
  * Gives where the lines of a point end on the page: up to the next point of its list,
- * over the empty lines between, see {@link itemLook}, the last point of a list where it ends,
- * see {@link itemEndOf}; right before the empty line the cursor stands on left of its text,
+ * over the empty lines between, see {@link itemLook},
+ * the last point of a list where it ends,
+ * see {@link itemEndOf};
+ * right before the empty line the cursor stands on left of its text,
  * see {@link typingCutOf}.
  * - `next`: The next point of its list, `null` for none.
  * - `end`: Where its lines end, that line aside.
@@ -2023,10 +2101,12 @@ function itemEndOf(look: Look, node: SyntaxNode): number {
 /**
  * Tells a line of blanks within a list, like the one Shift+Enter writes below a point
  * or a `-` taken away leaves: only blanks, below a line of a list item,
- * maybe past other empty lines, not code; its blanks are hidden, so it stands under the text
- * of its point, see {@link itemEndOf}, and the cursor on it where text typed will begin.
+ * maybe past other empty lines, not code;
+ * its blanks are hidden, so it stands under the text of its point, see {@link itemEndOf},
+ * and the cursor on it where text typed will begin.
  * - `above`: The nearest line with text above it.
- * - `node`: A piece of syntax at the start of that line's text, from the innermost outwards.
+ * - `node`: A piece of syntax at the start of that line's text,
+ *   from the innermost outwards.
  *
  * @param state - Text and syntax tree
  * @param line - The line
@@ -2053,7 +2133,8 @@ function listBlankIs(state: EditorState, line: Line): boolean {
  * List item: its lines in an `li`,
  * which draws its bullet or number as in the scripts view, a number as written,
  * so a step skipped, like `4.` after `2.`, keeps its number;
- * while the cursor is on its first line, without them, as its marker shows there as written,
+ * while the cursor is on its first line, without them,
+ * as its marker shows there as written,
  * see {@link listMarkLook};
  * its fold arrow left of its bullet when it has sub-points,
  * which folds them with its further lines.
@@ -2061,7 +2142,8 @@ function listBlankIs(state: EditorState, line: Line): boolean {
  * so the guide line of its sub-points runs on through that air, see `../notes/notes.css`,
  * and a list with air stays one list on the page, as in the file;
  * the last point of a list over the lines of blanks that reach its text,
- * never over the empty line the cursor stands on left of its text, see {@link itemDrawEndOf}.
+ * never over the empty line the cursor stands on left of its text,
+ * see {@link itemDrawEndOf}.
  * - `mark`: Its `-` or number, `ListMark`.
  * - `attributes`: Attributes of its `li`: its classes and its number.
  *
@@ -2141,7 +2223,8 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
  * of a line of a paragraph its indentation;
  * of the line of a list item the indentation before its `-` or number;
  * all of a line of blanks within a list, see {@link listBlankIs};
- * nothing of any other line of blanks, a code block, a table or a quote, whose blanks show.
+ * nothing of any other line of blanks, a code block,
+ * a table or a quote, whose blanks show.
  * - `blanks`: Its indentation.
  * - `node`: A piece of syntax around the start of its text, from the innermost outwards.
  *
@@ -2175,7 +2258,8 @@ function hiddenStartOf(state: EditorState, line: Line): number {
 /**
  * Tells the gap between two paragraphs: the first empty line after a line of text,
  * see `emptyIs` in `./keys.ts`, no place to write, see {@link caretPlace};
- * not the empty line a key just put the cursor on to write, see `typingLine` in `./keys.ts`.
+ * not the empty line a key just put the cursor on to write,
+ * see `typingLine` in `./keys.ts`.
  *
  * @param state - Text, cursor and syntax tree
  * @param line - The line
@@ -2192,7 +2276,8 @@ function gapIs(state: EditorState, line: Line): boolean {
 
 /**
  * Counts the characters of a point's line before its text:
- * its indentation, its `-` or number with the blank after it, and a task box with its blank.
+ * its indentation, its `-` or number with the blank after it,
+ * and a task box with its blank.
  * - `mark`: Them, the indentation with the `-` or number and its blank first.
  *
  * @param text - Text of the line, like `\t- [ ] Task`
@@ -2208,8 +2293,10 @@ function pointMarkOf(text: string, box: boolean): number {
 /**
  * Gives where the cursor may stand first on a line, see {@link caretPlace}:
  * after its hidden start, see {@link hiddenStartOf},
- * on the line of a point after its `-` or number with the blank after it, see {@link pointMarkOf},
- * never before them, where CodeMirror's own keys would take or rewrite the tabs of the point,
+ * on the line of a point after its `-` or number with the blank
+ * after it, see {@link pointMarkOf},
+ * never before them, where CodeMirror's own keys would take
+ * or rewrite the tabs of the point,
  * see `./keys.ts`, its task box still after the cursor, to be written;
  * on a line of code that looks like a point, like YAML, before the `-` too.
  * - `mark`: The piece of syntax where the text of the line begins, `ListMark` on a point.
@@ -2240,8 +2327,9 @@ function textStartOf(state: EditorState, line: Line): number {
  * see {@link textStartOf};
  * moved left out of the text of a line by a key from where it begins,
  * it goes on to the end of the line above, as from the start of any line;
- * moved up or down onto the line of a point before its text, like from the next line of a point
- * below it, it goes to where its text begins, after its `-` or number and its task box,
+ * moved up or down onto the line of a point before its text,
+ * like from the next line of a point below it, it goes to where its text begins,
+ * after its `-` or number and its task box,
  * see {@link pointMarkOf}.
  * Never on the gap between two paragraphs, see {@link gapIs}:
  * a click on it or an arrow down goes on to the line below it, an empty line or text,
@@ -2375,8 +2463,8 @@ function quoteLook(look: Look, node: SyntaxNode): boolean {
 }
 
 /**
- * Inline HTML: a line break `<br>` or break opportunity `<wbr>` drawn as in the scripts view
- * while the cursor does not touch it, see {@link BreakWidget};
+ * Inline HTML: a line break `<br>` or break opportunity `<wbr>` drawn
+ * as in the scripts view while the cursor does not touch it, see {@link BreakWidget};
  * any other tag stays as written, and so does every tag of a table shown as its text,
  * whose rows a break would split.
  * - `table`: Whether the tag stands in a table.
@@ -2567,7 +2655,8 @@ function spaceLook(look: Look): void {
 }
 
 /**
- * Marks the editor while the cursor stands on the lower of two empty lines, see {@link stop},
+ * Marks the editor while the cursor stands on the lower of two empty lines,
+ * see {@link stop},
  * so `./editor.css` draws it half a line higher, over both, the air of a line,
  * as on a line of text standing there, never reaching into the text below;
  * the click moves nothing, text typed there goes below the half line above it as before,
@@ -2591,7 +2680,8 @@ function stopCursorOf(view: EditorView): { class: string } | null {
 }
 
 /**
- * Keeps the invisible characters on the lines of the cursor invisible, see {@link invisibleRule}.
+ * Keeps the invisible characters on the lines of the cursor invisible,
+ * see {@link invisibleRule}.
  *
  * @param look - Look being built
  */
@@ -2683,7 +2773,8 @@ function invisiblesLook(look: Look): void {
 
 /**
  * Finds the person a line names as an item after its role, see {@link roleRule},
- * or as an item under {@link responsiblesHeading}: the heading above the line is that one;
+ * or as an item under {@link responsiblesHeading}:
+ * the heading above the line is that one;
  * the name a name of `Persons.md`, see `personOf` in `../persons.ts`.
  * - `role`: The line as an item with a role, `null` for none.
  * - `person`: The person of such an item, `undefined` for nobody there.
@@ -2714,9 +2805,11 @@ function responsibleOf(state: EditorState, line: Line): [Person, number] | undef
 }
 
 /**
- * Names of people under `## Modulverantwortliche` of a module file and after their role in a list,
+ * Names of people under `## Modulverantwortliche` of a module file
+ * and after their role in a list,
  * like `- Dean: Bungartz, Hans-Joachim`: each a link to its row in `Persons.md`,
- * like a name in the column `Lecturers`, see `../persons.ts`, while the cursor is not on its line;
+ * like a name in the column `Lecturers`, see `../persons.ts`,
+ * while the cursor is not on its line;
  * a name of nobody there plain text, see {@link responsibleOf}.
  * - `under`: Whether the lines so far stand under {@link responsiblesHeading}.
  * - `named`: The person of a line and where its name begins, `undefined` for none.
@@ -2779,7 +2872,8 @@ function drawingOf(state: EditorState): Drawing {
 }
 
 /**
- * Folds what the line of a place folds, see {@link foldLook}, or unfolds it when it is folded.
+ * Folds what the line of a place folds, see {@link foldLook},
+ * or unfolds it when it is folded.
  * - `line`: The line, of a heading, a list item or the time zone of a calendar file.
  * - `folded`: What of it is folded, `null` while nothing is.
  * - `range`: What it folds.
@@ -2809,7 +2903,8 @@ function foldToggle(view: EditorView, pos: number): void {
  * Folds every solution of the note, the section under each heading `#### Solution…`,
  * as the scripts view shows it at first, so I try a task before I see its solution;
  * the whole note read first, as the editor reads at first only what it shows.
- * - {@link forceParsing}: Reads the syntax of the note up to its end, for at most a second.
+ * - {@link forceParsing}: Reads the syntax of the note up to its end,
+ *   for at most a second.
  * - `ranges`: The sections of the solutions.
  *
  * @param view - The editor
@@ -2894,9 +2989,11 @@ function thirdScroll(scroller: HTMLElement, row: HTMLElement): void {
 /**
  * Shows a row of a table, the first whose first cell reads a text, like `Bichler, Martin`
  * of `| [Bichler, Martin](https://campus.tum.de/…) | Prof. Dr. |` in `Persons.md`,
- * a third down the page, see {@link thirdScroll}, and marks it, see `.row-shown` in `./editor.css`,
+ * a third down the page, see {@link thirdScroll}, and marks it,
+ * see `.row-shown` in `./editor.css`,
  * until its table shows as text; nothing when no row reads the text.
- * A table not drawn yet, far down the note, the editor scrolls to first, see {@link BlockWidget};
+ * A table not drawn yet, far down the note,
+ * the editor scrolls to first, see {@link BlockWidget};
  * then, right before the page is drawn, the page scrolls, so nothing jumps.
  * - `cellOf`: Gives the text of the first cell of a line of a table,
  *   of a link in it the text of the link, `null` for a line of no table.
@@ -2966,11 +3063,13 @@ function linkAt(state: EditorState, pos: number): SyntaxNode | null {
 /**
  * Follows a link, as the scripts view does:
  * a note opens in the scripts view at the heading after `#`, a heading of the same note,
- * like `[[#Task. Kiosk Sales Standard Error|…]]`, scrolls into sight, see {@link headingShow};
+ * like `[[#Task. Kiosk Sales Standard Error|…]]`,
+ * scrolls into sight, see {@link headingShow};
  * any other file opens in this window at the place after `#`,
  * like a PDF at its page with `#page=10`, an address of the web in a new tab;
  * a relative link, like `../NomModulesuniversity/IN2028_….md`, opens where it leads,
- * see {@link linkAddressOf}; a link that leads nowhere or opens only on the computer does nothing.
+ * see {@link linkAddressOf}; a link that leads nowhere or opens
+ * only on the computer does nothing.
  * - `url`: The address of a Markdown link or an address written as it is.
  *
  * @param view - The editor
@@ -3039,8 +3138,10 @@ let followed: boolean = false;
  * in a heading too, like `#### [Ice Cream Kiosk](<#Definition. Random Variable>)`,
  * whose text a click after its end edits, the cursor there and its Markdown shown,
  * or with Ctrl held, on a Mac with Cmd, one of a link shown as its text.
- * Taking the mouse button down there keeps the cursor where it is, so the link stays rendered;
- * letting it go follows it, see {@link linkFollow}; any other click goes on to the editor.
+ * Taking the mouse button down there keeps the cursor where it is,
+ * so the link stays rendered;
+ * letting it go follows it, see {@link linkFollow};
+ * any other click goes on to the editor.
  * The further clicks of a double click on a link do nothing, see {@link followed},
  * so they neither follow a second link nor put the cursor into what the link showed,
  * where Ctrl+Z would undo instead of going back, see `roundBack` in `./round.ts`.
@@ -3085,7 +3186,8 @@ let formulaPressed: { from: number; to: number } | null = null;
  * Gives the TeX of the formula a rendered one stands for, without its `$` or `$$`:
  * of the formula it replaces, see {@link MathWidget},
  * or of the formula `$$…$$` being edited below it, the first on the line it stands at.
- * - `from`: Where it stands: the start of the formula, or of the line of one being edited.
+ * - `from`: Where it stands: the start of the formula,
+ *   or of the line of one being edited.
  * - `tex`: The TeX found so far, `null` for none.
  * - `marks`: How many `$` stand at either end of a formula.
  *
@@ -3120,7 +3222,8 @@ function texOf(view: EditorView, box: Element): { from: number; to: number } | n
  * the first click puts the cursor at the formula, which shows as TeX, as any click does,
  * the second selects that TeX, wherever in it it lands, see {@link formulaPressed};
  * also the TeX of a formula `$$…$$` being edited, by a double click on it rendered above.
- * Any other press goes on to the editor, like a double click into TeX shown, selecting a word.
+ * Any other press goes on to the editor,
+ * like a double click into TeX shown, selecting a word.
  * - `tex`: The TeX of the formula the press before landed on, `null` for none.
  * - `box`: The rendered formula pressed, `null` for none.
  *
@@ -3183,15 +3286,18 @@ function selectionCopied(event: ClipboardEvent, view: EditorView): boolean {
 /**
  * Follows the click on the name of a person under `## Modulverantwortliche`,
  * see {@link responsiblesLook}, to its row in `Persons.md` in this window,
- * as a click on a name in the column `Lecturers` does, see `personRowAddressOf` in `../persons.ts`.
- * Taking the mouse button down there keeps the cursor where it is, so the name stays a link;
+ * as a click on a name in the column `Lecturers` does,
+ * see `personRowAddressOf` in `../persons.ts`.
+ * Taking the mouse button down there keeps the cursor where it is,
+ * so the name stays a link;
  * letting it go follows it; any other click goes on.
  * - `pos`: The place of the text clicked, `null` beside the text.
  * - `person`: The person named there, `undefined` for none.
  *
  * @param event - Mouse button taken down, `mousedown`, or a click, `click`
  * @param view - The editor
- * @returns Whether it was a click on the name of a person, which the editor then leaves alone
+ * @returns Whether it was a click on the name of a person,
+ *   which the editor then leaves alone
  */
 function personClicked(event: MouseEvent, view: EditorView): boolean {
     if (event.button !== 0 || (event.target as Element).closest(".cm-person") === null)
@@ -3209,9 +3315,11 @@ function personClicked(event: MouseEvent, view: EditorView): boolean {
 }
 
 /**
- * Holds the look while the mouse button is down after a press in the text, see {@link frozen}:
+ * Holds the look while the mouse button is down
+ * after a press in the text, see {@link frozen}:
  * from the press, with the cursors that show as text at that moment,
- * none while the editor has no focus, until the button goes up, wherever the pointer is then.
+ * none while the editor has no focus, until the button goes up,
+ * wherever the pointer is then.
  *
  * @param event - Mouse button taken down, `mousedown`
  * @param view - The editor
@@ -3232,13 +3340,16 @@ function pressHold(event: MouseEvent, view: EditorView): void {
  * Lets a selection by the mouse take the hidden start of a line,
  * like the tabs of the indentation of a list, which has no room to point at:
  * an end of a drag where the pointer stood left of where the text of its line begins,
- * in the room of the bullets and guide lines, reaches to the start of the line, as in VS Code,
+ * in the room of the bullets and guide lines,
+ * reaches to the start of the line, as in VS Code,
  * so its tabs are selected, shown by their marks, see {@link invisiblesLook},
- * and go with Backspace or Delete. Set once the button is up and the editor has made the selection.
+ * and go with Backspace or Delete.
+ * Set once the button is up and the editor has made the selection.
  * - `down`: Where the pointer went down, across the page.
  * - `range`: The selection made.
  * - `reach`: Gives where an end of it reaches:
- *   the start of its line where the pointer stood left of the line's text, else the end as it is.
+ *   the start of its line where the pointer stood left of the line's text,
+ *   else the end as it is.
  *
  * @param event - Mouse button taken down, `mousedown`
  * @param view - The editor
@@ -3314,9 +3425,11 @@ export function linksSet(view: EditorView, links: Links): void {
  *   only a field may hide line breaks, like those inside a table.
  * - {@link EditorView.decorations}, {@link EditorView.blockWrappers}:
  *   Take the decorations and elements of the look.
- * - {@link EditorView.editorAttributes}: Marks the cursor on the lower of two empty lines,
+ * - {@link EditorView.editorAttributes}:
+ *   Marks the cursor on the lower of two empty lines,
  *   see {@link stopCursorOf}.
- * - {@link EditorView.updateListener}: Tells {@link focused} when the editor got or lost the focus,
+ * - {@link EditorView.updateListener}:
+ *   Tells {@link focused} when the editor got or lost the focus,
  *   see {@link focusKeep}.
  * - {@link EditorView.domEventObservers}: Holds the look while the mouse button is down,
  *   see {@link pressHold}, before the editor reads where I pressed,
@@ -3325,13 +3438,16 @@ export function linksSet(view: EditorView, links: Links): void {
  *   see {@link linkClicked}, before the editor puts the cursor there,
  *   select the TeX of a formula double clicked, see {@link formulaClicked},
  *   and copy a selection with its links whole, see {@link selectionCopied}.
- * - {@link syntaxHighlighting}: Gives the pieces of syntax their classes, see {@link highlighter},
+ * - {@link syntaxHighlighting}: Gives the pieces of syntax their classes,
+ *   see {@link highlighter},
  *   those of code their colors of my theme, see `codeHighlighter` in `../notes/code.ts`.
- * - {@link codeFolding}: Holds what is folded, without the `…` CodeMirror puts in place of it,
+ * - {@link codeFolding}: Holds what is folded,
+ *   without the `…` CodeMirror puts in place of it,
  *   since the arrow turned right tells it;
  *   {@link foldKeymap} folds and unfolds by keys too, like Ctrl+Shift+[ and Ctrl+Shift+].
  *
- * @param links - Files the links of the note lead to, as the reader found them when it was read
+ * @param links - Files the links of the note lead to,
+ *   as the reader found them when it was read
  * @param place - Path of the note in `NomWorkspace`, from which its relative links lead,
  *   like `NomManageplannings/NomMetainformations/Modules.md`
  * @returns Extension for the editor

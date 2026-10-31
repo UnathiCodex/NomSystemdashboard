@@ -1,6 +1,8 @@
 /* Session of sport in the entry by category, see `sport.ts`:
-   its rows stand in one place, filled anew on every change, which counts as no box of its own,
-   so they stand as every row of the dialog; each part as a food of a meal, see `meal.css` */
+   its rows stand in one place, filled anew on every change,
+   which counts as no box of its own,
+   so they stand as every row of the dialog;
+   each part as a food of a meal, see `meal.css` */
 .sport-rows {
     display: contents;
 }
@@ -36,7 +38,8 @@
     }
 }
 
-/* The list of the plus of a workout below its parts, as the search of a meal stands, only its menu,
+/* The list of the plus of a workout below its parts,
+   as the search of a meal stands, only its menu,
    whose plus went up after the name of the workout,
    so it takes no room between the parts and the next row */
 .sport-rows .meal-parts > .picker {
@@ -44,7 +47,8 @@
 }
 
 /* Sets and repetitions of an exercise, see `setsOf` in `sport.ts`:
-   two small fields of whole numbers, the `×` between them and the unit after them always shown,
+   two small fields of whole numbers,
+   the `×` between them and the unit after them always shown,
    so an empty row says what to type, like `  ×   reps`;
    the unit, `reps` or `s`, a switch as plain as the units beside it,
    a thin line below it under the pointer, so I see that a click changes it */
@@ -75,7 +79,8 @@
 }
 
 /* The rows of a session in the columns of the rows of a meal,
-   see `.meal-row` in `meal.css`, with the room of `3 × 10 reps` where a food has its grams */
+   see `.meal-row` in `meal.css`,
+   with the room of `3 × 10 reps` where a food has its grams */
 .sport-rows .meal-row {
     grid-template-columns: minmax(0, 1fr) 10rem 6rem auto;
 }

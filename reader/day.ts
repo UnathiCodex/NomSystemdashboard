@@ -16,9 +16,12 @@
  * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons":IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * also one logged from a box, which takes its title, see `titleOf` in `documents.ts`;
  * its chapters, documents and rounds only `skill.ts` writes.
- * A change from the dialog is written only while the file holds the entry as the dialog opened it,
- * see {@link entryEdit}, and a drag writes only the new start and end, see {@link entryMove},
- * so no page writes back what the file held before, like a food renamed in every entry since.
+ * A change from the dialog is written
+ * only while the file holds the entry as the dialog opened it,
+ * see {@link entryEdit}, and a drag writes only the new start
+ * and end, see {@link entryMove},
+ * so no page writes back what the file held before,
+ * like a food renamed in every entry since.
  *
  * A box of the plan goes into the log at its real time,
  * dragged there or logged as expected with one tap, see {@link boxLog}:
@@ -28,18 +31,21 @@
  * see `relatedOf` in `calendar.ts`, written once when the log entry is added,
  * also when a box is logged through the dialog,
  * so the box shows as done, with expected and real time, and offers no second log;
- * removing the log entry opens the box again, and so does one click on the check of the done box,
- * see {@link boxUndo}. An older log entry points to its box with `X-PLANNED:<UID of the box>`,
+ * removing the log entry opens the box again,
+ * and so does one click on the check of the done box,
+ * see {@link boxUndo}.
+ * An older log entry points to its box with `X-PLANNED:<UID of the box>`,
  * which is still read. A tutorial logged moves no other week.
  *
- * The dialog of a new box takes the median of how long the last entries like it really lasted
- * as its length, see {@link realMinutesRead}.
+ * The dialog of a new box takes the median of how long the last entries
+ * like it really lasted as its length, see {@link realMinutesRead}.
  * The search of the log reads every entry of it, see {@link logAllRead}.
  * The timer of the day reads the entry running now, see {@link entryNowRead}.
  *
  * A meal of the log lists its foods as lines `X-FOOD`,
  * like `X-FOOD:Skyr natur;K-Classic;Kaufland;150`: appended with the entry,
- * and replaced as a whole when the entry changes, each meal of mine by its grams, the most first,
+ * and replaced as a whole when the entry changes,
+ * each meal of mine by its grams, the most first,
  * see `foodsRanked` in `food.ts`; the reader counts what each meal gives, see `food.ts`.
  * A cooking, `Cook`, lists what went into the pot the same way,
  * like `X-FOOD:Hackfleisch;Gut & Günstig;Edeka;500`, which counts nothing;
@@ -48,12 +54,15 @@
  * which follow every change of the cooking, see {@link cookedShare};
  * a link only ever points back in time, see {@link cookedCheck}.
  * A session of sport, `Sport`, holds what I did as its own lines,
- * its exercises `X-EXERCISE` and its videos `X-VIDEO`, each with its workout, see `sport.ts`:
+ * its exercises `X-EXERCISE` and its videos `X-VIDEO`,
+ * each with its workout, see `sport.ts`:
  * appended with the entry, and each kind replaced as a whole when the entry changes it;
  * the `X-WORKOUT` of a session written before goes once the entry changes.
  *
- * - `./boxes.ts`: Finds a box of the plan, an open one, and marks a box done or open again.
- * - `./calendar.ts`: Reads `.ics` files into entries, appends, changes and removes their events.
+ * - `./boxes.ts`: Finds a box of the plan, an open one,
+ *   and marks a box done or open again.
+ * - `./calendar.ts`: Reads `.ics` files into entries, appends,
+ *   changes and removes their events.
  * - `./categories.ts`: Tells whether the fields of an entry fit its category,
  *   and names the category of skill entries.
  * - `./documents.ts`: Writes what a skill entry was, linking the folder of its skill,
@@ -90,12 +99,14 @@ import type { Attendee, Entry, EntryFields, Link, Online } from "./calendar.ts";
 import type { Meal } from "./food.ts";
 
 /**
- * A new entry of the log, as the entry by category sends it; an empty field is not written.
+ * A new entry of the log, as the entry by category sends it;
+ * an empty field is not written.
  *
  * - `category`: Category picked.
  * - `title`: What picked.
  * - `titleLink`: Link of what it was, like the page of an event, typed, empty for none;
- *   left out, it keeps the one of the entry or box it comes from, see `titleOf` in `documents.ts`.
+ *   left out, it keeps the one of the entry or box it comes from,
+ *   see `titleOf` in `documents.ts`.
  * - `location`: Place picked, where I physically was, its link the reader finds itself,
  *   see `placeLinkOf` in `places.ts`.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
@@ -110,26 +121,31 @@ import type { Meal } from "./food.ts";
  *   so a changed entry keeps its people and one logged from a box takes those of the box.
  * - `module`: Module of a skill entry, like `IN2028`, empty for any other entry.
  * - `type`: Type of a skill entry, like `VO`, empty for any other entry.
- * - `semester`: Semester of a skill entry, like `2026W`, the semester of its day when empty,
+ * - `semester`: Semester of a skill entry, like `2026W`,
+ *   the semester of its day when empty,
  *   see `semesterFor` in `categories.ts`; empty for any other entry.
  * - `note`: Free note.
- * - `foods`: Foods of a meal or a cooking, its lines `X-FOOD` like `Reis;Golden Sun;Lidl;150`,
+ * - `foods`: Foods of a meal or a cooking,
+ *   its lines `X-FOOD` like `Reis;Golden Sun;Lidl;150`,
  *   none for any other entry.
  * - `planned`: Identifier of the box a new log entry is logged from,
  *   see `entryIdOf` in `calendar.ts`, written as its `RELATED-TO`, empty for none;
  *   written only when the entry is added.
- * - `pain`: My neck pain from 0 to 10 after `Neck long`, its `X-PAIN`, like `5`, empty for none;
+ * - `pain`: My neck pain from 0 to 10 after `Neck long`,
+ *   its `X-PAIN`, like `5`, empty for none;
  *   left out by a sender that does not know it, like a drag, so it stays as it is.
  * - `cooked`: For a meal drawn from a cooking, its `X-COOKED`,
  *   the identifier of the cooking, empty for none;
- *   left out by a sender that does not know it, so it stays as it is, see {@link cookedCheck}.
+ *   left out by a sender that does not know it,
+ *   so it stays as it is, see {@link cookedCheck}.
  * - `workout`: For a session of sport, the workout it did, its `X-WORKOUT`,
  *   like `Push`, empty for none.
  * - `exercises`: For a session of sport, its exercises,
  *   its lines `X-EXERCISE` like `Bench press;3;10;40`.
  * - `videos`: For a session of sport, its videos,
  *   its lines `X-VIDEO` like `Pilates;Lidia Mera;25;https://…`.
- *   The three left out by a sender that does not know them, like the calendar after a drag,
+ *   The three left out by a sender that does not know them,
+ *   like the calendar after a drag,
  *   so they stay as they are, see {@link sportCheck}.
  * - `start`: Start as ISO instant.
  * - `end`: End as ISO instant, after the start.
@@ -166,7 +182,8 @@ export type EntryChange = EntryNew & { id: string; version: string };
 
 /**
  * An entry moved or resized, as the calendar sends it after a drag:
- * its new times alone, every other field staying as its file holds it, see {@link entryMove}.
+ * its new times alone, every other field staying
+ * as its file holds it, see {@link entryMove}.
  *
  * - `id`: Identifier of the entry.
  * - `start`: New start as ISO instant.
@@ -198,7 +215,8 @@ export type BoxLogged = {
  * and whether it is a glass of water.
  *
  * - `chapters`: Chapters a skill entry covered,
- *   from the folders it links and from older `X-CHAPTER`s, see `chaptersOf` in `documents.ts`;
+ *   from the folders it links and from older `X-CHAPTER`s,
+ *   see `chaptersOf` in `documents.ts`;
  *   none for any other entry.
  * - `kcal`: kcal of a meal that lists foods, see `food.ts`; `null` for any other entry.
  *   The day hides them on its entries for now; its dialog and its trackers show them.
@@ -219,7 +237,8 @@ export type DayEntry = Entry & {
 const realCount: number = 3;
 
 /**
- * Category of cooking, which lists what went into the pot like a meal, but counts no kcal.
+ * Category of cooking, which lists what went into the pot
+ * like a meal, but counts no kcal.
  */
 const cookName: string = "Cook";
 
@@ -303,17 +322,20 @@ function fieldsOf(
  * Checks fields, foods and times of an entry of the log before they are written.
  * An entry has to fit its category, see {@link categoryAllows}, or keep what it was,
  * or what the box it is logged from was:
- * the same category and title, for a skill entry the same skill and type, with well-formed people,
+ * the same category and title, for a skill entry the same skill
+ * and type, with well-formed people,
  * see `attendeesAllow` in `categories.ts`, like an entry written before
- * its category got its rules, dragged to another time, or an older skill box `IN2028 DEV` of a type
- * no longer offered.
+ * its category got its rules, dragged to another time,
+ * or an older skill box `IN2028 DEV` of a type no longer offered.
  * Only a meal lists foods, each line well formed, see {@link foodLineAllows}.
  * - `kept`: Whether the entry keeps what the entry being changed or its box was.
  *
  * @param fields - Fields and times to write
  * @param foods - Lines `X-FOOD` to write, none for an entry that is no meal
- * @param old - Entry being changed, or the box a new entry is logged from, `null` for none
- * @throws {Error} - When the fields or foods are not allowed or the end is not after the start
+ * @param old - Entry being changed,
+ *   or the box a new entry is logged from, `null` for none
+ * @throws {Error} - When the fields or foods are not allowed
+ *   or the end is not after the start
  */
 function fieldsCheck(
     fields: EntryFields,
@@ -363,8 +385,10 @@ export function dayEntriesRead(start: string, end: string): DayEntry[] {
 
 /**
  * Reads the entry of the log running now, for the timer of the day, see `src/timer.ts`:
- * of every category, as the log shows it, so no glass of water and nothing of a whole day;
- * of several running at once the one begun last, like a meal during a session of learning,
+ * of every category, as the log shows it,
+ * so no glass of water and nothing of a whole day;
+ * of several running at once the one begun last,
+ * like a meal during a session of learning,
  * and the session again once the meal is over.
  * - `now`: The moment, in milliseconds.
  *
@@ -390,7 +414,8 @@ export function entryNowRead(): Entry | null {
 }
 
 /**
- * Reads every entry of the log, of every log file the reader reads, for the search of the log,
+ * Reads every entry of the log, of every log file the reader reads,
+ * for the search of the log,
  * newest first, see `search.ts` in `src/day`: the entries that can be changed,
  * since a click on a result opens its dialog;
  * a glass of water is no entry of its own but a mark of the trackers, so it is left out.
@@ -406,7 +431,8 @@ export function logAllRead(): Entry[] {
 }
 
 /**
- * Checks what a session of sport did as the dialog sends it, see `sportPartsAllow` in `sport.ts`.
+ * Checks what a session of sport did as the dialog sends it,
+ * see `sportPartsAllow` in `sport.ts`.
  *
  * @param category - Category of the entry, like `Sport`
  * @param workout - Its workout, empty for none
@@ -427,7 +453,8 @@ function sportCheck(
 }
 
 /**
- * Checks my neck pain as the dialog sends it: a whole number from 0 to 10, or empty for none.
+ * Checks my neck pain as the dialog sends it:
+ * a whole number from 0 to 10, or empty for none.
  *
  * @param pain - Pain, like `5`
  * @throws {Error} - When it is anything else
@@ -438,11 +465,13 @@ function painCheck(pain: string): void {
 
 /**
  * Checks the cooking a meal draws from, as the dialog sends it:
- * empty for none, else the identifier of an entry `Cook` of the log that starts before the meal;
+ * empty for none, else the identifier of an entry `Cook` of the log
+ * that starts before the meal;
  * only a meal draws, and a link only ever points back in time,
  * so every day stays as it was once I close it.
  * A meal keeps the cooking it drew from also once that cooking is removed from the log,
- * so it can still be changed and moved, its foods in its own lines, see {@link cookedShare}.
+ * so it can still be changed and moved,
+ * its foods in its own lines, see {@link cookedShare}.
  * - `cooking`: The entry of the cooking, `undefined` when the log holds none.
  *
  * @param category - Category of the entry, like `Food`
@@ -451,7 +480,8 @@ function painCheck(pain: string): void {
  * @param kept - Identifier of the cooking the entry being changed draws from already,
  *   empty for none and for a new entry
  * @throws {Error} - When an entry other than a meal draws,
- *   or the cooking is no entry `Cook` of the log that starts before the meal, but for the one kept
+ *   or the cooking is no entry `Cook` of the log that starts
+ *   before the meal, but for the one kept
  */
 function cookedCheck(
     category: string,
@@ -476,12 +506,14 @@ function cookedCheck(
  * Carries a cooking into the meals that draw from it, whatever their time,
  * so each eats its part of the pot by itself and follows every change of the cooking:
  * a food of the pot new to a meal,
- * or whose grams in the pot changed, gets the grams of the pot divided by how many meals draw,
+ * or whose grams in the pot changed,
+ * gets the grams of the pot divided by how many meals draw,
  * halves for two, thirds for three, to one decimal,
  * like 250 of 500 g, a `~` of grams guessed kept, in the meal of the pot;
  * every other food keeps the grams the meal gave it,
  * like 25 g of pesto typed over the 50 of the pot, since I type what I ate.
- * A food the cooking took in since a meal drew comes into the meal, also under a meal it renamed,
+ * A food the cooking took in since a meal drew comes into the meal,
+ * also under a meal it renamed,
  * one it took out leaves it, and one I took out of a meal stays out.
  * Foods a meal ate beside the pot keep their lines,
  * after the foods of the pot of the same meal of mine,
@@ -489,11 +521,13 @@ function cookedCheck(
  * the lines ordered as those of every entry, see `foodsRanked` in `food.ts`,
  * and a meal whose lines change gets its summary anew, see `mealTitleOf` in `food.ts`.
  * Called after a meal drawing from it is added, changed or removed,
- * and after the cooking itself changes, its foods, grams or time, so every meal stays right.
+ * and after the cooking itself changes, its foods,
+ * grams or time, so every meal stays right.
  * - `found`: The cooking with its file, `undefined` when it is gone.
  * - `keyOf`: Key of a line by its food and meal, in small letters.
  * - `drawn`: Keys of the lines of the pot as it was when the meals drew.
- * - `drawnGrams`: Grams of each line of the pot as it was when the meals drew, by its key.
+ * - `drawnGrams`: Grams of each line of the pot
+ *   as it was when the meals drew, by its key.
  * - `potKeys`: Keys of the lines of the pot as it is.
  * - `eaters`: The meals drawing from it.
  * - `had`: The lines of a meal that came from the pot as it was, by their keys.
@@ -679,11 +713,14 @@ export function entryAdd(entry: EntryNew, id?: string): string {
  * with its skill and type, written as the reader writes them,
  * see `titleOf` in `documents.ts`, linking the folder of its skill and of its material,
  * or the web address I typed for the box, from the start to the end the day sends,
- * pointing to the box with `RELATED-TO`, a tutorial with the group I went to as its `X-GROUP`,
+ * pointing to the box with `RELATED-TO`,
+ * a tutorial with the group I went to as its `X-GROUP`,
  * like `X-GROUP:23`, so the log shows it as the plan does, after which the box is done,
  * see `boxDone` in `boxes.ts`.
- * Its note stays empty, since the note of a log entry is my diary note about what happened;
- * a skill box hands on its links to documents, like the slides of a lecture, see `documents.ts`,
+ * Its note stays empty, since the note
+ * of a log entry is my diary note about what happened;
+ * a skill box hands on its links to documents,
+ * like the slides of a lecture, see `documents.ts`,
  * and its chapters as `X-CHAPTER`s, also those whose folders an older box links;
  * more chapters and documents a skill entry gets later in the dialog.
  * - `box`: The box.
@@ -789,7 +826,8 @@ export function boxUndo(id: string): void {
  * Writes fields, foods, pain and times of an entry of the log,
  * see {@link fieldsCheck}, all of them checked before anything is written,
  * so a change refused leaves the entry as it was:
- * changed foods replace all lines `X-FOOD` of the entry first, a changed pain its `X-PAIN`,
+ * changed foods replace all lines `X-FOOD` of the entry first,
+ * a changed pain its `X-PAIN`,
  * a changed cooking of a meal its `X-COOKED`,
  * see {@link cookedCheck}, a changed workout,
  * exercises or videos of a session of sport their lines, see {@link sportCheck},
@@ -858,18 +896,21 @@ function entryWrite(file: string, entry: Entry, change: EntryNew): void {
 /**
  * Changes an entry of the log as the dialog sends it,
  * see {@link entryWrite}, only while its file holds it as the dialog opened it,
- * its fingerprint still the one the dialog sends, see `version` of `Entry` in `calendar.ts`:
+ * its fingerprint still the one the dialog sends,
+ * see `version` of `Entry` in `calendar.ts`:
  * after any change of it since, by another device, Claude or the reader,
  * like a food renamed in every entry while the dialog was open,
  * see `foodChange` in `food.ts`, nothing is written,
  * so a save never writes back what the file held before;
- * the first save wins, and the dialog says so, see `entrySave` in `src/day/categories.ts`;
+ * the first save wins, and the dialog says so,
+ * see `entrySave` in `src/day/categories.ts`;
  * a skill entry alike, see `skillEntryEdit` in `skill.ts`.
  * - `file`, `entry`: Its `.ics` file and the entry as the file holds it.
  *
  * @param change - Changed entry as the dialog sends it,
  *   with its fingerprint as the dialog opened it
- * @returns Whether it is written, `false` when its file changed it since the dialog opened it
+ * @returns Whether it is written,
+ *   `false` when its file changed it since the dialog opened it
  * @throws {Error} - When there is no such entry, it may not be changed,
  *   the fields or foods are not allowed, the link typed online is no web address,
  *   or the end is not after the start
@@ -895,7 +936,8 @@ export function entryEdit(change: EntryChange): boolean {
  *
  * @param moved - The entry with its new start and end
  * @throws {Error} - When there is no such entry, it may not be changed,
- *   the end is not after the start, or a meal would start before the cooking it draws from
+ *   the end is not after the start,
+ *   or a meal would start before the cooking it draws from
  */
 export function entryMove(moved: EntryMoved): void {
     const [file, entry]: [string, Entry] = entryFind(day.log, moved.id);

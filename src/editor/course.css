@@ -1,5 +1,6 @@
 /* Course of a module on its page, see `course.ts`:
-   one card per type, a breath apart, its first name as high as the name of a chapter on its page,
+   one card per type, a breath apart,
+   its first name as high as the name of a chapter on its page,
    see `.overview-list` in `overview.css` */
 .overview-course {
     display: flex;
@@ -8,7 +9,8 @@
     margin-top: 0.75rem;
 }
 
-/* A thin grey line over the whole width between two cards, as between the sections of the plan,
+/* A thin grey line over the whole width between two cards,
+   as between the sections of the plan,
    see `.plan-section` in `../day/boxes.css`, as much room below it as above it */
 .course-card + .course-card {
     padding-top: 1.75rem;
@@ -17,10 +19,12 @@
 
 /* Heading of a card: its type at the left, bold as the name of a chapter,
    see `.overview-chapter`, the pencil right after it,
-   and at its right the menu of the group pinned of a type with groups, see `../day/groups.css`;
+   and at its right the menu of the group pinned of a type with groups,
+   see `../day/groups.css`;
    in line with the text of its rows, as the line of a chapter's name;
    the type and its pencil in the size of its name,
-   so the pencil meets the middle of its small letters, see `.entry-pencil` in `../day/day.css` */
+   so the pencil meets the middle of its small letters,
+   see `.entry-pencil` in `../day/day.css` */
 .course-head {
     display: flex;
     align-items: baseline;
@@ -38,7 +42,8 @@
    as close below it as an address below its place, in line with the heading:
    a link only as wide as its text,
    see `folderLinkOf` in `course.ts`, in the grey of a link of the page, never underlined,
-   lighter under the pointer, softly as every hover, see `--hover-in` in `../variants.css` */
+   lighter under the pointer, softly as every hover,
+   see `--hover-in` in `../variants.css` */
 .course-folder {
     align-self: flex-start;
     margin-top: -0.5rem;
@@ -64,7 +69,8 @@ a.course-folder:hover {
    see `.series-row` in `../day/series.css`, built by the same code,
    see `listRowOf` in `../day/rows.ts`, without its months,
    each row's day naming its month and year:
-   its rows one below the other, from the left edge of the card's text, in line with its heading,
+   its rows one below the other, from the left edge of the card's text,
+   in line with its heading,
    every row on the same columns, folded or not */
 .course-list {
     display: flex;
@@ -114,7 +120,8 @@ a.course-folder:hover {
     row-gap: 0;
 }
 
-/* The one line of a card whose rows all fold, see `foldedOf` in `course.ts`, like `⌄ 1 done`:
+/* The one line of a card whose rows all fold,
+   see `foldedOf` in `course.ts`, like `⌄ 1 done`:
    small and grey as the counts, its chevron before its words */
 .course-folded {
     display: inline-flex;

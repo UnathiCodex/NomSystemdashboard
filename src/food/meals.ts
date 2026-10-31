@@ -1,7 +1,8 @@
 /**
  * ## Meals
  *
- * My meals of `Meals.md`, each only its composition, one or more of my foods without grams,
+ * My meals of `Meals.md`, each only its composition,
+ * one or more of my foods without grams,
  * servings or variants, since I prepare it a little differently every time.
  * A meal goes into `Meals.md` from an entry, named in its search, see `../day/meal.ts`;
  * the food view lists my meals above my foods, where I change and remove them,
@@ -14,15 +15,19 @@
  *   a bare number under the head `Meals` and `kcal / meal`;
  *   for a meal never eaten what its foods give at the grams I logged each with last,
  *   see `dishesRead` in `reader/food.ts`.
- * - The section of the food view, built as that of my foods: `Meals`, then a search field,
- *   which shows only the meals whose name or foods hold what is typed, ignoring case and accents,
+ * - The section of the food view, built as that of my foods:
+ *   `Meals`, then a search field,
+ *   which shows only the meals whose name or foods hold what is typed,
+ *   ignoring case and accents,
  *   see {@link dishesFound}, like `reis` finding every meal with rice;
  *   then the head and the line of each meal, the small grey `×` at its end,
  *   whose first click only asks,
- *   as the remove of the entry dialog does, the cross turning into the plain question mark,
+ *   as the remove of the entry dialog does,
+ *   the cross turning into the plain question mark,
  *   `Really remove?` as its tooltip.
  *   The plus beside `Meals` opens a field of a name, as the plus beside `Foods` its form,
- *   and a name typed in the search that no meal has offers `+ New meal “Linsen Curry”` last:
+ *   and a name typed in the search
+ *   that no meal has offers `+ New meal “Linsen Curry”` last:
  *   either opens the new meal with the search of its foods,
  *   and its first food keeps it in `Meals.md`; its `×` drops it before.
  *   A click on a line opens the meal below it, its line staying as it was closed,
@@ -33,11 +38,13 @@
  *   then its foods, each with its brand and store in brackets, its standard grams,
  *   which change in place, and its `×` while the meal has more than one,
  *   ordered by their standard grams by themselves, the most first,
- *   see `rankOf` in `reader/food.ts`, so the foods that matter most stand first; right after
- *   the name of the meal the small grey plus, like `Chili con Carne +`,
- *   which opens below its foods the search of my foods and of Open Food Facts by name or barcode,
+ *   see `rankOf` in `reader/food.ts`, so the foods that matter most stand first;
+ *   right after the name of the meal the small grey plus, like `Chili con Carne +`,
+ *   which opens below its foods the search of my foods
+ *   and of Open Food Facts by name or barcode,
  *   as the plus of a meal in an entry does, and closes it again;
- *   a food picked, a product taken into my foods first, changed for good in `Meals.md` at once,
+ *   a food picked, a product taken into my foods first,
+ *   changed for good in `Meals.md` at once,
  *   the search staying open and empty for the next,
  *   since I mostly add many, the cursor in it unless it stands in another field;
  *   a click on the line but on its plus closes the meal again.
@@ -48,12 +55,15 @@
  *
  * - `./foods.ts`: Loads my meals, sends and removes meals,
  *   writes amounts and makes elements and buttons.
- * - `./search.ts`: The search of my foods and of Open Food Facts, which adds a food to a meal,
+ * - `./search.ts`: The search of my foods and of Open Food Facts,
+ *   which adds a food to a meal,
  *   and the head and lines of every list.
- * - `../search.ts`: Compares the text typed in the search of the meals with their names and foods.
+ * - `../search.ts`: Compares the text typed in the search
+ *   of the meals with their names and foods.
  * - `../changes.ts`: Loads my meals anew the moment a file of my new system changes.
  * - `../icons.ts`: Puts the one plus and the one `×` into the buttons,
- *   and the plain question mark, their words as tooltip, and makes the search field of the meals.
+ *   and the plain question mark, their words as tooltip,
+ *   and makes the search field of the meals.
  * - `./meals.css`: Look of the section and of a meal opened.
  */
 
@@ -170,7 +180,8 @@ function lettersFit(
  * like a long name on a phone, no brackets,
  * and the name cut the same way with a white `…` where even it alone has no room,
  * like `Pasta mit Ricotta Tomaten und P…`.
- * - `fits`: Whether the name stands whole, not cut by the brackets or the end of the line.
+ * - `fits`: Whether the name stands whole,
+ *   not cut by the brackets or the end of the line.
  *
  * @param name - Name of the meal, white
  * @param brackets - Its brackets
@@ -216,7 +227,8 @@ function dishFit(name: HTMLElement, brackets: HTMLElement, dish: Dish): void {
  * - `line`: The name with its short title.
  * - `name`: The name itself, white.
  * - `brackets`: Its short title in brackets, hidden for none.
- * - `width`: Width of the line when last fitted, so a change of its height alone fits nothing.
+ * - `width`: Width of the line when last fitted,
+ *   so a change of its height alone fits nothing.
  * - `fit`: Fits name and short title into the line.
  *
  * @param dish - Meal of `Meals.md`
@@ -243,7 +255,8 @@ export function dishNameOf(dish: Dish): HTMLElement {
 
 /**
  * Finds the meals whose name or foods hold every word typed, ignoring case and accents,
- * see `../search.ts`, like `reis` finding every meal with rice; all of them for nothing typed.
+ * see `../search.ts`, like `reis` finding every meal with rice;
+ * all of them for nothing typed.
  *
  * @param dishes - My meals
  * @param typed - Text typed
@@ -292,8 +305,10 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the line of a food of a meal opened: its name with its brand and store in brackets,
- * see `foodNameOf` in `./foods.ts`, a link to the food itself among my foods, which opens it there,
+ * Makes the line of a food of a meal opened:
+ * its name with its brand and store in brackets,
+ * see `foodNameOf` in `./foods.ts`,
+ * a link to the food itself among my foods, which opens it there,
  * see `foodShow` in `./search.ts`;
  * its standard grams, which change in place by a click into them,
  * millilitres for a drink; and its `×` where given.
@@ -329,8 +344,10 @@ function partOf(
 }
 
 /**
- * Makes the field of the standard grams of a food of a meal opened, see {@link inlineFieldOf}:
- * plain as every value, a click puts the cursor into it, Enter or leaving it saves a change;
+ * Makes the field of the standard grams of a food of a meal opened,
+ * see {@link inlineFieldOf}:
+ * plain as every value, a click puts the cursor into it,
+ * Enter or leaving it saves a change;
  * empty for none set, 0 for a food I rarely put in;
  * portions typed, like `2x`, count as grams by the portion of the food,
  * see `portionGramsOf` in `foods.ts`;
@@ -371,22 +388,26 @@ function gramsFieldOf(
 }
 
 /**
- * Builds the section of my meals in the food view, see the top of this file, loading my meals,
- * and again after every meal changed or removed, and after every change of a file of my new system
- * while the cursor stands outside their list.
+ * Builds the section of my meals in the food view,
+ * see the top of this file, loading my meals,
+ * and again after every meal changed or removed, and after every change of a file
+ * of my new system while the cursor stands outside their list.
  * - `section`: The section.
  * - `search`: The search field of the meals, `Search meals` grey in it while empty.
  * - `list`: Place of the head and the lines of the meals.
  * - `dishes`: My meals.
  * - `open`: Name of the meal opened, in small letters, empty for none.
- * - `adding`: Name of the meal whose search of my foods shows, in small letters, empty for none.
- * - `asked`: Name of the meal whose `×` asked `Really remove?`, in small letters, empty for none.
+ * - `adding`: Name of the meal whose search of my foods shows,
+ *   in small letters, empty for none.
+ * - `asked`: Name of the meal whose `×` asked `Really remove?`,
+ *   in small letters, empty for none.
  * - `take`: Shows my meals as the reader sends them.
  * - `load`: Loads my meals again and shows them.
  * - `send`: Sends a meal changed for good, its foods,
  *   and where given its short title and grams, and shows my meals.
  * - `toggle`: Opens a meal, or closes it again, its search of my foods with it.
- * - `show`: Shows the meals found for the words typed in the search, all of them for none typed,
+ * - `show`: Shows the meals found for the words typed in the search,
+ *   all of them for none typed,
  *   or a hint when none is found;
  *   the row of the meal opened no button but a row that a click closes again,
  *   since its plus stands inside it.

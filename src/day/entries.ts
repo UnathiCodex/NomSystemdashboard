@@ -1,13 +1,15 @@
 /**
  * ## Entries
  *
- * Sends new, changed, moved and removed entries of the log to the reader, the meal of a cooking,
+ * Sends new, changed, moved and removed entries of the log to the reader,
+ * the meal of a cooking,
  * and the boxes of the plan:
  * new, changed and removed ones, a new one repeated weekly,
  * a box logged at its real time or taken back, pushed to the next day or dropped.
  * A changed entry goes with its fingerprint as the dialog opened it,
  * so the reader refuses it once its file changed it since,
- * and a moved one with its new times alone, so nothing the page holds from before is written back.
+ * and a moved one with its new times alone,
+ * so nothing the page holds from before is written back.
  * After a change of the log the log of the shown day loads again,
  * so the page shows what the files hold, and with it the boxes,
  * which are done once a log entry points to them, see `boxes.ts`;
@@ -34,7 +36,8 @@ import type { Calendar } from "fullcalendar";
  * A person or a group I was with, one `ATTENDEE` of an entry or a box,
  * like `ATTENDEE;CN=Sophale:mailto:sophale@invalid`.
  *
- * - `name`: Its name, like `Sophale` or `Socials`, a person of `Persons.md` as it names it,
+ * - `name`: Its name, like `Sophale` or `Socials`,
+ *   a person of `Persons.md` as it names it,
  *   like `Bichler, Martin`, without `;`.
  * - `address`: Its address without `mailto:`, like `sophale@invalid`,
  *   which reaches nobody, or a real one I typed.
@@ -76,13 +79,16 @@ export type Online = {
  * - `from`: Where a way starts, `X-FROM`.
  * - `attendees`: Who I was with, one `ATTENDEE` each, none for nobody;
  *   left out, it keeps its people.
- * - `module`: Module of a skill entry, like `IN2028`, written by the reader only in its `SUMMARY`,
+ * - `module`: Module of a skill entry, like `IN2028`,
+ *   written by the reader only in its `SUMMARY`,
  *   like `IN2028_BusinessAnalyticsMachineLearning (VO)`.
  * - `type`: Type of a skill entry, like `VO`, written only in its `SUMMARY`.
- * - `semester`: Semester of a skill entry, `X-SEMESTER`, like `2026W`, empty for any other entry;
+ * - `semester`: Semester of a skill entry, `X-SEMESTER`,
+ *   like `2026W`, empty for any other entry;
  *   the reader fills in the semester of its day for a skill entry sent without one.
  * - `note`: Free note, `DESCRIPTION`.
- * - `foods`: Foods of a meal, its lines `X-FOOD` like `Reis;150`, none for any other entry.
+ * - `foods`: Foods of a meal, its lines `X-FOOD` like `Reis;150`,
+ *   none for any other entry.
  * - `planned`: Identifier of the box a new log entry is logged from,
  *   written as `RELATED-TO`, empty for none;
  *   the reader writes it only for a new entry.
@@ -91,7 +97,8 @@ export type Online = {
  * - `cooked`: For a meal drawn from a cooking, the identifier of that entry `Cook`,
  *   `X-COOKED`, empty for none;
  *   left out, it stays as it is.
- * - `workout`, `exercises`, `videos`: What a session of sport did, its `X-WORKOUT` of before,
+ * - `workout`, `exercises`, `videos`:
+ *   What a session of sport did, its `X-WORKOUT` of before,
  *   like `Push`, and its lines `X-EXERCISE` and `X-VIDEO`, see `sport.ts`;
  *   empty and none for any other entry; left out, they stay as they are.
  * - `start`: Start of the entry.
@@ -124,14 +131,17 @@ export type EntryFields = Partial<Online> & {
  *
  * - `category`, `title`, `titleLink`, `location`,
  *   `online`, `onlineLink`, `onlineChannel`, `onlineTitle`,
- *   `from`, `attendees`, `module`, `type`, `semester`, `note`: As those of {@link EntryFields}.
- * - `day`: Day of the box, like `2026-10-13`; for a box with a deadline the day of its deadline.
+ *   `from`, `attendees`, `module`, `type`, `semester`, `note`:
+ *   As those of {@link EntryFields}.
+ * - `day`: Day of the box, like `2026-10-13`;
+ *   for a box with a deadline the day of its deadline.
  * - `time`: Expected time on its day, `null` for none and for a box with a deadline.
  * - `minutes`: Expected duration in minutes, `null` for none.
  * - `deadline`: Deadline as the reader takes it: ISO instant,
  *   or its day like `2026-10-23` without time;
  *   empty for none.
- * - `chapters`, `documents`: Chapters and documents of a skill box, see `SkillLinks` in `skill.ts`;
+ * - `chapters`, `documents`: Chapters and documents of a skill box,
+ *   see `SkillLinks` in `skill.ts`;
  *   none for any other box.
  */
 export type BoxFields = Partial<Online> & {
@@ -162,7 +172,8 @@ export type BoxFields = Partial<Online> & {
  * every other letter with an accent plainly, like é as e,
  * see `searchTextOf` in `../search.ts`, every other character but a–z and 0–9 a dot,
  * like a space, never two in a row and none at either end,
- * then `@invalid`, the ending reserved for addresses that never work, so nothing reaches anybody,
+ * then `@invalid`, the ending reserved for addresses that never work,
+ * so nothing reaches anybody,
  * like `herr.mueller@invalid` of `Herr Müller`,
  * `jose.garcia@invalid` of `José García` and `philip.zimmer@invalid` of `Zimmer, Philip`.
  * - `local`: The part before `@`.
@@ -269,7 +280,8 @@ export async function entryAdd(calendar: Calendar, fields: EntryFields): Promise
  * Changes fields and times of an entry of the log,
  * only while its file holds it as the dialog opened it:
  * the reader refuses the change with 409 once the file changed it since,
- * like a food renamed in every entry, see `entryEdit` in `reader/day.ts`; the first save wins.
+ * like a food renamed in every entry, see `entryEdit` in `reader/day.ts`;
+ * the first save wins.
  * - `response`: Answer of the reader.
  *
  * @param calendar - Calendar of the day
@@ -277,7 +289,8 @@ export async function entryAdd(calendar: Calendar, fields: EntryFields): Promise
  * @param fields - New fields and times
  * @param version - Fingerprint of the entry as the dialog opened it,
  *   see `version` of `Entry` in `reader/calendar.ts`
- * @returns Whether it is changed, `false` when its file changed it since the dialog opened it
+ * @returns Whether it is changed,
+ *   `false` when its file changed it since the dialog opened it
  * @throws {Error} - When the reader does not take the change for another reason
  */
 export async function entryChange(
@@ -297,11 +310,14 @@ export async function entryChange(
 }
 
 /**
- * Moves an entry of the log to a new start and end, after a drag: sends its new times alone,
- * and the reader keeps every other field as its file holds it, see `entryMove` in `reader/day.ts`.
+ * Moves an entry of the log to a new start and end,
+ * after a drag: sends its new times alone,
+ * and the reader keeps every other field as its file holds it,
+ * see `entryMove` in `reader/day.ts`.
  * The log does not load again here, since FullCalendar shows it moved already
  * and the change of its file loads it anyway, see `changesFollow` in `../changes.ts`:
- * two loads at once showed the entry twice for a moment, at its old place and its new one.
+ * two loads at once showed the entry twice for a moment,
+ * at its old place and its new one.
  *
  * @param id - Identifier of the entry
  * @param start - Its new start
@@ -332,7 +348,8 @@ export async function entryDelete(calendar: Calendar, id: string): Promise<void>
  * Logs a box at its real time, dropped into the log or tapped:
  * the reader writes a log entry like it, pointing to it;
  * the change of its file loads the log and the boxes again, so the box shows as done,
- * see `changesFollow` in `../changes.ts`, once only, so the entry never shows twice for a moment.
+ * see `changesFollow` in `../changes.ts`, once only,
+ * so the entry never shows twice for a moment.
  *
  * @param box - Identifier of the box
  * @param start - Real start
@@ -349,13 +366,15 @@ export async function boxLog(box: string, start: Date, end: Date): Promise<void>
 
 /**
  * Takes a done box back to open, with one click on its check:
- * the reader removes the log entry written from it, or, when that holds what I added since,
+ * the reader removes the log entry written from it, or,
+ * when that holds what I added since,
  * like attempts or a note, only lets it go of the box, see `boxUndo` in `reader/day.ts`;
  * then the log of the shown day loads again, and with it the boxes.
  *
  * @param calendar - Calendar of the day
  * @param id - Identifier of the box
- * @throws {Error} - When the reader does not take it back, like for a box that is not done
+ * @throws {Error} - When the reader does not take it back,
+ *   like for a box that is not done
  */
 export async function boxUndo(calendar: Calendar, id: string): Promise<void> {
     await logSend(calendar, "POST", "/api/day/undone", { box: id });
@@ -377,7 +396,8 @@ export async function boxAdd(fields: BoxFields): Promise<string> {
  * as the dialog of a series gives them for a box repeated by its row `Series`,
  * see `seriesRepeat` in `series.ts` and `repeatApply` in `reader/course.ts`,
  * or only tells what that would make, for the preview of the dialog;
- * the reader refuses it with 409 for a series of a type that has a box in its semester already.
+ * the reader refuses it with 409 for a series of a type
+ * that has a box in its semester already.
  * - `response`: Answer of the reader.
  *
  * @param fields - Fields of the box, as of one made once;
@@ -460,7 +480,8 @@ export async function boxUniversity(id: string, cancelled: boolean): Promise<voi
 }
 
 /**
- * Ticks a box with a deadline submitted, or takes the tick back; its sessions stay in the log.
+ * Ticks a box with a deadline submitted, or takes the tick back;
+ * its sessions stay in the log.
  *
  * @param id - Identifier of the box
  * @param submitted - Whether to tick it submitted, else to take the tick back

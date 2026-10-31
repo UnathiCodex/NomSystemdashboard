@@ -9,16 +9,20 @@
  * in the columns `Lecturers` of the courses of a module file,
  * `Tutor` of its groups and `Head` of the departments and chairs in `Schools.md`,
  * one name per line, like `Bichler, Martin<br>Chao, Yutong`,
- * see {@link peopleLink}, under `## Modulverantwortliche` of a module file, one name per item,
+ * see {@link peopleLink}, under `## Modulverantwortliche` of a module file,
+ * one name per item,
  * see `responsiblesLook` in `./editor/preview.ts`, in `With` of an entry,
  * see `../day/categories.ts`, and in the rows of the course of a module,
  * see `./editor/course.ts`,
- * the name of a person is a link that opens `Persons.md` in the editor at its row, marked there,
+ * the name of a person is a link that opens `Persons.md`
+ * in the editor at its row, marked there,
  * see `rowShow` in `./editor/preview.ts`; any other name stays plain text.
- * The pencil beside the people of `With` changes a person, its name, its mail and its link,
+ * The pencil beside the people of `With` changes a person,
+ * its name, its mail and its link,
  * and the dialog sends each person I changed so once it saves, see {@link personsRename},
  * which renames it everywhere.
- * A person is found by its name in either order, `Nachname, Vorname` as `Persons.md` writes it,
+ * A person is found by its name in either order,
+ * `Nachname, Vorname` as `Persons.md` writes it,
  * or `Vorname Nachname` as an older entry may,
  * like `Philip Zimmer` for `Zimmer, Philip`, see {@link personOf}.
  *
@@ -45,7 +49,8 @@ export type Person = {
 };
 
 /**
- * A person as I changed it by its parts below `With`, see `withRowOf` in `./day/categories.ts`:
+ * A person as I changed it by its parts below `With`,
+ * see `withRowOf` in `./day/categories.ts`:
  * its name, its title, its mail and its link as typed.
  *
  * - `name`: Its name, like `Cuzic, Mihovil`.
@@ -127,7 +132,8 @@ export function summaryShownOf(summary: string): string {
 
 /**
  * Puts several people or values on one line, each apart by {@link valueDot},
- * like `Durmann, Julius · Ewert, Markus`, the line going on after it where it is too long.
+ * like `Durmann, Julius · Ewert, Markus`,
+ * the line going on after it where it is too long.
  * - `dot`: The dot between two of them.
  *
  * @param names - The names, each its text or its link
@@ -163,7 +169,8 @@ export function spokenOf(name: string): string {
  *
  * @param persons - The people of `Persons.md`
  * @param name - Name, like `Philip Zimmer`
- * @returns The person, `undefined` for a name of nobody of `Persons.md`, like a group, `Socials`
+ * @returns The person, `undefined` for a name of nobody of `Persons.md`,
+ *   like a group, `Socials`
  */
 export function personOf(persons: Person[], name: string): Person | undefined {
     return persons.find(
@@ -173,11 +180,13 @@ export function personOf(persons: Person[], name: string): Person | undefined {
 }
 
 /**
- * Gives the address that opens `Persons.md` in the editor at the row of a person, marked there,
+ * Gives the address that opens `Persons.md` in the editor
+ * at the row of a person, marked there,
  * see `rowShow` in `./editor/preview.ts`.
  *
  * @param person - The person, like `Bichler, Martin`
- * @returns Address like `/edit?file=NomMetainformations%2FPersons.md&row=Bichler%2C%20Martin`
+ * @returns Address
+ *   like `/edit?file=NomMetainformations%2FPersons.md&row=Bichler%2C%20Martin`
  */
 export function personRowAddressOf(person: Person): string {
     return `/edit?file=${encodeURIComponent(personsPath)}&row=${encodeURIComponent(person.name)}`;
@@ -249,7 +258,8 @@ export function peopleCellLink(cell: HTMLElement, head: string): void {
 }
 
 /**
- * Turns the names in the columns that name people of each table of rendered Markdown into links,
+ * Turns the names in the columns that name people of each table
+ * of rendered Markdown into links,
  * see {@link peopleCellLink}, like those of the courses and the groups of a module file,
  * as the editor renders its tables, see `blockRender`
  * in `./editor/preview.ts`.
@@ -276,8 +286,10 @@ export function peopleLink(block: HTMLElement): void {
 
 /**
  * Gives a person as its parts below `With` show it before I change it:
- * its name, its mail and its link as `Persons.md` holds them, a person not there with no link,
- * and with the address the entry gives it while that is a real one, not one ending in `@invalid`,
+ * its name, its mail and its link as `Persons.md` holds them,
+ * a person not there with no link,
+ * and with the address the entry gives it while that is a real one,
+ * not one ending in `@invalid`,
  * see `standardAddressOf` in `./day/entries.ts`.
  * - `person`: The person of `Persons.md` the name names, `undefined` for none.
  *
@@ -310,13 +322,15 @@ export function personEditOf(
  * which changes it everywhere, its row in `Persons.md`,
  * the columns that name people and every entry of my calendars,
  * see `personRename` in `reader/persons.ts`;
- * or which only checks that it would, writing nothing, so a dialog saves nothing it refuses.
+ * or which only checks that it would, writing nothing,
+ * so a dialog saves nothing it refuses.
  * A person as it was, see {@link personEditOf}, goes nowhere,
  * but one `Persons.md` does not hold yet, also one picked without changing it,
  * which then gets its row there, so its name links to it.
  * - `was`: The person as it was.
  *
- * @param edits - Each person I changed, by its name as picked, with the address it had in the entry
+ * @param edits - Each person I changed, by its name as picked,
+ *   with the address it had in the entry
  * @param persons - The people of `Persons.md`
  * @param dry - Whether only to check
  * @param picked - Names picked in `With`, none when left out

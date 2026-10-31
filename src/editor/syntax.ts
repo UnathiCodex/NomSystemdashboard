@@ -4,15 +4,19 @@
  * Teaches CodeMirror's Markdown parser the Obsidian syntax of my notes,
  * by the rules of the scripts view in `../notes/markdown.ts`,
  * so the editor finds the same formulas, links and HTML blocks as the scripts view:
- * - formulas `$…$` and `$$…$$` within a paragraph, also over several lines, as `InlineMath`;
+ * - formulas `$…$` and `$$…$$` within a paragraph,
+ *   also over several lines, as `InlineMath`;
  *   taken whole, so `_`, `*` and `\` inside stay TeX, while `$` inside code stays text;
- * - wiki links `[[Note#Heading|Text]]` as `WikiLink`, embeds `![[Image.svg|300]]` as `WikiEmbed`;
- * - an HTML block like `<table>` ending on the line its tag closes, as in Obsidian's editor,
+ * - wiki links `[[Note#Heading|Text]]` as `WikiLink`,
+ *   embeds `![[Image.svg|300]]` as `WikiEmbed`;
+ * - an HTML block like `<table>` ending on the line its tag closes,
+ *   as in Obsidian's editor,
  *   so Markdown right below it is read as Markdown;
  * - a still empty point right below a paragraph as a point, like the one Enter writes
  *   before the first point of a list, never as the line under a heading of the paragraph,
  *   which Markdown would make of a `-` there.
- * The parser places each of them in the text, from where to where, for the live preview to draw.
+ * The parser places each of them in the text, from where to where,
+ * for the live preview to draw.
  * Gives the Markdown of every editor of mine with it, see {@link markdownSupport}.
  *
  * - `@codemirror/lang-markdown`: Reads a text as Markdown in CodeMirror.
@@ -39,18 +43,22 @@ const mathDisplayRule: RegExp = /^\$\$(?:\\[\s\S]|[^\\])*?\$\$/;
 
 /**
  * Formula `$…$`, as the scripts view reads it:
- * no space or tab after the opening `$`, none before the closing `$` and no digit after it,
- * so `$5 and $6` stays text. A backslash keeps the next character, so `\$` ends no formula.
+ * no space or tab after the opening `$`,
+ * none before the closing `$` and no digit after it,
+ * so `$5 and $6` stays text.
+ * A backslash keeps the next character, so `\$` ends no formula.
  */
 const mathInlineRule: RegExp = /^\$(?![ \t$])(?:\\[\s\S]|[^\\])+?(?<![ \t])\$(?!\d)/;
 
 /**
- * Wiki link `[[Note#Heading|Text]]` or embed `![[Image.svg|300]]`, as the scripts view reads it.
+ * Wiki link `[[Note#Heading|Text]]` or embed `![[Image.svg|300]]`,
+ * as the scripts view reads it.
  */
 const wikiLinkRule: RegExp = /^!?\[\[[^\]]+\]\]/;
 
 /**
- * Start of an HTML block of a block tag, like `<table style="…">`, with the name of its tag.
+ * Start of an HTML block of a block tag,
+ * like `<table style="…">`, with the name of its tag.
  */
 const htmlStartRule: RegExp = /^<(table|div|details|figure|center)\b/i;
 
@@ -136,7 +144,8 @@ function htmlBlockParse(cx: BlockContext, line: Line): boolean {
 const emptyPointRule: RegExp = /^(?:[-+*]|\d{1,9}[.)])[ \t]*$/;
 
 /**
- * Ends a paragraph before a still empty point, which Markdown takes on into the paragraph,
+ * Ends a paragraph before a still empty point,
+ * which Markdown takes on into the paragraph,
  * a `-` as the line under a heading, so the point is read as the first point of a list.
  *
  * @param cx - The parser
@@ -150,9 +159,11 @@ function emptyPointEnds(cx: BlockContext, line: Line): boolean {
 /**
  * The Obsidian syntax for CodeMirror's Markdown parser, see the top of this file.
  * - `defineNodes`: The new pieces of syntax, wiki links and embeds tagged as links.
- * - `parseInline`: Wiki links read before Markdown links and images, which would take their `[`.
+ * - `parseInline`: Wiki links read before Markdown links and images,
+ *   which would take their `[`.
  * - `parseBlock`: HTML blocks of block tags read before Markdown's own,
- *   which would go on to the next empty line; a paragraph ending before a still empty point.
+ *   which would go on to the next empty line;
+ *   a paragraph ending before a still empty point.
  */
 const obsidianSyntax: MarkdownConfig = {
     defineNodes: [

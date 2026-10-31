@@ -4,7 +4,8 @@
  * Renders formulas the way Obsidian 1.14 does, so they look the same:
  * MathJax 4.1 with the MathJax TeX font, output as HTML and CSS (CHTML),
  * the same TeX packages and settings,
- * one call of `MathJax.tex2chtml` per formula and the stylesheet of the used characters after.
+ * one call of `MathJax.tex2chtml` per formula
+ * and the stylesheet of the used characters after.
  * MathJax loads when the scripts view opens and puts itself onto `window` as `MathJax`;
  * the TeX packages and the whole font come as files from `node_modules`,
  * which Vite serves while it runs, as it serves Noto Sans, so nothing comes from a CDN.
@@ -30,7 +31,8 @@ type MathJaxApi = {
 };
 
 /**
- * TeX packages Obsidian 1.14 adds to those MathJax has anyway, without `mhchem` for chemistry,
+ * TeX packages Obsidian 1.14 adds to those MathJax has anyway,
+ * without `mhchem` for chemistry,
  * which needs a font extension of its own and is not used in my notes.
  */
 const packages: string[] = [
@@ -71,11 +73,14 @@ const global: { MathJax: object } = window as unknown as { MathJax: object };
  *   and without `fonts` it would load its fonts from the CDN jsDelivr.
  * - `loader.load`: Loads the extra TeX packages before the first formula,
  *   as Obsidian has them built in.
- * - `output.font`: The MathJax TeX font, the font of MathJax 3, instead of the newer default.
+ * - `output.font`: The MathJax TeX font, the font of MathJax 3,
+ *   instead of the newer default.
  * - `output.linebreaks.inline`: Off, so a formula within a line never breaks inside,
  *   like before its `=`, as in MathJax 3; it goes to the next line whole.
- * - `tex.macros`: Lets `\usepackage{…}` and `\RequirePackage{…}` load a package, as in Obsidian.
- * - `tex.inlineMath`, `tex.displayMath`: Empty, so MathJax searches the page for no formula itself;
+ * - `tex.macros`: Lets `\usepackage{…}`
+ *   and `\RequirePackage{…}` load a package, as in Obsidian.
+ * - `tex.inlineMath`, `tex.displayMath`:
+ *   Empty, so MathJax searches the page for no formula itself;
  *   the Markdown reader finds them, see `markdown.ts`.
  * - `startup.typeset`: Renders nothing at the start.
  * - `options`: No menu on a right click, no speech and no exploring, as in Obsidian.
@@ -102,13 +107,15 @@ global.MathJax = {
     options: { enableMenu: false, enableEnrichment: false, enableExplorer: false },
 };
 
-// @ts-expect-error: MathJax comes without types; it puts itself onto window, typed by MathJaxApi
+// @ts-expect-error: MathJax comes without types;
+// it puts itself onto window, typed by MathJaxApi
 await import("@mathjax/mathjax-tex-font/tex-mml-chtml-mathjax-tex.js");
 const mathJax: MathJaxApi = global.MathJax as MathJaxApi;
 await mathJax.startup.promise;
 
 /**
- * The same options again: the menu of MathJax puts its own defaults over them when it starts,
+ * The same options again:
+ * the menu of MathJax puts its own defaults over them when it starts,
  * among them speech, which would start a worker for screen readers;
  * Obsidian sets them again the same way.
  */
@@ -126,7 +133,8 @@ Object.assign(mathJax.startup.document.options, {
  * A formula MathJax cannot read keeps its TeX as text.
  * Then adds the rules of the new characters to the stylesheet of MathJax,
  * which goes into the page only once:
- * a stylesheet moved in the page is read again from its text and loses the rules added later,
+ * a stylesheet moved in the page is read again from its text
+ * and loses the rules added later,
  * so the characters of every further note would lose their width and be cut away.
  * - {@link Node#isConnected}: Tells whether the element is in the page already.
  *

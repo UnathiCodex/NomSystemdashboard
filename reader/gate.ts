@@ -1,26 +1,33 @@
 /**
  * ## Gate
  *
- * The one thing the key of a person I share with may do on my server, like Vu's key `vu@skriptum`,
+ * The one thing the key of a person I share with may do on my server,
+ * like Vu's key `vu@skriptum`,
  * which holds `NomKommunikation`, see `holder` in `sources.ts`:
  * SSH runs this file for that key, whatever the key asks,
  * since `~/.ssh/authorized_keys` of my server names it before the key with `restrict`,
- * which allows no shell, no forwarding and no terminal, my name first, then the person's,
- * like `restrict,command="/usr/bin/node /home/sopha/NomWorkspace/NomSystemdashboard/reader/gate.ts Sopha Vu" ssh-ed25519 …`.
- * What the key asks stands in `SSH_ORIGINAL_COMMAND`, a command and maybe a path after one space,
+ * which allows no shell, no forwarding and no terminal,
+ * my name first, then the person's, like
+ * `restrict,command="/usr/bin/node /home/sopha/NomWorkspace/NomSystemdashboard/reader/gate.ts Sopha Vu" ssh-ed25519 …`.
+ * What the key asks stands in `SSH_ORIGINAL_COMMAND`,
+ * a command and maybe a path after one space,
  * like `get to_vu/2026-10-20_2113_gemeinsame-listen-und-with.md`;
  * the gate does only these commands, all inside `NomKommunikation`,
- * see `kommunikationRoot` in `sources.ts`, and refuses every other, telling which there are.
+ * see `kommunikationRoot` in `sources.ts`,
+ * and refuses every other, telling which there are.
  * In both boxes, theirs like `to_vu/` and mine like `to_sopha/`,
  * the person may do whatever they want, as I may:
- * - `readme`: Gives `README.md` of `NomKommunikation`, which says how we write to each other.
+ * - `readme`: Gives `README.md` of `NomKommunikation`,
+ *   which says how we write to each other.
  * - `list`: Lists every file of both boxes by its path,
  *   like `to_vu/2026-10-15_studien-nacht/CLAIMS.tsv`, but those of `dashboard/`.
- * - `get <path>`: Gives one file of a box, like `to_vu/2026-10-15_studien-nacht/CLAIMS.tsv`.
+ * - `get <path>`: Gives one file of a box,
+ *   like `to_vu/2026-10-15_studien-nacht/CLAIMS.tsv`.
  * - `put <path>`: Writes what comes in into a file of a box,
  *   like `to_sopha/2026-10-21_0930_antwort.md`, or into a folder of it,
  *   like `to_sopha/2026-10-21_0930_antwort/Tabelle.tsv`, a file there or not.
- * - `delete <path>`: Puts a file or folder of a box into the trash of my server, see `trash.ts`.
+ * - `delete <path>`: Puts a file or folder of a box
+ *   into the trash of my server, see `trash.ts`.
  * - `share <name>`: Writes what comes in into `dashboard/` of my box:
  *   an entry, a food, a meal or a place the dashboard of the person shares with mine,
  *   named by the moment, the person and what it is,
@@ -28,12 +35,16 @@
  * - `inbox`: Lists the names of what my dashboard shares with the person,
  *   waiting in `dashboard/` of their box, the earliest first.
  * - `take <name>`: Gives one of them.
- * - `done <name>`: Puts one of them into the trash of my server, once their dashboard took it.
+ * - `done <name>`: Puts one of them into the trash of my server,
+ *   once their dashboard took it.
  * A path is parted by `/`, each part letters, digits, spaces and `._()+,&'-`,
  * not starting with a dot, so it holds no `..` and names no hidden file,
- * and every file it reads or writes lies inside the box after symbolic links are followed.
- * A new file is written beside under a hidden name first, then renamed, so no one sees half of it.
- * Says `ok` after a write and the reason of a refusal on the error output, with the exit code 1,
+ * and every file it reads or writes lies inside the box
+ * after symbolic links are followed.
+ * A new file is written beside under a hidden name first,
+ * then renamed, so no one sees half of it.
+ * Says `ok` after a write and the reason of a refusal on the error output,
+ * with the exit code 1,
  * 2 for an unknown command.
  *
  * - `node:fs`: Lists, reads, writes and moves the files of the boxes.
@@ -79,7 +90,8 @@ const messageMost: number = 50 * 1024 * 1024;
 const shareMost: number = 1024 * 1024;
 
 /**
- * The most parts a path has, like `baumkuchen_results/footer_2026-10-13/…/Endterm_Solutions.pdf`.
+ * The most parts a path has,
+ * like `baumkuchen_results/footer_2026-10-13/…/Endterm_Solutions.pdf`.
  */
 const partsMost: number = 12;
 
@@ -158,7 +170,8 @@ function boxPathOf(boxes: string[], path: string): string[] {
 }
 
 /**
- * Refuses a file or folder that does not lie inside a box after symbolic links are followed.
+ * Refuses a file or folder that does not lie inside a box
+ * after symbolic links are followed.
  *
  * @param box - The box, like `NomKommunikation/to_vu`
  * @param path - The file or folder, which exists

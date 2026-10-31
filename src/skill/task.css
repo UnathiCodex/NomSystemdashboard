@@ -1,4 +1,5 @@
-/* Row of a task under its heading in the scripts view, calm and airy, everything from the left:
+/* Row of a task under its heading in the scripts view,
+   calm and airy, everything from the left:
    when it is due, its button `⋯` after it on the same line, see `../menu.css`;
    its history and the field of my comment below, each across the row;
    lines one gap apart, the button a gap and a half after when it is due */
@@ -15,8 +16,8 @@
     flex-basis: 100%;
 }
 
-/* A quiet row, on a card, as a box of the day: its button `⋯` at the right, so its menu opens
-   below it toward the page, the result of today grey before it,
+/* A quiet row, on a card, as a box of the day: its button `⋯` at the right,
+   so its menu opens below it toward the page, the result of today grey before it,
    and the field of my comment below them */
 .task-quiet {
     justify-content: flex-end;
@@ -92,7 +93,8 @@
 }
 
 /* History of a task: a small grey button with its icon
-   and the number of attempts on a line of its own, filled like the buttons, closed at first,
+   and the number of attempts on a line of its own,
+   filled like the buttons, closed at first,
    opening the attempts below it, the latest first, across the whole width;
    while open, the button light on the calm grey of what is shown */
 .task-history > summary {
@@ -126,7 +128,8 @@ details.task-history a {
     color: inherit;
 }
 
-/* The button `⋯` of a task, which holds Right and Wrong, while its solution is still closed:
+/* The button `⋯` of a task, which holds Right and Wrong,
+   while its solution is still closed:
    hidden, keeping its place, so nothing moves when it shows,
    and I judge against the solution, not by feeling */
 .task-unjudged .menu-place {
@@ -150,7 +153,8 @@ details.task-history a {
    see `judgeOf` in `task.ts`:
    two small buttons a little apart,
    as high as the heading's line and centred on it, its last line where it wraps,
-   the room for them kept free beside the text, see `.task-heading` in `../editor/editor.css`;
+   the room for them kept free beside the text,
+   see `.task-heading` in `../editor/editor.css`;
    small icon buttons, see `.chip-button` in `../base.css`,
    the result of today pressed told apart only by its icon light instead of grey,
    as the area of the rail shown */
@@ -168,7 +172,8 @@ details.task-history a {
     color: var(--text-main);
 }
 
-/* Field of my comment after Wrong in the menu below the cross, see `../menu.css`: one control high,
+/* Field of my comment after Wrong in the menu below the cross,
+   see `../menu.css`: one control high,
    as wide as a few words, filled in the soft grey of a card without a frame;
    the hint that saving failed above it, grey */
 .task-reason input {

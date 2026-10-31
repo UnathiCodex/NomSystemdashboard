@@ -26,16 +26,19 @@
  * - `./day/day.html?raw`, `./food/food.html?raw`, `./sport/sport.html?raw`,
  *   `./editor/editor.html?raw`:
  *   Html of day, food, sport and editor as text, packed into the built code by Vite.
- * - `./day/day.ts`: Shows the log of a day, my one calendar, with the boxes of its plan beside it.
+ * - `./day/day.ts`: Shows the log of a day, my one calendar,
+ *   with the boxes of its plan beside it.
  * - `./food/food.ts`: Shows what I ate on a day with its totals, and my foods.
  * - `./sport/sport.ts`: Shows my sessions of sport on a day with what they burned,
  *   and my workouts and exercises.
  * - `./editor/editor.ts`: Edits a note of my modules or a Markdown file of my new system
- *   as its text, its Markdown shown as in Obsidian's live preview, saved exactly as edited,
+ *   as its text, its Markdown shown as in Obsidian's live preview,
+ *   saved exactly as edited,
  *   with the tree of its root on the left.
  * - `./phone.ts`: Tells a phone, which opens the day everywhere.
  * - {@link History#replaceState}:
- *   Turns an older address of the scripts into `/scripts`, without loading the page again.
+ *   Turns an older address of the scripts into `/scripts`,
+ *   without loading the page again.
  */
 
 /// <reference types="vite/client" />
@@ -51,7 +54,8 @@ import { phone } from "./phone.ts";
  * its scale and whether it runs as the installed app,
  * so the dashboard can be shaped for each of my devices, see `reader/devices.ts`;
  * nothing while a size is 0, like for a page the browser loads unseen,
- * which the reader would refuse with an error, so the next load or change of its size reports it.
+ * which the reader would refuse with an error,
+ * so the next load or change of its size reports it.
  * - {@link Navigator#sendBeacon}:
  *   Sends a small report to the reader without waiting for its answer.
  */

@@ -1,11 +1,13 @@
 /* Page of a module where a note stands, or of one of its chapters,
-   see `overview.ts`, laid out as the day without its bar, the tree naming the module: its course,
+   see `overview.ts`, laid out as the day without its bar,
+   the tree naming the module: its course,
    or the sections of the chapter, as the plan below the bar of the day;
    its text in the size and white of the day and its dialogs, not those of a note,
    so a card of the course reads as the list of a series in its dialog;
    without the browser's scroll anchoring, as the dialogs of a series, see `series.css`:
    the cards of the course are built anew as a list opens or closes,
-   so the browser would pick another row to hold still each time and move the page by itself */
+   so the browser would pick another row to hold still
+   each time and move the page by itself */
 .editor-overview {
     display: flex;
     flex-direction: column;
@@ -44,10 +46,12 @@
 }
 
 /* The rows of a chapter without a grey box around them, as the rows of the course above,
-   see `.course-list` in `course.css`, and of the tree, see `.tree-file` in `../notes/notes.css`:
+   see `.course-list` in `course.css`, and of the tree,
+   see `.tree-file` in `../notes/notes.css`:
    each as high as a row of the tree, `--tree-row-height`,
    and as far apart, its name in line with the name of its chapter;
-   grey below the white name of the chapter, white under the pointer, as a note of the tree */
+   grey below the white name of the chapter,
+   white under the pointer, as a note of the tree */
 .overview-card {
     display: flex;
     flex-direction: column;
@@ -78,7 +82,8 @@
     color: var(--text-muted);
 }
 
-/* The name of a section as in the tree, on one line, ending in `…` where it is too long */
+/* The name of a section as in the tree, on one line,
+   ending in `…` where it is too long */
 .overview-name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -95,7 +100,8 @@
    its name where the name of a module stands,
    the path to it above it as the weekday above the date of the day,
    each folder on the way a link in the grey of a link of the page, never underlined,
-   lighter under the pointer, softly as every hover, see `--hover-in` in `../variants.css` */
+   lighter under the pointer, softly as every hover,
+   see `--hover-in` in `../variants.css` */
 .folder-path a {
     color: var(--text-muted);
     text-decoration: none;

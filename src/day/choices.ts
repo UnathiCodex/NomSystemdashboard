@@ -5,14 +5,17 @@
  * for every field of a dialog that picks:
  * categories, places, summaries, ways to travel, skills, types, chapters, documents,
  * semesters, tasks and efforts.
- * A field is one row of its dialog: its name at the left, then one line showing its value, like
- * `IN2028_BusinessAnalyticsMachineLearning (VO)`, empty without one, no dash and no placeholder;
+ * A field is one row of its dialog: its name at the left,
+ * then one line showing its value, like `IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * empty without one, no dash and no placeholder;
  * a click anywhere on the row opens its list as a menu of its own over the dialog,
  * right under the line, never covering it, the rows of the dialog staying where they are,
- * see {@link listOf}; only one list is open at a time, and Esc or a click beside it closes it.
+ * see {@link listOf}; only one list is open at a time,
+ * and Esc or a click beside it closes it.
  * A list of one value to pick closes as I pick;
  * one of several, like tasks, stays open, its picks lighter rows, never checkboxes,
- * until I close it. A field of several values may also add each value as a row of its own,
+ * until I close it. A field of several values may also add
+ * each value as a row of its own,
  * like the chapters of a skill entry:
  * each pick closes the list and adds a row with a small × to take it back,
  * and opening the list again adds the next one, see {@link addedRowsOf}.
@@ -23,10 +26,12 @@
  * Enter picks the first match.
  * The arrow key down goes to the first value, then on from value to value,
  * and Enter picks the one it stands on, see {@link listStep}.
- * Each value shows its whole name, its detail grey beside it, like the address of a place;
+ * Each value shows its whole name, its detail grey beside it,
+ * like the address of a place;
  * where a list takes new values, the small grey plus with the typed text, like `+ “Zz”`,
  * or with what it makes of it,
- * like `+ New module IN2346_DeepLearning`, stands at its end while no value has that text,
+ * like `+ New module IN2346_DeepLearning`,
+ * stands at its end while no value has that text,
  * and adds it, or first asks for what a new value needs, like the address of a new place;
  * with nothing typed it shows nowhere, so a plus inside a list always names what it adds;
  * a fixed list, like the categories, has none.
@@ -34,16 +39,24 @@
  * a group, like `Due today`, stands above its first value.
  * The parts of a field stand below it, each its name small and grey, then its field,
  * like the address of a place, see {@link partOf}.
- * Picked values are a lighter grey; a click picks a value, a click on a picked one takes it back.
- * The values come from a search function, so a list can later come from the reader, like the foods.
- * A short list that takes no new values, like the types, needs no search field and has none.
- * A value wider than its row goes on below, never cut, a long name broken where its parts meet,
+ * Picked values are a lighter grey;
+ * a click picks a value, a click on a picked one takes it back.
+ * The values come from a search function,
+ * so a list can later come from the reader, like the foods.
+ * A short list that takes no new values, like the types,
+ * needs no search field and has none.
+ * A value wider than its row goes on below, never cut,
+ * a long name broken where its parts meet,
  * see {@link breakableOf}. A value picked that opens what it names,
- * like a person of `Persons.md` in `With`, is a link in the line, see {@link lineValueOf}.
+ * like a person of `Persons.md` in `With`,
+ * is a link in the line, see {@link lineValueOf}.
  *
- * - `../icons.ts`: Puts the one plus into a line that adds, or before the typed text it adds,
- *   and the one `×` into the button that takes a value back, and makes the search field of a list.
- * - `../search.ts`: Compares a typed text with the values, as every search of the page does.
+ * - `../icons.ts`: Puts the one plus into a line that adds,
+ *   or before the typed text it adds,
+ *   and the one `×` into the button that takes a value back,
+ *   and makes the search field of a list.
+ * - `../search.ts`: Compares a typed text with the values,
+ *   as every search of the page does.
  * - `../persons.ts`: Puts the people or values of a line apart by a middle dot.
  */
 
@@ -76,10 +89,12 @@ export function breakableOf(text: string): string {
 }
 
 /**
- * Marks where a path may go on over a next line, where it is wider than its room, as on a phone:
+ * Marks where a path may go on over a next line,
+ * where it is wider than its room, as on a phone:
  * after each `/` and where the parts of a name meet, see {@link breakableOf}.
  *
- * @param path - Path from `NomWorkspace` on, like `NomManageplannings/NomMetainformations/Foods.md`
+ * @param path - Path from `NomWorkspace` on,
+ *   like `NomManageplannings/NomMetainformations/Foods.md`
  * @returns The same path with the marks
  */
 export function pathBreakableOf(path: string): string {
@@ -88,16 +103,19 @@ export function pathBreakableOf(path: string): string {
 
 /**
  * Writes the name of a file into its line, whole where it fits,
- * else cut in its middle and not at its end, so its ending stays in sight, the `…` right before it,
- * like `IN2028_BusinessAnalyticsMach…_Plan.ics` beside `IN2028_BusinessAnalyticsMach…_Log.ics`;
+ * else cut in its middle and not at its end,
+ * so its ending stays in sight, the `…` right before it,
+ * like `IN2028_BusinessAnalyticsMach…_Plan.ics`
+ * beside `IN2028_BusinessAnalyticsMach…_Log.ics`;
  * the name whole as its tooltip.
  * Its ending is its last part from its last `_` on, with its extension,
  * where that is the shorter part of the name, like `_Plan.ics`, else its extension alone,
  * like `.md` of `IN2028_BusinessAnalyticsMachineLearning.md`,
  * so the code of the module at its start stays in sight too;
- * a name with neither ends in `…`; a path keeps its last name from its last `/` on instead, like
- * `VO_UniversityLecture…/TUM_2026W`.
- * Its start keeps as many letters as fit, measured in the font of the line, see {@link measurer},
+ * a name with neither ends in `…`; a path keeps its last name from its last `/`
+ * on instead, like `VO_UniversityLecture…/TUM_2026W`.
+ * Its start keeps as many letters as fit,
+ * measured in the font of the line, see {@link measurer},
  * once the line shows and again whenever its width changes, like when its folder opens,
  * and once the font of the page has loaded, which changes the room the name takes,
  * as for the name of a meal, see `dishNameOf` in `../food/meals.ts`;
@@ -105,14 +123,17 @@ export function pathBreakableOf(path: string): string {
  * - `slash`, `under`, `dot`:
  *   Where its last `/`, its last `_` and its last `.` stand, `-1` for none.
  * - `cut`: Where its ending starts, its length for no ending.
- * - `room`: Width the line has for the name, when last fitted, `0` while it does not show.
+ * - `room`: Width the line has for the name,
+ *   when last fitted, `0` while it does not show.
  * - `fit`: Writes the name into that room:
  *   whole, else with a letter less of its start before the `…` each time until it fits.
  * - `start`: Letters of its start kept.
  * - `text`: The name as it shows.
  *
- * @param line - Line of the name, as wide as its room whatever it holds, like a row of the tree
- * @param name - Name of the file, like `IN2028_BusinessAnalyticsMachineLearning_Plan.ics`,
+ * @param line - Line of the name,
+ *   as wide as its room whatever it holds, like a row of the tree
+ * @param name - Name of the file,
+ *   like `IN2028_BusinessAnalyticsMachineLearning_Plan.ics`,
  *   or a path of folders, like `VO_UniversityLectureLessons/TUM_2026W`
  */
 export function middleCutPut(line: HTMLElement, name: string): void {
@@ -155,7 +176,8 @@ export function middleCutPut(line: HTMLElement, name: string): void {
  * A value to pick.
  *
  * - `value`: Value, like `IN2028/Airline Revenue Interval`.
- * - `text`: Text shown and searched, like `Airline Revenue Interval · due 12.10.2026 (Mon)`.
+ * - `text`: Text shown and searched,
+ *   like `Airline Revenue Interval · due 12.10.2026 (Mon)`.
  * - `group`: Name of its group, like `Due today`, empty for none.
  * - `detail`: Grey detail beside the text in the list,
  *   like the address of a place; left out for none.
@@ -177,7 +199,8 @@ export type Choice = {
  *   all of them for an empty one, see {@link searchOf}.
  * - `picked`: Values picked at first.
  * - `many`: Whether more than one value may be picked.
- * - `adding`: Whether the plus with the typed text at the end of the list adds it as a new value.
+ * - `adding`: Whether the plus with the typed text at the end
+ *   of the list adds it as a new value.
  * - `add`: Takes the typed text as a new value before it is picked, like a new place,
  *   which the reader writes, and gives the value to pick, `null` to pick none;
  *   left out, the plus picks the typed text itself.
@@ -187,11 +210,13 @@ export type Choice = {
  * - `pick`: Takes the values picked after each change, in the order they were picked,
  *   or in `order`; for a list of one value once it is closed.
  * - `order`: Puts the values picked of a list of several in the order the line shows
- *   and `pick` takes them, like the order of the list; the order they were picked when left out.
+ *   and `pick` takes them, like the order of the list;
+ *   the order they were picked when left out.
  * - `empty`: What the line shows, grey, while nothing is picked;
  *   nothing when left out, as every field of the entry by category has it.
  * - `noun`: What a value is,
- *   like `place` or `summary`, for the search field, `Search or add a place`, `an` before a vowel,
+ *   like `place` or `summary`, for the search field,
+ *   `Search or add a place`, `an` before a vowel,
  *   like `Search or add an exercise`,
  *   and for the tooltip of the plus, `New place`; `value` when left out.
  * - `aside`: Elements beside the line, like the pencil of a place; none when left out.
@@ -199,12 +224,16 @@ export type Choice = {
  *   like the address of a place; none when left out.
  * - `locked`: Whether the value stays as picked, its line opening no list,
  *   `As planned` as its tooltip,
- *   like the category of an entry of the log logged from a box of the plan; open when left out.
- * - `plus`: Whether the line shows the one plus in place of `empty` while nothing is picked,
+ *   like the category of an entry of the log logged from a box of the plan;
+ *   open when left out.
+ * - `plus`: Whether the line shows the one plus in place
+ *   of `empty` while nothing is picked,
  *   see `plusPut` in `../icons.ts`, `empty` then its tooltip,
  *   like the plus that adds a document to a chapter; words when left out.
- * - `besideName`: Whether the line, while it shows the plus, stands beside the name of its row,
- *   like `Cooked +`, so no plus stands on a line of its own and the value keeps the whole width,
+ * - `besideName`: Whether the line, while it shows the plus,
+ *   stands beside the name of its row,
+ *   like `Cooked +`, so no plus stands on a line of its own
+ *   and the value keeps the whole width,
  *   as {@link lineMove} does for a list;
  *   back in its picker once a value shows; false when left out.
  * - `textOf`: Text of a value picked before its list ever opened,
@@ -213,7 +242,8 @@ export type Choice = {
  *   like the row of a person in `Persons.md`, empty for a value that opens nothing,
  *   see {@link lineValueOf}; every value plain text when left out.
  * - `afterOf`: An element right after a value picked in the line,
- *   like the pencil of a person of `With`, whose click opens no list; nothing when left out.
+ *   like the pencil of a person of `With`, whose click opens no list;
+ *   nothing when left out.
  */
 export type ChoicesSetup = {
     search: (text: string) => Promise<Choice[]>;
@@ -240,19 +270,24 @@ export type ChoicesSetup = {
  * How the rows of a field of several values are built,
  * each value picked a row of its own, see {@link addedRowsOf}.
  *
- * - `choices`: Values to offer, in their order; a value picked already stays out of the list.
- * - `picked`: Values picked, in the order they were picked, also those the list does not offer,
+ * - `choices`: Values to offer, in their order;
+ *   a value picked already stays out of the list.
+ * - `picked`: Values picked, in the order they were picked,
+ *   also those the list does not offer,
  *   like a chapter whose folder has another name now.
  * - `textOf`: Text of a value picked in its row,
  *   like the name of the file of a document of its path.
- * - `grouped`: Whether the search looks at the group of a value too, see {@link groupedSearchOf}.
+ * - `grouped`: Whether the search looks at the group of a value too,
+ *   see {@link groupedSearchOf}.
  * - `noun`: What a value is, like `chapter`, for the search of the list.
  * - `hint`: Shown in place of the line
  *   while there are no values to offer at all, like `No chapters yet`;
  *   left out, the field then has no row of its own,
  *   only the rows of the values picked, the first named by it.
- * - `change`: Takes the values picked after each pick and each value taken back, in their order.
- * - `nested`: Whether the rows stand inside the value above them, like the documents of a chapter:
+ * - `change`: Takes the values picked after each pick
+ *   and each value taken back, in their order.
+ * - `nested`: Whether the rows stand inside the value above them,
+ *   like the documents of a chapter:
  *   indented under a thin grey line, without a name at the left, the values picked first,
  *   then the list, whose plus, `Add a document` its tooltip,
  *   the one who builds the value above moves right after it,
@@ -280,7 +315,8 @@ export type AddedSetup = {
 const searchedLength: number = 60;
 
 /**
- * Measures how wide a text is in the font of a line without showing it, see {@link middleCutPut}:
+ * Measures how wide a text is in the font of a line without showing it,
+ * see {@link middleCutPut}:
  * the drawing of a canvas never put into the page,
  * which measures a text exactly as the page writes it.
  */
@@ -347,7 +383,8 @@ export function searchOf(choices: Choice[]): (text: string) => Promise<Choice[]>
 /**
  * Builds the search of a list whose values stand under their groups,
  * like documents under their folders:
- * the choices whose group and text together hold each word of the typed text, in their order,
+ * the choices whose group and text together hold
+ * each word of the typed text, in their order,
  * so `vo 2025 04` finds `TUM_2025W/04_LogisticPoissonRegression.pdf`
  * under `VO_UniversityLectureLessons`.
  * - `words`: Words of the typed text, as the search compares them.
@@ -420,12 +457,14 @@ function valueButtonOf(
  * like a person its row in `Persons.md`, a link of its own in the line,
  * see `.picker-link` in `choices.css`,
  * which a click follows in this window instead of opening the list;
- * a span, since the line is a button, which holds no real link. Any other value its plain text.
+ * a span, since the line is a button, which holds no real link.
+ * Any other value its plain text.
  * - `link`: The value as a link.
  *
  * @param text - Text of the value, like `Bichler, Martin`
  * @param address - Address it opens,
- *   like `/edit?file=NomMetainformations%2FPersons.md&row=Bichler%2C%20Martin`, empty for none
+ *   like `/edit?file=NomMetainformations%2FPersons.md&row=Bichler%2C%20Martin`,
+ *   empty for none
  * @returns The value as the line shows it
  */
 function lineValueOf(text: string, address: string): string | HTMLSpanElement {
@@ -441,12 +480,15 @@ function lineValueOf(text: string, address: string): string | HTMLSpanElement {
 }
 
 /**
- * Makes a list that the line of a field opens and closes as a menu of its own over the dialog,
+ * Makes a list that the line of a field opens and closes
+ * as a menu of its own over the dialog,
  * see the top of this file, the same for every list of the dialogs:
  * a popover of the browser, `manual`, so this file alone decides when it closes,
  * which the anchors of CSS place right under the line that opened it,
- * as wide as the values of the row the line stands in, see `.picker-box` in `choices.css`;
- * the line and its row are those anchors while the list is open, `list-line` and `list-field`.
+ * as wide as the values of the row the line stands in,
+ * see `.picker-box` in `choices.css`;
+ * the line and its row are those anchors while the list is open,
+ * `list-line` and `list-field`.
  * It opens on a click on the line, closing the list open before,
  * and closes on another click on the line, on Esc, see {@link listsStart},
  * and on a click beside its picker and its line.
@@ -524,36 +566,43 @@ export function listOpen(box: HTMLElement): boolean {
  * the search field, when the list is long or takes new values, above the values found,
  * and the plus with the typed text at the end, where new values are taken,
  * while no value has that text already, nor shows it, case and accents ignored.
- * Values picked but not found, like a place an entry kept, come first while nothing is typed.
+ * Values picked but not found, like a place an entry kept,
+ * come first while nothing is typed.
  * - `head`: The line with what stands beside it.
  * - `line`: The line of the field, the button that opens the list.
  * - `box`: The list, a menu over the dialog, with its search field.
  * - `field`: The search field of the list, its words naming what it searches,
  *   like `Search or add a place` or `Search a chapter`.
- * - `newButton`: The plus with the typed text at the end of the list, `New place` as its tooltip.
+ * - `newButton`: The plus with the typed text at the end of the list,
+ *   `New place` as its tooltip.
  * - `noun`: What a value is, like `place`.
  * - `chosen`: Values picked so far, in the order they were picked.
  * - `texts`: Text of each value seen, for the line.
  * - `long`: Whether the list is long enough for a search field,
- *   more than {@link searchedLength} characters of all values together, fixed at the start.
+ *   more than {@link searchedLength} characters of all values together,
+ *   fixed at the start.
  * - `found`: Values found for the typed text.
  * - `close`: Closes the list.
- * - `linePlace`: Puts the line beside the name of its row while it shows the plus, see `besideName`
- *   of {@link ChoicesSetup}, else back at the start of its head;
+ * - `linePlace`: Puts the line beside the name of its row while it shows the plus,
+ *   see `besideName` of {@link ChoicesSetup}, else back at the start of its head;
  *   nothing before the picker stands in a row.
  * - `lineShow`: Shows the texts of the values picked in the line,
- *   each that opens what it names a link, see {@link lineValueOf}, or nothing without them.
+ *   each that opens what it names a link,
+ *   see {@link lineValueOf}, or nothing without them.
  * - `toggle`: Picks a value or takes it back, shows it in the line, and tells the dialog;
  *   a list of one value closes first.
  * - `show`: Shows the values found for the text of the search field,
- *   unless a newer text came meanwhile, and shows the plus with what it adds for the typed text,
+ *   unless a newer text came meanwhile,
+ *   and shows the plus with what it adds for the typed text,
  *   see `newTextOf` of {@link ChoicesSetup}, while no value has that text.
  * - `typedPick`: Picks the value Enter or the plus gives,
  *   empties the search and shows all values again, the value picked scrolled into sight,
  *   like a new dish at the end of a long list;
- *   a value picked already, like the place an entry kept, now added to my places, stays picked,
+ *   a value picked already, like the place an entry kept,
+ *   now added to my places, stays picked,
  *   and the dialog is told again.
- * - `typedAdd`: Takes the typed text as a new value, by the plus or by Enter when nothing matches:
+ * - `typedAdd`: Takes the typed text as a new value,
+ *   by the plus or by Enter when nothing matches:
  *   picks it, or, with `add`, what `add` gives for it,
  *   and nothing when it gives `null`, the text staying typed.
  *
@@ -784,7 +833,8 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
  * Puts two pickers side by side in one row,
  * like the skill and the type of a skill entry in its summary, the first wider,
  * the second below it where the row has no room for both, as on a phone;
- * the list of either opens below both, as wide as the row, see `.panel-pair` in `day.css`.
+ * the list of either opens below both, as wide as the row,
+ * see `.panel-pair` in `day.css`.
  *
  * @param first - Picker at the left
  * @param second - Picker at the right
@@ -803,7 +853,8 @@ export function pairOf(first: HTMLElement, second: HTMLElement): HTMLDivElement 
  * its name, mostly none, its text,
  * like `02_LogisticPoissonRegression`, going on below where it is wider than its row,
  * see {@link breakableOf}, a link when it has one,
- * which opens what it names in this window, never a second one, like a chapter in the scripts view,
+ * which opens what it names in this window, never a second one,
+ * like a chapter in the scripts view,
  * and a small × that takes it back.
  * - `text`: The text in its own element, its whole text in its tooltip.
  * - `opening`: The text as a link, inside the element of the text,
@@ -844,7 +895,8 @@ export function addedRowOf(
 }
 
 /**
- * Makes the grey box of a round, like `Round 0`, as the dialog of a box shows it after a note:
+ * Makes the grey box of a round, like `Round 0`,
+ * as the dialog of a box shows it after a note:
  * the box of the round in the status line of the editor, see `.round-tag` in `base.css`.
  *
  * @param text - The round, like `Round 0`
@@ -861,7 +913,8 @@ export function roundTagOf(text: string): HTMLSpanElement {
  * Builds the rows of a field of several values, like the documents of a skill entry,
  * as the chapters and the means of a way are built:
  * a row per value picked, the first named by the field, see {@link addedRowOf},
- * then the row of the list, whose plus stands beside the name of the field, see {@link addRowOf};
+ * then the row of the list, whose plus stands beside the name of the field,
+ * see {@link addRowOf};
  * a pick closes the list and adds the value as a row of its own,
  * opening the list again adds the next one.
  * The list offers the values not picked yet, and has no row while every value is picked;
@@ -869,7 +922,8 @@ export function roundTagOf(text: string): HTMLSpanElement {
  * or without hint the field has no row of its own.
  * Nested inside the value above,
  * see `nested` of {@link AddedSetup}, the rows stand indented under a thin grey line,
- * and the plus of the list waits for the one who builds that value to move it right after it,
+ * and the plus of the list waits for the one who builds
+ * that value to move it right after it,
  * see {@link lineMove}, so a chapter and its documents read as one.
  * - `offered`: Values the list offers.
  * - `nested`: Whether the rows stand inside the value above them.
@@ -925,9 +979,11 @@ export function addedRowsOf(name: string, setup: AddedSetup): HTMLDivElement[] {
 
 /**
  * Builds the row of the list that adds the next value of a field of several values,
- * like a chapter or a document, its plus beside the name of the field, see {@link lineMove}:
+ * like a chapter or a document,
+ * its plus beside the name of the field, see {@link lineMove}:
  * on the row of the first value picked, the row of the list keeping only the list then,
- * or on the row of the list itself while none is picked, named by the field, like `Chapter +`.
+ * or on the row of the list itself while none is picked,
+ * named by the field, like `Chapter +`.
  * Its picker is built with a plus as its line, see `plus` of {@link ChoicesSetup}.
  * - `row`: The row of the list.
  * - `place`: The name the plus goes beside.
@@ -954,7 +1010,8 @@ export function addRowOf(
  * beside the name of a field, like `Chapter +`, or after a value,
  * like a chapter's plus that adds a document to it;
  * moved out of its row, the row keeps only the list, which takes no room of the dialog,
- * see `.panel-list` in `choices.css`, and opens as a menu right under the plus, see {@link listOf}.
+ * see `.panel-list` in `choices.css`,
+ * and opens as a menu right under the plus, see {@link listOf}.
  * - `line`: The line of the picker of the row.
  *
  * @param row - Row with its picker, built with a plus as its line,
@@ -997,7 +1054,8 @@ export function partFieldOf(
 }
 
 /**
- * Makes a part of a field, like of a place, see {@link partFieldOf}: its name small and grey,
+ * Makes a part of a field, like of a place,
+ * see {@link partFieldOf}: its name small and grey,
  * then its field; a click on the name puts the focus into the field.
  * - `part`: The part, a label around name and field.
  * - `label`: Its name.
@@ -1018,9 +1076,11 @@ export function partOf(name: string, input: HTMLInputElement): HTMLLabelElement 
 
 /**
  * Makes a row of a dialog: the name of a field before its picker, like `Place`.
- * A click anywhere on the row but on something to click itself, like the pencil of a place,
+ * A click anywhere on the row but on something to click itself,
+ * like the pencil of a place,
  * or on a label of a part, like the link of a place,
- * which puts the focus into its own field, opens the list of its first picker, see {@link listOf},
+ * which puts the focus into its own field,
+ * opens the list of its first picker, see {@link listOf},
  * or puts the focus into its first field.
  * No `<label>` around the row,
  * which would pass a click on the name to the first button of the picker.
@@ -1054,14 +1114,17 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
  * a series or a birthday, at the left of its buttons, small and grey,
  * see `.panel-file` in `day.css`: only its folder and its name after `…/`,
  * since it is no whole path, like `…/Modules/WI1059_FinancialAccounting_Plan.ics`,
- * so it stays on one line beside the buttons, its whole path from `NomWorkspace` on as its title,
- * like `NomManageplannings/NomManagecalendar/Modules/WI1059_FinancialAccounting_Plan.ics`;
+ * so it stays on one line beside the buttons,
+ * its whole path from `NomWorkspace` on as its title, like
+ * `NomManageplannings/NomManagecalendar/Modules/WI1059_FinancialAccounting_Plan.ics`;
  * a link that opens it in the editor of my new system,
  * whose paths start inside `NomManageplannings`,
  * like `/edit?file=NomManagecalendar%2FModules%2FWI1059_FinancialAccounting_Plan.ics`;
- * hidden while the file is not known, like that of a new entry before its category is picked.
+ * hidden while the file is not known,
+ * like that of a new entry before its category is picked.
  * Where even the name is wider than its room,
- * as on a phone, it goes on below where the parts of the name meet, see {@link pathBreakableOf}.
+ * as on a phone, it goes on below where the parts of the name meet,
+ * see {@link pathBreakableOf}.
  *
  * @param link - The link at the left of the buttons
  * @param file - Path of the file from `NomWorkspace` on, empty while not known
@@ -1075,10 +1138,12 @@ export function fileShow(link: HTMLAnchorElement, file: string): void {
 
 /**
  * Moves through the open list by the arrow keys, wherever the focus stood when it opened:
- * down from its search field to its first value and on to the plus at its end, up back again,
+ * down from its search field to its first value
+ * and on to the plus at its end, up back again,
  * stopping at both ends, each row in sight as the focus reaches it,
  * so Enter takes it as a click does.
- * A field outside these rows, like the name of a new food, keeps its arrows for its own text.
+ * A field outside these rows, like the name of a new food,
+ * keeps its arrows for its own text.
  * - `focused`: What holds the focus.
  * - `rows`: The search field of the list, then each button that shows.
  * - `at`: Where the focus stands among them, `-1` for nowhere.

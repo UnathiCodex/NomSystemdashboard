@@ -1,12 +1,14 @@
 /**
  * ## Places
  *
- * The parts of a place, which I type below it in the dialog of an entry and in that of a series,
+ * The parts of a place, which I type below it in the dialog
+ * of an entry and in that of a series,
  * see {@link placeEditOf}, since the fields offer only my places of `Places.md`,
  * each with its address, see `reader/places.ts`.
  * The address of a place has four parts, the columns of `Places.md`,
  * as on an envelope in German, umlauts included, see {@link Place}:
- * its street with the number of the house, which may stay out, like `Burg-Eltz-Weg`, its code,
+ * its street with the number of the house, which may stay out,
+ * like `Burg-Eltz-Weg`, its code,
  * like `81375`, its town, like `München`, and its country, like `Deutschland`;
  * then its link, which follows the address as the search of Google Maps,
  * in the form Google gives for it, see {@link mapsLinkOf}, until I type a link myself,
@@ -22,9 +24,11 @@
  * which opens the link of the place, written with it as its `ALTREP`, when it has one,
  * and nothing else: nothing opens a map by itself,
  * only a link stored with the place opens on a click.
- * In the list of a field of a place a place shows by its name, its address grey beside it,
+ * In the list of a field of a place a place shows by its name,
+ * its address grey beside it,
  * see {@link placeChoiceOf}.
- * A way shows its route by labels, with an arrow drawn between them, see {@link whereLinkedOf}.
+ * A way shows its route by labels, with an arrow drawn between them,
+ * see {@link whereLinkedOf}.
  * A place is only where I physically am:
  * an entry that did something online shows its platform of `Online.md`,
  * like `Zoom`, instead of its place the same way,
@@ -32,8 +36,8 @@
  * see {@link whereLinkedOf}, its place still in the dialog;
  * a platform typed that is none of mine yet goes into `Online.md` at once,
  * see {@link platformSend}.
- * Below the parts of a place its star makes it my default place, which a new entry starts with, see
- * {@link standardStarOf}.
+ * Below the parts of a place its star makes it my default place,
+ * which a new entry starts with, see {@link standardStarOf}.
  *
  * - `lucide`: The arrow of a route and the star of my default place.
  * - `../icons.ts`: Makes the element of an icon and puts one into a button.
@@ -53,12 +57,14 @@ import type { Choice } from "./choices.ts";
  *
  * - `name`: Name, like `TUM Innenstadt`, without a comma, which the reader drops,
  *   see `nameOf` in `reader/places.ts`.
- * - `street`: Its street with the number of the house, which may stay out, like `Arcisstraße 21`.
+ * - `street`: Its street with the number of the house,
+ *   which may stay out, like `Arcisstraße 21`.
  * - `code`: Its code, the postcode, like `80333`.
  * - `city`: Its town, like `München`.
  * - `country`: Its country, like `Deutschland`.
  * - `link`: Its link, like `https://nav.tum.de/room/0509.EG.980`.
- * - `standard`: Whether it is my default place, `★` in its column `Default`, like `Home Munich`.
+ * - `standard`: Whether it is my default place,
+ *   `★` in its column `Default`, like `Home Munich`.
  *
  * Each text empty for none.
  */
@@ -73,8 +79,8 @@ export type Place = {
 };
 
 /**
- * A platform of what I do online, one row of `Online.md`, as the reader writes it, see `Platform`
- * in `reader/places.ts`.
+ * A platform of what I do online, one row of `Online.md`, as the reader writes it,
+ * see `Platform` in `reader/places.ts`.
  *
  * - `name`: Name, like `Zoom`.
  * - `provider`: Who offers it, like `Zoom Video Communications`, empty for none.
@@ -93,8 +99,8 @@ export type Platform = {
 const linkForm: RegExp = /^https?:\/\/\S+$/;
 
 /**
- * Writes the address of a place in one line: its street, its code, its town and its country, parted
- * by commas, a part left out while empty.
+ * Writes the address of a place in one line: its street, its code,
+ * its town and its country, parted by commas, a part left out while empty.
  *
  * @param place - A place of `Places.md`
  * @returns Address like `Arcisstraße 21, 80333, München, Deutschland`, empty for none
@@ -107,7 +113,8 @@ export function placeAddressOf(place: Place): string {
 
 /**
  * Writes a place as an entry writes it into `LOCATION`,
- * as Google Calendar does, its name and its address in one line, see {@link placeAddressOf}.
+ * as Google Calendar does, its name and its address in one line,
+ * see {@link placeAddressOf}.
  *
  * @param place - A place of `Places.md`
  * @returns Line like `TUM Innenstadt, Arcisstraße 21, 80333, München, Deutschland`,
@@ -144,7 +151,8 @@ export function addressOf(line: string): string {
 }
 
 /**
- * Gives a place as its row holds it, my place or the room of its name, see {@link labelOf};
+ * Gives a place as its row holds it,
+ * my place or the room of its name, see {@link labelOf};
  * one without row, like one an older entry wrote,
  * as its line says, with the link it was written with: its name,
  * then its street, its code, its town and its country,
@@ -153,13 +161,15 @@ export function addressOf(line: string): string {
  * - `name`: Its name.
  * - `row`: Its row, `undefined` for none.
  * - `parts`: The parts of its address.
- * - `town`: Index of the part of an older line that holds its code and its town, -1 for none.
+ * - `town`: Index of the part of an older line
+ *   that holds its code and its town, -1 for none.
  * - `space`: Where that part parts.
  *
  * @param line - Place as an entry writes it,
  *   like `TUM Innenstadt, Arcisstraße 21, 80333 München, Deutschland`
  * @param link - Its link as the entry wrote it, its `ALTREP`, empty for none
- * @param rows - My places and the rooms by their lines, see `places` of `Field` in `categories.ts`
+ * @param rows - My places and the rooms by their lines,
+ *   see `places` of `Field` in `categories.ts`
  * @returns The place
  */
 export function placeOf(
@@ -207,7 +217,8 @@ export function placeOf(
  * see `partOf` in `choices.ts`, the columns of its row:
  * its label, its street, its code, its city, its country and its link,
  * its star at the right of its label, see {@link standardStarOf};
- * the link following the address as the search of Google Maps while it is that search or empty,
+ * the link following the address as the search of Google Maps
+ * while it is that search or empty,
  * see {@link mapsLinkIs}, until I type a link myself, like the NavigaTUM page of a room;
  * below them a grey line while the reader would not take them,
  * a name left empty or a link that is no web address.
@@ -220,11 +231,13 @@ export function placeOf(
  * - `changed`: Whether I changed a part since I left one last.
  * - `typed`: The place as typed.
  * - `hint`: Line saying that the reader would not take it.
- * - `hintShow`: Shows the line while the reader would not take the place as typed, else hides it.
+ * - `hintShow`: Shows the line while the reader would
+ *   not take the place as typed, else hides it.
  * - `label`: The part of its label.
  * - `line`: Its field and its star in one line.
  *
- * @param place - The place as it shows, like my place as its row holds it, see {@link placeOf}
+ * @param place - The place as it shows,
+ *   like my place as its row holds it, see {@link placeOf}
  * @param change - Takes the place as typed, after each change
  * @param leave - Takes the name of the part or field I went on to,
  *   like `Street of the place`, `null` for none, once I leave a part I changed
@@ -367,7 +380,8 @@ export function placeChoiceOf(
 
 /**
  * Puts my default place, `★` in `Places.md`, first among the places of a list,
- * in the dialog and in the form of a series, so it always stands on top, see {@link placeChoiceOf}:
+ * in the dialog and in the form of a series,
+ * so it always stands on top, see {@link placeChoiceOf}:
  * by its line, once, an older line of the same name left out;
  * the list as it is without default place.
  * - `standard`: My default place, `undefined` for none.
@@ -470,8 +484,8 @@ function routeArrowOf(): SVGElement {
 }
 
 /**
- * Shows where an entry or a box was, as {@link whereOf} writes it, the arrow of a route drawn, see
- * {@link routeArrowOf}, like `Home Munich` → `TUM Garching`,
+ * Shows where an entry or a box was, as {@link whereOf} writes it, the arrow
+ * of a route drawn, see {@link routeArrowOf}, like `Home Munich` → `TUM Garching`,
  * and its place a link when it has one, its `ALTREP`, see {@link placeAnchorOf};
  * of a way its goal, which its `LOCATION` names, like `TUM Garching`;
  * for an entry that did something online its platform instead, the same way,
@@ -512,7 +526,8 @@ export function whereLinkedOf(
 
 /**
  * Gives the link of the search of an address in Google Maps,
- * in the form Google gives for a link to it, the address encoded for an address of the web, like
+ * in the form Google gives for a link to it,
+ * the address encoded for an address of the web, like
  * `https://www.google.com/maps/search/?api=1&query=Burg-Eltz-Weg%2C%2081375%20M%C3%BCnchen%2C%20Deutschland`
  * of `Burg-Eltz-Weg, 81375, München, Deutschland`.
  *
@@ -536,7 +551,8 @@ export function mapsLinkOf(address: string): string {
  *
  * @param link - Link of a place,
  *   like `https://www.google.com/maps/search/?api=1&query=Burg-Eltz-Weg%2C+81375+…`
- * @param address - Address of the place, like `Burg-Eltz-Weg, 81375, München, Deutschland`
+ * @param address - Address of the place,
+ *   like `Burg-Eltz-Weg, 81375, München, Deutschland`
  * @returns Whether it is the search of the address
  */
 export function mapsLinkIs(link: string, address: string): boolean {
@@ -551,7 +567,8 @@ export function mapsLinkIs(link: string, address: string): boolean {
 }
 
 /**
- * Sends a place to the reader: a new one, which it adds to `Places.md`, a room to `Rooms.md`,
+ * Sends a place to the reader: a new one,
+ * which it adds to `Places.md`, a room to `Rooms.md`,
  * or my place with its name as it was, whose row it changes, keeping its name.
  *
  * @param place - Name, the parts of its address and link as typed
@@ -574,7 +591,8 @@ export async function placeSend(place: Place, old: string): Promise<Place> {
  * its row in `Places.md` or `Rooms.md` and every entry and box that names it,
  * or moves them to the row of another place of the new name,
  * see `placeRename` in `reader/places.ts`;
- * or which only checks that it would, writing nothing, so a dialog saves nothing it refuses.
+ * or which only checks that it would, writing nothing,
+ * so a dialog saves nothing it refuses.
  *
  * @param old - Name of the place as the entry or the box names it,
  *   like `5610.01.011 (Seminarraum (Inf. 18/19)`
@@ -615,7 +633,8 @@ async function standardSend(name: string): Promise<void> {
  * @param platform - Its name, like `Webex`, and its provider as typed
  * @param old - Name of my platform being changed, like `Teams`, empty for a new one
  * @returns The platform as written, its name and provider cleaned
- * @throws {Error} - When the reader does not take it, like for a name another platform has
+ * @throws {Error} - When the reader does not take it,
+ *   like for a name another platform has
  */
 export async function platformSend(platform: Platform, old: string): Promise<Platform> {
     return readerAsk<Platform>("/api/day/online", {

@@ -5,7 +5,8 @@
  * one Markdown table, `| Person | Title | Mail | … |`, one row per person,
  * its name as `Nachname, Vorname`, like `Bichler, Martin`,
  * or a single name, linked to its page in TUMonline when it has one,
- * like `[Bichler, Martin](https://campus.tum.de/…)`, its title, like `Prof. Dr.`, and its mail,
+ * like `[Bichler, Martin](https://campus.tum.de/…)`, its title,
+ * like `Prof. Dr.`, and its mail,
  * like `m.bichler@tum.de`, both kept, never shown;
  * the rows ordered by name, small and capital letters alike, as the table came.
  * A name is the key of its person, as the name of a food of `Foods.md` is in `Meals.md`:
@@ -14,8 +15,10 @@
  * like `- Dean: Bungartz, Hans-Joachim`,
  * and `With` of an entry name a person by its name alone, never with a link,
  * and the page finds the person by it, see `src/persons.ts`;
- * an entry written with a person of a mail names that mail as its address, see {@link mailOf}.
- * The pencil beside the people of `With` changes a person everywhere once its dialog saves,
+ * an entry written with a person of a mail names that mail
+ * as its address, see {@link mailOf}.
+ * The pencil beside the people of `With` changes a person everywhere
+ * once its dialog saves,
  * see {@link personRename}:
  * its name, its mail and its link, in its row,
  * in those columns and lines and in every entry of my calendars.
@@ -36,7 +39,8 @@ import { dataRoot, personsFile, universityRoot, writeAllowed } from "./sources.t
  * - `name`: Its name, the text of its link or its plain cell, like `Bichler, Martin`.
  * - `link`: Its page in TUMonline, the address of its link,
  *   like `https://campus.tum.de/…`; empty for none.
- * - `title`: Its title, like `Prof. Dr.`, or what I typed, like `Speaker`, empty for none.
+ * - `title`: Its title, like `Prof. Dr.`, or what I typed,
+ *   like `Speaker`, empty for none.
  * - `mail`: Its mail, like `m.bichler@tum.de`, empty for none; kept, never shown.
  */
 export type Person = {
@@ -49,8 +53,8 @@ export type Person = {
 /**
  * A person changed by the pencil beside the people of `With`, as the page sends it,
  * see {@link personRename}:
- * its name as the entries named it, like `Cuzic, Mihovil`, and its name, title, mail and link
- * as typed.
+ * its name as the entries named it, like `Cuzic, Mihovil`,
+ * and its name, title, mail and link as typed.
  *
  * - `old`: Its name as it was.
  * - `name`: Its name as typed, like `Cuzic, Mihovil`.
@@ -96,7 +100,8 @@ const actingMark: string = " (komm.)";
 
 /**
  * Roles a line of a list names a person by,
- * like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md` or `- Rector: Sieber, Volker`,
+ * like `- Dean: Bungartz, Hans-Joachim` of a school in `Schools.md`
+ * or `- Rector: Sieber, Volker`,
  * see `peopleRoles` in `src/persons.ts`.
  */
 const peopleRoles: string[] = [
@@ -109,7 +114,8 @@ const peopleRoles: string[] = [
 ];
 
 /**
- * A link typed for a person, a web address without spaces, like `https://campus.tum.de/…`.
+ * A link typed for a person, a web address without spaces,
+ * like `https://campus.tum.de/…`.
  */
 const linkForm: RegExp = /^https?:\/\/\S+$/;
 
@@ -127,7 +133,8 @@ const linkedForm: RegExp = /^\[([^\]]*)\]\(([^)]*)\)$/;
 
 /**
  * Reads the people of `Persons.md`:
- * the lines of its table, starting with `|`, after the head of the table, each cut into its cells;
+ * the lines of its table, starting with `|`,
+ * after the head of the table, each cut into its cells;
  * a row without a name stays out.
  * - `linked`: The name and the address of a name with its link, `null` for a plain one.
  *
@@ -159,10 +166,12 @@ export function personsRead(): Person[] {
 }
 
 /**
- * Gives the mail of the person a name names in `Persons.md`, by its name, like `Bichler, Martin`,
+ * Gives the mail of the person a name names in `Persons.md`,
+ * by its name, like `Bichler, Martin`,
  * or by that name spoken, `Vorname Nachname`, as an older entry may name the person,
  * like `Martin Bichler`, as the page finds a person, see `personOf` in `src/persons.ts`.
- * - `parts`: The parts of the name of a person, `Nachname` and `Vorname`, one for a single name.
+ * - `parts`: The parts of the name of a person,
+ *   `Nachname` and `Vorname`, one for a single name.
  *
  * @param name - Name, like `Bichler, Martin`
  * @returns Its mail, like `m.bichler@tum.de`,
@@ -188,7 +197,8 @@ export function mailOf(name: string): string {
  * - `named`: The people whose `Vorname` the name is, small and capital letters alike.
  *
  * @param name - Name, like `Sopha`
- * @returns The name of its person, like `Family, Sopha`; the name itself for none or for several
+ * @returns The name of its person, like `Family, Sopha`;
+ *   the name itself for none or for several
  */
 export function personNameOf(name: string): string {
     const named: Person[] = name.includes(",")
@@ -212,10 +222,12 @@ function nameCellOf(name: string, link: string): string {
 }
 
 /**
- * Gives the name of a person's row, the text of the link of its first cell or the cell itself.
+ * Gives the name of a person's row,
+ * the text of the link of its first cell or the cell itself.
  * - `cell`: Its first cell.
  *
- * @param line - Row like `| [Bichler, Martin](https://…) | Prof. Dr. | m.bichler@tum.de | … |`
+ * @param line - Row
+ *   like `| [Bichler, Martin](https://…) | Prof. Dr. | m.bichler@tum.de | … |`
  * @returns Name like `Bichler, Martin`, empty for none
  */
 function rowNameOf(line: string): string {
@@ -229,7 +241,8 @@ function rowNameOf(line: string): string {
  * the row of the old name takes the new name, its link and its mail as typed,
  * every other cell of it kept, like its title, and a person without row gets one;
  * while another row has it, the person moves to that row, which stays as it is,
- * and the row of the old name goes, as a place moves to the row of the name it is renamed to.
+ * and the row of the old name goes,
+ * as a place moves to the row of the name it is renamed to.
  * The rows ordered anew by name, small and capital letters alike,
  * as the table came, every other line staying as it is.
  * - `lines`: Lines of the file.
@@ -309,13 +322,15 @@ function personsTextOf(sent: PersonRenamed): [string, Person] {
  * Works out a Markdown file with a person renamed in its columns that name people,
  * see {@link peopleHeads}, and in the lines of a list that name a person by its role,
  * see {@link peopleRoles}, like `- Dean: Bungartz, Hans-Joachim`:
- * in each table of such a column, every name of the old name in its cells takes the new one,
+ * in each table of such a column,
+ * every name of the old name in its cells takes the new one,
  * a cell holding several names parted by `<br>`, a name it then holds twice once,
  * a name followed by ` (komm.)` keeping it, see {@link actingMark},
  * and so does such a line of the old name, every other cell and line staying as it is.
  * - `role`: The role a line names the old name by, `undefined` for none.
  * - `lines`: Lines of the file.
- * - `named`: Indexes of the columns that name people in the table being read, none outside a table.
+ * - `named`: Indexes of the columns that name people in the table being read,
+ *   none outside a table.
  * - `cells`: Cells of a row.
  * - `names`: The names of a cell.
  * - `renamed`: The names of a cell, the old one renamed.
@@ -367,12 +382,14 @@ function peopleTextOf(file: string, old: string, name: string): string {
  * see {@link AttendeesRename}.
  * Works out every file first and writes only then,
  * so nothing is written while one cannot be; with `dry` only checks.
- * - `clean`: Cleans a text: `|` and line breaks as spaces, spaces in a row one, none at the ends.
+ * - `clean`: Cleans a text: `|` and line breaks as spaces,
+ *   spaces in a row one, none at the ends.
  * - `name`: The new name, cleaned.
  * - `mail`, `link`: The mail and the page, cleaned the same way, and so is the title.
  * - `cleaned`: The person as sent, cleaned.
  * - `persons`: `Persons.md` as it would be, with the person as its row then holds it.
- * - `tables`: Each file that names the person in a column of people, with its text as it would be.
+ * - `tables`: Each file that names the person in a column of people,
+ *   with its text as it would be.
  *
  * @param sent - The person as changed
  * @param attendees - Writes the people of my calendars anew, see {@link AttendeesRename}

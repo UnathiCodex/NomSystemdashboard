@@ -1,7 +1,8 @@
 /**
  * ## Search
  *
- * How every search of the page compares a typed text with what it searches, alike everywhere:
+ * How every search of the page compares a typed text with what it searches,
+ * alike everywhere:
  * the lists of the dialogs, see `./day/choices.ts`,
  * and the tree of Plannings, see `./notes/tree.ts`.
  * A text matches when it holds each typed word, in small letters and without accents,

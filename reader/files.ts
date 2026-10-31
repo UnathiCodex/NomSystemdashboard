@@ -4,7 +4,8 @@
  * Lists the files of my new system for the tree of the editor,
  * reads one and writes one back as I saved it.
  * The tree is `NomManageplannings` with every folder in it, also one I add later,
- * but never my old system, `NomSystemprevious`, at any depth, nor a hidden file or folder,
+ * but never my old system, `NomSystemprevious`,
+ * at any depth, nor a hidden file or folder,
  * like `.obsidian`, nor a symbolic link.
  * Reads and writes only the files of the tree, see `systemFiles` in `sources.ts`:
  * a Markdown file, like `NomMetainformations/Foods.md`, a daily note
@@ -17,7 +18,8 @@
  * - `node:fs`: Lists folders, reads and writes files.
  * - `node:path`: Builds file paths for the operating system.
  * - `./edit.ts`: Gives the form of a file as I saved it in the editor,
- *   merges it with a change of its file on the disk and tells the editor what that changed.
+ *   merges it with a change of its file on the disk
+ *   and tells the editor what that changed.
  * - `./sources.ts`: Names the tree and the folder left out of it,
  *   and tells which files the reader may write.
  */
@@ -43,7 +45,8 @@ import type { NoteChange, Written } from "./edit.ts";
  * - `path`: Its path, see the top of this file, like `NomMetainformations/Foods.md`.
  * - `folder`: Whether it is a folder.
  * - `opens`: Whether the editor opens it: a Markdown or `.ics` file, never a folder.
- * - `children`: What a folder holds, its folders first, each part by name; none for a file.
+ * - `children`: What a folder holds, its folders first,
+ *   each part by name; none for a file.
  */
 export type FileNode = {
     name: string;
@@ -99,8 +102,10 @@ function opensOf(path: string): boolean {
 
 /**
  * Lists a folder of the tree, its folders first,
- * then its files the editor opens, each part by name, any other file and the left out ones not,
- * see {@link leftOut}; a symbolic link is neither a folder nor a file here, so it is left out too.
+ * then its files the editor opens, each part by name,
+ * any other file and the left out ones not,
+ * see {@link leftOut}; a symbolic link is neither a folder nor a file here,
+ * so it is left out too.
  * - `entries`: Folders and files in it.
  *
  * @param folder - Folder on the disk, like `NomManageplannings/NomManagecalendar`
@@ -216,7 +221,8 @@ export function systemFileRead(path: string): SystemFile {
  * @param change - File as saved
  * @returns The file as written, see `Written` in `edit.ts`
  * @throws {Error} - When it is no Markdown file of the folders of the new system,
- *   see {@link systemFileOf}, or its file is no UTF-8 text, which could not be written back exactly
+ *   see {@link systemFileOf}, or its file is no UTF-8 text,
+ *   which could not be written back exactly
  */
 export function systemFileWrite(change: NoteChange): Written {
     const file: string = systemFileOf(String(change.path ?? ""), editEndings);

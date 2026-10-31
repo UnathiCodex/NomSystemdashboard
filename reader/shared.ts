@@ -3,7 +3,8 @@
  *
  * Shares with Vu, whose dashboard runs on a server of its own, skriptum,
  * what we agreed on and nothing else: an entry of my log with Vu in `With`,
- * and every food, meal and place either of us adds, changes or removes, so we both have them.
+ * and every food, meal and place either of us adds,
+ * changes or removes, so we both have them.
  * Who I share with names `sources.ts`, see `partners` there.
  * All we share lies only on my server, `sophabohne`, see `holder` in `sources.ts`,
  * in `NomKommunikation`; Vu's server never has that folder, nor anything in its place.
@@ -12,19 +13,24 @@
  * What goes to Vu waits as a file in Vu's box on my server,
  * `NomKommunikation/to_vu/dashboard/`, named by the moment, me and what it is,
  * like `20261021T093000123Z_Sopha_entry_<UID>.ics` or `…_Sopha_list_<random>.json`.
- * Vu's reader reaches mine by SSH, `ssh nom-sopha`, where its key may run nothing but the gate,
- * see `gate.ts`: as it starts and every {@link pollSeconds} it takes what waits in its box,
+ * Vu's reader reaches mine by SSH, `ssh nom-sopha`,
+ * where its key may run nothing but the gate,
+ * see `gate.ts`: as it starts and every {@link pollSeconds} it takes
+ * what waits in its box,
  * the earliest first, by `inbox`, `take` and `done`, each into my trash once taken,
  * see {@link inboxTake} and `trash.ts`; there is no archive.
  * What Vu's reader shares it sends at once by `share <name>` into my box,
- * `NomKommunikation/to_sopha/dashboard/`, where my reader sees it at once and takes it in.
+ * `NomKommunikation/to_sopha/dashboard/`,
+ * where my reader sees it at once and takes it in.
  * While my server cannot be reached, it waits in the memory of Vu's reader, in its order,
- * and goes out after the next taking; a restart of Vu's reader loses it, see {@link outbox}.
+ * and goes out after the next taking;
+ * a restart of Vu's reader loses it, see {@link outbox}.
  *
  * An entry: each of us in its `With` gets a copy as I add it or log a box,
  * and one who comes into its `With` as I change it, see {@link entryShare}:
  * the same `UID`, its times, category, what, the link of what when it is a web address,
- * that of a skill entry, which names its skill and type, its place with the link of the place,
+ * that of a skill entry, which names its skill and type,
+ * its place with the link of the place,
  * where a way starts, the semester of a skill entry, the foods of a meal
  * or a cooking and the cooking a meal draws from,
  * with me in `With` in place of the person, the others staying;
@@ -37,10 +43,14 @@
  * an entry I took in goes to nobody while its `With` stays,
  * since its sender sent it to everyone in it.
  * A food, a meal or a place: what changed it,
- * as the call of `food.ts` or `places.ts` that changed it, like `foodAdd` with the food as written,
- * see {@link ListChange}, which the reader of Vu makes on its own lists, see {@link listApply};
- * one Vu has already, like the same food, a place of the same name or a meal already renamed,
- * stays as Vu has it. The first time my reader shares with someone, as it makes their box,
+ * as the call of `food.ts` or `places.ts` that changed it,
+ * like `foodAdd` with the food as written,
+ * see {@link ListChange}, which the reader of Vu makes on its own lists,
+ * see {@link listApply};
+ * one Vu has already, like the same food,
+ * a place of the same name or a meal already renamed,
+ * stays as Vu has it. The first time my reader shares with someone,
+ * as it makes their box,
  * it sends all my foods, meals, places and rooms, so our lists come together,
  * see {@link sharedStart}; Vu's reader, which makes no box, sent all of Vu's long ago.
  * What I change in the editor by hand goes to nobody.
@@ -52,7 +62,8 @@
  * an entry into my log as the dialog would add it,
  * see `entryAdd` in `day.ts`, with the `UID` it brought, so it comes in only once;
  * then the file goes into my trash.
- * An entry a log cannot take, like one of a category its reader does not know, stays in its box,
+ * An entry a log cannot take, like one of a category its reader does
+ * not know, stays in its box,
  * and the reader says so once.
  *
  * - `node:child_process`: Runs `ssh` from Vu's reader to my server.
@@ -60,7 +71,8 @@
  * - `node:fs`: Creates the boxes on my server, lists and watches mine,
  *   writes and reads what is shared there.
  * - `node:path`: Builds the paths of the boxes.
- * - `./calendar.ts`: Reads the entries of my log and of a shared file, gives the copy of an entry,
+ * - `./calendar.ts`: Reads the entries of my log and of a shared file,
+ *   gives the copy of an entry,
  *   and names the category of skill entries.
  * - `./day.ts`: Adds an entry that came to my log, as the dialog adds one.
  * - `./food.ts`: Reads, adds, changes and removes my foods and meals.
@@ -125,7 +137,8 @@ import type { Place, PlaceChanged, Platform, PlatformChanged } from "./places.ts
 /**
  * A change of a list, as one call of `food.ts` or `places.ts` that changed it,
  * with what it was called with:
- * a food added as written, a food changed and removed, a meal written, renamed and removed,
+ * a food added as written, a food changed and removed,
+ * a meal written, renamed and removed,
  * a place added as written and changed,
  * and a platform online added and changed as written, see {@link listApply}.
  */
@@ -167,7 +180,8 @@ const quiet: number = 300;
 const reachSeconds: number = 10;
 
 /**
- * Seconds between two takings of Vu's reader from its box on my server, see {@link inboxTake}.
+ * Seconds between two takings of Vu's reader from its box on my server,
+ * see {@link inboxTake}.
  */
 const pollSeconds: number = 60;
 
@@ -191,7 +205,8 @@ const outbox: [string, string][] = [];
 let sending: boolean = false;
 
 /**
- * Whether Vu's reader sends again after it is through, since something came while it sent.
+ * Whether Vu's reader sends again after it is through,
+ * since something came while it sent.
  */
 let again: boolean = false;
 
@@ -201,7 +216,8 @@ let again: boolean = false;
 let taking: boolean = false;
 
 /**
- * Whether Vu's reader could not reach my server the last time, told once until it reaches it again.
+ * Whether Vu's reader could not reach my server the last time,
+ * told once until it reaches it again.
  */
 let unreached: boolean = false;
 
@@ -261,7 +277,8 @@ function stampOf(): string {
  * Gives the key of an entry in the name of a shared file:
  * its `UID`, every character but letters, digits, `.`, `@` and `-` as `_`.
  *
- * @param id - Identifier of the entry, like `b8f1e81f-15b4-460e-910d-ef6b1b3d09b3@nomsystem`
+ * @param id - Identifier of the entry,
+ *   like `b8f1e81f-15b4-460e-910d-ef6b1b3d09b3@nomsystem`
  * @returns Key, like `b8f1e81f-15b4-460e-910d-ef6b1b3d09b3@nomsystem`
  */
 function keyOf(id: string): string {
@@ -269,7 +286,8 @@ function keyOf(id: string): string {
 }
 
 /**
- * Tells whether two names of `With` name the same person, small and capital letters alike,
+ * Tells whether two names of `With` name the same person,
+ * small and capital letters alike,
  * each as `Persons.md` names its person, see `personNameOf` in `persons.ts`,
  * so `Family, Sopha` names the person I share with as `Sopha`.
  *
@@ -498,9 +516,11 @@ export function attendeesRead(id: string): Attendee[] {
 /**
  * Sends an entry of my log to each of us in its `With` who was not in it before,
  * see the top of this file:
- * to all of them after it is added or logged from a box, to those who came in after it is changed,
+ * to all of them after it is added or logged from a box,
+ * to those who came in after it is changed,
  * never after a drag, which leaves `With` as it is.
- * Sends nothing while the reader shares nothing, see {@link sharingIs}, nor for a whole day;
+ * Sends nothing while the reader shares nothing,
+ * see {@link sharingIs}, nor for a whole day;
  * a copy that fails is told, never failing what I saved.
  * - `found`: The entry as my log holds it, `undefined` when gone.
  * - `to`: Those I share with in its `With` now and not before, each once.
@@ -566,7 +586,8 @@ export function listShare(change: ListChange, only?: string): void {
 
 /**
  * Sends all my foods, meals, places, rooms and platforms to a person,
- * the first time my reader shares with them, so our lists come together, see the top of this file:
+ * the first time my reader shares with them,
+ * so our lists come together, see the top of this file:
  * the foods first, then the meals, which name them, then the places, then the platforms.
  *
  * @param partner - The person, like `Vu`
@@ -598,7 +619,8 @@ function listsShareAll(partner: string): void {
 }
 
 /**
- * Makes a change of a list that came on my own lists, with the same call as the one who made it,
+ * Makes a change of a list that came on my own lists,
+ * with the same call as the one who made it,
  * see the top of this file.
  *
  * @param change - The change
@@ -625,7 +647,8 @@ function listApply(change: ListChange): void {
  * its fields as it brought them, its skill and type by the folder it links,
  * a skill entry its link anew, to the folder of its skill in my modules,
  * see `titleOf` in `documents.ts`,
- * and the cooking a meal draws from only when it is an entry `Cook` of my log before the meal,
+ * and the cooking a meal draws from only when it is an entry `Cook`
+ * of my log before the meal,
  * as I have it once it came with us both in its `With`.
  * - `cooking`: The entry of that cooking in my log, `undefined` for none.
  *
@@ -710,7 +733,8 @@ function thingTake(name: string, text: string): boolean {
  * then sends what waits in {@link outbox}, since my server is there.
  * - `box`: My box, like `NomKommunikation/to_sopha/dashboard`.
  * - `file`: The file of a thing in my box.
- * - `names`: The names of what waits in Vu's box, one a line, `undefined` when not reached.
+ * - `names`: The names of what waits in Vu's box,
+ *   one a line, `undefined` when not reached.
  * - `text`: What one holds, `undefined` when not reached.
  */
 export function inboxTake(): void {

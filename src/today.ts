@@ -8,14 +8,17 @@
  * A view that shows today moves on to the new day by itself at 00:00,
  * and when the page becomes visible again on a later day, like a tab left open overnight,
  * whose timer the browser may have held back;
- * a day I went to myself stays, and only marks today anew, like the icon back to today of the day.
+ * a day I went to myself stays, and only marks today anew,
+ * like the icon back to today of the day.
  * A view that can load its day again,
  * like the day with its plan, its log, its trackers and its note,
- * loads it again whenever the page becomes visible, like when I come back to the app on my phone,
+ * loads it again whenever the page becomes visible,
+ * like when I come back to the app on my phone,
  * so it never shows them as they were when the page went to the background.
  * A view opens on today, also when it is reloaded,
  * opened again by the browser or started anew as the app;
- * only a link to a day, like a meal of the food view, opens on that day, see {@link askedDayOf}.
+ * only a link to a day, like a meal of the food view,
+ * opens on that day, see {@link askedDayOf}.
  *
  * - `./skill/attempts.ts`: Writes a date as a day in the form of the reader.
  */
@@ -23,7 +26,8 @@
 import { dayOf } from "./skill/attempts.ts";
 
 /**
- * Gives today's calendar date, which turns at 00:00: at 00:20 on 14 October today is 14 October.
+ * Gives today's calendar date, which turns at 00:00:
+ * at 00:20 on 14 October today is 14 October.
  *
  * @returns Day like `2026-10-14`
  */
@@ -67,7 +71,8 @@ export function askedDayOf(): string | null {
  *
  * @param shown - Gives the day the view shows, like `2026-10-13`
  * @param show - Shows a day, like `2026-10-14`
- * @param mark - Marks today anew in a view that stays on another day, like the icon back to today;
+ * @param mark - Marks today anew in a view that stays on another day,
+ *   like the icon back to today;
  *   none for a view without such a mark, like the food
  * @param again - Loads the shown day again, as it lies in the files now;
  *   none for a view that does not, like the food

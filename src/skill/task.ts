@@ -1,20 +1,24 @@
 /**
  * ## Task
  *
- * What the views show of one task: when it is due, and its history folded behind a small button
- * that opens all its attempts, each with its day, its result and my comment on what went wrong,
+ * What the views show of one task: when it is due,
+ * and its history folded behind a small button that opens all its attempts,
+ * each with its day, its result and my comment on what went wrong,
  * and a link to the day; in the scripts view and in a card, under the heading of a Task,
- * its row with one button `⋯` for the next attempt, as a box of the day has, see `../menu.ts`;
+ * its row with one button `⋯` for the next attempt,
+ * as a box of the day has, see `../menu.ts`;
  * in a section, the Task of a round,
  * a check and a cross on the line of its heading instead, see {@link judgeOf}.
  * Only a cold Task has a result; an Example has none, `Next` checks it off in its round,
  * see `../editor/round.ts`.
- * Its menu writes into the skill entry of the moment, through the reader's one writer of attempts,
+ * Its menu writes into the skill entry of the moment,
+ * through the reader's one writer of attempts,
  * the task judged as a whole:
  * Right at once, Wrong opens one short field for my comment on what went wrong,
  * which Enter writes with it, also empty, and Escape closes without writing;
  * the field takes plain text in one line only, see {@link plainKeep};
- * only in a session of its module, which the dialog of a new entry starts while none runs,
+ * only in a session of its module,
+ * which the dialog of a new entry starts while none runs,
  * see `../editor/session.ts`.
  * Right and Wrong work only once the solution of the task is open,
  * so I judge against it, not by feeling, since self-grading runs generous (León 2023);
@@ -52,7 +56,8 @@ import type { IconNode } from "lucide";
  *
  * @param task - Task
  * @param today - Today like `2026-10-10`
- * @returns Text like `Due today`, also for a task due earlier, `Due 12.10.2026 (Mon)`, `New`,
+ * @returns Text like `Due today`, also for a task due earlier,
+ *   `Due 12.10.2026 (Mon)`, `New`,
  *   `Ready` or `Done`
  */
 export function stateTextOf(task: SkillTask, today: string): string {
@@ -152,12 +157,14 @@ export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
 }
 
 /**
- * Writes an attempt at a task into the skill entry of the moment, then shows the task again,
+ * Writes an attempt at a task into the skill entry of the moment,
+ * then shows the task again,
  * once a session of its module runs, see `sessionEnsure` in `../editor/session.ts`;
  * without one nothing is written and the buttons stay as they are.
  * The buttons of the task take no clicks meanwhile, so a double click writes one attempt;
  * when the reader does not take the attempt, `failed` says so.
- * - {@link HTMLElement#inert}: Makes an element and its content take no clicks and no typing.
+ * - {@link HTMLElement#inert}:
+ *   Makes an element and its content take no clicks and no typing.
  *
  * @param place - The buttons of the task: its row, or its check and cross
  * @param task - Task
@@ -244,15 +251,18 @@ function wrongShow(
  * then its button `⋯` with Right and Wrong, see the top of this file,
  * then its history and the place for the field of my comment, each across the row.
  * The button hides, keeping its place, until the solution is open,
- * and the row marks itself so meanwhile, a grey hint after the state saying so, see `task.css`;
+ * and the row marks itself so meanwhile,
+ * a grey hint after the state saying so, see `task.css`;
  * a card's row shows neither state nor hint nor history.
  * - `more`: The button `⋯` of the task with its menu.
- * - `judged`: Shows the button while the solution is open, or always when the task has none.
+ * - `judged`: Shows the button while the solution is open,
+ *   or always when the task has none.
  * - `done`: The last attempt of today, whose result a card shows.
  *
  * @param task - Task
  * @param today - Today like `2026-10-10`
- * @param solution - Fold of the task's solution, `null` when it has none: whether it is open,
+ * @param solution - Fold of the task's solution,
+ *   `null` when it has none: whether it is open,
  *   and a `toggle` when that changes, like the fold of a card,
  *   or as the editor draws the row anew on each fold, see `../editor/tasks.ts`
  * @param card - Whether the row stands on a card, quiet
@@ -331,7 +341,8 @@ function judgeButtonOf(icon: IconNode, words: string): HTMLButtonElement {
  * The check writes Right at once and then goes on, as `Next` does;
  * the cross opens below it the field of my comment on what went wrong,
  * in the place and look of a menu, see `menuAnchor` in `../menu.ts`,
- * which Enter writes with it, also empty, and Escape or a click beside it closes without writing.
+ * which Enter writes with it, also empty,
+ * and Escape or a click beside it closes without writing.
  * Both stay faint and off until the solution is open, so I judge against it;
  * the result of today stands pressed, in the calm grey of what is picked,
  * the cross with my comment as its tooltip.

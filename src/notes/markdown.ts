@@ -7,12 +7,15 @@
  *   so `_`, `*` and `\` inside stay TeX, while `$` inside code stays text;
  *   as in Obsidian, `$$…$$` within a line stands on a line of its own;
  * - callouts `> [!note] Title`, folded with `-` after the type, foldable with `+`;
- *   their lines without `>` and one space are read by the same rules as the rest of the note;
- * - wiki links `[[Note#Heading|Text]]` and embeds `![[Note]]`, images only in Markdown's form;
+ *   their lines without `>` and one space are read by the same rules
+ *   as the rest of the note;
+ * - wiki links `[[Note#Heading|Text]]` and embeds `![[Note]]`,
+ *   images only in Markdown's form;
  * - a single line break as a break, as with Obsidian's strict line breaks off;
  * - a lazy line, one that goes on with the text of a list item without being indented,
  *   like the spacer `⠀` under a sub-bullet, as part of that item, as CommonMark reads it;
- * - an HTML block like `<table>` ending on the line its tag closes, as in Obsidian's editor,
+ * - an HTML block like `<table>` ending on the line its tag closes,
+ *   as in Obsidian's editor,
  *   so Markdown right below it is read as Markdown;
  * - `|` inside `[[…]]` on a table row as part of the link, not as the end of a cell.
  * Beyond Obsidian, the block under each heading `##`,
@@ -52,7 +55,8 @@ import type {
 } from "marked";
 
 /**
- * Formula on lines of its own, as Obsidian reads it: a line starting with `$$` and no other `$`,
+ * Formula on lines of its own, as Obsidian reads it:
+ * a line starting with `$$` and no other `$`,
  * up to a line ending with `$$` and no `$` before; the TeX between.
  */
 const mathBlockRule: RegExp = /^ {0,3}\$\$([^$\n]*\n(?:.*\n)*?[^$\n]*)\$\$[ \t]*(?:\n|$)/;
@@ -66,20 +70,24 @@ const mathDisplayRule: RegExp = /^\$\$((?:\\[\s\S]|[^\\])*?)\$\$(?:[^\S\n]*\n)?/
 
 /**
  * Formula `$…$`, as Obsidian reads it:
- * no space or tab after the opening `$`, none before the closing `$` and no digit after it,
- * so `$5 and $6` stays text. A backslash keeps the next character, so `\$` ends no formula.
+ * no space or tab after the opening `$`,
+ * none before the closing `$` and no digit after it,
+ * so `$5 and $6` stays text.
+ * A backslash keeps the next character, so `\$` ends no formula.
  */
 const mathInlineRule: RegExp = /^\$(?![ \t$])((?:\\[\s\S]|[^\\])+?)(?<![ \t])\$(?!\d)/;
 
 /**
- * Punctuation right after a formula `$…$`, like the `,` of `$x_1$, $x_2$`, which stays on its line:
+ * Punctuation right after a formula `$…$`,
+ * like the `,` of `$x_1$, $x_2$`, which stays on its line:
  * a formula never breaks, so a break before the punctuation would leave it alone
  * at the start of the next line.
  */
 export const punctuationRule: RegExp = /^[.,;:!?)]+/;
 
 /**
- * Callout: a quote whose first line is `> [!type] Title`, with its type, `-` or `+` for folding,
+ * Callout: a quote whose first line is `> [!type] Title`,
+ * with its type, `-` or `+` for folding,
  * its title, and the further lines of the quote.
  */
 const calloutRule: RegExp =
@@ -92,7 +100,8 @@ const wikiLinkRule: RegExp = /^(!?)\[\[([^\]]+)\]\]/;
 
 /**
  * HTML block of a block tag,
- * like `<table>`, up to the end of the line where the tag closes, with no empty line in it.
+ * like `<table>`, up to the end of the line where the tag closes,
+ * with no empty line in it.
  */
 const htmlBlockRule: RegExp =
     /^ {0,3}<(table|div|details|figure|center)\b(?:(?!\n[ \t]*\n)[\s\S])*?<\/\1>[^\n]*(?:\n|$)/i;
@@ -104,7 +113,8 @@ const htmlBlockRule: RegExp =
 const frontMatterRule: RegExp = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/;
 
 /**
- * Row of a table, like `| ![tangent](Visualizations/Tangens.svg) | … |`, also inside a quote.
+ * Row of a table, like `| ![tangent](Visualizations/Tangens.svg) | … |`,
+ * also inside a quote.
  */
 const tableRowRule: RegExp = /^[ \t>]*\|.*$/gm;
 
@@ -123,7 +133,8 @@ const blockStartRule: RegExp =
     /^[ \t]*(?:#{1,6}(?:[ \t]|$)|>|```|~~~|\||<|(?:[-*_][ \t]*){3,}$)/;
 
 /**
- * Text of a heading that opens a solution, like `Solution` or `Solution (own, unchecked)`.
+ * Text of a heading that opens a solution,
+ * like `Solution` or `Solution (own, unchecked)`.
  */
 const solutionRule: RegExp = /^Solution\b/;
 
@@ -149,8 +160,10 @@ function escaped(text: string): string {
 /**
  * Splits a link at its first `#` into the link to a file and the heading in it.
  *
- * @param address - Link like `05_06_EulerTrigonometrie#05.06. Definition. Eulersche Formel`
- * @returns Link to the file, empty for the note itself, and heading, empty when there is none
+ * @param address - Link
+ *   like `05_06_EulerTrigonometrie#05.06. Definition. Eulersche Formel`
+ * @returns Link to the file, empty for the note itself,
+ *   and heading, empty when there is none
  */
 function linkPartsOf(address: string): [string, string] {
     const hash: number = address.indexOf("#");
@@ -178,10 +191,11 @@ function emptyLinesAtEndOf(markdown: string): number {
  * so marked reads it as CommonMark does.
  * A lazy line goes on with the text of a list item without being indented,
  * like the spacer `⠀` under a sub-bullet.
- * marked would end the whole list at a lazy line whose line above lies 4 columns or more deeper
- * than its item, and every step after it would turn into plain text.
+ * marked would end the whole list at a lazy line whose line above lies 4 columns
+ * or more deeper than its item, and every step after it would turn into plain text.
  * - A tab counts 4 columns, as in marked.
- * - Lines inside a formula `$$…$$` over several lines are TeX, never a list item or another block,
+ * - Lines inside a formula `$$…$$` over several lines are TeX,
+ *   never a list item or another block,
  *   so a row like `- & 1 & 2` starts no list.
  *
  * @param markdown - Markdown, like a note or the lines of a callout without their `>`
@@ -246,7 +260,8 @@ function lazyLinesIndented(markdown: string): string {
 /**
  * Prepares a note for marked:
  * without its front matter, with every `|` inside `[[…]]` on a table row written `\|`,
- * as Obsidian asks for in tables, so marked keeps the link in one cell and gives it back with `|`,
+ * as Obsidian asks for in tables,
+ * so marked keeps the link in one cell and gives it back with `|`,
  * and with its lazy lines indented, see {@link lazyLinesIndented}.
  *
  * @param note - Text of the note
@@ -314,7 +329,8 @@ const mathBlock: TokenizerAndRendererExtension = {
 };
 
 /**
- * Formula within a line, `$$…$$` or `$…$`, see {@link mathDisplayRule} and {@link mathInlineRule}.
+ * Formula within a line, `$$…$$` or `$…$`,
+ * see {@link mathDisplayRule} and {@link mathInlineRule}.
  * Renders as `<span class="math math-block">` for `$$…$$`,
  * `<span class="math math-inline">` for `$…$`, with its TeX, as in Obsidian;
  * a formula `$…$` with punctuation right after it,
@@ -354,12 +370,15 @@ const mathInline: TokenizerAndRendererExtension = {
 /**
  * Callout, see {@link calloutRule};
  * its title as the type with a capital, like `Note`, when it has none.
- * Renders as `<div class="callout">`, or as `<details class="callout">` to fold, open for `+`,
- * with the type in `data-callout` and the title inside `callout-title-inner`, as in Obsidian,
+ * Renders as `<div class="callout">`,
+ * or as `<details class="callout">` to fold, open for `+`,
+ * with the type in `data-callout`
+ * and the title inside `callout-title-inner`, as in Obsidian,
  * so the title stays one piece of text between the icon and the fold arrow.
  * - {@link Lexer#inline}: Reads the title as Markdown once the blocks are read.
  * - {@link Lexer#blockTokens}:
- *   Reads the lines of the quote without their `>` and one space as Markdown of their own,
+ *   Reads the lines of the quote without their `>`
+ *   and one space as Markdown of their own,
  *   by the same rules as the rest of the note, lazy lines included;
  *   a tab right after `>` stays as indentation.
  */
@@ -407,7 +426,8 @@ const callout: TokenizerAndRendererExtension = {
  * Wiki link or embed, see {@link wikiLinkRule}; `\|` counts as `|`.
  * A link renders as `<a class="internal-link">` with its text,
  * else its target and heading like `Note > Heading`.
- * An embedded note renders as an empty `<div class="markdown-embed">` the scripts view fills;
+ * An embedded note renders
+ * as an empty `<div class="markdown-embed">` the scripts view fills;
  * any other file as a link, an image too, which is written in Markdown's form,
  * see {@link imageOf}.
  */
@@ -476,8 +496,8 @@ const fold: TokenizerAndRendererExtension = {
 /**
  * Keeps the empty lines between two blocks,
  * which marked reads as a block `space` and draws as nothing:
- * each `space` between two blocks becomes one {@link emptyLines} with the number of empty lines
- * between them, like 1 for the empty line below the `Generated:` quote of a block,
+ * each `space` between two blocks becomes one {@link emptyLines} with the number of empty
+ * lines between them, like 1 for the empty line below the `Generated:` quote of a block,
  * counted from the end of the block above,
  * since marked keeps the line break that ends a block's last line sometimes in the block
  * and sometimes in the `space`.
@@ -517,7 +537,8 @@ function emptyLinesMade(tokens: Token[] | TokensList): Token[] | TokensList {
  * Folds each section under a heading of a level,
  * up to the next heading of the same or a higher level, into one {@link fold},
  * when the heading's text says so.
- * - `sectionEnds`: Tells whether a block ends the section, a heading of the same or a higher level.
+ * - `sectionEnds`: Tells whether a block ends the section,
+ *   a heading of the same or a higher level.
  *
  * @param tokens - Blocks of a note
  * @param depth - Level of the headings, like 2 for `##`
@@ -578,7 +599,8 @@ function blocksMade(tokens: Token[] | TokensList): Token[] | TokensList {
 }
 
 /**
- * Heading with its text as written in `data-heading`, so a link like `[[Note#Heading]]` finds it.
+ * Heading with its text as written in `data-heading`,
+ * so a link like `[[Note#Heading]]` finds it.
  *
  * @param token - Heading
  * @returns HTML of the heading
@@ -606,7 +628,8 @@ function linkOf(this: Renderer, token: Tokens.Link): string | false {
 }
 
 /**
- * Code block of a language of my list, like ```python: its pieces in the colors of my theme,
+ * Code block of a language of my list, like ```python:
+ * its pieces in the colors of my theme,
  * see `./code.ts`.
  * - `html`: The code with a class for each piece, `null` for no language of my list.
  *
@@ -667,10 +690,12 @@ const markdown: Marked = new Marked({
 
 /**
  * Turns the Markdown of a note into clean HTML, see the top of this file.
- * The block below empty lines, see {@link emptyLinesMade}, gets their number in `--empty-lines`,
+ * The block below empty lines, see {@link emptyLinesMade},
+ * gets their number in `--empty-lines`,
  * which `notes.css` turns into room above it, so the room comes and goes with the block,
  * like a step of a solution shown one at a time.
- * Empty lines at the end of a list item or of a section stand above the next item or section,
+ * Empty lines at the end of a list item
+ * or of a section stand above the next item or section,
  * so they go to the element after the first element around them that has one,
  * like the next `<li>` or the next fold.
  * - {@link Marked#parse}: Turns Markdown into HTML, with `async: false` directly as text.

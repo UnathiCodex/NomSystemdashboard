@@ -15,7 +15,8 @@
  * Its rule is the one most of its boxes follow, see {@link ruleOf}:
  * its slots, each a weekday at least two of its boxes fall on,
  * with the time most of them have there,
- * like `Mon 12:00–13:30` and `Tue 16:00–17:30`, the place and the people most of them have,
+ * like `Mon 12:00–13:30` and `Tue 16:00–17:30`,
+ * the place and the people most of them have,
  * its first day and its last, like `Mon 14:00–16:00 · 19.10.2026–01.02.2027`,
  * and its extras, single dates besides its weeks, each with its own times,
  * like a session on Sat, 14.11.2026, 10:00–12:00 or a repetition in March;
@@ -28,12 +29,15 @@
  * every other day of its slots has its box,
  * and one that does not take place is a box the university cancelled, `X-NUMBER:NONE`,
  * see `boxUniversity` in `boxes.ts`, never a day without box.
- * The boxes of my tutorials that go to a group, by their `X-GROUP`, follow the rule of my group:
+ * The boxes of my tutorials that go to a group,
+ * by their `X-GROUP`, follow the rule of my group:
  * my group is the one I pinned, a choice of mine, never read from my boxes,
- * `X-GROUP;X-PINNED=TRUE` on the to-dos of that group, see {@link pinnedOf} and {@link pinPut},
+ * `X-GROUP;X-PINNED=TRUE` on the to-dos of that group,
+ * see {@link pinnedOf} and {@link pinPut},
  * and a box of another group is my own choice,
- * see {@link chosenIs}, a session I took from that group by hand besides the box of its week
- * or a week I go to that group instead, which never moves the pin and which no pin moves;
+ * see {@link chosenIs}, a session I took from that group
+ * by hand besides the box of its week or a week I go to that group instead,
+ * which never moves the pin and which no pin moves;
  * taking my group back removes my open boxes of it from today on
  * and the pin, see {@link groupMine}.
  * A box of my tutorials is numbered by its week of the semester,
@@ -42,10 +46,13 @@
  * a second tutorial in a week takes the number of that week too,
  * and a week the university cancelled keeps its place.
  *
- * The groups of the tutorials of a module lie in its plan, `Modules/<module folder>_Plan.ics`,
- * beside my boxes, one weekly to-do per group as TUMonline lists it, see {@link groupPut},
+ * The groups of the tutorials of a module lie in its plan,
+ * `Modules/<module folder>_Plan.ics`,
+ * beside my boxes, one weekly to-do per group
+ * as TUMonline lists it, see {@link groupPut},
  * since a plan holds only to-dos:
- * its first session as `DTSTART` in Berlin time, its length as `ESTIMATED-DURATION`, no `STATUS`,
+ * its first session as `DTSTART` in Berlin time,
+ * its length as `ESTIMATED-DURATION`, no `STATUS`,
  * since it is nothing I do, `RRULE:FREQ=WEEKLY;UNTIL=…` with the start of its last
  * session in UTC, as the standard wants it beside a time zone,
  * one `EXDATE` per day the university does not teach between them,
@@ -63,7 +70,8 @@
  * I make and change a group by hand in the form of a series, by its row `Group`,
  * see {@link groupApply}: its days, room, platform, tutors and weeks as typed,
  * its past kept as it was, the change going on from today
- * as a to-do of its own with the same `X-GROUP`, a date I mark cancelled one more `EXDATE`;
+ * as a to-do of its own with the same `X-GROUP`,
+ * a date I mark cancelled one more `EXDATE`;
  * one session changed alone, another room or time that day,
  * its component of its own with its `RECURRENCE-ID`, see {@link sessionApply}.
  * My open boxes that go to it take its sessions anew, see {@link groupBoxesMove};
@@ -71,7 +79,8 @@
  * so a session I catch up on another day or online stays where I put it.
  *
  * Three changes write the boxes of a series, week by week,
- * see {@link draftsOf}, each leaving every box done, cancelled by me or pushed where it is,
+ * see {@link draftsOf}, each leaving every box done,
+ * cancelled by me or pushed where it is,
  * since those are mine, see {@link changeable},
  * and each numbering the boxes of the type anew by their places, see {@link numbersOf}:
  * - its rule changed in the form of the series, see {@link seriesApply}:
@@ -83,14 +92,16 @@
  *   in the same form I skip a box or mark it cancelled by the university, a new one too,
  *   or take that back, see {@link stateSet}, all of it written as I save;
  * - a group made mine, see {@link groupMine}:
- *   from the week of its next session on, my boxes of the group before go to its sessions,
+ *   from the week of its next session on,
+ *   my boxes of the group before go to its sessions,
  *   my own choices staying, those of the group now its boxes of their weeks;
  *   with no series yet, its sessions to come become one;
  * - one session of a group picked for its week in the menu of the groups,
  *   in the card of its type or in a box of the plan, see {@link weekPick}:
  *   the box of its week goes to it, its day, its time, its length, its place,
  *   its tutor and its group, its number kept, a week without box gets one,
- *   and with no series from that week on yet the sessions of the group from then on become one.
+ *   and with no series from that week on yet the sessions
+ *   of the group from then on become one.
  * Logging a tutorial moves no other week.
  * A box of my own choice carries no mark but its group:
  * once its group is pinned, it follows the pin as every box of that group.
@@ -101,7 +112,8 @@
  * A new box repeated weekly by the row `Repeat` of its dialog, in the dialog of a series,
  * see `src/day/series.ts`, has such a rule too, see {@link repeatApply}:
  * a skill box of a numbered type of a module becomes its series
- * as the form of a new series makes it, numbered, while its type has no box in the semester yet;
+ * as the form of a new series makes it, numbered,
+ * while its type has no box in the semester yet;
  * any other box, like one of a project or my gym, one box per date,
  * each as the dialog adds one alone, see `boxesAdd` in `boxes.ts`.
  *
@@ -109,15 +121,18 @@
  * like `Endterm`, are no series:
  * their form gives each exam its kind and its times, see {@link examSet}.
  *
- * - `node:path`: Names the folder and the file of the plan of a module, which holds its groups.
+ * - `node:path`: Names the folder and the file of the plan of a module,
+ *   which holds its groups.
  * - `./boxes.ts`: Reads the skill boxes with their states, finds a box, removes one,
  *   adds boxes and takes back one I skipped, names the numbered types,
  *   and tells a group from a box.
- * - `./calendar.ts`: Reads the groups and the holidays, writes boxes and groups, ends a group,
+ * - `./calendar.ts`: Reads the groups and the holidays,
+ *   writes boxes and groups, ends a group,
  *   changes one session of it alone, cancels one and gives it back,
  *   and calculates with days and times in Berlin time.
  * - `./categories.ts`: Gives the semester of a day and tells well-formed people.
- * - `./documents.ts`: Writes what a box or a group is, linking the folder of its material.
+ * - `./documents.ts`: Writes what a box or a group is,
+ *   linking the folder of its material.
  * - `./notes.ts`: Lists the folders of my modules and of their material,
  *   and gives the code of a module.
  * - `./places.ts`: Gives the link of a place.
@@ -188,7 +203,8 @@ import type { CalendarSource } from "./sources.ts";
  * A slot of a rule, one weekday of it with its time, see {@link Rule}.
  *
  * - `weekday`: Its weekday, from 1 for Monday to 7 for Sunday.
- * - `start`: Its time of start in Berlin time, like `14:00`; empty for boxes without time.
+ * - `start`: Its time of start in Berlin time, like `14:00`;
+ *   empty for boxes without time.
  * - `end`: Its time of end in Berlin time, like `16:00`, after its start;
  *   empty for boxes without time.
  * - `minutes`: Of a slot without times only how long its boxes last, like 480,
@@ -202,10 +218,12 @@ export type Slot = {
 };
 
 /**
- * A single date of a rule outside its weeks, see {@link Rule}, like a session on a Saturday.
+ * A single date of a rule outside its weeks, see {@link Rule},
+ * like a session on a Saturday.
  *
  * - `day`: Its day, like `2026-11-14`.
- * - `start`, `end`: Its times in Berlin time, like `10:00` and `12:00`, as those of a slot.
+ * - `start`, `end`: Its times in Berlin time,
+ *   like `10:00` and `12:00`, as those of a slot.
  */
 export type Extra = {
     day: string;
@@ -214,7 +232,8 @@ export type Extra = {
 };
 
 /**
- * The dates of the slots of a rule with times of their own, other than those of their slot,
+ * The dates of the slots of a rule with times of their own,
+ * other than those of their slot,
  * by their days, like `2026-10-30` with `14:00` and `17:00` of a lecture once later
  * than on its other Fridays, see {@link Rule}.
  */
@@ -227,8 +246,10 @@ export type Times = { [day: string]: Pick<Slot, "start" | "end"> };
  * or as a group is written, see {@link groupPut}.
  *
  * - `type`: Type of its boxes, like `VO`.
- * - `slots`: Its weekdays with their times, by weekday, each weekday once; a group has one.
- * - `extras`: Its single dates besides its weeks, like a session on a Saturday, by their days;
+ * - `slots`: Its weekdays with their times, by weekday,
+ *   each weekday once; a group has one.
+ * - `extras`: Its single dates besides its weeks,
+ *   like a session on a Saturday, by their days;
  *   none for none, as for every group.
  * - `location`: Its place as an entry writes it, see `lineOf` in `places.ts`, like
  *   `5416.01.003 (Hörsaal 2 "Interims II"), Lichtenbergstraße 2b, 85748, Garching bei München, Deutschland`,
@@ -238,8 +259,10 @@ export type Times = { [day: string]: Pick<Slot, "start" | "end"> };
  *   the place keeping the link it has or taking that of `Places.md` or `Rooms.md`,
  *   see `placeLinkOf` in `places.ts`.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`: What its boxes do online,
- *   like the stream of a lecture on `TUM-Live` with its link, see `Online` in `calendar.ts`.
- * - `attendees`: Who I am with, like a tutor, see `Attendee` in `calendar.ts`; none for nobody.
+ *   like the stream of a lecture on `TUM-Live` with its link,
+ *   see `Online` in `calendar.ts`.
+ * - `attendees`: Who I am with, like a tutor,
+ *   see `Attendee` in `calendar.ts`; none for nobody.
  * - `first`: The first day of its weeks, like `2026-10-19`; an extra may lie before it.
  * - `last`: The last day of its weeks, like `2027-02-01`, on or after its first;
  *   an extra may lie after it.
@@ -284,7 +307,8 @@ export type Series = {
  *   like `2026-10-27T09:00:00.000Z`, of a group without times its day, like `2026-10-27`.
  * - `minutes`: Its length in minutes, like 120.
  * - `location`, `locationLink`, `online`, `onlineLink`, `onlineChannel`, `onlineTitle`,
- *   `attendees`: Its room with its link, what it does online and its tutors, those of its to-do,
+ *   `attendees`: Its room with its link,
+ *   what it does online and its tutors, those of its to-do,
  *   or its own once the university changed it alone.
  * - `changed`: Whether the university changed it alone,
  *   a component of its own with its `RECURRENCE-ID`, see {@link sessionApply}.
@@ -301,11 +325,14 @@ export type Session = Online &
  * A group of the tutorials of a module, see the top of this file, as the page shows it.
  *
  * - `ids`: The identifiers of its to-dos in the plan of its module, their `UID`s,
- *   one per weekday it meets on and per part a change from a day on left, see {@link groupApply},
+ *   one per weekday it meets on and per part a change from a day on left,
+ *   see {@link groupApply},
  *   and of each session changed alone, see {@link Session}.
- * - `rule`: Its rule, read back from its sessions from today on, else from all, see {@link ruleOf},
+ * - `rule`: Its rule, read back from its sessions from today on,
+ *   else from all, see {@link ruleOf},
  *   so a group changed from today on shows its change:
- *   its type, its slots, mostly one, its room, its tutor, its first and last day, its group,
+ *   its type, its slots, mostly one, its room, its tutor,
+ *   its first and last day, its group,
  *   like `03`, and its semester.
  * - `sessions`: Its sessions, the earliest first.
  * - `pinned`: Whether it is the group I pinned, see {@link pinnedOf}.
@@ -318,26 +345,31 @@ export type Group = {
 };
 
 /**
- * The course of a module in the semester of today, see the top of this file, as the page shows it.
+ * The course of a module in the semester of today,
+ * see the top of this file, as the page shows it.
  *
- * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `semester`: The semester, like `2026W`.
  * - `boxes`: Its skill boxes of the semester, of every type, each with its state,
  *   see `Box` in `boxes.ts`, the earliest first.
  * - `series`: Its series, one per numbered type with boxes, see {@link seriesListOf}.
  * - `groups`: Its groups of the semester, by type and group.
- * - `folders`: The folder of the material of the semester of each type, from the module folder,
+ * - `folders`: The folder of the material of the semester of each type,
+ *   from the module folder,
  *   like `VO_UniversityLectureLessons/TUM_2026W` for `VO`, also one not there yet,
  *   which a click on it makes, see `semesterFoldersRead` in `notes.ts`.
  * - `links`: The folder a box of each type links in the semester, its `ALTREP`,
  *   as the reader writes it now, see `skillLinkOf` in `documents.ts`,
  *   like `NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W` for `VO`,
  *   which the dialog of a series shows below its summary, see `src/day/series.ts`.
- * - `learned`: My own learning of the module in the semester logged without a box of the plan,
- *   its skill entries of the log without type, see {@link learnedRead}, the earliest first;
+ * - `learned`: My own learning of the module
+ *   in the semester logged without a box of the plan,
+ *   its skill entries of the log without type,
+ *   see {@link learnedRead}, the earliest first;
  *   what I learned from a box shows as that box, among `boxes`, without type.
- * - `file`: Its plan from `NomWorkspace` on, see `vaultPathOf` in `sources.ts`,
- *   like `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
+ * - `file`: Its plan from `NomWorkspace` on, see `vaultPathOf` in `sources.ts`, like
+ *   `NomManageplannings/NomManagecalendar/Modules/IN2028_BusinessAnalyticsMachineLearning_Plan.ics`.
  */
 export type Course = {
     module: string;
@@ -374,10 +406,12 @@ export type Learned = Online &
 /**
  * A change of a series, as the form of a series sends it, see {@link seriesApply}.
  *
- * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `rule`: The rule as typed, its slots in the order of the form.
  * - `old`: The rule as read back when the form opened, `null` for a new series.
- * - `before`: For each slot of the rule, the weekday of the slot of `old` whose boxes it takes,
+ * - `before`: For each slot of the rule,
+ *   the weekday of the slot of `old` whose boxes it takes,
  *   like 1 for a slot moved from Monday to Tuesday, 0 for a slot added;
  *   left out, each slot takes those of the slot of its own weekday.
  * - `states`: The state I gave a box of the series in the form, by its identifier,
@@ -400,10 +434,12 @@ export type SeriesChange = {
 /**
  * A group made mine, as the page sends it, see {@link groupMine}.
  *
- * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `type`: Type of the group, like `TU`.
  * - `group`: The group, like `03`, empty to have none.
- * - `dry`: Whether only to tell what that would make, for the preview of the form, writing nothing;
+ * - `dry`: Whether only to tell what that would make,
+ *   for the preview of the form, writing nothing;
  *   false when left out.
  */
 export type MineChange = {
@@ -417,7 +453,8 @@ export type MineChange = {
  * One session of a group picked for its week,
  * as the menu of the groups sends it, see {@link weekPick}.
  *
- * - `module`: Name of the folder of the module, like `IN0009_BetriebssystemeSystemsoftware`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN0009_BetriebssystemeSystemsoftware`.
  * - `type`: Type of the group, like `TU`.
  * - `group`: The group, like `03`.
  * - `start`: The start of the session as ISO instant, like `2026-11-05T15:00:00.000Z`.
@@ -436,7 +473,8 @@ export type PickChange = {
 /**
  * A group to write, see {@link groupPut}.
  *
- * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `rule`: Its rule, with its one slot and its group, like `03`.
  */
 export type GroupNew = {
@@ -447,19 +485,23 @@ export type GroupNew = {
 /**
  * A group as the form of a series makes or changes it, see {@link groupApply}.
  *
- * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `rule`: Its rule as typed: its type, its group,
  *   like `05`, its slots, one or more, its place, what it does online, its tutors,
  *   its first and last day and its semester;
  *   no extras and no times of its own, since a group meets weekly.
- * - `made`: Whether it is a new group, so none of its type, group and semester may be there yet;
+ * - `made`: Whether it is a new group, so none of its type,
+ *   group and semester may be there yet;
  *   else it changes the one there.
  * - `was`: The name of the group there before I renamed it,
- *   like `Mo-0800-1`, its name everywhere taking that of the rule, see {@link groupRename};
+ *   like `Mo-0800-1`, its name everywhere taking that of the rule,
+ *   see {@link groupRename};
  *   left out, or the same, for a group not renamed.
  * - `states`: The dates of its slots I marked cancelled, `university`,
  *   or open again, `open`, by their days, like `2026-11-10`; left out for none.
- * - `dry`: Whether only to tell what it would make, for the preview of the form, writing nothing.
+ * - `dry`: Whether only to tell what it would make,
+ *   for the preview of the form, writing nothing.
  */
 export type GroupChange = {
     module: string;
@@ -474,11 +516,13 @@ export type GroupChange = {
  * One session of a group the university changed alone, as the form of the group sends it,
  * see {@link sessionApply}.
  *
- * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `type`, `group`, `semester`: Its group, like `TU`, `03` and `2026W`.
  * - `id`: Its identifier, see `id` of {@link Session}.
  * - `start`, `end`: Its times in Berlin time that day, like `12:00` and `14:00`.
- * - `location`: Its room as an entry writes it, see `lineOf` in `places.ts`, empty for none.
+ * - `location`: Its room as an entry writes it,
+ *   see `lineOf` in `places.ts`, empty for none.
  */
 export type SessionChange = {
     module: string;
@@ -494,7 +538,8 @@ export type SessionChange = {
 /**
  * A group to remove, see {@link groupRemove}.
  *
- * - `module`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `module`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
  * - `type`: Its type, like `TU`.
  * - `group`: The group, like `03`.
  * - `semester`: Its semester, like `2026W`.
@@ -512,14 +557,17 @@ export type GroupGone = {
  * of its dialog, see {@link repeatApply}.
  *
  * - `box`: The box as the dialog sends one made once,
- *   see `BoxNew` in `boxes.ts`, without its day, time, length and deadline, which each date sets.
+ *   see `BoxNew` in `boxes.ts`, without its day, time,
+ *   length and deadline, which each date sets.
  * - `slots`: Its weekdays with their times, in the order of the dialog.
  * - `extras`: Its single dates besides its weeks, see {@link Extra}.
  * - `first`, `last`: Its first and last day, like `2026-10-19`.
- * - `times`: The dates of its slots with times of their own, see {@link Times}; left out for none.
+ * - `times`: The dates of its slots with times of their own,
+ *   see {@link Times}; left out for none.
  * - `states`: The states I gave its boxes, as those of a series,
  *   see `states` of {@link SeriesChange}, each new, so by its day; left out for none.
- * - `dry`: Whether only to tell what it would make, for the preview of the dialog, writing nothing.
+ * - `dry`: Whether only to tell what it would make,
+ *   for the preview of the dialog, writing nothing.
  */
 export type RepeatChange = {
     box: Omit<BoxNew, "day" | "time" | "minutes" | "deadline">;
@@ -557,7 +605,8 @@ export type ExamChange = {
  * - `number`: Its number after the change,
  *   like `2`, `NONE` for one the university cancelled, empty for none.
  * - `state`: Its state, as the change gives it,
- *   see `BoxState` in `boxes.ts`, `new` for a new one, `university` for a new one I cancelled.
+ *   see `BoxState` in `boxes.ts`, `new` for a new one,
+ *   `university` for a new one I cancelled.
  * - `pushed`: Whether I pushed it to a later day, so it stands no more on its own day,
  *   see `Push` in `calendar.ts`.
  * - `editable`: Whether I may skip it or mark it cancelled by the university:
@@ -567,9 +616,11 @@ export type ExamChange = {
  * - `change`: `new`, `changed`, its day, time, place, what it does online or its people,
  *   `renumbered`, only its number, its group, or `removed`;
  *   empty for one that stays as it is, or whose state alone changes.
- * - `attendees`: Who I am with after the change, like a tutor or the lecturers; none for nobody.
+ * - `attendees`: Who I am with after the change,
+ *   like a tutor or the lecturers; none for nobody.
  * - `chained`: Of a plain series, whether it is a day of another series of its chain,
- *   like the one it went on from, only shown, see `plannedOf` in `rules.ts`; false when left out.
+ *   like the one it went on from, only shown,
+ *   see `plannedOf` in `rules.ts`; false when left out.
  * - `location`, `locationLink`: Of a session of a group the university changed alone,
  *   see {@link Session}, its own room with its link; left out for any other.
  */
@@ -593,7 +644,8 @@ export type Planned = {
 /**
  * What a rule is read back from, see {@link ruleOf}: a box at its place in its series,
  * see {@link datedOf}, or a session of a group;
- * its day, its time as ISO instant, empty for none, its length in minutes, `null` for none,
+ * its day, its time as ISO instant, empty for none,
+ * its length in minutes, `null` for none,
  * its place with its link, what it does online and who I am with;
  * a box of my tutorials also its group, its `X-GROUP`, see {@link ruleOf}.
  */
@@ -630,7 +682,8 @@ type Field = "day" | "time" | "location" | "online" | "attendees" | "group";
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`: What it does online.
  * - `attendees`: Who I am with.
  * - `group`: The group it goes to, like `03`, empty for none.
- * - `before`: The weekday the box it takes fell on before the change, 1 for Monday to 7 for Sunday:
+ * - `before`: The weekday the box it takes fell on before the change,
+ *   1 for Monday to 7 for Sunday:
  *   that of its slot as the form opened,
  *   like 1 for a slot moved from Monday to Tuesday, else its own.
  * - `fields`: What of the box it takes changes, see {@link Field}.
@@ -688,7 +741,8 @@ type Draft = Online & {
 const allFields: Field[] = ["day", "time", "location", "online", "attendees", "group"];
 
 /**
- * Most weeks a rule may span, about a year, so a slip of a year typed makes no hundreds of boxes.
+ * Most weeks a rule may span, about a year,
+ * so a slip of a year typed makes no hundreds of boxes.
  */
 const ruleWeeks: number = 53;
 
@@ -698,7 +752,8 @@ const ruleWeeks: number = 53;
 const weekLength: number = 7 * 24 * 60 * 60 * 1000;
 
 /**
- * Type of the exams of a module, single dates whose `X-NUMBER` is their kind, see {@link examSet}.
+ * Type of the exams of a module,
+ * single dates whose `X-NUMBER` is their kind, see {@link examSet}.
  */
 const examType: string = "FA";
 
@@ -708,14 +763,16 @@ const examType: string = "FA";
 const examKinds: string[] = ["Midterm", "Endterm", "Retake"];
 
 /**
- * Regions whose holidays the university keeps, as the bracket at the end of a holiday names them,
+ * Regions whose holidays the university keeps,
+ * as the bracket at the end of a holiday names them,
  * see {@link lectureFreeOf}: Germany, `DE`, and Bavaria, where TUM lies, `BY`.
  */
 const universityRegions: string[] = ["DE", "BY"];
 
 /**
  * Dates of the semester, `CATEGORIES:University`, the university does not teach on,
- * see {@link lectureFreeOf}, as `Termine und Feiertage` of TUM names them beside the holidays,
+ * see {@link lectureFreeOf},
+ * as `Termine und Feiertage` of TUM names them beside the holidays,
  * see `Tum_TermineFristen` in my university records:
  * the times without lectures, its breaks, and the Dies Academicus.
  */
@@ -784,7 +841,8 @@ function semesterBeginOf(semester: string): string {
 }
 
 /**
- * Gives of a list the value whose key most of them have, the earliest of those equally many.
+ * Gives of a list the value whose key most of them have,
+ * the earliest of those equally many.
  * - `counts`: How many of them have each key.
  *
  * @param values - Values, in their order
@@ -808,7 +866,8 @@ function modeOf<T>(values: T[], keyOf: (value: T) => string): T | undefined {
 
 /**
  * Gives a box at its place in its series, see the top of this file:
- * where it stood before its first push, see `Push` in `calendar.ts`, else where it stands,
+ * where it stood before its first push,
+ * see `Push` in `calendar.ts`, else where it stands,
  * so a lecture pushed to the next day counts on its own day.
  * - `left`: Where it stood before its first push, `undefined` for a box never pushed.
  *
@@ -842,7 +901,8 @@ function weekOf(box: Box): string {
  * the earliest of them, see {@link draftsOf} and {@link ruleOf}.
  * - `found`: Its place among them, -1 for none.
  *
- * @param boxes - The boxes of a week still free, the earliest first; the one taken goes out of them
+ * @param boxes - The boxes of a week still free, the earliest first;
+ *   the one taken goes out of them
  * @param weekday - The weekday, 1 for Monday to 7 for Sunday
  * @param any - Whether to take the earliest when none falls on the weekday
  * @param dayOf - Gives the day of a box at its place in its series, like `2026-10-19`
@@ -866,7 +926,8 @@ function weekTake<T>(
  * as a slot or an extra has them, see {@link Slot}.
  *
  * @param item - A box or a session
- * @returns Its start and its end in Berlin time, like `14:00` and `16:00`, both empty without time
+ * @returns Its start and its end in Berlin time,
+ *   like `14:00` and `16:00`, both empty without time
  */
 function timesOf(item: Dated): [string, string] {
     return item.time === ""
@@ -882,12 +943,14 @@ function timesOf(item: Dated): [string, string] {
 /**
  * Gives the days the university does not teach from one day to another,
  * which a series of my course skips, see the top of this file:
- * every day of a holiday, `CATEGORIES:Holiday`, of `Holidays.ics`, see `holidays` in `sources.ts`,
+ * every day of a holiday, `CATEGORIES:Holiday`, of `Holidays.ics`,
+ * see `holidays` in `sources.ts`,
  * whose regions, the codes in the bracket at the end of its `SUMMARY`,
  * name one of {@link universityRegions}, like `Heilige Drei Könige (AT, BY)`,
  * and every day of a date of the semester, `CATEGORIES:University`, of `University.ics`,
  * of {@link lectureFreeTitles}, like `Weihnachtsferien (TUM)` or `Dies Academicus (TUM)`;
- * never a holiday only of Austria, like `Nationalfeiertag (AT)`, nor another date of the semester,
+ * never a holiday only of Austria, like `Nationalfeiertag (AT)`,
+ * nor another date of the semester,
  * like `Vorlesungsbeginn 2026W`.
  * - `regionsOf`: Gives the regions of a `SUMMARY`, parted by commas,
  *   none without a bracket at its end.
@@ -930,7 +993,8 @@ function lectureFreeOf(first: string, last: string): Set<string> {
  * the earliest of those equally many;
  * its weeks, from the first box on the weekday of a slot to the last,
  * the days the university does not teach skipped,
- * see {@link lectureFreeOf}, a box on another day of a week taking the place of a missing one,
+ * see {@link lectureFreeOf},
+ * a box on another day of a week taking the place of a missing one,
  * like a lecture moved once from Monday to Tuesday;
  * the times of a box on the day of a slot other than those of its slot,
  * as times of its own, see {@link Times};
@@ -954,7 +1018,8 @@ function lectureFreeOf(first: string, last: string): Set<string> {
  * - `from`, `to`: The first and the last of them,
  *   `from` the Monday of that box where it lies before.
  * - `skipped`: The days the university does not teach from the first to the last.
- * - `days`: The days of its weeks, those on a slot and those taking the place of a missing one.
+ * - `days`: The days of its weeks,
+ *   those on a slot and those taking the place of a missing one.
  * - `extras`: The extras, those outside its weeks first.
  * - `times`: The days of its slots whose box has times of its own.
  * - `free`: The boxes of a week no day of a slot took yet, by their days.
@@ -962,9 +1027,11 @@ function lectureFreeOf(first: string, last: string): Set<string> {
  * - `taken`: The box on the weekday of a slot of a week, `undefined` for none.
  *
  * @param type - Type of the series, like `VO`
- * @param items - What the rule follows: the boxes of a series, of my tutorials those of my group,
+ * @param items - What the rule follows: the boxes of a series,
+ *   of my tutorials those of my group,
  *   or the sessions of a group; at least one
- * @param all - What its days come from: every box of the series, also of a week at another group
+ * @param all - What its days come from: every box of the series,
+ *   also of a week at another group
  * @param group - Its group, like `03`, empty for none
  * @param semester - Its semester, like `2026W`
  * @returns The rule
@@ -1111,7 +1178,8 @@ function ruleOf(
  * Gives the dates of a rule, see the top of this file:
  * the day of each of its slots in each week from its first day to its last, but,
  * for a rule of the university, of a numbered type,
- * see `numberedTypes` in `boxes.ts`, the days it does not teach, see {@link lectureFreeOf},
+ * see `numberedTypes` in `boxes.ts`,
+ * the days it does not teach, see {@link lectureFreeOf},
  * and its extras, each with its times, those of its slot or its own, see {@link Times},
  * and the place of its slot in the rule.
  * - `skipped`: The days the university does not teach,
@@ -1192,7 +1260,8 @@ function chosenIs(box: Box, pinned: string): boolean {
  * Writes only a to-do that changes.
  * - `file`: The plan of the module.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param type - The type, like `TU`
  * @param semester - The semester, like `2026W`
  * @param group - The group, like `06`, empty for none
@@ -1218,7 +1287,8 @@ function pinPut(module: string, type: string, semester: string, group: string): 
 }
 
 /**
- * Gives the first day of lectures of a semester, `Vorlesungsbeginn 2026W` of `University.ics`,
+ * Gives the first day of lectures of a semester,
+ * `Vorlesungsbeginn 2026W` of `University.ics`,
  * see `holidays` in `sources.ts`.
  * - `begin`: The first day of the semester.
  *
@@ -1247,7 +1317,8 @@ function lecturesBeginOf(semester: string): string | undefined {
  * to the last session, that is not wholly free of lectures, see {@link lectureFreeOf},
  * so a week the university cancelled one session of keeps its place,
  * and a group added or changed numbers no week anew; none for a type without groups.
- * - `starts`: The days of the sessions of its groups and the days given, the earliest first.
+ * - `starts`: The days of the sessions of its groups
+ *   and the days given, the earliest first.
  * - `begin`: The first day of lectures of their semester, `undefined` for none.
  * - `first`: Monday of the first week.
  * - `free`: The days the university does not teach between them.
@@ -1303,7 +1374,8 @@ function weekNumberOf(weeks: string[], day: string): number {
 /**
  * Stops a module folder of none of my modules, which no course reads or writes.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @throws {Error} - When `NomSkillingmodules` holds no such module folder
  */
 function folderCheck(module: string): void {
@@ -1334,7 +1406,8 @@ function courseBoxesRead(code: string, semester: string): Box[] {
 }
 
 /**
- * Reads my own learning of a module in a semester logged without a box, see {@link Learned}:
+ * Reads my own learning of a module in a semester logged without a box,
+ * see {@link Learned}:
  * the skill entries of the log of the module without type
  * and without the box they were logged from, of the semester they state,
  * or of their day, read up to a year after the semester begins, the earliest first;
@@ -1386,7 +1459,8 @@ function learnedRead(code: string, semester: string): Learned[] {
 
 /**
  * Reads the groups of a module of a semester from its plan, its to-dos with `X-GROUP`,
- * see the top of this file, each with its sessions, read up to a year after the semester begins,
+ * see the top of this file, each with its sessions,
+ * read up to a year after the semester begins,
  * and its rule read back from them, see {@link ruleOf};
  * the to-dos of one type and group, like one per weekday of a group meeting twice a week,
  * as one group; none while the plan is missing.
@@ -1402,7 +1476,8 @@ function learnedRead(code: string, semester: string): Learned[] {
  * - `dated`: Them as what its rule is read back from.
  * - `ahead`: Those from today on.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param semester - Semester, like `2026W`
  * @returns Its groups, by type and group
  */
@@ -1498,7 +1573,8 @@ function groupsRead(module: string, semester: string): Group[] {
 }
 
 /**
- * Reads back the series of a module from its boxes of a semester, see the top of this file:
+ * Reads back the series of a module from its boxes of a semester,
+ * see the top of this file:
  * one per numbered type with boxes,
  * see `numberedTypes` in `boxes.ts`, its rule read back from all its boxes,
  * or from those of my group while they go to groups, see {@link pinnedOf};
@@ -1544,7 +1620,8 @@ function seriesListOf(boxes: Box[], semester: string, groups: Group[]): Series[]
  * - `semester`: The semester.
  * - `boxes`: Its skill boxes of the semester.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`,
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`,
  *   or its code, like `IN2028`, as a box of the plan names it
  * @param named - Semester, like `2026W`, empty for that of today in Berlin time
  * @returns Its course
@@ -1595,7 +1672,8 @@ function timesRight(times: Pick<Slot, "start" | "end">): boolean {
 
 /**
  * Tells whether a slot is well formed: its times well formed, see {@link timesRight},
- * or without times its length, a whole number of minutes, more than nothing and at most a day.
+ * or without times its length, a whole number of minutes,
+ * more than nothing and at most a day.
  *
  * @param slot - The slot
  * @returns Whether it is
@@ -1715,7 +1793,8 @@ function ruleCheck(rule: Rule): void {
 }
 
 /**
- * Tells whether a change of a series may change or remove a box, see the top of this file:
+ * Tells whether a change of a series may change or remove a box,
+ * see the top of this file:
  * a to-do of the new system, no date of a series of the file, never pushed,
  * open or cancelled by the university;
  * never one done, which the log points to, nor one I cancelled or pushed,
@@ -1737,7 +1816,8 @@ function changeable(box: Box): boolean {
 /**
  * Tells whether I may give a box another state in the form of its series,
  * see `states` of {@link SeriesChange}:
- * a to-do of the new system, no date of a series of the file, neither done, which the log decides,
+ * a to-do of the new system, no date of a series of the file,
+ * neither done, which the log decides,
  * nor pushed away from a day, as it shows on that day.
  *
  * @param box - The box
@@ -1757,8 +1837,10 @@ function stateable(box: Box): boolean {
  * Tells whether a box takes the times I typed for its day in the form of its series,
  * see `retimed` of {@link Target}:
  * a to-do of the new system, no date of a series of the file, never pushed,
- * whose times follow its pushes, see `boxPush` in `boxes.ts`, but whatever its state and its day,
- * so a lecture done or over takes the times it really had, while its log entry keeps its own.
+ * whose times follow its pushes, see `boxPush` in `boxes.ts`,
+ * but whatever its state and its day,
+ * so a lecture done or over takes the times it really had,
+ * while its log entry keeps its own.
  *
  * @param box - The box
  * @returns Whether it does
@@ -1773,7 +1855,8 @@ function retimable(box: Box): boolean {
  * see {@link draftsOf}: skipped, it keeps its number and its place;
  * cancelled by the university, its number is `NONE`;
  * open again, it takes its number anew, see {@link numbersOf}.
- * A box I may give no state, see {@link stateable}, and a state I may not give stay as they are.
+ * A box I may give no state, see {@link stateable},
+ * and a state I may not give stay as they are.
  *
  * @param box - The box as it stands
  * @param state - The state I gave it, `undefined` for none
@@ -1935,19 +2018,24 @@ function draftSet(draft: Draft, target: Target): Draft {
 /**
  * Plans a change of a series week by week,
  * see the top of this file, from the first week it reaches to its last:
- * each date of a week takes the box of the week that fell on the weekday of its slot before,
+ * each date of a week takes the box of the week
+ * that fell on the weekday of its slot before,
  * see `before` of {@link Target}, else,
  * but for a date added, the earliest box of the week no date took yet,
  * like a lecture moved once to another day;
  * a box a change may not change, see {@link changeable}, stays as it is all the same,
- * so its date gets no new box, but takes the times I typed for its date where they may change,
+ * so its date gets no new box,
+ * but takes the times I typed for its date where they may change,
  * see `retimed` of {@link Target} and {@link retimable};
  * a box a change may change takes what changed of its date, see {@link draftSet};
  * a date without box gets a new one, with all of its date, while it is made,
  * see `made` of {@link Target}; every other box of the week a change may change goes.
- * A box of a week outside those reached stays as it is, but for its number, see {@link numbersOf}.
- * - `drafts`: The drafts so far: every box outside the weeks reached, then the weeks one by one.
- * - `seriesDayOf`: Gives the day of a box at its place in its series, see {@link datedOf}.
+ * A box of a week outside those reached stays as it is,
+ * but for its number, see {@link numbersOf}.
+ * - `drafts`: The drafts so far: every box outside the weeks reached,
+ *   then the weeks one by one.
+ * - `seriesDayOf`: Gives the day of a box at its place in its series,
+ *   see {@link datedOf}.
  * - `dates`: The dates of a week.
  * - `free`: The boxes of the week no date took yet, the earliest first.
  * - `taken`: The box each date of the week takes, `undefined` for none.
@@ -2019,7 +2107,8 @@ function draftsOf(
  *   or its day for a box without time, after the change.
  * - `last`: The number of the box before.
  *
- * @param drafts - The drafts of every box of the type, see {@link draftsOf}, numbered in place
+ * @param drafts - The drafts of every box of the type,
+ *   see {@link draftsOf}, numbered in place
  * @param weeks - The weeks of the type with groups,
  *   see {@link tutorialWeeksOf}; none for a type without
  */
@@ -2079,7 +2168,8 @@ export function numbersRenew(module: string, type: string, semester: string): vo
 }
 
 /**
- * Tells whether a draft of a box that stays sets its day, its time, its length, its place,
+ * Tells whether a draft of a box that stays sets its day,
+ * its time, its length, its place,
  * what it does online or its people anew.
  *
  * @param draft - The draft of a box that stays
@@ -2112,7 +2202,8 @@ function draftMoved(draft: Draft, box: Box): boolean {
  * see `titleOf` in `documents.ts`, with its place, its people, its `X-NUMBER`,
  * its `X-GROUP` while it goes to a group, and its `X-SEMESTER`; of a box that
  * stays only what changed against its file: skipped or open again,
- * see `boxDrop` in `boxes.ts`, its day, its time and its place as the dialog changes them,
+ * see `boxDrop` in `boxes.ts`, its day,
+ * its time and its place as the dialog changes them,
  * see `todoChange` in `calendar.ts`, its number, `NONE` once the university cancelled it,
  * and its group in their lines, one of a day over open again staying on its day,
  * see `overKeep` in `boxes.ts`.
@@ -2122,7 +2213,8 @@ function draftMoved(draft: Draft, box: Box): boolean {
  * - `title`, `titleLink`: What a new box is,
  *   its `SUMMARY` and the `ALTREP` of it, the same for all.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param type - Type of the boxes, like `TU`
  * @param semester - Their semester, like `2026W`
  * @param drafts - The drafts of the boxes, see {@link draftsOf}
@@ -2206,7 +2298,8 @@ function draftsWrite(
 }
 
 /**
- * Gives the boxes of a series as planned, see {@link draftsOf}, for the preview of the form:
+ * Gives the boxes of a series as planned, see {@link draftsOf},
+ * for the preview of the form:
  * each with its day, its times and its number after the change, its state,
  * whether I pushed it, may give it another state and may give it other times,
  * whether the change adds, changes, renumbers or removes it, and its people after it.
@@ -2254,7 +2347,8 @@ function plannedOf(drafts: Draft[]): Planned[] {
  *
  * @param before - The slot or the extra as read back, `undefined` for one added
  * @param date - The slot or the extra as typed
- * @param shared - What changed of the whole rule, its place, what it does online or its people
+ * @param shared - What changed of the whole rule, its place,
+ *   what it does online or its people
  * @returns What changed
  */
 function slotFieldsOf(
@@ -2286,7 +2380,8 @@ function slotFieldsOf(
  * or only tells what that would make, for the preview of the form:
  * first each box takes the state I gave it, see {@link stateSet};
  * then each date of the rule takes the box of its week of the slot it takes the boxes of,
- * see `before` of {@link SeriesChange}, an extra the box of its day, with what changed of its slot,
+ * see `before` of {@link SeriesChange}, an extra the box of its day,
+ * with what changed of its slot,
  * of its own times, see {@link Times}, or of its extra,
  * see {@link slotFieldsOf}, all of it for a new series or a slot or an extra added;
  * a date without box gets one, for a series that has boxes only from today on,
@@ -2312,19 +2407,22 @@ function slotFieldsOf(
  * - `shared`: Those of them that changed.
  * - `wasOf`: Gives the slot or the extra of the rule as read back
  *   whose boxes a date takes, `undefined` for none.
- * - `wasDay`: The day of a date as read back, on the weekday of the slot whose boxes it takes,
+ * - `wasDay`: The day of a date as read back,
+ *   on the weekday of the slot whose boxes it takes,
  *   whose times of its own, see {@link Times}, stand for those of its slot,
  *   so a box with times of its own keeps them while the times of its slot change,
  *   and only a box whose times I typed anew takes them.
  * - `retimed`: Whether I typed the times of a date anew for its day:
  *   of an extra others than as read back, of a date of a slot times of its own,
  *   see {@link Times}, other than those of its day as read back, its slot's again too.
- * - `own`: Of a type with groups, my group, each of its templates, none without group of mine.
+ * - `own`: Of a type with groups, my group,
+ *   each of its templates, none without group of mine.
  * - `met`: Of a type with groups, the days my group meets, its real sessions,
  *   cancelled ones left out, so a week it does not meet
  *   and that holds no box of mine is no new date; `null` without groups or group of mine.
  * - `held`: The weeks that hold a box of the type.
- * - `picked`: Of a type with groups, the weeks I gave to another group, see {@link weekPick}:
+ * - `picked`: Of a type with groups,
+ *   the weeks I gave to another group, see {@link weekPick}:
  *   they hold boxes of my own choice only, see {@link chosenIs}.
  * - `targets`: The dates of the rule,
  *   but those of a week my group does not meet and that holds no box of mine,
@@ -2477,7 +2575,8 @@ export function seriesApply(change: SeriesChange): Planned[] {
 }
 
 /**
- * Makes a new box of the dialog once per date of its weekly rule, see the top of this file,
+ * Makes a new box of the dialog once per date of its weekly rule,
+ * see the top of this file,
  * or only tells what that would make, for the preview of the dialog.
  * A skill box of a numbered type of a module becomes its series
  * as the form of a new series makes it,
@@ -2489,7 +2588,8 @@ export function seriesApply(change: SeriesChange): Planned[] {
  * Any other box, like one of a project or my gym,
  * is added once per date into the plan it belongs into, as the dialog adds one alone,
  * see `boxesAdd` in `boxes.ts`:
- * its day the date, its time and length those of the slot or the extra of the date, no deadline.
+ * its day the date, its time and length those of the slot
+ * or the extra of the date, no deadline.
  * - `box`: The box as sent.
  * - `rule`: Its rule, its days with the fields of the box.
  * - `module`: Name of the folder of the module of a skill box of a numbered type,
@@ -2499,7 +2599,8 @@ export function seriesApply(change: SeriesChange): Planned[] {
  * @param change - The box and its days, as the dialog sends them
  * @returns The boxes it makes, by their days;
  *   `null` for a series of a type with a box in its semester already
- * @throws {Error} - When the rule or the box is not well formed, the link online is no web address,
+ * @throws {Error} - When the rule or the box is not well formed,
+ *   the link online is no web address,
  *   a document is none of the module's, or a box cannot be written
  */
 export function repeatApply(change: RepeatChange): Planned[] | null {
@@ -2572,7 +2673,8 @@ export function repeatApply(change: RepeatChange): Planned[] | null {
  * - `time`, `minutes`: Its time as ISO instant and its length after the change.
  *
  * @param change - The exam with its kind and its times, as the form sends them
- * @throws {Error} - When there is no such box, it is no exam that is a to-do of the new system,
+ * @throws {Error} - When there is no such box,
+ *   it is no exam that is a to-do of the new system,
  *   no date of a series of a file, its new kind is none of {@link examKinds},
  *   or its times are not well formed, see {@link timesRight},
  *   or may not change, see {@link retimable}
@@ -2611,8 +2713,10 @@ export function examSet(change: ExamChange): void {
  * Makes a group mine, see the top of this file,
  * or only tells what that would make, for the preview of the form:
  * from the week of its next session that is not over on, the boxes that follow the pin,
- * those of my group before and those without group, go to its sessions, its day, time, length,
- * room, tutor and group, a session without box getting one, a box of a week it does not meet going,
+ * those of my group before and those without group,
+ * go to its sessions, its day, time, length,
+ * room, tutor and group, a session without box getting one,
+ * a box of a week it does not meet going,
  * but every box a change may not change staying, see {@link changeable},
  * and every box of a day over, see {@link ahead},
  * as the past never changes by a pin, its session then getting no box either;
@@ -2624,7 +2728,8 @@ export function examSet(change: ExamChange): void {
  * and those of the group, each its box of its week from then on,
  * its session in that week getting no second box.
  * With no series yet, its sessions to come become one.
- * Then the boxes of the type are numbered anew, see {@link numbersOf}, from 1 for a new series,
+ * Then the boxes of the type are numbered anew,
+ * see {@link numbersOf}, from 1 for a new series,
  * and the group is pinned, see {@link pinPut}.
  * No group named takes my group back, `No group yet` again:
  * every box of my group from today on that a change may change goes,
@@ -2656,7 +2761,8 @@ export function examSet(change: ExamChange): void {
  *
  * @param change - The group, as the page sends it
  * @returns The boxes of the series after the change, removed ones too, by their days
- * @throws {Error} - When there is no such module folder or group, the group meets no more,
+ * @throws {Error} - When there is no such module folder or group,
+ *   the group meets no more,
  *   or a box cannot be written
  */
 export function groupMine(change: MineChange): Planned[] {
@@ -2755,21 +2861,25 @@ export function groupMine(change: MineChange): Planned[] {
 
 /**
  * Picks one session of a group for its week, as the menu of the groups sends it,
- * see the top of this file: a box I skipped that week is open again, one a change may change,
+ * see the top of this file: a box I skipped that week is open again,
+ * one a change may change,
  * see {@link changeable}; then the open box of the week,
  * the one that follows the pin before one of my own choice,
  * see {@link chosenIs}, goes to the session, its day, its time, its length, its room,
  * its tutor and its group, its number kept, and no other week;
- * when I hold that session already, by an extra, the box goes instead, so the week keeps the one.
+ * when I hold that session already, by an extra,
+ * the box goes instead, so the week keeps the one.
  * A week without box gets one,
  * and with no box of the type after that week the sessions of the group from that week
  * on become my series, one per week, so later weeks follow it;
  * then the boxes of the type are numbered anew, see {@link numbersOf}.
  * A week done, or whose box may not change, see {@link changeable}, stays as it is.
- * As an extra, see `extra` of {@link PickChange}, the session becomes a box of its own instead,
+ * As an extra, see `extra` of {@link PickChange},
+ * the session becomes a box of its own instead,
  * besides the box of its week, which stays, as a second tutorial in one week;
  * then the boxes are numbered anew, once per session;
- * one of a day over stays on its day, never carried along to today, since it got its day after it,
+ * one of a day over stays on its day, never carried along to today,
+ * since it got its day after it,
  * see `carriedOf` in `boxes.ts`, so I log it there.
  * - `semester`: The semester of the session.
  * - `groups`: The groups of the semester.
@@ -2784,7 +2894,8 @@ export function groupMine(change: MineChange): Planned[] {
  * - `box`: The one that goes to the session, `undefined` for none.
  * - `held`: My box at the session already, `undefined` for none.
  * - `later`: Whether a box of the type falls after the week.
- * - `firsts`: Without later box the first session of the group of every later week, else none.
+ * - `firsts`: Without later box the first session of the group
+ *   of every later week, else none.
  * - `targets`: The dates: the session, then those of the later weeks.
  * - `drafts`: The boxes of the type as planned.
  *
@@ -2917,23 +3028,29 @@ function groupsTake(gone: GroupGone): number {
  * one weekly to-do, its first session as `DTSTART`,
  * its length as `ESTIMATED-DURATION`, no `STATUS`,
  * `RRULE:FREQ=WEEKLY;UNTIL=…` with the start of its last session in UTC,
- * like `UNTIL=20270202T090000Z`, one `EXDATE` per day of its slot between them without session,
+ * like `UNTIL=20270202T090000Z`,
+ * one `EXDATE` per day of its slot between them without session,
  * a day the university does not teach or one cancelled,
  * like `EXDATE;TZID=Europe/Berlin:20261229T100000`, what it is as a box of its type is,
  * see `titleOf` in `documents.ts`, its room with its link,
  * see `placeLinkOf` in `places.ts`, what it does online,
- * see `onlineFor` there, its tutor, `X-GROUP` and `X-SEMESTER`; the plan made when missing.
- * A slot without times, only its length, see `minutes` of {@link Slot}, writes days, as my sleep:
+ * see `onlineFor` there, its tutor, `X-GROUP` and `X-SEMESTER`;
+ * the plan made when missing.
+ * A slot without times, only its length,
+ * see `minutes` of {@link Slot}, writes days, as my sleep:
  * `DTSTART;VALUE=DATE`, `UNTIL` its last day and `EXDATE;VALUE=DATE`.
  * - `slot`: Its one slot.
  * - `code`: Code of the module, like `IN2028`.
  * - `title`, `titleLink`: What it is, its `SUMMARY` and the `ALTREP` of it.
  * - `start`: The start of its first session, `null` for a slot without times.
  * - `fields`: Its fields, the time of its first session and its length.
- * - `until`: The start of its last session, in the form of the iCalendar format in UTC, or its day.
- * - `left`: The days of its slot between its first and its last session without a session.
+ * - `until`: The start of its last session,
+ *   in the form of the iCalendar format in UTC, or its day.
+ * - `left`: The days of its slot between its first
+ *   and its last session without a session.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param rule - The rule of the group with one slot, checked, see {@link ruleCheck}
  * @param days - The days of its sessions on that slot, at least one, the earliest first
  * @returns Identifier of the to-do written
@@ -3002,7 +3119,8 @@ function groupWrite(module: string, rule: Rule, days: string[]): string {
  * see the top of this file:
  * each open box of its type from today on that goes to it, one a change may change,
  * see {@link changeable}, takes a session of the group in its week no other box of mine
- * at it holds, the one on its weekday, else the first left, all of it, see {@link targetOf},
+ * at it holds, the one on its weekday, else the first left,
+ * all of it, see {@link targetOf},
  * like a new room, so two boxes of a week never take one session;
  * a box of a week the group no longer meets in stays as it is.
  * - `found`: The group as written, `undefined` for none.
@@ -3015,7 +3133,8 @@ function groupWrite(module: string, rule: Rule, days: string[]): string {
  * - `session`: The one a box takes, `undefined` for none.
  * - `draft`: The box as it moves, `undefined` for none.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param type - Type of the group, like `TU`
  * @param group - The group, like `05`
  * @param semester - Its semester, like `2026W`
@@ -3075,8 +3194,10 @@ function groupBoxesMove(
  * Writes a group into the plan of a module as Claude sends it,
  * see the top of this file, in place of every to-do of the same type, group and semester:
  * one weekly to-do of its one slot,
- * see {@link groupWrite}, its sessions every day of its slot in its weeks the university teaches,
- * see {@link datesOf}; my boxes that go to it take its sessions anew, see {@link groupBoxesMove}.
+ * see {@link groupWrite}, its sessions
+ * every day of its slot in its weeks the university teaches,
+ * see {@link datesOf}; my boxes that go to it take its sessions anew,
+ * see {@link groupBoxesMove}.
  * - `rule`: The rule of the group, without extras, since a group meets weekly,
  *   so a group sent without them is right.
  * - `days`: The days of its sessions.
@@ -3113,7 +3234,8 @@ export function groupPut(change: GroupNew): string {
  * see {@link datesOf}, the days the university does not teach left out,
  * each a session but those I marked cancelled,
  * see `states` of {@link GroupChange}, and, of a group there already,
- * the dates of its weeks it did not meet on, as its `EXDATE`s said, while not marked open again.
+ * the dates of its weeks it did not meet on,
+ * as its `EXDATE`s said, while not marked open again.
  * A group there already whose dates I only mark cancelled or open again,
  * or rename, changes in place:
  * a session cancelled one more `EXDATE`, its component of its own gone,
@@ -3125,15 +3247,18 @@ export function groupPut(change: GroupNew): string {
  * a group with a session before today ends there,
  * each of its to-dos at its last session before today,
  * see `seriesCut` in `calendar.ts`, one without such gone,
- * and goes on from today, one to-do per slot with the same `X-GROUP`, see {@link groupWrite};
- * a group wholly ahead is written anew in place of the group of its type, group and semester;
+ * and goes on from today, one to-do per slot with the same `X-GROUP`,
+ * see {@link groupWrite};
+ * a group wholly ahead is written anew in place of the group of its type,
+ * group and semester;
  * either way its sessions changed alone from today on go, the change taking their place,
  * and it stays pinned while it was.
  * Then my boxes that go to it take its sessions anew,
  * see {@link groupBoxesMove},
  * an open one on a session I marked cancelled cancelled by the university too,
  * see `boxUniversity` in `boxes.ts`,
- * and one cancelled on a session I marked open again open again, numbered by its week again,
+ * and one cancelled on a session I marked open again open again,
+ * numbered by its week again,
  * see {@link numbersRenew}.
  * The preview shows a session changed alone with its own times and room
  * while the group changes in place,
@@ -3151,17 +3276,21 @@ export function groupPut(change: GroupNew): string {
  * - `shared`: Whether its place, what it does online or its tutors changed.
  * - `whenOf`: Gives the slots of a rule, each its weekday, start and length,
  *   with its first and last day.
- * - `sessionOn`: Gives the session of the group there already on a day, `undefined` for none.
+ * - `sessionOn`: Gives the session of the group there already on a day,
+ *   `undefined` for none.
  * - `opened`: Of each date I marked open again,
  *   its identifier in the to-do of the sessions of its weekday before and after it,
  *   see `id` of {@link Session}, `undefined` while no such to-do is found.
  * - `near`, `before`, `uid`:
- *   The sessions on its weekday not changed alone, the last of them before it, and its to-do.
+ *   The sessions on its weekday not changed alone,
+ *   the last of them before it, and its to-do.
  * - `whole`: Whether it is written anew, not changed in place.
  * - `begun`: Whether it is written anew from today on,
  *   a group there already with a session before today.
- * - `kept`: Tells whether a day stays as it is, of a group going on from today a day before today.
- * - `weeks`: The weeks of the type with groups with its dates, see {@link tutorialWeeksOf}.
+ * - `kept`: Tells whether a day stays as it is,
+ *   of a group going on from today a day before today.
+ * - `weeks`: The weeks of the type with groups with its dates,
+ *   see {@link tutorialWeeksOf}.
  * - `planned`: Its sessions after the change, cancelled ones too,
  *   and those of the group there already it loses.
  * - `time`, `minutes`: The start and the length of a date.
@@ -3492,8 +3621,10 @@ export function groupApply(change: GroupChange): Planned[] {
  * Changes one session of a group as the university changed it alone,
  * as the form of the group sends it, see `src/day/series.ts`:
  * the way the standard changes one occurrence,
- * a component of its own with the same `UID` and its start in its to-do as `RECURRENCE-ID`,
- * see `occurrenceOwn` in `calendar.ts`, its rule untouched, with the times and the room typed,
+ * a component of its own with the same `UID`
+ * and its start in its to-do as `RECURRENCE-ID`,
+ * see `occurrenceOwn` in `calendar.ts`, its rule untouched,
+ * with the times and the room typed,
  * given back to its to-do once they are its own again, see `occurrencesTidy` there;
  * then my boxes that go to the group take its sessions anew, see {@link groupBoxesMove},
  * so my box at that session follows it, one I pushed, done or skipped staying as it is.
@@ -3549,7 +3680,8 @@ export function sessionApply(change: SessionChange): void {
 
 /**
  * Renames a group everywhere, as the form of a group sends a new name for it,
- * see {@link groupApply}: the `X-GROUP` of its to-dos, which repeat, so they are read as groups,
+ * see {@link groupApply}: the `X-GROUP` of its to-dos,
+ * which repeat, so they are read as groups,
  * see {@link groupsRead}, of my boxes that go to it, done ones too,
  * so the group pinned, the group of my series, keeps its new name,
  * and of every entry of the log of the module I went to it in;
@@ -3558,7 +3690,8 @@ export function sessionApply(change: SessionChange): void {
  * - `files`: The plan and the log of the module, those there.
  * - `taken`: Whether an entry goes to the group.
  *
- * @param module - Name of the folder of the module, like `IN0004_EinfuehrungRechnerarchitektur`
+ * @param module - Name of the folder of the module,
+ *   like `IN0004_EinfuehrungRechnerarchitektur`
  * @param type - Type of the group, like `TU`
  * @param semester - Its semester, like `2026W`
  * @param was - Its name before, like `Mo-0800-1`
@@ -3604,7 +3737,8 @@ function groupRename(
 
 /**
  * Removes my series of a type of a module of a semester, as the bin of its form asks,
- * see `src/day/series.ts`: each of its boxes but those done goes, see `boxDelete` in `boxes.ts`;
+ * see `src/day/series.ts`: each of its boxes but those done goes,
+ * see `boxDelete` in `boxes.ts`;
  * a box done stays, since its log entry points to it.
  * - `boxes`: Its boxes.
  *

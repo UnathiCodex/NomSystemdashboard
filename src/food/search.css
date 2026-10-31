@@ -23,7 +23,8 @@
    so a long name or one cut with … never runs up to its number,
    like `Pasta mit Ricotta Tomaten und Paprika (Pasta, Ricotta, Tom…)   609`;
    at least one chip high, higher for a product with its pack below its name
-   or a name going on below, its number then on the line of the name, never between its lines;
+   or a name going on below, its number then on the line of the name,
+   never between its lines;
    a little room above and below, so the pack of a product stays clear of the next name;
    a grey lighter under the pointer where a click does something */
 .food-row {
@@ -59,7 +60,8 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* Name of a meal or a food with its brand and store in brackets, see `foodNameOf` in `foods.ts`:
+/* Name of a meal or a food with its brand and store in brackets,
+   see `foodNameOf` in `foods.ts`:
    going on below where the row has no room, never cut with dots, here,
    in the food view and the dialogs */
 .food-name {
@@ -74,7 +76,8 @@ button.food-row {
 }
 
 /* The brackets of a list all on a line of their own below their names
-   while one of them has no room on the line of its name, see `bracketsWatch` in `foods.ts`:
+   while one of them has no room on the line of its name,
+   see `bracketsWatch` in `foods.ts`:
    all one line, or all two */
 .bracket-below {
     display: block;
@@ -87,8 +90,10 @@ button.food-row {
     font-variant-numeric: tabular-nums;
 }
 
-/* Head of a list small and grey: what a number is per, and `kcal`, the unit of every number below;
-   only as high as its words, as far from the first row below it as two rows are from each other,
+/* Head of a list small and grey: what a number is per, and `kcal`,
+   the unit of every number below;
+   only as high as its words,
+   as far from the first row below it as two rows are from each other,
    so it heads them and touches none */
 .food-columns {
     min-height: 0;
@@ -110,7 +115,8 @@ button.food-row {
     font-size: 0.875rem;
 }
 
-/* A food of a meal opened: its name with its brackets, its grams, and the room of its `×` */
+/* A food of a meal opened: its name with its brackets,
+   its grams, and the room of its `×` */
 .food-part {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto 1.5rem;
@@ -154,7 +160,8 @@ button.food-row {
 /* A value of a food of mine that changes in place, its name, brand or store:
    as plain as every value beside it, no frame;
    a thin line below it under the pointer, softly as every hover,
-   see `--hover-in` in `../variants.css`, and while I type, so I see that a click changes it */
+   see `--hover-in` in `../variants.css`, and while I type,
+   so I see that a click changes it */
 .food-inline {
     width: 100%;
     padding: 0 0 0.125rem;
@@ -188,10 +195,12 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* The cross and the check of a form inside a list, like that of a new food or meal: small and flat,
+/* The cross and the check of a form inside a list,
+   like that of a new food or meal: small and flat,
    as modern layouts keep the buttons of a form inside a page,
    while a dialog ends with its big ones: icon buttons one chip square,
-   see `.icon-button` in `../base.css`, both loose, the check, which saves, light instead of grey,
+   see `.icon-button` in `../base.css`, both loose, the check,
+   which saves, light instead of grey,
    as `Save` of a dialog; well apart from the last value above them */
 .food-buttons {
     display: inline-flex;
@@ -249,7 +258,8 @@ button.food-row {
     cursor: default;
 }
 
-/* Line between the sections of a search, my meals, my foods and the products of Open Food Facts,
+/* Line between the sections of a search, my meals,
+   my foods and the products of Open Food Facts,
    thin and in the grey of every line, so they stand apart at a glance */
 .food-divider {
     margin: 0.75rem 0.75rem 0.25rem;

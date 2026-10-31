@@ -1,8 +1,10 @@
 /**
  * ## Documents
  *
- * Names a skill entry and links it to the folder of its skill and to the documents it used,
- * like the slides of a lecture, a sheet or the notes of a chapter, its paths from `NomWorkspace`;
+ * Names a skill entry and links it to the folder of its skill
+ * and to the documents it used,
+ * like the slides of a lecture, a sheet or the notes of a chapter,
+ * its paths from `NomWorkspace`;
  * each link only points to more, the entry states its facts itself, see `calendar.ts`,
  * like the chapters of my system it belongs to, one `X-CHAPTER` each,
  * like `X-CHAPTER:02_LogisticPoissonRegression`.
@@ -11,26 +13,30 @@
  * read by `skillPartsOf` in `calendar.ts`;
  * its `ALTREP` a link I set, by default the folder of the skill,
  * for a module with a type on into the folder of the material of its type
- * and of its semester, see {@link skillLinkOf},
- * like `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
+ * and of its semester, see {@link skillLinkOf}, like
+ * `SUMMARY;ALTREP="NomSkillingmodules/IN2028_…/VO_UniversityLectureLessons/TUM_2026W":IN2028_BusinessAnalyticsMachineLearning (VO)`,
  * my own learning, without type, the module folder, a project its folder,
  * like `SUMMARY;ALTREP="NomProgramprojects/AsiaWok_Wokflow_2026":AsiaWok_Wokflow_2026`.
  * Every real document a skill entry used is one `ATTACH` holding just its path,
  * see `Link` in `calendar.ts`, as many as it used, in the same form for every kind:
  * a lecture its slides, like
  * `ATTACH;X-SHA256=9f86d081…:NomSkillingmodules/IN2028_…/VO_…/TUM_2026W/04_LogisticRegression.pdf`,
- * an exercise or a tutorial its sheet in `TU_UniversityTutorExercises`, a homework its sheet
- * in `HU_UniversityHomeExercises`, and my own learning the notes of its chapters, like
- * `ATTACH:NomSkillingmodules/IN2028_…/01_…/01_01_SampleMeanStandardError.md`.
+ * an exercise or a tutorial its sheet in `TU_UniversityTutorExercises`,
+ * a homework its sheet in `HU_UniversityHomeExercises`,
+ * and my own learning the notes of its chapters,
+ * like `ATTACH:NomSkillingmodules/IN2028_…/01_…/01_01_SampleMeanStandardError.md`.
  * The name of the file says what it is and its `X-CHAPTER`s what the session was about,
  * so a document has no name of my own;
- * a file of the university keeps the fingerprint of its content, the SHA-256 of its bytes,
+ * a file of the university keeps the fingerprint of its content,
+ * the SHA-256 of its bytes,
  * as parameter, so the link survives a rename;
  * a note has none, since I change my notes too often, and is found by its name,
  * see {@link linksRepairOf}; a note an older entry links with its fingerprint keeps it.
  * An older `X-TOPIC` beside the path is no more read, and goes once the entry changes.
- * The folder of a chapter is no `ATTACH`: an older entry that links one names that chapter,
- * which is still read, see {@link chaptersOf}, and becomes its `X-CHAPTER` once the entry changes;
+ * The folder of a chapter is no `ATTACH`:
+ * an older entry that links one names that chapter,
+ * which is still read, see {@link chaptersOf},
+ * and becomes its `X-CHAPTER` once the entry changes;
  * its `DESCRIPTION` is only my free note.
  * The folder of a module in an `ATTACH` of an older entry counts no more and goes
  * once the entry changes too.
@@ -43,11 +49,13 @@
  * like after a rename or a move into another folder of the module,
  * is looked for by its fingerprint among the module's documents,
  * a note without fingerprint by its name,
- * like one an older entry links among my drafts in `.claude`, once it lies in the module folder,
+ * like one an older entry links among my drafts in `.claude`,
+ * once it lies in the module folder,
  * and a chapter by the name of its folder in the module folder found.
  * Each repair goes into the entry, every other line of the file as it is,
  * and into the reader's console, with the old and the new path.
- * A link it cannot repair stays as written, like a document deleted or the folder of a project,
+ * A link it cannot repair stays as written,
+ * like a document deleted or the folder of a project,
  * which has no code to find it by.
  * Fingerprints are kept by path, size and time of change,
  * so only new or changed files are read again.
@@ -55,19 +63,23 @@
  * so the page opens it in the browser's own viewer, see {@link linkedFileRead};
  * no other file of `NomWorkspace`.
  * By the folder of its skill a skill entry also finds its log and a skill box its plan,
- * any other entry or box the log or the plan of its topic and year, see {@link calendarFileOf}.
+ * any other entry or box the log or the plan of its topic and year,
+ * see {@link calendarFileOf}.
  *
  * - `node:fs`: Reads files and their sizes and times of change.
  * - `node:path`: Builds file paths for the operating system.
  * - `node:crypto`: Computes the SHA-256 of a file.
  * - `./calendar.ts`: Reads the log, finds an entry's event,
- *   puts new values into it or changes its fields, writes its start and the days in Berlin time,
+ *   puts new values into it or changes its fields,
+ *   writes its start and the days in Berlin time,
  *   and names the category of skill entries.
  * - `./notes.ts`: Finds the folder of a module by its code and of a chapter by its name,
- *   lists the documents of a module, names a folder to read, gives the content type of a file,
+ *   lists the documents of a module, names a folder to read,
+ *   gives the content type of a file,
  *   and reads the modules of the semester.
- * - `./sources.ts`: Names `NomWorkspace`, the folder of my modules, the projects of the semester
- *   and the skill log, and builds the paths of the files of plan and log of a year and of a skill.
+ * - `./sources.ts`: Names `NomWorkspace`, the folder of my modules,
+ *   the projects of the semester and the skill log,
+ *   and builds the paths of the files of plan and log of a year and of a skill.
  */
 
 import { existsSync, readFileSync, statSync } from "node:fs";
@@ -165,7 +177,8 @@ function diskOf(path: string): string {
  * - `stats`: Size and time of change of the file now.
  * - `known`: Fingerprint computed before, `undefined` for a file not seen yet.
  * - `fingerprint`: Fingerprint computed now.
- * - {@link createHash}: Computes a hash of bytes, here SHA-256, written as hexadecimal digits.
+ * - {@link createHash}: Computes a hash of bytes, here SHA-256,
+ *   written as hexadecimal digits.
  *
  * @param file - Path of the file on the disk
  * @returns Fingerprint as 64 hexadecimal digits
@@ -191,7 +204,8 @@ function fingerprintOf(file: string): string {
 /**
  * Gives the folder of a skill by its name, as a path from `NomWorkspace`:
  * a project of the semester by its folder name, a module by its code,
- * its folder in `NomSkillingmodules`, or a module of the semester whose folder is missing yet.
+ * its folder in `NomSkillingmodules`,
+ * or a module of the semester whose folder is missing yet.
  * - `module`: Name of the module folder, `undefined` for none.
  *
  * @param code - Name of the skill, like `IN2028` or `WokFlow`
@@ -214,14 +228,16 @@ export function skillFolderOf(code: string): string | undefined {
  * a skill without folder by its name alone.
  *
  * @param code - Name of the skill, like `IN2028` or `WokFlow`, empty for none
- * @returns Name like `IN2028_BusinessAnalyticsMachineLearning` or `WokFlow`, empty for no skill
+ * @returns Name like `IN2028_BusinessAnalyticsMachineLearning`
+ *   or `WokFlow`, empty for no skill
  */
 function skillFolderNameOf(code: string): string {
     return skillFolderOf(code)?.split("/").at(-1) ?? code;
 }
 
 /**
- * Gives the title a skill entry has while I type none, its `SUMMARY`, see the top of this file:
+ * Gives the title a skill entry has while I type none,
+ * its `SUMMARY`, see the top of this file:
  * the name of the folder of its skill, with its type in round brackets when it has one;
  * a skill without folder by its name alone;
  * an entry without skill by its type in brackets alone, like `(VO)`, or not at all.
@@ -230,7 +246,8 @@ function skillFolderNameOf(code: string): string {
  * @param code - Name of the skill, like `IN2028` or `WokFlow`
  * @param type - Its type, like `VO`, empty for none, like my own learning
  * @returns What it is, like `IN2028_BusinessAnalyticsMachineLearning (VO)`,
- *   `IN2028_BusinessAnalyticsMachineLearning` or `WokFlow`, empty for neither skill nor type
+ *   `IN2028_BusinessAnalyticsMachineLearning` or `WokFlow`,
+ *   empty for neither skill nor type
  */
 export function skillTitleOf(code: string, type: string): string {
     const name: string = skillFolderNameOf(code);
@@ -239,10 +256,13 @@ export function skillTitleOf(code: string, type: string): string {
 }
 
 /**
- * Gives the link of a skill, the `ALTREP` of the `SUMMARY` of each of its entries and boxes:
+ * Gives the link of a skill, the `ALTREP` of the `SUMMARY`
+ * of each of its entries and boxes:
  * the one they share, see `sharedLinkOf` in `calendar.ts`, else the folder of the skill,
- * see {@link skillFolderOf}, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`;
- * the same link the dialog fills in below the skill, see `skillPathOf` in `src/day/skill.ts`.
+ * see {@link skillFolderOf},
+ * like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`;
+ * the same link the dialog fills in below the skill,
+ * see `skillPathOf` in `src/day/skill.ts`.
  *
  * @param code - Name of the skill, like `IN2028` or `WokFlow`
  * @returns Link like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`
@@ -253,8 +273,10 @@ export function skillLinkOf(code: string): string {
 }
 
 /**
- * Gives what an entry or a box was as it is written, its `SUMMARY` and the `ALTREP` of it:
- * its what as sent, a skill entry the one its skill and type give it, see {@link skillTitleOf},
+ * Gives what an entry or a box was as it is written,
+ * its `SUMMARY` and the `ALTREP` of it:
+ * its what as sent, a skill entry the one its skill and type give it,
+ * see {@link skillTitleOf},
  * which names both, see `skillPartsOf` in `calendar.ts`;
  * its link as I type it, on one line, a web address, like the page of an event,
  * or a path from `NomWorkspace` on, like `NomManageplannings`, whatever it is,
@@ -270,8 +292,9 @@ export function skillLinkOf(code: string): string {
  *   as sent, the semester as it is written, see `semesterFor` in `categories.ts`
  * @param from - The entry or box it comes from,
  *   like the entry being changed or the box a log entry is logged from, `null` for none
- * @returns `SUMMARY` and `ALTREP`, like `IN2028_BusinessAnalyticsMachineLearning (VO)`
- *   and `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`,
+ * @returns `SUMMARY` and `ALTREP`,
+ *   like `IN2028_BusinessAnalyticsMachineLearning (VO)` and
+ *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`,
  *   or `Planungen` and an empty link
  */
 export function titleOf(
@@ -302,20 +325,23 @@ export function titleOf(
 /**
  * Gives the file of the plan or of the log in `NomManagecalendar` an entry
  * or a box belongs into, see `sources.ts`:
- * for a skill entry the log of its skill and for a skill box its plan, in `Modules/` for a module
- * and in `Skilling/` for a project, named like the folder of the skill,
+ * for a skill entry the log of its skill and for a skill box its plan, in `Modules/`
+ * for a module and in `Skilling/` for a project, named like the folder of the skill,
  * see {@link skillFolderNameOf}, never one without skill, which no entry is,
  * see `categoryAllows` in `categories.ts`;
- * for any other the log or the plan of its topic in the year of its day in `Health/` or `Living/`,
+ * for any other the log or the plan of its topic in the year
+ * of its day in `Health/` or `Living/`,
  * see `topicFileOf` in `sources.ts`.
  * - `name`: Name of the folder of the skill, empty for none.
  *
  * @param fields - Category and skill of the entry or the box,
  *   like `Skill` and `IN2028`, or `Food` and no skill
  * @param date - Its day in Berlin time, like `2026-10-13`
- * @param ending - End of the name of the file, `logEnding` or `planEnding` of `sources.ts`
+ * @param ending - End of the name of the file,
+ *   `logEnding` or `planEnding` of `sources.ts`
  * @returns Path like `Modules/IN2028_BusinessAnalyticsMachineLearning_Log.ics`,
- *   `Skilling/NomSystemdashboard_Plan.ics` or `Living/Food_2026_Log.ics` in `NomManagecalendar`
+ *   `Skilling/NomSystemdashboard_Plan.ics`
+ *   or `Living/Food_2026_Log.ics` in `NomManagecalendar`
  * @throws {Error} - For a skill entry without skill
  */
 export function calendarFileOf(
@@ -332,7 +358,8 @@ export function calendarFileOf(
 /**
  * Tells whether a link is one to the folder of a chapter, which an older entry has:
  * a folder, without fingerprint, named like a chapter, right in the folder of a module,
- * unlike the folder of a module itself in an `ATTACH` of an older entry, which counts no more.
+ * unlike the folder of a module itself in an `ATTACH` of an older entry,
+ * which counts no more.
  * - `parts`: The parts of its path.
  *
  * @param link - Link of a skill entry
@@ -372,7 +399,8 @@ export function chaptersOf(entry: Entry): string[] {
  * Tells whether a path leads to a note, a Markdown file,
  * which a skill entry links without fingerprint.
  *
- * @param path - Path like `NomSkillingmodules/IN2028_…/01_…/01_01_SampleMeanStandardError.md`
+ * @param path - Path
+ *   like `NomSkillingmodules/IN2028_…/01_…/01_01_SampleMeanStandardError.md`
  * @returns Whether it ends in `.md`
  */
 function noteIs(path: string): boolean {
@@ -383,7 +411,8 @@ function noteIs(path: string): boolean {
  * Gives the path from `NomWorkspace` of a document of a module,
  * as the reader offers it from the module folder.
  *
- * @param module - Name of the module folder, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the module folder,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param document - Path from the module folder, like `VO_…/04_LogisticRegression.pdf`
  *   or `01_RegressionAnalysis/01_01_SampleMeanStandardError.md`
  * @returns Path like `NomSkillingmodules/IN2028_…/VO_…/04_LogisticRegression.pdf`
@@ -413,14 +442,18 @@ export function documentLinksOf(links: Link[]): Link[] {
 }
 
 /**
- * Builds the links of a skill entry, its `ATTACH`es, one line each, see the top of this file:
- * the documents it used, each a file of its module with its fingerprint, a note without, each once.
+ * Builds the links of a skill entry, its `ATTACH`es,
+ * one line each, see the top of this file:
+ * the documents it used, each a file of its module with its fingerprint,
+ * a note without, each once.
  * A document the entry links already keeps its link with its fingerprint,
  * also when the reader could not find it any more;
  * a file it links without fingerprint,
  * like the slides a lecture of my plan links, gets its fingerprint,
- * or stays as written while its file is not there yet, like the slides of a lecture to come.
- * The folder of its skill is the `ALTREP` of its `SUMMARY`, its chapters its `X-CHAPTER`s.
+ * or stays as written while its file is not there yet,
+ * like the slides of a lecture to come.
+ * The folder of its skill is the `ALTREP` of its `SUMMARY`,
+ * its chapters its `X-CHAPTER`s.
  * - `folder`: Folder of the skill from `NomWorkspace`,
  *   see {@link skillFolderOf}, `undefined` for none.
  * - `module`: Name of the folder of a module, empty for a project.
@@ -459,7 +492,8 @@ export function linksOf(code: string, documents: string[], links: Link[]): Link[
  * Repairs the links of a skill entry that lead nowhere, see the top of this file:
  * each document by its fingerprint among the documents of the module of the entry,
  * each note without fingerprint by the name of its file among them,
- * each folder of a chapter an older entry links by its name in the module folder found now,
+ * each folder of a chapter an older entry links by its name
+ * in the module folder found now,
  * like after the module folder was renamed.
  * The folder of a module in an older `ATTACH` stays as it is.
  * - `folder`: Name of the folder of the entry's module,
@@ -519,8 +553,8 @@ function linksRepairOf(entry: Entry): Link[] {
 }
 
 /**
- * Prints a repair of a link of a skill entry into the reader's console, like `Repaired a link
- * of IN2028_BusinessAnalyticsMachineLearning (VO) on 2026-10-13 at 14:00:
+ * Prints a repair of a link of a skill entry into the reader's console, like `Repaired
+ * a link of IN2028_BusinessAnalyticsMachineLearning (VO) on 2026-10-13 at 14:00:
  * NomSkillingmodules/IN2028_…/04_Old.pdf is now NomSkillingmodules/IN2028_…/04_New.pdf`.
  *
  * @param entry - Skill entry of the log, as it was
@@ -540,7 +574,8 @@ function repairPrint(entry: Entry, old: string, path: string): void {
  * Repairs the link of a skill entry, the `ALTREP` of its `SUMMARY`,
  * when the folder of its module is gone, like after a rename:
  * the folder found again by the code of the entry's module,
- * see `moduleFolderOf` in `notes.ts`, with the material of its type and semester as before,
+ * see `moduleFolderOf` in `notes.ts`,
+ * with the material of its type and semester as before,
  * see {@link skillLinkOf}; its title follows, see {@link skillTitleOf}.
  * The folder of a project stays as written,
  * and so does the folder of a material or a semester that is gone,
@@ -579,13 +614,15 @@ function folderRepair(file: string, entry: Entry): void {
  * see the top of this file:
  * the folder of each, the `ALTREP` of its `SUMMARY`, see {@link folderRepair},
  * then its documents and chapters, see {@link linksRepairOf};
- * writes the repaired links into their entries and prints each repair, see {@link repairPrint}.
+ * writes the repaired links into their entries and prints each repair,
+ * see {@link repairPrint}.
  * Entries that cannot be changed stay as they are.
  * - `entries`: Skill entries of the log with links.
  * - `file`: `.ics` file of an entry.
  * - `links`: The links of an entry to files as repaired.
  *
- * @throws {Error} - When a module folder or file cannot be read, or the log cannot be written
+ * @throws {Error} - When a module folder or file cannot be read,
+ *   or the log cannot be written
  */
 export function linksCheck(): void {
     const entries: Entry[] = logRead()
@@ -618,7 +655,8 @@ export function linksCheck(): void {
 }
 
 /**
- * Checks every link now, see {@link linksCheck}, and again every night at 04:00 in Berlin time,
+ * Checks every link now, see {@link linksCheck},
+ * and again every night at 04:00 in Berlin time,
  * as long as the reader runs; a failed check is printed and waits for the next.
  * - `check`: Checks the links, then waits for the next 04:00.
  * - `now`: The moment of the check.
@@ -647,7 +685,8 @@ export function linksCheckStart(): void {
  * Reads a file a skill entry of the log links, to send it read only,
  * so the page opens it in the browser's own viewer, like the slides of a lecture as PDF;
  * no other file, and none outside `NomWorkspace` or hidden, like `.git` or `.claude`.
- * - `linked`: Whether a skill entry of the whole log links the file, see {@link linksCheck}.
+ * - `linked`: Whether a skill entry of the whole log links the file,
+ *   see {@link linksCheck}.
  * - `file`: Path of the file on the disk.
  * - `hidden`: Whether a part of the path starts with `.`, like `..` or `.git`.
  *

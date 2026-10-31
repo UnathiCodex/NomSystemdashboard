@@ -1,16 +1,19 @@
 /**
  * ## Skill
  *
- * Reads the tasks of my chapter notes and my attempts at them, tells when each task is due,
+ * Reads the tasks of my chapter notes and my attempts at them,
+ * tells when each task is due,
  * and writes the skill entries of the log:
  * the one writer of their chapters, documents and rounds,
  * for the scripts view and the entry by category alike.
  * Only the modules of the semester have tasks, see `activeModulesRead` in `notes.ts`;
  * their chapters and tasks are read live from the folders every time,
  * so a changed chapter changes the views too, and no list of them is kept anywhere.
- * A task is a block of a note of a chapter folder like `01_RegressionAnalysis` in my modules,
+ * A task is a block of a note of a chapter folder
+ * like `01_RegressionAnalysis` in my modules,
  * its kind by the type word of its heading:
- * `## Example. <name>` is an example, its scene and question, then its steps `1.`, `2.`, …,
+ * `## Example. <name>` is an example, its scene and question,
+ * then its steps `1.`, `2.`, …,
  * which I predict one by one;
  * `## Task. <name>` is cold, the one I solve alone, one of its variants due per round;
  * a `## Definition.` and the `## Algorithm.`, the one worked example, are theory.
@@ -19,9 +22,10 @@
  * a heading `## Task. <name> (cold)` is cold, `(cold)` no part of its name,
  * and each plain `## Task. <name>` there an example.
  * Its sources are the `>` lines right below its heading, one per source,
- * each starting with its mode word, `Original:` or `Generated:`, which is left out,
- * like `> Generated: [[VO_UniversityLectureLessons/TUM_2025W/01_CourseOverview.pdf#page=45|VO 2025W 01 CourseOverview (45)]]`.
- * The parts of a cold task, one per idea, are its numbered list items at the start of a line,
+ * each starting with its mode word, `Original:` or `Generated:`, which is left out, like
+ * `> Generated: [[VO_UniversityLectureLessons/TUM_2025W/01_CourseOverview.pdf#page=45|VO 2025W 01 CourseOverview (45)]]`.
+ * The parts of a cold task, one per idea,
+ * are its numbered list items at the start of a line,
  * like `1. Sales $X_1,X_2,X_3$ of three days`, before its solution.
  *
  * A skill entry of the log is one block of learning of a type, as in the plan:
@@ -42,25 +46,30 @@
  *   like the slides of a lecture, the sheet of an exercise or the notes of a chapter,
  *   just its path, a file of the university with the fingerprint of its content,
  *   so the link survives a rename, a note without, since I change my notes too often,
- *   see `documents.ts`; the learning view attaches the note of each section I learn in it, like
+ *   see `documents.ts`;
+ *   the learning view attaches the note of each section I learn in it, like
  *   `ATTACH:NomSkillingmodules/IN2028_…/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`;
  *   its `DESCRIPTION` is only my free note;
  * - its semester, `X-SEMESTER`, see `semesterFor` in `categories.ts`;
  * - one `X-CHAPTER` per chapter of my system it belongs to, of any type,
- *   like `X-CHAPTER:02_LogisticPoissonRegression`, several for a session over several chapters,
+ *   like `X-CHAPTER:02_LogisticPoissonRegression`,
+ *   several for a session over several chapters,
  *   like exam training, the chapters of the sections of its rounds always among them;
- *   an older entry that links the folder of a chapter instead gets its `X-CHAPTER` once it changes,
+ *   an older entry that links the folder of a chapter
+ *   instead gets its `X-CHAPTER` once it changes,
  *   see `chaptersOf` in `documents.ts`;
  * - one `X-ROUND` per section it works on, of any type, also logged by hand,
- *   where I stand in its round and what I did in it, see {@link RoundLine} and `RoundMark`
- *   in `calendar.ts`, written anew in its place as I go on, like
+ *   where I stand in its round and what I did in it, see {@link RoundLine}
+ *   and `RoundMark` in `calendar.ts`, written anew in its place as I go on, like
  *   `X-ROUND;ROUND=1;STEP=Task. Food Truck;USED=Example. Canteen Double Count;RESULT=wrong:01_02_SampleMeanEstimator`,
- *   then with `STEP=done` once I closed the round; the order of the lines is the order I did it in.
+ *   then with `STEP=done` once I closed the round;
+ *   the order of the lines is the order I did it in.
  * Every attempt stands in the line of its section, so no task is solved outside a round:
  * a result of a cold Task, right or wrong, judged as a whole, my comment on a wrong one,
  * or an Example I checked off with `Next`, which has no result.
  * A button of a task writes into the skill entry of the moment:
- * the last one of the task's module that started before now and ended at most half an hour ago,
+ * the last one of the task's module that started before now
+ * and ended at most half an hour ago,
  * like a tutorial logged from the plan;
  * it grows to the end of the quarter hour of the attempt,
  * so the half hour of a pause counts from the attempt.
@@ -73,11 +82,13 @@
  * whose timer the page shows when it is of a type I pace myself,
  * my own learning or homework, see {@link sessionRead}.
  * Due by my protocol, per section, a note like `01_01_SampleMeanStandardError.md`,
- * as `~/NomWorkspace/.claude/skills/learn/4-session-learn/session-learn.md` says it, see `## Rounds`:
+ * as `~/NomWorkspace/.claude/skills/learn/4-session-learn/session-learn.md` says it,
+ * see `## Rounds`:
  * round 0 is its whole theory, its first Example and its first Task,
  * gone over until the Task is right, since the first can only succeed;
  * every later round its theory from my head and the next Task not solved yet;
- * a wrong Task brings the next unused Example, then the Task again, which then counts as right;
+ * a wrong Task brings the next unused Example,
+ * then the Task again, which then counts as right;
  * wrong again, the next round comes 2 days later and the spacing starts over.
  * One Example per round; the Task decides the round and writes the day of the next one
  * into its line as `DUE`, see {@link dueOf}.
@@ -89,7 +100,8 @@
  * see {@link exams} (Cepeda 2008, Rohrer 2005).
  * A right Task before its day counts as none, so the runs stay spaced.
  *
- * - `ical.js`: Builds the lines `X-ROUND` the reader writes, see `roundPropertyOf` in `calendar.ts`.
+ * - `ical.js`: Builds the lines `X-ROUND` the reader writes,
+ *   see `roundPropertyOf` in `calendar.ts`.
  * - `./boxes.ts`: Finds the skill box of a module for now,
  *   marks a box done once a skill entry is logged from it,
  *   and reads the skill boxes of the plan, for the exam of each module.
@@ -172,16 +184,21 @@ export type Kind = "example" | "cold";
  * A task whose wording improves keeps its heading and with it its history;
  * a task thrown away disappears, and its attempts stay in the log,
  * because they happened, but count nowhere.
- * Names are unique within a module; a renamed one takes its attempts along, see {@link taskRename}.
+ * Names are unique within a module;
+ * a renamed one takes its attempts along, see {@link taskRename}.
  *
  * - `id`: Identity, `<module>/<name>`,
  *   like `IN2028/Airline Revenue Interval`, the first part of its `X-ATTEMPT`s.
  * - `name`: Name in its heading,
  *   like `Airline Revenue Interval` of `## Task. Airline Revenue Interval`.
- * - `heading`: Its heading as written, like `Task. Airline Revenue Interval`, for a link to it.
+ * - `heading`: Its heading as written,
+ *   like `Task. Airline Revenue Interval`, for a link to it.
  * - `kind`: Its {@link Kind}, by the type word of its heading.
- * - `source`: Its sources as written on its source lines, each without `> ` and its mode word,
- *   joined by `, `, like `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`, empty without one.
+ * - `source`: Its sources as written on its source lines,
+ *   each without `> ` and its mode word,
+ *   joined by `, `, like
+ *   `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`,
+ *   empty without one.
  * - `note`: Path of its note, as the scripts view takes it, like
  *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md`.
  * - `chapter`: Name of its chapter, like `01_RegressionAnalysis`.
@@ -203,7 +220,8 @@ export type Task = {
 
 /**
  * An attempt at a task, as the views show it, read from the lines `X-ROUND` of the log,
- * see {@link RoundLine}: a result of a cold Task, or an Example I checked off, which reads as right.
+ * see {@link RoundLine}: a result of a cold Task,
+ * or an Example I checked off, which reads as right.
  *
  * - `day`: Day its skill entry started in Berlin time, like `2026-10-10`.
  * - `order`: Its place among all my attempts, the oldest first,
@@ -222,11 +240,13 @@ export type Attempt = {
 /**
  * A {@link Task} with when it is due, see the top of this file.
  *
- * - `due`: Day it is due next, like `2026-10-12`, the day of the next round of its section
- *   for its cold Task of that round, empty for any other task and when nothing is due.
+ * - `due`: Day it is due next, like `2026-10-12`,
+ *   the day of the next round of its section for its cold Task of that round,
+ *   empty for any other task and when nothing is due.
  * - `done`: For an Example, whether I checked it off in a round.
  * - `level`: For a cold task, the runs of its section that count, 0 to 4.
- * - `ready`: For a cold task, whether its section has its four runs, spaced as the protocol says.
+ * - `ready`: For a cold task, whether its section has its four runs,
+ *   spaced as the protocol says.
  * - `attempts`: All its attempts, the latest last.
  */
 export type SkillTask = Task & {
@@ -249,11 +269,14 @@ export type SkillTask = Task & {
  * - `example`: Identity of the Example of the round shown, see {@link exampleOf},
  *   empty for none left.
  * - `algorithm`: Heading of its Algorithm as written, the one worked example,
- *   like `Algorithm. Check an Estimator for Bias`, see {@link algorithmOf}; empty for none.
+ *   like `Algorithm. Check an Estimator for Bias`,
+ *   see {@link algorithmOf}; empty for none.
  * - `tasks`: Number of its tasks, the cold one included.
  * - `tried`: Number of its tasks I tried.
- * - `round`: The round shown: one going on, or closed today, else the next one, see {@link sectionOf}.
- * - `ladder`: Whether the round shown is round 0, its theory, one Example and its first Task.
+ * - `round`: The round shown: one going on, or closed today,
+ *   else the next one, see {@link sectionOf}.
+ * - `ladder`: Whether the round shown is round 0, its theory,
+ *   one Example and its first Task.
  * - `runs`: Its runs that count, decided before today, so it stays the whole day,
  *   see {@link levelsOf}.
  * - `day`: Day the round shown began, today for one not begun.
@@ -261,7 +284,8 @@ export type SkillTask = Task & {
  *   by the spacing, see {@link dueAfter}; empty without a cold task.
  * - `wrongDue`: Day it comes after a Task wrong for good today, 2 days later;
  *   empty without a cold task.
- * - `at`: Key of the step of the round shown I am at, by the last `Next`, empty for none yet.
+ * - `at`: Key of the step of the round shown I am at,
+ *   by the last `Next`, empty for none yet.
  * - `closed`: Whether I closed the round shown by hand.
  * - `results`: Results of the Task of the round shown, in order, none for none yet.
  * - `used`: Whether the round shown checked its Example off, its `USED`.
@@ -301,16 +325,20 @@ export type SectionToday = "task" | "new" | "";
 /**
  * A line `X-ROUND` of a skill entry of the log, see `RoundMark` in `calendar.ts`,
  * so where I am and what I did lives in the log alone, never in the browser or the note:
- * one line per section in a skill entry, written anew in its place as I go on, its section,
+ * one line per section in a skill entry,
+ * written anew in its place as I go on, its section,
  * its round, the step I went on to with `Next`, where the round goes on,
  * also in another session, or `done` once I closed the round by hand;
  * the cold Task I solved in it with its results and my comment on each wrong one,
- * the Example I checked off, and once the Task decided the round, the day the next one comes.
+ * the Example I checked off, and once the Task decided the round,
+ * the day the next one comes.
  * The steps before the step count as passed.
- * Every skill entry that links the note of a section holds one, also one I logged by hand,
+ * Every skill entry that links the note of a section holds one,
+ * also one I logged by hand,
  * see {@link markStartOf}, and every line links its note, see {@link linksWith},
  * so no attempt stands outside a round.
- * The lines of a section in a row with the same round are that round, see {@link roundsOf},
+ * The lines of a section in a row with the same round are that round,
+ * see {@link roundsOf},
  * so a round I did not close goes on over days and entries until I close it.
  * A step is named by its key, its heading as written.
  *
@@ -318,8 +346,10 @@ export type SectionToday = "task" | "new" | "";
  * - `day`: Day of its skill entry.
  * - `section`: Its section with its module, `<module>/<note name>`,
  *   like `IN2028/01_02_SampleMeanEstimator`.
- * - `round`, `step`, `results`, `notes`, `due`: As written, see `RoundMark` in `calendar.ts`.
- * - `task`, `example`: Identities of its Task and of the Example it used, `<module>/<name>`,
+ * - `round`, `step`, `results`, `notes`, `due`:
+ *   As written, see `RoundMark` in `calendar.ts`.
+ * - `task`, `example`: Identities of its Task
+ *   and of the Example it used, `<module>/<name>`,
  *   from their headings, empty for none.
  */
 type RoundLine = {
@@ -336,14 +366,17 @@ type RoundLine = {
 };
 
 /**
- * A round of a section, its lines `X-ROUND` in a row with the same round, see {@link roundsOf}.
+ * A round of a section, its lines `X-ROUND` in a row with the same round,
+ * see {@link roundsOf}.
  *
  * - `round`: Its round.
  * - `lines`: Its lines in order.
  * - `closed`: Whether I closed it, its last line `done`.
- * - `task`, `example`: Identities of its Task and its Example, the last named, empty for none.
+ * - `task`, `example`: Identities of its Task and its Example,
+ *   the last named, empty for none.
  * - `results`: Results of its Task, of all its lines in order.
- * - `decided`: Day of the line whose result decided it, see {@link decidedIs}, empty while open.
+ * - `decided`: Day of the line whose result decided it,
+ *   see {@link decidedIs}, empty while open.
  * - `due`: Day the next round comes, the `DUE` of that line, empty while open.
  */
 type Round = {
@@ -412,22 +445,26 @@ export type SkillModule = {
 };
 
 /**
- * Everything the scripts view shows of my tasks, and the skill entries of the day pick from.
+ * Everything the scripts view shows of my tasks,
+ * and the skill entries of the day pick from.
  *
- * - `modules`: Modules of the semester in the order of their list, also those without tasks yet.
+ * - `modules`: Modules of the semester in the order of their list,
+ *   also those without tasks yet.
  * - `skills`: The skills of the semester for the Skill picker, in their order,
  *   by their names, see {@link skillNameOf}:
  *   a module by its code, like `IN2028`, a project by its folder name, like `WokFlow`.
  * - `otherModules`: The other module folders by their codes,
  *   like `IN0024`, for the search of the Skill picker, which reaches every module.
  * - `folders`: The whole name of the folder of each of them by its name,
- *   which the Skill picker shows, like `IN2028_BusinessAnalyticsMachineLearning` for `IN2028`,
+ *   which the Skill picker shows,
+ *   like `IN2028_BusinessAnalyticsMachineLearning` for `IN2028`,
  *   or `WokFlow` for a project, see `skillTitleOf` in `documents.ts`.
  * - `paths`: The folder of each of them from `NomWorkspace` by its name, like
  *   `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
  *   see `skillFolderOf` in `documents.ts`.
  * - `links`: The link of each of them by its name, one for all its entries and boxes,
- *   which the dialog fills in below the skill picked, see `skillLinkOf` in `documents.ts`.
+ *   which the dialog fills in below the skill picked,
+ *   see `skillLinkOf` in `documents.ts`.
  * - `types`: Types of a skill entry, like `VO`.
  */
 export type Skilling = {
@@ -442,13 +479,15 @@ export type Skilling = {
 
 /**
  * A new attempt, as a button of a task sends it,
- * and as each attempt of a skill entry of the dialog comes, written into the line `X-ROUND`
- * of its section, see {@link markTried}: a cold Task judged as a whole, right or wrong,
+ * and as each attempt of a skill entry of the dialog comes,
+ * written into the line `X-ROUND` of its section, see {@link markTried}:
+ * a cold Task judged as a whole, right or wrong,
  * or an Example checked off, always right.
  *
  * - `task`: Identity of the task, see {@link Task}.
  * - `result`: Its result, `right` or `wrong`, an Example only `right`.
- * - `comment`: My short comment on what went wrong, only with `wrong`, empty when not given.
+ * - `comment`: My short comment on what went wrong,
+ *   only with `wrong`, empty when not given.
  */
 export type AttemptNew = {
     task: string;
@@ -457,7 +496,8 @@ export type AttemptNew = {
 };
 
 /**
- * A new skill entry of the log, as the entry by category sends it; an empty field is not written.
+ * A new skill entry of the log, as the entry by category sends it;
+ * an empty field is not written.
  *
  * - `title`: Its title, `SUMMARY`, always the one its skill and type give it,
  *   see `titleOf` in `documents.ts`.
@@ -466,11 +506,14 @@ export type AttemptNew = {
  * - `type`: Its type, one of the types of `categories.ts`, like `VO`, empty for none.
  * - `module`: Name of its skill: the code of any module folder, like `IN2028`,
  *   or a project of the semester, like `WokFlow`.
- * - `semester`: Its semester, `X-SEMESTER`, like `2026W`, the semester of its day when empty,
+ * - `semester`: Its semester, `X-SEMESTER`, like `2026W`,
+ *   the semester of its day when empty,
  *   see `semesterFor` in `categories.ts`.
- * - `chapters`: Names of the chapters of my system it belongs to, like `01_RegressionAnalysis`,
+ * - `chapters`: Names of the chapters of my system it belongs to,
+ *   like `01_RegressionAnalysis`,
  *   none for none.
- * - `documents`: Paths from the folder of its skill of the documents it used, files of its module,
+ * - `documents`: Paths from the folder of its skill of the documents it used,
+ *   files of its module,
  *   like `VO_UniversityLectureLessons/TUM_2025W/04_LogisticPoissonRegression.pdf`
  *   or the notes of a chapter, empty for none.
  * - `attempts`: Its attempts, in the order they were picked, none for none.
@@ -479,7 +522,8 @@ export type AttemptNew = {
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
  *   What I did online, like the stream of a lecture,
  *   as for any entry of the log, see `EntryNew` in `day.ts`;
- *   left out by a sender that does not know them, so it keeps them or takes those of its box.
+ *   left out by a sender that does not know them,
+ *   so it keeps them or takes those of its box.
  * - `attendees`: Who I was with, one `ATTENDEE` each;
  *   left out, as for any entry of the log, see `EntryNew` in `day.ts`.
  * - `planned`: Identifier of the box it is logged from,
@@ -507,24 +551,27 @@ export type SkillEntryNew = Partial<Online> & {
 };
 
 /**
- * A changed skill entry of the log, as the entry by category sends it: a {@link SkillEntryNew}
- * with the identifier `id` of the entry,
+ * A changed skill entry of the log, as the entry by category sends it:
+ * a {@link SkillEntryNew} with the identifier `id` of the entry,
  * whose `attempts` are only the new ones, added after those it has;
  * its box stays as it is, and its place keeps its link while it stays the same place;
  * and with `version`, its fingerprint as the dialog opened it,
- * see `version` of `Entry` in `calendar.ts`, so the reader writes nothing older than the file,
+ * see `version` of `Entry` in `calendar.ts`,
+ * so the reader writes nothing older than the file,
  * see {@link skillEntryEdit}.
  */
 export type SkillEntryChange = SkillEntryNew & { id: string; version: string };
 
 /**
- * A session of a module running now, as the learning view reads it, see {@link sessionRead}.
+ * A session of a module running now,
+ * as the learning view reads it, see {@link sessionRead}.
  *
  * - `module`: Name of its skill, like `IN2028` or `WokFlow`.
  * - `type`: Its type, `HU`, empty for none, like my own learning or a project.
  * - `title`: What its skill entry is, as written,
  *   like `IN2028_BusinessAnalyticsMachineLearning (HU)`.
- * - `start`, `end`: Start and end of its skill entry, as ISO instants; it runs until its end.
+ * - `start`, `end`: Start and end of its skill entry,
+ *   as ISO instants; it runs until its end.
  */
 export type Session = {
     module: string;
@@ -564,7 +611,8 @@ type LoggedAttempt = {
 const roundDone: string = "done";
 
 /**
- * Days until the next round of a section after its Task stayed wrong, see `session-learn.md`.
+ * Days until the next round of a section after its Task stayed wrong,
+ * see `session-learn.md`.
  */
 const retryDays: number = 2;
 
@@ -582,7 +630,8 @@ const spacingDays: number[] = [1, 7, 21];
 const examDays: number = 14;
 
 /**
- * Days between a ready section and its exam beyond which one keep-up check lies halfway between,
+ * Days between a ready section and its exam beyond
+ * which one keep-up check lies halfway between,
  * about 6 weeks, since without one 70 % fell to 24 % in 9 weeks (Rohrer 2005).
  */
 const keepUpDays: number = 42;
@@ -611,7 +660,8 @@ export const exams: { [code: string]: ExamDate } = {
 
 /**
  * Exam of a module whose exam is not listed:
- * the first Monday of the exam period after the lectures of 2026W, the earliest it could be,
+ * the first Monday of the exam period after the lectures of 2026W,
+ * the earliest it could be,
  * so the last runs come in time.
  */
 const examDefault: ExamDate = { day: "2027-02-15", estimated: true };
@@ -660,14 +710,16 @@ const algorithmHeading: RegExp = /^##[ \t]+(Algorithm\.[ \t]+.+?)[ \t]*$/;
 const olderCold: RegExp = /^## Task\.[ \t]+.+[ \t]+\(cold\)[ \t]*$/;
 
 /**
- * Source line of a task, one per source, `> Original: …` or `> Generated: …` with its mode word,
+ * Source line of a task, one per source,
+ * `> Original: …` or `> Generated: …` with its mode word,
  * which is left out, or `> …` without one.
  */
 const sourceLine: RegExp = /^>[ \t]*(?:(?:Original|Generated):[ \t]*)?(.*?)[ \t]*$/;
 
 /**
  * Gives the name of a section from the path of its note, the name of the note as it is,
- * without `.md`, like `01_01_SampleMeanStandardError` of `…/01_01_SampleMeanStandardError.md`.
+ * without `.md`, like `01_01_SampleMeanStandardError`
+ * of `…/01_01_SampleMeanStandardError.md`.
  *
  * @param note - Path of the note
  * @returns Name
@@ -677,7 +729,8 @@ function sectionTitleOf(note: string): string {
 }
 
 /**
- * Reads the parts of a cold task: the numbers of its lines that start with a number and `.`,
+ * Reads the parts of a cold task:
+ * the numbers of its lines that start with a number and `.`,
  * see {@link partLine}, from below its heading to the next heading,
  * which is its solution or the next block, each number once.
  * - `body`: Lines below the heading, up to the next heading.
@@ -707,7 +760,8 @@ function partsOf(lines: string[], index: number): string[] {
  *
  * @param lines - Lines of the note
  * @param index - Line of the heading of the task
- * @returns Sources, like `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`,
+ * @returns Sources, like
+ *   `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`,
  *   empty without one
  */
 function sourceOf(lines: string[], index: number): string {
@@ -740,7 +794,8 @@ function kindOf(word: string, cold: boolean, older: boolean): Kind {
  * see {@link algorithmHeading}.
  *
  * @param note - Path of the note, as the scripts view takes it
- * @returns Heading as written, like `Algorithm. Check an Estimator for Bias`, empty for none
+ * @returns Heading as written,
+ *   like `Algorithm. Check an Estimator for Bias`, empty for none
  * @throws {Error} - When the note cannot be read
  */
 function algorithmOf(note: string): string {
@@ -758,7 +813,8 @@ function algorithmOf(note: string): string {
  * see {@link sourceOf}, its kind, see {@link kindOf}, and for a cold task its parts.
  * - `lines`: Lines of the note.
  * - `section`: Name of the note's section.
- * - `older`: Whether the note is written the older way, with a heading `## Task. <name> (cold)`.
+ * - `older`: Whether the note is written the older way,
+ *   with a heading `## Task. <name> (cold)`.
  *
  * @param code - Module code of the note
  * @param chapter - Name of the chapter of the note
@@ -836,7 +892,8 @@ function skillEntriesRead(start: string, end: string): Entry[] {
 }
 
 /**
- * Reads the lines `X-ROUND` of all skill entries of the log up to now, see {@link RoundLine},
+ * Reads the lines `X-ROUND` of all skill entries of the log up to now,
+ * see {@link RoundLine},
  * in the order of their entries and within each,
  * each section, Task and Example with its module, the module of its entry
  * unless the section names its own, like `IN2028/01_02_…` once the entry's skill changed,
@@ -885,7 +942,8 @@ function nameOf(heading: string): string {
 
 /**
  * Reads my attempts from the lines `X-ROUND`, see {@link Attempt}, in their order:
- * per line its Example checked off, then each result of its Task with my comment on a wrong one.
+ * per line its Example checked off,
+ * then each result of its Task with my comment on a wrong one.
  * - `order`: Place of the next attempt.
  * - `wrongs`: Wrong results of a line so far, whose comment is the next of its notes.
  *
@@ -932,7 +990,8 @@ function overIs(round: Round, day: string): boolean {
 
 /**
  * Gives the rounds of a section from its lines, see {@link Round}:
- * the lines in a row with the same round, a round over ending its own, see {@link overIs}.
+ * the lines in a row with the same round,
+ * a round over ending its own, see {@link overIs}.
  * - `last`: The round so far.
  *
  * @param lines - Lines `X-ROUND` of the section, in order
@@ -1057,11 +1116,13 @@ function levelsOf(
 
 /**
  * Tells when the next round of a section comes once its Task decides a round on a day,
- * written as `DUE` into the line that decides it, so the log holds it, see {@link markDecide}:
+ * written as `DUE` into the line that decides it,
+ * so the log holds it, see {@link markDecide}:
  * after a Task wrong for good 2 days later;
  * after a right one by the spacing, see {@link dueAfter}, unless it came before its day,
  * which keeps the day it was due.
- * - `level`, `due`: Level and next round by the rounds decided before, see {@link levelsOf}.
+ * - `level`, `due`: Level and next round by the rounds decided before,
+ *   see {@link levelsOf}.
  *
  * @param earlier - Rounds of the section before the one it decides
  * @param result - The result that decides it
@@ -1109,7 +1170,8 @@ function coldOf(colds: Task[], rounds: Round[], shown: Round | undefined): strin
 
 /**
  * Gives the Example of a round of a section, see `session-learn.md`:
- * the one its lines name, else the next unused, the first of the note no round checked off,
+ * the one its lines name, else the next unused,
+ * the first of the note no round checked off,
  * so round 0 takes the first.
  *
  * @param examples - Examples of the section, in the order of the note
@@ -1128,18 +1190,23 @@ function exampleOf(examples: Task[], rounds: Round[], shown: Round | undefined):
 }
 
 /**
- * Builds a section of a module with its tasks, from its note and its lines `X-ROUND` alone,
+ * Builds a section of a module with its tasks,
+ * from its note and its lines `X-ROUND` alone,
  * see {@link SkillSection}:
  * the round shown is the last one while it is not over, see {@link overIs},
- * or on the day it ended, else the next one, its number one more, round 0 for a section never begun;
- * it is due today as `new` while its round 0 began, see {@link todayMarked} for the next one,
+ * or on the day it ended, else the next one, its number one more,
+ * round 0 for a section never begun;
+ * it is due today as `new` while its round 0 began,
+ * see {@link todayMarked} for the next one,
  * as `task` while a later round is shown or its next round is due.
  * Its cold Task of the round is due on the day of the next round, its Examples never;
  * an Example is done once a round checked it off.
- * - `colds`, `examples`: Its cold tasks, its variants, and its Examples, in the order of the note.
+ * - `colds`, `examples`: Its cold tasks, its variants,
+ *   and its Examples, in the order of the note.
  * - `rounds`, `last`, `shown`: Its rounds, the last one and the round shown.
  * - `round`: Number of the round shown.
- * - `all`: Its level and next round by every round decided, `before` by those before today.
+ * - `all`: Its level and next round by every round decided,
+ *   `before` by those before today.
  * - `cold`: Identity of the Task of the round shown.
  * - `days`: Days of its lines.
  * - `today`: What of it is due today.
@@ -1231,7 +1298,8 @@ function sectionOf(
 /**
  * Marks the next section of a module to learn new today, which the plan of today holds,
  * see `suggestions.ts`, the sections due today already marked, see {@link sectionOf}:
- * while no section is on a begun round 0, the first section not begun yet of an open chapter,
+ * while no section is on a begun round 0,
+ * the first section not begun yet of an open chapter,
  * one at a time, once the section before it, when begun, has {@link openRuns} runs:
  * the first chapter opens by a skill box of my plan that names it, see {@link openedOf},
  * a later one too, or by itself once every section of the chapter before has them.
@@ -1242,7 +1310,8 @@ function sectionOf(
  * - `next`: The first section not begun yet of an open chapter, `undefined` for none.
  * - `before`: The section with a Task before it, `undefined` for none.
  *
- * @param sections - Sections of a module in the order of their notes, those due today marked
+ * @param sections - Sections of a module in the order of their notes,
+ *   those due today marked
  * @param opened - Chapters of the module I opened, like `01_StatisticsFoundations`
  * @returns The sections, marked
  */
@@ -1308,7 +1377,8 @@ function openedOf(module: string, boxes: Box[], today: string): string[] {
 
 /**
  * Gives the exam of a module:
- * the first box of the type `FA` of its plan from today on, its day as the university named it,
+ * the first box of the type `FA` of its plan from today on,
+ * its day as the university named it,
  * else its estimate, see {@link exams}, else {@link examDefault}.
  * - `today`: Today in Berlin time.
  * - `planned`: The first exam of its plan from today on, `undefined` for none.
@@ -1334,7 +1404,8 @@ function examOf(module: string, boxes: Box[]): ExamDate {
 
 /**
  * Reads everything the scripts view shows:
- * per module of the semester its exam, its tasks with when each is due, see the top of this file,
+ * per module of the semester its exam,
+ * its tasks with when each is due, see the top of this file,
  * and its sections; a module without chapter notes yet has no tasks,
  * and a task whose name an earlier task of the module has already is left out.
  * Attempts on other modules count nowhere.
@@ -1456,11 +1527,14 @@ function folderOf(code: string): string {
  * Reads what the dialog of a skill entry offers for a skill:
  * for a module, any module folder, its chapters and its documents,
  * see `notes.ts`, none for a module of the semester whose folder is missing;
- * for a project of the semester none, since it behaves like a module without chapters and tasks.
+ * for a project of the semester none,
+ * since it behaves like a module without chapters and tasks.
  *
- * @param code - Name of the skill, a module code like `IN2028` or a project like `WokFlow`
+ * @param code - Name of the skill,
+ *   a module code like `IN2028` or a project like `WokFlow`
  * @returns Chapters and documents of the skill
- * @throws {Error} - When no module folder, no module of the semester and no project has the name
+ * @throws {Error} - When no module folder,
+ *   no module of the semester and no project has the name
  */
 export function moduleRead(code: string): ModuleContents {
     if (projectOf(code) !== undefined)
@@ -1550,7 +1624,8 @@ function lineOf(mark: RoundMark, module: string, entry: string, day: string): Ro
 /**
  * Writes an attempt into the line `X-ROUND` of its section, see {@link AttemptNew}:
  * an Example checked off as its `USED`, the one Example of the round;
- * a result of the cold Task with its heading as `TASK`, its result after those of the line,
+ * a result of the cold Task with its heading as `TASK`,
+ * its result after those of the line,
  * and for a wrong one my comment as `NOTE`, an empty one kept for its place
  * unless no later one follows.
  * - `comment`: My comment as plain text in one line: each `"` a `'`,
@@ -1562,8 +1637,9 @@ function lineOf(mark: RoundMark, module: string, entry: string, day: string): Ro
  * @param attempt - The attempt
  * @param decided - Whether the round is decided already, see {@link decidedIs}
  * @returns The line
- * @throws {Error} - When an Example comes with a result other than right, its round has another
- *   Example already, the round is decided already, the result is neither right nor wrong,
+ * @throws {Error} - When an Example comes with a result other than right,
+ *   its round has another Example already, the round is decided already,
+ *   the result is neither right nor wrong,
  *   or a comment comes with right
  */
 function markTried(
@@ -1600,9 +1676,11 @@ function markTried(
 }
 
 /**
- * Writes the day the next round comes as `DUE` into the line whose result decides its round,
- * see {@link decidedIs} and {@link dueOf}, so the dashboard shows the next round right away
- * and the log holds it; a round decided before keeps its day.
+ * Writes the day the next round comes as `DUE` into the line
+ * whose result decides its round,
+ * see {@link decidedIs} and {@link dueOf},
+ * so the dashboard shows the next round right away and the log holds it;
+ * a round decided before keeps its day.
  * - `rounds`: Rounds of the section with the line, `round` the one of the line.
  *
  * @param mark - The line
@@ -1627,7 +1705,8 @@ function markDecide(
 }
 
 /**
- * Applies changes to the line `X-ROUND` of a section of a skill entry, see {@link RoundLine},
+ * Applies changes to the line `X-ROUND` of a section of a skill entry,
+ * see {@link RoundLine},
  * and decides its round once its Task did, see {@link markDecide}:
  * the attempts at tasks of the section in order, see {@link markTried},
  * then the step I went on to, see {@link markStepped}.
@@ -1636,7 +1715,8 @@ function markDecide(
  *
  * @param mark - The line
  * @param change - Attempts and the step, empty for none
- * @param context - Module, identifier and day of the entry, the lines of the log, the tasks,
+ * @param context - Module, identifier and day of the entry,
+ *   the lines of the log, the tasks,
  *   and the exam of the module of the section
  * @returns The line
  */
@@ -1686,7 +1766,8 @@ function markWith(
 
 /**
  * Writes the step I went on to into a line `X-ROUND`, or `done` once I close its round:
- * passing an Example with `Next` checks it off as the `USED` of the round, see {@link markTried};
+ * passing an Example with `Next` checks it off as the `USED` of the round,
+ * see {@link markTried};
  * round 0 closes only once its Task is right, since its first Task can only succeed.
  * - `left`: The Example I leave, `undefined` for none.
  *
@@ -1747,7 +1828,8 @@ function marksWith(kept: RoundMark[], marks: RoundMark[]): RoundMark[] {
 
 /**
  * Gives the line `X-ROUND` of a section a skill entry holds now and goes on in,
- * its last one while that did not close its round, else a new one, see {@link markStartOf};
+ * its last one while that did not close its round,
+ * else a new one, see {@link markStartOf};
  * a round picked moves the line it has to that round, at the step I last stood at in it.
  *
  * @param kept - Lines the entry has, none for a new entry
@@ -1784,7 +1866,8 @@ function markOf(
 
 /**
  * Gives the lines `X-ROUND` of the log before those a skill entry writes anew:
- * those of the other entries, and its own that closed a round, which it never writes again.
+ * those of the other entries, and its own that closed a round,
+ * which it never writes again.
  *
  * @param lines - Lines `X-ROUND` of the log, see {@link roundsRead}
  * @param entry - Identifier of the entry, empty for a new one
@@ -1890,10 +1973,12 @@ function markTasksOf(marks: RoundMark[], module: string, tasks: Task[]): string[
  * Checks a round I pick by hand in the dialog:
  * its section must have tasks of the module and its round must be a number from 0.
  *
- * @param pick - Section with its module, like `IN2028/01_02_SampleMeanEstimator`, and its round
+ * @param pick - Section with its module,
+ *   like `IN2028/01_02_SampleMeanEstimator`, and its round
  * @param module - Module of the entry
  * @param tasks - Tasks of the modules of the semester
- * @throws {Error} - When no task of the module names its section, or its round is no number from 0
+ * @throws {Error} - When no task of the module names its section,
+ *   or its round is no number from 0
  */
 function pickCheck(pick: RoundPick, module: string, tasks: Task[]): void {
     if (
@@ -1907,13 +1992,15 @@ function pickCheck(pick: RoundPick, module: string, tasks: Task[]): void {
 
 /**
  * Gives the lines `X-ROUND` of a skill entry from the dialog, see {@link RoundLine}:
- * none for an entry of a type, like a lecture or a tutorial, whose sheet or slides it links
- * and whose tasks are no attempts, since no task stands outside a round;
- * for my own learning one per section it works on, the rounds I picked, the notes it links
- * and the tasks it tried,
- * each going on in the line the entry has, see {@link markOf}, with its attempts and decided,
+ * none for an entry of a type, like a lecture or a tutorial, whose sheet or slides
+ * it links and whose tasks are no attempts, since no task stands outside a round;
+ * for my own learning one per section it works on, the rounds I picked,
+ * the notes it links and the tasks it tried,
+ * each going on in the line the entry has, see {@link markOf},
+ * with its attempts and decided,
  * see {@link markWith}; a line the entry has of a note it no longer links goes
- * while it holds nothing I did, else it stays and links its note again, see {@link linksWith}.
+ * while it holds nothing I did, else it stays and links its note again,
+ * see {@link linksWith}.
  * - `lines`: Lines `X-ROUND` of the log.
  * - `boxes`: Skill boxes of the plan, for the exam of the module.
  * - `sections`: Sections it works on, with their modules.
@@ -1924,7 +2011,8 @@ function pickCheck(pick: RoundPick, module: string, tasks: Task[]): void {
  * @param tasks - Tasks of the modules of the semester
  * @returns Its lines and its links with the notes of their sections
  * @throws {Error} - When a pick, an attempt or a step is not right,
- *   see {@link pickCheck} and {@link markTried}, an attempt is at a task of another module,
+ *   see {@link pickCheck} and {@link markTried},
+ *   an attempt is at a task of another module,
  *   or an entry of a type comes with picks or attempts
  */
 function marksOfEntry(
@@ -2012,10 +2100,12 @@ function marksOfEntry(
  * Lists the chapters of a skill entry: those picked,
  * then the chapters of the sections of its lines `X-ROUND`, each once,
  * since an entry covers the chapters of the sections I worked on in it.
- * - `solved`: Chapter of each task, as its note lies now; none for a task no note holds any more.
+ * - `solved`: Chapter of each task, as its note lies now;
+ *   none for a task no note holds any more.
  *
  * @param chapters - Chapters picked, by their names
- * @param worked - Identities of one task of each section of its lines, see {@link markTasksOf}
+ * @param worked - Identities of one task of each section of its lines,
+ *   see {@link markTasksOf}
  * @param tasks - Tasks of the modules of the semester
  * @returns Chapters, each once, in this order
  */
@@ -2043,7 +2133,8 @@ function chaptersWith(chapters: string[], worked: string[], tasks: Task[]): stri
  * @param kept - Chapters the entry had,
  *   or the box a new entry is logged from, by the names they gave them,
  *   also once a folder has another name; none for a new entry without box
- * @param keptType - Type the entry or the box it is logged from had, like `DEV`, empty for none
+ * @param keptType - Type the entry or the box it is logged from had,
+ *   like `DEV`, empty for none
  * @throws {Error} - When one of these does not hold
  */
 function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string): void {
@@ -2076,7 +2167,8 @@ function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string)
  * also for a note it only links, see {@link marksOfEntry},
  * the box it is logged from, which is done then;
  * my own learning, without type and box,
- * like the session the learning view opens, is logged from the study box of its module and day,
+ * like the session the learning view opens,
+ * is logged from the study box of its module and day,
  * see `studyBoxOf` in `boxes.ts`, so learning does the box of the plan.
  * - `tasks`: Tasks of the modules of the semester.
  * - `marks`, `links`: Its `X-ROUND`s and its links with the notes of their sections.
@@ -2090,8 +2182,10 @@ function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string)
  *
  * @param entry - Skill entry as the page sends it
  * @returns Identifier of the new entry, so the reader can send it to Vu, see `shared.ts`
- * @throws {Error} - When an attempt or a round picked is not right, see {@link marksOfEntry},
- *   the entry is not right, see {@link skillEntryCheck}, a document is none of the module's,
+ * @throws {Error} - When an attempt or a round picked is not right,
+ *   see {@link marksOfEntry},
+ *   the entry is not right, see {@link skillEntryCheck},
+ *   a document is none of the module's,
  *   the link typed online is no web address, the box it is logged from is not open
  */
 export function skillEntryAdd(entry: SkillEntryNew): string {
@@ -2168,14 +2262,16 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
  * the entry moves into the log of its new skill when that is another file,
  * see `logFileOf` in `day.ts`.
  * Its title, its `SUMMARY`, is the one sent, the link of it follows its skill and type,
- * see `titleOf` in `documents.ts`, and its links its skill and documents, see `linksOf` there:
+ * see `titleOf` in `documents.ts`,
+ * and its links its skill and documents, see `linksOf` there:
  * a document it had keeps its link with its fingerprint, a new one gets its own;
  * its chapters are its `X-CHAPTER`s, the folders of chapters an older entry links going.
  * Its place keeps its link while it stays the same, see `placeLinkOf` in `places.ts`.
  * Its lines `X-ROUND` keep their section, also once I change its skill:
  * then each names the module of its section.
- * A round I picked for a note moves the line of its section there, the new attempts go into
- * the lines of their sections, and a newly linked note gets its line, see {@link marksOfEntry}.
+ * A round I picked for a note moves the line of its section there,
+ * the new attempts go into the lines of their sections,
+ * and a newly linked note gets its line, see {@link marksOfEntry}.
  * Written only while its file holds it as the dialog opened it,
  * its fingerprint still the one the dialog sends, as for any entry of the log,
  * see `entryEdit` in `day.ts`: after any change of it since,
@@ -2191,9 +2287,11 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
  *
  * @param change - Changed skill entry as the page sends it,
  *   with its fingerprint as the dialog opened it
- * @returns Whether it is written, `false` when its file changed it since the dialog opened it
+ * @returns Whether it is written,
+ *   `false` when its file changed it since the dialog opened it
  * @throws {Error} - When there is no such skill entry in the log of the new system,
- *   a new attempt or a round picked is not right, see {@link marksOfEntry}, the entry is not right,
+ *   a new attempt or a round picked is not right,
+ *   see {@link marksOfEntry}, the entry is not right,
  *   see {@link skillEntryCheck}, a document is none of the module's,
  *   the link typed online is no web address
  */
@@ -2255,13 +2353,16 @@ export function skillEntryEdit(change: SkillEntryChange): boolean {
 /**
  * Writes where I stand in a round and what I did in it into the skill entry of the moment
  * of its module, see the top of this file:
- * the line `X-ROUND` of its section there, written anew in its place, see {@link marksWith},
+ * the line `X-ROUND` of its section there,
+ * written anew in its place, see {@link marksWith},
  * started at the round going on when the entry has none of it, see {@link markOf},
  * with the attempts and the step, decided once its Task did, see {@link markWith},
- * the note of its section linked as an `ATTACH` without fingerprint, see {@link linksWith},
+ * the note of its section linked as an `ATTACH` without fingerprint,
+ * see {@link linksWith},
  * with the chapter of the section,
  * and its end moved to the end of the quarter hour of now, if that is later.
- * Without an open entry of the module, starts one without type covering the quarter hour of now,
+ * Without an open entry of the module,
+ * starts one without type covering the quarter hour of now,
  * logged from the open skill box of the module for now while that has no type either,
  * with its title, which is done then.
  * - `quarter`: End of the quarter hour of now, now rounded up to the quarter hour.
@@ -2274,10 +2375,12 @@ export function skillEntryEdit(change: SkillEntryChange): boolean {
  *   see `documentLinksOf` in `documents.ts`, with the note of each section of its lines.
  * - `chapters`: Its chapters, with that of the section.
  * - `box`: Open skill box of the module for now and the chapter of the section,
- *   see `skillBoxOf` in `boxes.ts`, for a new entry, and `plan` that box while it has no type.
+ *   see `skillBoxOf` in `boxes.ts`, for a new entry,
+ *   and `plan` that box while it has no type.
  * - `type`: Type of a new entry, none.
  * - `own`: The links, chapters, rounds and box of a new entry, as properties of my own.
- * - `semester`: Semester of a new entry, the box's or that of its day, which its link names too,
+ * - `semester`: Semester of a new entry,
+ *   the box's or that of its day, which its link names too,
  *   see `titleOf` in `documents.ts`.
  * - `fields`: Fields and times of a new entry, which go into the log of the module,
  *   see `logFileOf` in `day.ts`.
@@ -2414,7 +2517,8 @@ function notePathOf(task: Task): string {
  * Finds the skill entry of the moment of a module:
  * the last one of the module without type that started before now
  * and ended at most {@link sessionPause} ago,
- * since only my own learning has rounds, never a lecture or a tutorial, see {@link marksOfEntry}.
+ * since only my own learning has rounds,
+ * never a lecture or a tutorial, see {@link marksOfEntry}.
  *
  * @param module - Module code, like `IN2028`
  * @param now - The moment
@@ -2437,7 +2541,8 @@ function momentOf(module: string, now: Date): Entry | undefined {
  * - `task`: Its task.
  *
  * @param attempt - Attempt as the page sends it
- * @throws {Error} - When no note holds its task or the attempt is not right, see {@link markTried}
+ * @throws {Error} - When no note holds its task
+ *   or the attempt is not right, see {@link markTried}
  */
 export function attemptAdd(attempt: AttemptNew): void {
     const tasks: Task[] = tasksRead();
@@ -2449,9 +2554,11 @@ export function attemptAdd(attempt: AttemptNew): void {
 }
 
 /**
- * Writes where I stand in the round of a section into the skill entry of the moment of its module,
+ * Writes where I stand in the round of a section
+ * into the skill entry of the moment of its module,
  * see {@link momentWrite} and {@link RoundLine}: the step I went on to with `Next`,
- * an Example I passed checked off, or `done` once I closed the round, see {@link markStepped}.
+ * an Example I passed checked off,
+ * or `done` once I closed the round, see {@link markStepped}.
  * - `step`: The step in one line.
  *
  * @param line - Where I stand
@@ -2468,11 +2575,14 @@ export function roundAdd(line: RoundNew): void {
 }
 
 /**
- * Reads the session of a module running now, for the learning view: its skill entry of the moment,
+ * Reads the session of a module running now, for the learning view:
+ * its skill entry of the moment,
  * see {@link momentOf}, without type, my own learning, into which its round writes,
  * as the buttons of a task write into it, see {@link attemptAdd},
- * so the learning view records only in a session of the module, see `src/editor/session.ts`.
- * The timer of the day shows any entry running now instead, see `entryNowRead` in `day.ts`.
+ * so the learning view records only in a session of the module,
+ * see `src/editor/session.ts`.
+ * The timer of the day shows any entry running now instead,
+ * see `entryNowRead` in `day.ts`.
  * - `now`: The moment.
  * - `open`: The skill entry of the moment.
  *
@@ -2495,13 +2605,15 @@ export function sessionRead(module: string): Session | null {
 /**
  * Renames a task in the log, in the same step as its heading in its note,
  * so its history stays with it:
- * every line `X-ROUND` of its section that names it as `TASK` or `USED` gets the new heading,
+ * every line `X-ROUND` of its section that names it as `TASK`
+ * or `USED` gets the new heading,
  * every other line stays as it is.
  * For the AI, not for a button; run in the folder of the dashboard like
  * `node -e 'import("./reader/skill.ts").then((skill) => console.log(skill.taskRename("IN2028/Old Name", "IN2028/New Name")))'`.
  * - `tasks`: Tasks of the modules of the semester.
  * - `task`: The task by its new identity.
- * - `before`, `after`: Its heading before and after, its type word with the old and the new name.
+ * - `before`, `after`: Its heading before and after,
+ *   its type word with the old and the new name.
  * - `renamed`: Number of lines renamed so far.
  *
  * @param from - Identity the task had, like `IN2028/Airline Revenue Interval`

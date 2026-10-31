@@ -4,7 +4,8 @@
  * One row of a box in a list, built alike wherever boxes stand in a list,
  * so the lists never look or work apart:
  * in the list `Entries` of the dialog of a series, see `./series.ts`, by month,
- * and in a card of the course on the page of a module, see `../editor/course.ts`, without months.
+ * and in a card of the course on the page of a module,
+ * see `../editor/course.ts`, without months.
  * A row is the same unit as a box of the plan:
  * its number in a small grey box,
  * like `2`, `–` for one the university cancelled, of an exam its kind,
@@ -48,9 +49,11 @@ import type { Person } from "../persons.ts";
  *   first on its grey line, `null` for none.
  * - `meta`: The parts of its first grey line, each its texts and its link,
  *   like its times and its place, see {@link metaOf}; a part without anything left out.
- * - `people`: Who I am with, the first shown as a link to its row in `Persons.md` while it has one.
+ * - `people`: Who I am with, the first shown
+ *   as a link to its row in `Persons.md` while it has one.
  * - `persons`: The people of `Persons.md`, which the names are found among.
- * - `mark`: What more there is to say, last on its first line, like `new`, empty for nothing.
+ * - `mark`: What more there is to say, last on its first line,
+ *   like `new`, empty for nothing.
  * - `end`: Its actions or the icon of its state, at its right edge.
  * - `faded`: Whether it is greyed.
  */
@@ -86,7 +89,8 @@ export function rowTimesOf(time: string, minutes: number | null): string {
 }
 
 /**
- * Makes the number of a row in its small grey box, as the type of a block of a section in the tree:
+ * Makes the number of a row in its small grey box,
+ * as the type of a block of a section in the tree:
  * a button that opens its box while it has one, its note as tooltip, else plain;
  * empty without number, like a box a change removes.
  * - `number`: The number.
@@ -117,10 +121,12 @@ export function numberOf(
 }
 
 /**
- * Makes the grey line of a row right of its day, its times and place, apart by a middle dot,
+ * Makes the grey line of a row right of its day,
+ * its times and place, apart by a middle dot,
  * always on one line, its first person cut by `…` where the line has no more room,
  * see `.series-parts` in `series.css`;
- * only then the line as its tooltip, its visible text alone, never what a menu in it holds.
+ * only then the line as its tooltip, its visible text alone,
+ * never what a menu in it holds.
  * - `kept`: Its parts, none left out.
  * - `meta`: The line.
  * - `shown`: Its parts side by side.
@@ -157,7 +163,8 @@ export function metaOf(parts: (string | Node)[][]): HTMLElement {
 
 /**
  * Shows the first of the people of a row, the one its line names, see {@link listRowOf}:
- * a link to its row in `Persons.md`, see `personLinkOf` in `../persons.ts`, a name of nobody there,
+ * a link to its row in `Persons.md`,
+ * see `personLinkOf` in `../persons.ts`, a name of nobody there,
  * like a group, its text; all of them the box shows.
  * - `first`: The first of them, `undefined` for nobody.
  * - `person`: Its person in `Persons.md`, `undefined` for nobody there.

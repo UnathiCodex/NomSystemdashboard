@@ -7,11 +7,13 @@
  * Only a clearly sideways move is a swipe, so nothing else of the day ever starts one:
  * - a move mostly up or down scrolls the time grid or the plan, as before;
  * - a finger resting longer than {@link restMs} before it moves is a press,
- *   so it selects a range in the time grid after 300 ms, or drags an entry after a second,
+ *   so it selects a range in the time grid after 300 ms,
+ *   or drags an entry after a second,
  *   see `selectLongPressDelay` in `day.ts`, and never swipes;
  * - an entry or a box being dragged, which turns the day itself at the edge,
  *   see `turnShow` in `day.ts`, never swipes;
- * - a touch in a dialog or a list over the page never swipes, since those lie outside the day.
+ * - a touch in a dialog or a list over the page never swipes,
+ *   since those lie outside the day.
  * A swipe beyond a quarter of the width, or a quick flick, changes the day:
  * the shown part slides out at that side and the new day slides in from the other;
  * a shorter one slides back.

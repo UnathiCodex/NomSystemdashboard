@@ -3,14 +3,18 @@
  *
  * One plain button `⋯` that holds what a thing can do,
  * on the computer as on a phone, so both show the same:
- * a click opens its items as a small menu below it, each its icon and then its words, like `Skip`,
- * so the line beside it keeps its room; a click on an item, or beside the menu, closes it.
- * A box in the dialog of a series has one, see `day/series.ts`, and a task, see `skill/task.ts`,
+ * a click opens its items as a small menu below it,
+ * each its icon and then its words, like `Skip`,
+ * so the line beside it keeps its room;
+ * a click on an item, or beside the menu, closes it.
+ * A box in the dialog of a series has one, see `day/series.ts`,
+ * and a task, see `skill/task.ts`,
  * whose field of my comment after Wrong opens below its cross in the same place and look,
  * see {@link menuAnchor}, as the menu of the groups of my tutorials
  * below its button, see `day/groups.ts`.
  *
- * - `./icons.ts`: Puts the icon `⋯` into its button, and an icon with words into each item.
+ * - `./icons.ts`: Puts the icon `⋯` into its button,
+ *   and an icon with words into each item.
  * - `lucide`: The icon `⋯`.
  * - `./menu.css`: Look of the button and its menu.
  */
@@ -48,8 +52,10 @@ export function menuItemOf(
  * which closes by itself on a click beside it or Escape;
  * right before it opens, it moves below the button, its left edge under the button's,
  * and once open, and again whenever its size changes while open,
- * to the left as far as it must to stay inside its frame, the dialog the button stands in,
- * else the window, never wider than that frame, like the groups of a box or a wide menu on a phone,
+ * to the left as far as it must to stay inside its frame,
+ * the dialog the button stands in,
+ * else the window, never wider than that frame,
+ * like the groups of a box or a wide menu on a phone,
  * and above the button instead when it would reach below the window but fits above it,
  * like a short menu low on the page;
  * a menu that fits neither stays under its button on the side with more room,
@@ -59,7 +65,8 @@ export function menuItemOf(
  *   kept below it when above the button, and kept from the edges of its frame.
  * - `frame`: The dialog the button stands in, else the window.
  * - `below`, `above`: Room below and above the button, its margin kept.
- * - {@link ToggleEvent}: Fires before a popover opens or closes, `newState` telling which.
+ * - {@link ToggleEvent}: Fires before a popover opens or closes,
+ *   `newState` telling which.
  * - {@link ResizeObserver}: Tells when the size of the menu changes, also when it opens,
  *   since closed it has none.
  *

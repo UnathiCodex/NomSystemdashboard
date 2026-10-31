@@ -1,9 +1,11 @@
 /**
  * ## Gifts
  *
- * My gift ideas for the birthdays and holidays at the top of the plan, see `reader/gifts.ts`,
+ * My gift ideas for the birthdays and holidays at the top of the plan,
+ * see `reader/gifts.ts`,
  * written only when I have one:
- * a click on a birthday or holiday opens a small dialog with one field, my gift idea for it,
+ * a click on a birthday or holiday opens a small dialog with one field,
+ * my gift idea for it,
  * which `Enter` or `Save` saves as its `DESCRIPTION` in its file,
  * `Birthdays.ics` or `Holidays.ics`, for every year of it;
  * an empty field, or `Remove`, takes the idea out again.
@@ -26,9 +28,11 @@ import type { Occasion } from "./boxes.ts";
 let opened: Occasion = { id: "", category: "", title: "", gift: "", file: "" };
 
 /**
- * Sends my gift idea for a birthday or holiday to the reader, an empty one to take it out again.
+ * Sends my gift idea for a birthday or holiday to the reader,
+ * an empty one to take it out again.
  *
- * @param id - Identifier of the birthday or holiday in its file, like `birthday-anna@nomsystem`
+ * @param id - Identifier of the birthday or holiday in its file,
+ *   like `birthday-anna@nomsystem`
  * @param gift - The gift, empty for none
  * @throws {Error} - When the reader does not take it
  */

@@ -9,13 +9,15 @@
  * whether it runs as the installed app,
  * and since when its row holds these sizes, like `13.10.2026 23:20`.
  * A device is what Tailscale names it:
- * `tailscale serve` hands every request of my devices on to the reader with the Tailscale address
- * of its device in `X-Forwarded-For`, which `tailscale whois` names.
+ * `tailscale serve` hands every request of my devices on to the reader with the Tailscale
+ * address of its device in `X-Forwarded-For`, which `tailscale whois` names.
  * A report with other sizes writes the row of its device anew,
- * the same sizes leave the file as it is, and a device without row yet gets one at the end;
+ * the same sizes leave the file as it is,
+ * and a device without row yet gets one at the end;
  * the reader creates the file with the first report.
  * A request without that address, which reached the reader without Tailscale,
- * like the browser of Claude's screenshots on skriptum, and one of skriptum itself write nothing,
+ * like the browser of Claude's screenshots on skriptum,
+ * and one of skriptum itself write nothing,
  * since I never look at the dashboard on skriptum.
  *
  * - `node:child_process`: Asks Tailscale for the name of a device.
@@ -81,7 +83,8 @@ async function deviceNameOf(address: string): Promise<string> {
 /**
  * Gives the cells of a row of `Devices.md`, without the edges of the table.
  *
- * @param row - Row, like `| vuenvy | 1601 × 822 | 1.2 | 1600 × 900 | yes | 19.10.2026 00:06 |`
+ * @param row - Row,
+ *   like `| vuenvy | 1601 × 822 | 1.2 | 1600 × 900 | yes | 19.10.2026 00:06 |`
  * @returns Its cells, like `vuenvy`, `1601 × 822`, `1.2`, `1600 × 900`,
  *   `yes` and `19.10.2026 00:06`
  */
@@ -105,7 +108,8 @@ function cellsOf(row: string): string[] {
  * @param report - Report as the page sends it
  * @param address - Tailscale address of the device, from `X-Forwarded-For`,
  *   empty for a request without Tailscale
- * @throws {Error} - When Tailscale does not know the address, a size is no number above 0,
+ * @throws {Error} - When Tailscale does not know the address,
+ *   a size is no number above 0,
  *   or the file lies outside the new system
  */
 export async function deviceReport(report: DeviceReport, address: string): Promise<void> {

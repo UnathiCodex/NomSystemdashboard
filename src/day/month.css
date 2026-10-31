@@ -5,7 +5,8 @@
 /* Days of the month with their number in the middle in the size of the page,
    a grey under the pointer, softly as every hover,
    see `--hover-in` in `../variants.css`, those of the months before and after grey;
-   the shown day in the calm grey of what is picked, today framed by a calm line and in bold;
+   the shown day in the calm grey of what is picked,
+   today framed by a calm line and in bold;
    below the number the places of entries,
    which the month has none of, take no room, against the theme,
    so the number stands in the middle from top to bottom too */
@@ -83,7 +84,8 @@
         height: 15rem;
     }
 
-    /* The month and year above the days on a phone in the size of the date above plan and log,
+    /* The month and year above the days on a phone in the size
+       of the date above plan and log,
        and its arrows half a gap from them and a little closer together,
        their icons still well apart inside their buttons, so the longest,
        like `September 2026`, keeps one line beside its four arrows */

@@ -4,13 +4,16 @@
  * A session of the log, `Sport`, below its summary and place,
  * built and working as a meal with its foods, see `meal.ts`, in its look,
  * see `meal.css`, on the computer as on a phone:
- * - Exercises: what I did, the one plus beside its name opening one list, a menu over the dialog,
- *   whose search finds my workouts first, then my exercises, then the basic ones of a gym,
+ * - Exercises: what I did, the one plus beside its name opening one list,
+ *   a menu over the dialog,
+ *   whose search finds my workouts first, then my exercises,
+ *   then the basic ones of a gym,
  *   see `basicExercises` in `reader/sport.ts`,
  *   and a name typed that none has adds itself as a new exercise.
  *   Each variant of mine stands with its values grey beside its name,
  *   like `Dips 3 × 10` and `Dips 4 × 8 · 10 kg`, and brings them;
- *   one without values, a basic one or one typed new brings what I did of it the last time.
+ *   one without values, a basic one or one typed new brings
+ *   what I did of it the last time.
  *   A workout picked brings its block, as a meal brings its foods:
  *   a row with its name, the small grey plus after it,
  *   which adds an exercise to it, the kcal of its videos and a small grey `×`,
@@ -21,17 +24,22 @@
  *   each video with its minutes of `Videos.md`.
  *   An exercise picked alone stands by itself below the blocks.
  * - A row of an exercise, as that of a food: its name,
- *   then its sets, `×` and its repetitions, two small fields, and after them `reps`, a switch:
+ *   then its sets, `×` and its repetitions, two small fields,
+ *   and after them `reps`, a switch:
  *   a click turns it into `s` for an exercise on time, like a plank, and back,
  *   so `3 × 10 reps` and `2 × 60 s` stand alike;
- *   then its kilograms in place of the kcal of a food, empty for none, like for dips, and its `×`;
- *   the `×` between the fields and the units always show, so an empty row says what to type;
- *   a row of a video its title with its channel grey in brackets, its minutes in the field,
+ *   then its kilograms in place of the kcal of a food,
+ *   empty for none, like for dips, and its `×`;
+ *   the `×` between the fields and the units always show,
+ *   so an empty row says what to type;
+ *   a row of a video its title with its channel grey in brackets,
+ *   its minutes in the field,
  *   its kcal and its `×`. On a phone the fields come first, as the grams of a food do,
  *   like `3 × 10 reps  Dips  kg`.
  *   A video comes only with a workout,
  *   which takes it in the sport area by its link, see `../sport/lists.ts`.
- * - Its time: while the session holds only videos, its end follows them as I change its parts,
+ * - Its time: while the session holds only videos,
+ *   its end follows them as I change its parts,
  *   its start and their minutes, like `18:00` to `18:30` for two videos of 15 minutes,
  *   so a slot drawn too long in the log does not stay;
  *   with an exercise beside them it stays as I typed it,
@@ -68,7 +76,8 @@ import type { Exercise, Mine, Part, Video, Workout } from "../sport/mine.ts";
  *
  * - `name`: Its name, like `Bench press`.
  * - `sets`: Its sets, like `3`, empty for none.
- * - `reps`: Its repetitions per set, like `10`, or its seconds, like `60s`, empty for none.
+ * - `reps`: Its repetitions per set, like `10`,
+ *   or its seconds, like `60s`, empty for none.
  * - `kg`: Its kilograms, like `40`, empty for none.
  * - `workout`: The workout it belongs to, empty for one picked alone.
  */
@@ -152,13 +161,16 @@ let changed: () => void = (): void => undefined;
 let fit: (minutes: number) => void = (): void => undefined;
 
 /**
- * Prefix of the value of a workout in the list, which tells it from an exercise of the same name.
+ * Prefix of the value of a workout in the list,
+ * which tells it from an exercise of the same name.
  */
 const workoutValue: string = "workout:";
 
 /**
- * Prefix of the value of a variant of mine in the list, before its place among my exercises,
- * which tells two variants of one name apart, like `Dips 3 × 10` and `Dips 4 × 8 · 10 kg`.
+ * Prefix of the value of a variant of mine in the list,
+ * before its place among my exercises,
+ * which tells two variants of one name apart,
+ * like `Dips 3 × 10` and `Dips 4 × 8 · 10 kg`.
  */
 const variantValue: string = "variant:";
 
@@ -198,7 +210,8 @@ function exerciseOf(line: string, before: string): ExerciseDone {
  * Reads a line `X-VIDEO` into its row, its workout that of the line,
  * else the one of the session of before.
  *
- * @param line - Line like `Pilates;Lidia Mera;25;https://www.youtube.com/watch?v=…;Morning`
+ * @param line - Line
+ *   like `Pilates;Lidia Mera;25;https://www.youtube.com/watch?v=…;Morning`
  * @param before - The workout of the session of before, its `X-WORKOUT`, empty for none
  * @returns The video
  */
@@ -217,7 +230,8 @@ function videoOf(line: string, before: string): VideoDone {
 
 /**
  * Brings an exercise with the values of the variant of mine it was picked as,
- * of the sport area or of a workout, see `../sport/lists.ts`, else, for one without values,
+ * of the sport area or of a workout, see `../sport/lists.ts`,
+ * else, for one without values,
  * like a basic one or one typed new, with what I did of it the last time,
  * see `last` of `Mine` in `../sport/mine.ts`, empty the first time.
  * - `given`: Whether the variant has any value.
@@ -380,7 +394,8 @@ function workoutPick(name: string): void {
 /**
  * Adds an exercise, to a block or alone, picked as a variant of mine with its values,
  * or by its name, see {@link exerciseLastOf}, and puts the cursor into its sets.
- * - `variant`: The variant of mine picked, by its place among my exercises, `undefined` for a name.
+ * - `variant`: The variant of mine picked,
+ *   by its place among my exercises, `undefined` for a name.
  * - `name`: Its name, cleaned.
  * - `added`: The exercise added.
  *
@@ -439,7 +454,8 @@ function inputOf(
  * Makes a small field of a row, as the grams of a food, its unit after it.
  * - `label`: The field with its unit.
  *
- * @param className - Class of the field, like `meal-grams`, which a phone puts first in its row
+ * @param className - Class of the field, like `meal-grams`,
+ *   which a phone puts first in its row
  * @param value - Text it starts with
  * @param unit - Unit after it, like `kg`
  * @param words - What it holds, for screen readers, like `Kilograms of Squat`
@@ -462,10 +478,12 @@ function fieldOf(
 
 /**
  * Makes the sets and repetitions of an exercise, see the top of this file:
- * two small fields of whole numbers with `×` between them and the switch of the unit after them,
+ * two small fields of whole numbers with `×` between them
+ * and the switch of the unit after them,
  * `reps` or `s`, which a click turns into the other.
  * - `place`: The fields with the `×` and the unit.
- * - `seconds`: Whether the exercise is on time, its repetitions written with `s`, like `60s`.
+ * - `seconds`: Whether the exercise is on time,
+ *   its repetitions written with `s`, like `60s`.
  * - `whole`: Reads a whole number typed, empty for none, `null` for a text that is none.
  * - `unitShow`: Shows the unit and its tooltip as it now is.
  * - `unit`: The switch of the unit.
@@ -535,7 +553,8 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the list of exercises, a menu with the one plus as its line, whose pick adds an exercise.
+ * Makes the list of exercises, a menu with the one plus as its line,
+ * whose pick adds an exercise.
  *
  * @param words - What the plus adds, its tooltip, like `Add an exercise to Push`
  * @param workouts - Whether the list offers my workouts first,
@@ -676,8 +695,10 @@ function videoRowOf(video: VideoDone, shown: () => void): HTMLElement {
 /**
  * Makes the block of a workout, as a meal stands with its foods:
  * its row, its name with the small grey plus after it,
- * which adds an exercise to it, the kcal of its videos, none while it has no video, and its `×`,
- * which removes it with its parts; then its parts below it, indented under a thin grey line.
+ * which adds an exercise to it, the kcal of its videos,
+ * none while it has no video, and its `×`,
+ * which removes it with its parts;
+ * then its parts below it, indented under a thin grey line.
  * - `row`: Its row.
  * - `name`: Its name with its plus, the line of its list, right after the name,
  *   as the plus of a meal stands.
@@ -748,10 +769,12 @@ function blockOf(workout: string): HTMLElement[] {
 
 /**
  * Shows the row of what I did anew in its place, see the top of this file:
- * its name `Exercises` with the one plus beside it, then the blocks of the workouts in their order,
+ * its name `Exercises` with the one plus beside it,
+ * then the blocks of the workouts in their order,
  * then the exercises alone; then lets the dialog know.
  * - `rows`: The blocks and the rows alone, as the rows of the foods of a meal stand.
- * - `alone`: The exercises picked alone, and those of a workout the session no longer holds.
+ * - `alone`: The exercises picked alone,
+ *   and those of a workout the session no longer holds.
  * - `box`: The rows and the list of the row.
  * - `list`: The list of the row, whose plus goes beside its name,
  *   as `lineMove` in `choices.ts` moves it, and not the plus of a block,
@@ -813,7 +836,8 @@ export async function sportOpen(lines: SessionLines | null): Promise<void> {
 }
 
 /**
- * Gives the rows of the session for the dialog, the same for every kind, see {@link rowsShow}.
+ * Gives the rows of the session for the dialog,
+ * the same for every kind, see {@link rowsShow}.
  *
  * @param change - Lets the dialog know of a change
  * @param end - Puts the end of the session at its start

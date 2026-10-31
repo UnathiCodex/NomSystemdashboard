@@ -1,17 +1,20 @@
 /**
  * ## Trackers
  *
- * The trackers of the shown day, at the right of the bar of the day, as the reader counts them,
+ * The trackers of the shown day, at the right of the bar of the day,
+ * as the reader counts them,
  * see `reader/trackers.ts`, calm and basic:
  * three tiles of equal width side by side, each its name small and grey before its value,
- * like `Sleep 09h 15m`, every tile alike, without icons and without descriptions under the pointer;
+ * like `Sleep 09h 15m`, every tile alike,
+ * without icons and without descriptions under the pointer;
  * none on a phone, see `trackers.css`:
  * - Sleep: how long I slept on the day, every sleep that ended on it,
  *   the night and the naps, like `07h 30m`;
  *   its goal, the spread of my bedtime and the average of the week left out for now,
  *   since other things come first.
  * - Water: what I drank on the day in litres, like `1.5 l`, without a goal;
- *   the whole tile logs 0.25 l more, one glass of water, at the time of the tap on the shown day,
+ *   the whole tile logs 0.25 l more, one glass of water,
+ *   at the time of the tap on the shown day,
  *   a small `−` in its corner takes the last glass of water back;
  *   every other drink, like `Kaffee`, counts as one glass too.
  *   A day still to come takes no glasses.
@@ -66,7 +69,8 @@ import type { Totals } from "../food/foods.ts";
  * - `sleepBand`: Fewest and most hours of a healthy night.
  * - `glassMl`: Millilitres of one glass of water.
  * - `waterMl`: Millilitres of water I want a day.
- * - `bedtimeVaried`: Minutes my bedtime may vary over the week, up or down, for its check.
+ * - `bedtimeVaried`: Minutes my bedtime may vary over the week,
+ *   up or down, for its check.
  * - `neckLongWeek`: Long neck sessions I want in seven days;
  *   a short one, or a long, on every study day.
  * - `sessionMinutes`: Minutes of one study session.
@@ -114,7 +118,8 @@ type SleepDay = {
 };
 
 /**
- * A glass of a drink, of water or of another drink, like `Kaffee`, as the reader sends it.
+ * A glass of a drink, of water or of another drink,
+ * like `Kaffee`, as the reader sends it.
  *
  * - `id`: Identifier of its entry.
  * - `start`: When I drank it, as ISO instant.
@@ -129,7 +134,8 @@ type Glass = {
 };
 
 /**
- * My neck routine in the seven days up to a day and my neck pain, as the reader sends them.
+ * My neck routine in the seven days up to a day and my neck pain,
+ * as the reader sends them.
  *
  * - `short`: My study days on which I did a neck routine, short or long.
  * - `studyDays`: My study days, days with an entry `Skill` in the log.
@@ -176,7 +182,8 @@ const glassMinutes: number = 5;
 const neckShown: boolean = false;
 
 /**
- * Makes the check of a goal met, small and grey, see the class `tracker-check` in `trackers.css`.
+ * Makes the check of a goal met, small and grey,
+ * see the class `tracker-check` in `trackers.css`.
  *
  * @returns Icon of the check
  */
@@ -253,7 +260,8 @@ function linesOf(name: string, value: string): HTMLElement[] {
  * like `1.5 l` of six glasses, its tile one button, which logs one more glass of water,
  * and `−` in its corner, which takes the last glass of water back;
  * the words of `−` only for screen readers, no description under the pointer, no goal;
- * on a day still to come the tile greyed and `−` hidden, since nothing is drunk there yet.
+ * on a day still to come the tile greyed and `−` hidden,
+ * since nothing is drunk there yet.
  * The tile takes no clicks while a glass is sent, so a double tap logs one glass;
  * the card loads again once the log changed.
  * - `litres`: What I drank, in litres, as shown.
@@ -307,7 +315,8 @@ function waterOf(calendar: Calendar, trackers: Trackers, day: string): HTMLEleme
 }
 
 /**
- * Builds the food: the kcal of the day's meals, rounded and so never marked as an estimate,
+ * Builds the food: the kcal of the day's meals,
+ * rounded and so never marked as an estimate,
  * like `1.850 kcal` or `0 kcal`, a number never apart from its word.
  * - `food`: What the meals gave.
  *
@@ -387,7 +396,8 @@ export async function trackersFetch(day: string): Promise<Trackers> {
 }
 
 /**
- * Loads the trackers of the shown day and shows them, unless another day is shown meanwhile;
+ * Loads the trackers of the shown day and shows them,
+ * unless another day is shown meanwhile;
  * the neck only once {@link neckShown}.
  * - `day`: The shown day.
  * - `trackers`: Its trackers.

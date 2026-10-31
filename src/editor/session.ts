@@ -2,7 +2,8 @@
  * ## Session
  *
  * No learning recorded without a session: before the learning view records something,
- * where I stand with `Next`, a result or the close of the round, a session of the module runs,
+ * where I stand with `Next`, a result or the close of the round,
+ * a session of the module runs,
  * its skill entry of the moment, into which the record goes, see `reader/skill.ts`;
  * reading a section needs none.
  * While none runs, the day view's own dialog of a new entry opens over the page,
@@ -10,7 +11,8 @@
  * `Skill` and the module picked, from now, to the minute, as long as my usual session,
  * see `sessionMinutes` in `reader/trackers.ts`;
  * I fill and save it there as always, and the record follows into it.
- * Cancelled, or saved as no session running now, nothing is recorded and I stay where I was.
+ * Cancelled, or saved as no session running now,
+ * nothing is recorded and I stay where I was.
  * A session of the module running now, now between its start and its end,
  * counts without the dialog.
  * The dialog comes into the page only the first time it opens, see `./dialog.ts`,
@@ -55,7 +57,8 @@ export type Session = {
 };
 
 /**
- * Loads from the reader the session of a module running now: its skill entry of the moment,
+ * Loads from the reader the session of a module running now:
+ * its skill entry of the moment,
  * see `sessionRead` in `reader/skill.ts`, while its end lies after now.
  * - `session`: The skill entry of the moment, `null` for none.
  *

@@ -2,8 +2,8 @@
  * ## Folder
  *
  * A folder of my modules in the scripts view, at its address, like
- * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2FVO_UniversityLectureLessons%2FTUM_2026W`, which the folder
- * of the material of a card of the course opens, see `./course.ts`,
+ * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2FVO_UniversityLectureLessons%2FTUM_2026W`,
+ * which the folder of the material of a card of the course opens, see `./course.ts`,
  * and so does the folder of a skill below its summary in the dialog of an entry,
  * see `skillPathShow` in `../day/skill.ts`;
  * kept simple, in the look of the page of a module, see `./overview.ts`:
@@ -54,7 +54,8 @@ type NotesFolder = {
  * and so to a module on top of its page, see `./overview.ts`:
  * `NomSkillingmodules`, a link to the start of my modules,
  * then each folder on the way, a link to it, each after a `/`;
- * each name going on below where the path is wider than its room, see {@link breakableOf}.
+ * each name going on below where the path is wider than its room,
+ * see {@link breakableOf}.
  * - `parts`: Its folders from `NomSkillingmodules` on.
  * - `link`: A link.
  *

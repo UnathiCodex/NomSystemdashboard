@@ -1,13 +1,17 @@
 /* Boxes of the plan: each its lines and at their right its actions as small icon buttons,
    or its state once no longer open, on a card filled in soft grey,
-   above them the birthdays and holidays of the day, among them those carried along to today */
+   above them the birthdays and holidays of the day,
+   among them those carried along to today */
 /* Boxes of the plan one below the other, a little apart,
-   so the plan looks airy, filling the height above its + and scrolling alone when they are many;
+   so the plan looks airy, filling the height above its +
+   and scrolling alone when they are many;
    their scrollbar in the middle of the gap to the log, not against them,
-   half the gap and half the 6 px of the bar further out, see `base.css`, its room always kept,
+   half the gap and half the 6 px of the bar further out,
+   see `base.css`, its room always kept,
    so they keep the whole width of the plan,
    as wide as my gratitude below them, with the bar or without;
-   one space between its boxes, between the lines of a box and around the line of a section,
+   one space between its boxes, between the lines of a box
+   and around the line of a section,
    `--plan-space`, so those never differ;
    only the air around the lines inside a box is larger */
 .plan-boxes {
@@ -34,9 +38,11 @@
    and beside it, after the middle dot, my gift idea in the grey of a time,
    ending in `…` where the line is too narrow, see `occasionsOf` in `boxes.ts`;
    a click anywhere on it opens its gift idea,
-   and one without an idea shows the gift after its name under the pointer, softly as every hover,
+   and one without an idea shows the gift after its name under the pointer,
+   softly as every hover,
    see `--hover-in` in `../variants.css`,
-   as high as a letter, its middle on the middle of the letters, like the arrow of a route */
+   as high as a letter, its middle on the middle of the letters,
+   like the arrow of a route */
 .occasion {
     cursor: pointer;
 }
@@ -64,7 +70,8 @@
 
 /* A box in one grid, on the computer as on a phone:
    what it is on its first line, its other lines below,
-   and at their right its actions or its state in a column of their own beside its first two lines,
+   and at their right its actions or its state in a column
+   of their own beside its first two lines,
    so the buttons take no row of their own, every line ending before that column;
    a card filled in the soft grey of a card without a frame, with round corners,
    like the cards of the phone, with the same air on all four sides of its lines,
@@ -118,11 +125,13 @@
     cursor: pointer;
 }
 
-/* Every line of a box only as high as from the top of its capitals to its baseline, `text-box`,
+/* Every line of a box only as high
+   as from the top of its capitals to its baseline, `text-box`,
    so the air above its first line,
    between its lines and below its last is exactly the padding and gap of `.box`,
    and its lines stand in its middle, whatever its first and last line are;
-   cut off only at its right, so letters reaching above its capitals or below its baseline,
+   cut off only at its right,
+   so letters reaching above its capitals or below its baseline,
    like `Ü` and `g`, stay whole */
 .box-what,
 .box-part,
@@ -143,7 +152,8 @@
 }
 
 /* Grey line of a box, its time and after it its place, apart by the middle dot,
-   on one line as in the log: the place giving way first, the time only where it alone is too long;
+   on one line as in the log: the place giving way first,
+   the time only where it alone is too long;
    both in the one grey of the page;
    the chapters of a skill box below it alike, `.box-chapters`;
    on a phone the same line, a part that does not fit going whole onto the next,
@@ -204,7 +214,8 @@
 }
 
 /* Done box: its lines as when it was open, only greyed, its what grey too;
-   so is an open one whose day is over, which keeps its actions, see `boxElementOf` in `boxes.ts` */
+   so is an open one whose day is over, which keeps its actions,
+   see `boxElementOf` in `boxes.ts` */
 .box-done .box-what,
 .box-over .box-what {
     color: var(--text-muted);
@@ -274,7 +285,8 @@
    see `boxElementOf` in `boxes.ts`, with their middle on the middle of the box,
    also of one with three lines or more,
    like a skill box with its chapters, taking no more height than they,
-   reaching into the air above and below them, so its lines keep the height of their capitals;
+   reaching into the air above and below them,
+   so its lines keep the height of their capitals;
    so far out that the last icon stands about as far from the right edge of the box
    as its lines from its left edge,
    the quarter rem beside the icon in its button reaching into the air at the right */
@@ -293,7 +305,8 @@
 }
 
 /* Phone: a box as on the computer, but its actions behind one button `⋯`,
-   see `actions.ts`, it and its state a finger's width to hit, and its place on a line of its own */
+   see `actions.ts`, it and its state a finger's width to hit,
+   and its place on a line of its own */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     /* The boxes on a phone over the whole width of the screen,
        without room for a scrollbar, which lies over them */

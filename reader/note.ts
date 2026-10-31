@@ -4,8 +4,10 @@
  * Reads the daily notes of the new system, one per day in `NomFrequencediary`,
  * like `2026/2026_10/2026_10_12.md`,
  * and writes into them what I write in the dashboard, all a note holds,
- * each a plain Markdown section of points, one `- ` line each, as the dashboard names them:
- * my gratitude under `## Gratitude`, and my points about the day overall under `## About`:
+ * each a plain Markdown section of points,
+ * one `- ` line each, as the dashboard names them:
+ * my gratitude under `## Gratitude`,
+ * and my points about the day overall under `## About`:
  *
  * ```
  * ## Gratitude
@@ -21,18 +23,22 @@
  * A section holds every line below its heading up to the next heading;
  * a further line of a point stands under its text, two spaces in, then the spacer `⠀`,
  * as the editor writes it with Shift+Enter, see `src/editor/keys.ts`.
- * The page edits a section as this Markdown, in the editor of my files, see `src/day/points.ts`,
+ * The page edits a section as this Markdown,
+ * in the editor of my files, see `src/day/points.ts`,
  * and the reader keeps its lines points, see {@link pointLinesOf}.
- * Every day has its note, made at its start with both headings empty, see {@link notesStart},
+ * Every day has its note, made at its start with both headings empty,
+ * see {@link notesStart},
  * whether I write into it or not;
- * a section keeps its heading when I empty it, and every other line of a note stays as it is.
+ * a section keeps its heading when I empty it,
+ * and every other line of a note stays as it is.
  * Its empty lines are those of my Markdown, see `markdownFormOf` in `markdown.ts`,
  * so two headings without points have two empty lines between them,
  * the one below the first and the one before the second together.
  *
  * - `node:fs`: Works with files and folders on the disk.
  * - `node:path`: Builds file paths for the operating system.
- * - `./sources.ts`: Names the folder of the daily notes and tells which files the reader may write.
+ * - `./sources.ts`: Names the folder of the daily notes and tells
+ *   which files the reader may write.
  * - `./calendar.ts`: Gives today in Berlin time and the moment its next day starts.
  * - `./markdown.ts`: Gives a note the empty lines of my Markdown.
  */
@@ -63,7 +69,8 @@ export type SectionNew = {
 };
 
 /**
- * The sections of a daily note, in their order: my gratitude, then my points about the day.
+ * The sections of a daily note, in their order:
+ * my gratitude, then my points about the day.
  */
 const titles: SectionTitle[] = ["Gratitude", "About"];
 
@@ -85,7 +92,8 @@ const pointForm: RegExp = /^[ \t]*(?:[-*+]|\d+[.)]) /;
 const furtherForm: RegExp = /^[ \t]+⠀/;
 
 /**
- * A line without text: empty, or only indentation, spacers and the `-` or number of an empty point.
+ * A line without text: empty, or only indentation,
+ * spacers and the `-` or number of an empty point.
  */
 const emptyForm: RegExp = /^[ \t⠀]*(?:(?:[-*+]|\d+[.)])[ \t⠀]*)?$/;
 
@@ -96,7 +104,8 @@ const emptyForm: RegExp = /^[ \t⠀]*(?:(?:[-*+]|\d+[.)])[ \t⠀]*)?$/;
 const headingForm: RegExp = /^#{1,6} /;
 
 /**
- * A daily note as each day starts: both headings, empty, with the empty lines of my Markdown,
+ * A daily note as each day starts: both headings, empty,
+ * with the empty lines of my Markdown,
  * `## Gratitude`, two empty lines, `## About`.
  */
 const emptyNote: string = markdownFormOf(
@@ -154,14 +163,16 @@ export function noteRead(date: string): string | null {
 }
 
 /**
- * Reads a section of the daily note of a date as text to edit: its Markdown, its lines kept points,
+ * Reads a section of the daily note of a date as text to edit:
+ * its Markdown, its lines kept points,
  * see {@link pointLinesOf}.
  * - `lines`: Lines of the note.
  * - `found`: The section in the note, `null` for none.
  *
  * @param date - Date like `2026-07-03`
  * @param title - Title of the section
- * @returns Text of the section, empty for a day without note or a note without the section
+ * @returns Text of the section,
+ *   empty for a day without note or a note without the section
  * @throws {Error} - When the date is not written like `2026-07-03`
  */
 function sectionTextRead(date: string, title: SectionTitle): string {
@@ -172,7 +183,8 @@ function sectionTextRead(date: string, title: SectionTitle): string {
 }
 
 /**
- * Reads my gratitude and my points about the day of the daily note of a date as texts to edit,
+ * Reads my gratitude and my points about the day
+ * of the daily note of a date as texts to edit,
  * see {@link sectionTextRead}.
  *
  * @param date - Date like `2026-07-03`
@@ -187,14 +199,16 @@ export function sectionsRead(date: string): { [title in SectionTitle]: string } 
 }
 
 /**
- * Keeps the lines of my gratitude or my points about the day points, as the editor writes them:
+ * Keeps the lines of my gratitude or my points about the day points,
+ * as the editor writes them:
  * a point and a further line as written, an indented line without the spacer,
  * as further lines were written before it, given the spacer,
  * see {@link furtherForm}, any other line a point of its own,
  * like one whose `- ` I took away, without a spacer at its start;
  * lines without text left out, like the empty point of a section without points.
  *
- * @param text - Text of the section, its Markdown, as the page sends it or the note holds it
+ * @param text - Text of the section, its Markdown,
+ *   as the page sends it or the note holds it
  * @returns Lines like `- Schön, dass alle da waren`, none for a text without text
  */
 function pointLinesOf(text: string): string[] {
@@ -219,7 +233,8 @@ function pointLinesOf(text: string): string[] {
  * while the note has no such section, the section added,
  * my gratitude before my points about the day when the note has them already,
  * else at the end of the note.
- * - `found`: The section in the note, see {@link sectionFind}, `null` when the note has none.
+ * - `found`: The section in the note, see {@link sectionFind},
+ *   `null` when the note has none.
  * - `block`: The section as written: its heading and its points.
  * - `next`: My points about the day,
  *   which my gratitude goes before, `null` for none and when they are added.

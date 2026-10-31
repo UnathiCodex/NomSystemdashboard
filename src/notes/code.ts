@@ -2,16 +2,20 @@
  * ## Code
  *
  * The languages of my code blocks, a fixed list, see {@link codeLanguages},
- * named after the ``` of a block, like ```python, and picked in the editor from that list:
- * the words of a block of one of them in the colors of my IntelliJ theme, see `reader/theme.ts`,
+ * named after the ``` of a block, like ```python,
+ * and picked in the editor from that list:
+ * the words of a block of one of them in the colors of my IntelliJ theme,
+ * see `reader/theme.ts`,
  * every other block in the color of text, white;
- * in the scripts view, see {@link codeHtmlOf}, and in the editor, see `../editor/syntax.ts`.
+ * in the scripts view, see {@link codeHtmlOf},
+ * and in the editor, see `../editor/syntax.ts`.
  * Make has no language of its own there, its lines take that of Bash.
  * Built-in functions, like `print` and `len`, take a color of their own only in Python,
  * as my theme gives it for Python alone, see {@link plain}, and so do `self` and `cls`;
  * simple types, like `int` and `void`, that of keywords.
  *
- * - `@codemirror/language`: Reads a language of CodeMirror's older modes, `StreamLanguage`.
+ * - `@codemirror/language`:
+ *   Reads a language of CodeMirror's older modes, `StreamLanguage`.
  * - `@codemirror/legacy-modes`: The languages.
  * - `@lezer/highlight`: Gives each piece of code its class, like `code-keyword`,
  *   see {@link codeHighlighter}, colored by `notes.css`.
@@ -54,7 +58,8 @@ function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
 }
 
 /**
- * The languages of my code blocks, as written after the ```, in the order of the list to pick.
+ * The languages of my code blocks, as written after the ```,
+ * in the order of the list to pick.
  */
 export const codeLanguages: { [name: string]: StreamLanguage<unknown> } = {
     bash: StreamLanguage.define(shell),

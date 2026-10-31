@@ -1,7 +1,8 @@
 /**
  * ## Month
  *
- * Picks the day to show from a month, to jump far back or ahead much faster than day by day,
+ * Picks the day to show from a month,
+ * to jump far back or ahead much faster than day by day,
  * like to a birthday next spring to write down a gift idea for it, see `gifts.ts`:
  * a click on the date above plan
  * and log opens the month of the shown day over the page, the shown day marked;
@@ -13,7 +14,8 @@
  * - `fullcalendar/daygrid`: Draws the month as a grid of its days.
  * - `fullcalendar/interaction`: Takes the click on a day.
  * - `fullcalendar/themes/forma`: Look of the month, coloured by `day.css` as the log is.
- * - `fullcalendar/locales/en-gb`: English names of days and months, the week starting on Monday.
+ * - `fullcalendar/locales/en-gb`: English names of days and months,
+ *   the week starting on Monday.
  * - `./month.html?raw`: Html of the dialog of the month as text,
  *   packed into the built code by Vite.
  * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader.
@@ -41,16 +43,20 @@ import type { DateClickInfo, DatesSetInfo, DayCellInfo } from "fullcalendar";
 let month: Calendar | null = null;
 
 /**
- * Opens the month of the first shown day, drawn anew each time, so the shown days are marked:
+ * Opens the month of the first shown day, drawn anew each time,
+ * so the shown days are marked:
  * drawn only once the dialog shows, since FullCalendar measures its place,
  * which a closed dialog does not have.
  * - `dialog`: The dialog of the month.
- * - `initialView`: A grid of the days of a month, always six weeks, so the dialog keeps its height.
+ * - `initialView`: A grid of the days of a month, always six weeks,
+ *   so the dialog keeps its height.
  * - `aspectRatio`: Makes the grid 1.8 times as wide as high,
  *   so its days are small and wider than high.
- * - `headerToolbar`: None, since the month and its arrows stand above it, as above plan and log.
+ * - `headerToolbar`: None, since the month and its arrows stand above it,
+ *   as above plan and log.
  * - `dayHeaderFormat`: Writes the days of the week short, like `Mon`.
- * - `dayCellClass`: Adds the class `month-day` to every day, which `month.css` makes clickable,
+ * - `dayCellClass`: Adds the class `month-day` to every day,
+ *   which `month.css` makes clickable,
  *   `month-other` to the days of the months before and after, which it greys,
  *   and `month-shown` to the shown days, which it marks.
  * - `dayCellTopClass`, `dayCellTopInnerClass`:
@@ -100,7 +106,8 @@ function monthOpen(shown: string[], pick: (day: string) => void): void {
 
 /**
  * Starts the month after the router has put the HTML of its area into the page:
- * puts its dialog into the page, the button of the area opens it, the arrows move it by a month,
+ * puts its dialog into the page, the button of the area opens it,
+ * the arrows move it by a month,
  * the double arrows by a year.
  *
  * @param button - Button that opens the month, the date above plan and log

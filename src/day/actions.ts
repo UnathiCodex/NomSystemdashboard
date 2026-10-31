@@ -12,7 +12,8 @@
  * but for a box with a deadline,
  * which stays on the day of its deadline,
  * a move by mistake set right by moving it again in its dialog, see `reader/boxes.ts`;
- * `Cancel` for a lecture, an exercise, a tutorial or a sheet, see `numberedTypes` in `series.ts`,
+ * `Cancel` for a lecture, an exercise, a tutorial or a sheet,
+ * see `numberedTypes` in `series.ts`,
  * which marks it cancelled by the university; and last `Skip`, which cancels it;
  * packed together at the right, the same gap between them, however many a box has.
  * A box whose day is over has no `Move`, since what I set right moves by its dialog.
@@ -21,7 +22,8 @@
  * Each its icon, its word as tooltip, in the one look of an icon button,
  * see `.icon-button` in `../base.css` and `.box-actions` in `boxes.css`;
  * a click on one never opens the box.
- * On a phone they stay behind one button `⋯`, each its icon and then its words in its menu,
+ * On a phone they stay behind one button `⋯`,
+ * each its icon and then its words in its menu,
  * see `../menu.ts`, since a row of them leaves what a box is no room there,
  * like a tutorial beside its group;
  * but in the row of a list,
@@ -60,7 +62,8 @@ import type { IconNode } from "lucide";
  * @param icon - Icon, like `ArrowRight`
  * @param words - What it does, like `Move`
  * @param click - What a click does
- * @param listed - Whether it stands in the row of a list, which keeps its icons on a phone too
+ * @param listed - Whether it stands in the row of a list,
+ *   which keeps its icons on a phone too
  * @returns The button
  */
 function actionOf(
@@ -83,7 +86,8 @@ function actionOf(
  * - `send`: Makes the click of an action that sends a change of the box.
  * - `over`: Whether its day is over, without deadline, so it moves only by its dialog.
  * - `buttons`: The actions in their order.
- * - `actions`: The actions in their row, on a phone the button `⋯` with its menu, but in a list.
+ * - `actions`: The actions in their row,
+ *   on a phone the button `⋯` with its menu, but in a list.
  *
  * @param box - The box, open
  * @param log - Logs it as expected

@@ -4,7 +4,8 @@
  * Finds foods through the reader, mine first,
  * then on Open Food Facts, page by page, sends new foods to `Foods.md` and renames them,
  * loads my meals of `Meals.md`,
- * sends new and changed ones and removes them, loads the meals of a day with what they give,
+ * sends new and changed ones and removes them,
+ * loads the meals of a day with what they give,
  * writes amounts as the page shows them,
  * and makes the elements and buttons of both,
  * the names of foods with their brackets kept alike in a list:
@@ -18,7 +19,8 @@ import { readerAsk } from "../reader.ts";
 /**
  * Energy and nutrients of 100 g of a food, or of what one food of a meal gave,
  * as the reader sends them, as far as they are known:
- * kcal always, protein, carbs and fat `null` where unknown, never 0, see `reader/food.ts`.
+ * kcal always, protein, carbs and fat `null` where unknown,
+ * never 0, see `reader/food.ts`.
  *
  * - `kcal`: Energy in kcal.
  * - `protein`: Protein in grams, `null` when unknown.
@@ -48,21 +50,25 @@ export type Totals = {
 };
 
 /**
- * Kind of a food, as the reader sends it: `Eat`, its values per 100 g and its amounts in grams,
+ * Kind of a food, as the reader sends it:
+ * `Eat`, its values per 100 g and its amounts in grams,
  * or `Drink`, its values per 100 ml and its amounts in millilitres, see {@link unitOf}.
  */
 export type Kind = "Eat" | "Drink";
 
 /**
  * A food, one row of `Foods.md`, or a product of Open Food Facts as it would go there:
- * its {@link Nutrients} per 100 of its unit with its name, barcode, brand, store, pack and kind.
+ * its {@link Nutrients} per 100 of its unit with its name,
+ * barcode, brand, store, pack and kind.
  *
- * - `name`: Name, by which a meal lists it, like `Reis` of `X-FOOD:Reis;Golden Sun;Lidl;150`.
+ * - `name`: Name, by which a meal lists it,
+ *   like `Reis` of `X-FOOD:Reis;Golden Sun;Lidl;150`.
  * - `barcode`: Open Food Facts barcode it came from, empty for a food added by hand.
  * - `brand`: Its first brand, like `Milbona`, empty when none is known.
  * - `store`: The first store that sells it, like `Lidl`, empty when none is known.
  * - `pack`: Size of its pack as sold in its unit, like 450, `null` when none is known.
- * - `portion`: Amount in its unit I typically take at once, like 50 of a Semmel, one piece,
+ * - `portion`: Amount in its unit I typically take at once,
+ *   like 50 of a Semmel, one piece,
  *   or 30 of oil, two tablespoons, so an entry takes `2x` or `2 St` as twice that;
  *   `null` only in a row left empty by hand.
  * - `kind`: Its kind, `Eat` or `Drink`.
@@ -99,7 +105,8 @@ export type FoodChanges = {
 /**
  * A product of Open Food Facts as a search sends it:
  * a {@link Food}, its kcal `null` where Open Food Facts does not know them,
- * like `Zwiebeln` of Edeka, so it still shows and I type its kcal from the pack, see `./search.ts`.
+ * like `Zwiebeln` of Edeka, so it still shows
+ * and I type its kcal from the pack, see `./search.ts`.
  */
 export type Product = Omit<Food, "kcal"> & {
     kcal: number | null;
@@ -108,9 +115,12 @@ export type Product = Omit<Food, "kcal"> & {
 /**
  * What a search finds, as the reader sends it.
  *
- * - `foods`: My foods found, the most eaten first; all of them for an empty search; of every brand.
- * - `products`: Products of Open Food Facts on the page asked for that are not among my foods,
- *   each as it would go into `Foods.md`, its kcal `null` where unknown, the best match first;
+ * - `foods`: My foods found, the most eaten first;
+ *   all of them for an empty search; of every brand.
+ * - `products`: Products of Open Food Facts on the page asked
+ *   for that are not among my foods,
+ *   each as it would go into `Foods.md`,
+ *   its kcal `null` where unknown, the best match first;
  *   none for a search of only a few letters or of my foods only;
  *   `null` when Open Food Facts cannot be reached.
  * - `total`: Number of products of Open Food Facts the search matches;
@@ -131,7 +141,8 @@ export type FoodsFound = {
  * as the reader sends it, a nutrient its food does not know unknown too.
  *
  * - `name`: Name of the food, as the meal lists it, like `Skyr natur`.
- * - `brand`, `store`: Its brand and the store I bought it in, like `K-Classic` and `Kaufland`;
+ * - `brand`, `store`: Its brand and the store I bought it in,
+ *   like `K-Classic` and `Kaufland`;
  *   empty where the line names none.
  * - `grams`: Grams eaten as the meal lists them, millilitres of a drink,
  *   0 for none, which count nothing.
@@ -186,7 +197,8 @@ export type Meal = Totals & {
  * - `kcal`: What its foods give at those grams; `null` while none has grams.
  * - `portions`: The grams of the portion of each food, in their order,
  *   so its grams take `2x`; `null` for none.
- * - `kinds`: The kind of each food, in their order, `Eat` for one `Foods.md` does not hold.
+ * - `kinds`: The kind of each food, in their order,
+ *   `Eat` for one `Foods.md` does not hold.
  */
 export type Dish = {
     name: string;
@@ -199,7 +211,8 @@ export type Dish = {
 };
 
 /**
- * Gives the unit of the amounts of a food by its kind: `g` for a food to eat, `ml` for a drink,
+ * Gives the unit of the amounts of a food by its kind:
+ * `g` for a food to eat, `ml` for a drink,
  * like `330 ml` of a Coca-Cola, wherever the page shows or asks for an amount of it.
  *
  * @param kind - Kind of the food
@@ -211,8 +224,10 @@ export function unitOf(kind: Kind): string {
 
 /**
  * Writes the summary of a meal of the log from what it names,
- * its meals of mine and the foods beside them, in their order, parted by `, `, drinks left out,
- * so it does not fill up, like `Pizza Salami, Pizza Margherita` of those two and a `Coca-Cola`;
+ * its meals of mine and the foods beside them, in their order,
+ * parted by `, `, drinks left out,
+ * so it does not fill up, like `Pizza Salami, Pizza Margherita`
+ * of those two and a `Coca-Cola`;
  * an entry of drinks alone names them all, so no summary stays empty.
  * - `eaten`: What it names but drinks.
  *
@@ -230,14 +245,16 @@ export function summaryOf(named: { name: string; kind: Kind }[]): string {
 }
 
 /**
- * Reads portions typed into the grams of a food, by the grams of its portion I keep with the food,
+ * Reads portions typed into the grams of a food,
+ * by the grams of its portion I keep with the food,
  * see `portion` of {@link Food}: `2x` of oil of 30 g gives 60, `x` alone one portion,
  * and `2 St`, `2 Stk` and `2 Stück` alike, as for a Semmel of 50 g.
  * - `typed`: The number of portions typed and their word, `null` for no portions.
  *
  * @param text - Grams or portions as typed, like `2x`
  * @param portion - Grams of the portion of the food, `null` for none kept
- * @returns Grams, like 60, `null` for a text that names no portions or a food without portion
+ * @returns Grams, like 60, `null` for a text
+ *   that names no portions or a food without portion
  */
 export function portionGramsOf(text: string, portion: number | null): number | null {
     const typed: RegExpExecArray | null =
@@ -294,7 +311,8 @@ export async function dishesLoad(): Promise<Dish[]> {
  * the name keeps its spaces, like `Chili con Carne`, the reader only taking its commas.
  *
  * @param name - Name of the meal
- * @param foods - Its foods by name, brand and store, like `Hackfleisch;Gut & Günstig;Edeka`
+ * @param foods - Its foods by name, brand and store,
+ *   like `Hackfleisch;Gut & Günstig;Edeka`
  * @returns All my meals after
  * @throws {Error} - When the reader does not take the meal, like one without name or food
  */
@@ -346,7 +364,8 @@ export async function dishDelete(name: string): Promise<Dish[]> {
  *
  * @param food - Food to add
  * @returns The food as the reader wrote it, its name cleaned and its numbers rounded;
- *   for a product that is one of my foods already, like the same beans in a bigger can, that food
+ *   for a product that is one of my foods already,
+ *   like the same beans in a bigger can, that food
  * @throws {Error} - When the reader does not take the food,
  *   like a food by hand with the name, brand and store of one of mine
  */
@@ -408,15 +427,18 @@ export async function foodDayLoad(day: string): Promise<FoodDay> {
 
 /**
  * Writes an amount as the page shows it,
- * with a point between thousands and a point before the decimals, always as many decimals as asked,
- * so a number keeps its width as it changes, like the date of a day: `1.00` litres, never `1`,
+ * with a point between thousands and a point before the decimals,
+ * always as many decimals as asked,
+ * so a number keeps its width as it changes,
+ * like the date of a day: `1.00` litres, never `1`,
  * and `0.0` g of a nutrient, never `0`;
  * an unknown amount, like the fat of a food nobody gives, as nothing, no dash and no `?`,
  * so it never reads as 0. English writes the thousands with a comma,
  * its only comma, which becomes the point.
  *
  * @param value - Amount, `null` when unknown
- * @param digits - Decimals to show, like 0 for kcal, 1 for nutrients per 100 g and 2 for litres
+ * @param digits - Decimals to show, like 0 for kcal,
+ *   1 for nutrients per 100 g and 2 for litres
  * @returns Amount like `1.284`, `7.4` or `1.00`, empty when unknown
  */
 export function amountOf(value: number | null, digits: number): string {
@@ -458,7 +480,8 @@ export function elementOf(tag: string, className: string, text: string): HTMLEle
 
 /**
  * Makes the name of a food, the same wherever it stands: its name,
- * then its brand and store grey in brackets, those it has, like `Skyr natur (K-Classic, Kaufland)`,
+ * then its brand and store grey in brackets, those it has,
+ * like `Skyr natur (K-Classic, Kaufland)`,
  * since they only tell which one it is;
  * in the size of the name, never cut,
  * on a line of their own below it where one name of the list has no room,
@@ -466,7 +489,8 @@ export function elementOf(tag: string, className: string, text: string): HTMLEle
  * - `shown`: The name with its brand and store.
  * - `place`: Brand and store, those it has.
  *
- * @param className - Class of the name where it stands, like `food-name` in the food search
+ * @param className - Class of the name where it stands,
+ *   like `food-name` in the food search
  * @param name - Name, like `Skyr natur`
  * @param brand - Brand, empty for none
  * @param store - Store, empty for none
@@ -486,7 +510,8 @@ export function foodNameOf(
 }
 
 /**
- * Keeps the brackets after the names of a list alike, like the brand and store of the foods:
+ * Keeps the brackets after the names of a list alike,
+ * like the brand and store of the foods:
  * all on the line of their name while every one fits there,
  * else every one on a line of its own below its name, never one here and one there;
  * looked at again whenever the list changes or gets narrower or wider.

@@ -5,9 +5,11 @@
  * as the scripts view showed them under their headings, see `../skill/task.ts`:
  * under the heading `##` of each Task of the semester its row,
  * when it is due, its history, the menu for the next attempt,
- * which goes into the skill entry of the moment, Right and Wrong once its solution is open,
+ * which goes into the skill entry of the moment,
+ * Right and Wrong once its solution is open,
  * Wrong with my short comment; after each attempt the rows load again.
- * An Example has no row and no result: `Next` checks it off in its round, see `./round.ts`.
+ * An Example has no row and no result:
+ * `Next` checks it off in its round, see `./round.ts`.
  * A cold task, its heading ending with `(cold)`, shows a grey label in place of `(cold)`,
  * like `cold · 2 done · 1 right`, while the cursor is not on its heading.
  * Only a note with tasks of the semester has rows.
@@ -15,7 +17,8 @@
  * has no rows but on the line of each heading of a Task, at its right end,
  * a check and a cross, its results Right and Wrong,
  * see `judgeOf` in `../skill/task.ts`, without state, hint or numbers,
- * and its `(cold)` hidden without a label, since its round says what is due, see `./round.ts`,
+ * and its `(cold)` hidden without a label,
+ * since its round says what is due, see `./round.ts`,
  * which hears of each load and each Right, see {@link tasksFollow}.
  *
  * - `@codemirror/state`, `@codemirror/view`:
@@ -25,7 +28,8 @@
  *   and whether an Example shows a step.
  * - `../skill/attempts.ts`: Loads the tasks with when they are due.
  * - `../today.ts`: Gives today's calendar date, for when a task is due.
- * - `../skill/task.ts`: Builds the row of a task, the check and the cross of a task of a section,
+ * - `../skill/task.ts`: Builds the row of a task,
+ *   the check and the cross of a task of a section,
  *   and the label of a cold task.
  */
 
@@ -195,8 +199,8 @@ class RowWidget extends TaskWidget<boolean | null> {
 }
 
 /**
- * Check and cross of a task of a section at the right end of the line of its heading, see `judgeOf`
- * in `../skill/task.ts`; they work while its solution is open,
+ * Check and cross of a task of a section at the right end of the line of its heading,
+ * see `judgeOf` in `../skill/task.ts`; they work while its solution is open,
  * so a fold, an unfold or a step shown draws them anew.
  */
 class JudgeWidget extends TaskWidget<boolean> {
@@ -230,7 +234,8 @@ class ColdWidget extends WidgetType {
     }
 
     /**
-     * Tells whether another label is that of the same task as loaded, so the drawn one stays.
+     * Tells whether another label is that of the same task
+     * as loaded, so the drawn one stays.
      */
     override eq(other: ColdWidget): boolean {
         return other.task === this.task;
@@ -245,10 +250,13 @@ class ColdWidget extends WidgetType {
 }
 
 /**
- * Tells whether the solution of a task is open: that of an Example once a step of it shows,
- * see `exampleOpenOf` in `./steps.ts`; else the first heading `#### Solution…` of its block,
+ * Tells whether the solution of a task is open:
+ * that of an Example once a step of it shows,
+ * see `exampleOpenOf` in `./steps.ts`;
+ * else the first heading `#### Solution…` of its block,
  * from its heading to the next heading `##`, unfolded.
- * - `example`: Whether the solution of an Example is open, `null` for a task of no Example.
+ * - `example`: Whether the solution of an Example is open,
+ *   `null` for a task of no Example.
  * - `line`: A line of the block.
  *
  * @param state - Text, folds and steps of the note
@@ -293,14 +301,16 @@ export function blocksOf(state: EditorState, tasks: SkillTask[]): Block[] {
 }
 
 /**
- * Builds the rows of the note, see the top of this file: a row after the heading of each task,
+ * Builds the rows of the note, see the top of this file:
+ * a row after the heading of each task,
  * as wide as the page, and the label of a cold task in place of its `(cold)`
  * while the cursor is not on its heading;
  * in a section the check and the cross on the line of the heading instead of the row,
  * after its fold arrow, so the cursor at the end of the heading stands
  * at its text, see `./preview.ts`.
  * - `decorations`: The rows and labels found so far.
- * - `block`: A block of the note with a task, `task` the task, `line` the line of its heading.
+ * - `block`: A block of the note with a task, `task` the task,
+ *   `line` the line of its heading.
  * - `cold`: Where `(cold)` stands in the heading of a cold task, `null` for no such task.
  *
  * @param state - Text, cursor and folds of the note
@@ -372,7 +382,8 @@ export function tasksFollow(
 }
 
 /**
- * Loads the tasks of the note from the reader and shows their rows, see the top of this file;
+ * Loads the tasks of the note from the reader and shows their rows,
+ * see the top of this file;
  * without tasks of the semester the note shows no rows.
  * Then tells the one following, see {@link tasksFollow}.
  * - `skilling`: Every module of the semester with its tasks.
@@ -401,7 +412,8 @@ export async function tasksLoad(view: EditorView, path: string): Promise<void> {
 
 /**
  * The rows of the tasks of a note, see the top of this file:
- * built again when the tasks load, the text or the cursor changes, something folds or unfolds,
+ * built again when the tasks load, the text or the cursor changes,
+ * something folds or unfolds,
  * or more steps show;
  * none until {@link tasksLoad} has loaded the tasks.
  * - {@link StateField}: Holds the rows; only a field may draw widgets between the lines.

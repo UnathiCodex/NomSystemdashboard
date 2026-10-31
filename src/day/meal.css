@@ -32,7 +32,8 @@
     display: none;
 }
 
-/* Row of a meal or a food: its name, the grams of a food, its kcal and its small grey `×`,
+/* Row of a meal or a food: its name, the grams of a food,
+   its kcal and its small grey `×`,
    see `.cross-quiet` in `base.css`;
    grams, kcal and × on the line of the name,
    also while its brand and store stand on a line below it,
@@ -73,7 +74,8 @@
     color: var(--text-muted);
 }
 
-/* Grams of a food: a small field with `g` after it, a space apart as `313 kcal` writes its unit,
+/* Grams of a food: a small field with `g` after it,
+   a space apart as `313 kcal` writes its unit,
    white as the kcal, like every fact, which I type */
 .meal-grams {
     display: flex;
@@ -98,7 +100,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Food search in the list of the foods or of a meal, see `.picker-box`: its field one chip high,
+/* Food search in the list of the foods or of a meal,
+   see `.picker-box`: its field one chip high,
    as the search of every list,
    see `.picker-box .search-field` in `choices.css`, its results below it */
 .meal-box .food-search {
@@ -112,7 +115,8 @@
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     /* A meal or a food of the entry by category on a phone on one line, its grams first,
        as a recipe writes them, like `125 g Hackfleisch`,
-       so grams and kcal stand apart, at both ends of the name: its grams, its name, its kcal and ×;
+       so grams and kcal stand apart, at both ends of the name:
+       its grams, its name, its kcal and ×;
        a name too long goes on below, never cut;
        the foods of a meal indented less, the field of the grams narrower,
        just wide enough for four digits, and the kcal only as wide as their own text,

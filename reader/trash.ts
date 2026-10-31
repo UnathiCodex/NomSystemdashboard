@@ -5,7 +5,8 @@
  * never removing anything for good,
  * as the desktop does it, by the Trash specification of freedesktop.org:
  * the thing goes into `~/.local/share/Trash/files/`,
- * and beside it into `info/` a file `<name>.trashinfo` with the path it had and when it went,
+ * and beside it into `info/` a file `<name>.trashinfo`
+ * with the path it had and when it went,
  * so `gio trash --restore` and a file manager can bring it back.
  * A name the trash holds already gets a number before its ending, like `Tabelle 2.tsv`.
  * What Vu and I share and our messages go there once done, see `shared.ts` and `gate.ts`.

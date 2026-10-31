@@ -1,7 +1,8 @@
 /**
  * ## Markdown
  *
- * Gives the Markdown the reader writes the empty lines of my system, see {@link markdownFormOf}:
+ * Gives the Markdown the reader writes the empty lines of my system,
+ * see {@link markdownFormOf}:
  * two empty lines before a heading, one below it and one between paragraphs;
  * none at the start of a file, one after its front matter, and none at its end,
  * which is one line break. Only empty lines change, every other line stays as it is.
@@ -13,7 +14,8 @@
 const headingForm: RegExp = /^ {0,3}#{1,6}(?:[ \t]|$)/;
 
 /**
- * An empty line: nothing or only spaces and tabs; a line of only the spacer `⠀` is a line of text.
+ * An empty line: nothing or only spaces and tabs;
+ * a line of only the spacer `⠀` is a line of text.
  */
 const emptyForm: RegExp = /^[ \t]*$/;
 
@@ -24,7 +26,8 @@ const fenceForm: RegExp = /^ {0,3}(?:```|~~~)/;
 
 /**
  * Gives a Markdown text with the empty lines of my system, see the top of this file:
- * before each line of text as many empty lines as the line before it and the line itself ask,
+ * before each line of text as many empty lines as the line
+ * before it and the line itself ask,
  * however many there were: none before the first line, one after the front matter,
  * two before a heading, also right below another heading, one below a heading,
  * else one where there was any and none where there was none.

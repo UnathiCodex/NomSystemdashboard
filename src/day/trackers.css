@@ -1,14 +1,18 @@
 /* Trackers and the timer of a session in the bar of the day:
    Sleep, Water and Food as three tiles at its right end,
-   the water's tile a button that logs a glass, the session running now between them and the date,
+   the water's tile a button that logs a glass,
+   the session running now between them and the date,
    all filled in the soft grey of a card without a frame,
    like the cards of the phone; none on a phone */
-/* Timer of a session running now, see `timer.ts`, always there, its name `Session` while none runs,
+/* Timer of a session running now, see `timer.ts`, always there,
+   its name `Session` while none runs,
    so the bar never jumps: all the room the bar leaves between the date and the trackers,
    never more, so the bar keeps one line,
    as far from both as the trackers from each other, at least 9rem,
-   so its time always shows, filled like a tracker, at least one control high, on one line:
-   what the session is at the left, giving way with an ellipsis where the room is too small,
+   so its time always shows, filled like a tracker,
+   at least one control high, on one line:
+   what the session is at the left,
+   giving way with an ellipsis where the room is too small,
    how long it still runs at the right, in the grey of a time, every digit equally wide */
 .session-timer {
     display: inline-flex;
@@ -38,7 +42,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Trackers: at the right end of the bar of the day, three tiles of equal width side by side,
+/* Trackers: at the right end of the bar of the day,
+   three tiles of equal width side by side,
    a control gap apart, each 10.5rem wide, a little room beside its name and value,
    or as wide as the widest needs for them, like `Food 2.137 kcal`,
    so the timer beside them keeps its room,
@@ -55,7 +60,8 @@
 
 /* Sleep and neck as tiles side by side, each its value over its name, small and grey;
    a check small and grey after a value in the healthy band, or a goal met;
-   `.trackers .tracker-check` wins over the size of icons in `base.css`, being more exact */
+   `.trackers .tracker-check` wins over the size of icons in `base.css`,
+   being more exact */
 .tiles {
     display: flex;
     flex-wrap: wrap;
@@ -88,7 +94,8 @@
 }
 
 /* A tracker as a tile of its own, filled in the soft grey of a card without a frame,
-   one control high, its name small and grey before its value on one line, like `Sleep 09h 15m`,
+   one control high, its name small and grey before its value on one line,
+   like `Sleep 09h 15m`,
    so Sleep, Water and Food stand apart at a glance */
 .tracker-row {
     position: relative;
@@ -171,7 +178,8 @@
     height: 1.5rem;
 }
 
-/* Phone: no trackers and no timer, since a phone shows only plan and log, see `../main.ts` */
+/* Phone: no trackers and no timer,
+   since a phone shows only plan and log, see `../main.ts` */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .trackers,
     .session-timer {

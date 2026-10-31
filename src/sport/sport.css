@@ -7,7 +7,8 @@
     margin-top: var(--gap);
 }
 
-/* Name of a workout, an exercise or a video in a list with what stands grey in brackets after it,
+/* Name of a workout, an exercise or a video in a list
+   with what stands grey in brackets after it,
    its parts, its workouts or its channel, see `nameOf` in `lists.ts`:
    always one line, the name whole, the brackets cut with … where they have no room,
    like `Push (Bench press, Shoulder press, Di…)`, as the short title of a meal */
@@ -32,7 +33,8 @@
 }
 
 /* The plus right after the name of a workout opened, which adds an exercise or a video,
-   as after the name of a meal opened, see `.dish-list .food-name .plus-quiet` in `meals.css` */
+   as after the name of a meal opened,
+   see `.dish-list .food-name .plus-quiet` in `meals.css` */
 .dish-list .sport-name .plus-quiet {
     height: calc(1lh + 0.5rem);
     margin: -0.25rem 0 -0.25rem 0.5rem;
@@ -73,7 +75,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* The kinds of a video opened or new side by side as plain words, see `kindsOf` in `lists.ts`:
+/* The kinds of a video opened or new side by side as plain words,
+   see `kindsOf` in `lists.ts`:
    the one picked white, the others grey, lighter under the pointer */
 .sport-kinds {
     display: flex;
@@ -95,7 +98,8 @@
     color: var(--text-main);
 }
 
-/* The link of a video opened, which leads to YouTube, going on below where it has no room */
+/* The link of a video opened, which leads to YouTube,
+   going on below where it has no room */
 .sport-link {
     overflow-wrap: anywhere;
 }
@@ -103,7 +107,8 @@
 /* My weight among the totals, see `weightOf` in `sport.ts`:
    its kilograms as plain as the other totals, a button without frame,
    the small grey pencil after them, lighter under the pointer;
-   as a field the same size, a thin line below it while I type, as wide as what is typed */
+   as a field the same size, a thin line below it while I type,
+   as wide as what is typed */
 .sport-weight-amount {
     display: inline-flex;
     align-items: center;

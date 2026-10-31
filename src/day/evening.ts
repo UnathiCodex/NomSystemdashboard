@@ -1,7 +1,8 @@
 /**
  * ## Evening
  *
- * What I write into the daily note of the shown day, any time of the day, at the top of the note,
+ * What I write into the daily note of the shown day,
+ * any time of the day, at the top of the note,
  * each a list of points in the editor of my files, see `points.ts`:
  * my gratitude into the section `## Gratitude`,
  * and my points about the day overall into the section `## About`, both apart,
@@ -47,7 +48,8 @@ const boxes: Box[] = [
 const pause: number = 1000;
 
 /**
- * Day whose texts the fields hold, like `2026-10-10`, empty before the first day is shown.
+ * Day whose texts the fields hold, like `2026-10-10`,
+ * empty before the first day is shown.
  */
 let shown: string = "";
 
@@ -93,7 +95,8 @@ function errorShow(error: unknown): void {
 }
 
 /**
- * Saves each list whose text changed, one after the other, since both write into the same note,
+ * Saves each list whose text changed, one after the other,
+ * since both write into the same note,
  * then shows the note again, which the first save of a day may create.
  * - `day`: Day the texts belong to.
  * - `changed`: Lists whose text changed since it was loaded or saved.
@@ -142,7 +145,8 @@ export async function eveningShow(day: string): Promise<void> {
 
 /**
  * Hides both lists and the note below them,
- * or shows them again, after a click on the name of either list, so plan and log take their height;
+ * or shows them again, after a click on the name of either list,
+ * so plan and log take their height;
  * folded at every start, see `.note-fold` in `note.css`.
  * - `folded`: Whether they are hidden now.
  */
@@ -158,7 +162,8 @@ function foldToggle(): void {
 }
 
 /**
- * Starts the lists after the router has put their HTML into the page, each a list of points,
+ * Starts the lists after the router has put their HTML into the page,
+ * each a list of points,
  * see `points.ts`, saved a moment after the typing pauses, at once by `Ctrl+S`,
  * which then saves no web page, when the focus leaves the list,
  * and when the page goes out of sight, like when I close it or switch to another app,

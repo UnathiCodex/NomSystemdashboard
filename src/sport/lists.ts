@@ -1,11 +1,13 @@
 /**
  * ## Lists of the sport area
  *
- * My workouts and my exercises beside the day of the sport view, in this order, each section
- * built as my meals and foods in the food view, in their look, see `../food/meals.ts`:
+ * My workouts and my exercises beside the day of the sport view,
+ * in this order, each section built as my meals and foods in the food view,
+ * in their look, see `../food/meals.ts`:
  * its name, the small grey plus after it where it adds one,
  * a search field where the list may grow long,
- * then a small grey head and one flat line per workout or exercise, the small grey `×` at its end,
+ * then a small grey head and one flat line per workout or exercise,
+ * the small grey `×` at its end,
  * whose first click only asks,
  * the cross turning into the plain question mark, `Really remove?` as its tooltip.
  * Both come from one load of everything of mine, see `mineLoad` in `mine.ts`,
@@ -15,30 +17,39 @@
  *   cut with … where they have no room, whole as its tooltip, and what its videos burn,
  *   when all its parts are videos with minutes;
  *   a click opens it below, as a meal of the food view: its name,
- *   which changes in place, a click into it or on the small grey pencil after its name on top,
+ *   which changes in place, a click into it or on the small grey pencil
+ *   after its name on top,
  *   and its parts in their order, each with its `×` while it has more than one,
  *   a video with its channel and its minutes,
  *   a click on it showing its minutes and its kind below it to change;
- *   the plus right after its name opens the search of my exercises and videos below its parts,
+ *   the plus right after its name opens the search of my exercises
+ *   and videos below its parts,
  *   see {@link partSearchOf},
- *   which adds the one picked, `+ New exercise “Squat”` for a name typed that no exercise has,
- *   and a new video by its YouTube link pasted into it, the one place where a video comes in.
+ *   which adds the one picked,
+ *   `+ New exercise “Squat”` for a name typed that no exercise has,
+ *   and a new video by its YouTube link pasted into it,
+ *   the one place where a video comes in.
  *   The plus beside `Workouts`
  *   opens a field of a name, and a name typed
  *   in the search that no workout has offers `+ New workout “Legs”` last:
- *   either opens the new workout with its search, and its first part keeps it in `Workouts.md`.
- * - Exercises: mine, each with the workouts that hold it grey in brackets and what I do of it
- *   as a rule at the right, like `3 × 10 · 40 kg`;
- *   a click opens it below, its sets, its repetitions with their unit, `reps` or `s`, a switch,
- *   and its kilograms changing in place, which an entry brings every time, see `../day/sport.ts`,
+ *   either opens the new workout with its search,
+ *   and its first part keeps it in `Workouts.md`.
+ * - Exercises: mine, each with the workouts that hold it grey in brackets
+ *   and what I do of it as a rule at the right, like `3 × 10 · 40 kg`;
+ *   a click opens it below, its sets,
+ *   its repetitions with their unit, `reps` or `s`, a switch,
+ *   and its kilograms changing in place,
+ *   which an entry brings every time, see `../day/sport.ts`,
  *   and the workouts that hold it too;
  *   one name may stand several times, each a variant with values of its own,
  *   like `Dips 3 × 10` and `Dips 4 × 8 · 10 kg`,
  *   and `+ New exercise “Dips”` adds one more, empty, opened to fill in;
  *   a search finds the basic ones of a gym
- *   below them, see `basicExercises` in `reader/sport.ts`, as the food search finds products,
+ *   below them, see `basicExercises` in `reader/sport.ts`,
+ *   as the food search finds products,
  *   and a click makes one mine; the plus beside `Exercises` opens a field of a name,
- *   and a name typed in the search that no exercise has offers `+ New exercise “Squat”` last:
+ *   and a name typed in the search
+ *   that no exercise has offers `+ New exercise “Squat”` last:
  *   either adds it to `Exercises.md` by itself; its `×` removes it from my workouts too.
  * My videos have no list of their own: they live in my workouts.
  * My weight, which the kcal need, I change in the totals of the day, see `sport.ts`,
@@ -55,10 +66,12 @@
  *   the fields of a change in place and the cross and the check of a form.
  * - `../day/times.ts`: Writes a length of time.
  * - `../search.ts`: Compares the text typed in a search with the names of a list.
- * - `../changes.ts`: Loads everything of mine anew the moment a file of my new system changes.
+ * - `../changes.ts`: Loads everything
+ *   of mine anew the moment a file of my new system changes.
  * - `../icons.ts`: Puts the one plus and the one `×` into the buttons,
  *   and the plain question mark, their words as tooltip, and makes every search field.
- * - `lucide`: The plus of a new workout or exercise, and the pencil that renames a workout.
+ * - `lucide`: The plus of a new workout or exercise,
+ *   and the pencil that renames a workout.
  */
 
 import {
@@ -153,7 +166,8 @@ function plusOf(words: string, click: () => void): HTMLButtonElement {
 
 /**
  * Makes the one `×` of every list that takes a value back,
- * see `crossPut` in `../icons.ts`, its words as tooltip, the plain question mark while it asks.
+ * see `crossPut` in `../icons.ts`, its words as tooltip,
+ * the plain question mark while it asks.
  * - `button`: The ×.
  *
  * @param words - What it removes, like `Remove Push`
@@ -211,12 +225,14 @@ function headingOf(name: string, plus: HTMLButtonElement | null): HTMLElement {
 
 /**
  * Makes the name of a line with what stands grey in brackets after it, on one line,
- * the brackets cut with … where they have no room, like `Push (Bench press, Shoulder press, Di…)`,
+ * the brackets cut with … where they have no room,
+ * like `Push (Bench press, Shoulder press, Di…)`,
  * see `.sport-name` in `sport.css`, both whole as its tooltip.
  * - `name`: The name.
  *
  * @param text - The name, like `Push`
- * @param brackets - What stands in the brackets, like `Bench press, Dips`; empty for no brackets
+ * @param brackets - What stands in the brackets,
+ *   like `Bench press, Dips`; empty for no brackets
  * @returns The name
  */
 function nameOf(text: string, brackets: string): HTMLElement {
@@ -269,7 +285,8 @@ function numberFieldOf(
 }
 
 /**
- * Makes a value of a change in place that is a whole number, like the sets of an exercise:
+ * Makes a value of a change in place that is a whole number,
+ * like the sets of an exercise:
  * plain as every value, Enter or leaving it saves a change,
  * a text that is no whole number takes nothing and shows the number again.
  * - `input`: Its field.
@@ -319,7 +336,8 @@ function variantKeyOf(exercise: {
 }
 
 /**
- * Writes what I do of an exercise as a rule, as its line shows it: its sets and repetitions,
+ * Writes what I do of an exercise as a rule,
+ * as its line shows it: its sets and repetitions,
  * then its kilograms after a middle dot, those it has,
  * like `3 × 10 · 40 kg`, `3 × 10` or `2 × 60 s`.
  * - `reps`: Its repetitions, seconds written with a space before `s`.
@@ -341,7 +359,8 @@ function ruleTextOf(exercise: { sets?: string; reps?: string; kg?: string }): st
 /**
  * Makes the pick of the kind of a video:
  * its kinds side by side as plain words, the one picked white, the others grey,
- * lighter under the pointer, a click picking one, since there are only a few and no list is needed.
+ * lighter under the pointer, a click picking one,
+ * since there are only a few and no list is needed.
  * - `kinds`: The words.
  *
  * @param picked - Kind picked, empty for none
@@ -447,13 +466,17 @@ function valueOf(text: string): HTMLElement {
  *   in small letters, empty for none.
  * - `asked`: Name of the workout whose `×` asked `Really remove?`,
  *   in small letters, empty for none.
- * - `fresh`: Name of a new workout not yet written, as it has no part yet, empty for none.
+ * - `fresh`: Name of a new workout not yet written,
+ *   as it has no part yet, empty for none.
  * - `naming`: Whether the field of the name of a new workout shows.
- * - `focusing`: Whether the search of my exercises and videos takes the cursor when it shows next:
+ * - `focusing`: Whether the search of my exercises
+ *   and videos takes the cursor when it shows next:
  *   only once it opens or a part was picked from it, never when another list shows anew.
- * - `editing`: Key of the video of a workout opened whose minutes and kind show below it, its link,
+ * - `editing`: Key of the video of a workout opened whose minutes
+ *   and kind show below it, its link,
  *   or its title in small letters for one without link; empty for none.
- * - `videoChange`: Sends a video of mine changed, its minutes or its kind, and shows all of mine.
+ * - `videoChange`: Sends a video of mine changed,
+ *   its minutes or its kind, and shows all of mine.
  * - `send`: Sends a workout with its parts, or renamed,
  *   and shows all of mine as the reader sends them,
  *   a workout renamed staying open under its name as the reader cleans it,
@@ -774,15 +797,18 @@ function newOf(text: string, words: string, click: () => void): HTMLElement {
 }
 
 /**
- * Makes the search of my exercises and videos below the parts of a workout opened: a field,
- * then my exercises and videos whose names hold the words typed, all of them for none typed,
+ * Makes the search of my exercises
+ * and videos below the parts of a workout opened: a field,
+ * then my exercises and videos whose names hold the words typed,
+ * all of them for none typed,
  * the basic exercises of a gym only as I type, but those the workout holds,
  * and last `+ New exercise “Squat”` for a name typed that no exercise has;
  * a click or Enter on the first adds one.
  * A YouTube link pasted into it asks YouTube for its title and channel,
  * see `videoLookup` in `mine.ts`:
  * a video of mine shows as the one line to add, a new one as a form below the field,
- * its title and channel filled in, its minutes empty to type, its kind guessed from its title,
+ * its title and channel filled in, its minutes empty to type,
+ * its kind guessed from its title,
  * see {@link kindGuessOf}, whose check adds it to my videos and to the workout at once;
  * a link YouTube does not know says so in one grey line.
  * - `search`: The search with its field and its lines.
@@ -1028,10 +1054,12 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
  * - `naming`: Whether the field of the name of a new exercise shows.
  * - `open`: Key of the variant opened, see {@link variantKeyOf}, empty for none.
  * - `add`: Adds an exercise by its name and shows all of mine.
- * - `show`: Shows the exercises whose name holds the words typed in the search, all for none typed.
+ * - `show`: Shows the exercises whose name holds the words typed in the search,
+ *   all for none typed.
  * - `nameFormOf`: Makes the field of the name of a new exercise with its cross and check.
  * - `ruleOf`: Makes what I do of an exercise opened as a rule, its sets,
- *   repetitions with their unit and kilograms, each changing in place and written at once.
+ *   repetitions with their unit and kilograms,
+ *   each changing in place and written at once.
  *
  * @returns The section
  */
@@ -1234,7 +1262,8 @@ export function mineReload(): void {
 /**
  * Builds the two sections of the lists, see the top of this file,
  * and loads everything of mine into them,
- * and anew after every change of the files while the cursor stands in neither, see `../changes.ts`.
+ * and anew after every change of the files
+ * while the cursor stands in neither, see `../changes.ts`.
  * - `sections`: The sections in their order.
  *
  * @returns The sections

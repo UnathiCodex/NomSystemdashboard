@@ -10,32 +10,40 @@
  * but theory only by my hand, like a Definition or the Algorithm, see {@link theoryIs}:
  * it reads whole whenever I open it, by the tree, a link, `Next` or a reload,
  * and in the whole note, which shows while the round has no step, like once it is closed.
- * In the head, at the right end of the status line, stands `Next`, an arrow, see {@link roundDraw}:
+ * In the head, at the right end of the status line, stands `Next`,
+ * an arrow, see {@link roundDraw}:
  * it checks a block without a result off, theory and an Example,
  * and opens the next; the Task stays unchecked until my result,
  * which only its check and cross on the line of its heading write,
  * the check going on as `Next` does, see `../skill/task.ts`,
- * so `Next` stays off on the Task until it has my result, and it never passes without one.
- * In the status line above the text stands the round, like `Round 1`, see {@link roundLineOf},
+ * so `Next` stays off on the Task until it has my result,
+ * and it never passes without one.
+ * In the status line above the text stands the round,
+ * like `Round 1`, see {@link roundLineOf},
  * and beside it the session it writes into, see {@link sessionShow};
  * the tree lists every block with its place, see `roundListOf` in `../notes/tree.ts`,
  * and a click there shows a block alone, see {@link roundHeadingShow}.
  * What a round holds, only what it needs;
  * the other blocks wait, grey in the tree, those of one kind folded into one line there.
- * Every round starts with every theory block in the order of the note, the Algorithm among them,
+ * Every round starts with every theory block in the order of the note,
+ * the Algorithm among them,
  * so what an Example or a Task uses, like $X$, stands defined right before it,
  * also in a later round, when I forgot it; only its Examples and Tasks change:
  * - round 0: one Example, the first, its steps predicted one by one, see `./steps.ts`,
  *   then one Task alone, gone over with this Example and the theory until it is right,
  *   since the first Task can only succeed, so a wrong one leaves the Task to do;
- * - later: only the Task of the round, once it is due; until then the round holds no theory either;
+ * - later: only the Task of the round, once it is due;
+ *   until then the round holds no theory either;
  *   a wrong Task brings the Example of the round, the next unused, then the Task again,
  *   which then counts as right; wrong again, I go through it with its solution and close.
- * The Task decides the round, and the reader writes the day of the next one with its result,
- * see `reader/skill.ts` and `~/NomWorkspace/.claude/skills/learn/4-session-learn/session-learn.md`.
+ * The Task decides the round,
+ * and the reader writes the day of the next one with its result,
+ * see `reader/skill.ts`
+ * and `~/NomWorkspace/.claude/skills/learn/4-session-learn/session-learn.md`.
  * Where I am lives in the log alone, never in the browser or the note:
  * `Next` writes the step it goes on to, its heading,
- * where I stand, into the one line `X-ROUND` of the section in the skill entry of the moment,
+ * where I stand, into the one line `X-ROUND` of the section
+ * in the skill entry of the moment,
  * an Example it passes checked off there as the `USED` of the round,
  * written anew in its place, and the reader gives it back with the section,
  * see `RoundLine` in `reader/skill.ts`,
@@ -52,10 +60,13 @@
  * once the block shown has nothing left to undo, see {@link roundBack},
  * and from the first block I opened in a note back to the note I came from by a link.
  * The round folds and unfolds only whole blocks, never a section in one:
- * the scene of a Definition, its section under a heading `####` like `#### Ice Cream Kiosk`,
+ * the scene of a Definition, its section under a heading `####`
+ * like `#### Ice Cream Kiosk`,
  * folds only by my hand, also when I look the block up.
- * On the last step `Next` stays off, since a round closes only by hand, with the close in the head,
- * see {@link roundClose}, once its Task decided it, see {@link closeShow}; the close writes `done` where the step stood, and Today follows;
+ * On the last step `Next` stays off, since a round closes only by hand,
+ * with the close in the head,
+ * see {@link roundClose}, once its Task decided it, see {@link closeShow};
+ * the close writes `done` where the step stood, and Today follows;
  * once closed, neither shows, with no step to return to.
  * Reading a round needs no session,
  * but `Next` and the close write only in a session of the module,
@@ -72,10 +83,12 @@
  * - `./steps.ts`: Tells whether a block is folded.
  * - `../skill/attempts.ts`: Writes the days of the round line out,
  *   and the day of the next Task for the tree.
- * - `./tasks.ts`: Reads the blocks of the note with their tasks and the heading of a line,
+ * - `./tasks.ts`: Reads the blocks of the note with their tasks
+ *   and the heading of a line,
  *   and hears each load of the tasks, with its section, and each Right.
  * - `./session.ts`: Makes sure a session of the module runs before `Next`
- *   or the close writes, and gives the session running, with its day and times written out.
+ *   or the close writes, and gives the session running,
+ *   with its day and times written out.
  * - `../notes/tree.ts`: The places of the blocks the tree shows,
  *   and the type word at the start of a heading.
  */
@@ -139,12 +152,14 @@ type Round = {
 };
 
 /**
- * The block shown alone, see {@link aloneOf}, the only text I may change and select while it shows.
+ * The block shown alone, see {@link aloneOf},
+ * the only text I may change and select while it shows.
  *
  * - `from`: Start of its heading line.
  * - `to`: Where it ends, see {@link endOf}.
  * - `heading`: Its heading as it now stands, see {@link alonePlace}.
- * - `decorations`: What is drawn: the text around it hidden, its heading marked as the first.
+ * - `decorations`: What is drawn: the text around it hidden,
+ *   its heading marked as the first.
  */
 type Alone = {
     from: number;
@@ -154,7 +169,8 @@ type Alone = {
 };
 
 /**
- * Effect of `Next` moving, or a click in the tree, to the end of a block, `null` for none.
+ * Effect of `Next` moving, or a click in the tree,
+ * to the end of a block, `null` for none.
  */
 const nextMoved: StateEffectType<{ block: Block; end: number } | null> =
     StateEffect.define<{
@@ -177,7 +193,8 @@ let opened: string = "";
 /**
  * Headings of the blocks I had open before, as written, the last one at the end,
  * for Ctrl+Z, see {@link roundBack}; kept with the page in the history of the browser,
- * see {@link openedBeforeKeep}, so a reload and the way back from another note find them again.
+ * see {@link openedBeforeKeep},
+ * so a reload and the way back from another note find them again.
  */
 let openedBefore: string[] = Array.isArray(history.state)
     ? (history.state as string[])
@@ -195,14 +212,16 @@ const linked: boolean = ["/scripts?path=", "/edit?file="].some((page: string): b
 /**
  * Keeps {@link openedBefore} with the page in the history of the browser,
  * which gives it back with the page after a reload or the back button.
- * - {@link History#replaceState}: Writes it into the step of the history the page stands on.
+ * - {@link History#replaceState}:
+ *   Writes it into the step of the history the page stands on.
  */
 function openedBeforeKeep(): void {
     history.replaceState(openedBefore, "");
 }
 
 /**
- * Keeps the block shown in {@link openedBefore} before another one shows by a click or by `Next`,
+ * Keeps the block shown in {@link openedBefore}
+ * before another one shows by a click or by `Next`,
  * back or ahead.
  * - `before`: The block shown, see {@link roundShownOf}.
  *
@@ -216,7 +235,8 @@ function shownRemember(view: EditorView, heading: string): void {
 }
 
 /**
- * Takes the block I opened in the section shown, empty for the current step, see {@link opened},
+ * Takes the block I opened in the section shown,
+ * empty for the current step, see {@link opened},
  * and tells the reader, which keeps it in its memory until it restarts,
  * see {@link roundOpenedOf}.
  * - {@link Navigator#sendBeacon}: Sends it to the reader without waiting for its answer.
@@ -240,15 +260,18 @@ const todayAddress: string = "/scripts";
 /**
  * The block shown alone, `null` for none:
  * built anew when `Next` moves, carried along when the text changes,
- * its start before what I type at it and its end after, so what I type at either belongs to it,
+ * its start before what I type at it and its end after,
+ * so what I type at either belongs to it,
  * its end never past the line break before the hidden text after it,
  * also once its last line went with that line break, see {@link changesKeep}.
- * - {@link StateField}: Only a field may hide whole lines, like the text around the block.
+ * - {@link StateField}: Only a field may hide whole lines,
+ *   like the text around the block.
  * - `from`: Its start, carried along.
  * - `decorations`: The hidden text around it, carried along.
  * - `hidden`: Start of the hidden text after it, past the end of the note for none.
  * - `heading`: The heading on the line of its start as it now stands,
- *   `undefined` while that line is none, like `## ` while I retype it, which keeps the one before.
+ *   `undefined` while that line is none, like `## ` while I retype it,
+ *   which keeps the one before.
  */
 const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
     create: (): Alone | null => null,
@@ -292,7 +315,8 @@ const alonePlace: StateField<Alone | null> = StateField.define<Alone | null>({
  * undo and redo, which CodeMirror never filters, only take back what was allowed.
  * - `alone`: The block shown alone before the change.
  * - `inside`: Whether every change lies inside it.
- * - `lines`: Whether a change takes away whole lines up to the line break after the block.
+ * - `lines`: Whether a change takes away whole lines up
+ *   to the line break after the block.
  *
  * @param transaction - Transaction
  * @returns Whether its changes may stand
@@ -322,12 +346,14 @@ function changesKeep(transaction: Transaction): boolean {
  * a place beyond the block goes to its start or its end.
  * Only where a key, a click, a drag or a change puts them:
  * the cursor left in the block before when another shows, by `Next`, the tree or a link,
- * stays there, unseen and without the focus, see {@link blockOpen}, until I click or move it,
+ * stays there, unseen and without the focus,
+ * see {@link blockOpen}, until I click or move it,
  * so the heading of the next block shows as before.
  * - `alone`: The block shown alone after the transaction.
  * - `selection`: The cursors and selections the transaction puts or carries along.
  * - `inside`: A place kept inside the block.
- * - `kept`: Each cursor or selection inside the block, the same where it already lies inside.
+ * - `kept`: Each cursor or selection inside the block,
+ *   the same where it already lies inside.
  *
  * @param transaction - Transaction
  * @returns The transaction, and after it the selection kept inside,
@@ -454,7 +480,8 @@ function theoryIs(block: Block): boolean {
  * after a wrong one its Example and the Task again; none for a later round not due.
  * - `step`: A step of a block, `again` for the Task after its Example.
  * - `theory`: The theory, the first steps of every round, see {@link theoryIs}.
- * - `cold`, `example`: The blocks of the Task and the Example of the round, `undefined` for none.
+ * - `cold`, `example`: The blocks of the Task
+ *   and the Example of the round, `undefined` for none.
  *
  * @param blocks - Blocks of the note
  * @param section - Its section
@@ -594,7 +621,8 @@ function passedOf(steps: Step[], at: string): string[] {
  * Tells whether a step is done:
  * theory and the Example once passed with `Next`;
  * the Task of round 0 once right, since the first can only succeed;
- * a later Task once it has a result in the round, the Task again once it has a second one.
+ * a later Task once it has a result in the round,
+ * the Task again once it has a second one.
  * - `results`: Results of the Task of the round.
  *
  * @param shown - The round
@@ -620,7 +648,8 @@ function roundStepsOf(view: EditorView, shown: Round): Step[] {
 }
 
 /**
- * Gives the current step: the one pinned, see {@link Round}; none once the round is closed.
+ * Gives the current step: the one pinned, see {@link Round};
+ * none once the round is closed.
  *
  * @param shown - The round
  * @param steps - Its steps
@@ -652,7 +681,8 @@ function atKeyOf(section: SkillSection): string {
  * Gives where the round goes on when the page opens, from the log alone:
  * from the step of the last `Next`, the first step not done, else that step itself;
  * without a `Next` yet, the first step not done, else the last step.
- * The step of the last `Next` is found also once its heading changed, see {@link placeOf}.
+ * The step of the last `Next` is found also
+ * once its heading changed, see {@link placeOf}.
  * - `from`: Index of the step of the last `Next`, 0 for none.
  *
  * @param shown - The round
@@ -669,7 +699,8 @@ function resumedOf(shown: Round, steps: Step[]): string {
 }
 
 /**
- * Gives the module of the round shown, the part of the identities of its tasks before `/`.
+ * Gives the module of the round shown,
+ * the part of the identities of its tasks before `/`.
  *
  * @param shown - The round
  * @returns Module code like `IN2028`
@@ -724,8 +755,10 @@ function roundLineOf(shown: Round): string {
 
 /**
  * Shows beside the round line the session the round writes into, smaller,
- * as the calendar shows an entry: its day and its times, like `17.10.2026 (Sat) · 21:40 – 22:40`;
- * nothing while no session of the module runs, since reading needs none, see `./session.ts`.
+ * as the calendar shows an entry: its day and its times,
+ * like `17.10.2026 (Sat) · 21:40 – 22:40`;
+ * nothing while no session of the module runs,
+ * since reading needs none, see `./session.ts`.
  * What it showed stays until the reader answers, so nothing flickers.
  *
  * @param shown - The round
@@ -740,7 +773,8 @@ function sessionShow(shown: Round): void {
 }
 
 /**
- * Gives the block shown alone, where I am: the one opened from the tree, else the current step.
+ * Gives the block shown alone, where I am:
+ * the one opened from the tree, else the current step.
  *
  * @param blocks - The blocks of the note
  * @param current - The current step, `undefined` for none
@@ -755,10 +789,12 @@ function shownOf(blocks: Block[], current: Step | undefined): Block | undefined 
 /**
  * Shows the round as it stands:
  * the round line with the session beside it, the block shown alone,
- * `Next` in the head, an arrow, see {@link roundNext}, and the close beside it, see {@link closeShow},
+ * `Next` in the head, an arrow, see {@link roundNext},
+ * and the close beside it, see {@link closeShow},
  * and the places of the blocks in the tree.
  * `Next` is on while it goes somewhere:
- * from a block shown from the tree back to the current step, else on from the current step;
+ * from a block shown from the tree back to the current step,
+ * else on from the current step;
  * off and faint on the last step, and on an Example or a Task until it has my result,
  * see {@link waitingIs}, as the close before the round may close;
  * hidden once the round is closed or for a round without steps, as the close.
@@ -803,9 +839,10 @@ function roundDraw(view: EditorView, shown: Round): void {
 /**
  * Opens a block, which then stands alone on the page, and scrolls the page to its top,
  * so the block starts at the top of the screen, once the page is drawn anew.
- * The text gives up the focus, also after a link in it, so the cursor left in the block before
- * stays there unseen, see {@link selectionKeep},
- * and Ctrl+Z goes back to that block, see {@link roundBack}, never undoing in it while hidden.
+ * The text gives up the focus, also after a link in it,
+ * so the cursor left in the block before stays there unseen, see {@link selectionKeep},
+ * and Ctrl+Z goes back to that block, see {@link roundBack},
+ * never undoing in it while hidden.
  * - {@link requestAnimationFrame}: Waits until the page is drawn next.
  *
  * @param view - The editor
@@ -827,10 +864,12 @@ function blockOpen(view: EditorView, block: Block): void {
  * from an Example or a Task without my result not at all, see {@link waitingIs};
  * else, once a session of the module runs,
  * see `sessionEnsure` in `./session.ts`, writes into the log which step comes next,
- * so a step without a result before it counts as passed, and shows it; from the last step not at all.
+ * so a step without a result before it counts as passed, and shows it;
+ * from the last step not at all.
  * Where I am moves at once;
  * a line the reader does not take shows in the status line, see {@link failShow};
- * without a session, or once the round was shown anew meanwhile, as after a result, nothing moves.
+ * without a session, or once the round was shown anew meanwhile,
+ * as after a result, nothing moves.
  * - `steps`, `current`: The steps of the round and the current one.
  * - `back`: Whether it goes from a block shown from the tree back to the current step.
  * - `following`: The step after it.
@@ -879,11 +918,13 @@ function failShow(error: unknown): void {
  * Shows the close of the round in the head, see {@link roundClose}:
  * a loose icon, a check in a ring, so it never looks like the check of a block,
  * between the save button and `Next`, its tooltip only `Close the round`;
- * on once the round's Task decided it, in its full grey then, as the save button with changes;
+ * on once the round's Task decided it, in its full grey then,
+ * as the save button with changes;
  * off and faint before; hidden once the round is closed or for a round without steps.
  * The Task decides round 0 once it is right, a later round once it is right,
  * also after its Example, or wrong a second time, see `decidedIs` in `reader/skill.ts`,
- * so after Wrong on `Task. Food Truck` the close stays off until the Task again has its result.
+ * so after Wrong on `Task. Food Truck` the close stays off
+ * until the Task again has its result.
  * - `results`: Results of the Task of the round.
  *
  * @param shown - The round
@@ -902,7 +943,8 @@ function closeShow(shown: Round, steps: Step[]): void {
 }
 
 /**
- * Closes the round shown by hand, the close in the head, once a session of the module runs,
+ * Closes the round shown by hand, the close in the head,
+ * once a session of the module runs,
  * see `sessionEnsure` in `./session.ts`: writes `done` where I stand into the log,
  * then shows Today, where the round stands done.
  * - `shown`: The round.
@@ -928,7 +970,8 @@ export function roundClose(): void {
  * so a result moves nothing, only `Next`, a click and the check of a Right;
  * each time after, like after a result, the round as it now stands.
  * - `fresh`: Whether the round of this note shows for the first time.
- * - `blocks`, `steps`, `current`: Blocks of the note, steps of the round and the current one.
+ * - `blocks`, `steps`, `current`: Blocks of the note,
+ *   steps of the round and the current one.
  * - `open`: Whether a block stays open, theory always, see {@link theoryIs}.
  * - `effects`: The blocks to fold.
  *
@@ -976,11 +1019,14 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
 }
 
 /**
- * Gives the places of the blocks of the round shown in their order, every block of the note,
- * for the tree: done, wrong once its last result was wrong, like `Task. Food Truck` after Wrong,
+ * Gives the places of the blocks of the round shown in their order,
+ * every block of the note,
+ * for the tree: done, wrong once its last result was wrong,
+ * like `Task. Food Truck` after Wrong,
  * so the tree shows the cross its heading line shows, still to do in the round,
  * the current step among them, or outside it, like a Task variant not due.
- * The tree lights the block shown, see {@link roundShownOf}, never the current step for itself:
+ * The tree lights the block shown, see {@link roundShownOf},
+ * never the current step for itself:
  * where I am is the block shown, where the round goes on the first one after those done.
  * - `steps`: Steps of the round.
  * - `own`: The steps of a block.
@@ -1023,11 +1069,13 @@ export function roundShownOf(view: EditorView): string {
 
 /**
  * Tells when the section shown has its next Task,
- * for the line of its Tasks outside the round in the tree, see `roundListOf` in `../notes/tree.ts`:
+ * for the line of its Tasks outside the round in the tree,
+ * see `roundListOf` in `../notes/tree.ts`:
  * the day its Task comes back, by the rule of the overview,
  * see `stateOf` in `./overview.ts`, `Tomorrow` for the day after today,
  * else like `19.10.2026 (Mon)`;
- * nothing while its Task is due today, since its result decides the day, or no day is known.
+ * nothing while its Task is due today,
+ * since its result decides the day, or no day is known.
  * - `today`, `due`: Today and the day its Task comes back, empty for none.
  * - `year`, `month`, `day`: Today in numbers.
  * - `tomorrow`: The day after today.
@@ -1083,10 +1131,12 @@ export function roundHeadingShow(
 
 /**
  * Goes back to the block I had open before, see {@link openedBefore},
- * as Ctrl+Z asks once the block shown has nothing left to undo, see `historyIn` in `./keys.ts`,
+ * as Ctrl+Z asks once the block shown has nothing left to undo,
+ * see `historyIn` in `./keys.ts`,
  * or while the focus stands outside the text, see `keyDown` in `./editor.ts`;
  * while I opened none before, back to the note I came from by a link, see {@link linked},
- * as the back button of the browser, which shows the block I left it on, see {@link openedKeep}.
+ * as the back button of the browser,
+ * which shows the block I left it on, see {@link openedKeep}.
  * - `heading`: The block before.
  *
  * @param view - The editor
@@ -1101,7 +1151,8 @@ export function roundBack(view: EditorView): boolean {
 }
 
 /**
- * Gives the block I opened last in a section, as the reader keeps it, see {@link openedKeep}.
+ * Gives the block I opened last in a section,
+ * as the reader keeps it, see {@link openedKeep}.
  *
  * @param path - Path of the note, as the scripts view takes it
  * @returns Heading as written, empty for the current step,
@@ -1133,7 +1184,8 @@ export function roundGo(view: EditorView): void {
  *   {@link Prec.highest} runs {@link selectionKeep} after the other filters,
  *   which move the cursor too, so it has the last word.
  * - {@link EditorView.updateListener}: Hears each change once it is applied.
- * - {@link keymap}: Takes Ctrl+Z once Undo within the block of `./keys.ts` has nothing left.
+ * - {@link keymap}: Takes Ctrl+Z once Undo within the block
+ *   of `./keys.ts` has nothing left.
  *
  * @param changed - Shows the places of the blocks anew in the tree
  * @returns Extension for the editor: the block shown alone,

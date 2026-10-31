@@ -44,7 +44,8 @@ button.group-name:is(:hover, :has(+ .menu:popover-open)) {
    each group on one line, on the same columns as the others:
    the check, the pin of the group pinned, the group, and a margin after it,
    then its times and place, grey, see `groupPartsOf` in `groups.ts`,
-   as far after them its tutors, grey in the same size, plain text, so the row is one click,
+   as far after them its tutors, grey in the same size,
+   plain text, so the row is one click,
    and at its right end its series icon;
    times and tutors wrapping where the window is narrower, like on a phone;
    the day of the groups of one day small and grey above them,
@@ -93,7 +94,8 @@ button.group-name:is(:hover, :has(+ .menu:popover-open)) {
 }
 
 /* The pin of the group pinned, which takes it back, see `groupMenuOf` in `groups.ts`:
-   lighter under the pointer, softly as every hover, see `--hover-in` in `../variants.css` */
+   lighter under the pointer, softly as every hover,
+   see `--hover-in` in `../variants.css` */
 .group-unpin {
     cursor: pointer;
 }

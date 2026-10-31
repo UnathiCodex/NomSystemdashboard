@@ -4,7 +4,8 @@
  * Finds entries in my whole log, not only the shown day,
  * like every `Talk` to add who was there with `With`:
  * a small button beside `Log +` opens the search,
- * and what I type finds every entry that holds each typed word in its summary, its category,
+ * and what I type finds every entry that holds
+ * each typed word in its summary, its category,
  * its place, its people or its day,
  * as every search of the page compares, see `../search.ts`,
  * like `Talk Sophale` or `Talk 10.2026`, never in its note.
@@ -13,19 +14,23 @@
  * like `16.10.2026 (Fri) · 13:45 – 14:15 · Mensa Leopoldstraße · Kicktipp`.
  * A click on a result shows its day and opens its dialog there;
  * closing that dialog, saved or not, brings the search back with what I typed, read anew,
- * so I go from one result to the next. The search brings its dialog itself, `search.html`.
+ * so I go from one result to the next.
+ * The search brings its dialog itself, `search.html`.
  *
  * - `./search.html?raw`: Html of the dialog of the search as text,
  *   packed into the built code by Vite.
  * - `./categories.ts`: Opens the dialog of an entry.
- * - `./boxes.ts`: Writes what an entry was as the log shows it, and builds the parts of a result.
- * - `./places.ts`: Gives the place of an entry by its label, a route with its arrow drawn.
+ * - `./boxes.ts`: Writes what an entry was as the log shows it,
+ *   and builds the parts of a result.
+ * - `./places.ts`: Gives the place of an entry by its label,
+ *   a route with its arrow drawn.
  * - `./series.ts`: Writes a room by its code, without what stands in brackets.
  * - `./times.ts`: Writes the times and the date of an entry.
  * - `../skill/attempts.ts`: Writes a date as a day in the form of the reader,
  *   and a day with its weekday.
  * - `../search.ts`: Compares a typed text with an entry, alike everywhere.
- * - `../icons.ts`: Puts the icon of the search into its button, and makes its search field.
+ * - `../icons.ts`: Puts the icon of the search into its button,
+ *   and makes its search field.
  * - `../persons.ts`: Puts who I was with apart by a middle dot.
  * - `lucide`: The icon of the search.
  */
@@ -46,7 +51,8 @@ import type { Calendar, EventApi } from "fullcalendar";
 import type { Attendee } from "./entries.ts";
 
 /**
- * An entry of the log as the reader sends it for the search, the fields the search reads of it.
+ * An entry of the log as the reader sends it for the search,
+ * the fields the search reads of it.
  *
  * - `id`: Its identifier, which the calendar of its day knows it by.
  * - `category`: Its category, like `Talk`.
@@ -108,7 +114,8 @@ function whatTextOf(entry: LogEntry): string {
  * Gives the text the search compares with what I type:
  * the summary of an entry, its category, its place, its people and the day of its start,
  * like `Talk Artificial Intelligence Mensa Leopoldstraße … Kicktipp 16.10.2026`,
- * so `Talk 10.2026` finds my talks of October and `Talk 16.10` those of one day; never its note.
+ * so `Talk 10.2026` finds my talks of October and `Talk 16.10` those of one day;
+ * never its note.
  *
  * @param entry - The entry
  * @returns Its text
@@ -127,7 +134,8 @@ function searchedOf(entry: LogEntry): string {
 }
 
 /**
- * Builds a result: what the entry was in the bold of the log, like `Talk: Artificial Intelligence`,
+ * Builds a result: what the entry was in the bold of the log,
+ * like `Talk: Artificial Intelligence`,
  * see `whatOf` in `boxes.ts`,
  * and below it, small and grey, its day with its weekday short after it, its time,
  * its place by its label as the plan and the log show it, a room by its code,
@@ -139,7 +147,8 @@ function searchedOf(entry: LogEntry): string {
  * - `start`, `end`: Start and end of the entry.
  * - `day`: Day of its start, like `2026-10-16`.
  * - `place`: Its place as shown, see `whereLinkedOf` in `places.ts`, none for none.
- * - `people`: The names of who I was with, apart by a middle dot, like `Sophale, Willi · Socials`,
+ * - `people`: The names of who I was with, apart by a middle dot,
+ *   like `Sophale, Willi · Socials`,
  *   see `dottedOf` in `../persons.ts`, none for nobody.
  * - `where`: Its place and who I was with, those it has.
  * - `meta`: The grey line below what it was, its day and time, then where.
@@ -202,7 +211,8 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
 }
 
 /**
- * Shows the entries that hold each word typed, newest first, every entry while nothing is typed.
+ * Shows the entries that hold each word typed, newest first,
+ * every entry while nothing is typed.
  * - `words`: The words typed, see `wordsOf` in `../search.ts`.
  *
  * @param calendar - Calendar of the day
@@ -274,7 +284,8 @@ function entryAwait(calendar: Calendar, id: string): Promise<EventApi | null> {
 }
 
 /**
- * Shows the day of a result and opens the dialog of its entry there, after closing the search,
+ * Shows the day of a result and opens the dialog of its entry there,
+ * after closing the search,
  * which comes back once that dialog closes, see {@link searchStart};
  * an entry the calendar does not show brings the search back at once.
  * - `day`: The day of its start, like `2026-10-16`.
@@ -302,7 +313,8 @@ async function resultOpen(calendar: Calendar, entry: LogEntry): Promise<void> {
  * its button beside `Log +` opens it, what I type shows its results at once,
  * and the dialog of an entry opened from it brings it back when it closes.
  * - `button`: The button that opens the search.
- * - `text`: The field of what I type, which goes into the search field at the top of the dialog.
+ * - `text`: The field of what I type,
+ *   which goes into the search field at the top of the dialog.
  *
  * @param calendar - Calendar of the day
  */

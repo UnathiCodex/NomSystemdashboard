@@ -7,11 +7,13 @@
  * like `Skill: NomSystemdashboard` or `Food: Brotzeit Nachspeise`,
  * and how long it still runs at the right, in hours and minutes, like `01h 23m`;
  * while none runs its name `Session` small and grey at the left,
- * as the trackers beside it have theirs, and `00h 00m`, so the bar never jumps; none on a phone.
+ * as the trackers beside it have theirs, and `00h 00m`,
+ * so the bar never jumps; none on a phone.
  * Where the room is too small for the whole name,
  * like on my laptop, it is cut with an ellipsis at its end,
  * like `Skill: WI0219_InvestitionFin…`, whole in its tooltip,
- * see {@link timerShow}, the time always whole; a short code would not work for every name.
+ * see {@link timerShow}, the time always whole;
+ * a short code would not work for every name.
  * The entry running now is one of every category but a glass of water,
  * which the log does not show, a session of learning as much as a meal or a video;
  * of several running at once the one begun last, like a meal during a session,
@@ -19,7 +21,8 @@
  * it ends where its entry ends.
  * The timer asks the reader again at every full minute,
  * so its minutes change with the clock, whenever the page comes back into sight,
- * like a tab I return to, whose timers the browser slowed, and each time the log was read,
+ * like a tab I return to, whose timers the browser slowed,
+ * and each time the log was read,
  * like after I saved, ended or removed an entry or a file of my new system changed,
  * so an entry whose time holds now shows at once, and one I end goes back to `Session`,
  * see {@link timerSee} and {@link timerStart}.
@@ -70,7 +73,8 @@ async function runningLoad(): Promise<Running | null> {
  * Shows the entry running now in the timer, see the top of this file, what it is, whole,
  * and its start and end as tooltip, each on a line,
  * like `Skill: WI0219_InvestitionFinanzmanagement (VO)` and `17:45 – 20:45`;
- * while none runs and once it is over its name `Session` small and grey, as a tracker has its name,
+ * while none runs and once it is over its name `Session` small and grey,
+ * as a tracker has its name,
  * see `.tracker-name` in `day/trackers.css`, and a grey `00h 00m`, without tooltip.
  * - `timer`: The timer in the bar of the day, in `day.html`.
  * - `running`: The entry running now.
@@ -111,7 +115,8 @@ async function timerShow(): Promise<void> {
 /**
  * Looks at the reader for the entry running now and shows it in the timer,
  * a failure only written to the console;
- * the day calls it each time it has read the log, see `eventSourceSuccess` in `day/day.ts`,
+ * the day calls it each time it has read the log,
+ * see `eventSourceSuccess` in `day/day.ts`,
  * so an entry saved, ended or removed shows at once, without loading the page again.
  */
 export function timerSee(): void {

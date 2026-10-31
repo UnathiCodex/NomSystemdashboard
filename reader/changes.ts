@@ -1,11 +1,14 @@
 /**
  * ## Changes
  *
- * Tells every open page the moment a file of my new system changes, whoever changed it: the reader,
+ * Tells every open page the moment a file of my new system changes,
+ * whoever changed it: the reader,
  * like a food renamed in every entry that holds it, a page of another device,
- * or Syncthing bringing a change, so each page loads anew what it shows, see `src/changes.ts`,
+ * or Syncthing bringing a change,
+ * so each page loads anew what it shows, see `src/changes.ts`,
  * and never shows, nor writes back, what the files held before.
- * A page asks `GET /api/changes` and keeps the answer open, a stream of server-sent events,
+ * A page asks `GET /api/changes` and keeps the answer open,
+ * a stream of server-sent events,
  * one `data: changed` per change;
  * changes coming within a tenth of a second of each other,
  * like the entries a rename writes one by one, are told once, after the last.
@@ -33,7 +36,8 @@ import type { ServerResponse } from "node:http";
 const pages: Set<ServerResponse> = new Set();
 
 /**
- * Milliseconds without a change before the pages are told, so many changes in a row are told once.
+ * Milliseconds without a change before the pages are told,
+ * so many changes in a row are told once.
  */
 const quiet: number = 100;
 
@@ -43,8 +47,10 @@ const quiet: number = 100;
 let waiting: NodeJS.Timeout | undefined = undefined;
 
 /**
- * How many changes of the new system the reader has seen, counted the moment each happens,
- * see {@link changesWatch}, so what is worked out of its files may be kept until the next change,
+ * How many changes of the new system the reader has seen,
+ * counted the moment each happens,
+ * see {@link changesWatch},
+ * so what is worked out of its files may be kept until the next change,
  * like the boxes `suggestions.ts` writes.
  */
 let version: number = 0;

@@ -5,8 +5,10 @@
    its weekdays on top, only to pick, then, clearly below them,
    each day picked one line of plain text, like `Thu 18:00 – 19:30`, its weekday short,
    as wide as the widest, `Mon` or `Wed`,
-   so the times of several days stand one below the other, about two spaces before its times,
-   as a day and its time, see `.entry-moment` in `day.css`; as close as the lines of a list */
+   so the times of several days stand one below the other,
+   about two spaces before its times,
+   as a day and its time, see `.entry-moment` in `day.css`;
+   as close as the lines of a list */
 .series-slots {
     display: flex;
     flex-direction: column;
@@ -67,7 +69,8 @@
     color: var(--text-main);
 }
 
-/* The boxes a series makes, one calm line, see `previewSoon` in `series.ts`, without a fold arrow,
+/* The boxes a series makes, one calm line,
+   see `previewSoon` in `series.ts`, without a fold arrow,
    since a tap on it opens: how many, what a change does and their states,
    light as the value of every row, apart by middle dots;
    a plain button, its text the size of a value */
@@ -88,7 +91,8 @@
 /* The dialog of a series, which shows its boxes, without the browser's scroll anchoring:
    its rows are built anew on every change,
    so the browser would pick another row to hold still each time
-   and move the dialog by a few pixels, while built anew alike they stand still by themselves */
+   and move the dialog by a few pixels,
+   while built anew alike they stand still by themselves */
 #series {
     overflow-anchor: none;
 }
@@ -96,7 +100,8 @@
 /* The dialog of a box while the dialog of a series opened from it stands over it,
    by its row `Series` or the pencil after its times, see `seriesShow` in `categories.ts`:
    hidden with the dimming of its page, which that of the series takes over,
-   so one dialog shows at a time, and back as it was once the series closes, one level back;
+   so one dialog shows at a time,
+   and back as it was once the series closes, one level back;
    but not a box a number of its list opened over it, marked `data-over`,
    see `boxShow` in `series.ts`, which shows on top */
 #entry:not([data-over]):has(~ #series[open]),
@@ -104,7 +109,8 @@
     visibility: hidden;
 }
 
-/* The list of the boxes below their line, across the whole row on the columns of the dialog,
+/* The list of the boxes below their line,
+   across the whole row on the columns of the dialog,
    by month: each month short where the names of the rows stand, small and grey as they,
    beside its first box, a little room above each month after the first;
    on a phone above its boxes, as a name above its value.
@@ -145,8 +151,8 @@
     flex-direction: column;
 }
 
-/* A row of a box, see `rows.ts`, the same in the list of a series and in a card of the course, see
-   `../editor/course.css`: on its first line its number,
+/* A row of a box, see `rows.ts`, the same in the list of a series
+   and in a card of the course, see `../editor/course.css`: on its first line its number,
    or of an exam its kind, in a column as wide in every row as `Endterm`,
    so numbers and kinds take one width, its day with its weekday,
    as wide in every row as `30.12.2026 (Wed)` and a little more,
@@ -167,7 +173,8 @@
     line-height: 1.5;
 }
 
-/* The exams, whose kinds stand where the numbers stand: that column as wide as `Endterm` */
+/* The exams, whose kinds stand where the numbers stand:
+   that column as wide as `Endterm` */
 :is(.series-exams, .series-kinds) .series-row {
     --series-number: 4rem;
 }
@@ -215,13 +222,15 @@
 }
 
 /* The extra being typed, see `draftRowOf` in `series.ts`:
-   its day where the days stand, its times where the times stand, its `×` where the state stands */
+   its day where the days stand, its times where the times stand,
+   its `×` where the state stands */
 .series-draft > .cross-quiet {
     align-self: center;
     justify-self: center;
 }
 
-/* The number of a box, in a small grey box as the type of a block of a section in the tree,
+/* The number of a box, in a small grey box
+   as the type of a block of a section in the tree,
    see `.block-kind` in `../base.css`: a step smaller than the day,
    as in the tree, each as wide as its column, room for `999` with a calm margin,
    so every number of every list is equally wide and the columns behind it never shift,
@@ -295,7 +304,8 @@
 }
 
 /* The day of a box without number, like a day of my sleep, the button that opens its box,
-   see `listRowOf` in `rows.ts`: plain text, lighter under the pointer, softly as every hover */
+   see `listRowOf` in `rows.ts`: plain text,
+   lighter under the pointer, softly as every hover */
 .series-day-open {
     padding: 0;
     border: 0;
@@ -312,8 +322,10 @@
     transition: color var(--hover-in);
 }
 
-/* The number of a row that opens its box, see `numberOf` in `rows.ts`, on the line of its day:
-   its small grey box a grey lighter under the pointer, its text white, softly as every hover,
+/* The number of a row that opens its box,
+   see `numberOf` in `rows.ts`, on the line of its day:
+   its small grey box a grey lighter under the pointer,
+   its text white, softly as every hover,
    see `--hover-in` in `../variants.css` */
 .series-open {
     border: 0;
@@ -431,11 +443,14 @@
 }
 
 /* Phone: each month above its boxes, near them, the room before it;
-   in a row its group while it has one, its times, place and first person a line below its day,
+   in a row its group while it has one, its times,
+   place and first person a line below its day,
    as on a box of the plan, since its whole day leaves them no room beside it,
    its actions or state at its right edge beside all its lines;
-   the grey box of its number one grey lighter, as the type of a block on the row shown in the tree,
-   so it never melts into the grey of its row; the plus of `+` without one, as every plus */
+   the grey box of its number one grey lighter,
+   as the type of a block on the row shown in the tree,
+   so it never melts into the grey of its row;
+   the plus of `+` without one, as every plus */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     /* On a phone its actions, the same icons as on the computer,
        on a line of their own below the row, see `boxActionsOf` in `actions.ts` */
@@ -509,11 +524,13 @@
 }
 
 /* The semester and the group beside it, the semester only as wide as its value,
-   a middle dot between them as between the parts of a line, see `.entry-parted` in `day.css`,
+   a middle dot between them as between the parts of a line,
+   see `.entry-parted` in `day.css`,
    like `2026W · 📌 Group 01 ⌄`, see `semesterRowOf` in `series.ts`,
-   as much room left of the dot as right of it, the gap of the pair, 0.3em, before its own 0.2em;
-   no dot before the plus alone of a type without groups, which stays as close as the type beside
-   a skill; the field of the name of a group with its grey line below it */
+   as much room left of the dot as right of it,
+   the gap of the pair, 0.3em, before its own 0.2em;
+   no dot before the plus alone of a type without groups, which stays as close as the type
+   beside a skill; the field of the name of a group with its grey line below it */
 .panel-pair.series-semester > .picker:first-child .picker-head {
     min-width: 0;
 }
@@ -541,10 +558,12 @@
     font: inherit;
 }
 
-/* My series below the form of one of its groups, a still copy, see `groupFrom` in `series.ts`:
+/* My series below the form of one of its groups, a still copy,
+   see `groupFrom` in `series.ts`:
    as large as the form of the group, a little above and left of it, so it shows there;
    dimmed only lightly by the dialog of the group over it, so it reads as a window behind,
-   and dimming the page around it by its shadow, so the page stays as dark as behind any dialog */
+   and dimming the page around it by its shadow,
+   so the page stays as dark as behind any dialog */
 #series-under {
     position: fixed;
     inset: 0;
@@ -558,8 +577,9 @@
     background: rgb(0 0 0 / 0.15);
 }
 
-/* The heading of the form of a group, see `formFill` in `series.ts`, `Series: Group`, so it reads
-   as a group of my series, not as my series below it: bold as the type of a card,
+/* The heading of the form of a group, see `formFill` in `series.ts`,
+   `Series: Group`, so it reads as a group of my series, not as my series below it:
+   bold as the type of a card,
    see `.course-title` in `../editor/course.css`, in line with the names of the rows */
 .series-heading {
     margin: 0.5rem 0;

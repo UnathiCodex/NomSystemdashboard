@@ -1,12 +1,15 @@
 /**
  * ## Tree
  *
- * The tree on the left of the editor, see `../editor/editor.ts`, which is the scripts view too,
- * as Obsidian's file explorer, of one of two roots at a time, each an area of its own in the rail:
+ * The tree on the left of the editor, see `../editor/editor.ts`,
+ * which is the scripts view too,
+ * as Obsidian's file explorer, of one of two roots at a time,
+ * each an area of its own in the rail:
  * - `NomSkillingmodules`, the book, every module of mine, one at a time,
  *   since I learn one module at a time:
  *   right below the name of the root the module picked,
- *   then its chapter picked, each a line of plain text that opens its menu beside the tree,
+ *   then its chapter picked, each a line of plain text
+ *   that opens its menu beside the tree,
  *   a pick in it opening the page of the module or of the chapter, see {@link pickerOf},
  *   then the notes of that chapter as a plain list, nothing folding,
  *   which open in the scripts view to write, saved right into their files;
@@ -14,7 +17,8 @@
  *   its search and every module below the name of the root instead, grouped by semester,
  *   see {@link choiceListOf}, a pick opening the page of the module;
  * - `NomManageplannings`, the open folder, my new system,
- *   as the reader lists it, without my old system `NomSystemprevious`, see `reader/files.ts`:
+ *   as the reader lists it, without my old system `NomSystemprevious`,
+ *   see `reader/files.ts`:
  *   a Markdown file, like `Foods.md`, opens in the editor to edit,
  *   an `.ics` file as its plain text to read, any other file shows faint and opens not.
  * The name of the root stands on top as a heading that never folds,
@@ -28,13 +32,15 @@
  * Of my new system a search filters the tree as I type, see {@link searchStart};
  * of my modules one their list on the start and in the menu of their picker,
  * see {@link choiceListOf}, their chapter short enough to see without.
- * Under the note shown stands its outline, as Obsidian's outline, see {@link outlineShow};
+ * Under the note shown stands its outline,
+ * as Obsidian's outline, see {@link outlineShow};
  * under a section its blocks in the places of its round, see {@link roundListOf};
  * a click on the note shown folds them away, as a folder closes,
  * and a further click opens them again, see {@link outlineFold}.
  * Each name stands on one line, one too long for it ending in dots,
  * a file of my new system cut in its middle instead, so its ending stays in sight,
- * like `IN2028_BusinessAnalyticsMach…_Plan.ics`, see {@link fileNodeOf}; each whole as its tooltip;
+ * like `IN2028_BusinessAnalyticsMach…_Plan.ics`, see {@link fileNodeOf};
+ * each whole as its tooltip;
  * its look is in `./notes.css`.
  *
  * - `../search.ts`: Compares a typed text with the paths of the files and notes,
@@ -101,7 +107,8 @@ type Chapter = {
 };
 
 /**
- * A module with its chapters, as the reader sends it, in the order of the list of the modules,
+ * A module with its chapters, as the reader sends it,
+ * in the order of the list of the modules,
  * see `menuRead` in `reader/notes.ts`.
  *
  * - `name`: Name of its folder, like `IN2028_BusinessAnalyticsMachineLearning`.
@@ -151,10 +158,12 @@ export function noteAddressOf(path: string, heading: string): string {
 }
 
 /**
- * Builds the address of the page of a module in the scripts view, see `../editor/overview.ts`,
+ * Builds the address of the page of a module in the scripts view,
+ * see `../editor/overview.ts`,
  * or of one of its chapters, which the tree picks too.
  *
- * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
+ * @param module - Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`
  * @param chapter - Name of the chapter,
  *   like `01_RegressionAnalysis`, empty for the page of the module
  * @returns Address like `/scripts?module=…&chapter=…`
@@ -166,7 +175,8 @@ export function overviewAddressOf(module: string, chapter: string): string {
 }
 
 /**
- * Builds the address of a folder of my modules in the scripts view, see `../editor/folder.ts`.
+ * Builds the address of a folder of my modules in the scripts view,
+ * see `../editor/folder.ts`.
  *
  * @param path - Path of the folder from `NomSkillingmodules`,
  *   like `IN2028_BusinessAnalyticsMachineLearning/VO_UniversityLectureLessons/TUM_2026W`
@@ -177,14 +187,15 @@ export function folderAddressOf(path: string): string {
 }
 
 /**
- * Finds the place in `NomWorkspace` a relative link of a file leads to, as VSCodium follows it:
+ * Finds the place in `NomWorkspace` a relative link of a file leads to,
+ * as VSCodium follows it:
  * from the folder of the file, each `..` one folder up, `.` staying;
  * `%20` and the like decoded, as the reader reads a link.
  * - `parts`: The folders on the way so far, from `NomWorkspace`.
  * - `decoded`: The link decoded, as written when it cannot be decoded.
  *
- * @param file - Path of the file in `NomWorkspace`,
- *   like `NomManageplannings/NomModulesuniversity/IN2028_BusinessAnalyticsMachineLearning.md`
+ * @param file - Path of the file in `NomWorkspace`, like
+ *   `NomManageplannings/NomModulesuniversity/IN2028_BusinessAnalyticsMachineLearning.md`
  * @param link - Link as written, before `#`,
  *   like `../../NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`
  * @returns Its path in `NomWorkspace`,
@@ -212,18 +223,21 @@ export function linkPlaceOf(file: string, link: string): string | null {
 }
 
 /**
- * Builds the address the dashboard opens a place of `NomWorkspace` at, see {@link linkPlaceOf}:
+ * Builds the address the dashboard opens a place of `NomWorkspace` at,
+ * see {@link linkPlaceOf}:
  * - a Markdown or `.ics` file of my new system in the editor,
  *   like `/edit?file=NomMetainformations%2FModules.md`;
  * - a note of my modules in the scripts view at its heading, see {@link noteAddressOf};
- * - the folder of a module, like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
+ * - the folder of a module,
+ *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
  *   as its overview, see {@link overviewAddressOf};
  * none for any other place, like another folder, a PDF or my old system,
  * which opens only on the computer.
  * - `parts`: Its folders and its name, from `NomWorkspace`.
  * - `inner`: Its path inside `NomManageplannings` or `NomSkillingmodules`.
  *
- * @param place - Path in `NomWorkspace`, like `NomManageplannings/NomMetainformations/Modules.md`
+ * @param place - Path in `NomWorkspace`,
+ *   like `NomManageplannings/NomMetainformations/Modules.md`
  * @param heading - Heading of a note to scroll to, empty for the top
  * @returns Address, empty for none
  */
@@ -249,9 +263,11 @@ export function placeAddressOf(place: string, heading: string): string {
  * Makes a folder or file of `NomManageplannings`: a folder with its entries and its path,
  * so it opens again once the tree is loaded anew, see {@link filesAgain};
  * a file that opens as a link to it in the editor, named as on the disk,
- * like `Foods.md`, cut in its middle where it is too long, so its ending stays, like `_Plan.ics`,
+ * like `Foods.md`, cut in its middle where it is too long,
+ * so its ending stays, like `_Plan.ics`,
  * see `middleCutPut` in `../day/choices.ts`, its name whole as its tooltip;
- * any other file faint, opening nothing, cut alike, its tooltip saying why below its name.
+ * any other file faint, opening nothing, cut alike,
+ * its tooltip saying why below its name.
  * - `folder`: The folder of a folder.
  * - `link`: The link of a file that opens.
  * - `name`: The name of any other file.
@@ -283,12 +299,14 @@ function fileNodeOf(node: FileNode): HTMLElement {
 }
 
 /**
- * Folds the outline of the note shown, or the blocks of a section, away on a click on its entry,
+ * Folds the outline of the note shown, or the blocks of a section,
+ * away on a click on its entry,
  * as a folder closes, and opens it again on a further click,
  * the note staying open and in place beside the tree:
  * `tree-folded` on the entry hides the outline below it, see `./notes.css`,
  * and stays on it while the outline is built anew, see {@link outlineShow}.
- * A click on another note, on a note without an outline, or with a key held, acts as usual.
+ * A click on another note, on a note without an outline,
+ * or with a key held, acts as usual.
  * - {@link Event#stopPropagation}: Keeps the click from the tree,
  *   which would scroll the note to its top, see `treeClick` in `../editor/editor.ts`.
  * - `entry`: The entry clicked.
@@ -316,9 +334,11 @@ function outlineFold(event: MouseEvent): void {
  * so it can be picked, see {@link choiceListOf}, the group the semester it stands under,
  * like `2026W`, or `Other` for none;
  * its chapters in it, each shown once it is picked, its notes a plain list,
- * which link to the scripts view, named without `.md` as in Obsidian, whole as their tooltip,
+ * which link to the scripts view,
+ * named without `.md` as in Obsidian, whole as their tooltip,
  * the note shown folding its outline by a click on it, see {@link outlineFold};
- * a module without chapter notes, like most of my earlier modules, holds a calm `No notes yet`.
+ * a module without chapter notes, like most of my earlier modules,
+ * holds a calm `No notes yet`.
  * - `element`: The module.
  * - `group`: A chapter.
  * - `link`: Link of a note.
@@ -366,30 +386,36 @@ function moduleNodeOf(module: NotesModule): HTMLDivElement {
 
 /**
  * Makes a list of choices to pick from, see the top of this file:
- * every module on the start of the scripts, or the menu of a picker, see {@link pickerOf};
+ * every module on the start of the scripts,
+ * or the menu of a picker, see {@link pickerOf};
  * each choice a row, a link to the overview of what it picks,
  * see `../editor/overview.ts`, named by the name of its folder,
  * like `IN2028_BusinessAnalyticsMachineLearning`, whole as its tooltip,
  * plain text in the grey of a note, the one picked in the light text,
  * see `.tree-choice` in `./notes.css`.
- * A list of the modules, too many to see at once, has the one search field of the page on top,
+ * A list of the modules, too many to see at once,
+ * has the one search field of the page on top,
  * see `searchFieldOf` in `../icons.ts`:
  * as I type, only the modules whose name holds each typed word stay,
  * as every search of the page compares, see `../search.ts`,
- * so `in00` finds them by their code and `software` by their name, and Enter opens the first;
- * they stand in the order of the reader, each group named small and grey above its first module,
+ * so `in00` finds them by their code and `software` by their name,
+ * and Enter opens the first;
+ * they stand in the order of the reader,
+ * each group named small and grey above its first module,
  * like `2026W`, see `menuRead` in `reader/notes.ts`.
  * - `input`: The search field.
  * - `list`: The rows.
  * - `found`: The choices found for the typed text, all while nothing is typed.
- * - `show`: Shows the choices found for the typed text, the name of a group above its first choice,
+ * - `show`: Shows the choices found for the typed text,
+ *   the name of a group above its first choice,
  *   from the top of the list, so the first one, which Enter opens, is in sight.
  *
  * @param choices - What it offers: the modules, or the chapters of the module picked
  * @param nameOf - Gives the name of a choice, like `01_RegressionAnalysis`
  * @param groupOf - Gives the group of a choice, like `2026W` of a module;
  *   `null` for a list without search and groups, that of the chapters
- * @param addressOf - Gives the address of the overview of a choice, see {@link overviewAddressOf}
+ * @param addressOf - Gives the address of the overview of a choice,
+ *   see {@link overviewAddressOf}
  * @returns The search field, none without groups, and the list, every choice shown
  */
 function choiceListOf(
@@ -444,18 +470,21 @@ function choiceListOf(
  * which a pick, Escape or a click beside it closes;
  * the menu holds its list of choices, made anew each time it opens,
  * see {@link choiceListOf}, the cursor in its search, the one picked scrolled into sight;
- * a pick opens the page of what it picks, the module or the chapter, see `../editor/overview.ts`.
+ * a pick opens the page of what it picks, the module or the chapter,
+ * see `../editor/overview.ts`.
  * - `pick`: The row, a button.
  * - `name`: The name of what is picked on it, see `.tree-pick` in `./notes.css`.
  * - `menu`: The menu.
  *
  * @param kind - What it picks, `module` or `chapter`, which names its anchor,
  *   see `.tree-pick` in `./notes.css`
- * @param choices - Gives what it may pick: the modules, or the chapters of the module picked
+ * @param choices - Gives what it may pick:
+ *   the modules, or the chapters of the module picked
  * @param nameOf - Gives the name of a choice, like `01_RegressionAnalysis`
  * @param groupOf - Gives the group of a choice, like `2026W` of a module;
  *   `null` for a menu without search and groups, that of the chapters
- * @param addressOf - Gives the address of the overview of a choice, see {@link overviewAddressOf}
+ * @param addressOf - Gives the address of the overview of a choice,
+ *   see {@link overviewAddressOf}
  * @returns The row and its menu
  */
 function pickerOf(
@@ -490,12 +519,16 @@ function pickerOf(
 /**
  * Shows one chapter of one module in the tree of my modules, see the top of this file:
  * their names in their pickers, each by the name of its folder on one line,
- * like `IN2028_BusinessAnalyticsMachineLearning` and `01_RegressionAnalysis`, whole as its tooltip;
- * the notes of that chapter below, both marked `picked`, every other module and chapter hidden;
+ * like `IN2028_BusinessAnalyticsMachineLearning`
+ * and `01_RegressionAnalysis`, whole as its tooltip;
+ * the notes of that chapter below, both marked `picked`,
+ * every other module and chapter hidden;
  * a module without chapters shows its hint `No notes yet` and no picker of chapters.
  * - `modulePick`, `chapterPick`: The pickers of the module and of the chapter.
- * - `title`: Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`.
- * - `name`: Name of the folder of the chapter, like `01_RegressionAnalysis`, empty for none.
+ * - `title`: Name of the folder of the module,
+ *   like `IN2028_BusinessAnalyticsMachineLearning`.
+ * - `name`: Name of the folder of the chapter,
+ *   like `01_RegressionAnalysis`, empty for none.
  *
  * @param tree - The tree
  * @param module - The module, see {@link moduleNodeOf}
@@ -532,16 +565,18 @@ export function chapterShow(
 }
 
 /**
- * Marks the file or note shown in the tree, and no other: picks the module and chapter of a note,
- * see {@link chapterShow}, opens every folder on the way to a file and scrolls the tree to it.
+ * Marks the file or note shown in the tree, and no other:
+ * picks the module and chapter of a note,
+ * see {@link chapterShow}, opens every folder on the way to a file
+ * and scrolls the tree to it.
  * - {@link CSS.escape}: Writes a path so it can stand inside a selector.
  * - `link`: Entry of the file or note shown, `null` while it is not in the tree.
  * - `module`: The module of a note, `null` for a file of my new system.
  * - `folder`: A folder on the way to it, from the nearest one up to its root.
  *
  * @param tree - The tree
- * @param shown - Path of the file or note shown, like `NomMetainformations/Foods.md`
- *   or `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanStandardError.md`
+ * @param shown - Path of the file or note shown, like `NomMetainformations/Foods.md` or
+ *   `IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_01_SampleMeanStandardError.md`
  * @returns Its entry, `null` while it is not in the tree,
  *   like a note outside the chapter folders of its module
  */
@@ -574,10 +609,12 @@ export function treeMark(tree: HTMLElement, shown: string): HTMLElement | null {
  * the folders open before the search open again once it is empty.
  * Enter opens the first file shown that opens, as a click on it does;
  * Escape empties the search as in every search field of the page, by the browser itself,
- * which then tells `input` as for any change of the text, and so does the tree loaded anew,
+ * which then tells `input` as for any change of the text,
+ * and so does the tree loaded anew,
  * see {@link filesAgain}, which the search then filters again.
  * - `opened`: Paths of the folders open before the search, `null` while nothing is typed;
- *   paths, not the folders themselves, so they still name the folders of the tree loaded anew.
+ *   paths, not the folders themselves,
+ *   so they still name the folders of the tree loaded anew.
  * - `files`: The files of the tree.
  * - `show`: Shows the tree for the typed text.
  *
@@ -642,7 +679,8 @@ function searchStart(tree: HTMLElement, search: HTMLInputElement): void {
  * and puts them in place of those shown, the tree else as it was:
  * the folders open before open again, the file shown marked,
  * see {@link treeMark}, the search filters them for its text, see {@link searchStart},
- * and the tree stays scrolled where it was; the search keeps its place, so typing in it goes on.
+ * and the tree stays scrolled where it was;
+ * the search keeps its place, so typing in it goes on.
  * - `open`: Paths of the folders open before.
  * - `top`: How far the tree was scrolled.
  * - `entries`: The folders and files as they lie now.
@@ -686,7 +724,8 @@ async function filesAgain(
 export type BlockMark = "done" | "wrong" | "round" | "other";
 
 /**
- * Type word of a block of a section at the start of its heading, with the dot and space after it,
+ * Type word of a block of a section at the start of its heading,
+ * with the dot and space after it,
  * like `Definition. ` of `Definition. Population and Sample`.
  */
 export const kindRule: RegExp =
@@ -706,10 +745,12 @@ const kindShorts: Map<string, string> = new Map([
 ]);
 
 /**
- * Builds the name of a block for the list of its section: its type word as a small grey box,
+ * Builds the name of a block for the list of its section:
+ * its type word as a small grey box,
  * then its name, rendered, without an older `(cold)`,
  * like `Def` boxed and then `Population and Sample`.
- * - `kind`: The type word with the dot and space after it, `null` for a heading without one.
+ * - `kind`: The type word with the dot and space after it,
+ *   `null` for a heading without one.
  * - `name`: The name, rendered.
  * - `box`: The box of the type word.
  *
@@ -746,10 +787,12 @@ function kindBoxOf(kind: string): HTMLSpanElement {
  * see {@link blockNameOf}, that heading without an older `(cold)` whole as its tooltip:
  * an Example or a Task done with a check after it,
  * or with a cross, the one its heading line has, once its last result failed,
- * like `Food Truck` after Wrong; theory, a Definition, a Theorem, a Lemma or an Algorithm,
+ * like `Food Truck` after Wrong; theory, a Definition,
+ * a Theorem, a Lemma or an Algorithm,
  * which is never right or wrong, only done, with a check in a ring,
  * the close of a round in the head of the editor, small and faint;
- * the one shown in the light text of what is shown, where I am, wherever it stands in the round,
+ * the one shown in the light text of what is shown, where I am,
+ * wherever it stands in the round,
  * one still to do in the round grey, the current step too while another one is shown,
  * one outside the round fainter.
  * Every block of the section stands in it, never hidden without a trace:
@@ -887,8 +930,10 @@ export function roundListOf(
  * - `lines`: Lines of the note.
  * - `older`: Whether the note is written the older way.
  * - `cold`, `ladder`: Whether a heading is that of a cold task, or of an Example.
- * - `block`: Link of the last block that is no task, until its first task makes it a folder.
- * - `tasks`: Place of the tasks below that block, the outline itself before the first block.
+ * - `block`: Link of the last block that is no task,
+ *   until its first task makes it a folder.
+ * - `tasks`: Place of the tasks below that block,
+ *   the outline itself before the first block.
  * - `heading`: Text of a heading `##` as written, `undefined` for a line that is none.
  * - `name`: Its name shown, as written, a task's without its type word and `(cold)`.
  * - `link`: Link to a heading, its text rendered.
@@ -899,7 +944,8 @@ export function roundListOf(
  * @param round - Headings of the blocks of a section with their places in its round,
  *   `null` for any other note
  * @param shown - For a section the heading of the block shown, where I am, empty for none
- * @param next - For a section the day its next Task comes, like `Tomorrow`, empty for none
+ * @param next - For a section the day its next Task comes,
+ *   like `Tomorrow`, empty for none
  */
 export function outlineShow(
     tree: HTMLElement,
@@ -997,7 +1043,8 @@ export type TreeRoot = "NomSkillingmodules" | "NomManageplannings";
  * its name as a heading, that of my modules a link to their start,
  * then of my modules the pickers of module and chapter,
  * see {@link pickerOf}, of my new system its search, see {@link searchStart},
- * its folders or notes below, those of my new system loaded anew after every change of its files,
+ * its folders or notes below, those of my new system loaded anew
+ * after every change of its files,
  * see {@link filesAgain}, the file or note shown marked, see {@link treeMark};
  * in the modules, while none is shown, the module asked for is picked,
  * like the module of a skill entry clicked in the day,
@@ -1009,7 +1056,8 @@ export type TreeRoot = "NomSkillingmodules" | "NomManageplannings";
  * - `link`: The name of my modules, a link to their start.
  * - `modules`: Of my modules the modules, each with its chapters and notes,
  *   see {@link moduleNodeOf}.
- * - `nameOf`, `groupOf`, `moduleAddressOf`: Give the name of a module, its group, like `2026W`,
+ * - `nameOf`, `groupOf`, `moduleAddressOf`:
+ *   Give the name of a module, its group, like `2026W`,
  *   and the address of its overview.
  * - `moduleOf`: Gives the name of the folder of the module picked,
  *   for the address of the overview of a chapter.

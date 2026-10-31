@@ -4,12 +4,14 @@
  * Names every folder and file the reader reads,
  * and every address on the web it asks, grouped by area.
  * My new system is every folder in `NomManageplannings`, also one I add later,
- * like `NomStudysciences` for the studies I collect, but my old system, `NomSystemprevious`,
+ * like `NomStudysciences` for the studies I collect,
+ * but my old system, `NomSystemprevious`,
  * which lies beside them and is never read.
  * The reader uses four of them, see {@link systemRoots}:
  * `NomManagecalendar` for plan and log, {@link calendarRoot},
  * `NomFrequencediary` for the daily notes, {@link diaryRoot},
- * `NomMetainformations` for my foods, places, workouts, videos and weight, {@link dataRoot},
+ * `NomMetainformations` for my foods, places, workouts,
+ * videos and weight, {@link dataRoot},
  * and `NomModulesuniversity` for my modules of the university, {@link universityRoot}.
  * The reader reads only the new system, my modules, see {@link notes},
  * and the files the skill entries link, in my modules and my projects,
@@ -19,8 +21,10 @@
  * and, on the server that holds it, into what the dashboards share in `NomKommunikation`,
  * the mailbox between Vu and me,
  * see {@link writeAllowed} and {@link kommunikationRoot},
- * the editor into the notes of my modules and the file of my corrections, see {@link editor},
- * and a click on a folder of a module not there yet makes it, see `folderMake` in `notes.ts`;
+ * the editor into the notes of my modules
+ * and the file of my corrections, see {@link editor},
+ * and a click on a folder of a module not there yet makes it,
+ * see `folderMake` in `notes.ts`;
  * the editor shows the tree
  * of `NomManageplannings` but for my old system, and opens its files, Markdown or `.ics`,
  * see {@link systemFiles}. A file or folder of the new system that is missing,
@@ -34,7 +38,8 @@ import { homedir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 
 /**
- * Files of a calendar: in a folder and its subfolders, the files whose names end in an ending.
+ * Files of a calendar: in a folder and its subfolders,
+ * the files whose names end in an ending.
  *
  * - `folder`: Folder of the files.
  * - `ending`: End of their names,
@@ -61,7 +66,8 @@ export const manageRoot: string = join(vault, "NomManageplannings");
 /**
  * Folder of plan and log of my new system, `NomManagecalendar`:
  * folders of the same depth, no month folders,
- * `Health/` and `Living/` for the plan and the log of every category but `Skill`, see {@link topics},
+ * `Health/` and `Living/` for the plan and the log of every category
+ * but `Skill`, see {@link topics},
  * {@link skillingRoot} for those of my skills and {@link metaRoot} for my birthdays,
  * the holidays and the semester dates of TUM.
  * Every view reads all their plans and logs,
@@ -72,7 +78,8 @@ export const calendarRoot: string = join(manageRoot, "NomManagecalendar");
 /**
  * Folder `Skilling/` in {@link calendarRoot}:
  * per project a plan and a log, named like the folder of the project,
- * like `NomSystemdashboard_Plan.ics` and `NomSystemdashboard_Log.ics`, see {@link skillFileOf};
+ * like `NomSystemdashboard_Plan.ics` and `NomSystemdashboard_Log.ics`,
+ * see {@link skillFileOf};
  * a skill box or entry always has its skill.
  */
 export const skillingRoot: string = join(calendarRoot, "Skilling");
@@ -89,7 +96,8 @@ export const skillingRoot: string = join(calendarRoot, "Skilling");
 export const modulesRoot: string = join(calendarRoot, "Modules");
 
 /**
- * Folder `Meta/` in {@link calendarRoot}: `Birthdays.ics`, `Holidays.ics` and `University.ics`,
+ * Folder `Meta/` in {@link calendarRoot}: `Birthdays.ics`,
+ * `Holidays.ics` and `University.ics`,
  * see {@link day} and {@link holidays}.
  */
 export const metaRoot: string = join(calendarRoot, "Meta");
@@ -125,7 +133,8 @@ export const personsFile: string = join(dataRoot, "Persons.md");
 /**
  * Folder of my modules of the university, `NomModulesuniversity`:
  * one file per module of mine, named like its folder in `NomSkillingmodules`,
- * like `IN2028_BusinessAnalyticsMachineLearning.md`, with its courses, groups and description;
+ * like `IN2028_BusinessAnalyticsMachineLearning.md`,
+ * with its courses, groups and description;
  * the overview of all of them is `Modules.md` in {@link dataRoot}.
  */
 export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
@@ -137,7 +146,8 @@ export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
 export const systemRoots: string[] = [calendarRoot, diaryRoot, dataRoot, universityRoot];
 
 /**
- * Folder `NomKommunikation` in `NomWorkspace`, the mailbox between Vu and me, see its `README.md`:
+ * Folder `NomKommunikation` in `NomWorkspace`,
+ * the mailbox between Vu and me, see its `README.md`:
  * `to_vu/` for what goes to Vu, `to_sopha/` for what comes to me.
  * Only the server of {@link holder} has it, with our messages,
  * and in the box of each of us `dashboard/`, what the dashboards share,
@@ -163,7 +173,8 @@ export const myName: string = process.env.NOM_NAME?.trim() ?? "";
 
 /**
  * The people I share with, as I write them in `With`, like `Vu`:
- * environment variable `NOM_PARTNERS` of the reader, names parted by commas, set in its service;
+ * environment variable `NOM_PARTNERS` of the reader,
+ * names parted by commas, set in its service;
  * none when unset, and never me.
  * The reader of one who is not {@link holder} reaches the server of the holder by SSH
  * under `nom-` and the name in small letters, `nom-sopha`,
@@ -181,8 +192,10 @@ export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
 /**
  * Gives the folder of what the dashboards share in the box of a person
  * in {@link kommunikationRoot}: `dashboard/` in `to_` and the name in small letters,
- * like `to_vu/dashboard/` for what goes to Vu, waiting there until Vu's reader took it by SSH,
- * and `to_sopha/dashboard/` for what came to me; what is done goes into the trash, see `shared.ts`.
+ * like `to_vu/dashboard/` for what goes to Vu,
+ * waiting there until Vu's reader took it by SSH,
+ * and `to_sopha/dashboard/` for what came to me;
+ * what is done goes into the trash, see `shared.ts`.
  *
  * @param name - Name of the person, like `Vu`
  * @returns Its folder, like `NomKommunikation/to_vu/dashboard` in `NomWorkspace`
@@ -192,7 +205,8 @@ export function dashboardBoxOf(name: string): string {
 }
 
 /**
- * Name of the folder of my old system beside them in `NomManageplannings`, `NomSystemprevious`,
+ * Name of the folder of my old system beside them in `NomManageplannings`,
+ * `NomSystemprevious`,
  * which the reader never reads, not even to list it.
  */
 export const previousName: string = "NomSystemprevious";
@@ -206,7 +220,8 @@ export const logEnding: string = "_Log.ics";
 
 /**
  * End of the names of the files of the plan, like `Living_2026_Plan.ics`
- * or `IN2028_BusinessAnalyticsMachineLearning_Plan.ics`: the boxes of the plan, as to-dos,
+ * or `IN2028_BusinessAnalyticsMachineLearning_Plan.ics`:
+ * the boxes of the plan, as to-dos,
  * see `boxes.ts`, beside the lectures imported from TUMonline, as events,
  * and in the plan of a module the groups of its tutorials,
  * as to-dos with `X-GROUP` and without `X-NUMBER`, which are no boxes, see `course.ts`.
@@ -253,7 +268,8 @@ export const notes: NotesSources = {
  * the only ones besides the files of the new system, see {@link systemFiles}.
  *
  * - `modules`: My modules, each note right at its place, the modules of {@link notes}.
- * - `corrections`: My corrections, one file, `corrections-personal.diff` of skills-evaluate,
+ * - `corrections`: My corrections, one file,
+ *   `corrections-personal.diff` of skills-evaluate,
  *   out of Git, each save of a note of my modules added at its end as a unified diff,
  *   for the AI to turn into rules of my style.
  */
@@ -308,7 +324,8 @@ export const systemFiles: SystemFilesSources = {
  * like `NomProgramprojects/AsiaWok_Wokflow_2026`,
  * and the time I spend logging, planning and thinking about my day, `NomMasterplannings`,
  * Sopha's `NomFrequencediary`, linking the folder of her diary.
- * The modules of the semester come from `Modules.md`, see `activeModulesRead` in `notes.ts`;
+ * The modules of the semester come from `Modules.md`,
+ * see `activeModulesRead` in `notes.ts`;
  * Sopha's will come from her own `Modules.md`, so her list holds no module either,
  * and until she has one her reader has no modules of the semester.
  * Changed on request, when the semester's projects change.
@@ -326,7 +343,8 @@ const skillsOf: { [name: string]: string[] } = {
  * Projects of the semester of this reader,
  * see {@link skillsOf}, Vu's when {@link myName} names none of us there,
  * like a reader without `NOM_NAME`;
- * after the modules of the semester the rest of its skills, see `activeSkillsRead` in `notes.ts`.
+ * after the modules of the semester the rest of its skills,
+ * see `activeSkillsRead` in `notes.ts`.
  */
 export const activeProjects: string[] = skillsOf[myName] ?? skillsOf.Vu;
 
@@ -362,7 +380,8 @@ export function skillNameOf(skill: string): string {
  * Finds a project of the semester by its name, see {@link skillNameOf}.
  *
  * @param name - Name of the project, like `WokFlow`
- * @returns Its folder from `NomWorkspace`, like `NomProgramprojects/AsiaWok_Wokflow_2026`,
+ * @returns Its folder from `NomWorkspace`,
+ *   like `NomProgramprojects/AsiaWok_Wokflow_2026`,
  *   `undefined` when no project of the semester has the name
  */
 export function projectOf(name: string): string | undefined {
@@ -376,22 +395,26 @@ export function projectOf(name: string): string | undefined {
  * - `plan`: Calendar of what I intend, every plan file in {@link calendarRoot},
  *   the plans of topic and year in `Living/` and those of my skills in `Skilling/`,
  *   read as the boxes of each day, but for the groups of my tutorials, see `boxes.ts`.
- * - `log`: Calendar of what really happened, by category, every log file in {@link calendarRoot},
- *   the logs of topic and year in `Living/` and those of my skills in `Skilling/`, my one calendar.
+ * - `log`: Calendar of what really happened, by category,
+ *   every log file in {@link calendarRoot},
+ *   the logs of topic and year in `Living/`
+ *   and those of my skills in `Skilling/`, my one calendar.
  * - `system`: Calendars of birthdays, holidays and semester dates in {@link metaRoot},
  *   shown above the boxes of their day, each a whole day: `Birthdays.ics`,
- *   which I write by hand, a birthday a yearly series with `CATEGORIES:Birthday` and the name
- *   as `SUMMARY`, like `Birthday: Karlbauer Florian`, beside it `Holidays.ics`,
+ *   which I write by hand, a birthday a yearly series with `CATEGORIES:Birthday`
+ *   and the name as `SUMMARY`, like `Birthday: Karlbauer Florian`,
+ *   beside it `Holidays.ics`,
  *   a holiday with `CATEGORIES:Holiday`, like `Holiday: Ostermontag (AT, DE)`,
- *   and `University.ics`, the official semester dates of TUM, each with `CATEGORIES:University`,
+ *   and `University.ics`, the official semester dates of TUM,
+ *   each with `CATEGORIES:University`,
  *   its breaks too, the semester written as I write it,
  *   like `University: Vorlesungsbeginn 2026W` or `University: Weihnachtsferien (TUM)`,
  *   a lecture-free period on each of its days,
  *   a semester and a lecture period only on their first and their last day;
  *   my gift idea for one is its `DESCRIPTION`, which the reader writes, see `gifts.ts`;
  *   none of a file while it is missing.
- * - `places`: My places, `Places.md` in {@link dataRoot}, beside `Foods.md`, one Markdown table
- *   with one row per place, its name, street, code, city, country and link,
+ * - `places`: My places, `Places.md` in {@link dataRoot}, beside `Foods.md`, one Markdown
+ *   table with one row per place, its name, street, code, city, country and link,
  *   which the reader writes as I add places, see `places.ts`.
  * - `rooms`: The rooms of the university, `Rooms.md` beside `Places.md`,
  *   one table of the same form, its link to NavigaTUM,
@@ -430,7 +453,8 @@ export const day: DaySources = {
  * the holidays of `Holidays.ics`, `CATEGORIES:Holiday`, where they are the university's,
  * like `Allerheiligen (AT, BY)`,
  * and the dates of the semester of `University.ics`, `CATEGORIES:University`,
- * the university does not teach on, like `Weihnachtsferien (TUM)` or `Dies Academicus (TUM)`,
+ * the university does not teach on,
+ * like `Weihnachtsferien (TUM)` or `Dies Academicus (TUM)`,
  * see `lectureFreeOf` in `course.ts`; none of a file while it is missing.
  */
 export const holidays: CalendarSource[] = [
@@ -440,8 +464,8 @@ export const holidays: CalendarSource[] = [
 
 /**
  * Skill log: the log of the new system,
- * where each block of learning is an entry of the category `Skill` in the log of its skill
- * in `Skilling/`, holding the attempts made in it.
+ * where each block of learning is an entry of the category `Skill` in the log
+ * of its skill in `Skilling/`, holding the attempts made in it.
  * The tasks lie in the chapter notes of the modules of the semester,
  * see `activeModulesRead` in `notes.ts`.
  */
@@ -457,7 +481,8 @@ export const trackerLog: CalendarSource[] = [{ folder: calendarRoot, ending: log
 /**
  * Sources of the food area.
  *
- * - `foods`: My foods, `Foods.md` in {@link dataRoot}, one Markdown table with one row per food,
+ * - `foods`: My foods, `Foods.md` in {@link dataRoot},
+ *   one Markdown table with one row per food,
  *   which the reader writes as I add foods, see `food.ts`.
  * - `meals`: My meals, `Meals.md` in {@link dataRoot},
  *   one section per meal with its table of its foods,
@@ -505,7 +530,8 @@ export const food: FoodSources = {
  *   which the reader writes as I change my weight in the sport area, see `sport.ts`;
  *   each person's own, never in the code.
  * - `log`: Log of the new system,
- *   where each session is an entry of the category `Sport`, in the log of its year in `Living/`,
+ *   where each session is an entry of the category `Sport`,
+ *   in the log of its year in `Living/`,
  *   like `Living_2026_Log.ics`.
  * - `video`: oEmbed of YouTube,
  *   which gives the title and the channel of a video by its link put after the address.
@@ -533,8 +559,10 @@ export const sport: SportSources = {
 
 /**
  * Folders and topics of the files of every category but `Skill` in {@link calendarRoot}:
- * my sleep in `Health/`, my food with my cooking and my ways in `Living/`, each in its own files,
- * any other category in those of the topic `Living` in `Living/`, see {@link topicFileOf}.
+ * my sleep in `Health/`, my food with my cooking and my ways in `Living/`,
+ * each in its own files,
+ * any other category in those of the topic `Living` in `Living/`,
+ * see {@link topicFileOf}.
  */
 export const topics: { [category: string]: string } = {
     Sleep: "Health/Sleep",
@@ -545,7 +573,8 @@ export const topics: { [category: string]: string } = {
 
 /**
  * Builds the path of a file of a topic and a year in {@link calendarRoot}:
- * the log or the plan of the topic of a category, see {@link topics}, in the year of a day,
+ * the log or the plan of the topic of a category,
+ * see {@link topics}, in the year of a day,
  * an entry by the year of its start in Berlin time, a box by the year of its day.
  *
  * @param category - Category of the entry or the box, like `Cook`
@@ -562,8 +591,9 @@ export function topicFileOf(category: string, date: string, ending: string): str
 }
 
 /**
- * Builds the path of a file of a skill, its log or its plan: a module's, whose folder starts
- * with its code, in {@link modulesRoot}, any other in {@link skillingRoot}.
+ * Builds the path of a file of a skill, its log or its plan:
+ * a module's, whose folder starts with its code, in {@link modulesRoot},
+ * any other in {@link skillingRoot}.
  *
  * @param name - Name of the folder of the skill,
  *   like `IN2028_BusinessAnalyticsMachineLearning` or `WokFlow`,
@@ -581,16 +611,19 @@ export function skillFileOf(name: string, ending: string): string {
 
 /**
  * Tells whether the reader may write a file:
- * only inside my new system, `NomManageplannings` but my old system, see {@link previousName},
+ * only inside my new system, `NomManageplannings` but my old system,
+ * see {@link previousName},
  * and a hidden file or folder right in it, like `.obsidian`,
  * or, on the server of {@link holder} only,
  * inside what the dashboards share in a box of `NomKommunikation`,
  * see {@link dashboardBoxOf}, never beside our messages.
  * The editor leaves both out at any depth, see {@link systemFiles}.
- * - {@link resolve}: Makes a path absolute and takes out `..`, so no path leaves the folders.
+ * - {@link resolve}: Makes a path absolute and takes out `..`,
+ *   so no path leaves the folders.
  * - `path`: The file, absolute.
  * - `root`: Start of every path inside `NomManageplannings`.
- * - `top`: The first part of its path inside `NomManageplannings`, like `NomStudysciences`.
+ * - `top`: The first part of its path inside `NomManageplannings`,
+ *   like `NomStudysciences`.
  * - `box`: Its parts inside `NomKommunikation`, like `to_vu`, `dashboard` and the file;
  *   one starting with `..` when it lies outside.
  *
@@ -613,10 +646,12 @@ export function writeAllowed(file: string): boolean {
 
 /**
  * Gives the path of a file from {@link vault} on, with `/` on every system,
- * as a dialog of the page shows the file of its entry, see `fileShow` in `src/day/choices.ts`.
+ * as a dialog of the page shows the file of its entry,
+ * see `fileShow` in `src/day/choices.ts`.
  *
  * @param file - Path of a file in `NomWorkspace`
- * @returns Path like `NomManageplannings/NomManagecalendar/Modules/WI1059_FinancialAccounting_Plan.ics`
+ * @returns Path like
+ *   `NomManageplannings/NomManagecalendar/Modules/WI1059_FinancialAccounting_Plan.ics`
  */
 export function vaultPathOf(file: string): string {
     return relative(vault, file).split(sep).join("/");

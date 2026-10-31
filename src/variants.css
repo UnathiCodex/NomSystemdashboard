@@ -2,16 +2,19 @@
    text in two tones only, white for what a thing is and its facts,
    like a name, its brand, its grams and its kcal,
    and one grey for times, places, the names of rows and hints,
-   a fact in the same tone wherever it stands, that grey a little stronger than Obsidian's,
+   a fact in the same tone wherever it stands,
+   that grey a little stronger than Obsidian's,
    so it reads easily; every grey line and frame,
    like the frame of a field or a dialog, the lines of the time grid,
    the ring of a round's check or the guides of a list,
    light enough to show on my PC monitor and still calm;
    the line at the left of indented parts,
-   like the foods of a meal, 2 px and a little lighter than other lines, `--guide`, so it shows;
+   like the foods of a meal, 2 px and a little lighter than other lines,
+   `--guide`, so it shows;
    notes in the greys of my Obsidian's dark theme with my accent #969696,
    a page of one width on every computer, `--reading-width`,
-   as wide as my laptop holds beside the tree, with the same room at its left and its right,
+   as wide as my laptop holds beside the tree,
+   with the same room at its left and its right,
    `--edge-room` in `editor/editor.css`,
    so I write on the same page on the laptop and on the 4K monitor,
    in the middle where the screen has room,
@@ -20,26 +23,32 @@
    controls and lines sized for my 4K monitor: buttons and fields one control high,
    chips, small buttons and the rows of the menu one chip high,
    all with the text of controls and the space beside it, a small square button,
-   like the − and + of the water or the arrows of the month, a little less round, `--chip-radius`,
+   like the − and + of the water or the arrows of the month,
+   a little less round, `--chip-radius`,
    so it looks as round as a big one,
    controls side by side one control gap apart, so they never touch,
    icons one icon size big, notes with lines a bit higher than my Obsidian's;
-   the tree of the scripts and of my new system in the text of the page, `--tree-text`, 0.9rem,
+   the tree of the scripts and of my new system in the text of the page,
+   `--tree-text`, 0.9rem,
    a little smaller than the 1rem of controls and two steps bigger
    than Obsidian's 13 px file explorer,
    so it reads easily while learning,
    the tree just as wide as the widest of my modules needs on its line,
    40 characters the most a folder name of mine has,
-   `IN2028_BusinessAnalyticsMachineLearning` in bold, with its room on both sides, 22.5rem,
+   `IN2028_BusinessAnalyticsMachineLearning` in bold,
+   with its room on both sides, 22.5rem,
    `--tree-width`, with the same 0.75rem from the rail and from its line around it,
    as the sidebar of the Claude app,
-   so every module, chapter and note fits on its line and the tree takes no more of the page;
+   so every module, chapter and note fits on its line
+   and the tree takes no more of the page;
    what is picked or shown a calm lighter grey with a soft line, never glaring white;
    the rail and the tree dark, on the page's background, parted from it only by a line;
    the greys those of the dark Claude app;
    a card, filled in the soft grey `--fill` without a frame,
-   as the module and chapter cards of the tree, one grey lighter under the pointer, `--fill-over`,
-   halfway to the calm grey of what is picked, so a tile or a box lights up without looking picked;
+   as the module and chapter cards of the tree,
+   one grey lighter under the pointer, `--fill-over`,
+   halfway to the calm grey of what is picked,
+   so a tile or a box lights up without looking picked;
    the faint round circle behind an icon button under the pointer,
    as behind an area of the rail, `--icon-over`, the light of the text seen through 8 %,
    so it is `--fill-over` on the page and as faint a step lighter on a card,
@@ -51,10 +60,13 @@
    fades in over 150 ms after 100 ms, `--hover-in`, so passing over a list stays calm,
    and back over 150 ms as soon as the pointer leaves, `--hover-out`, see `base.css`;
    on a screen without a pointer at once, see below;
-   the rail a bar of its own at the left edge of the screen, as VS Code's bar of activities,
+   the rail a bar of its own at the left edge of the screen,
+   as VS Code's bar of activities,
    and everything of an area,
-   framed controls like the arrows of a date and content without a frame like the plan of the day,
-   the meals of a day or the cards of the tree, one step from it, `--side-room`, a gap and a half,
+   framed controls like the arrows of a date
+   and content without a frame like the plan of the day,
+   the meals of a day or the cards of the tree, one step from it,
+   `--side-room`, a gap and a half,
    as far as from the right edge of the screen,
    so a control and its content start in one line; the same in every view;
    plan and log in their own text, `--day-text`, three quarters of the root,
@@ -123,12 +135,16 @@
     color-scheme: dark;
 }
 
-/* Phone: the same look on a narrower screen, every size a tenth smaller than on a computer,
+/* Phone: the same look on a narrower screen,
+   every size a tenth smaller than on a computer,
    112.5 % of the browser's 16 px, so a line holds more of a name,
-   like `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)` on two lines, while the text stays 17 px,
-   as big as the text of an app on Android, and a button or a field stays 52 px high, a finger high;
+   like `0509.EG.980 (Audimax Werner-von-Siemens-Hörsaal)` on two lines,
+   while the text stays 17 px,
+   as big as the text of an app on Android,
+   and a button or a field stays 52 px high, a finger high;
    every frame a little rounder, as an app's,
-   and every button one shape, big or small, a rectangle with the round corners of `--chip-radius`,
+   and every button one shape, big or small,
+   a rectangle with the round corners of `--chip-radius`,
    never a pill or a circle, as most buttons of the computer are */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     :root {

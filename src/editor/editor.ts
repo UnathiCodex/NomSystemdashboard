@@ -2,18 +2,22 @@
  * ## Editor
  *
  * Edits a note of my modules or a Markdown file of my new system as its text,
- * its Markdown shown as in Obsidian's live preview away from the cursor, see `./preview.ts`.
+ * its Markdown shown as in Obsidian's live preview away from the cursor,
+ * see `./preview.ts`.
  * The scripts view, `/scripts`, is this editor, always writing,
  * with no view beside it to read only.
  * A selection marks each line only as far as what it shows, as a browser and Obsidian do,
  * see {@link selectionLines}.
- * It edits the text of the file itself: saving writes exactly the edited text, nothing reformatted,
+ * It edits the text of the file itself:
+ * saving writes exactly the edited text, nothing reformatted,
  * tabs and soft hyphens,
  * spaces at the ends of lines and the line breaks of the file as they were.
  * A note of my modules is saved right into its file in `NomSkillingmodules`,
- * and the reader keeps each change as a diff, so the AI learns my style from my corrections.
+ * and the reader keeps each change as a diff,
+ * so the AI learns my style from my corrections.
  * On the left the tree of one root, see `../notes/tree.ts`:
- * `NomSkillingmodules` at `/scripts`, the outline of the note under it, built anew as I write,
+ * `NomSkillingmodules` at `/scripts`,
+ * the outline of the note under it, built anew as I write,
  * whose headings scroll the note to them without loading the page again;
  * `NomManageplannings` for a file of my new system and at `/plannings`,
  * where a click on any Markdown file of it but my old system,
@@ -23,13 +27,15 @@
  * each block of it drawn one step in and its entries apart, its names grey,
  * its values readable and each block folding, see `./ics.ts`;
  * any other file shows in the tree, faint, and opens not.
- * A note of my modules shows the rows of its tasks under their headings, see `./tasks.ts`.
+ * A note of my modules shows the rows of its tasks under their headings,
+ * see `./tasks.ts`.
  * A section, a note with tasks of the semester, shows its round in the same view:
  * its name in words, its round below it, like `Round 1`, then only the block due,
  * `Next` and the close of the round in the head beside the save button,
  * and in the tree, in place of the outline, its blocks with their places,
  * a click opening one, see `./round.ts`.
- * While no note is open, the page asks to choose one, since the plan of the day says what is due;
+ * While no note is open, the page asks to choose one,
+ * since the plan of the day says what is due;
  * for the address of a module or of one of its chapters,
  * which a click on its name in the tree opens, like
  * `/scripts?module=IN2028_BusinessAnalyticsMachineLearning&chapter=01_RegressionAnalysis`,
@@ -38,12 +44,13 @@
  * see `./overview.ts`, the chapter picked in the tree;
  * for the address of a folder of my modules,
  * which the folder of the material of a card of the course opens, like
- * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2FVO_UniversityLectureLessons%2FTUM_2026W`, it shows
- * its folders and files, see `./folder.ts`, its module picked in the tree.
+ * `/scripts?folder=IN2028_BusinessAnalyticsMachineLearning%2FVO_UniversityLectureLessons%2FTUM_2026W`,
+ * it shows its folders and files, see `./folder.ts`, its module picked in the tree.
  * A file of my modules that is no Markdown,
  * like an `.ics` file a folder opens, shows as its plain text, to read only,
  * as an `.ics` file of my new system.
- * The address names a note by its path in the scripts view and the heading to scroll to, like
+ * The address names a note by its path in the scripts view
+ * and the heading to scroll to, like
  * `/scripts?path=IN2028_BusinessAnalyticsMachineLearning/01_RegressionAnalysis/01_02_SampleMeanEstimator.md#…`,
  * so a reload and the back button of the browser stay on it,
  * and a file of my new system by its path in the tree,
@@ -56,12 +63,14 @@
  * so a reload, also on another device, returns there, else where its round stands.
  * Saves only with its button, the plain floppy disk of saving,
  * so no check stands for saving, its tooltip `Save`,
- * or Ctrl+S, never by itself, merged with a change of the file on the disk since it was read,
+ * or Ctrl+S, never by itself,
+ * merged with a change of the file on the disk since it was read,
  * and asks before leaving with changes unsaved, also for another file of the tree;
  * the button faint while nothing is to save, its full grey while there are changes,
  * and the status line above the text says only `Saved` or `Failed`;
  * at its left it shows the name of the file,
- * which the tree may be too narrow to show whole, its path from `NomWorkspace` on as its title.
+ * which the tree may be too narrow to show whole,
+ * its path from `NomWorkspace` on as its title.
  *
  * - `@codemirror/state`, `@codemirror/view`:
  *   The editor, CodeMirror 6, the engine of Obsidian's editor.
@@ -70,14 +79,16 @@
  * - `@codemirror/language`: Indents with tabs.
  * - `./ics.ts`: Shows an `.ics` file with its blocks one step in, its entries apart,
  *   its names grey and its values readable, each block folding.
- * - `./keys.ts`: The keys of a Markdown file as in Obsidian, like Enter continuing a list.
+ * - `./keys.ts`: The keys of a Markdown file as in Obsidian,
+ *   like Enter continuing a list.
  * - `./syntax.ts`: Reads the note as Markdown, with the Obsidian syntax.
  * - `./preview.ts`: Shows the Markdown as in the scripts view,
  *   folds its sections and scrolls to a heading.
  * - `./steps.ts`: Shows an unfolded solution one step at a time.
  * - `./tasks.ts`: Shows the rows of the tasks of a note.
  * - `./round.ts`: Shows the round of a section in the note.
- * - `./overview.ts`: Shows the page of a module, its course, or of a chapter, its sections,
+ * - `./overview.ts`: Shows the page of a module, its course,
+ *   or of a chapter, its sections,
  *   and its chapter in the tree.
  * - `./folder.ts`: Shows a folder of my modules with its folders and files.
  * - `../notes/code.ts`: Gives my code blocks the colors of my theme.
@@ -181,7 +192,8 @@ type Written = {
  *   none for a file of my new system, whose links stay as they are written.
  * - `markdown`: Whether it is Markdown, shown with its preview;
  *   else its plain text, like an `.ics` file.
- * - `editable`: Whether I may change it: a note of my modules or a Markdown file of my new system.
+ * - `editable`: Whether I may change it:
+ *   a note of my modules or a Markdown file of my new system.
  * - `place`: Its path in `NomWorkspace`, from which its relative links lead,
  *   like `NomManageplannings/NomMetainformations/Modules.md`.
  */
@@ -236,7 +248,8 @@ let outlineWait: number = 0;
  * Shows whether the file has changes not yet saved:
  * the save button in its full grey while it has, else faint, in a section too,
  * before the close of the round, and in the status line a notice, `Saved` or `Failed`.
- * - {@link EditorState#sliceDoc}: Gives the text, its lines joined by the line break of the file.
+ * - {@link EditorState#sliceDoc}: Gives the text,
+ *   its lines joined by the line break of the file.
  *
  * @param notice - Notice of the moment, `Saved` or `Failed`, empty for none
  */
@@ -248,7 +261,8 @@ function stateShow(notice: string): void {
 }
 
 /**
- * Saves the file: sends its text to the reader with the text it had when read or saved last;
+ * Saves the file: sends its text to the reader with the text it had
+ * when read or saved last;
  * the reader writes it, merged with a change of the file on the disk since,
  * like by a Claude session, mine standing where we both changed the same lines,
  * a note of my modules with its change as a diff, see `reader/edit.ts`;
@@ -257,7 +271,8 @@ function stateShow(notice: string): void {
  * then the status line says only `Saved`, or `Failed` when the reader does not write it,
  * until the next change, and a note takes the files its links lead to anew,
  * so a link written since works, see `./preview.ts`.
- * Does nothing while a save is on its way, when nothing changed, or for a file to read only.
+ * Does nothing while a save is on its way,
+ * when nothing changed, or for a file to read only.
  * - `written`: The file as the reader wrote it.
  * - `merged`: Whether the reader merged a change of the disk into it.
  * - `reread`: The note read anew with its links,
@@ -353,7 +368,8 @@ type Box = {
 };
 
 /**
- * Gives a row on the screen from its top to its bottom, not yet marked, so without a width.
+ * Gives a row on the screen from its top to its bottom,
+ * not yet marked, so without a width.
  *
  * @param top - Its top
  * @param bottom - Its bottom
@@ -367,7 +383,8 @@ function rowOf(top: number, bottom: number): Box {
  * Gives the rows a line stands in on the screen, one for each row its text wraps into,
  * still without a width, see {@link selectionRowsOf}:
  * each as high as its part of the line, two rows parted halfway between their text,
- * and with the little room of the line's own above or below it, like that around a list item,
+ * and with the little room of the line's own above or below it,
+ * like that around a list item,
  * so the rows of a selection touch, also from one line to the next,
  * but never with more than a quarter of a line, like the room above a heading.
  * - `range`: The whole line, whose boxes tell its rows.
@@ -411,14 +428,18 @@ function rowsOf(view: EditorView, line: HTMLElement): Box[] {
 
 /**
  * Gives the boxes on the screen of what a selection covers of a line,
- * see {@link selectionRowsOf}: of its text, its code and its links as far as it covers them,
- * a rendered formula, an image or the type word of a heading whole once it covers some of it,
+ * see {@link selectionRowsOf}: of its text,
+ * its code and its links as far as it covers them,
+ * a rendered formula, an image or the type word of a heading whole
+ * once it covers some of it,
  * by its own box only, never by what stands inside it,
  * like a formula too wide for its line, which scrolls sideways;
  * never a widget that holds no text, like the arrow that folds a heading.
  * - `range`: What the selection covers of a piece of the line.
- * - `start`, `end`: Where a piece of the line, an element or a text, begins and ends in the text.
- * - `first`, `last`: Where what the selection covers of the piece begins and ends in the elements.
+ * - `start`, `end`: Where a piece of the line,
+ *   an element or a text, begins and ends in the text.
+ * - `first`, `last`: Where what the selection covers of the piece begins
+ *   and ends in the elements.
  *
  * @param view - The editor
  * @param line - Element of the line
@@ -481,7 +502,8 @@ function markedRowsOf(rows: Box[], boxes: Box[]): Box[] {
 /**
  * Marks each selection line by line, as a browser and Obsidian do,
  * never as CodeMirror's own selection,
- * one block over the lines between its first and its last, also right of them and around formulas:
+ * one block over the lines between its first and its last,
+ * also right of them and around formulas:
  * on each line row by row, see {@link rowsOf},
  * each row as far as the selection covers what it shows, see {@link selectedBoxesOf},
  * and half a letter on where the selection goes on past the end of the line,
@@ -495,7 +517,8 @@ function markedRowsOf(rows: Box[], boxes: Box[]): Box[] {
  * - `line`: Whether an element drawn is a line, else a rendered block.
  * - `from`, `to`: Where it begins and ends in the text.
  * - `box`, `parts`: Box of a block and those of the pieces it shows.
- * - `boxes`: What a selection covers of a line, its end too where the selection goes on past.
+ * - `boxes`: What a selection covers of a line,
+ *   its end too where the selection goes on past.
  * - `end`: Where the line ends on the screen.
  *
  * @param view - The editor
@@ -574,7 +597,8 @@ const selectionLines: Extension = layer({
 
 /**
  * Builds the extensions of the editor for a file.
- * - `lineSeparator`: Splits and joins the lines by the line break of the file, `\r\n` or `\n`,
+ * - `lineSeparator`: Splits and joins the lines
+ *   by the line break of the file, `\r\n` or `\n`,
  *   so saving writes the line breaks as they were, also a single other one,
  *   which stays inside its line.
  * - `readOnly`: Lets me read an `.ics` file, never change it.
@@ -590,13 +614,16 @@ const selectionLines: Extension = layer({
  *   so I see where a line overflows.
  * - `darkTheme`: Draws cursor and selection for a dark page.
  * - `scrollMargins`: Keeps the cursor below the status line,
- *   which stays on top while the file scrolls, so moving up never hides the cursor under it.
+ *   which stays on top while the file scrolls,
+ *   so moving up never hides the cursor under it.
  * - `solutionSteps`: The steps of an unfolded solution, one at a time, see `./steps.ts`.
  * - `taskRows`: The rows of the tasks of a note, once loaded, see `./tasks.ts`.
  * - `roundStart`: The round of a section, see `./round.ts`,
  *   which shows the places of its blocks anew as it moves.
- * - `updateListener`: Shows whether the file has unsaved changes after each change of the text,
- *   and builds the outline of a note anew once the typing rests, see {@link outlineRefresh}.
+ * - `updateListener`: Shows whether the file has unsaved changes
+ *   after each change of the text,
+ *   and builds the outline of a note anew once the typing rests,
+ *   see {@link outlineRefresh}.
  *
  * @param opened - The file
  * @returns Extensions
@@ -635,7 +662,8 @@ function extensionsOf(opened: Opened): Extension[] {
 }
 
 /**
- * Reads the file the address names, see the top of this file: a file of my new system, else a note.
+ * Reads the file the address names, see the top of this file:
+ * a file of my new system, else a note.
  * - `response`: Answer of the reader.
  * - `sent`: The file of my new system as the reader sends it.
  * - `note`: The note as the reader sends it.
@@ -678,7 +706,8 @@ async function openedRead(file: string): Promise<Opened | null> {
 }
 
 /**
- * Scrolls the note shown to the heading of the address, see `headingShow` in `./preview.ts`,
+ * Scrolls the note shown to the heading of the address,
+ * see `headingShow` in `./preview.ts`,
  * or to the very top of the page.
  * - `heading`: The heading of the address, empty for none.
  */
@@ -719,11 +748,13 @@ function treeClick(event: MouseEvent): void {
 /**
  * Starts the editor after the router has put its HTML into the page:
  * gives my code blocks the colors of my theme, see `../notes/code.ts`;
- * shows the tree on the left, that of my new system for one of its files and at `/plannings`,
+ * shows the tree on the left,
+ * that of my new system for one of its files and at `/plannings`,
  * else that of my modules, the module of the address picked while no note is shown,
  * like `/scripts?module=IN2028_BusinessAnalyticsMachineLearning` from a skill entry,
  * see `../notes/tree.ts`, and its chapter of the address,
- * like `&chapter=01_RegressionAnalysis`, picked in the tree, while the page of the module,
+ * like `&chapter=01_RegressionAnalysis`, picked in the tree,
+ * while the page of the module,
  * or of the chapter the address names, stands on the right, see `./overview.ts`,
  * and so does a folder of my modules the address names,
  * like `/scripts?folder=…`, with its module picked, see `./folder.ts`;
@@ -735,7 +766,8 @@ function treeClick(event: MouseEvent): void {
  * button, Ctrl+S, and a question before leaving with changes unsaved;
  * a file to read only has the save button crossed out, a file that cannot
  * be read shows a hint instead, and so does the editor while it shows no file.
- * A note of my modules gets the rows of its tasks, see `./tasks.ts`, its outline in the tree,
+ * A note of my modules gets the rows of its tasks,
+ * see `./tasks.ts`, its outline in the tree,
  * and scrolls to the heading of the address,
  * also when the back or forward button of the browser changes it;
  * a section its round, see `./round.ts`, its text hidden until its tasks are loaded,
@@ -752,10 +784,13 @@ function treeClick(event: MouseEvent): void {
  * - `tree`: Place of the tree, and `shown` the tree once it is shown.
  * - `close`, `next`: The close of a round and `Next` in the head, see `./round.ts`.
  * - `opened`: The file read.
- * - `text`: Element of the text, with the look of the notes for Markdown, else of plain text.
- * - `kept`: The block I opened last in the section, asked from the reader while the tasks load,
+ * - `text`: Element of the text,
+ *   with the look of the notes for Markdown, else of plain text.
+ * - `kept`: The block I opened last in the section,
+ *   asked from the reader while the tasks load,
  *   empty for none or when the reader cannot be reached.
- * - `beforeunload`: Comes before the page closes or loads again, also for another file of the tree;
+ * - `beforeunload`: Comes before the page closes or loads again,
+ *   also for another file of the tree;
  *   `preventDefault` makes the browser ask.
  * - `popstate`: Comes when the back or forward button of the browser changes the address.
  */

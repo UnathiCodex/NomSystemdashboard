@@ -39,7 +39,8 @@ export const QuestionMark: IconNode = [
  * which read the words of its button instead.
  * Lucide draws it 24 px big;
  * its class `lucide`, which `createElement` leaves out, lets `base.css` size it.
- * - {@link createElement}: Makes the SVG element of an icon, which draws in the colour of the text.
+ * - {@link createElement}: Makes the SVG element of an icon,
+ *   which draws in the colour of the text.
  *
  * @param icon - Icon, like `Check`
  * @returns SVG element of the icon
@@ -93,7 +94,8 @@ export function plusPut(button: HTMLElement, words: string): void {
 
 /**
  * Takes the plus out of a button again, with its tooltip and its name for screen readers,
- * so the button shows its text or nothing, like the line of a field once a value is picked.
+ * so the button shows its text or nothing,
+ * like the line of a field once a value is picked.
  *
  * @param button - Button that showed the plus
  */
@@ -105,7 +107,8 @@ export function plusTake(button: HTMLElement): void {
 }
 
 /**
- * Shows the small grey plus with what it adds in a button at the end of a list with a search,
+ * Shows the small grey plus with what it adds in a button
+ * at the end of a list with a search,
  * like `+ “skyr”` for the text typed,
  * or `+ New module IN2346_DeepLearning` for the folder a typed code and name make,
  * see `.picker-new` in `base.css`, so a plus inside a list always names what it adds.
@@ -120,7 +123,8 @@ export function plusTypedPut(button: HTMLElement, text: string): void {
 /**
  * Shows the small grey `×` of every list in a button, see `.cross-quiet` in `base.css`:
  * the one `×` that takes a value picked back,
- * like a food, a meal or a chapter, its words as tooltip and as its name for screen readers.
+ * like a food, a meal or a chapter,
+ * its words as tooltip and as its name for screen readers.
  *
  * @param button - Button beside the value
  * @param words - What it takes back, like `Remove Hackfleisch`
@@ -131,13 +135,17 @@ export function crossPut(button: HTMLElement, words: string): void {
 }
 
 /**
- * Makes the one search field of the page around a field, see `.search-field` in `base.css`:
+ * Makes the one search field of the page around a field,
+ * see `.search-field` in `base.css`:
  * a card of the soft grey without a frame, the small grey magnifier at its left,
  * then the field, its words naming what it searches,
- * like `Search places` or `Search files`, grey till I type, and its name for screen readers;
- * the same in the food view, in the tree, in the search of the log and in every list of a dialog,
+ * like `Search places` or `Search files`, grey till I type,
+ * and its name for screen readers;
+ * the same in the food view, in the tree,
+ * in the search of the log and in every list of a dialog,
  * only as high as where it stands asks.
- * A click on the magnifier puts the cursor into the field, as the card is the field's label.
+ * A click on the magnifier puts the cursor into the field,
+ * as the card is the field's label.
  * - `field`: The card around the magnifier and the field.
  *
  * @param input - The field, its events added by the search it belongs to

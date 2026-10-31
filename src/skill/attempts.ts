@@ -1,8 +1,10 @@
 /**
  * ## Attempts
  *
- * Loads my tasks with when each is due from the reader, and what a module offers a skill entry,
- * orders the tasks into groups by when they are due, writes days out as the page shows them,
+ * Loads my tasks with when each is due from the reader,
+ * and what a module offers a skill entry,
+ * orders the tasks into groups by when they are due,
+ * writes days out as the page shows them,
  * and sends to the reader's one writer of skill entries:
  * an attempt from a button of a task into the skill entry of the moment,
  * and a whole skill entry from the entry by category.
@@ -43,14 +45,18 @@ export type Attempt = {
  * - `id`: Identity, `<module>/<name>`, like `IN2028/Airline Revenue Interval`.
  * - `name`: Name in its heading, like `Airline Revenue Interval`.
  * - `heading`: Its heading as written, like `Task. Airline Revenue Interval`.
- * - `source`: Its sources as written on its source lines, each without `> ` and its mode word,
- *   joined by `, `, like `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`, empty without one.
+ * - `source`: Its sources as written on its source lines,
+ *   each without `> ` and its mode word,
+ *   joined by `, `, like
+ *   `[[…|VO 2025W 01 CourseOverview (38)]], [[…|VO 2025W 02 RegressionAnalysis (8)]]`,
+ *   empty without one.
  * - `note`: Path of its note, as the scripts view takes it.
  * - `chapter`: Name of its chapter, like `01_RegressionAnalysis`.
  * - `section`: Name of its section, its note, like `01_01_SampleMeanStandardError`.
- * - `kind`: Its kind by the type word of its heading: example, an Example, its steps predicted
- *   one by one, or an older Completion; or cold, a Task.
- * - `parts`: Numbers of the parts of a cold task, like `1`, `2` and `3`, none for any other task.
+ * - `kind`: Its kind by the type word of its heading: example, an Example,
+ *   its steps predicted one by one, or an older Completion; or cold, a Task.
+ * - `parts`: Numbers of the parts of a cold task, like `1`,
+ *   `2` and `3`, none for any other task.
  */
 export type Task = {
     id: string;
@@ -91,22 +97,27 @@ export type SkillTask = Task & {
  * - `cold`: Identity of the cold Task of the round shown, empty when it has none yet.
  * - `example`: Identity of the Example of the round shown, the next unused one,
  *   empty for none left.
- * - `algorithm`: Heading of its Algorithm as written, the one worked example; empty for none.
+ * - `algorithm`: Heading of its Algorithm as written,
+ *   the one worked example; empty for none.
  * - `tasks`: Number of its tasks.
  * - `tried`: Number of its tasks I tried.
  * - `round`: The round shown: one going on, or ended today, else the next one,
  *   see `sectionOf` in `reader/skill.ts`.
- * - `ladder`: Whether the round shown is round 0, its theory, one Example and its first Task.
+ * - `ladder`: Whether the round shown is round 0, its theory,
+ *   one Example and its first Task.
  * - `runs`: Its runs that count, decided before today.
  * - `day`: Day the round shown began, today for one not begun.
- * - `rightDue`: Day the next round comes after a right Task today; empty without a cold task.
- * - `wrongDue`: Day it comes after a Task wrong for good today; empty without a cold task.
+ * - `rightDue`: Day the next round comes after a right Task today;
+ *   empty without a cold task.
+ * - `wrongDue`: Day it comes after a Task wrong for good today;
+ *   empty without a cold task.
  * - `at`: Key of the step of the round shown I went on to with the last `Next`,
  *   where I stand, empty for none yet.
  * - `closed`: Whether I closed the round shown by hand.
  * - `results`: Results of the Task of the round shown, in order, none for none yet.
  * - `used`: Whether the round shown checked its Example off with `Next`.
- * - `days`: Days I learned it, by its lines in the log, the oldest first, like `2026-10-11`.
+ * - `days`: Days I learned it, by its lines in the log,
+ *   the oldest first, like `2026-10-11`.
  * - `today`: What of it is due today: `task`, its Task of today, `new`, its round 0,
  *   or empty for nothing, see `todayMarked` in `reader/skill.ts`.
  */
@@ -163,7 +174,8 @@ export type SkillModule = {
 
 /**
  * Every module of the semester with its tasks,
- * which the scripts show and the skill entries of the day pick from, as the reader sends it.
+ * which the scripts show and the skill entries of the day pick from,
+ * as the reader sends it.
  *
  * - `modules`: Modules of the semester in their order, also those without tasks yet.
  * - `skills`: The skills of the semester in their order, for the Skill picker:
@@ -171,7 +183,8 @@ export type SkillModule = {
  * - `otherModules`: The other module folders by their codes,
  *   like `IN0024`, for the search of the Skill picker.
  * - `folders`: The whole name of the folder of each of them by its name,
- *   which the Skill picker shows, like `IN2028_BusinessAnalyticsMachineLearning` for `IN2028`.
+ *   which the Skill picker shows,
+ *   like `IN2028_BusinessAnalyticsMachineLearning` for `IN2028`.
  * - `paths`: The folder of each of them from `NomWorkspace`,
  *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`.
  * - `links`: The link of each of them, one for all its entries and boxes,
@@ -205,15 +218,16 @@ export type Link = {
  * What a skill offers a skill entry, as the reader sends it; a project offers nothing.
  *
  * - `folder`: The module folder from `NomWorkspace`,
- *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`, empty for a project.
+ *   like `NomSkillingmodules/IN2028_BusinessAnalyticsMachineLearning`,
+ *   empty for a project.
  * - `chapters`: Names of its chapter folders, also of the empty ones,
  *   like `05 Decision Trees Ensembles`.
  * - `documents`: Its files outside the chapter folders, the university's material,
  *   and the notes of its chapters, by their paths from the module folder,
  *   like `VO_UniversityLectureLessons/TUM_2025W/04_….pdf`
  *   or `01_RegressionAnalysis/01_01_SampleMeanStandardError.md`.
- * - `materials`: The folder of the material of each type, also while the module has none yet, like
- *   `VO_UniversityLectureLessons` for `VO`, none for a project.
+ * - `materials`: The folder of the material of each type, also while the module has none
+ *   yet, like `VO_UniversityLectureLessons` for `VO`, none for a project.
  */
 export type ModuleContents = {
     folder: string;
@@ -229,7 +243,8 @@ export type ModuleContents = {
  *
  * - `task`: Identity of the task.
  * - `result`: Its result, `right` or `wrong`.
- * - `comment`: My short comment on what went wrong, only with `wrong`, empty when not given.
+ * - `comment`: My short comment on what went wrong,
+ *   only with `wrong`, empty when not given.
  */
 export type AttemptNew = {
     task: string;
@@ -238,7 +253,8 @@ export type AttemptNew = {
 };
 
 /**
- * A line `X-ROUND` of a skill entry, as the reader sends it, see `RoundMark` in `reader/calendar.ts`.
+ * A line `X-ROUND` of a skill entry, as the reader sends it,
+ * see `RoundMark` in `reader/calendar.ts`.
  *
  * - `section`: Its section, the name of its note, like `01_02_SampleMeanEstimator`.
  * - `round`: Its round.
@@ -273,7 +289,8 @@ export type RoundPick = {
 };
 
 /**
- * A new skill entry of the log to send from the entry by category; an empty field is not written.
+ * A new skill entry of the log to send from the entry by category;
+ * an empty field is not written.
  *
  * - `title`: Its title, always the one its skill and type give it.
  * - `titleLink`: Its link, typed, one for all entries of its skill;
@@ -283,10 +300,12 @@ export type RoundPick = {
  * - `semester`: Its semester, like `2026W`:
  *   from which semester the lecture or the material is, see {@link semesterOf}.
  * - `chapters`: Names of the chapters it covered, none for none.
- * - `documents`: Paths from the folder of its skill of the documents it used, none for none;
+ * - `documents`: Paths from the folder of its skill
+ *   of the documents it used, none for none;
  *   the reader links each with its fingerprint, see `reader/documents.ts`.
  * - `attempts`: Its attempts, none for none.
- * - `rounds`: Rounds I picked by hand for its notes, see {@link RoundPick}, none for none.
+ * - `rounds`: Rounds I picked by hand for its notes,
+ *   see {@link RoundPick}, none for none.
  * - `location`: Place, like the room of a lecture logged from the plan.
  * - `online`, `onlineLink`, `onlineChannel`, `onlineTitle`:
  *   What I did online, like the stream of a lecture, see `Online` in `../day/entries.ts`.
@@ -331,7 +350,8 @@ export type Group = {
 export const skillName: string = "Skill";
 
 /**
- * Loads every module of the semester with its tasks from the reader, see {@link Skilling}.
+ * Loads every module of the semester with its tasks from the reader,
+ * see {@link Skilling}.
  *
  * @returns Modules with their tasks and what the pickers offer
  * @throws {Error} - When the reader cannot answer
@@ -344,7 +364,8 @@ export async function skillingLoad(): Promise<Skilling> {
  * Loads what a skill offers a skill entry from the reader,
  * its chapters and its documents, none for a project.
  *
- * @param code - Name of the skill, a module code like `IN2028` or a project like `WokFlow`
+ * @param code - Name of the skill,
+ *   a module code like `IN2028` or a project like `WokFlow`
  * @returns Chapters and documents of the skill
  * @throws {Error} - When the reader cannot answer, like for a module without folder
  */
@@ -384,10 +405,13 @@ export async function attemptSend(attempt: AttemptNew): Promise<void> {
 /**
  * Sends a skill entry of the log to the reader, with ISO instants: a new one to write,
  * or with the identifier of an entry the changes of that entry,
- * its attempts added after those it has, only while its file holds it as the dialog opened it:
+ * its attempts added after those it has,
+ * only while its file holds it as the dialog opened it:
  * the reader refuses the change with 409 once the file changed it since,
- * like an attempt the learning view wrote into it, see `skillEntryEdit` in `reader/skill.ts`,
- * as for any entry of the log, see `entryChange` in `../day/entries.ts`; the first save wins.
+ * like an attempt the learning view wrote into it,
+ * see `skillEntryEdit` in `reader/skill.ts`,
+ * as for any entry of the log, see `entryChange` in `../day/entries.ts`;
+ * the first save wins.
  * - `body`: The entry with ISO instants.
  * - `response`: Answer of the reader to a change.
  *
@@ -452,7 +476,8 @@ export function dayTextOf(day: string, weekday: boolean): string {
 }
 
 /**
- * Gives the semester of a day, which the dialog fills in for a skill entry until I pick another,
+ * Gives the semester of a day,
+ * which the dialog fills in for a skill entry until I pick another,
  * as the reader does, see `semesterOf` in `reader/categories.ts`:
  * October to March a winter, April to September a summer;
  * January to March belong to the winter that began the year before.

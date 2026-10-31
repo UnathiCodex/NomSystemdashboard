@@ -9,9 +9,12 @@
  * while the reader runs, see `reader.ts`.
  * Chromium without a window draws the file in the editor of the page,
  * with its own look, see `src/editor/preview.ts`, as my laptop shows it:
- * a page 1600 px wide, the text column `--reading-width` 1000 px of it, see `src/variants.css`;
- * a wider page, like that of my desktop, grows as a whole, so its lines break at the same words.
- * Every line shows, rendered as while I do not edit it, the solutions and the hidden blocks too;
+ * a page 1600 px wide, the text column `--reading-width` 1000 px of it,
+ * see `src/variants.css`;
+ * a wider page, like that of my desktop, grows as a whole,
+ * so its lines break at the same words.
+ * Every line shows, rendered as while I do not edit it,
+ * the solutions and the hidden blocks too;
  * the heading of an Example or a Task keeps the room of its check and cross free,
  * as in the round of a section, see `.task-heading` in `src/editor/editor.css`.
  * A line counts once its text goes on below, a line of a code block too,
@@ -22,7 +25,8 @@
  * the characters guessed at half the size of the text each;
  * a file whose lines all fit gets one line that says so.
  * The command ends with 1 while a line does not fit,
- * with 2 when the reader does not answer with its editor, like when its page fails to load it.
+ * with 2 when the reader does not answer with its editor,
+ * like when its page fails to load it.
  * The page asks the reader for nothing but itself: every request to its API is refused,
  * so nothing is written.
  *
@@ -72,17 +76,21 @@ type Drawn = {
 const address: string = "http://127.0.0.1:3000/scripts";
 
 /**
- * Draws a file in the editor of the page and finds its lines that do not fit, in the browser,
+ * Draws a file in the editor of the page and finds its lines
+ * that do not fit, in the browser,
  * see the top of this file:
- * takes CodeMirror and the look of the editor at the very addresses the editor imports them,
- * so they are its own, reads the whole file as Markdown at once, which CodeMirror otherwise does
- * bit by bit in the background, showing the lines not read yet as their plain text,
+ * takes CodeMirror and the look of the editor
+ * at the very addresses the editor imports them,
+ * so they are its own, reads the whole file as Markdown at once,
+ * which CodeMirror otherwise does bit by bit in the background,
+ * showing the lines not read yet as their plain text,
  * then scrolls through the file, since the editor draws only what is in sight,
  * and measures each line drawn: a line of text as it stands and again kept on one line,
  * which tells how many lines it takes and how much wider it is than the column;
  * a line of a code block by the lines of the page its text stands on;
  * a line measured again, as it stays in sight while scrolling, counts as last measured.
- * - `imports`: The addresses the script of the editor imports from, as the page loaded it.
+ * - `imports`: The addresses the script of the editor imports from,
+ *   as the page loaded it.
  * - `urlOf`: The address the editor imports a script from, by a part of it.
  * - `heading`: Heading of an Example or a Task, see `taskHeading` in `skill.ts`.
  * - `start`: The text as CodeMirror holds it, for the lines of those headings.
@@ -281,7 +289,8 @@ function whatOf(misfit: Misfit): string {
 }
 
 /**
- * Prints the lines of each file named after the command that do not fit, see the top of this file.
+ * Prints the lines of each file named after the command that do not fit,
+ * see the top of this file.
  * - `files`: The files, as named.
  * - `browser`, `page`: Chromium and the page of the editor.
  * - `misfitting`: Whether a line of any file does not fit.

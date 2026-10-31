@@ -1,7 +1,8 @@
 /**
  * ## Daily note
  *
- * Shows the daily note of a day, read only, below my gratitude and my points about the day,
+ * Shows the daily note of a day, read only,
+ * below my gratitude and my points about the day,
  * which the lists above it show,
  * so the note leaves their two sections out, `## Gratitude` and `## About`:
  * what is left shows as Markdown, nothing for a note that holds only them,
@@ -67,7 +68,8 @@ export async function noteShow(date: string): Promise<void> {
 }
 
 /**
- * Loads my gratitude and my points about the day of the daily note of a date from the reader.
+ * Loads my gratitude and my points about the day
+ * of the daily note of a date from the reader.
  *
  * @param date - Date like `2026-07-03`
  * @returns Text of each section by its title, the Markdown of its points,
@@ -83,7 +85,8 @@ export async function sectionsLoad(
 }
 
 /**
- * Sends the text of a section to the reader, which writes it into the daily note of its date;
+ * Sends the text of a section to the reader,
+ * which writes it into the daily note of its date;
  * `keepalive` lets it arrive also when the page closes meanwhile.
  *
  * @param date - Date like `2026-07-03`

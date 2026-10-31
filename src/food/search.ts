@@ -5,7 +5,8 @@
  * for the food view and the foods of a meal in the entry by category of the day:
  * a field where a few letters or a barcode find my foods first, the most eaten first,
  * and below them, where asked, the products of Open Food Facts, a page of them at a time,
- * `More` loading the next page, beside it how many it shows of how many the search matches,
+ * `More` loading the next page,
+ * beside it how many it shows of how many the search matches,
  * like `8 of 54`; in an entry my meals above my foods, see {@link SearchSetup}.
  * Its sections stand apart at a glance, a thin grey line between them:
  * `Meals`, `Foods` and `Open Food Facts` each its name small and grey above it,
@@ -19,9 +20,11 @@
  * whose list would grow long:
  * there a list shows only once I search. That nothing
  * is found it says in one grey line, only for the text as it stands,
- * once its answer is in, never for a text typed before, like a barcode typed digit by digit,
+ * once its answer is in, never for a text typed before,
+ * like a barcode typed digit by digit,
  * whose first digits find nothing.
- * I search the food alone, like `räucherlachs`: Open Food Facts searches the names of its products,
+ * I search the food alone, like `räucherlachs`:
+ * Open Food Facts searches the names of its products,
  * and a word of a brand or a shop only ranks them, it filters nothing,
  * so the brand and store of a product stand beside its name.
  * Every list of meals or foods looks alike, wherever it stands:
@@ -30,23 +33,29 @@
  * so the same name of two shops never mixes up,
  * and its kcal as a bare number, a meal's whole, a food's per 100 g,
  * the head of a section naming the unit once where it has one, see {@link listLineOf};
- * a product of Open Food Facts also its pack small and grey below its name, like `Pack 265 g`,
+ * a product of Open Food Facts also its pack small
+ * and grey below its name, like `Pack 265 g`,
  * which tells products apart.
- * A click on a product adds it to my foods as Open Food Facts gives it, no form in between,
+ * A click on a product adds it to my foods
+ * as Open Food Facts gives it, no form in between,
  * see `foodSend` in `foods.ts`, and takes it like one of mine.
  * Where a food is wanted, like in an entry, a click on one of my foods picks it;
  * in the food view, which wants none, it opens the food below its line:
  * its protein, carbs and fat per 100 g, one unknown empty, never 0,
  * its pack and its barcode where known, its kind, `Eat` or `Drink`,
  * its amounts in grams or millilitres by it, and its name, brand and store to change,
- * see {@link foodDetailOf}, which the dialog of a meal opens the same way by the pencil of a food,
+ * see {@link foodDetailOf},
+ * which the dialog of a meal opens the same way by the pencil of a food,
  * see `../day/meal.ts`. A food found nowhere goes in by hand only in the food view,
  * by the plus beside the name `Foods`, see {@link foodNewShow}.
- * Nothing in the search is a form or sends one, so it can stand inside the form of a dialog.
+ * Nothing in the search is a form or sends one,
+ * so it can stand inside the form of a dialog.
  *
- * - `./foods.ts`: Finds foods, sends new and renamed foods, writes amounts and the key of a food,
+ * - `./foods.ts`: Finds foods, sends new and renamed foods,
+ *   writes amounts and the key of a food,
  *   and makes elements and buttons.
- * - `../icons.ts`: Puts icons into the buttons, their words as tooltip, and makes the search field.
+ * - `../icons.ts`: Puts icons into the buttons,
+ *   their words as tooltip, and makes the search field.
  * - `lucide`: The icons save and cancel.
  * - `./search.css`: Look of the search and of every list of meals or foods,
  *   the same wherever they stand.
@@ -116,7 +125,8 @@ export type SearchSetup = {
  * - `asking`: Key of my food whose `×` asked `Really remove?`, empty for none.
  * - `reveal`: Whether the food open goes into sight once shown,
  *   as after a click on it in a meal, see {@link foodShow}.
- * - `linked`: Whether the text was put in by a click on a food of a meal, see {@link foodShow},
+ * - `linked`: Whether the text was put in by a click on a food of a meal,
+ *   see {@link foodShow},
  *   so the search finds only my foods, not Open Food Facts, until I type.
  * - `added`: Keys of the foods I added in the food view since it opened, the last first,
  *   which stay on top until the page loads anew,
@@ -155,7 +165,8 @@ const pause: number = 300;
 const searchLength: number = 3;
 
 /**
- * Milliseconds a search waits before it asks the reader once more when it could not answer,
+ * Milliseconds a search waits before it asks the reader
+ * once more when it could not answer,
  * about twice as long as the reader takes to start anew after a change of its code,
  * see {@link foodsFindTwice}.
  */
@@ -220,11 +231,13 @@ export function listHeadOf(name: string, unit: string): HTMLElement {
  *
  * @param name - Name of the meal or food, with what stands after or below it
  * @param kcal - Its kcal; `null` while unknown,
- *   like those of a product Open Food Facts gives without them, which leaves the number empty
+ *   like those of a product Open Food Facts gives without them,
+ *   which leaves the number empty
  * @param click - What a click on the row does, like picking or opening it;
  *   `null` for a row a click does nothing on, or which takes its clicks itself,
  *   like that of a meal open, whose plus stands in it
- * @param end - What stands at the end of the line, like the `×` of a meal; `null` for nothing
+ * @param end - What stands at the end of the line,
+ *   like the `×` of a meal; `null` for nothing
  * @returns The line and its row
  */
 export function listLineOf(
@@ -248,7 +261,8 @@ export function listLineOf(
 }
 
 /**
- * Makes the two buttons of every change in place, as the dialogs end: the cross, which cancels,
+ * Makes the two buttons of every change in place,
+ * as the dialogs end: the cross, which cancels,
  * then the check, which saves, in the calm grey of what is picked,
  * see `.food-buttons` in `search.css`.
  * - `buttons`: The two buttons side by side.
@@ -269,7 +283,8 @@ export function editButtonsOf(cancelled: () => void, saved: () => void): HTMLEle
 }
 
 /**
- * Makes a field of a change in place, one chip high, like the name of a food or of a meal.
+ * Makes a field of a change in place, one chip high,
+ * like the name of a food or of a meal.
  * - `input`: The field.
  *
  * @param value - Text it starts with, empty for none
@@ -309,7 +324,8 @@ export function editFieldOf(
  * Makes a value that changes in place,
  * like the name, brand or store of a food of mine or the name of a meal of mine,
  * see `../food/meals.ts`: its text as plain as every value
- * beside it, no frame, a click puts the cursor into it, see `.food-inline` in `search.css`;
+ * beside it, no frame, a click puts the cursor into it,
+ * see `.food-inline` in `search.css`;
  * Enter or leaving it saves a change, Escape takes the change back.
  * - `input`: The value.
  *
@@ -371,13 +387,17 @@ function kindFieldOf(kind: Kind, saved: () => void): HTMLButtonElement {
 }
 
 /**
- * Builds a food of mine opened below its line, in the food view and in the dialog of a meal,
+ * Builds a food of mine opened below its line,
+ * in the food view and in the dialog of a meal,
  * in two columns as the parts of a dialog, each its name small and grey,
- * then its value, every value as high as a field, so the rows stand equally apart: on top its name,
+ * then its value, every value as high as a field,
+ * so the rows stand equally apart: on top its name,
  * brand and store, which change in place by a click into them,
- * see {@link inlineFieldOf}, renaming it wherever it stands, see `foodChange` in `foods.ts`;
+ * see {@link inlineFieldOf}, renaming it wherever it stands,
+ * see `foodChange` in `foods.ts`;
  * then its protein, carbs and fat per 100 g or 100 ml, its kcal standing on its line,
- * its portion and its pack, in grams, or in millilitres for a drink, see `unitOf` in `foods.ts`,
+ * its portion and its pack, in grams, or in millilitres for a drink,
+ * see `unitOf` in `foods.ts`,
  * and its kind, `Eat` or `Drink`, which a click switches, see {@link kindFieldOf}.
  * Its nutrients are set once:
  * a food I made by hand, without barcode, takes a nutrient still unknown in place,
@@ -400,12 +420,15 @@ function kindFieldOf(kind: Kind, saved: () => void): HTMLButtonElement {
  * - `save`: Sends the values, the food taking no clicks meanwhile,
  *   then hands on the food as written;
  *   a number that is none, like `abc`, takes nothing and says so.
- * - `fieldAdd`: Adds a value that changes in place, with its unit after it where it has one.
+ * - `fieldAdd`: Adds a value that changes in place,
+ *   with its unit after it where it has one.
  * - `gramsOf`: Writes grams of a nutrient as a fixed value, empty while unknown.
- * - `nutrientAdd`: Adds a nutrient, a field while unknown in a food I made by hand, else fixed.
+ * - `nutrientAdd`: Adds a nutrient,
+ *   a field while unknown in a food I made by hand, else fixed.
  *
  * @param food - My food
- * @param saved - Takes the food as the reader wrote it, like with its new name, to show it anew
+ * @param saved - Takes the food as the reader wrote it,
+ *   like with its new name, to show it anew
  * @returns The food opened
  */
 export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLElement {
@@ -514,7 +537,8 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
 
 /**
  * Builds the line of a food of mine:
- * a click picks it where foods are picked, else opens it below its line or closes it again,
+ * a click picks it where foods are picked,
+ * else opens it below its line or closes it again,
  * see {@link foodDetailOf}, after a change the search shown anew,
  * the food staying open under its new name;
  * in the food view its small grey `×` at its end, which removes it from `Foods.md`,
@@ -603,11 +627,13 @@ function productNameOf(product: Product): HTMLElement {
 
 /**
  * Builds the line of a product of Open Food Facts:
- * a click adds it to my foods as Open Food Facts gives it, the line taking no clicks meanwhile,
+ * a click adds it to my foods as Open Food Facts gives it,
+ * the line taking no clicks meanwhile,
  * so a double click adds it once, then takes it, see {@link addedOf};
  * when the reader does not take it, a line below says so.
  * A product whose kcal Open Food Facts does not know shows no number,
- * and a click opens the form of a food by hand with its name, brand, store, barcode and pack,
+ * and a click opens the form of a food by hand with its name,
+ * brand, store, barcode and pack,
  * the cursor in its kcal, which I type from its pack, see {@link newFormShow},
  * so nothing goes in without its kcal and nothing made up.
  * - `kcal`: Its kcal, `null` while unknown.
@@ -660,7 +686,8 @@ const shownFoods: number = 10;
  * my meals under their head, see {@link listHeadOf}, where the search shows them,
  * see {@link SearchSetup}; while nothing is typed the foods I just added under theirs,
  * the last first, see {@link addedOf};
- * my foods under theirs, `Foods`, while nothing is typed only the most eaten but those just added,
+ * my foods under theirs, `Foods`,
+ * while nothing is typed only the most eaten but those just added,
  * see {@link shownFoods}, and the one open, a search listing all it finds;
  * then the products of Open Food Facts below them, see {@link productsShow}.
  * - `found`: What the search found.
@@ -857,9 +884,12 @@ function newFoodOf(search: Search, query: string, mine: Food[]): HTMLElement[] {
 
 /**
  * Gives what a search does with a food once the reader wrote it: clears the text typed,
- * so the list shows my foods again, and I am out of the search, see {@link foodSearchClear};
- * where foods are picked it picks it, in the food view it puts it on top under `Just added`, open,
- * so I mend at once what came wrong from Open Food Facts or my typing, see {@link resultsShow}.
+ * so the list shows my foods again, and I am out of the search,
+ * see {@link foodSearchClear};
+ * where foods are picked it picks it,
+ * in the food view it puts it on top under `Just added`, open,
+ * so I mend at once what came wrong from Open Food Facts or my typing,
+ * see {@link resultsShow}.
  *
  * @param search - The search
  * @returns Takes the food written
@@ -905,8 +935,10 @@ function numberRead(text: string): number | null {
  * and protein, carbs or fat left empty is unknown, never 0,
  * the one of them missing worked out by the reader from the kcal,
  * see `nutrientsOf` in `reader/food.ts`.
- * The check or Enter in a field sends the food; the cross or Escape in a field closes the form.
- * When the reader does not take the food, like for the name, brand and store of one of mine,
+ * The check or Enter in a field sends the food;
+ * the cross or Escape in a field closes the form.
+ * When the reader does not take the food, like for the name,
+ * brand and store of one of mine,
  * or a field holds no number, the form stays open and says so.
  * - `search`: The search, `undefined` for an element that is none.
  * - `form`: The form.
@@ -915,7 +947,8 @@ function numberRead(text: string): number | null {
  * - `error`: Hint that the food is not taken.
  * - `text`: Name, brand or store as its field says.
  * - `close`: Closes the form.
- * - `add`: Sends the food, the form taking no clicks meanwhile, so a double click adds it once;
+ * - `add`: Sends the food, the form taking no clicks meanwhile,
+ *   so a double click adds it once;
  *   with no name or kcal, or a field that holds no number, it says so instead.
  *
  * @param element - The search, as {@link foodSearchOf} built it
@@ -930,7 +963,8 @@ export function foodNewShow(element: HTMLElement): void {
  * see {@link foodNewShow}, named as typed in the search, the cursor in its kcal,
  * or in its name while none is typed;
  * for a product of Open Food Facts without kcal its name, brand and store filled in,
- * its pack and portion too, its barcode and kind kept, its amounts in the unit of its kind,
+ * its pack and portion too, its barcode and kind kept,
+ * its amounts in the unit of its kind,
  * see {@link productLineOf};
  * a food of my own is `Eat`, which I change once it is saved, see {@link foodDetailOf}.
  * - `kind`: Kind of the food.
@@ -1102,12 +1136,14 @@ async function foodsFindTwice(
 }
 
 /**
- * Searches my foods for the text of the field and shows them at once, see {@link resultsShow},
+ * Searches my foods for the text of the field and shows them at once,
+ * see {@link resultsShow},
  * unless another search was asked meanwhile or the text changed since,
  * so a late answer never covers a newer one,
  * and an answer that found nothing never stands below a text it was not given for,
  * see {@link nothingHide}; then, where the search finds products too,
- * see `products` of {@link SearchSetup}, for a text of {@link searchLength} characters or more,
+ * see `products` of {@link SearchSetup},
+ * for a text of {@link searchLength} characters or more,
  * asks Open Food Facts for their first page, once a pause of the typing is over,
  * see {@link productsLoad}, while `Searching…` stands in their place;
  * a text put in by a click on a food of a meal finds only my foods, see {@link foodShow}.
@@ -1118,7 +1154,8 @@ async function foodsFindTwice(
  * - `text`: The text searched for.
  *
  * @param search - The search
- * @param wait - Milliseconds before Open Food Facts is asked, {@link pause} while I type, else 0
+ * @param wait - Milliseconds before Open Food Facts is asked,
+ *   {@link pause} while I type, else 0
  */
 function resultsLoad(search: Search, wait: number): void {
     const asked: number = ++search.asked;
@@ -1155,7 +1192,8 @@ function resultsLoad(search: Search, wait: number): void {
  * and shows them below my foods, by themselves, see {@link productsShow},
  * unless another search was asked meanwhile or the text changed since:
  * the first page in place of `Searching…`, a later page after the products shown,
- * which stay when Open Food Facts cannot be reached for it, as when the reader cannot answer twice,
+ * which stay when Open Food Facts cannot be reached for it,
+ * as when the reader cannot answer twice,
  * see {@link foodsFindTwice}.
  * - `asked`: Number of the search they are for.
  * - `text`: The text searched for.
@@ -1215,7 +1253,8 @@ function nothingHide(search: Search): void {
 
 /**
  * Builds the food search, see the top of this file, showing all my foods at first.
- * Typing finds my foods at once and asks Open Food Facts once it pauses for {@link pause},
+ * Typing finds my foods at once and asks Open Food Facts
+ * once it pauses for {@link pause},
  * see {@link resultsLoad}, the lines that found nothing for the text before gone at once,
  * see {@link nothingHide}; Enter searches at once, without sending a form around it.
  * - `element`: Field and results.
@@ -1277,9 +1316,11 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
 
 /**
  * Shows one of my foods opened in a search that only shows, like that of the food view,
- * as a click on a food of a meal asks, see `../food/meals.ts`: its name put into the field,
+ * as a click on a food of a meal asks, see `../food/meals.ts`:
+ * its name put into the field,
  * so the search lists it among my foods, without the products of Open Food Facts,
- * see {@link Search}, open below its line, the page moving only as far as it needs to show it.
+ * see {@link Search}, open below its line,
+ * the page moving only as far as it needs to show it.
  *
  * @param element - The search, as {@link foodSearchOf} built it
  * @param food - The food, its name, brand and store

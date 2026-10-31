@@ -115,9 +115,11 @@
 /* Whole page: one screen high, the area fills it, right beside the rail at the left edge,
    one control wide, so an area's own padding, `--side-room` in `variants.css`,
    is all the room between the rail and its controls and content;
-   in Noto Sans, the one served with the page first, else the one installed, as on my Kubuntu;
+   in Noto Sans, the one served with the page first,
+   else the one installed, as on my Kubuntu;
    the line under a link, like a name in Skill under the pointer,
-   a fifth of a letter below its text, clear of letters like g and y, the same for every link */
+   a fifth of a letter below its text,
+   clear of letters like g and y, the same for every link */
 body {
     display: flex;
     flex-direction: column;
@@ -133,13 +135,16 @@ body {
 }
 
 /* Areas at the left edge of the screen, the rail: a bar of its own,
-   as VS Code's bar of activities, one control wide and the whole height, touching the edge,
+   as VS Code's bar of activities,
+   one control wide and the whole height, touching the edge,
    in the ground of the page, set apart from it only by a thin grey line at its right,
    as Linear and Obsidian do;
-   in it the areas one below the other, in its middle, the first one level with the bar of an area,
+   in it the areas one below the other, in its middle,
+   the first one level with the bar of an area,
    half a gap and the room of a button from the top;
    each an icon button, see `.icon-button` below, its name as tooltip,
-   see `main.ts`, the shown one marked only by its light icon, without a ground of its own */
+   see `main.ts`, the shown one marked only by its light icon,
+   without a ground of its own */
 .areas {
     position: fixed;
     inset: 0 auto 0 0;
@@ -177,14 +182,19 @@ body {
    a plus or the cross of a dialog:
    a loose icon, frameless, without a ground, in the grey of quiet text,
    faint and off while it cannot be used;
-   under a pointer that hovers its icon light on a faint round circle behind it, `--icon-over`,
+   under a pointer that hovers its icon light
+   on a faint round circle behind it, `--icon-over`,
    never a box, as Material draws the state of a button on a layer of its own:
    in the middle of the button, as wide as it,
    but never smaller than the icon with a little room around it nor bigger
-   than the circle of an area of the rail, so it is round whatever the shape of the button,
-   and its button keeps its size and place; not on a phone, where a tap would leave a circle lit;
-   round, so the line of the keyboard's focus around it is round too, or a pill around a narrow one.
-   Its place sets only its size and where it needs it its own grey, like the check of a dialog,
+   than the circle of an area of the rail,
+   so it is round whatever the shape of the button,
+   and its button keeps its size and place;
+   not on a phone, where a tap would leave a circle lit;
+   round, so the line of the keyboard's focus around it is round too,
+   or a pill around a narrow one.
+   Its place sets only its size and where it needs it its own grey,
+   like the check of a dialog,
    which saves, light instead of grey, so the main button of a place reads at a glance */
 .icon-button {
     position: relative;
@@ -233,8 +243,10 @@ body {
     }
 }
 
-/* The bar of a day, in the day and in the food view alike, see `day/day.html` and `food/food.html`:
-   the date between its arrows, the icon back to today beside it, in one line, a control gap apart,
+/* The bar of a day, in the day and in the food view alike,
+   see `day/day.html` and `food/food.html`:
+   the date between its arrows, the icon back to today beside it,
+   in one line, a control gap apart,
    going on below where the bar has no room for all, never over the edge;
    the arrows icon buttons one control square, see `.icon-button`;
    the date big and semibold, the weekday small and grey above it, not bold,
@@ -310,8 +322,10 @@ textarea {
 }
 
 /* Hover is soft everywhere, with the one timing of `variants.css`:
-   what lights up under the pointer, the text, ground or line of a link, a button or a fold,
-   fades in after a moment, `--hover-in`, and back as soon as the pointer leaves, `--hover-out`;
+   what lights up under the pointer, the text,
+   ground or line of a link, a button or a fold,
+   fades in after a moment, `--hover-in`,
+   and back as soon as the pointer leaves, `--hover-out`;
    anything else that lights up,
    like a day of the month, a part of a row or the arrow before a name,
    takes the same two in the rule of its own;
@@ -330,7 +344,8 @@ textarea {
         border-color var(--hover-in);
 }
 
-/* The one plus that adds one more and the one cross that takes a value back, wherever they stand,
+/* The one plus that adds one more and the one cross
+   that takes a value back, wherever they stand,
    like for a meal, a food, a chapter, a type or a document,
    see `plusPut` and `crossPut` in `icons.ts`: small icon buttons,
    see `.icon-button`, their icons a little smaller than those of buttons,
@@ -353,8 +368,10 @@ textarea {
 /* The plus with the text typed at the end of a list with a search,
    like `+ “Zz”` of the places or `+ “skyr”` of the foods,
    which adds what I typed while no value of the list has it,
-   and shows nowhere while nothing is typed, so a plus inside a list always names what it adds:
-   a row of the list, grey, the small plus before the text, a grey lighter under the pointer;
+   and shows nowhere while nothing is typed,
+   so a plus inside a list always names what it adds:
+   a row of the list, grey, the small plus before the text,
+   a grey lighter under the pointer;
    the same in the dialogs and in the food view */
 .picker-new {
     display: flex;
@@ -390,9 +407,12 @@ textarea {
    in the tree short, like `Def`, and on the line of its heading in the note,
    as the round in the status line of the editor, see `editor/editor.css`,
    see `blockNameOf` in `notes/tree.ts` and `headingLook` in `editor/preview.ts`,
-   and the number of a box of a series in its list, see `day/series.ts`, so both look alike:
-   filled in the soft grey of a card, its word in the grey of quiet text and the text's weight,
-   a little room above and below it and more left and right of it, and as far apart from the name */
+   and the number of a box of a series in its list,
+   see `day/series.ts`, so both look alike:
+   filled in the soft grey of a card,
+   its word in the grey of quiet text and the text's weight,
+   a little room above and below it and more left and right of it,
+   and as far apart from the name */
 .block-kind {
     display: inline-block;
     margin-right: 0.75em;
@@ -407,17 +427,20 @@ textarea {
 }
 
 /* The one search field of the page,
-   see `searchFieldOf` in `icons.ts`, the same in the food view, in the sport view, in the tree,
+   see `searchFieldOf` in `icons.ts`, the same in the food view,
+   in the sport view, in the tree,
    in the search of the log and in every list of a dialog:
    a card filled in the soft grey without a frame, one control high,
    with the rounding of every frame, the small grey magnifier at its left,
    its words grey till I type, without a line of the focus around it,
    since a list opens with the cursor in its search, which would frame it every time,
    and the blinking cursor says enough;
-   as much room above and below it as in the dialogs, so its list starts as far below it everywhere;
+   as much room above and below it as in the dialogs,
+   so its list starts as far below it everywhere;
    without the browser's own clear cross, which is no Lucide icon;
-   Escape or deleting the text clears it. Only how high it is changes where it stands, like one chip
-   high in a list of a dialog, see `.picker-box .search-field` in `day/choices.css` */
+   Escape or deleting the text clears it.
+   Only how high it is changes where it stands, like one chip high in a list of a dialog,
+   see `.picker-box .search-field` in `day/choices.css` */
 .search-field {
     display: flex;
     flex: none;
@@ -484,7 +507,8 @@ textarea {
     accent-color: var(--chosen-line);
 }
 
-/* Icons of buttons one icon size big, never squeezed; `icons.ts` gives each its class `lucide` */
+/* Icons of buttons one icon size big, never squeezed;
+   `icons.ts` gives each its class `lucide` */
 svg.lucide {
     flex: none;
     width: var(--icon-size);
@@ -534,9 +558,11 @@ button.round-tag:hover {
         display: none;
     }
 
-    /* The bar of a day on a phone: the date at the left, a step bigger than on the computer,
+    /* The bar of a day on a phone: the date at the left,
+       a step bigger than on the computer,
        since no timer stands beside it,
-       and the icon back to today at the right end, one control square, so a thumb hits it;
+       and the icon back to today at the right end,
+       one control square, so a thumb hits it;
        no arrows, since a swipe sideways changes the day, see `day/swipe.ts` */
     .day-bar {
         flex-wrap: nowrap;
@@ -557,9 +583,12 @@ button.round-tag:hover {
         margin-left: auto;
     }
 
-    /* A small control on a phone as small and quiet as it looks, but a finger's width to hit:
-       it takes a tap `--tap` around it, which takes no room of its line, so nothing moves;
-       the quiet plus and cross 0.5rem around them, like the plus of `Foods +` or the × of a food,
+    /* A small control on a phone as small and quiet as it looks,
+       but a finger's width to hit:
+       it takes a tap `--tap` around it,
+       which takes no room of its line, so nothing moves;
+       the quiet plus and cross 0.5rem around them,
+       like the plus of `Foods +` or the × of a food,
        unless their place sets a reach of its own,
        like the × of a line of the food view reaching into the room right of its list;
        every stylesheet gives its own small controls their tap the same way, at its end */
@@ -577,14 +606,16 @@ button.round-tag:hover {
     }
 
     /* The plus with the text typed at the end of a list on a phone a rectangle
-       with the round corners of every button there, `--chip-radius`, see `variants.css` */
+       with the round corners of every button there,
+       `--chip-radius`, see `variants.css` */
     .picker-new {
         border-radius: var(--chip-radius);
     }
 
     /* A swipe down at the top of the log never pulls the page to load it again,
        as Chrome does in a tab, which would lose what I am typing:
-       the page itself never scrolls on a phone, so it takes no swipe passed on by the log */
+       the page itself never scrolls on a phone,
+       so it takes no swipe passed on by the log */
     html {
         overscroll-behavior-y: none;
     }
