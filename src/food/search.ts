@@ -115,7 +115,7 @@ const searchLength: number = 3;
 const restartTime: number = 1000;
 
 /**
- * Gives the fields of the form of a food by hand,
+ * Gives the fields of a food, in the form of a food by hand and in a food opened,
  * its portion and pack in the unit of its kind.
  */
 function fieldsOf(kind: Kind): [string, string, string][] {
@@ -277,21 +277,16 @@ function kindFieldOf(kind: Kind, saved: () => void): HTMLButtonElement {
  * in the food view and in the dialog of a meal,
  * in two columns as the parts of a dialog, every value as high as a field,
  * so the rows stand equally apart.
- * Name, brand and store change in place, renaming it wherever it stands,
+ * Every value of every food changes in place, wherever it came from,
+ * since not everything from Open Food Facts or my typing is right,
+ * name, brand and store renaming it wherever it stands,
  * see `foodChange` in `foods.ts`.
- * Its nutrients are set once:
- * a food I made by hand, without barcode, takes a nutrient still unknown in place,
- * which then stays as every known one, so nothing known is changed by mistake,
- * and changes its pack; one of Open Food Facts keeps them and its pack as they came,
- * one unknown empty, never 0.
- * Its portion and kind change for every food,
- * since how much I take and whether I drink it only I know.
+ * A nutrient unknown stands empty, never 0.
  * When the reader does not take a change, the food stays open and says so.
  * - `save`: Sends the values, the food taking no clicks meanwhile,
  *   a number that is none, like `abc`, takes nothing and says so.
  */
 export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLElement {
-    const own: boolean = food.barcode === "";
     const detail: HTMLElement = elementOf("div", "food-detail", "");
     const facts: HTMLElement = elementOf("div", "food-facts", "");
     const factAdd: (name: string, value: Node | string) => void = (
@@ -306,15 +301,15 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
     const fields: Map<string, HTMLInputElement> = new Map();
     const text: (key: string) => string = (key: string): string =>
         fields.get(key)?.value.trim() ?? "";
-    const unit: string = unitOf(food.kind);
     const error: HTMLElement = elementOf(
         "p",
         "food-error",
-        "Not changed: it needs a name, numbers only, " +
+        "Not changed: it needs a name and its kcal, numbers only, " +
             "and no other food of mine may have this name, brand and store",
     );
     const save: () => void = (): void => {
-        const [protein, carbs, fat, portion, pack]: (number | null)[] = [
+        const [kcal, protein, carbs, fat, portion, pack]: (number | null)[] = [
+            "kcal",
             "protein",
             "carbs",
             "fat",
@@ -323,8 +318,9 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
         ].map((key: string): number | null => numberRead(text(key)));
         if (
             text("name") === "" ||
-            [protein, carbs, fat, portion, pack].some((typed: number | null): boolean =>
-                Number.isNaN(typed),
+            kcal === null ||
+            [kcal, protein, carbs, fat, portion, pack].some(
+                (typed: number | null): boolean => Number.isNaN(typed),
             )
         ) {
             error.hidden = false;
@@ -335,9 +331,14 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
             name: text("name"),
             brand: text("brand"),
             store: text("store"),
+            barcode: text("barcode"),
+            kcal: kcal,
+            protein: protein,
+            carbs: carbs,
+            fat: fat,
+            pack: pack,
             portion: portion,
             kind: kind.textContent as Kind,
-            ...(own ? { protein: protein, carbs: carbs, fat: fat, pack: pack } : {}),
         })
             .then(saved)
             .catch((reason: unknown): void => {
@@ -366,30 +367,12 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
         amount.addEventListener("click", (): void => input.focus());
         factAdd(name, amount);
     };
-    const gramsOf: (grams: number | null) => string = (grams: number | null): string =>
-        grams === null ? "" : `${amountOf(grams, 1)} g`;
-    const numberOf: (value: number | null) => string = (value: number | null): string =>
-        value === null ? "" : String(value);
-    const nutrientAdd: (name: string, key: string, grams: number | null) => void = (
-        name: string,
-        key: string,
-        grams: number | null,
-    ): void => {
-        if (own && grams === null) fieldAdd(name, key, "", "g");
-        else factAdd(name, gramsOf(grams));
-    };
 
-    fieldAdd("Name", "name", food.name, "");
-    fieldAdd("Brand", "brand", food.brand, "");
-    fieldAdd("Store", "store", food.store, "");
-    nutrientAdd("Protein", "protein", food.protein);
-    nutrientAdd("Carbs", "carbs", food.carbs);
-    nutrientAdd("Fat", "fat", food.fat);
-    fieldAdd("Portion", "portion", numberOf(food.portion), unit);
-    if (own) fieldAdd("Pack", "pack", numberOf(food.pack), unit);
-    else if (food.pack !== null) factAdd("Pack", `${food.pack} ${unit}`);
+    fieldsOf(food.kind).forEach(([name, key, unit]: [string, string, string]): void =>
+        fieldAdd(name, key, String(food[key as keyof Food] ?? ""), unit),
+    );
     factAdd("Kind", kind);
-    if (food.barcode !== "") factAdd("Barcode", food.barcode);
+    fieldAdd("Barcode", "barcode", food.barcode, "");
     error.hidden = true;
     detail.append(facts, error);
     return detail;

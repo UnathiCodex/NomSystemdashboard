@@ -155,8 +155,8 @@ type ProductsPage = {
  * A food of mine to change, as the page sends it, see {@link foodChange}.
  *
  * - `old`: Its name, brand and store as `Foods.md` holds them.
- * - `protein`, `carbs`, `fat`: Taken only for a food I made by hand, without barcode,
- *   and only while unknown.
+ * - `barcode`: Only digits, empty for none.
+ * - `protein`, `carbs`, `fat`: `null` for unknown, see {@link nutrientsOf}.
  * - `portion`: `null` for none, which takes 100, see {@link portionOf}.
  */
 export type FoodChanged = {
@@ -164,6 +164,8 @@ export type FoodChanged = {
     name: string;
     brand: string;
     store: string;
+    barcode?: string;
+    kcal?: number;
     protein?: number | null;
     carbs?: number | null;
     fat?: number | null;
@@ -265,10 +267,12 @@ export type FoodDay = Totals & {
  * Each may be missing.
  * `brands` and `stores` come as a list from the search,
  * as a text parted by commas from the products.
+ * `product_name_de` and the like, its name in a language, come only with a whole product.
  */
 type ProductSent = {
     code?: string;
     product_name?: string;
+    [name: `product_name_${string}`]: string | undefined;
     brands?: string | string[];
     stores?: string | string[];
     quantity?: string;
@@ -368,7 +372,8 @@ const searchLength: number = 3;
 const agent: string = "NomSystemDashboard/0.1";
 
 /**
- * Fields of a product the reader asks Open Food Facts for, see {@link ProductSent}.
+ * Fields of a product the reader asks the search of Open Food Facts for,
+ * see {@link ProductSent}.
  */
 const productFields: string =
     "code,product_name,brands,stores,quantity,serving_quantity," +
@@ -737,20 +742,36 @@ function usesRead(): Map<string, number> {
 
 /**
  * Builds the address that asks Open Food Facts for a search:
- * for a barcode its product, else a page of the products whose names match.
+ * for a barcode its whole product, since no field lists the names of all languages,
+ * see {@link productNameOf}, else a page of the products whose names match.
  */
 function addressOf(query: string, page: number): URL {
-    const address: URL = new URL(
-        barcode.test(query) ? `${food.product}${query}` : food.search,
-    );
-    if (!barcode.test(query)) {
-        address.searchParams.set("q", query);
-        address.searchParams.set("langs", searchLanguages);
-        address.searchParams.set("page_size", String(pageSize));
-        address.searchParams.set("page", String(page));
-    }
+    if (barcode.test(query)) return new URL(`${food.product}${query}`);
+    const address: URL = new URL(food.search);
+    address.searchParams.set("q", query);
+    address.searchParams.set("langs", searchLanguages);
+    address.searchParams.set("page_size", String(pageSize));
+    address.searchParams.set("page", String(page));
     address.searchParams.set("fields", productFields);
     return address;
+}
+
+/**
+ * Gives the name of a product, cleaned: its main name, else its German, its English,
+ * else the one of any language, since a product may have no main name,
+ * like 6920584471017, which holds only `product_name_de`, `_ms` and `_zh`.
+ */
+function productNameOf(sent: ProductSent): string {
+    const languages: string[] = Object.entries(sent)
+        .filter(([key]: [string, unknown]): boolean =>
+            /^product_name_[a-z]{2}$/.test(key),
+        )
+        .map(([, name]: [string, unknown]): string => String(name));
+    return (
+        [sent.product_name, sent.product_name_de, sent.product_name_en, ...languages]
+            .map((name: string | undefined): string => foodTextOf(name ?? ""))
+            .find((name: string): boolean => name !== "") ?? ""
+    );
 }
 
 /**
@@ -759,7 +780,7 @@ function addressOf(query: string, page: number): URL {
  * Its kcal is else its energy in kJ turned into kcal, 4.184 kJ a kcal.
  *
  * @returns The product, its kcal `null` when Open Food Facts does not know them,
- *   `null` when it has no name
+ *   `null` when it has no name in any language
  */
 function productOf(sent: ProductSent): Product | null {
     const nutrients: { [nutrient: string]: number | string | undefined } =
@@ -772,7 +793,7 @@ function productOf(sent: ProductSent): Product | null {
         carbs: nutrientOf(nutrients.carbohydrates_100g),
         fat: nutrientOf(nutrients.fat_100g),
     };
-    const name: string = foodTextOf(sent.product_name ?? "");
+    const name: string = productNameOf(sent);
     const pack: number | null = packOf(sent.quantity);
     if (name === "") return null;
 
@@ -1045,19 +1066,17 @@ function lineRenamed(
  * like `Kren` of `Hausgemachter Salat, Kren`, every other part staying as it is,
  * then every meal of `Meals.md` holding it, last its row of `Foods.md`,
  * so one stopped in between finishes when sent again.
- * For a food I made by hand, without barcode, its protein,
- * carbs and fat where they are still unknown, each set once and then fixed,
- * as its kcal from the start, so nothing known is changed by mistake, and its pack.
- * Those of Open Food Facts stay as they came.
- * The portion and the kind of any food change too.
+ * Its barcode, kcal, protein, carbs, fat, pack, portion and kind change too,
+ * for every food, since not everything from Open Food Facts or my typing is right.
+ * What is not sent stays, kcal also when sent as `null`, since a food needs them.
+ * A nutrient cleared is unknown, the one missing worked out, see {@link nutrientsOf}.
  * A food sent without change writes nothing.
- * - `settled`: Gives a nutrient of it as written:
- *   as it is once known, else as sent for my own food.
+ * - `settled`: Gives a nutrient of it as written: as sent, else as it is.
  *
  * @throws {Error} - When `Foods.md` holds no such food, the new name is empty,
  *   another food of mine has the new name, brand and store, ignoring case,
- *   a number is none of 0 or more, a kind is none of `Eat` and `Drink`,
- *   or a file lies outside the new system
+ *   a number is none of 0 or more, the barcode not only digits,
+ *   a kind is none of `Eat` and `Drink`, or a file lies outside the new system
  */
 export function foodChange(sent: FoodChanged): Food {
     const old: string = keyOf({
@@ -1086,14 +1105,17 @@ export function foodChange(sent: FoodChanged): Food {
         throw new Error(`No new name of a food: ${labelOf(renamed)}`);
     const amount: (value: unknown) => boolean = (value: unknown): boolean =>
         typeof value === "number" && value >= 0;
-    const own: boolean = found.barcode === "";
+    const kcal: number = sent.kcal ?? found.kcal;
     if (
+        !amount(kcal) ||
         ![sent.protein, sent.carbs, sent.fat, sent.portion, sent.pack].every(
             (value: unknown): boolean =>
                 value === undefined || value === null || amount(value),
         )
     )
         throw new Error(`No numbers of a food: ${JSON.stringify(sent)}`);
+    const code: string = String(sent.barcode ?? found.barcode).trim();
+    if (!/^\d*$/.test(code)) throw new Error(`No barcode: ${code}`);
     if (sent.kind !== undefined && sent.kind !== "Eat" && sent.kind !== "Drink")
         throw new Error(`No kind of a food: ${String(sent.kind)}`);
     const settled: (
@@ -1102,9 +1124,9 @@ export function foodChange(sent: FoodChanged): Food {
     ) => number | null = (
         known: number | null,
         typed: number | null | undefined,
-    ): number | null => (known !== null || !own || typed === undefined ? known : typed);
+    ): number | null => (typed === undefined ? known : typed);
     const pack: number | null =
-        !own || sent.pack === undefined
+        sent.pack === undefined
             ? found.pack
             : sent.pack === null || sent.pack === 0
               ? null
@@ -1112,8 +1134,9 @@ export function foodChange(sent: FoodChanged): Food {
     const changed: Food = {
         ...found,
         ...renamed,
+        barcode: code,
         ...nutrientsOf({
-            kcal: found.kcal,
+            kcal: kcal,
             protein: settled(found.protein, sent.protein),
             carbs: settled(found.carbs, sent.carbs),
             fat: settled(found.fat, sent.fat),

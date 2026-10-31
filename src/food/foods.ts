@@ -14,14 +14,15 @@ import type { Food, FoodDay, FoodsFound, Kind } from "../../reader/food.ts";
 
 /**
  * What changes of a food of mine, as typed, see {@link foodChange}:
- * a nutrient per 100 g only for a food I made by hand while still unknown,
- * which once known stays, and the portion `null` for none,
+ * a nutrient per 100 g `null` for unknown, and the portion `null` for none,
  * which the reader fills with 100, never with its pack.
  */
 export type FoodChanges = {
     name: string;
     brand: string;
     store: string;
+    barcode?: string;
+    kcal?: number;
     protein?: number | null;
     carbs?: number | null;
     fat?: number | null;
@@ -187,7 +188,8 @@ export async function foodDelete(food: Food): Promise<void> {
 }
 
 /**
- * Changes a food of mine, renaming it in `Foods.md`, my meals and every entry naming it.
+ * Changes a food of mine, renaming it in `Foods.md`, my meals and every entry naming it,
+ * and its values in `Foods.md`.
  *
  * @throws {Error} - When the reader does not take it,
  *   like for an empty name or one another food of mine has with that brand and store
