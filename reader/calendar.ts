@@ -886,6 +886,13 @@ function filesOf(sources: CalendarSource[]): string[] {
         );
 }
 
+/** Finds the series with a `UID` in an `.ics` file, `undefined` for none. */
+function seriesOf(file: string, uid: string): ICAL.Event | undefined {
+    return calendarOf(file).series.find(
+        (series: ICAL.Event): boolean => series.uid === uid,
+    );
+}
+
 /** Gives the bounds of a {@link Range} in the form of an {@link Entry}. */
 function boundsOf(allDay: boolean, range: Range): [string, string] {
     return allDay ? range.days : range.instants;
@@ -1025,9 +1032,7 @@ export function occurrenceLookup(
         );
         if (changed !== undefined) return [file, changed];
 
-        const series: ICAL.Event | undefined = calendar.series.find(
-            (candidate: ICAL.Event): boolean => candidate.uid === id,
-        );
+        const series: ICAL.Event | undefined = seriesOf(file, id);
         const day: string = recurrence.slice(0, 10);
         const range: Range = {
             days: [day, dayAdd(day, 1)],
@@ -1072,13 +1077,18 @@ function writeCheck(file: string): void {
 function linesRead(file: string): FileLines {
     const text: string = readFileSync(file, "utf8");
     const newline: string = text.includes("\r\n") ? "\r\n" : "\n";
-    const lines: string[] = [];
-    text.split(newline).forEach((line: string): void => {
-        if (/^[ \t]/.test(line) && lines.length > 0)
-            lines[lines.length - 1] += line.slice(1);
-        else lines.push(line);
+    return { lines: unfold(text.split(newline)), newline: newline };
+}
+
+/** Joins each folded line to the line before. */
+function unfold(lines: string[]): string[] {
+    const joined: string[] = [];
+    lines.forEach((line: string): void => {
+        if (/^[ \t]/.test(line) && joined.length > 0)
+            joined[joined.length - 1] += line.slice(1);
+        else joined.push(line);
     });
-    return { lines: lines, newline: newline };
+    return joined;
 }
 
 /** Types of the entries of a module in the order they stand in its file. */
@@ -1122,15 +1132,6 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
     });
     if (block !== null) return lines;
 
-    const timeOf: (component: string[], name: string) => string = (
-        component: string[],
-        name: string,
-    ): string => {
-        const line: string = unfoldedOf(component, name);
-        return line === ""
-            ? ""
-            : textOf(ICAL.Property.fromString(line).getFirstValue() as ICAL.Time);
-    };
     const typeOf: (component: string[]) => string = (component: string[]): string => {
         const summary: string = unfoldedOf(component, "SUMMARY");
         return summary === ""
@@ -1509,6 +1510,48 @@ function unfoldedOf(event: string[], name: string): string {
 }
 
 /**
+ * Reads a time property of an event or a to-do in the form of {@link Entry},
+ * empty for none.
+ */
+function timeOf(component: string[], name: string): string {
+    const line: string = unfoldedOf(component, name);
+    return line === ""
+        ? ""
+        : textOf(ICAL.Property.fromString(line).getFirstValue() as ICAL.Time);
+}
+
+/** Reads the `UID` of an event or a to-do. */
+function uidOf(component: string[]): string {
+    return unfoldedOf(component, "UID").replace(/^UID:/i, "");
+}
+
+/**
+ * Finds the lines of every event or to-do of the lines of a file,
+ * with a `UID` given only those of it.
+ * - `closed`: An `END:` closes its component, so a stray one after it counts for none,
+ *   as removing a series and putting its title read a file.
+ *
+ * @returns Index of each line `BEGIN:` and of the line after its `END:`
+ */
+function placesOf(
+    lines: string[],
+    uid?: string,
+    closed: boolean = false,
+): [number, number][] {
+    const found: [number, number][] = [];
+    let begin: number = -1;
+    lines.forEach((line: string, index: number): void => {
+        if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO") begin = index;
+        else if ((line === "END:VEVENT" || line === "END:VTODO") && begin !== -1) {
+            if (uid === undefined || uidOf(lines.slice(begin, index + 1)) === uid)
+                found.push([begin, index + 1]);
+            if (closed) begin = -1;
+        }
+    });
+    return found;
+}
+
+/**
  * Finds the lines of every event or to-do with an identifier, see {@link entryIdOf}:
  * with its `UID` and without `RECURRENCE-ID`, or, for an identifier with `#`,
  * with the `UID` before it and the `RECURRENCE-ID` after it, compared as instants.
@@ -1519,27 +1562,12 @@ function componentsOf(lines: string[], id: string): [number, number][] {
     const at: number = id.lastIndexOf("#");
     const uid: string = at === -1 ? id : id.slice(0, at);
     const recurrence: string = at === -1 ? "" : id.slice(at + 1);
-    const found: [number, number][] = [];
-    let begin: number = -1;
-    lines.forEach((line: string, index: number): void => {
-        if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO") begin = index;
-        else if ((line === "END:VEVENT" || line === "END:VTODO") && begin !== -1) {
-            const event: string[] = lines.slice(begin, index + 1);
-            const changed: string = unfoldedOf(event, "RECURRENCE-ID");
-            const start: string =
-                changed === ""
-                    ? ""
-                    : textOf(
-                          ICAL.Property.fromString(changed).getFirstValue() as ICAL.Time,
-                      );
-            if (
-                unfoldedOf(event, "UID").replace(/^UID:/i, "") === uid &&
-                start === recurrence
-            )
-                found.push([begin, index + 1]);
-        }
+    // The RECURRENCE-ID of every component is read, so a broken one throws.
+    return placesOf(lines).filter((place: [number, number]): boolean => {
+        const component: string[] = lines.slice(...place);
+        const start: string = timeOf(component, "RECURRENCE-ID");
+        return uidOf(component) === uid && start === recurrence;
     });
-    return found;
 }
 
 /**
@@ -1586,9 +1614,7 @@ export function occurrenceOwn(file: string, entry: Entry): void {
     const text: FileLines = linesRead(file);
     if (componentsOf(text.lines, entryIdOf(entry)).length > 0) return;
 
-    const series: ICAL.Event | undefined = calendarOf(file).series.find(
-        (candidate: ICAL.Event): boolean => candidate.uid === entry.id,
-    );
+    const series: ICAL.Event | undefined = seriesOf(file, entry.id);
     if (series === undefined) throw new Error(`No series ${entry.id} in ${file}`);
     const start: ICAL.Time | undefined = seriesStartOf(series, entry.recurrence);
     if (start === undefined) throw new Error(`No occurrence ${entryIdOf(entry)}`);
@@ -1656,61 +1682,34 @@ function occurrenceLinesOf(
 export function occurrencesTidy(file: string, uid: string): void {
     writeCheck(file);
     const text: FileLines = linesRead(file);
-    const series: ICAL.Event | undefined = calendarOf(file).series.find(
-        (candidate: ICAL.Event): boolean => candidate.uid === uid,
-    );
+    const series: ICAL.Event | undefined = seriesOf(file, uid);
     const master: [number, number] | undefined = componentsOf(text.lines, uid)[0];
     if (series === undefined || master === undefined) return;
     const lines: string[] = text.lines.slice(...master);
-    const plain: (lines: string[]) => string[] = (lines: string[]): string[] =>
-        lines
-            .reduce(
-                (unfolded: string[], line: string): string[] =>
-                    /^[ \t]/.test(line)
-                        ? [
-                              ...unfolded.slice(0, -1),
-                              `${unfolded[unfolded.length - 1]}${line.slice(1)}`,
-                          ]
-                        : [...unfolded, line],
-                [],
-            )
-            .filter(
+    const plain: (lines: string[]) => string = (lines: string[]): string =>
+        JSON.stringify(
+            unfold(lines).filter(
                 (line: string): boolean =>
                     !/^DTSTAMP[:;]/i.test(line) && !/^STATUS:NEEDS-ACTION$/i.test(line),
-            );
-    const places: [number, number][] = [];
-    let begin: number = -1;
-    text.lines.forEach((read: string, index: number): void => {
-        if (read === "BEGIN:VEVENT" || read === "BEGIN:VTODO") begin = index;
-        else if ((read === "END:VEVENT" || read === "END:VTODO") && begin !== -1) {
-            const component: string[] = text.lines.slice(begin, index + 1);
-            if (
-                unfoldedOf(component, "UID").replace(/^UID:/i, "") === uid &&
-                unfoldedOf(component, "RECURRENCE-ID") !== ""
-            )
-                places.unshift([begin, index + 1]);
-        }
-    });
-    let gone: number = 0;
-    places.forEach(([first, after]: [number, number]): void => {
-        const own: string[] = text.lines.slice(first, after);
-        const start: ICAL.Time | undefined = seriesStartOf(
-            series,
-            textOf(
-                ICAL.Property.fromString(
-                    unfoldedOf(own, "RECURRENCE-ID"),
-                ).getFirstValue() as ICAL.Time,
             ),
         );
-        if (
-            start === undefined ||
-            JSON.stringify(plain(linesOrdered(own))) !==
-                JSON.stringify(plain(occurrenceLinesOf(series, lines, start)))
-        )
-            return;
-        text.lines.splice(first, after - first);
-        gone++;
-    });
+    let gone: number = 0;
+    placesOf(text.lines, uid)
+        .reverse()
+        .forEach(([first, after]: [number, number]): void => {
+            const own: string[] = text.lines.slice(first, after);
+            const recurrence: string = timeOf(own, "RECURRENCE-ID");
+            if (recurrence === "") return;
+            const start: ICAL.Time | undefined = seriesStartOf(series, recurrence);
+            if (
+                start === undefined ||
+                plain(linesOrdered(own)) !==
+                    plain(occurrenceLinesOf(series, lines, start))
+            )
+                return;
+            text.lines.splice(first, after - first);
+            gone++;
+        });
     if (gone > 0) linesWrite(file, text);
 }
 
@@ -2440,24 +2439,11 @@ export function seriesRemove(file: string, uid: string): boolean {
     const text: FileLines = linesRead(file);
     if (componentsOf(text.lines, uid).length === 0)
         throw new Error(`No series ${uid} in ${file}`);
-    const all: [number, number][] = [];
-    let begin: number = -1;
-    text.lines.forEach((read: string, index: number): void => {
-        if (read === "BEGIN:VEVENT" || read === "BEGIN:VTODO") begin = index;
-        else if ((read === "END:VEVENT" || read === "END:VTODO") && begin !== -1) {
-            if (
-                unfoldedOf(text.lines.slice(begin, index + 1), "UID").replace(
-                    /^UID:/i,
-                    "",
-                ) === uid
-            )
-                all.unshift([begin, index + 1]);
-            begin = -1;
-        }
-    });
-    all.forEach(([first, after]: [number, number]): void => {
-        text.lines.splice(first, after - first);
-    });
+    placesOf(text.lines, uid, true)
+        .reverse()
+        .forEach(([first, after]: [number, number]): void => {
+            text.lines.splice(first, after - first);
+        });
     linesWrite(file, text);
     return !text.lines.some(
         (line: string): boolean => line === "BEGIN:VEVENT" || line === "BEGIN:VTODO",
@@ -2477,9 +2463,7 @@ export function seriesRemove(file: string, uid: string): boolean {
  */
 export function seriesDayRemove(file: string, uid: string, recurrence: string): void {
     writeCheck(file);
-    const series: ICAL.Event | undefined = calendarOf(file).series.find(
-        (candidate: ICAL.Event): boolean => candidate.uid === uid,
-    );
+    const series: ICAL.Event | undefined = seriesOf(file, uid);
     const start: ICAL.Time | undefined =
         series === undefined ? undefined : seriesStartOf(series, recurrence);
     if (series === undefined || start === undefined)
@@ -2527,9 +2511,7 @@ export function seriesDayRemove(file: string, uid: string, recurrence: string): 
  */
 export function seriesDayRestore(file: string, uid: string, recurrence: string): void {
     writeCheck(file);
-    const series: ICAL.Event | undefined = calendarOf(file).series.find(
-        (candidate: ICAL.Event): boolean => candidate.uid === uid,
-    );
+    const series: ICAL.Event | undefined = seriesOf(file, uid);
     const excluded: ICAL.Property[] = series?.component.getAllProperties("exdate") ?? [];
     const kept: ICAL.Property[] = excluded.filter(
         (property: ICAL.Property): boolean =>
@@ -2565,9 +2547,7 @@ export function seriesDayRestore(file: string, uid: string, recurrence: string):
  */
 export function seriesCut(file: string, uid: string, last: string): void {
     writeCheck(file);
-    const series: ICAL.Event | undefined = calendarOf(file).series.find(
-        (candidate: ICAL.Event): boolean => candidate.uid === uid,
-    );
+    const series: ICAL.Event | undefined = seriesOf(file, uid);
     const end: ICAL.Time | undefined =
         series === undefined ? undefined : seriesStartOf(series, last);
     if (series === undefined || end === undefined)
@@ -2630,11 +2610,7 @@ function seriesDatesRead(series: ICAL.Event): ICAL.Time[] {
 export function seriesDatesOf(sources: CalendarSource[], uid: string): string[] {
     const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(sources, uid);
     const series: ICAL.Event | undefined =
-        found === undefined
-            ? undefined
-            : calendarOf(found[0]).series.find(
-                  (candidate: ICAL.Event): boolean => candidate.uid === uid,
-              );
+        found === undefined ? undefined : seriesOf(found[0], uid);
     return series === undefined ? [] : seriesDatesRead(series).map(textOf);
 }
 
@@ -2707,9 +2683,7 @@ export function seriesLookup(
     uid: string,
 ): [string, Entry, ICAL.Recur] | undefined {
     for (const file of filesOf(sources)) {
-        const series: ICAL.Event | undefined = calendarOf(file).series.find(
-            (candidate: ICAL.Event): boolean => candidate.uid === uid,
-        );
+        const series: ICAL.Event | undefined = seriesOf(file, uid);
         const rule: unknown = series?.component.getFirstPropertyValue("rrule");
         if (series !== undefined && rule instanceof ICAL.Recur)
             return [file, entryOf(series, series.startDate, series.endDate, file), rule];
@@ -2763,25 +2737,17 @@ export function seriesWrite(
         propertyPut(component, "rrule", [ownPropertyOf("rrule", rule)]);
     };
     componentFind(text.lines, uid);
-    const places: [number, number][] = [];
-    let begin: number = -1;
-    text.lines.forEach((read: string, index: number): void => {
-        if (read === "BEGIN:VEVENT" || read === "BEGIN:VTODO") begin = index;
-        else if (
-            read === "END:VTODO" &&
-            begin !== -1 &&
-            unfoldedOf(text.lines.slice(begin, index + 1), "UID").replace(
-                /^UID:/i,
-                "",
-            ) === uid
+    placesOf(text.lines, uid)
+        .filter(
+            ([, after]: [number, number]): boolean =>
+                text.lines[after - 1] === "END:VTODO",
         )
-            places.unshift([begin, index + 1]);
-    });
-    places.forEach(([first, after]: [number, number]): void => {
-        const component: string[] = text.lines.slice(first, after);
-        put(component, unfoldedOf(component, "RECURRENCE-ID") === "");
-        text.lines.splice(first, after - first, ...linesOrdered(component));
-    });
+        .reverse()
+        .forEach(([first, after]: [number, number]): void => {
+            const component: string[] = text.lines.slice(first, after);
+            put(component, unfoldedOf(component, "RECURRENCE-ID") === "");
+            text.lines.splice(first, after - first, ...linesOrdered(component));
+        });
     linesWrite(file, text);
     occurrencesTidy(file, uid);
 }
@@ -2930,26 +2896,13 @@ export function seriesTitlePut(file: string, uid: string, fields: EntryTexts): v
     writeCheck(file);
     const text: FileLines = linesRead(file);
     const summary: ICAL.Property = textPropertyOf("summary", fields.title, fields);
-    const all: [number, number][] = [];
-    let begin: number = -1;
-    text.lines.forEach((read: string, index: number): void => {
-        if (read === "BEGIN:VEVENT" || read === "BEGIN:VTODO") begin = index;
-        else if ((read === "END:VEVENT" || read === "END:VTODO") && begin !== -1) {
-            if (
-                unfoldedOf(text.lines.slice(begin, index + 1), "UID").replace(
-                    /^UID:/i,
-                    "",
-                ) === uid
-            )
-                all.unshift([begin, index + 1]);
-            begin = -1;
-        }
-    });
-    all.forEach(([first, after]: [number, number]): void => {
-        const component: string[] = text.lines.slice(first, after);
-        propertyPut(component, "summary", fields.title === "" ? [] : [summary]);
-        text.lines.splice(first, after - first, ...linesOrdered(component));
-    });
+    placesOf(text.lines, uid, true)
+        .reverse()
+        .forEach(([first, after]: [number, number]): void => {
+            const component: string[] = text.lines.slice(first, after);
+            propertyPut(component, "summary", fields.title === "" ? [] : [summary]);
+            text.lines.splice(first, after - first, ...linesOrdered(component));
+        });
     linesWrite(file, text);
 }
 
@@ -2999,27 +2952,11 @@ export function attendeesRename(
     let count: number = 0;
     filesOf(sources).forEach((file: string): void => {
         const text: FileLines = linesRead(file);
-        const places: [number, number][] = [];
-        let begin: number = -1;
-        text.lines.forEach((line: string, index: number): void => {
-            if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO") begin = index;
-            else if ((line === "END:VEVENT" || line === "END:VTODO") && begin !== -1)
-                places.unshift([begin, index + 1]);
-        });
+        const places: [number, number][] = placesOf(text.lines).reverse();
         const named: number = count;
         places.forEach(([first, after]: [number, number]): void => {
             const component: string[] = text.lines.slice(first, after);
-            const unfolded: string[] = component.reduce(
-                (lines: string[], part: string): string[] =>
-                    /^[ \t]/.test(part) && lines.length > 0
-                        ? [
-                              ...lines.slice(0, -1),
-                              `${lines[lines.length - 1]}${part.slice(1)}`,
-                          ]
-                        : [...lines, part],
-                [],
-            );
-            const people: ICAL.Property[] = unfolded
+            const people: ICAL.Property[] = unfold(component)
                 .filter((line: string): boolean => /^ATTENDEE[;:]/i.test(line))
                 .map((line: string): ICAL.Property => ICAL.Property.fromString(line));
             let renamed: boolean = false;
@@ -3171,13 +3108,7 @@ export function placeLinesRename(
     let count: number = 0;
     filesOf(sources).forEach((file: string): void => {
         const text: FileLines = linesRead(file);
-        const places: [number, number][] = [];
-        let begin: number = -1;
-        text.lines.forEach((line: string, index: number): void => {
-            if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO") begin = index;
-            else if ((line === "END:VEVENT" || line === "END:VTODO") && begin !== -1)
-                places.unshift([begin, index + 1]);
-        });
+        const places: [number, number][] = placesOf(text.lines).reverse();
         const named: number = count;
         places.forEach(([first, after]: [number, number]): void => {
             const component: string[] = text.lines.slice(first, after);
