@@ -18,12 +18,7 @@
  * - `./sources.ts`: Names the folder of my modules.
  */
 
-import {
-    readFileSync,
-    realpathSync,
-    statSync,
-    writeFileSync,
-} from "node:fs";
+import { readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, sep } from "node:path";
 import { diffArrays } from "diff";
 import { editor } from "./sources.ts";
