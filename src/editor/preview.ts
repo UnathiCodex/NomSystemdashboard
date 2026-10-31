@@ -728,7 +728,8 @@ class BlockWidget extends WidgetType {
      * Renders the blocks; once an image of them is loaded,
      * the editor measures its lines again.
      * A table of them wider than the page scrolls sideways on its own,
-     * see {@link tableMeasure}, measured again whenever its size changes,
+     * marked so, see `.markdown table.is-wide` in `../notes/notes.css`,
+     * framed and as high as all its rows, measured again whenever its size changes,
      * like when the window narrows, and the editor measures its lines again;
      * every code block of them names its language by the list at its top right,
      * see {@link fencesOf},
@@ -800,7 +801,10 @@ class BlockWidget extends WidgetType {
                 table.replaceWith(frame);
                 frame.append(table, open);
                 new ResizeObserver((): void => {
-                    tableMeasure(table);
+                    table.classList.toggle(
+                        "is-wide",
+                        table.scrollWidth > table.clientWidth,
+                    );
                     view.requestMeasure();
                 }).observe(table);
             });
@@ -997,16 +1001,17 @@ function blockPlaceOf(
         event.clientX,
         event.clientY,
     );
-    const cell: HTMLTableCellElement | null = (event.target as Element).closest("td, th");
-    if (cell !== null) return cellPlaceOf(view, from, to, cell, caret);
-
     const text: string =
         caret?.offsetNode.nodeType === Node.TEXT_NODE
             ? (caret.offsetNode.textContent ?? "")
             : "";
+    const offset: number = caret?.offset ?? 0;
+    const cell: HTMLTableCellElement | null = (event.target as Element).closest("td, th");
+    if (cell !== null) return cellPlaceOf(view, from, to, cell, text, offset);
+
     const at: number =
         text.trim() === "" ? -1 : view.state.sliceDoc(from, to).indexOf(text);
-    return at === -1 ? to : from + at + (caret?.offset ?? 0);
+    return at === -1 ? to : from + at + offset;
 }
 
 /**
@@ -1016,6 +1021,7 @@ function blockPlaceOf(
  * in the row the text of the cell, after its `|`,
  * at the letter clicked where the cell's text holds it as it is,
  * like a number, else at its start, like for a formula.
+ * - `text`, `offset`: The text node clicked and the place in it, see {@link blockPlaceOf}.
  * - `bars`: How many `|` stand before the cell's text so far,
  *   escaped ones like in `[[…\|…]]` not counted.
  */
@@ -1024,7 +1030,8 @@ function cellPlaceOf(
     from: number,
     to: number,
     cell: HTMLTableCellElement,
-    caret: CaretPosition | null,
+    text: string,
+    offset: number,
 ): number {
     const table: HTMLTableElement = cell.closest("table") as HTMLTableElement;
     const tables: HTMLTableElement[] = [
@@ -1052,10 +1059,6 @@ function cellPlaceOf(
                 index + 1 + (/^[ \t]*/.exec(line.text.slice(index + 1))?.[0].length ?? 0);
             break;
         }
-    const text: string =
-        caret?.offsetNode.nodeType === Node.TEXT_NODE
-            ? (caret.offsetNode.textContent ?? "")
-            : "";
     const at: number =
         text.trim() === ""
             ? -1
@@ -1063,7 +1066,7 @@ function cellPlaceOf(
                   .slice(start)
                   .split(/(?<!\\)\|/)[0]
                   .indexOf(text);
-    return line.from + start + (at === -1 ? 0 : at + (caret?.offset ?? 0));
+    return line.from + start + (at === -1 ? 0 : at + offset);
 }
 
 /**
@@ -1136,11 +1139,6 @@ function touched(look: Look, from: number, to: number): boolean {
     );
 }
 
-/** Tells whether the cursor or a selection lies on a line of a stretch of the text. */
-function linesTouched(look: Look, from: number, to: number): boolean {
-    return touched(look, look.state.doc.lineAt(from).from, look.state.doc.lineAt(to).to);
-}
-
 /**
  * Tells whether a block is a callout,
  * a quote whose first line is like `> [!note] Title`, see {@link calloutRule}.
@@ -1152,6 +1150,11 @@ function calloutIs(look: Look, node: SyntaxNode): boolean {
             look.state.sliceDoc(node.from, look.state.doc.lineAt(node.from).to),
         )
     );
+}
+
+/** Draws a widget in place of a stretch of the text. */
+function widgetPut(look: Look, widget: WidgetType, from: number, to: number): void {
+    look.decorations.push(Decoration.replace({ widget: widget }).range(from, to));
 }
 
 /** Hides a stretch of markup. */
@@ -1339,12 +1342,7 @@ function imageLook(look: Look, node: SyntaxNode): boolean {
     const target: string = address.split("#")[0].trim();
     const path: string | null | undefined = look.links[target];
     if (imageRule.test(target) && typeof path === "string")
-        look.decorations.push(
-            Decoration.replace({ widget: new ImageWidget(fileAddressOf(path)) }).range(
-                node.from,
-                node.to,
-            ),
-        );
+        widgetPut(look, new ImageWidget(fileAddressOf(path)), node.from, node.to);
     return false;
 }
 
@@ -1415,24 +1413,14 @@ function linkAddressOf(
 
 /**
  * Look of the text of a rendered link, see {@link linkAddressOf}:
- * followed by a click, faded when it leads nowhere, see {@link unresolvedOf},
- * or opens only on the computer, see {@link computerOnly}.
- */
-function linkMarkOf(state: EditorState, target: string): Decoration {
-    const address: string | null = linkAddressOf(state, target, "");
-    return address === null
-        ? unresolvedOf(target)
-        : address === ""
-          ? computerOnly
-          : followable;
-}
-
-/**
- * Text of a link that leads nowhere: faded and dotted below,
+ * followed by a click; faded when it opens only on the computer, see {@link computerOnly};
+ * when it leads nowhere faded and dotted below,
  * as in the scripts view, its tooltip naming what it looked for,
  * so a broken source stands out, and no click follows it.
  */
-function unresolvedOf(target: string): Decoration {
+function linkMarkOf(state: EditorState, target: string): Decoration {
+    const address: string | null = linkAddressOf(state, target, "");
+    if (address !== null) return address === "" ? computerOnly : followable;
     return Decoration.mark({
         class: "is-unresolved",
         attributes: { title: `Leads nowhere: ${target}` },
@@ -1458,12 +1446,7 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
         ? 0
         : (punctuationRule.exec(after)?.[0].length ?? 0);
     if (!touched(look, node.from, node.to)) {
-        look.decorations.push(
-            Decoration.replace({ widget: new MathWidget(tex, display, false) }).range(
-                node.from,
-                node.to,
-            ),
-        );
+        widgetPut(look, new MathWidget(tex, display, false), node.from, node.to);
         if (punctuation > 0)
             look.decorations.push(unbroken.range(node.from, node.to + punctuation));
     } else if (display) {
@@ -1894,12 +1877,7 @@ function taskBoxLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
     const done: boolean = /x/i.test(look.state.sliceDoc(node.from, node.to));
     if (!touched(look, line.from, line.to))
-        look.decorations.push(
-            Decoration.replace({ widget: new TaskBoxWidget(done) }).range(
-                node.from,
-                node.to,
-            ),
-        );
+        widgetPut(look, new TaskBoxWidget(done), node.from, node.to);
     return false;
 }
 
@@ -1941,21 +1919,17 @@ function htmlTagLook(look: Look, node: SyntaxNode): boolean {
     )
         table ||= parent.name === "Table";
     if (tagName !== undefined && !table && !touched(look, node.from, node.to))
-        look.decorations.push(
-            Decoration.replace({ widget: new BreakWidget(tagName) }).range(
-                node.from,
-                node.to,
-            ),
-        );
+        widgetPut(look, new BreakWidget(tagName), node.from, node.to);
     return false;
 }
 
 /**
  * Marker `>` of a quote, hidden,
- * on the line of the cursor shown left of the text, which keeps its place.
+ * on the line of the cursor or a selection shown left of the text, which keeps its place.
  */
 function quoteMarkLook(look: Look, node: SyntaxNode): boolean {
-    if (linesTouched(look, node.from, node.to))
+    const line: Line = look.state.doc.lineAt(node.from);
+    if (touched(look, line.from, look.state.doc.lineAt(node.to).to))
         look.decorations.push(hanging.range(node.from, markEndOf(look, node)));
     else hide(look, node.from, markEndOf(look, node));
     return true;
@@ -2336,26 +2310,8 @@ export function headingShow(view: EditorView, heading: string): void {
 }
 
 /**
- * Measures a table drawn in the note, see {@link BlockWidget}:
- * one wider than the page is marked so,
- * see `.markdown table.is-wide` in `../notes/notes.css`,
- * framed and scrolling sideways, as high as all its rows.
- */
-function tableMeasure(table: HTMLTableElement): void {
-    table.classList.toggle("is-wide", table.scrollWidth > table.clientWidth);
-}
-
-/** Scrolls the page so a row of a table stands a third down its height. */
-function thirdScroll(scroller: HTMLElement, row: HTMLElement): void {
-    scroller.scrollTop +=
-        row.getBoundingClientRect().top -
-        scroller.getBoundingClientRect().top -
-        scroller.clientHeight / 3;
-}
-
-/**
  * Shows a row of a table, the first whose first cell reads a text,
- * a third down the page, see {@link thirdScroll}, and marks it,
+ * a third down the page, and marks it,
  * see `.row-shown` in `./editor.css`,
  * until its table shows as text; nothing when no row reads the text.
  * A table not drawn yet, far down the note,
@@ -2392,7 +2348,10 @@ export function rowShow(view: EditorView, text: string): void {
         const page: HTMLElement | null = view.dom.closest<HTMLElement>(".editor-file");
         if (row === undefined || page === null) return;
         row.classList.add("row-shown");
-        thirdScroll(page, row);
+        page.scrollTop +=
+            row.getBoundingClientRect().top -
+            page.getBoundingClientRect().top -
+            page.clientHeight / 3;
     });
 }
 
