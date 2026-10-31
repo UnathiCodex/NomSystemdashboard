@@ -119,7 +119,8 @@ const listItemRule: RegExp = /^([ \t]*)([-*+]|\d{1,9}[.)])([ \t]+|$)/;
  * a heading, quote, fence, table row, HTML or rule.
  * A line with `$$` goes on with it, so a formula stays whole.
  */
-const blockStartRule: RegExp = /^[ \t]*(?:#{1,6}(?:[ \t]|$)|>|```|~~~|\||<|(?:[-*_][ \t]*){3,}$)/;
+const blockStartRule: RegExp =
+    /^[ \t]*(?:#{1,6}(?:[ \t]|$)|>|```|~~~|\||<|(?:[-*_][ \t]*){3,}$)/;
 
 /**
  * Text of a heading that opens a solution, like `Solution` or `Solution (own, unchecked)`.
@@ -197,7 +198,8 @@ function lazyLinesIndented(markdown: string): string {
         const signs: number = (line.match(/\$\$/g) ?? []).length;
         if (signs % 2 === 1) open = !open;
     }
-    const markdownAt: (index: number) => boolean = (index: number): boolean => !tex[index];
+    const markdownAt: (index: number) => boolean = (index: number): boolean =>
+        !tex[index];
 
     let listed: boolean = false;
     let fenced: boolean = false;
@@ -235,7 +237,8 @@ function lazyLinesIndented(markdown: string): string {
             item === null
                 ? (/^[ \t]*/.exec(above)?.[0] ?? "")
                 : item[1] + " ".repeat(item[2].length + item[3].length);
-        if (columnsOf(line) < columnsOf(indentation)) lines[index] = indentation + line.trimStart();
+        if (columnsOf(line) < columnsOf(indentation))
+            lines[index] = indentation + line.trimStart();
     }
     return lines.join("\n");
 }
@@ -302,7 +305,9 @@ const mathBlock: TokenizerAndRendererExtension = {
     start: (src: string): number | undefined => src.match(/^ {0,3}\$\$[^$\n]*\n/m)?.index,
     tokenizer: (src: string): Tokens.Generic | undefined => {
         const match: RegExpExecArray | null = mathBlockRule.exec(src);
-        return match === null ? undefined : { type: "mathBlock", raw: match[0], tex: match[1] };
+        return match === null
+            ? undefined
+            : { type: "mathBlock", raw: match[0], tex: match[1] };
     },
     renderer: (token: Tokens.Generic): string =>
         `<div class="math math-block">${escaped(token.tex)}</div>`,
@@ -327,7 +332,9 @@ const mathInline: TokenizerAndRendererExtension = {
         const match: RegExpExecArray | null = display ?? mathInlineRule.exec(src);
         if (match === null) return undefined;
         const punctuation: string =
-            display === null ? (punctuationRule.exec(src.slice(match[0].length))?.[0] ?? "") : "";
+            display === null
+                ? (punctuationRule.exec(src.slice(match[0].length))?.[0] ?? "")
+                : "";
         return {
             type: "mathInline",
             raw: match[0] + punctuation,
@@ -367,7 +374,8 @@ const callout: TokenizerAndRendererExtension = {
         const [raw, kind, fold, title, lines]: string[] = match;
         const titleTokens: Token[] = [];
         this.lexer.inline(
-            title.trim() || `${kind.charAt(0).toUpperCase()}${kind.slice(1).toLowerCase()}`,
+            title.trim() ||
+                `${kind.charAt(0).toUpperCase()}${kind.slice(1).toLowerCase()}`,
             titleTokens,
         );
         return {
@@ -424,12 +432,14 @@ const wikiLink: TokenizerAndRendererExtension = {
     },
     renderer: (token: Tokens.Generic): string => {
         const data: string = `data-link="${escaped(token.target)}" data-heading="${escaped(token.heading)}"`;
-        const ending: string = /\.([a-z\d]+)$/i.exec(token.target)?.[1].toLowerCase() ?? "md";
+        const ending: string =
+            /\.([a-z\d]+)$/i.exec(token.target)?.[1].toLowerCase() ?? "md";
         const name: string = [token.target, token.heading]
             .filter((part: string): boolean => part !== "")
             .join(" > ");
 
-        if (token.embed && ending === "md") return `<div class="markdown-embed" ${data}></div>`;
+        if (token.embed && ending === "md")
+            return `<div class="markdown-embed" ${data}></div>`;
         return `<a class="internal-link" ${data}>${escaped(token.text === "" ? name : token.text)}</a>`;
     },
 };
@@ -525,7 +535,8 @@ function sectionsFolded(
         block.type === "heading" && block.depth <= depth;
     for (let start: number = 0; start < tokens.length; start++) {
         const heading: Token = tokens[start];
-        if (heading.type !== "heading" || heading.depth !== depth || !folds(heading.text)) continue;
+        if (heading.type !== "heading" || heading.depth !== depth || !folds(heading.text))
+            continue;
 
         let end: number = start + 1;
         while (end < tokens.length && !sectionEnds(tokens[end])) end++;
@@ -647,7 +658,11 @@ const markdown: Marked = new Marked({
     extensions: [mathBlock, mathInline, callout, wikiLink, emptyLines, fold],
     tokenizer: { html: htmlBlockOf },
     renderer: { heading: headingOf, link: linkOf, image: imageOf, code: codeOf },
-    hooks: { preprocess: preprocess, emStrongMask: emStrongMask, processAllTokens: blocksMade },
+    hooks: {
+        preprocess: preprocess,
+        emStrongMask: emStrongMask,
+        processAllTokens: blocksMade,
+    },
 });
 
 /**
@@ -676,7 +691,8 @@ export function htmlOf(note: string): string {
         .querySelectorAll<HTMLElement>(".empty-lines")
         .forEach((lines: HTMLElement): void => {
             let above: Element | null = lines;
-            while (above !== null && above.nextElementSibling === null) above = above.parentElement;
+            while (above !== null && above.nextElementSibling === null)
+                above = above.parentElement;
             const below: HTMLElement | null = (above?.nextElementSibling ??
                 null) as HTMLElement | null;
             below?.style.setProperty("--empty-lines", lines.dataset.lines ?? "0");

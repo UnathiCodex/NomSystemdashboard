@@ -207,7 +207,13 @@ const withField: Field = {
  * Field `Online` of every category, what I did online, below its place, see the top of this file;
  * its values the reader gives from `Online.md`, see {@link categoriesRead}.
  */
-const onlineField: Field = { name: "Online", key: "online", values: [], steps: {}, fixed: false };
+const onlineField: Field = {
+    name: "Online",
+    key: "online",
+    values: [],
+    steps: {},
+    fixed: false,
+};
 
 /**
  * Builds a category with the fields `Summary`, `Place`, `Online` and `With`,
@@ -267,7 +273,16 @@ const sleepWhats: string[] = ["Night", "Day"];
  * `Walk`, `Bike`, `Bus`, `Tram`, `U-Bahn`, `S-Bahn`, `Train` and `Car`;
  * a way may use several, since I change on it, parted by `, `, like `U-Bahn, Bus`.
  */
-const transports: string[] = ["Walk", "Bike", "Bus", "Tram", "U-Bahn", "S-Bahn", "Train", "Car"];
+const transports: string[] = [
+    "Walk",
+    "Bike",
+    "Bus",
+    "Tram",
+    "U-Bahn",
+    "S-Bahn",
+    "Train",
+    "Car",
+];
 
 /**
  * Categories the dialog leaves out, though the reader takes them: `Drink`,
@@ -279,7 +294,9 @@ const hiddenNames: string[] = ["Drink"];
  * Whats a category no longer offers, by category, also where the log holds them:
  * the neck routine of `Body`, which is my body care now, see {@link neckRoutines}.
  */
-const retiredWhats: { [category: string]: string[] } = { Body: Object.keys(neckRoutines) };
+const retiredWhats: { [category: string]: string[] } = {
+    Body: Object.keys(neckRoutines),
+};
 
 /**
  * Categories with their fields, in the order of their importance for my life,
@@ -297,7 +314,13 @@ const categories: Category[] = [
     {
         name: "Sleep",
         fields: [
-            { name: "Summary", key: "title", values: sleepWhats, steps: {}, fixed: false },
+            {
+                name: "Summary",
+                key: "title",
+                values: sleepWhats,
+                steps: {},
+                fixed: false,
+            },
             { name: "Place", key: "location", values: [], steps: {}, fixed: false },
             onlineField,
             withField,
@@ -340,7 +363,14 @@ const categories: Category[] = [
     {
         name: "Manage",
         fields: [
-            { name: "Summary", key: "title", values: [], steps: {}, fixed: false, many: true },
+            {
+                name: "Summary",
+                key: "title",
+                values: [],
+                steps: {},
+                fixed: false,
+                many: true,
+            },
             { name: "Place", key: "location", values: [], steps: {}, fixed: false },
             onlineField,
             withField,
@@ -399,7 +429,8 @@ export function semesterOf(day: string): string {
  */
 export function semesterFor(category: string, semester: string, day: string): string {
     if (category !== skillName) return "";
-    if (semester !== "" && !semesterForm.test(semester)) throw new Error(`No semester ${semester}`);
+    if (semester !== "" && !semesterForm.test(semester))
+        throw new Error(`No semester ${semester}`);
     return semester === "" ? semesterOf(day) : semester;
 }
 
@@ -425,7 +456,10 @@ function logsRead(now: string): Entry[] {
  * @returns Every use of a place by its name, like `TUM Innenstadt`, a place as often as it was used
  */
 function placeUsesOf(logs: Entry[]): string[] {
-    return logs.flatMap((log: Entry): string[] => [labelOf(log.location), labelOf(log.from)]);
+    return logs.flatMap((log: Entry): string[] => [
+        labelOf(log.location),
+        labelOf(log.from),
+    ]);
 }
 
 /**
@@ -464,7 +498,11 @@ function titleUsesOf(logs: Entry[], name: string, many: boolean): string[] {
  * @param many - Whether its what takes several values, parted by `, `
  * @returns Params by value, like `Augenheilkunde`
  */
-function paramsOf(logs: Entry[], name: string, many: boolean): { [value: string]: string[] } {
+function paramsOf(
+    logs: Entry[],
+    name: string,
+    many: boolean,
+): { [value: string]: string[] } {
     const uses: string[] = titleUsesOf(logs, name, many).filter(
         (use: string): boolean => summaryBaseOf(use) !== use,
     );
@@ -505,7 +543,9 @@ function peopleUsesOf(logs: Entry[]): string[] {
 function addressesOf(logs: Entry[]): { [name: string]: string } {
     return Object.fromEntries(
         [...logs]
-            .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
+            .sort((first: Entry, second: Entry): number =>
+                first.start.localeCompare(second.start),
+            )
             .flatMap((log: Entry): [string, string][] =>
                 log.attendees.map((attendee: Attendee): [string, string] => [
                     attendee.name,
@@ -528,12 +568,15 @@ function valuesOrder(uses: string[], offered: string[]): string[] {
             .filter((value: string): boolean => value !== "")
             .map((value: string): [string, number] => [value, 0]),
     );
-    uses.filter((value: string): boolean => counts.has(value)).forEach((value: string): void => {
-        counts.set(value, (counts.get(value) ?? 0) + 1);
-    });
+    uses.filter((value: string): boolean => counts.has(value)).forEach(
+        (value: string): void => {
+            counts.set(value, (counts.get(value) ?? 0) + 1);
+        },
+    );
     return [...counts.keys()].sort(
         (first: string, second: string): number =>
-            (counts.get(second) ?? 0) - (counts.get(first) ?? 0) || first.localeCompare(second),
+            (counts.get(second) ?? 0) - (counts.get(first) ?? 0) ||
+            first.localeCompare(second),
     );
 }
 
@@ -554,18 +597,25 @@ function stepsWithNoteOf(
     steps: { [what: string]: string[] },
 ): { [what: string]: string[] } {
     return Object.fromEntries(
-        Object.entries(steps).map(([what, own]: [string, string[]]): [string, string[]] => {
-            const last: Entry | undefined = logs
-                .filter(
-                    (log: Entry): boolean =>
-                        log.category === name && log.title === what && log.note.trim() !== "",
-                )
-                .sort((first: Entry, second: Entry): number =>
-                    first.start.localeCompare(second.start),
-                )
-                .at(-1);
-            return [what, last === undefined ? own : [...own, `Last time: ${last.note.trim()}`]];
-        }),
+        Object.entries(steps).map(
+            ([what, own]: [string, string[]]): [string, string[]] => {
+                const last: Entry | undefined = logs
+                    .filter(
+                        (log: Entry): boolean =>
+                            log.category === name &&
+                            log.title === what &&
+                            log.note.trim() !== "",
+                    )
+                    .sort((first: Entry, second: Entry): number =>
+                        first.start.localeCompare(second.start),
+                    )
+                    .at(-1);
+                return [
+                    what,
+                    last === undefined ? own : [...own, `Last time: ${last.note.trim()}`],
+                ];
+            },
+        ),
     );
 }
 
@@ -613,11 +663,19 @@ export function categoriesRead(now: string): CategoryShown[] {
         platformNames,
     );
     const rowsOnline: { [name: string]: Platform } = Object.fromEntries(
-        platformsRead().map((platform: Platform): [string, Platform] => [platform.name, platform]),
+        platformsRead().map((platform: Platform): [string, Platform] => [
+            platform.name,
+            platform,
+        ]),
     );
-    const rooms: Place[] = roomsRead().filter((room: Place): boolean => !names.includes(room.name));
+    const rooms: Place[] = roomsRead().filter(
+        (room: Place): boolean => !names.includes(room.name),
+    );
     const rows: { [line: string]: Place } = Object.fromEntries(
-        [...mine, ...rooms].map((place: Place): [string, Place] => [lineOf(place), place]),
+        [...mine, ...rooms].map((place: Place): [string, Place] => [
+            lineOf(place),
+            place,
+        ]),
     );
     const people: string[] = valuesOrder(peopleUsesOf(logs), partners.map(personNameOf));
     const addresses: { [name: string]: string } = addressesOf(logs);
@@ -639,23 +697,30 @@ export function categoriesRead(now: string): CategoryShown[] {
                               : [
                                     ...field.values,
                                     ...valuesOrder(
-                                        titleUsesOf(logs, category.name, field.many === true).map(
-                                            summaryBaseOf,
-                                        ),
+                                        titleUsesOf(
+                                            logs,
+                                            category.name,
+                                            field.many === true,
+                                        ).map(summaryBaseOf),
                                         [],
                                     ).filter(
-                                        (value: string): boolean => !field.values.includes(value),
+                                        (value: string): boolean =>
+                                            !field.values.includes(value),
                                     ),
                                 ].filter(
                                     (value: string): boolean =>
-                                        !(retiredWhats[category.name] ?? []).includes(value),
+                                        !(retiredWhats[category.name] ?? []).includes(
+                                            value,
+                                        ),
                                 ),
                 steps: stepsWithNoteOf(logs, category.name, field.steps),
                 rooms: ["location", "from"].includes(field.key) ? rooms.map(lineOf) : [],
                 places: ["location", "from"].includes(field.key) ? rows : {},
                 links: field.key === "with" ? addresses : {},
                 params:
-                    field.key === "title" ? paramsOf(logs, category.name, field.many === true) : {},
+                    field.key === "title"
+                        ? paramsOf(logs, category.name, field.many === true)
+                        : {},
                 platforms: field.key === "online" ? rowsOnline : {},
             })),
         }));
@@ -678,7 +743,9 @@ export function lastPlaceRead(before: string): string {
     const names: string[] = placesRead().map((place: Place): string => place.name);
     const last: Entry | undefined = logsRead(before)
         .filter((log: Entry): boolean => names.includes(labelOf(log.location)))
-        .sort((first: Entry, second: Entry): number => second.start.localeCompare(first.start))[0];
+        .sort((first: Entry, second: Entry): number =>
+            second.start.localeCompare(first.start),
+        )[0];
     return last?.location ?? "";
 }
 
@@ -722,7 +789,10 @@ export function attendeesAllow(attendees: Attendee[]): boolean {
  * @returns Whether the entry may be written
  */
 export function categoryAllows(
-    fields: Omit<EntryTexts, "locationLink" | "titleLink" | "attendees" | keyof Online> & {
+    fields: Omit<
+        EntryTexts,
+        "locationLink" | "titleLink" | "attendees" | keyof Online
+    > & {
         attendees?: Attendee[];
     },
 ): boolean {
@@ -747,7 +817,8 @@ export function categoryAllows(
             : fields.title.trim() !== "" &&
               (!what.fixed ||
                   (what.many === true ? fields.title.split(", ") : [fields.title]).every(
-                      (value: string): boolean => what.values.includes(summaryBaseOf(value)),
+                      (value: string): boolean =>
+                          what.values.includes(summaryBaseOf(value)),
                   ));
     return (
         whatAllowed &&

@@ -84,7 +84,9 @@ async function timerShow(): Promise<void> {
     const timer: HTMLElement = document.getElementById("session-timer") as HTMLElement;
     const running: Running | null = await runningLoad();
     const left: number =
-        running === null ? 0 : Math.ceil((Date.parse(running.end) - Date.now()) / (60 * 1000));
+        running === null
+            ? 0
+            : Math.ceil((Date.parse(running.end) - Date.now()) / (60 * 1000));
     if (running === null || left <= 0) {
         timer.replaceChildren(
             entryPartOf("span", "session-what tracker-name", ["Session"]),

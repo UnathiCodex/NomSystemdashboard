@@ -518,7 +518,8 @@
     min-width: 0;
 }
 
-.panel-pair.series-semester > :is(.series-group-pick:has(.group-name), .series-group-part)::before {
+.panel-pair.series-semester
+    > :is(.series-group-pick:has(.group-name), .series-group-part)::before {
     content: "·";
     margin-inline: 0.2em 0.5em;
 }

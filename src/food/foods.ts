@@ -240,9 +240,8 @@ export function summaryOf(named: { name: string; kind: Kind }[]): string {
  * @returns Grams, like 60, `null` for a text that names no portions or a food without portion
  */
 export function portionGramsOf(text: string, portion: number | null): number | null {
-    const typed: RegExpExecArray | null = /^(\d+(?:[.,]\d+)?)?\s*(st|stk|stück|x)\.?$/i.exec(
-        text.trim(),
-    );
+    const typed: RegExpExecArray | null =
+        /^(\d+(?:[.,]\d+)?)?\s*(st|stk|stück|x)\.?$/i.exec(text.trim());
     return typed === null || portion === null
         ? null
         : Number((typed[1] ?? "1").replace(",", ".")) * portion;
@@ -352,7 +351,10 @@ export async function dishDelete(name: string): Promise<Dish[]> {
  *   like a food by hand with the name, brand and store of one of mine
  */
 export async function foodSend(food: Food): Promise<Food> {
-    return readerAsk<Food>("/api/food/foods", { method: "POST", body: JSON.stringify(food) });
+    return readerAsk<Food>("/api/food/foods", {
+        method: "POST",
+        body: JSON.stringify(food),
+    });
 }
 
 /**
@@ -478,7 +480,8 @@ export function foodNameOf(
 ): HTMLElement {
     const shown: HTMLElement = elementOf("span", className, name);
     const place: string[] = [brand, store].filter((part: string): boolean => part !== "");
-    if (place.length > 0) shown.append(elementOf("span", "food-brand", ` (${place.join(", ")})`));
+    if (place.length > 0)
+        shown.append(elementOf("span", "food-brand", ` (${place.join(", ")})`));
     return shown;
 }
 
@@ -504,7 +507,8 @@ export function bracketsWatch(list: HTMLElement): void {
     const fits: (bracket: HTMLElement) => boolean = (bracket: HTMLElement): boolean => {
         const parts: DOMRectList = bracket.getClientRects();
         const name: Node | null = bracket.parentElement?.firstChild ?? null;
-        if (parts.length === 0 || name === null || name.nodeType !== Node.TEXT_NODE) return true;
+        if (parts.length === 0 || name === null || name.nodeType !== Node.TEXT_NODE)
+            return true;
         const range: Range = document.createRange();
         range.selectNodeContents(name);
         const first: DOMRect | undefined = range.getClientRects()[0];
@@ -517,7 +521,9 @@ export function bracketsWatch(list: HTMLElement): void {
             (bracket: HTMLElement): boolean =>
                 bracket.parentElement?.closest("[data-brackets]") === list,
         );
-        brackets.forEach((bracket: HTMLElement): void => bracket.classList.remove("bracket-below"));
+        brackets.forEach((bracket: HTMLElement): void =>
+            bracket.classList.remove("bracket-below"),
+        );
         const below: boolean = !brackets.every(fits);
         brackets.forEach((bracket: HTMLElement): void => {
             bracket.classList.toggle("bracket-below", below);
@@ -541,7 +547,11 @@ export function bracketsWatch(list: HTMLElement): void {
  * @param click - What a click does
  * @returns Button
  */
-export function buttonOf(className: string, text: string, click: () => void): HTMLButtonElement {
+export function buttonOf(
+    className: string,
+    text: string,
+    click: () => void,
+): HTMLButtonElement {
     const button: HTMLButtonElement = document.createElement("button");
     button.type = "button";
     button.className = className;

@@ -338,34 +338,47 @@ function sleepRead(date: string): SleepDay {
     ).filter((entry: Entry): boolean => entry.category === sleepName && !entry.allDay);
     const longs: Entry[] = sleeps.filter(
         (sleep: Entry): boolean =>
-            summaryBaseOf(sleep.title) !== napName && lengthOf(sleep) >= nightMinutes * 60 * 1000,
+            summaryBaseOf(sleep.title) !== napName &&
+            lengthOf(sleep) >= nightMinutes * 60 * 1000,
     );
     const nights: (Night | null)[] = Array.from(
         { length: weekDays },
         (_: unknown, back: number): Night | null => {
-            const day: string = new Date(noon - back * dayLength).toISOString().slice(0, 10);
+            const day: string = new Date(noon - back * dayLength)
+                .toISOString()
+                .slice(0, 10);
             const night: Entry | undefined = longs
-                .filter((sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === day)
+                .filter(
+                    (sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === day,
+                )
                 .sort(
-                    (first: Entry, second: Entry): number => lengthOf(second) - lengthOf(first),
+                    (first: Entry, second: Entry): number =>
+                        lengthOf(second) - lengthOf(first),
                 )[0];
             return night === undefined ? null : nightOf(night);
         },
     );
-    const logged: Night[] = nights.filter((night: Night | null): night is Night => night !== null);
+    const logged: Night[] = nights.filter(
+        (night: Night | null): night is Night => night !== null,
+    );
     return {
         night: nights[0],
         slept: Math.round(
             sleeps
-                .filter((sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === date)
-                .reduce((sum: number, sleep: Entry): number => sum + lengthOf(sleep), 0) / 60000,
+                .filter(
+                    (sleep: Entry): boolean => berlinDateOf(new Date(sleep.end)) === date,
+                )
+                .reduce((sum: number, sleep: Entry): number => sum + lengthOf(sleep), 0) /
+                60000,
         ),
         minutes:
             logged.length === 0
                 ? null
                 : Math.round(
-                      logged.reduce((sum: number, night: Night): number => sum + night.minutes, 0) /
-                          logged.length,
+                      logged.reduce(
+                          (sum: number, night: Night): number => sum + night.minutes,
+                          0,
+                      ) / logged.length,
                   ),
         varied: variedOf(logged),
         nights: logged.length,
@@ -381,7 +394,8 @@ function sleepRead(date: string): SleepDay {
  */
 export function glassIs(entry: Entry): boolean {
     return (
-        entry.category === drinkName && entry.title.trim().toLowerCase() === waterName.toLowerCase()
+        entry.category === drinkName &&
+        entry.title.trim().toLowerCase() === waterName.toLowerCase()
     );
 }
 
@@ -407,7 +421,9 @@ function glassesRead(date: string): Glass[] {
                 !entry.allDay &&
                 berlinDateOf(new Date(entry.start)) === date,
         )
-        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
+        .sort((first: Entry, second: Entry): number =>
+            first.start.localeCompare(second.start),
+        )
         .map((entry: Entry): Glass => ({
             id: entry.id,
             start: entry.start,
@@ -436,7 +452,9 @@ function glassesRead(date: string): Glass[] {
  */
 function neckRead(date: string): NeckWeek {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
-    const first: string = new Date(noon - (weekDays - 1) * dayLength).toISOString().slice(0, 10);
+    const first: string = new Date(noon - (weekDays - 1) * dayLength)
+        .toISOString()
+        .slice(0, 10);
     const dayOf: (entry: Entry) => string = (entry: Entry): string =>
         berlinDateOf(new Date(entry.start));
     const entries: Entry[] = entriesRead(
@@ -446,18 +464,23 @@ function neckRead(date: string): NeckWeek {
     ).filter((entry: Entry): boolean => dayOf(entry) >= first && dayOf(entry) <= date);
     const necks: Entry[] = entries.filter(
         (entry: Entry): boolean =>
-            entry.category === bodyName && Object.keys(neckRoutines).includes(entry.title),
+            entry.category === bodyName &&
+            Object.keys(neckRoutines).includes(entry.title),
     );
     const neckDays: Set<string> = new Set(necks.map(dayOf));
     const studyDays: Set<string> = new Set(
-        entries.filter((entry: Entry): boolean => entry.category === skillName).map(dayOf),
+        entries
+            .filter((entry: Entry): boolean => entry.category === skillName)
+            .map(dayOf),
     );
     const [painFirst, painLast]: [number | null, number | null] = painRead(date);
     return {
         short: [...studyDays].filter((day: string): boolean => neckDays.has(day)).length,
         studyDays: studyDays.size,
         long: new Set(
-            necks.filter((entry: Entry): boolean => entry.title === neckLongName).map(dayOf),
+            necks
+                .filter((entry: Entry): boolean => entry.title === neckLongName)
+                .map(dayOf),
         ).size,
         painFirst: painFirst,
         painLast: painLast,
@@ -514,13 +537,18 @@ function painRead(date: string): [number | null, number | null] {
         ]);
     if (rated.length === 0) return [null, null];
     const first: string = rated.map(([day]: [string, number]): string => day).sort()[0];
-    const firstEnd: string = new Date(Date.parse(`${first}T12:00:00Z`) + painDays * dayLength)
+    const firstEnd: string = new Date(
+        Date.parse(`${first}T12:00:00Z`) + painDays * dayLength,
+    )
         .toISOString()
         .slice(0, 10);
     const lastStart: string = new Date(noon - (painDays - 1) * dayLength)
         .toISOString()
         .slice(0, 10);
-    const painsOf: (from: string, to: string) => number[] = (from: string, to: string): number[] =>
+    const painsOf: (from: string, to: string) => number[] = (
+        from: string,
+        to: string,
+    ): number[] =>
         rated
             .filter(([day]: [string, number]): boolean => day >= from && day < to)
             .map(([, pain]: [string, number]): number => pain);

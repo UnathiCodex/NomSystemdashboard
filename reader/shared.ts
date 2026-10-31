@@ -74,7 +74,14 @@
 
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
+import {
+    existsSync,
+    mkdirSync,
+    readdirSync,
+    readFileSync,
+    watch,
+    writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
 import { entryAdd } from "./day.ts";
@@ -99,7 +106,14 @@ import {
     roomsRead,
 } from "./places.ts";
 import { personNameOf } from "./persons.ts";
-import { dashboardBoxOf, day, holder, myName, partners, writeAllowed } from "./sources.ts";
+import {
+    dashboardBoxOf,
+    day,
+    holder,
+    myName,
+    partners,
+    writeAllowed,
+} from "./sources.ts";
 import { trashPut } from "./trash.ts";
 
 import type { ChildProcess } from "node:child_process";
@@ -121,7 +135,12 @@ export type ListChange =
     | { call: "foodRemove"; with: { name: string; brand: string; store: string } }
     | {
           call: "mealAdd";
-          with: { name?: string; foods?: string[]; short?: string; grams?: (number | null)[] };
+          with: {
+              name?: string;
+              foods?: string[];
+              short?: string;
+              grams?: (number | null)[];
+          };
       }
     | { call: "mealRename"; with: { old?: string; name?: string } }
     | { call: "mealRemove"; with: string }
@@ -272,7 +291,10 @@ function sameName(first: string, second: string): boolean {
 function boxFilesOf(box: string): string[] {
     if (!existsSync(box)) return [];
     return readdirSync(box)
-        .filter((name: string): boolean => !name.startsWith(".") && /\.(?:ics|json)$/.test(name))
+        .filter(
+            (name: string): boolean =>
+                !name.startsWith(".") && /\.(?:ics|json)$/.test(name),
+        )
         .sort();
 }
 
@@ -426,7 +448,9 @@ function copyWrite(entry: Entry, partner: string): void {
         category: entry.category,
         title: entry.title,
         titleLink:
-            entry.category === skillName || linkForm.test(entry.titleLink) ? entry.titleLink : "",
+            entry.category === skillName || linkForm.test(entry.titleLink)
+                ? entry.titleLink
+                : "",
         location: entry.location,
         locationLink: entry.locationLink,
         online: entry.online,
@@ -494,14 +518,19 @@ export function entryShare(id: string, before: Attendee[] = []): void {
             found[1].attendees
                 .filter(
                     (attendee: Attendee): boolean =>
-                        !before.some((old: Attendee): boolean => sameName(old.name, attendee.name)),
+                        !before.some((old: Attendee): boolean =>
+                            sameName(old.name, attendee.name),
+                        ),
                 )
                 .map((attendee: Attendee): string | undefined =>
                     partnersOf().find((partner: string): boolean =>
                         sameName(partner, attendee.name),
                     ),
                 )
-                .filter((partner: string | undefined): partner is string => partner !== undefined),
+                .filter(
+                    (partner: string | undefined): partner is string =>
+                        partner !== undefined,
+                ),
         );
         to.forEach((partner: string): void => copyWrite(found[1], partner));
     } catch (error: unknown) {
@@ -527,7 +556,11 @@ export function listShare(change: ListChange, only?: string): void {
             );
         });
     } catch (error: unknown) {
-        console.error(new Date().toISOString(), `No change shared: ${change.call}`, error);
+        console.error(
+            new Date().toISOString(),
+            `No change shared: ${change.call}`,
+            error,
+        );
     }
 }
 
@@ -539,7 +572,9 @@ export function listShare(change: ListChange, only?: string): void {
  * @param partner - The person, like `Vu`
  */
 function listsShareAll(partner: string): void {
-    foodsRead().forEach((food: Food): void => listShare({ call: "foodAdd", with: food }, partner));
+    foodsRead().forEach((food: Food): void =>
+        listShare({ call: "foodAdd", with: food }, partner),
+    );
     compositionsRead().forEach((meal: Composition): void =>
         listShare(
             {
@@ -641,7 +676,10 @@ function thingTake(name: string, text: string): boolean {
     try {
         if (name.endsWith(".ics"))
             textEntriesRead(text, name)
-                .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
+                .filter(
+                    (entry: Entry): boolean =>
+                        entryLookup(day.log, entry.id) === undefined,
+                )
                 .forEach((entry: Entry): void => {
                     entryAdd(entryNewOf(entry), entry.id);
                 });
@@ -690,7 +728,9 @@ export function inboxTake(): void {
     const run: () => Promise<void> = async (): Promise<void> => {
         const names: string | undefined = await sshRun(["inbox"]);
         if (names === undefined) return;
-        for (const name of names.split("\n").filter((one: string): boolean => one !== "")) {
+        for (const name of names
+            .split("\n")
+            .filter((one: string): boolean => one !== "")) {
             const text: string | undefined = await sshRun(["take", name]);
             if (text === undefined) return;
             if (thingTake(name, text)) await sshRun(["done", name]);
@@ -699,7 +739,11 @@ export function inboxTake(): void {
     };
     run()
         .catch((error: unknown): void => {
-            console.error(new Date().toISOString(), `Nothing taken from ${holder}`, error);
+            console.error(
+                new Date().toISOString(),
+                `Nothing taken from ${holder}`,
+                error,
+            );
         })
         .finally((): void => {
             taking = false;

@@ -94,7 +94,13 @@
  */
 
 import { EditorState, Transaction } from "@codemirror/state";
-import { EditorView, RectangleMarker, drawSelection, keymap, layer } from "@codemirror/view";
+import {
+    EditorView,
+    RectangleMarker,
+    drawSelection,
+    keymap,
+    layer,
+} from "@codemirror/view";
 import { defaultKeymap, history, indentWithTab } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { icsLook } from "./ics.ts";
@@ -420,7 +426,12 @@ function rowsOf(view: EditorView, line: HTMLElement): Box[] {
  * @param to - Where it ends in the line
  * @returns Boxes of what it covers, without those that take no room
  */
-function selectedBoxesOf(view: EditorView, line: HTMLElement, from: number, to: number): Box[] {
+function selectedBoxesOf(
+    view: EditorView,
+    line: HTMLElement,
+    from: number,
+    to: number,
+): Box[] {
     const boxes: Box[] = [];
     const range: Range = document.createRange();
     line.childNodes.forEach((child: ChildNode, index: number): void => {
@@ -434,7 +445,10 @@ function selectedBoxesOf(view: EditorView, line: HTMLElement, from: number, to: 
             boxes.push(...child.getClientRects());
             return;
         }
-        const first: { node: Node; offset: number } = view.domAtPos(Math.max(from, start), 1);
+        const first: { node: Node; offset: number } = view.domAtPos(
+            Math.max(from, start),
+            1,
+        );
         const last: { node: Node; offset: number } = view.domAtPos(Math.min(to, end), -1);
         range.setStart(first.node, first.offset);
         range.setEnd(last.node, last.offset);
@@ -508,8 +522,8 @@ function selectionRowsOf(view: EditorView): RectangleMarker[] {
                 if (range.from > to || range.to <= from) continue;
                 if (!line) {
                     const box: DOMRect = element.getBoundingClientRect();
-                    const parts: DOMRect[] = [...element.children].map((child: Element): DOMRect =>
-                        child.getBoundingClientRect(),
+                    const parts: DOMRect[] = [...element.children].map(
+                        (child: Element): DOMRect => child.getBoundingClientRect(),
                     );
                     rows.push(...markedRowsOf([rowOf(box.top, box.bottom)], parts));
                     continue;
@@ -634,7 +648,9 @@ function extensionsOf(opened: Opened): Extension[] {
  */
 async function openedRead(file: string): Promise<Opened | null> {
     if (file !== "") {
-        const response: Response = await fetch(`/api/edit/file?path=${encodeURIComponent(file)}`);
+        const response: Response = await fetch(
+            `/api/edit/file?path=${encodeURIComponent(file)}`,
+        );
         if (!response.ok) return null;
         const sent: SystemFile = (await response.json()) as SystemFile;
         return {
@@ -646,7 +662,9 @@ async function openedRead(file: string): Promise<Opened | null> {
         };
     }
 
-    const response: Response = await fetch(`/api/notes/note?path=${encodeURIComponent(path)}`);
+    const response: Response = await fetch(
+        `/api/notes/note?path=${encodeURIComponent(path)}`,
+    );
     if (!response.ok) return null;
     const note: LinkedNote = (await response.json()) as LinkedNote;
     const markdown: boolean = /\.md$/i.test(note.path);
@@ -666,7 +684,8 @@ async function openedRead(file: string): Promise<Opened | null> {
  */
 function addressHeadingShow(): void {
     const heading: string = decodeURIComponent(location.hash.slice(1));
-    if (heading === "") (document.querySelector(".editor-file") as HTMLElement).scrollTop = 0;
+    if (heading === "")
+        (document.querySelector(".editor-file") as HTMLElement).scrollTop = 0;
     else headingShow(view, heading);
 }
 
@@ -689,7 +708,8 @@ function treeClick(event: MouseEvent): void {
     if (link === null || event.ctrlKey || event.metaKey || event.shiftKey) return;
 
     const address: URL = new URL(link.href);
-    if (address.pathname !== "/scripts" || address.searchParams.get("path") !== path) return;
+    if (address.pathname !== "/scripts" || address.searchParams.get("path") !== path)
+        return;
     event.preventDefault();
     if (roundHeadingShow(view, decodeURIComponent(address.hash.slice(1)))) return;
     window.history.pushState(null, "", address);
@@ -756,15 +776,21 @@ export async function editorStart(): Promise<void> {
         address.get("module") ?? folder.split("/")[0],
     );
     shown.catch((error: unknown): void => console.error(error));
-    const close: HTMLButtonElement = document.getElementById("editor-close") as HTMLButtonElement;
-    const next: HTMLButtonElement = document.getElementById("editor-next") as HTMLButtonElement;
+    const close: HTMLButtonElement = document.getElementById(
+        "editor-close",
+    ) as HTMLButtonElement;
+    const next: HTMLButtonElement = document.getElementById(
+        "editor-next",
+    ) as HTMLButtonElement;
     iconPut(close, CircleCheck, "Close the round");
     close.addEventListener("click", roundClose);
     iconPut(next, ArrowRight, "Next");
     next.addEventListener("click", (): void => roundGo(view));
     if (path === "" && !plannings && folder !== "") {
         save.hidden = true;
-        (document.getElementById("editor") as HTMLElement).classList.add("editor-on-overview");
+        (document.getElementById("editor") as HTMLElement).classList.add(
+            "editor-on-overview",
+        );
         await folderShow(document.getElementById("editor-folder") as HTMLElement, folder);
         return;
     }
@@ -772,7 +798,9 @@ export async function editorStart(): Promise<void> {
         const module: string = address.get("module") ?? "";
         const chapter: string = address.get("chapter") ?? "";
         save.hidden = true;
-        (document.getElementById("editor") as HTMLElement).classList.add("editor-on-overview");
+        (document.getElementById("editor") as HTMLElement).classList.add(
+            "editor-on-overview",
+        );
         shown
             .then((): void => overviewTreeShow(tree, module, chapter))
             .catch((error: unknown): void => console.error(error));
@@ -802,7 +830,11 @@ export async function editorStart(): Promise<void> {
         state: EditorState.create({ doc: opened.text, extensions: extensionsOf(opened) }),
     });
     if (opened.markdown) solutionsFold(view);
-    iconPut(save, view.state.readOnly ? SaveOff : Save, view.state.readOnly ? "Read only" : "Save");
+    iconPut(
+        save,
+        view.state.readOnly ? SaveOff : Save,
+        view.state.readOnly ? "Read only" : "Save",
+    );
     save.addEventListener("click", noteSave);
     (save as HTMLButtonElement).disabled = view.state.readOnly;
     stateShow("");
@@ -819,12 +851,17 @@ export async function editorStart(): Promise<void> {
         .catch((error: unknown): void => console.error(error))
         .then(async (): Promise<void> => {
             const sectionShown: boolean = roundBlocksOf(view) !== null;
-            const heading: string = sectionShown && location.hash === "" ? await kept : "";
+            const heading: string =
+                sectionShown && location.hash === "" ? await kept : "";
             text.style.visibility = "";
             if (!sectionShown) addressHeadingShow();
             else if (location.hash !== "") {
                 roundHeadingShow(view, decodeURIComponent(location.hash.slice(1)), false);
-                window.history.replaceState(null, "", location.pathname + location.search);
+                window.history.replaceState(
+                    null,
+                    "",
+                    location.pathname + location.search,
+                );
             } else if (heading !== "") roundHeadingShow(view, heading, false);
         })
         .catch((error: unknown): void => console.error(error));

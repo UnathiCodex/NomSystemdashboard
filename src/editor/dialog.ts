@@ -72,10 +72,13 @@ async function dialogStart(): Promise<Dialog> {
     const categories: typeof Categories = await import("../day/categories.ts");
     const full: typeof FullCalendar = await import("fullcalendar");
     const timeGrid: typeof TimeGrid = await import("fullcalendar/timegrid");
-    const calendar: FullCalendar.Calendar = new full.Calendar(document.createElement("div"), {
-        plugins: [timeGrid.default],
-        initialView: "timeGridDay",
-    });
+    const calendar: FullCalendar.Calendar = new full.Calendar(
+        document.createElement("div"),
+        {
+            plugins: [timeGrid.default],
+            initialView: "timeGridDay",
+        },
+    );
     const day: Document = new DOMParser().parseFromString(html, "text/html");
     document.body.append(
         ...["entry", "series", "series-under"].map(

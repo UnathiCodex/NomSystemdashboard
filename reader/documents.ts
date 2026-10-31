@@ -174,10 +174,17 @@ function diskOf(path: string): string {
 function fingerprintOf(file: string): string {
     const stats: Stats = statSync(file);
     const known: Fingerprint | undefined = fingerprints.get(file);
-    if (known?.size === stats.size && known.modified === stats.mtimeMs) return known.fingerprint;
+    if (known?.size === stats.size && known.modified === stats.mtimeMs)
+        return known.fingerprint;
 
-    const fingerprint: string = createHash("sha256").update(readFileSync(file)).digest("hex");
-    fingerprints.set(file, { size: stats.size, modified: stats.mtimeMs, fingerprint: fingerprint });
+    const fingerprint: string = createHash("sha256")
+        .update(readFileSync(file))
+        .digest("hex");
+    fingerprints.set(file, {
+        size: stats.size,
+        modified: stats.mtimeMs,
+        fingerprint: fingerprint,
+    });
     return fingerprint;
 }
 
@@ -195,7 +202,10 @@ export function skillFolderOf(code: string): string | undefined {
     const module: string | undefined =
         moduleFolderOf(code) ??
         activeModulesRead().find((name: string): boolean => codeOf(name) === code);
-    return projectOf(code) ?? (module === undefined ? undefined : `${modulesFolder}/${module}`);
+    return (
+        projectOf(code) ??
+        (module === undefined ? undefined : `${modulesFolder}/${module}`)
+    );
 }
 
 /**
@@ -276,7 +286,9 @@ export function titleOf(
     from: { title: string; titleLink: string } | null,
 ): [string, string] {
     const title: string =
-        fields.category === skillName ? skillTitleOf(fields.module, fields.type) : fields.title;
+        fields.category === skillName
+            ? skillTitleOf(fields.module, fields.type)
+            : fields.title;
     const link: string = (
         fields.titleLink ?? (from !== null && from.title === title ? from.titleLink : "")
     )
@@ -429,12 +441,17 @@ export function linksOf(code: string, documents: string[], links: Link[]): Link[
     return [...new Set(documents)].map((document: string): Link => {
         const path: string =
             module === "" ? `${folder}/${document}` : documentPathOf(module, document);
-        const kept: Link | undefined = links.find((link: Link): boolean => link.path === path);
+        const kept: Link | undefined = links.find(
+            (link: Link): boolean => link.path === path,
+        );
         if (kept !== undefined && (kept.fingerprint !== "" || !existsSync(diskOf(path))))
             return kept;
         if (module === "" || !moduleContentsRead(module).documents.includes(document))
             throw new Error(`No document ${document} in ${code}`);
-        return { path: path, fingerprint: noteIs(path) ? "" : fingerprintOf(diskOf(path)) };
+        return {
+            path: path,
+            fingerprint: noteIs(path) ? "" : fingerprintOf(diskOf(path)),
+        };
     });
 }
 
@@ -472,7 +489,8 @@ function linksRepairOf(entry: Entry): Link[] {
                 folder === undefined
                     ? undefined
                     : moduleContentsRead(folder).documents.find(
-                          (document: string): boolean => document.split("/").at(-1) === name,
+                          (document: string): boolean =>
+                              document.split("/").at(-1) === name,
                       );
             if (note !== undefined && folder !== undefined)
                 return { ...link, path: documentPathOf(folder, note) };
@@ -546,7 +564,8 @@ function folderRepair(file: string, entry: Entry): void {
     const given: string = entry.type === "" ? parts[1] : `${parts[1]} (${entry.type})`;
     const fields: EntryFields = {
         ...entry,
-        title: entry.title === given ? skillTitleOf(entry.module, entry.type) : entry.title,
+        title:
+            entry.title === given ? skillTitleOf(entry.module, entry.type) : entry.title,
         titleLink: skillFolderOf(entry.module) ?? entry.titleLink,
         start: new Date(entry.start),
         end: new Date(entry.end),
@@ -576,14 +595,17 @@ export function linksCheck(): void {
                 entry.editable &&
                 (entry.titleLink !== "" || entry.links.length > 0),
         )
-        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
+        .sort((first: Entry, second: Entry): number =>
+            first.start.localeCompare(second.start),
+        );
     entries.forEach((entry: Entry): void => {
         const [file]: [string, Entry] = entryFind(skillLog, entry.id);
         folderRepair(file, entry);
         const links: Link[] = linksRepairOf(entry);
         if (
             links.some(
-                (link: Link, index: number): boolean => link.path !== entry.links[index].path,
+                (link: Link, index: number): boolean =>
+                    link.path !== entry.links[index].path,
             )
         ) {
             propertiesPut(file, entry.id, [["attach", links]]);
@@ -607,7 +629,11 @@ export function linksCheckStart(): void {
         try {
             linksCheck();
         } catch (error: unknown) {
-            console.error(new Date().toISOString(), "The check of the links failed", error);
+            console.error(
+                new Date().toISOString(),
+                "The check of the links failed",
+                error,
+            );
         }
         const now: Date = new Date();
         let next: Date = berlinInstantOf(berlinDateOf(now), checkHour);
@@ -633,10 +659,14 @@ export function linksCheckStart(): void {
  */
 export function linkedFileRead(path: string): NotesFile {
     const linked: boolean = logRead().some((entry: Entry): boolean =>
-        entry.links.some((link: Link): boolean => link.fingerprint !== "" && link.path === path),
+        entry.links.some(
+            (link: Link): boolean => link.fingerprint !== "" && link.path === path,
+        ),
     );
     const file: string = diskOf(path);
-    const hidden: boolean = path.split("/").some((part: string): boolean => part.startsWith("."));
+    const hidden: boolean = path
+        .split("/")
+        .some((part: string): boolean => part.startsWith("."));
     if (!linked || hidden || !resolve(file).startsWith(`${resolve(vault)}${sep}`))
         throw new Error(`No linked file ${path}`);
     return { type: contentTypeOf(file), content: readFileSync(file) };

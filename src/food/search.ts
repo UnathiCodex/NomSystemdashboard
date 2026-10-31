@@ -235,8 +235,13 @@ export function listLineOf(
 ): [HTMLElement, HTMLElement] {
     const line: HTMLElement = elementOf("div", "food-item", "");
     const row: HTMLElement =
-        click === null ? elementOf("div", "food-row", "") : buttonOf("food-row", "", click);
-    row.append(name, elementOf("span", "food-value", kcal === null ? "" : amountOf(kcal, 0)));
+        click === null
+            ? elementOf("div", "food-row", "")
+            : buttonOf("food-row", "", click);
+    row.append(
+        name,
+        elementOf("span", "food-value", kcal === null ? "" : amountOf(kcal, 0)),
+    );
     line.append(row);
     if (end !== null) line.append(end);
     return [line, row];
@@ -313,7 +318,11 @@ export function editFieldOf(
  * @param saved - Sends the change, after a change only
  * @returns The value
  */
-export function inlineFieldOf(value: string, words: string, saved: () => void): HTMLInputElement {
+export function inlineFieldOf(
+    value: string,
+    words: string,
+    saved: () => void,
+): HTMLInputElement {
     const input: HTMLInputElement = document.createElement("input");
     input.type = "text";
     input.className = "food-inline";
@@ -538,7 +547,8 @@ function mineLinesOf(search: Search, food: Food): HTMLElement[] {
                       .catch((error: unknown): void => console.error(error));
               });
     if (remove !== null) crossPut(remove, `Remove ${food.name}`);
-    if (remove !== null && search.asking === key) iconPut(remove, QuestionMark, "Really remove?");
+    if (remove !== null && search.asking === key)
+        iconPut(remove, QuestionMark, "Really remove?");
     const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
         foodNameOf("food-name", food.name, food.brand, food.store),
         food.kcal,
@@ -582,7 +592,11 @@ function productNameOf(product: Product): HTMLElement {
     title.append(foodNameOf("food-name", product.name, product.brand, product.store));
     if (product.pack !== null)
         title.append(
-            elementOf("span", "food-pack", `Pack ${product.pack} ${unitOf(product.kind)}`),
+            elementOf(
+                "span",
+                "food-pack",
+                `Pack ${product.pack} ${unitOf(product.kind)}`,
+            ),
         );
     return title;
 }
@@ -682,7 +696,9 @@ function resultsShow(search: Search): void {
             : search.added.flatMap((key: string): Food[] =>
                   found.foods.filter((food: Food): boolean => keyOf(food) === key),
               );
-    const rest: Food[] = found.foods.filter((food: Food): boolean => !fresh.includes(food));
+    const rest: Food[] = found.foods.filter(
+        (food: Food): boolean => !fresh.includes(food),
+    );
     const listed: Food[] =
         query !== ""
             ? rest
@@ -765,7 +781,9 @@ function productsShow(search: Search): void {
         search.tail.replaceChildren(
             ...line,
             listHeadOf("Open Food Facts", "kcal / 100 g"),
-            ...products.map((product: Product): HTMLElement => productLineOf(search, product)),
+            ...products.map((product: Product): HTMLElement =>
+                productLineOf(search, product),
+            ),
             moreOf(search, products.length, found),
         );
     else if (query !== "" && found.products === null)
@@ -824,7 +842,9 @@ function newFoodOf(search: Search, query: string, mine: Food[]): HTMLElement[] {
     if (
         query === "" ||
         /^\d{8,14}$/.test(query) ||
-        mine.some((food: Food): boolean => food.name.toLowerCase() === query.toLowerCase())
+        mine.some(
+            (food: Food): boolean => food.name.toLowerCase() === query.toLowerCase(),
+        )
     )
         return [];
     const plus: HTMLButtonElement = buttonOf("picker-new", "", (): void =>
@@ -962,8 +982,8 @@ function newFormShow(search: Search, product: Product | null): void {
             text("brand") === "" ||
             text("store") === "" ||
             kcal === null ||
-            [kcal, protein, carbs, fat, portion, pack].some((typed: number | null): boolean =>
-                Number.isNaN(typed),
+            [kcal, protein, carbs, fat, portion, pack].some(
+                (typed: number | null): boolean => Number.isNaN(typed),
             )
         ) {
             error.hidden = false;
@@ -996,7 +1016,12 @@ function newFormShow(search: Search, product: Product | null): void {
 
     fieldsOf(kind).forEach(([name, key, unit]: [string, string, string]): void => {
         const label: HTMLElement = elementOf("span", "food-fact", name);
-        const input: HTMLInputElement = editFieldOf(start.get(key) ?? "", name, add, close);
+        const input: HTMLInputElement = editFieldOf(
+            start.get(key) ?? "",
+            name,
+            add,
+            close,
+        );
         const amount: HTMLElement = elementOf("span", "food-grams", "");
         input.className = "food-inline food-inline-new";
         input.inputMode = unit === "" ? "text" : "decimal";
@@ -1060,7 +1085,11 @@ function moreOf(search: Search, shown: number, found: FoodsFound): HTMLElement {
  * @returns Foods found
  * @throws {Error} - When the reader cannot answer the second time either
  */
-async function foodsFindTwice(query: string, page: number, products: boolean): Promise<FoodsFound> {
+async function foodsFindTwice(
+    query: string,
+    page: number,
+    products: boolean,
+): Promise<FoodsFound> {
     try {
         return await foodsFind(query, page, products);
     } catch (error: unknown) {
@@ -1100,10 +1129,14 @@ function resultsLoad(search: Search, wait: number): void {
             if (asked !== search.asked || search.input.value.trim() !== text) return;
             search.page = 1;
             search.found = found;
-            search.loading = search.setup.products && !search.linked && text.length >= searchLength;
+            search.loading =
+                search.setup.products && !search.linked && text.length >= searchLength;
             resultsShow(search);
             if (search.loading)
-                search.waiting = window.setTimeout((): void => productsLoad(search, 1), wait);
+                search.waiting = window.setTimeout(
+                    (): void => productsLoad(search, 1),
+                    wait,
+                );
         })
         .catch((error: unknown): void => {
             console.error(error);
@@ -1135,7 +1168,11 @@ function productsLoad(search: Search, page: number): void {
     const asked: number = search.asked;
     const text: string = search.input.value.trim();
     const take: (found: FoodsFound) => void = (found: FoodsFound): void => {
-        if (asked !== search.asked || search.input.value.trim() !== text || search.found === null)
+        if (
+            asked !== search.asked ||
+            search.input.value.trim() !== text ||
+            search.found === null
+        )
             return;
         search.page = page;
         search.loading = false;
@@ -1145,7 +1182,10 @@ function productsLoad(search: Search, page: number): void {
                 : {
                       ...found,
                       foods: search.found.foods,
-                      products: [...(search.found.products ?? []), ...(found.products ?? [])],
+                      products: [
+                          ...(search.found.products ?? []),
+                          ...(found.products ?? []),
+                      ],
                       more: found.products !== null && found.more,
                   };
         productsShow(search);
@@ -1224,7 +1264,9 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
     element.append(
         searchFieldOf(
             search.input,
-            setup.meals === null ? "Search foods or a barcode" : "Search meals, foods or a barcode",
+            setup.meals === null
+                ? "Search foods or a barcode"
+                : "Search meals, foods or a barcode",
         ),
         search.results,
     );

@@ -197,7 +197,11 @@ function checkOf(): SVGElement {
  */
 function tileOf(value: string, met: boolean, name: string): HTMLElement {
     const tile: HTMLElement = elementOf("div", "tile", "");
-    const amount: HTMLElement = elementOf("span", "tile-value", value === "" ? "–" : value);
+    const amount: HTMLElement = elementOf(
+        "span",
+        "tile-value",
+        value === "" ? "–" : value,
+    );
     if (value !== "" && met) amount.append(checkOf());
     tile.append(amount, elementOf("span", "tile-name", name));
     return tile;
@@ -238,7 +242,10 @@ async function glassAdd(calendar: Calendar): Promise<void> {
  * @returns Name and value
  */
 function linesOf(name: string, value: string): HTMLElement[] {
-    return [elementOf("span", "tracker-name", name), elementOf("span", "tracker-value", value)];
+    return [
+        elementOf("span", "tracker-name", name),
+        elementOf("span", "tracker-value", value),
+    ];
 }
 
 /**
@@ -268,7 +275,9 @@ function waterOf(calendar: Calendar, trackers: Trackers, day: string): HTMLEleme
         .filter((glass: Glass): boolean => glass.water && glass.editable)
         .at(-1);
     const coming: boolean = day > calendarTodayOf();
-    const send: (change: () => Promise<void>) => void = (change: () => Promise<void>): void => {
+    const send: (change: () => Promise<void>) => void = (
+        change: () => Promise<void>,
+    ): void => {
         row.inert = true;
         change().catch((error: unknown): void => {
             console.error(error);
@@ -281,7 +290,9 @@ function waterOf(calendar: Calendar, trackers: Trackers, day: string): HTMLEleme
     add.append(...linesOf("Water", litres));
     add.setAttribute("aria-label", `Water ${litres}, 0.25 l more`);
     add.disabled = coming;
-    add.addEventListener("click", (): void => send((): Promise<void> => glassAdd(calendar)));
+    add.addEventListener("click", (): void =>
+        send((): Promise<void> => glassAdd(calendar)),
+    );
     less.type = "button";
     less.className = "icon-button chip-button water-less";
     less.append(iconOf(Minus));
@@ -411,6 +422,8 @@ export function trackersSee(calendar: Calendar): void {
         console.error(error);
         document
             .getElementById("trackers")
-            ?.replaceChildren(elementOf("p", "tracker-meta", "The trackers cannot be read"));
+            ?.replaceChildren(
+                elementOf("p", "tracker-meta", "The trackers cannot be read"),
+            );
     });
 }

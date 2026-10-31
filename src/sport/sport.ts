@@ -226,7 +226,11 @@ function weightEdit(tile: HTMLElement, kg: number | null): void {
 function doneTextOf(exercise: Session["exercises"][number]): string {
     const reps: string = exercise.reps.replace(/^(\d+)s$/, "$1 s");
     const sets: string =
-        exercise.sets === "" ? reps : reps === "" ? exercise.sets : `${exercise.sets} × ${reps}`;
+        exercise.sets === ""
+            ? reps
+            : reps === ""
+              ? exercise.sets
+              : `${exercise.sets} × ${reps}`;
     return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
         .filter((part: string): boolean => part !== "")
         .join(" · ");
@@ -277,15 +281,18 @@ function sessionLinesOf(session: Session): HTMLElement[] {
         elementOf(
             "span",
             "food-what",
-            session.workout === "" ? session.kind : `${session.kind} · ${session.workout}`,
+            session.workout === ""
+                ? session.kind
+                : `${session.kind} · ${session.workout}`,
         ),
         elementOf("span", "food-value", lengthOf(session.minutes)),
     );
     return [
         entry,
         kind,
-        ...(session.exercises ?? []).map((exercise: Session["exercises"][number]): HTMLElement =>
-            partLineOf(exercise.name, "", doneTextOf(exercise)),
+        ...(session.exercises ?? []).map(
+            (exercise: Session["exercises"][number]): HTMLElement =>
+                partLineOf(exercise.name, "", doneTextOf(exercise)),
         ),
         ...(session.videos ?? []).map((video: Session["videos"][number]): HTMLElement =>
             partLineOf(
@@ -309,7 +316,10 @@ function sessionLinesOf(session: Session): HTMLElement[] {
  */
 async function dayShow(date: string): Promise<void> {
     shown = date;
-    (document.getElementById("sport-date") as HTMLElement).textContent = dayTextOf(date, true);
+    (document.getElementById("sport-date") as HTMLElement).textContent = dayTextOf(
+        date,
+        true,
+    );
     (document.getElementById("sport-today") as HTMLButtonElement).disabled =
         date === calendarTodayOf();
 

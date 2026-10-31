@@ -143,9 +143,12 @@ export function boxActionsOf(
                 listed,
             ),
         );
-    const actions: HTMLElement = phone && !listed ? menuOf(buttons) : document.createElement("div");
+    const actions: HTMLElement =
+        phone && !listed ? menuOf(buttons) : document.createElement("div");
     if (!phone || listed) actions.append(...buttons);
     actions.classList.add("box-actions");
-    actions.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
+    actions.addEventListener("click", (event: MouseEvent): void =>
+        event.stopPropagation(),
+    );
     return actions;
 }

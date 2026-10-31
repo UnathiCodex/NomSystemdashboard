@@ -122,12 +122,18 @@ async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
         urlOf("/@codemirror_language.js")
     );
     const heading: RegExp = /^## (Example|Completion|Task)\.[ \t]+/;
-    const start: import("@codemirror/state").EditorState = EditorState.create({ doc: file.text });
-    const judged: import("@codemirror/state").Range<import("@codemirror/view").Decoration>[] = [];
+    const start: import("@codemirror/state").EditorState = EditorState.create({
+        doc: file.text,
+    });
+    const judged: import("@codemirror/state").Range<
+        import("@codemirror/view").Decoration
+    >[] = [];
     for (let number: number = 1; number <= start.doc.lines; number++)
         if (heading.test(start.doc.line(number).text))
             judged.push(
-                Decoration.line({ class: "task-heading" }).range(start.doc.line(number).from),
+                Decoration.line({ class: "task-heading" }).range(
+                    start.doc.line(number).from,
+                ),
             );
     const editor: import("@codemirror/view").EditorView = new EditorView({
         parent: document.getElementById("editor-text") as HTMLElement,
@@ -152,7 +158,8 @@ async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
     });
 
     const lineMeasure: (line: HTMLElement) => void = (line: HTMLElement): void => {
-        if (line.textContent === "" && line.querySelector("img, mjx-container") === null) return;
+        if (line.textContent === "" && line.querySelector("img, mjx-container") === null)
+            return;
         const range: Range = document.createRange();
         const style: CSSStyleDeclaration = getComputedStyle(line);
         const box: DOMRect = line.getBoundingClientRect();
@@ -164,7 +171,8 @@ async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
         const over: number = range.getBoundingClientRect().right - end;
         line.style.whiteSpace = "";
         const rows: number =
-            1 + Math.max(0, Math.round((box.height - single) / parseFloat(style.lineHeight)));
+            1 +
+            Math.max(0, Math.round((box.height - single) / parseFloat(style.lineHeight)));
         const number: number = editor.state.doc.lineAt(editor.posAtDOM(line)).number;
         if (rows === 1 && wide <= 1) {
             found.delete(number);
@@ -183,11 +191,19 @@ async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
         to: number,
     ): number => {
         const range: Range = document.createRange();
-        const walker: TreeWalker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        const walker: TreeWalker = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_TEXT,
+        );
         let offset: number = 0;
-        for (let node: Node | null = walker.nextNode(); node !== null; node = walker.nextNode()) {
+        for (
+            let node: Node | null = walker.nextNode();
+            node !== null;
+            node = walker.nextNode()
+        ) {
             const length: number = node.textContent?.length ?? 0;
-            if (from >= offset && from <= offset + length) range.setStart(node, from - offset);
+            if (from >= offset && from <= offset + length)
+                range.setStart(node, from - offset);
             if (to >= offset && to <= offset + length) {
                 range.setEnd(node, to - offset);
                 break;
@@ -202,28 +218,34 @@ async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
     };
     const codeMeasure: () => void = (): void => {
         const blocks: Map<number, number> = new Map();
-        editor.contentDOM.querySelectorAll<HTMLElement>("pre").forEach((pre: HTMLElement): void => {
-            const first: number = editor.state.doc.lineAt(editor.posAtDOM(pre)).number;
-            const index: number = blocks.get(first) ?? 0;
-            const fence: number | undefined = fences.filter(
-                (line: number): boolean => line >= first,
-            )[index];
-            blocks.set(first, index + 1);
-            if (fence === undefined) return;
-            let from: number = 0;
-            (pre.textContent ?? "").split("\n").forEach((code: string, line: number): void => {
-                const rows: number = rowsOf(pre, from, from + code.length);
-                from += code.length + 1;
-                if (rows <= 1) found.delete(fence + 1 + line);
-                else
-                    found.set(fence + 1 + line, {
-                        line: fence + 1 + line,
-                        rows: rows,
-                        over: 0,
-                        characters: 0,
+        editor.contentDOM
+            .querySelectorAll<HTMLElement>("pre")
+            .forEach((pre: HTMLElement): void => {
+                const first: number = editor.state.doc.lineAt(
+                    editor.posAtDOM(pre),
+                ).number;
+                const index: number = blocks.get(first) ?? 0;
+                const fence: number | undefined = fences.filter(
+                    (line: number): boolean => line >= first,
+                )[index];
+                blocks.set(first, index + 1);
+                if (fence === undefined) return;
+                let from: number = 0;
+                (pre.textContent ?? "")
+                    .split("\n")
+                    .forEach((code: string, line: number): void => {
+                        const rows: number = rowsOf(pre, from, from + code.length);
+                        from += code.length + 1;
+                        if (rows <= 1) found.delete(fence + 1 + line);
+                        else
+                            found.set(fence + 1 + line, {
+                                line: fence + 1 + line,
+                                rows: rows,
+                                over: 0,
+                                characters: 0,
+                            });
                     });
             });
-        });
     };
 
     const scroller: HTMLElement = document.querySelector(".editor-file") as HTMLElement;
@@ -236,7 +258,8 @@ async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
         await document.fonts.ready;
         editor.contentDOM.querySelectorAll<HTMLElement>(".cm-line").forEach(lineMeasure);
         codeMeasure();
-        if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1) break;
+        if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1)
+            break;
     }
     editor.destroy();
     return [...found.values()].sort(
@@ -282,7 +305,9 @@ async function wrapsPrint(): Promise<void> {
         await page.goto(address, { waitUntil: "networkidle" });
         await page.waitForSelector(".editor-file", { state: "attached" });
     } catch {
-        console.log(`The reader does not answer at ${address} with its editor, see reader.ts`);
+        console.log(
+            `The reader does not answer at ${address} with its editor, see reader.ts`,
+        );
         process.exitCode = 2;
         await browser.close();
         return;

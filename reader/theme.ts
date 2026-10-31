@@ -63,15 +63,16 @@ const scopes: { [kind: string]: string } = {
  * @returns Color of each kind, like `{ "string": "#6aab73", … }`, none of a kind without one
  */
 export function codeColorsRead(): { [kind: string]: string } {
-    const theme: { colors: { [name: string]: string }; tokenColors: TokenColor[] } = JSON.parse(
-        readFileSync(
-            join(
-                vault,
-                "NomTechnicalsettings/EditorThemes/intellij-dark/themes/intellij-dark.json",
+    const theme: { colors: { [name: string]: string }; tokenColors: TokenColor[] } =
+        JSON.parse(
+            readFileSync(
+                join(
+                    vault,
+                    "NomTechnicalsettings/EditorThemes/intellij-dark/themes/intellij-dark.json",
+                ),
+                "utf8",
             ),
-            "utf8",
-        ),
-    );
+        );
     const colorOf = (scope: string): string | undefined => {
         let color: string | undefined;
         let length: number = 0;
@@ -87,7 +88,9 @@ export function codeColorsRead(): { [kind: string]: string } {
                 }
         return color;
     };
-    const colors: { [kind: string]: string } = { text: theme.colors["editor.foreground"] };
+    const colors: { [kind: string]: string } = {
+        text: theme.colors["editor.foreground"],
+    };
     for (const [kind, scope] of Object.entries(scopes)) {
         const color: string | undefined = colorOf(scope);
         if (color !== undefined) colors[kind] = color;

@@ -78,7 +78,14 @@ import {
     listHeadOf,
     listLineOf,
 } from "./search.ts";
-import { crossPut, iconOf, iconPut, plusPut, QuestionMark, searchFieldOf } from "../icons.ts";
+import {
+    crossPut,
+    iconOf,
+    iconPut,
+    plusPut,
+    QuestionMark,
+    searchFieldOf,
+} from "../icons.ts";
 import { Plus } from "lucide";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
@@ -137,7 +144,11 @@ function cutOf(text: string, letters: number): string {
  * @param fits - Whether what is written fits
  * @returns The most letters that fit, 0 where not one does
  */
-function lettersFit(text: string, put: (cut: string) => void, fits: () => boolean): number {
+function lettersFit(
+    text: string,
+    put: (cut: string) => void,
+    fits: () => boolean,
+): number {
     let low: number = 0;
     let high: number = text.length - 1;
     while (low < high) {
@@ -241,7 +252,10 @@ export function dishNameOf(dish: Dish): HTMLElement {
 export function dishesFound(dishes: Dish[], typed: string): Dish[] {
     return dishes.filter((dish: Dish): boolean =>
         matchesAll(
-            [dish.name, ...dish.foods.map((line: string): string => line.split(";")[0])].join(" "),
+            [
+                dish.name,
+                ...dish.foods.map((line: string): string => line.split(";")[0]),
+            ].join(" "),
             wordsOf(typed),
         ),
     );
@@ -403,10 +417,17 @@ export function mealsSectionOf(
             .then(take)
             .catch((error: unknown): void => {
                 console.error(error);
-                list.replaceChildren(elementOf("p", "food-none", "The meals cannot be read"));
+                list.replaceChildren(
+                    elementOf("p", "food-none", "The meals cannot be read"),
+                );
             });
     };
-    const send: (dish: Dish, foods: string[], short?: string, grams?: (number | null)[]) => void = (
+    const send: (
+        dish: Dish,
+        foods: string[],
+        short?: string,
+        grams?: (number | null)[],
+    ) => void = (
         dish: Dish,
         foods: string[],
         short?: string,
@@ -453,22 +474,25 @@ export function mealsSectionOf(
         const rows: HTMLElement[] = shown.flatMap((dish: Dish): HTMLElement[] => {
             const key: string = dish.name.toLowerCase();
             const name: HTMLElement = dishNameOf(dish);
-            const remove: HTMLButtonElement = removeOf(`Remove ${dish.name}`, (): void => {
-                if (dish.foods.length === 0) {
-                    fresh = "";
-                    show();
-                    return;
-                }
-                if (asked !== key) {
-                    asked = key;
-                    show();
-                    return;
-                }
-                asked = "";
-                dishDelete(dish.name)
-                    .then(take)
-                    .catch((error: unknown): void => console.error(error));
-            });
+            const remove: HTMLButtonElement = removeOf(
+                `Remove ${dish.name}`,
+                (): void => {
+                    if (dish.foods.length === 0) {
+                        fresh = "";
+                        show();
+                        return;
+                    }
+                    if (asked !== key) {
+                        asked = key;
+                        show();
+                        return;
+                    }
+                    asked = "";
+                    dishDelete(dish.name)
+                        .then(take)
+                        .catch((error: unknown): void => console.error(error));
+                },
+            );
             const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
                 name,
                 dish.kcal,
@@ -495,23 +519,27 @@ export function mealsSectionOf(
                 "food-error",
                 "Not changed: it needs a name, and no other meal of mine may have it",
             );
-            const rename: HTMLInputElement = inlineFieldOf(dish.name, "Name", (): void => {
-                if (dish.foods.length === 0) {
-                    begin(rename.value);
-                    return;
-                }
-                detail.inert = true;
-                dishRename(dish.name, rename.value)
-                    .then((meals: Dish[]): void => {
-                        open = mealNameOf(rename.value).toLowerCase();
-                        take(meals);
-                    })
-                    .catch((reason: unknown): void => {
-                        console.error(reason);
-                        error.hidden = false;
-                        detail.inert = false;
-                    });
-            });
+            const rename: HTMLInputElement = inlineFieldOf(
+                dish.name,
+                "Name",
+                (): void => {
+                    if (dish.foods.length === 0) {
+                        begin(rename.value);
+                        return;
+                    }
+                    detail.inert = true;
+                    dishRename(dish.name, rename.value)
+                        .then((meals: Dish[]): void => {
+                            open = mealNameOf(rename.value).toLowerCase();
+                            take(meals);
+                        })
+                        .catch((reason: unknown): void => {
+                            console.error(reason);
+                            error.hidden = false;
+                            detail.inert = false;
+                        });
+                },
+            );
             const short: HTMLInputElement = inlineFieldOf(dish.short, "Short", (): void =>
                 send(dish, dish.foods, short.value, dish.standard),
             );
@@ -553,12 +581,18 @@ export function mealsSectionOf(
                             ? removeOf(`Remove ${name}`, (): void =>
                                   send(
                                       dish,
-                                      dish.foods.filter((other: string): boolean => other !== food),
+                                      dish.foods.filter(
+                                          (other: string): boolean => other !== food,
+                                      ),
                                   ),
                               )
                             : null,
                         (): void =>
-                            foodOpen({ name: name, brand: brand ?? "", store: store ?? "" }),
+                            foodOpen({
+                                name: name,
+                                brand: brand ?? "",
+                                store: store ?? "",
+                            }),
                     );
                     return part;
                 }),
@@ -568,7 +602,9 @@ export function mealsSectionOf(
                     pick: (food: Food): void => {
                         const added: string = `${food.name};${food.brand};${food.store}`;
                         send(dish, [
-                            ...dish.foods.filter((other: string): boolean => other !== added),
+                            ...dish.foods.filter(
+                                (other: string): boolean => other !== added,
+                            ),
                             added,
                         ]);
                     },
@@ -587,7 +623,9 @@ export function mealsSectionOf(
         const typed: string = mealNameOf(search.value);
         const plus: HTMLElement[] =
             typed === "" ||
-            dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === typed.toLowerCase())
+            dishes.some(
+                (dish: Dish): boolean => dish.name.toLowerCase() === typed.toLowerCase(),
+            )
                 ? []
                 : [newOf(typed)];
         list.replaceChildren(
@@ -601,7 +639,9 @@ export function mealsSectionOf(
         );
     };
     const newOf: (name: string) => HTMLElement = (name: string): HTMLElement => {
-        const button: HTMLButtonElement = buttonOf("picker-new", "", (): void => begin(name));
+        const button: HTMLButtonElement = buttonOf("picker-new", "", (): void =>
+            begin(name),
+        );
         button.replaceChildren(iconOf(Plus), `New meal “${name}”`);
         button.title = "New meal, its foods picked next";
         return button;

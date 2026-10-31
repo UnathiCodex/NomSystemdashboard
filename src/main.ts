@@ -77,12 +77,19 @@ function deviceReport(): void {
 let deviceWait: number = 0;
 
 const address: URLSearchParams = new URLSearchParams(location.search);
-if (location.pathname === "/notes" || (location.pathname === "/edit" && address.has("path")))
+if (
+    location.pathname === "/notes" ||
+    (location.pathname === "/edit" && address.has("path"))
+)
     history.replaceState(null, "", `/scripts${location.search}${location.hash}`);
-const areas: string[] = phone ? [] : ["/scripts", "/plannings", "/food", "/sport", "/edit"];
+const areas: string[] = phone
+    ? []
+    : ["/scripts", "/plannings", "/food", "/sport", "/edit"];
 const area: string = areas.includes(location.pathname) ? location.pathname : "/";
 const marked: string = area === "/edit" ? "/plannings" : area;
-document.querySelector(`.areas a[href="${marked}"]`)?.setAttribute("aria-current", "page");
+document
+    .querySelector(`.areas a[href="${marked}"]`)
+    ?.setAttribute("aria-current", "page");
 deviceReport();
 addEventListener("resize", (): void => {
     clearTimeout(deviceWait);
@@ -98,7 +105,8 @@ if (area === "/food") {
     document.body.insertAdjacentHTML("beforeend", sportHtml);
     sport.sportStart();
 } else if (area === "/scripts" || area === "/edit" || area === "/plannings") {
-    const editor: { editorStart: () => Promise<void> } = await import("./editor/editor.ts");
+    const editor: { editorStart: () => Promise<void> } =
+        await import("./editor/editor.ts");
     document.body.insertAdjacentHTML("beforeend", editorHtml);
     await editor.editorStart();
 } else {

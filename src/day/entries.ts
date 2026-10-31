@@ -193,7 +193,11 @@ export function standardAddressOf(name: string): string {
  * @returns Answer of the reader, like the identifier of a new entry, `null` for none
  * @throws {Error} - When the reader does not take the request
  */
-async function requestSend(method: string, address: string, body: object | null): Promise<unknown> {
+async function requestSend(
+    method: string,
+    address: string,
+    body: object | null,
+): Promise<unknown> {
     const response: Response = await fetch(address, {
         method: method,
         body: body === null ? null : JSON.stringify(body),
@@ -231,7 +235,11 @@ async function logSend(
  * @returns Fields to send
  */
 function bodyOf(fields: EntryFields): object {
-    return { ...fields, start: fields.start.toISOString(), end: fields.end.toISOString() };
+    return {
+        ...fields,
+        start: fields.start.toISOString(),
+        end: fields.end.toISOString(),
+    };
 }
 
 /**

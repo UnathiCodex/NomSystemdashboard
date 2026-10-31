@@ -82,7 +82,14 @@ import {
 import { lengthOf } from "../day/times.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
-import { crossPut, iconOf, iconPut, plusPut, QuestionMark, searchFieldOf } from "../icons.ts";
+import {
+    crossPut,
+    iconOf,
+    iconPut,
+    plusPut,
+    QuestionMark,
+    searchFieldOf,
+} from "../icons.ts";
 import { Pencil, Plus } from "lucide";
 
 import type { Exercise, Mine, Part, Video, VideoFound, Workout } from "./mine.ts";
@@ -90,7 +97,14 @@ import type { Exercise, Mine, Part, Video, VideoFound, Workout } from "./mine.ts
 /**
  * Everything of mine as the reader last sent it.
  */
-let mine: Mine = { workouts: [], exercises: [], videos: [], basics: [], kinds: [], last: {} };
+let mine: Mine = {
+    workouts: [],
+    exercises: [],
+    videos: [],
+    basics: [],
+    kinds: [],
+    last: {},
+};
 
 /**
  * Shows of the sections, each showing its list anew from {@link mine}.
@@ -165,7 +179,9 @@ function removeOf(words: string, asking: boolean, click: () => void): HTMLButton
  * @returns Clean name, like `Push heavy`, empty for a link
  */
 function typedNameOf(typed: string): string {
-    return linkTyped(typed) ? "" : typed.replace(/[|;,]/g, " ").replace(/\s+/g, " ").trim();
+    return linkTyped(typed)
+        ? ""
+        : typed.replace(/[|;,]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -315,7 +331,8 @@ function variantKeyOf(exercise: {
 function ruleTextOf(exercise: { sets?: string; reps?: string; kg?: string }): string {
     const reps: string = (exercise.reps ?? "").replace(/^(\d+)s$/, "$1 s");
     const given: string = exercise.sets ?? "";
-    const sets: string = given === "" ? reps : reps === "" ? `${given} ×` : `${given} × ${reps}`;
+    const sets: string =
+        given === "" ? reps : reps === "" ? `${given} ×` : `${given} × ${reps}`;
     return [sets, (exercise.kg ?? "") === "" ? "" : `${exercise.kg} kg`]
         .filter((part: string): boolean => part !== "")
         .join(" · ");
@@ -335,7 +352,9 @@ function kindsOf(picked: string, pick: (kind: string) => void): HTMLElement {
     const kinds: HTMLElement = elementOf("span", "sport-kinds", "");
     kinds.append(
         ...mine.kinds.map((kind: string): HTMLButtonElement => {
-            const button: HTMLButtonElement = buttonOf("sport-kind", kind, (): void => pick(kind));
+            const button: HTMLButtonElement = buttonOf("sport-kind", kind, (): void =>
+                pick(kind),
+            );
             button.setAttribute("aria-pressed", String(kind === picked));
             return button;
         }),
@@ -393,7 +412,10 @@ function formOf(
     rows.forEach(([name, field]: [string, HTMLElement]): void => {
         const label: HTMLElement = elementOf("span", "food-fact", name);
         label.addEventListener("click", (): void =>
-            (field instanceof HTMLInputElement ? field : field.querySelector("input"))?.focus(),
+            (field instanceof HTMLInputElement
+                ? field
+                : field.querySelector("input")
+            )?.focus(),
         );
         if (field instanceof HTMLInputElement) {
             field.className = "food-inline food-inline-new";
@@ -460,7 +482,11 @@ function workoutsSectionOf(): HTMLElement {
         parts: Part[],
         name?: string,
     ): void => {
-        workoutSend(name ?? workout.name, parts, name === undefined ? undefined : workout.name)
+        workoutSend(
+            name ?? workout.name,
+            parts,
+            name === undefined ? undefined : workout.name,
+        )
             .then((sent: Mine): void => {
                 if (workout.name === fresh) fresh = "";
                 if (name !== undefined) open = typedNameOf(name).toLowerCase();
@@ -494,7 +520,8 @@ function workoutsSectionOf(): HTMLElement {
     const show: () => void = (): void => {
         if (
             mine.workouts.some(
-                (workout: Workout): boolean => workout.name.toLowerCase() === fresh.toLowerCase(),
+                (workout: Workout): boolean =>
+                    workout.name.toLowerCase() === fresh.toLowerCase(),
             )
         )
             fresh = "";
@@ -502,9 +529,10 @@ function workoutsSectionOf(): HTMLElement {
             ...(fresh === "" ? [] : [{ name: fresh, parts: [], kcal: null }]),
             ...mine.workouts.filter((workout: Workout): boolean =>
                 matchesAll(
-                    [workout.name, ...workout.parts.map((part: Part): string => part.name)].join(
-                        " ",
-                    ),
+                    [
+                        workout.name,
+                        ...workout.parts.map((part: Part): string => part.name),
+                    ].join(" "),
                     wordsOf(search.value),
                 ),
             ),
@@ -516,7 +544,8 @@ function workoutsSectionOf(): HTMLElement {
         const plus: HTMLElement[] =
             typed === "" ||
             mine.workouts.some(
-                (workout: Workout): boolean => workout.name.toLowerCase() === typed.toLowerCase(),
+                (workout: Workout): boolean =>
+                    workout.name.toLowerCase() === typed.toLowerCase(),
             )
                 ? []
                 : [
@@ -626,10 +655,14 @@ function workoutsSectionOf(): HTMLElement {
                 const name: HTMLElement = nameOf(part.name, video?.channel ?? "");
                 if (video === undefined) line.append(name);
                 else {
-                    const opening: HTMLButtonElement = buttonOf("food-link", "", (): void => {
-                        editing = editing === videoKey ? "" : videoKey;
-                        show();
-                    });
+                    const opening: HTMLButtonElement = buttonOf(
+                        "food-link",
+                        "",
+                        (): void => {
+                            editing = editing === videoKey ? "" : videoKey;
+                            show();
+                        },
+                    );
                     name.title += `\nMinutes and kind of ${video.title}`;
                     opening.append(name);
                     line.append(opening);
@@ -657,14 +690,24 @@ function workoutsSectionOf(): HTMLElement {
                         ),
                     );
                 if (video === undefined || editing !== videoKey) return [line];
-                const facts: HTMLElement = elementOf("div", "food-facts sport-video-facts", "");
+                const facts: HTMLElement = elementOf(
+                    "div",
+                    "food-facts sport-video-facts",
+                    "",
+                );
                 facts.append(
                     elementOf("span", "food-fact", "Minutes"),
-                    numberFieldOf(video.minutes, "min", "Minutes", (minutes: number | null): void =>
-                        videoChange(video, { minutes: minutes }),
+                    numberFieldOf(
+                        video.minutes,
+                        "min",
+                        "Minutes",
+                        (minutes: number | null): void =>
+                            videoChange(video, { minutes: minutes }),
                     ),
                     elementOf("span", "food-fact", "Kind"),
-                    kindsOf(video.kind, (kind: string): void => videoChange(video, { kind: kind })),
+                    kindsOf(video.kind, (kind: string): void =>
+                        videoChange(video, { kind: kind }),
+                    ),
                 );
                 return [line, facts];
             }),
@@ -675,7 +718,8 @@ function workoutsSectionOf(): HTMLElement {
                 send(workout, [...workout.parts, part]);
             });
             parts.append(added);
-            if (focusing) queueMicrotask((): void => added.querySelector("input")?.focus());
+            if (focusing)
+                queueMicrotask((): void => added.querySelector("input")?.focus());
             focusing = false;
         }
         return [line, detail];
@@ -792,21 +836,29 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
                       link: "",
                   }))),
         ].filter(
-            (part: Part): boolean => !held(part) && matchesAll(part.name, wordsOf(input.value)),
+            (part: Part): boolean =>
+                !held(part) && matchesAll(part.name, wordsOf(input.value)),
         );
     const lineOf: (part: Part) => HTMLElement = (part: Part): HTMLElement => {
         const video: Video | undefined = mine.videos.find(
             (other: Video): boolean =>
-                part.kind === "Video" && other.link === part.link && other.title === part.name,
+                part.kind === "Video" &&
+                other.link === part.link &&
+                other.title === part.name,
         );
         return listLineOf(
-            nameOf(part.name, part.kind === "Video" ? (video?.channel ?? "") : ruleTextOf(part)),
+            nameOf(
+                part.name,
+                part.kind === "Video" ? (video?.channel ?? "") : ruleTextOf(part),
+            ),
             video?.kcal ?? null,
             (): void => pick(part),
             null,
         )[0];
     };
-    const formOfVideo: (video: VideoFound) => HTMLElement = (video: VideoFound): HTMLElement => {
+    const formOfVideo: (video: VideoFound) => HTMLElement = (
+        video: VideoFound,
+    ): HTMLElement => {
         let kind: string = kindGuessOf(video.title);
         const close: () => void = (): void => {
             input.value = "";
@@ -847,7 +899,12 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
                 });
         };
         const title: HTMLInputElement = editFieldOf(video.title, "Title", save, close);
-        const channel: HTMLInputElement = editFieldOf(video.channel, "Channel", save, close);
+        const channel: HTMLInputElement = editFieldOf(
+            video.channel,
+            "Channel",
+            save,
+            close,
+        );
         const minutes: HTMLInputElement = editFieldOf("", "Minutes", save, close);
         const kinds: HTMLElement = elementOf("span", "", "");
         const kindShow: () => void = (): void => {
@@ -891,7 +948,11 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
                     part === null
                         ? formOfVideo(video)
                         : held(part)
-                          ? elementOf("p", "food-none", "This workout has this video already")
+                          ? elementOf(
+                                "p",
+                                "food-none",
+                                "This workout has this video already",
+                            )
                           : lineOf(part),
                 );
             })
@@ -899,7 +960,11 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
                 console.error(error);
                 if (input.value.trim() === typed)
                     results.replaceChildren(
-                        elementOf("p", "food-none", "No YouTube video found for this link"),
+                        elementOf(
+                            "p",
+                            "food-none",
+                            "No YouTube video found for this link",
+                        ),
                     );
             });
     };
@@ -920,15 +985,23 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
             ].some((name: string): boolean => name.toLowerCase() === typed.toLowerCase())
                 ? []
                 : [
-                      newOf(`New exercise “${typed}”`, "New exercise of this workout", (): void =>
-                          pick({ kind: "Exercise", name: typed, link: "" }),
+                      newOf(
+                          `New exercise “${typed}”`,
+                          "New exercise of this workout",
+                          (): void => pick({ kind: "Exercise", name: typed, link: "" }),
                       ),
                   ];
         results.replaceChildren(
             ...lines,
             ...plus,
             ...(lines.length === 0 && plus.length === 0
-                ? [elementOf("p", "food-none", "Type an exercise, or paste a YouTube link")]
+                ? [
+                      elementOf(
+                          "p",
+                          "food-none",
+                          "Type an exercise, or paste a YouTube link",
+                      ),
+                  ]
                 : []),
         );
     };
@@ -991,10 +1064,17 @@ function exercisesSectionOf(): HTMLElement {
             typed === ""
                 ? []
                 : mine.basics
-                      .filter((name: string): boolean => matchesAll(name, wordsOf(search.value)))
+                      .filter((name: string): boolean =>
+                          matchesAll(name, wordsOf(search.value)),
+                      )
                       .map(
                           (name: string): HTMLElement =>
-                              listLineOf(nameOf(name, ""), null, (): void => add(name), null)[0],
+                              listLineOf(
+                                  nameOf(name, ""),
+                                  null,
+                                  (): void => add(name),
+                                  null,
+                              )[0],
                       );
         const empty: boolean =
             mine.exercises.some(
@@ -1002,7 +1082,9 @@ function exercisesSectionOf(): HTMLElement {
                     variantKeyOf(exercise) ===
                     variantKeyOf({ name: typed, sets: "", reps: "", kg: "" }),
             ) ||
-            mine.basics.some((name: string): boolean => name.toLowerCase() === typed.toLowerCase());
+            mine.basics.some(
+                (name: string): boolean => name.toLowerCase() === typed.toLowerCase(),
+            );
         const plus: HTMLElement[] =
             typed === "" || empty
                 ? []
@@ -1048,14 +1130,23 @@ function exercisesSectionOf(): HTMLElement {
             naming = false;
             show();
         };
-        const name: HTMLInputElement = editFieldOf("", "Name", (): void => add(name.value), close);
+        const name: HTMLInputElement = editFieldOf(
+            "",
+            "Name",
+            (): void => add(name.value),
+            close,
+        );
         queueMicrotask((): void => name.focus());
         return formOf([["Name", name]], close, (): void => add(name.value));
     };
-    const ruleOf: (exercise: Exercise) => HTMLElement = (exercise: Exercise): HTMLElement => {
+    const ruleOf: (exercise: Exercise) => HTMLElement = (
+        exercise: Exercise,
+    ): HTMLElement => {
         const detail: HTMLElement = elementOf("div", "food-detail", "");
         const facts: HTMLElement = elementOf("div", "food-facts", "");
-        const send: (changes: Partial<Exercise>) => void = (changes: Partial<Exercise>): void => {
+        const send: (changes: Partial<Exercise>) => void = (
+            changes: Partial<Exercise>,
+        ): void => {
             const values: { sets: string; reps: string; kg: string } = {
                 sets: changes.sets ?? exercise.sets,
                 reps: changes.reps ?? exercise.reps,
@@ -1070,24 +1161,33 @@ function exercisesSectionOf(): HTMLElement {
         };
         let seconds: boolean = exercise.reps.endsWith("s");
         const reps: HTMLElement = elementOf("span", "food-grams", "");
-        const unit: HTMLButtonElement = buttonOf("sport-kind", seconds ? "s" : "reps", (): void => {
-            seconds = !seconds;
-            const number: string = exercise.reps.replace(/s$/, "");
-            send({ reps: number === "" ? "" : `${number}${seconds ? "s" : ""}` });
-        });
+        const unit: HTMLButtonElement = buttonOf(
+            "sport-kind",
+            seconds ? "s" : "reps",
+            (): void => {
+                seconds = !seconds;
+                const number: string = exercise.reps.replace(/s$/, "");
+                send({ reps: number === "" ? "" : `${number}${seconds ? "s" : ""}` });
+            },
+        );
         unit.setAttribute("aria-pressed", "true");
         unit.title = seconds
             ? "Seconds per set; a click makes them repetitions"
             : "Repetitions per set; a click makes them seconds";
         reps.append(
-            wholeFieldOf(exercise.reps.replace(/s$/, ""), "Repetitions", (typed: string): void =>
-                send({ reps: typed === "" ? "" : `${typed}${seconds ? "s" : ""}` }),
+            wholeFieldOf(
+                exercise.reps.replace(/s$/, ""),
+                "Repetitions",
+                (typed: string): void =>
+                    send({ reps: typed === "" ? "" : `${typed}${seconds ? "s" : ""}` }),
             ),
             unit,
         );
         const sets: HTMLElement = elementOf("span", "food-grams", "");
         sets.append(
-            wholeFieldOf(exercise.sets, "Sets", (typed: string): void => send({ sets: typed })),
+            wholeFieldOf(exercise.sets, "Sets", (typed: string): void =>
+                send({ sets: typed }),
+            ),
         );
         facts.append(
             elementOf("span", "food-fact", "Sets"),

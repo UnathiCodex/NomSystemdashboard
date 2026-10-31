@@ -167,7 +167,8 @@ export function spokenOf(name: string): string {
  */
 export function personOf(persons: Person[], name: string): Person | undefined {
     return persons.find(
-        (person: Person): boolean => person.name === name || spokenOf(person.name) === name,
+        (person: Person): boolean =>
+            person.name === name || spokenOf(person.name) === name,
     );
 }
 
@@ -219,11 +220,13 @@ function namesLink(cell: HTMLElement, persons: Person[]): void {
         .forEach((node: ChildNode): void => {
             const parts: string[] = (node.textContent ?? "").split(namesParting);
             node.replaceWith(
-                ...parts.map((part: string, index: number): string | HTMLAnchorElement => {
-                    const person: Person | undefined =
-                        index % 2 === 0 ? personOf(persons, part) : undefined;
-                    return person === undefined ? part : personLinkOf(person, part);
-                }),
+                ...parts.map(
+                    (part: string, index: number): string | HTMLAnchorElement => {
+                        const person: Person | undefined =
+                            index % 2 === 0 ? personOf(persons, part) : undefined;
+                        return person === undefined ? part : personLinkOf(person, part);
+                    },
+                ),
             );
         });
 }
@@ -255,16 +258,20 @@ export function peopleCellLink(cell: HTMLElement, head: string): void {
  * @param block - Rendered Markdown
  */
 export function peopleLink(block: HTMLElement): void {
-    block.querySelectorAll<HTMLTableElement>("table").forEach((table: HTMLTableElement): void => {
-        const heads: string[] = [...(table.rows[0]?.cells ?? [])].map(
-            (head: HTMLTableCellElement): string => head.textContent ?? "",
-        );
-        [...table.rows].slice(1).forEach((row: HTMLTableRowElement): void => {
-            [...row.cells].forEach((cell: HTMLTableCellElement, column: number): void => {
-                peopleCellLink(cell, heads[column] ?? "");
+    block
+        .querySelectorAll<HTMLTableElement>("table")
+        .forEach((table: HTMLTableElement): void => {
+            const heads: string[] = [...(table.rows[0]?.cells ?? [])].map(
+                (head: HTMLTableCellElement): string => head.textContent ?? "",
+            );
+            [...table.rows].slice(1).forEach((row: HTMLTableRowElement): void => {
+                [...row.cells].forEach(
+                    (cell: HTMLTableCellElement, column: number): void => {
+                        peopleCellLink(cell, heads[column] ?? "");
+                    },
+                );
             });
         });
-    });
 }
 
 /**
@@ -279,7 +286,11 @@ export function peopleLink(block: HTMLElement): void {
  * @param address - Its address in the entry, like `mihovil.cuzic@invalid`
  * @returns The person as it is
  */
-export function personEditOf(persons: Person[], name: string, address: string): PersonEdit {
+export function personEditOf(
+    persons: Person[],
+    name: string,
+    address: string,
+): PersonEdit {
     const person: Person | undefined = personOf(persons, name);
     return {
         name: person?.name ?? name,

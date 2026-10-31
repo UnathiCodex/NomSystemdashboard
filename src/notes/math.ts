@@ -88,7 +88,10 @@ global.MathJax = {
     output: { font: "mathjax-tex", linebreaks: { inline: false } },
     tex: {
         packages: { "[+]": packages },
-        macros: { RequirePackage: ["\\require{#1}", 1], usepackage: ["\\require{#1}", 1] },
+        macros: {
+            RequirePackage: ["\\require{#1}", 1],
+            usepackage: ["\\require{#1}", 1],
+        },
         inlineMath: [],
         displayMath: [],
         processEscapes: false,

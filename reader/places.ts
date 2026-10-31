@@ -249,7 +249,12 @@ function lineIs(place: Place, line: string): boolean {
     return (
         line === lineOf(place) ||
         line ===
-            [place.name, place.street, `${place.code} ${place.city}`.trim(), place.country]
+            [
+                place.name,
+                place.street,
+                `${place.code} ${place.city}`.trim(),
+                place.country,
+            ]
                 .filter((part: string): boolean => part !== "")
                 .join(", ")
     );
@@ -286,8 +291,9 @@ export function placeLinkOf(
 ): string {
     if (from !== null && from.location === line) return from.locationLink;
     return (
-        [...placesRead(), ...roomsRead()].find((place: Place): boolean => lineIs(place, line))
-            ?.link ?? ""
+        [...placesRead(), ...roomsRead()].find((place: Place): boolean =>
+            lineIs(place, line),
+        )?.link ?? ""
     );
 }
 
@@ -377,7 +383,10 @@ function placeCleanOf(sent: Place, others: Place[]): Place {
     };
     if (
         clean.name === "" ||
-        others.some((mine: Place): boolean => mine.name.toLowerCase() === clean.name.toLowerCase())
+        others.some(
+            (mine: Place): boolean =>
+                mine.name.toLowerCase() === clean.name.toLowerCase(),
+        )
     )
         throw new Error(`No new name of a place: ${clean.name}`);
     if (clean.link !== "" && !linkForm.test(clean.link))
@@ -397,12 +406,17 @@ function placeCleanOf(sent: Place, others: Place[]): Place {
  * @throws {Error} - When the file lies outside the new system or holds no table
  */
 function placeLinesRead(file: string): string[] {
-    if (!writeAllowed(file)) throw new Error(`No writing outside the new system: ${file}`);
+    if (!writeAllowed(file))
+        throw new Error(`No writing outside the new system: ${file}`);
     const lines: string[] = existsSync(file)
         ? readFileSync(file, "utf8").split("\n")
         : [...(file === day.rooms ? roomHead : fileHead), ""];
-    const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
-    const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
+    const first: number = lines.findIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
+    const last: number = lines.findLastIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     if (first === -1 || last === first) throw new Error(`No table in ${file}`);
     return lines;
 }
@@ -431,14 +445,19 @@ function rowOf(place: Place): string {
 function rowsSort(lines: string[]): void {
     const first: number =
         lines.findIndex((line: string): boolean => line.startsWith("|")) + tableHead;
-    const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
+    const last: number = lines.findLastIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     lines.splice(
         first,
         last + 1 - first,
         ...lines
             .slice(first, last + 1)
             .sort((one: string, other: string): number =>
-                nameOrder.compare(nameOf(cellsOf(one)[0] ?? ""), nameOf(cellsOf(other)[0] ?? "")),
+                nameOrder.compare(
+                    nameOf(cellsOf(one)[0] ?? ""),
+                    nameOf(cellsOf(other)[0] ?? ""),
+                ),
             ),
     );
 }
@@ -465,7 +484,9 @@ export function placeAdd(sent: Place): Place {
     const added: Place = placeCleanOf(sent, [...placesRead(), ...roomsRead()]);
     const file: string = roomForm.test(added.name) ? day.rooms : day.places;
     const lines: string[] = placeLinesRead(file);
-    const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
+    const last: number = lines.findLastIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     lines.splice(last + 1, 0, rowOf(added));
     rowsSort(lines);
     mkdirSync(dirname(file), { recursive: true });
@@ -495,7 +516,9 @@ export function placeAdd(sent: Place): Place {
  */
 export function placeChange(sent: PlaceChanged): Place {
     const old: string = nameOf(String(sent.old ?? "")).toLowerCase();
-    const file: string = roomsRead().some((room: Place): boolean => room.name.toLowerCase() === old)
+    const file: string = roomsRead().some(
+        (room: Place): boolean => room.name.toLowerCase() === old,
+    )
         ? day.rooms
         : day.places;
     const changed: Place = placeCleanOf(
@@ -505,7 +528,9 @@ export function placeChange(sent: PlaceChanged): Place {
         ),
     );
     const lines: string[] = placeLinesRead(file);
-    const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
+    const first: number = lines.findIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     const row: number = lines.findIndex(
         (line: string, index: number): boolean =>
             index >= first + tableHead &&
@@ -576,7 +601,9 @@ export function placeRename(sent: PlaceRenamed): PlaceChanged | null {
         )
         .map((file: string): [string, string] => {
             const lines: string[] = placeLinesRead(file);
-            const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
+            const first: number = lines.findIndex((line: string): boolean =>
+                line.startsWith("|"),
+            );
             const named: number[] = lines
                 .flatMap((line: string, index: number): number[] =>
                     index >= first + tableHead &&
@@ -588,13 +615,19 @@ export function placeRename(sent: PlaceRenamed): PlaceChanged | null {
                 .reverse();
             named.forEach((row: number): void => {
                 if (target === undefined)
-                    lines[row] = rowOf({ ...changed, standard: rowPlaceOf(lines[row]).standard });
+                    lines[row] = rowOf({
+                        ...changed,
+                        standard: rowPlaceOf(lines[row]).standard,
+                    });
                 else lines.splice(row, 1);
             });
             if (target === undefined) rowsSort(lines);
             return [file, lines.join("\n")];
         })
-        .filter(([file, text]: [string, string]): boolean => text !== readFileSync(file, "utf8"));
+        .filter(
+            ([file, text]: [string, string]): boolean =>
+                text !== readFileSync(file, "utf8"),
+        );
     placeLinesRename(
         [{ folder: calendarRoot, ending: ".ics" }],
         old,
@@ -629,7 +662,9 @@ export function placeRename(sent: PlaceRenamed): PlaceChanged | null {
 export function placeStandardSet(name: string): void {
     if (
         name !== "" &&
-        ![...placesRead(), ...roomsRead()].some((place: Place): boolean => place.name === name)
+        ![...placesRead(), ...roomsRead()].some(
+            (place: Place): boolean => place.name === name,
+        )
     )
         throw new Error(`No place of the name: ${name}`);
     [day.places, day.rooms].filter(existsSync).forEach((file: string): void => {
@@ -641,7 +676,10 @@ export function placeStandardSet(name: string): void {
             .map((line: string, index: number): string =>
                 index < first || !line.startsWith("|")
                     ? line
-                    : rowOf({ ...rowPlaceOf(line), standard: rowPlaceOf(line).name === name }),
+                    : rowOf({
+                          ...rowPlaceOf(line),
+                          standard: rowPlaceOf(line).name === name,
+                      }),
             )
             .join("\n");
         if (marked !== text) writeFileSync(file, marked);
@@ -685,7 +723,9 @@ export function platformOfLink(link: string): Platform | undefined {
         URL.canParse(text) ? new URL(text).hostname.replace(/^www\./, "") : "";
     return host(link) === ""
         ? undefined
-        : platformsRead().find((platform: Platform): boolean => host(platform.link) === host(link));
+        : platformsRead().find(
+              (platform: Platform): boolean => host(platform.link) === host(link),
+          );
 }
 
 /**
@@ -724,7 +764,9 @@ export function platformAdd(sent: Platform): Platform {
     const lines: string[] = existsSync(day.online)
         ? readFileSync(day.online, "utf8").split("\n")
         : [...platformHead, ""];
-    const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
+    const last: number = lines.findLastIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     lines.splice(last + 1, 0, `| ${added.name} | ${added.provider} | ${added.link} |`);
     rowsSort(lines);
     mkdirSync(dirname(day.online), { recursive: true });
@@ -748,7 +790,12 @@ export function platformAdd(sent: Platform): Platform {
  * @throws {Error} - When the link is no web address
  */
 export function onlineFor(
-    sent: { online?: string; onlineLink?: string; onlineChannel?: string; onlineTitle?: string },
+    sent: {
+        online?: string;
+        onlineLink?: string;
+        onlineChannel?: string;
+        onlineTitle?: string;
+    },
     from: Online | null,
 ): Online {
     if (sent.online === undefined)
@@ -760,7 +807,8 @@ export function onlineFor(
         };
     const online: string = cellOf(String(sent.online));
     const link: string = online === "" ? "" : cellOf(String(sent.onlineLink ?? ""));
-    if (link !== "" && !linkForm.test(link)) throw new Error(`No link of ${online}: ${link}`);
+    if (link !== "" && !linkForm.test(link))
+        throw new Error(`No link of ${online}: ${link}`);
     return {
         online: online,
         onlineLink: link,
@@ -803,7 +851,9 @@ export function platformChange(sent: PlatformChanged): Platform {
     const lines: string[] = existsSync(day.online)
         ? readFileSync(day.online, "utf8").split("\n")
         : [];
-    const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
+    const first: number = lines.findIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     const row: number = lines.findIndex(
         (line: string, index: number): boolean =>
             index >= first + tableHead &&

@@ -109,7 +109,11 @@ export async function sessionEnsure(module: string): Promise<boolean> {
             .getElementById("entry")
             ?.addEventListener("close", (): void => resolve(), { once: true }),
     );
-    await categories.entryOpenSkill(module, start, new Date(start.getTime() + minutes * 60 * 1000));
+    await categories.entryOpenSkill(
+        module,
+        start,
+        new Date(start.getTime() + minutes * 60 * 1000),
+    );
     await closed;
     return (await sessionOf(module)) !== null;
 }

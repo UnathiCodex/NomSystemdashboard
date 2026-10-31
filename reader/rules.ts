@@ -206,7 +206,10 @@ function minutesOf(time: string): number {
  * @param date - Day like `2026-11-01`
  * @returns Whether it happens that day
  */
-function onDay(plain: Pick<Plain, "weekdays" | "monthDay" | "month">, date: string): boolean {
+function onDay(
+    plain: Pick<Plain, "weekdays" | "monthDay" | "month">,
+    date: string,
+): boolean {
     return plain.monthDay > 0
         ? Number(date.slice(8)) === plain.monthDay &&
               (plain.month === 0 || Number(date.slice(5, 7)) === plain.month)
@@ -303,8 +306,13 @@ function countLastOf(
 function daysOf(plain: Plain, from: string, to: string): string[] {
     const days: string[] = [];
     const first: string = firstOf(plain);
-    for (let found: string = from < first ? first : from; found <= to; found = dayAdd(found, 1))
-        if ((plain.last === "" || found <= plain.last) && onDay(plain, found)) days.push(found);
+    for (
+        let found: string = from < first ? first : from;
+        found <= to;
+        found = dayAdd(found, 1)
+    )
+        if ((plain.last === "" || found <= plain.last) && onDay(plain, found))
+            days.push(found);
     return [
         ...new Set([
             ...days,
@@ -364,14 +372,16 @@ function partRead(id: string, key: string): Plain {
     const timed: boolean = !entry.allDay;
     const start: string = timed ? berlinDateOf(new Date(entry.start)) : entry.start;
     const monthDay: number = !dated ? 0 : (monthDays[0] ?? Number(start.slice(8)));
-    const month: number = rule.freq !== "YEARLY" ? 0 : (months[0] ?? Number(start.slice(5, 7)));
+    const month: number =
+        rule.freq !== "YEARLY" ? 0 : (months[0] ?? Number(start.slice(5, 7)));
     const own: Entry[] = fileEntriesRead(file).filter(
         (one: Entry): boolean => one.id === id && one.recurrence !== "",
     );
     const extras: Extra[] = seriesDatesOf(day.plan, id).map((date: string): Extra => {
         if (!timed) return { day: date, start: "", end: "" };
         const minutes: number | null =
-            own.find((one: Entry): boolean => one.recurrence === date)?.minutes ?? entry.minutes;
+            own.find((one: Entry): boolean => one.recurrence === date)?.minutes ??
+            entry.minutes;
         return {
             day: berlinDateOf(new Date(date)),
             start: berlinTimeOf(new Date(date)),
@@ -405,14 +415,21 @@ function partRead(id: string, key: string): Plain {
         start: timed ? berlinTimeOf(new Date(entry.start)) : "",
         end:
             timed && entry.minutes !== null
-                ? berlinTimeOf(new Date(Date.parse(entry.start) + entry.minutes * 60 * 1000))
+                ? berlinTimeOf(
+                      new Date(Date.parse(entry.start) + entry.minutes * 60 * 1000),
+                  )
                 : "",
         minutes: entry.minutes,
         first: start,
         last:
             rule.count !== null
                 ? countLastOf(
-                      { weekdays: weekdays, monthDay: monthDay, month: month, first: start },
+                      {
+                          weekdays: weekdays,
+                          monthDay: monthDay,
+                          month: month,
+                          first: start,
+                      },
                       rule.count,
                   )
                 : rule.until === null
@@ -485,16 +502,25 @@ function plainCheck(plain: Plain): void {
         (plain.month > 0 && plain.monthDay === 0) ||
         new Set(plain.weekdays).size !== plain.weekdays.length ||
         plain.weekdays.some(
-            (weekday: number): boolean => !Number.isInteger(weekday) || weekday < 1 || weekday > 7,
+            (weekday: number): boolean =>
+                !Number.isInteger(weekday) || weekday < 1 || weekday > 7,
         )
     )
         throw new Error(`${plain.title}: no weekdays ${plain.weekdays.join(", ")}`);
     if (plain.start !== "" || plain.end !== "") {
-        if (!timeForm.test(plain.start) || !timeForm.test(plain.end) || plain.start >= plain.end)
+        if (
+            !timeForm.test(plain.start) ||
+            !timeForm.test(plain.end) ||
+            plain.start >= plain.end
+        )
             throw new Error(`${plain.title}: no times ${plain.start} – ${plain.end}`);
     } else if (
         plain.minutes !== null &&
-        !(Number.isInteger(plain.minutes) && plain.minutes > 0 && plain.minutes <= dayMinutes)
+        !(
+            Number.isInteger(plain.minutes) &&
+            plain.minutes > 0 &&
+            plain.minutes <= dayMinutes
+        )
     )
         throw new Error(`${plain.title}: no duration of ${plain.minutes} minutes`);
     if (
@@ -554,8 +580,15 @@ function plainCheck(plain: Plain): void {
  */
 function fieldsOf(plain: Plain, old: Entry | null): TodoFields {
     const first: string = firstOf(plain);
-    const semester: string = semesterFor(plain.category, String(plain.semester ?? ""), first);
-    const [title, titleLink]: [string, string] = titleOf({ ...plain, semester: semester }, old);
+    const semester: string = semesterFor(
+        plain.category,
+        String(plain.semester ?? ""),
+        first,
+    );
+    const [title, titleLink]: [string, string] = titleOf(
+        { ...plain, semester: semester },
+        old,
+    );
     const timed: boolean = plain.start !== "";
     return {
         category: plain.category,
@@ -572,7 +605,10 @@ function fieldsOf(plain: Plain, old: Entry | null): TodoFields {
         note: old?.note ?? "",
         day: first,
         time: timed
-            ? berlinInstantOf(first, ...(plain.start.split(":").map(Number) as [number, number]))
+            ? berlinInstantOf(
+                  first,
+                  ...(plain.start.split(":").map(Number) as [number, number]),
+              )
             : null,
         minutes: timed ? minutesOf(plain.end) - minutesOf(plain.start) : plain.minutes,
         deadline: "",
@@ -607,7 +643,9 @@ function chainBoxesOf(uids: string[], from: string, to: string): Map<string, Box
             const recurrence: string = box.id.slice(box.id.lastIndexOf("#") + 1);
             kept.set(
                 `${box.id.slice(0, box.id.lastIndexOf("#"))} ${
-                    recurrence.includes("T") ? berlinDateOf(new Date(recurrence)) : recurrence
+                    recurrence.includes("T")
+                        ? berlinDateOf(new Date(recurrence))
+                        : recurrence
                 }`,
                 box,
             );
@@ -627,7 +665,9 @@ function chainBoxesOf(uids: string[], from: string, to: string): Map<string, Box
  * @returns Its start as ISO instant, empty for none, and its length in minutes, `null` for none
  */
 function timesOf(plain: Plain, date: string): [string, number | null] {
-    const extra: Extra | undefined = plain.extras.find((one: Extra): boolean => one.day === date);
+    const extra: Extra | undefined = plain.extras.find(
+        (one: Extra): boolean => one.day === date,
+    );
     const times: [string, string] =
         extra !== undefined && extra.start !== ""
             ? [extra.start, extra.end]
@@ -677,7 +717,9 @@ function timesOf(plain: Plain, date: string): [string, number | null] {
 function plannedOf(plain: Plain, old: Plain | null): Planned[] {
     const today: string = berlinDateOf(new Date());
     const ahead: string =
-        plain.first > today || (plain.last !== "" && plain.last < today) ? plain.first : today;
+        plain.first > today || (plain.last !== "" && plain.last < today)
+            ? plain.first
+            : today;
     const chain: Plain[] =
         old === null
             ? []
@@ -693,10 +735,14 @@ function plannedOf(plain: Plain, old: Plain | null): Planned[] {
     const first: string = [plain, ...(old === null ? [] : [old]), ...chain]
         .map((series: Plain): string => series.first)
         .sort()[0];
-    const from: string = first > dayAdd(today, -previewDays) ? first : dayAdd(today, -previewDays);
+    const from: string =
+        first > dayAdd(today, -previewDays) ? first : dayAdd(today, -previewDays);
     const to: string = dayAdd(ahead, previewDays - 1);
     const boxes: Map<string, Box> = chainBoxesOf(
-        [...(old === null ? [] : [old.id]), ...chain.map((series: Plain): string => series.id)],
+        [
+            ...(old === null ? [] : [old.id]),
+            ...chain.map((series: Plain): string => series.id),
+        ],
         from,
         to,
     );
@@ -750,7 +796,8 @@ function plannedOf(plain: Plain, old: Plain | null): Planned[] {
     const was: string[] = old === null ? [] : daysOf(old, ahead, to);
     const past: string[] = old === null ? [] : daysOf(old, from, dayAdd(ahead, -1));
     const retimed: (date: string) => boolean = (date: string): boolean =>
-        old !== null && JSON.stringify(timesOf(old, date)) !== JSON.stringify(timesOf(plain, date));
+        old !== null &&
+        JSON.stringify(timesOf(old, date)) !== JSON.stringify(timesOf(plain, date));
     const known: (series: Plain, date: string) => boolean = (
         series: Plain,
         date: string,
@@ -777,8 +824,13 @@ function plannedOf(plain: Plain, old: Plain | null): Planned[] {
             )
             .filter((row: Planned): boolean => row.change !== "" || row.id !== ""),
         ...was
-            .filter((date: string): boolean => !now.includes(date) && known(old as Plain, date))
-            .map((date: string): Planned => rowOf(old as Plain, date, "open", "removed", false)),
+            .filter(
+                (date: string): boolean =>
+                    !now.includes(date) && known(old as Plain, date),
+            )
+            .map((date: string): Planned =>
+                rowOf(old as Plain, date, "open", "removed", false),
+            ),
         ...chain.flatMap((series: Plain): Planned[] =>
             daysOf(series, from, to)
                 .filter((date: string): boolean => known(series, date))
@@ -814,7 +866,8 @@ function aheadOwnOf(id: string, from: string): string[] {
                 entry.id === id &&
                 entry.recurrence !== "" &&
                 !extras.includes(entry.recurrence) &&
-                (entry.allDay ? entry.start : berlinDateOf(new Date(entry.start))) >= from,
+                (entry.allDay ? entry.start : berlinDateOf(new Date(entry.start))) >=
+                    from,
         )
         .map(entryIdOf)
         .filter((own: string): boolean => boxFind(own)[2].state !== "done");
@@ -869,7 +922,9 @@ function durationOf(minutes: number): string {
  * @param old - The series as it stood, `null` for a new one
  */
 function extrasWrite(file: string, id: string, plain: Plain, old: Plain | null): void {
-    const starts: string[] = plain.extras.map((extra: Extra): string => extraStartOf(plain, extra));
+    const starts: string[] = plain.extras.map((extra: Extra): string =>
+        extraStartOf(plain, extra),
+    );
     const own: Set<string> = new Set(
         fileEntriesRead(file)
             .filter((entry: Entry): boolean => entry.id === id && entry.recurrence !== "")
@@ -895,11 +950,17 @@ function extrasWrite(file: string, id: string, plain: Plain, old: Plain | null):
         const minutes: number = minutesOf(extra.end) - minutesOf(extra.start);
         if (length === null || (minutes === length && !own.has(start))) return;
         if (!own.has(start)) {
-            const found: [string, Entry] | undefined = occurrenceLookup(day.plan, id, start);
+            const found: [string, Entry] | undefined = occurrenceLookup(
+                day.plan,
+                id,
+                start,
+            );
             if (found === undefined) return;
             occurrenceOwn(found[0], found[1]);
         }
-        propertiesPut(file, `${id}#${start}`, [["estimated-duration", [durationOf(minutes)]]]);
+        propertiesPut(file, `${id}#${start}`, [
+            ["estimated-duration", [durationOf(minutes)]],
+        ]);
     });
 }
 
@@ -997,16 +1058,18 @@ export function plainApply(change: PlainChange): Planned[] {
     const old: Plain | null = change.id === "" ? null : partRead(change.id, "");
     const today: string = berlinDateOf(new Date());
     if (old === null) {
-        if (!change.dry) seriesKeyPut(plainAdd(change, change.sibling ?? ""), change.series);
+        if (!change.dry)
+            seriesKeyPut(plainAdd(change, change.sibling ?? ""), change.series);
         return plannedOf(change, null);
     }
-    const [file, written]: [string, Entry, ICAL.Recur] = seriesLookup(day.plan, change.id) as [
-        string,
-        Entry,
-        ICAL.Recur,
-    ];
+    const [file, written]: [string, Entry, ICAL.Recur] = seriesLookup(
+        day.plan,
+        change.id,
+    ) as [string, Entry, ICAL.Recur];
     const renamed: boolean =
-        change.title !== old.title || change.module !== old.module || change.type !== old.type;
+        change.title !== old.title ||
+        change.module !== old.module ||
+        change.type !== old.type;
     const moved: boolean =
         JSON.stringify([
             change.weekdays,
@@ -1057,7 +1120,8 @@ export function plainApply(change: PlainChange): Planned[] {
     );
     const ahead: Extra[] = change.extras.filter(
         (extra: Extra): boolean =>
-            extra.day >= today && !kept.some((one: Extra): boolean => one.day === extra.day),
+            extra.day >= today &&
+            !kept.some((one: Extra): boolean => one.day === extra.day),
     );
     const whole: Plain = begun ? { ...change, extras: [...kept, ...ahead] } : change;
     const next: Plain = {
@@ -1083,7 +1147,8 @@ export function plainApply(change: PlainChange): Planned[] {
             .map((extra: Extra): string => extraStartOf(old, extra))
             .filter((start: string): boolean =>
                 fileEntriesRead(file).some(
-                    (entry: Entry): boolean => entry.id === change.id && entry.recurrence === start,
+                    (entry: Entry): boolean =>
+                        entry.id === change.id && entry.recurrence === start,
                 ),
             )
             .forEach((start: string): void =>
@@ -1093,13 +1158,16 @@ export function plainApply(change: PlainChange): Planned[] {
         seriesEnd(file, change.id, ruleOf({ ...old, last: dayAdd(today, -1) }));
         extrasWrite(file, change.id, { ...old, extras: kept }, old);
         own.filter((own: string): boolean =>
-            fileEntriesRead(file).some((entry: Entry): boolean => entryIdOf(entry) === own),
+            fileEntriesRead(file).some(
+                (entry: Entry): boolean => entryIdOf(entry) === own,
+            ),
         ).forEach((own: string): void => entryRemove(file, own));
     } else extrasWrite(file, change.id, whole, old);
     seriesKeyPut(part, change.series);
     if (renamed)
-        seriesChainOf(day.plan, change.id).forEach(([chained, uid]: [string, string]): void =>
-            seriesTitlePut(chained, uid, fieldsOf(change, written)),
+        seriesChainOf(day.plan, change.id).forEach(
+            ([chained, uid]: [string, string]): void =>
+                seriesTitlePut(chained, uid, fieldsOf(change, written)),
         );
     return plannedOf(begun && moved ? next : change, old);
 }
@@ -1116,7 +1184,9 @@ export function plainApply(change: PlainChange): Planned[] {
 function seriesKeyPut(uid: string, key: string): void {
     const [now]: [string, string[]] = seriesPartsOf(day.plan, uid);
     if (now !== key)
-        propertiesPut(fileOfId(day.plan, uid) ?? "", uid, [["x-series", key === "" ? [] : [key]]]);
+        propertiesPut(fileOfId(day.plan, uid) ?? "", uid, [
+            ["x-series", key === "" ? [] : [key]],
+        ]);
 }
 
 /**
@@ -1153,7 +1223,8 @@ function plainGone(id: string, dry: boolean): Planned[] {
     }
     const kept: Extra[] = old.extras.filter(
         (extra: Extra): boolean =>
-            extra.day < today || boxFind(`${id}#${extraStartOf(old, extra)}`)[2].state === "done",
+            extra.day < today ||
+            boxFind(`${id}#${extraStartOf(old, extra)}`)[2].state === "done",
     );
     const own: string[] = aheadOwnOf(id, today);
     seriesEnd(file, id, ruleOf({ ...old, last: yesterday }));
@@ -1180,7 +1251,10 @@ export function plainRemove(id: string): void {
     const [, uids]: [string, string[]] = seriesPartsOf(day.plan, id);
     if (uids.length === 0) throw new Error(`No series ${id} in the plan`);
     uids.forEach((uid: string): void => {
-        const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(day.plan, uid);
+        const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(
+            day.plan,
+            uid,
+        );
         if (found !== undefined && seriesRemove(found[0], uid)) trashPut(found[0]);
     });
 }

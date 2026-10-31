@@ -409,7 +409,10 @@ const tableHead: number = 2;
  * Head of the table of a meal in `Meals.md`, no line above it but its short title,
  * since its columns say enough.
  */
-const mealHead: string[] = ["| Food | Brand | Store | Grams |", "| --- | --- | --- | ---: |"];
+const mealHead: string[] = [
+    "| Food | Brand | Store | Grams |",
+    "| --- | --- | --- | ---: |",
+];
 
 /**
  * Line `X-FOOD` written before foods had brand and store, which names its food alone:
@@ -621,7 +624,14 @@ function firstOf(sent: string | string[] | undefined): string {
 /**
  * Grams or millilitres of one of each unit a maker writes the size of a pack in.
  */
-const unitSizes: { [unit: string]: number } = { g: 1, kg: 1000, ml: 1, cl: 10, dl: 100, l: 1000 };
+const unitSizes: { [unit: string]: number } = {
+    g: 1,
+    kg: 1000,
+    ml: 1,
+    cl: 10,
+    dl: 100,
+    l: 1000,
+};
 
 /**
  * Gives the size of a pack as a bare number in grams or millilitres, its first weight or volume,
@@ -639,7 +649,9 @@ function packOf(quantity: string | undefined): number | null {
     const size: RegExpExecArray | null = /(\d+(?:[.,]\d+)?)\s*(kg|g|ml|cl|dl|l)\b/i.exec(
         quantity ?? "",
     );
-    return size === null ? null : roundOf(numberOf(size[1]) * unitSizes[size[2].toLowerCase()], 1);
+    return size === null
+        ? null
+        : roundOf(numberOf(size[1]) * unitSizes[size[2].toLowerCase()], 1);
 }
 
 /**
@@ -651,7 +663,8 @@ function packOf(quantity: string | undefined): number | null {
  * @returns Its kind
  */
 function productKindOf(sent: ProductSent): Kind {
-    return sent.nutrition_data_per === "100ml" || /\d\s*(ml|cl|dl|l)\b/i.test(sent.quantity ?? "")
+    return sent.nutrition_data_per === "100ml" ||
+        /\d\s*(ml|cl|dl|l)\b/i.test(sent.quantity ?? "")
         ? "Drink"
         : "Eat";
 }
@@ -713,7 +726,10 @@ function cellsOf(line: string): string[] {
  * @param line - Row of the table
  * @returns Its cells by the names of the columns
  */
-function cellsByNameOf(head: string[], line: string): { [column: string]: string | undefined } {
+function cellsByNameOf(
+    head: string[],
+    line: string,
+): { [column: string]: string | undefined } {
     const cells: string[] = cellsOf(line);
     return Object.fromEntries(
         head.map((name: string, index: number): [string, string] => [
@@ -745,9 +761,12 @@ export function foodsRead(): Food[] {
     const head: string[] = cellsOf(rows[0] ?? "");
     return rows
         .slice(tableHead)
-        .map((line: string): { [column: string]: string | undefined } => cellsByNameOf(head, line))
+        .map((line: string): { [column: string]: string | undefined } =>
+            cellsByNameOf(head, line),
+        )
         .filter(
-            (cells: { [column: string]: string | undefined }): boolean => (cells.Food ?? "") !== "",
+            (cells: { [column: string]: string | undefined }): boolean =>
+                (cells.Food ?? "") !== "",
         )
         .map((cells: { [column: string]: string | undefined }): Food => ({
             name: cells.Food ?? "",
@@ -786,7 +805,9 @@ function mealsRead(start: string, end: string): Entry[] {
  * @returns Label, the name alone for a food without brand and store
  */
 export function labelOf(food: { name: string; brand: string; store: string }): string {
-    const place: string[] = [food.brand, food.store].filter((part: string): boolean => part !== "");
+    const place: string[] = [food.brand, food.store].filter(
+        (part: string): boolean => part !== "",
+    );
     return place.length === 0 ? food.name : `${food.name} (${place.join(", ")})`;
 }
 
@@ -829,7 +850,9 @@ function foodsByKeyRead(): Map<string, Food> {
 function foodOfLine(read: Line, mine: Map<string, Food>): Food | undefined {
     return (
         mine.get(keyOf(read)) ??
-        (read.brand === "" && read.store === "" ? mine.get(read.name.toLowerCase()) : undefined)
+        (read.brand === "" && read.store === ""
+            ? mine.get(read.name.toLowerCase())
+            : undefined)
     );
 }
 
@@ -920,7 +943,9 @@ function usesRead(): Map<string, number> {
  * @returns Address with the fields to send
  */
 function addressOf(query: string, page: number): URL {
-    const address: URL = new URL(barcode.test(query) ? `${food.product}${query}` : food.search);
+    const address: URL = new URL(
+        barcode.test(query) ? `${food.product}${query}` : food.search,
+    );
     if (!barcode.test(query)) {
         address.searchParams.set("q", query);
         address.searchParams.set("langs", searchLanguages);
@@ -952,7 +977,8 @@ function addressOf(query: string, page: number): URL {
  *   `null` when it has no name
  */
 function productOf(sent: ProductSent): Product | null {
-    const nutrients: { [nutrient: string]: number | string | undefined } = sent.nutriments ?? {};
+    const nutrients: { [nutrient: string]: number | string | undefined } =
+        sent.nutriments ?? {};
     const kj: number | null = nutrientOf(nutrients["energy-kj_100g"]);
     const kcal: number | null =
         nutrientOf(nutrients["energy-kcal_100g"]) ?? (kj === null ? null : kj / 4.184);
@@ -967,7 +993,9 @@ function productOf(sent: ProductSent): Product | null {
 
     return {
         name: name,
-        ...(kcal === null ? { kcal: null, ...given } : nutrientsOf({ kcal: kcal, ...given })),
+        ...(kcal === null
+            ? { kcal: null, ...given }
+            : nutrientsOf({ kcal: kcal, ...given })),
         barcode: sent.code ?? "",
         brand: brandOf(firstOf(sent.brands)),
         store: brandOf(firstOf(sent.stores)),
@@ -1041,15 +1069,21 @@ export async function foodsFind(
     const foods: Food[] = mine
         .filter(
             (candidate: Food): boolean =>
-                labelOf(candidate).toLowerCase().includes(query) || candidate.barcode === query,
+                labelOf(candidate).toLowerCase().includes(query) ||
+                candidate.barcode === query,
         )
         .sort(
             (first: Food, second: Food): number =>
                 (uses.get(keyOf(second)) ?? 0) - (uses.get(keyOf(first)) ?? 0) ||
                 first.name.localeCompare(second.name),
         );
-    const none: Omit<FoodsFound, "foods" | "products"> = { total: 0, exact: true, more: false };
-    if (!products || query.length < searchLength) return { foods: foods, products: [], ...none };
+    const none: Omit<FoodsFound, "foods" | "products"> = {
+        total: 0,
+        exact: true,
+        more: false,
+    };
+    if (!products || query.length < searchLength)
+        return { foods: foods, products: [], ...none };
 
     try {
         const found: ProductsPage = await productsAsk(
@@ -1060,7 +1094,10 @@ export async function foodsFind(
             foods: foods,
             products: found.products.filter(
                 (product: Product): boolean =>
-                    !mine.some((candidate: Food): boolean => candidate.barcode === product.barcode),
+                    !mine.some(
+                        (candidate: Food): boolean =>
+                            candidate.barcode === product.barcode,
+                    ),
             ),
             total: found.total,
             exact: found.exact,
@@ -1117,7 +1154,10 @@ function tableHeadPut(lines: string[], header: number): void {
     const head: string[] = cellsOf(lines[header]);
     lines.forEach((line: string, index: number): void => {
         if (index >= header + tableHead && line.startsWith("|")) {
-            const cells: { [column: string]: string | undefined } = cellsByNameOf(head, line);
+            const cells: { [column: string]: string | undefined } = cellsByNameOf(
+                head,
+                line,
+            );
             lines[index] =
                 `| ${columns.map((name: string): string => cells[name] ?? "").join(" | ")} |`;
         }
@@ -1201,8 +1241,12 @@ export function foodAdd(sent: Food): Food {
     const lines: string[] = existsSync(food.foods)
         ? readFileSync(food.foods, "utf8").split("\n")
         : [...fileHead, ""];
-    const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
-    const header: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
+    const last: number = lines.findLastIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
+    const header: number = lines.findIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     if (last === -1) throw new Error(`No table in ${food.foods}`);
 
     tableHeadPut(lines, header);
@@ -1231,9 +1275,14 @@ function lineRenamed(
     renamed: { name: string; brand: string; store: string },
 ): string {
     const parts: string[] | null = partsOf(line);
-    if (parts === null || keyOf({ name: parts[0], brand: parts[1], store: parts[2] }) !== old)
+    if (
+        parts === null ||
+        keyOf({ name: parts[0], brand: parts[1], store: parts[2] }) !== old
+    )
         return line;
-    return [renamed.name, renamed.brand, renamed.store, ...line.split(";").slice(3)].join(";");
+    return [renamed.name, renamed.brand, renamed.store, ...line.split(";").slice(3)].join(
+        ";",
+    );
 }
 
 /**
@@ -1288,7 +1337,8 @@ export function foodChange(sent: FoodChanged): Food {
     const found: Food | undefined = mine.find(
         (candidate: Food): boolean => keyOf(candidate) === old,
     );
-    if (found === undefined) throw new Error(`No food of mine: ${JSON.stringify(sent.old)}`);
+    if (found === undefined)
+        throw new Error(`No food of mine: ${JSON.stringify(sent.old)}`);
     if (
         renamed.name === "" ||
         mine.some(
@@ -1302,13 +1352,17 @@ export function foodChange(sent: FoodChanged): Food {
     const own: boolean = found.barcode === "";
     if (
         ![sent.protein, sent.carbs, sent.fat, sent.portion, sent.pack].every(
-            (value: unknown): boolean => value === undefined || value === null || amount(value),
+            (value: unknown): boolean =>
+                value === undefined || value === null || amount(value),
         )
     )
         throw new Error(`No numbers of a food: ${JSON.stringify(sent)}`);
     if (sent.kind !== undefined && sent.kind !== "Eat" && sent.kind !== "Drink")
         throw new Error(`No kind of a food: ${String(sent.kind)}`);
-    const settled: (known: number | null, typed: number | null | undefined) => number | null = (
+    const settled: (
+        known: number | null,
+        typed: number | null | undefined,
+    ) => number | null = (
         known: number | null,
         typed: number | null | undefined,
     ): number | null => (known !== null || !own || typed === undefined ? known : typed);
@@ -1337,7 +1391,9 @@ export function foodChange(sent: FoodChanged): Food {
 
     entriesRead(food.log, "1970-01-01T00:00:00Z", logEnd)
         .filter((entry: Entry): boolean =>
-            entry.foods.some((line: string): boolean => lineRenamed(line, old, renamed) !== line),
+            entry.foods.some(
+                (line: string): boolean => lineRenamed(line, old, renamed) !== line,
+            ),
         )
         .forEach((entry: Entry): void => {
             const file: string | undefined = entryLookup(food.log, entry.id)?.[0];
@@ -1352,7 +1408,9 @@ export function foodChange(sent: FoodChanged): Food {
             const properties: [string, string[]][] = [
                 [
                     "x-food",
-                    entry.foods.map((line: string): string => lineRenamed(line, old, renamed)),
+                    entry.foods.map((line: string): string =>
+                        lineRenamed(line, old, renamed),
+                    ),
                 ],
             ];
             if (beside)
@@ -1372,18 +1430,24 @@ export function foodChange(sent: FoodChanged): Food {
     const meals: Composition[] = compositionsRead();
     if (
         meals.some((meal: Composition): boolean =>
-            meal.foods.some((line: string): boolean => lineRenamed(line, old, renamed) !== line),
+            meal.foods.some(
+                (line: string): boolean => lineRenamed(line, old, renamed) !== line,
+            ),
         )
     )
         compositionsWrite(
             meals.map((meal: Composition): Composition => ({
                 ...meal,
-                foods: meal.foods.map((line: string): string => lineRenamed(line, old, renamed)),
+                foods: meal.foods.map((line: string): string =>
+                    lineRenamed(line, old, renamed),
+                ),
             })),
         );
 
     const lines: string[] = readFileSync(food.foods, "utf8").split("\n");
-    const header: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
+    const header: number = lines.findIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     tableHeadPut(lines, header);
     const head: string[] = cellsOf(lines[header]);
     const row: number = lines.findIndex((line: string, index: number): boolean => {
@@ -1423,13 +1487,18 @@ export function foodRemove(sent: { name: string; brand: string; store: string })
     const lines: string[] = existsSync(food.foods)
         ? readFileSync(food.foods, "utf8").split("\n")
         : [];
-    const header: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
+    const header: number = lines.findIndex((line: string): boolean =>
+        line.startsWith("|"),
+    );
     const head: string[] = cellsOf(lines[header] ?? "");
     const row: number =
         header === -1
             ? -1
             : lines.findIndex((line: string, index: number): boolean => {
-                  const cells: { [column: string]: string | undefined } = cellsByNameOf(head, line);
+                  const cells: { [column: string]: string | undefined } = cellsByNameOf(
+                      head,
+                      line,
+                  );
                   return (
                       index >= header + tableHead &&
                       line.startsWith("|") &&
@@ -1549,7 +1618,9 @@ export function foodDayRead(date: string): FoodDay {
         new Date(noon + dayLength).toISOString(),
     )
         .filter((entry: Entry): boolean => berlinDateOf(new Date(entry.start)) === date)
-        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
+        .sort((first: Entry, second: Entry): number =>
+            first.start.localeCompare(second.start),
+        )
         .map((entry: Entry): Meal => mealOf(entry, mine));
     return {
         ...sumOf(meals),
@@ -1572,7 +1643,8 @@ export function mealsOf(entries: Entry[]): Map<string, Meal> {
     return new Map(
         entries
             .filter(
-                (entry: Entry): boolean => entry.category === foodName && entry.foods.length > 0,
+                (entry: Entry): boolean =>
+                    entry.category === foodName && entry.foods.length > 0,
             )
             .map((entry: Entry): [string, Meal] => [entry.id, mealOf(entry, mine)]),
     );
@@ -1603,7 +1675,10 @@ export function mealTitleOf(lines: string[]): string {
                     .filter((line: Line): boolean => line.meal !== "")
                     .map((line: Line): string => line.meal),
             ),
-        ].map((meal: string): { name: string; kind: Kind } => ({ name: meal, kind: "Eat" })),
+        ].map((meal: string): { name: string; kind: Kind } => ({
+            name: meal,
+            kind: "Eat",
+        })),
         ...read
             .filter((line: Line): boolean => line.meal === "")
             .map((line: Line): { name: string; kind: Kind } => ({
@@ -1640,7 +1715,10 @@ export function foodsRanked(lines: string[]): string[] {
                     rankOf(lineOf(second).grams) - rankOf(lineOf(first).grams),
             );
     return [
-        ...new Set([...lines.map(mealOf).filter((meal: string): boolean => meal !== ""), ""]),
+        ...new Set([
+            ...lines.map(mealOf).filter((meal: string): boolean => meal !== ""),
+            "",
+        ]),
     ].flatMap(ranked);
 }
 
@@ -1722,7 +1800,9 @@ export function compositionsRead(): Composition[] {
                 name: lines[0].trim(),
                 short: lines[1]?.startsWith("|") === false ? lines[1].trim() : "",
                 foods: rows.map((cells: string[]): string => cells.slice(0, 3).join(";")),
-                standard: rows.map((cells: string[]): number | null => nutrientOf(cells[3] ?? "")),
+                standard: rows.map((cells: string[]): number | null =>
+                    nutrientOf(cells[3] ?? ""),
+                ),
             };
         });
 }
@@ -1749,7 +1829,8 @@ export function dishesRead(): Dish[] {
                   0,
               ),
         portions: meal.foods.map(
-            (line: string): number | null => foodOfLine(lineOf(line), mine)?.portion ?? null,
+            (line: string): number | null =>
+                foodOfLine(lineOf(line), mine)?.portion ?? null,
         ),
         kinds: meal.foods.map(
             (line: string): Kind => foodOfLine(lineOf(line), mine)?.kind ?? "Eat",
@@ -1815,8 +1896,10 @@ export function dishAdd(sent: {
     const meals: Composition[] = compositionsRead();
     const typed: string = mealNameOf(String(sent.name ?? ""));
     const name: string =
-        meals.find((meal: Composition): boolean => meal.name.toLowerCase() === typed.toLowerCase())
-            ?.name ?? typed;
+        meals.find(
+            (meal: Composition): boolean =>
+                meal.name.toLowerCase() === typed.toLowerCase(),
+        )?.name ?? typed;
     const foods: string[] = [
         ...new Set(
             (sent.foods ?? []).map((line: string): string => {
@@ -1826,7 +1909,8 @@ export function dishAdd(sent: {
         ),
     ].filter((line: string): boolean => !line.startsWith(";"));
     if (name === "") throw new Error("No name of a meal");
-    if (foods.length === 0) throw new Error(`No foods of a meal: ${JSON.stringify(sent.foods)}`);
+    if (foods.length === 0)
+        throw new Error(`No foods of a meal: ${JSON.stringify(sent.foods)}`);
     if (!writeAllowed(food.meals))
         throw new Error(`No writing outside the new system: ${food.meals}`);
 
@@ -1834,22 +1918,29 @@ export function dishAdd(sent: {
         (meal: Composition): boolean => meal.name.toLowerCase() === name.toLowerCase(),
     );
     const before: Composition | undefined = meals[at];
-    const standard: (number | null)[] = foods.map((line: string, index: number): number | null =>
-        sent.grams !== undefined
-            ? nutrientOf(sent.grams[index])
-            : (before?.standard[before.foods.indexOf(line)] ?? null),
+    const standard: (number | null)[] = foods.map(
+        (line: string, index: number): number | null =>
+            sent.grams !== undefined
+                ? nutrientOf(sent.grams[index])
+                : (before?.standard[before.foods.indexOf(line)] ?? null),
     );
     const ranked: [string, number | null][] = foods
-        .map((line: string, index: number): [string, number | null] => [line, standard[index]])
+        .map((line: string, index: number): [string, number | null] => [
+            line,
+            standard[index],
+        ])
         .sort(
             (first: [string, number | null], second: [string, number | null]): number =>
                 rankOf(second[1]) - rankOf(first[1]),
         );
     const meal: Composition = {
         name: name,
-        short: sent.short === undefined ? (before?.short ?? "") : nameOf(String(sent.short)),
+        short:
+            sent.short === undefined ? (before?.short ?? "") : nameOf(String(sent.short)),
         foods: ranked.map(([line]: [string, number | null]): string => line),
-        standard: ranked.map(([, grams]: [string, number | null]): number | null => grams),
+        standard: ranked.map(
+            ([, grams]: [string, number | null]): number | null => grams,
+        ),
     };
     compositionsWrite(
         at === -1
@@ -1964,7 +2055,8 @@ export function dishRemove(name: string): Dish[] {
         throw new Error(`No writing outside the new system: ${food.meals}`);
     compositionsWrite(
         compositionsRead().filter(
-            (meal: Composition): boolean => meal.name.toLowerCase() !== name.trim().toLowerCase(),
+            (meal: Composition): boolean =>
+                meal.name.toLowerCase() !== name.trim().toLowerCase(),
         ),
     );
     return dishesRead();

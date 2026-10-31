@@ -153,7 +153,9 @@ export function emptyIs(state: EditorState, line: Line): boolean {
         node !== null;
         node = node.parent
     )
-        if (/^(?:FencedCode|CodeBlock|HTMLBlock|CommentBlock|InlineMath)$/.test(node.name))
+        if (
+            /^(?:FencedCode|CodeBlock|HTMLBlock|CommentBlock|InlineMath)$/.test(node.name)
+        )
             return false;
     return /^[ \t]*$/.test(line.text) || quoteMarkIs(state, line);
 }
@@ -239,7 +241,9 @@ function airOf(state: EditorState, line: Line, count: number): string {
  * @returns Number of blanks
  */
 function blanksBefore(state: EditorState, pos: number): number {
-    return /[ \t]*$/.exec(state.sliceDoc(state.doc.lineAt(pos).from, pos))?.[0].length ?? 0;
+    return (
+        /[ \t]*$/.exec(state.sliceDoc(state.doc.lineAt(pos).from, pos))?.[0].length ?? 0
+    );
 }
 
 /**
@@ -367,8 +371,9 @@ function numbersFixed(change: Transaction): ChangeSpec[] {
         enter: (node: SyntaxNodeRef): void => {
             if (node.name !== "OrderedList") return;
             const before: RegExpExecArray | null = /^[ \t]*(\d+)[.)]/.exec(
-                change.startState.doc.lineAt(change.changes.invertedDesc.mapPos(node.from, -1))
-                    .text,
+                change.startState.doc.lineAt(
+                    change.changes.invertedDesc.mapPos(node.from, -1),
+                ).text,
             );
             let number: number | null =
                 node.node.parent?.name === "ListItem"
@@ -399,7 +404,10 @@ function numbersFixed(change: Transaction): ChangeSpec[] {
  * @param spec - The change, like a point moved in by Tab
  */
 function listChange(view: EditorView, spec: TransactionSpec): void {
-    view.dispatch(spec, { changes: numbersFixed(view.state.update(spec)), sequential: true });
+    view.dispatch(spec, {
+        changes: numbersFixed(view.state.update(spec)),
+        sequential: true,
+    });
 }
 
 /**
@@ -452,7 +460,9 @@ function quoteMarksOf(state: EditorState, pos: number): string | null {
 const pointContinue: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.from);
-    const before: string = view.state.sliceDoc(line.from, range.from).replace(/[ \t]+$/, "");
+    const before: string = view.state
+        .sliceDoc(line.from, range.from)
+        .replace(/[ \t]+$/, "");
     const own: string = /^(?:[ \t]*>[ \t]?)*[ \t]*/.exec(line.text)?.[0] ?? "";
     const start: string =
         pointStartOf(line.text) ??
@@ -466,7 +476,8 @@ const pointContinue: Command = (view: EditorView): boolean => {
             insert: before + view.state.lineBreak + start,
         },
         selection: {
-            anchor: line.from + before.length + view.state.lineBreak.length + start.length,
+            anchor:
+                line.from + before.length + view.state.lineBreak.length + start.length,
         },
         scrollIntoView: true,
         userEvent: "input",
@@ -525,7 +536,10 @@ function nextPointOf(state: EditorState, item: SyntaxNode): string | null {
  * @param head - The cursor
  * @returns The point, `ListItem`, with the end of its fold, `null` for none
  */
-function foldedPointOf(state: EditorState, head: number): { item: SyntaxNode; to: number } | null {
+function foldedPointOf(
+    state: EditorState,
+    head: number,
+): { item: SyntaxNode; to: number } | null {
     let folded: { item: SyntaxNode; to: number } | null = null;
     foldedRanges(state).between(head, head, (from: number, to: number): void => {
         const item: SyntaxNode | null = itemOf(state, state.doc.lineAt(from));
@@ -547,9 +561,17 @@ function foldedPointOf(state: EditorState, head: number): { item: SyntaxNode; to
  * @param head - The cursor, at the end of a line of the point's text
  * @returns The first sub-point, `ListItem`, `null` for none there or text right of the cursor
  */
-function subPointOf(state: EditorState, item: SyntaxNode, head: number): SyntaxNode | null {
-    const list: SyntaxNode | null = item.getChild("BulletList") ?? item.getChild("OrderedList");
-    if (list === null || !/^[ \t]*$/.test(state.sliceDoc(head, state.doc.lineAt(head).to)))
+function subPointOf(
+    state: EditorState,
+    item: SyntaxNode,
+    head: number,
+): SyntaxNode | null {
+    const list: SyntaxNode | null =
+        item.getChild("BulletList") ?? item.getChild("OrderedList");
+    if (
+        list === null ||
+        !/^[ \t]*$/.test(state.sliceDoc(head, state.doc.lineAt(head).to))
+    )
         return null;
     let next: number = state.doc.lineAt(head).number + 1;
     while (next < state.doc.lines && emptyIs(state, state.doc.line(next))) next++;
@@ -588,14 +610,23 @@ const furtherContinue: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
     if (!range.empty || markEndIs(view.state, line, range.head)) return false;
-    const folded: { item: SyntaxNode; to: number } | null = foldedPointOf(view.state, range.head);
+    const folded: { item: SyntaxNode; to: number } | null = foldedPointOf(
+        view.state,
+        range.head,
+    );
     const item: SyntaxNode | null =
         folded?.item ??
-        (!/^[ \t>]*$/.test(view.state.sliceDoc(line.from, range.head)) ? itemAt(view.state) : null);
+        (!/^[ \t>]*$/.test(view.state.sliceDoc(line.from, range.head))
+            ? itemAt(view.state)
+            : null);
     if (item === null) return false;
     const sub: SyntaxNode | null =
         folded === null ? subPointOf(view.state, item, range.head) : null;
-    if (folded === null && sub === null && view.state.doc.lineAt(item.from).number === line.number)
+    if (
+        folded === null &&
+        sub === null &&
+        view.state.doc.lineAt(item.from).number === line.number
+    )
         return false;
 
     const insert: string | null = nextPointOf(view.state, sub ?? item);
@@ -638,14 +669,19 @@ const quoteBreak: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
     const marks: string | null = quoteMarksOf(view.state, range.head);
-    if (view.state.selection.ranges.length > 1 || !range.empty || marks === null) return false;
+    if (view.state.selection.ranges.length > 1 || !range.empty || marks === null)
+        return false;
 
     const air: string = marks.trimEnd();
-    const textStart: boolean = /^[ \t>]*$/.test(view.state.sliceDoc(line.from, range.head));
+    const textStart: boolean = /^[ \t>]*$/.test(
+        view.state.sliceDoc(line.from, range.head),
+    );
     const insert: string = textStart
         ? air + view.state.lineBreak
         : view.state.lineBreak + air + view.state.lineBreak + marks;
-    const from: number = textStart ? line.from : range.head - blanksBefore(view.state, range.head);
+    const from: number = textStart
+        ? line.from
+        : range.head - blanksBefore(view.state, range.head);
     view.dispatch({
         changes: textStart
             ? { from: from, insert: insert }
@@ -712,10 +748,11 @@ const pointEnter: Command = (view: EditorView): boolean => {
     const head: number = view.state.selection.main.head;
     const prefix: string = quotePrefixOf(line.text);
     if (view.state.sliceDoc(head, line.to).trim() !== "") {
-        const point: string = `${view.state.sliceDoc(line.from, head).trimEnd()} `.replace(
-            /\[[xX]\] $/,
-            "[ ] ",
-        );
+        const point: string =
+            `${view.state.sliceDoc(line.from, head).trimEnd()} `.replace(
+                /\[[xX]\] $/,
+                "[ ] ",
+            );
         listChange(view, {
             changes: { from: line.from, insert: point + view.state.lineBreak },
             selection: { anchor: head + point.length + view.state.lineBreak.length },
@@ -824,8 +861,16 @@ const markupContinue: Command = (view: EditorView): boolean =>
             const changes: ChangeSpec[] = [];
             let removed: number = 0;
             transaction.changes.iterChanges(
-                (from: number, to: number, fromB: number, toB: number, inserted: Text): void => {
-                    const insert: string = inserted.toString().replace(/^(\n)[ \t>]*\n/, "$1");
+                (
+                    from: number,
+                    to: number,
+                    fromB: number,
+                    toB: number,
+                    inserted: Text,
+                ): void => {
+                    const insert: string = inserted
+                        .toString()
+                        .replace(/^(\n)[ \t>]*\n/, "$1");
                     removed += inserted.length - insert.length;
                     changes.push({ from: from, to: to, insert: insert });
                 },
@@ -964,9 +1009,13 @@ function blankIndent(inward: boolean): Command {
         )
             return false;
         let above: Line = line;
-        while (above.number > 1 && (above.number === line.number || /^[ \t>]*$/.test(above.text)))
+        while (
+            above.number > 1 &&
+            (above.number === line.number || /^[ \t>]*$/.test(above.text))
+        )
             above = view.state.doc.line(above.number - 1);
-        const items: SyntaxNode[] = above.number === line.number ? [] : itemsOf(view.state, above);
+        const items: SyntaxNode[] =
+            above.number === line.number ? [] : itemsOf(view.state, above);
         if (items.length === 0) return false;
 
         const indentationOf = (point: SyntaxNode): string => {
@@ -978,8 +1027,9 @@ function blankIndent(inward: boolean): Command {
         );
         const column: number = columnsOf(body);
         const item: SyntaxNode | null = inward
-            ? (items.find((point: SyntaxNode, index: number): boolean => levels[index] > column) ??
-              null)
+            ? (items.find(
+                  (point: SyntaxNode, index: number): boolean => levels[index] > column,
+              ) ?? null)
             : (items.findLast(
                   (point: SyntaxNode, index: number): boolean => levels[index] < column,
               ) ?? null);
@@ -1058,7 +1108,8 @@ const headingBackward: Command = (view: EditorView): boolean => {
 const quoteBackward: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
-    if (view.state.selection.ranges.length > 1 || !range.empty || line.number === 1) return false;
+    if (view.state.selection.ranges.length > 1 || !range.empty || line.number === 1)
+        return false;
     const before: string = view.state.sliceDoc(line.from, range.head);
     const above: Line = view.state.doc.line(line.number - 1);
 
@@ -1091,7 +1142,8 @@ const quoteBackward: Command = (view: EditorView): boolean => {
         return true;
     }
 
-    if (line.number < 3 || !/^[ \t]*$/.test(before) || !/^[ \t]*$/.test(above.text)) return false;
+    if (line.number < 3 || !/^[ \t]*$/.test(before) || !/^[ \t]*$/.test(above.text))
+        return false;
     const quote: Line = view.state.doc.line(line.number - 2);
     const marks: string | null = quoteMarksOf(view.state, quote.to);
     let block: SyntaxNode = syntaxTree(view.state).resolveInner(line.to, -1);
@@ -1163,8 +1215,13 @@ function tableBreak(lines: number): Command {
             });
         else if (range.empty && range.head === line.from && table.from === line.from)
             view.dispatch({
-                changes: { from: line.from, insert: view.state.lineBreak.repeat(lines - 1) },
-                selection: { anchor: line.from + view.state.lineBreak.length * (lines - 1) },
+                changes: {
+                    from: line.from,
+                    insert: view.state.lineBreak.repeat(lines - 1),
+                },
+                selection: {
+                    anchor: line.from + view.state.lineBreak.length * (lines - 1),
+                },
                 scrollIntoView: true,
                 userEvent: "input",
             });
@@ -1192,7 +1249,8 @@ function tableJoin(forward: boolean): Command {
         const number: number = line.number + (forward ? 1 : -1);
         if (number < 1 || number > view.state.doc.lines) return false;
         const next: Line = view.state.doc.line(number);
-        const textIs = (row: Line): boolean => !emptyIs(view.state, row) && row.length > 0;
+        const textIs = (row: Line): boolean =>
+            !emptyIs(view.state, row) && row.length > 0;
         return (
             (tableOf(view.state, line) !== null || tableOf(view.state, next) !== null) &&
             textIs(line) &&
@@ -1211,7 +1269,9 @@ function tableJoin(forward: boolean): Command {
  */
 const tabWrite: Command = (view: EditorView): boolean => {
     const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
-    return !view.state.selection.main.empty || codeIs(view.state, line) ? insertTab(view) : true;
+    return !view.state.selection.main.empty || codeIs(view.state, line)
+        ? insertTab(view)
+        : true;
 };
 
 /**
@@ -1269,7 +1329,9 @@ const markerBackward: Command = (view: EditorView): boolean => {
             view.dispatch({
                 changes: transaction.changes,
                 selection: transaction.selection,
-                effects: markEndIs(view.state, line, range.head) ? typingSet.of(null) : [],
+                effects: markEndIs(view.state, line, range.head)
+                    ? typingSet.of(null)
+                    : [],
                 scrollIntoView: true,
                 userEvent: transaction.annotation(Transaction.userEvent),
             }),
@@ -1322,7 +1384,9 @@ function markerTaken(
         holder.to <= previous.to
             ? airOf(state, line, 1)
             : "";
-    const mark: RegExpExecArray | null = /^((?:[ \t]*>[ \t]?)*\t*)([-*+]|\d+[.)])/.exec(line.text);
+    const mark: RegExpExecArray | null = /^((?:[ \t]*>[ \t]?)*\t*)([-*+]|\d+[.)])/.exec(
+        line.text,
+    );
     const indentation: string =
         air === "" && !emptyIs(state, above)
             ? (pointStartOf(line.text) ?? "")
@@ -1376,11 +1440,16 @@ const markupForward: Command = (view: EditorView): boolean => {
         changed({ from: line.to, to: next.from + markup.length });
         return true;
     }
-    const taken: ChangeSpec | null = markerTaken(view.state, next, next.from + markup.length);
+    const taken: ChangeSpec | null = markerTaken(
+        view.state,
+        next,
+        next.from + markup.length,
+    );
     if (taken !== null) changed(taken);
     else if (
         !deleteMarkupBackward({
-            state: view.state.update({ selection: { anchor: next.from + markup.length } }).state,
+            state: view.state.update({ selection: { anchor: next.from + markup.length } })
+                .state,
             dispatch: (transaction: Transaction): void => changed(transaction.changes),
         })
     )
@@ -1425,25 +1494,36 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
         )
             return false;
         const point: SyntaxNode | null =
-            view.state.field(typingLine, false) === line.from ? null : airPointOf(view.state, line);
+            view.state.field(typingLine, false) === line.from
+                ? null
+                : airPointOf(view.state, line);
         const indentation: string =
-            point === null ? "" : (textIndentationOf(view.state.doc.lineAt(point.from).text) ?? "");
+            point === null
+                ? ""
+                : (textIndentationOf(view.state.doc.lineAt(point.from).text) ?? "");
 
         let below: number = 0;
         let next: Line | null = null;
-        for (let number: number = line.number + 1; number <= view.state.doc.lines; number++) {
+        for (
+            let number: number = line.number + 1;
+            number <= view.state.doc.lines;
+            number++
+        ) {
             next = view.state.doc.line(number);
             if (!emptyIs(view.state, next)) break;
             below++;
             next = null;
         }
-        const wanted: number = next === null ? 0 : /^#{1,6}(?:[ \t]|$)/.test(next.text) ? 2 : 1;
+        const wanted: number =
+            next === null ? 0 : /^#{1,6}(?:[ \t]|$)/.test(next.text) ? 2 : 1;
         if (below >= wanted && indentation === "") return false;
         view.dispatch({
             changes: {
                 from: from,
                 insert:
-                    indentation + text + view.state.lineBreak.repeat(Math.max(wanted - below, 0)),
+                    indentation +
+                    text +
+                    view.state.lineBreak.repeat(Math.max(wanted - below, 0)),
             },
             selection: { anchor: from + indentation.length + text.length },
             scrollIntoView: true,
@@ -1469,7 +1549,13 @@ const airMost: Extension = EditorState.transactionFilter.of(
     (transaction: Transaction): TransactionSpec | readonly TransactionSpec[] => {
         let broken: boolean = false;
         transaction.changes.iterChanges(
-            (fromA: number, toA: number, fromB: number, toB: number, inserted: Text): void => {
+            (
+                fromA: number,
+                toA: number,
+                fromB: number,
+                toB: number,
+                inserted: Text,
+            ): void => {
                 broken ||= inserted.lines > 1;
             },
         );
@@ -1529,7 +1615,10 @@ const paragraphUntyped: Extension = EditorState.transactionFilter.of(
             next = null;
         }
         if (next === null || next.number === now.number + 1) return transaction;
-        return [transaction, { changes: { from: now.to, to: next.from - 1 }, sequential: true }];
+        return [
+            transaction,
+            { changes: { from: now.to, to: next.from - 1 }, sequential: true },
+        ];
     },
 );
 
@@ -1552,7 +1641,8 @@ function airPointOf(state: EditorState, line: Line): SyntaxNode | null {
     return (
         itemsOf(state, above).findLast(
             (point: SyntaxNode): boolean =>
-                point.nextSibling?.name === "ListItem" && point.nextSibling.from > line.to,
+                point.nextSibling?.name === "ListItem" &&
+                point.nextSibling.from > line.to,
         ) ?? null
     );
 }
@@ -1606,7 +1696,8 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
     const blank: boolean =
         (/^[ \t]+$/.test(line.text) && emptyIs(view.state, line)) ||
         furtherStartIs(view.state, line, range.head);
-    if (line.length > 0 && !blank && !/^(?:Paragraph|ATXHeading\d)$/.test(node.name)) return false;
+    if (line.length > 0 && !blank && !/^(?:Paragraph|ATXHeading\d)$/.test(node.name))
+        return false;
 
     const textStart: boolean =
         blank ||
@@ -1616,7 +1707,9 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
     const insert: string = textStart
         ? airOf(view.state, line, 1)
         : view.state.lineBreak + view.state.lineBreak;
-    const from: number = textStart ? line.from : range.head - blanksBefore(view.state, range.head);
+    const from: number = textStart
+        ? line.from
+        : range.head - blanksBefore(view.state, range.head);
     view.dispatch({
         changes: {
             from: from,
@@ -1661,8 +1754,13 @@ function itemOf(state: EditorState, line: Line): SyntaxNode | null {
  * @returns The item, `ListItem`, `null` outside a list or when the lines picked reach beyond it
  */
 function itemAt(state: EditorState): SyntaxNode | null {
-    const item: SyntaxNode | null = itemOf(state, state.doc.lineAt(state.selection.main.from));
-    return item !== null && state.selection.main.to <= state.doc.lineAt(item.to).to ? item : null;
+    const item: SyntaxNode | null = itemOf(
+        state,
+        state.doc.lineAt(state.selection.main.from),
+    );
+    return item !== null && state.selection.main.to <= state.doc.lineAt(item.to).to
+        ? item
+        : null;
 }
 
 /**
@@ -1686,7 +1784,9 @@ function itemsAt(state: EditorState): [SyntaxNode, SyntaxNode] | null {
     let last: SyntaxNode | null = itemOf(state, end);
     while (first !== null && last !== null && last.parent?.from !== first.parent?.from)
         last = last.parent?.parent?.name === "ListItem" ? last.parent.parent : null;
-    return first !== null && last !== null && last.from >= first.from ? [first, last] : null;
+    return first !== null && last !== null && last.from >= first.from
+        ? [first, last]
+        : null;
 }
 
 /**
@@ -1754,7 +1854,9 @@ function itemShift(
                     ? { from: from, insert: "\t" }
                     : {
                           from: from,
-                          to: from + (blanks.startsWith("\t") ? 1 : Math.min(4, blanks.length)),
+                          to:
+                              from +
+                              (blanks.startsWith("\t") ? 1 : Math.min(4, blanks.length)),
                       },
             );
             const mark: SyntaxNode | null = point.getChild("ListMark");
@@ -1853,10 +1955,12 @@ function itemIndent(inward: boolean): Command {
                 ? (last?.lastChild ?? null)
                 : null
             : parent;
-        const start: string | null = before === null ? null : nextPointOf(view.state, before);
+        const start: string | null =
+            before === null ? null : nextPointOf(view.state, before);
         if (inward && item.prevSibling?.name === "ListItem")
             itemShift(view, item, items[1], true, start);
-        else if (!inward && parent !== null) itemShift(view, item, items[1], false, start);
+        else if (!inward && parent !== null)
+            itemShift(view, item, items[1], false, start);
         return true;
     };
 }
@@ -2033,7 +2137,8 @@ function linesMove(down: boolean): Command {
         const doc: Text = view.state.doc;
         if (view.state.readOnly) return false;
 
-        const text: (number: number) => string = (number: number): string => doc.line(number).text;
+        const text: (number: number) => string = (number: number): string =>
+            doc.line(number).text;
         const { first, last }: { first: number; last: number } = linesOf(view.state);
         const point: boolean = pointIs(view.state, first);
         const level: number | null = depthOf(text(first));
@@ -2067,10 +2172,17 @@ function linesMove(down: boolean): Command {
                     (point && blanks > 0 && !pointIs(view.state, number))
                 )
                     continue;
-                if (pointIs(view.state, number) && (blanks === level || point)) top = number;
+                if (pointIs(view.state, number) && (blanks === level || point))
+                    top = number;
                 break;
             }
-        blocksSwap(view, doc.line(top).from, doc.line(first).from, doc.line(last).to, true);
+        blocksSwap(
+            view,
+            doc.line(top).from,
+            doc.line(first).from,
+            doc.line(last).to,
+            true,
+        );
         return true;
     };
 }
@@ -2126,7 +2238,12 @@ const linesDelete: Command = (view: EditorView): boolean => {
  * @param char - Markup character, like `*`
  * @returns How many stand there in a row, at most three
  */
-function marksCount(state: EditorState, pos: number, forward: boolean, char: string): number {
+function marksCount(
+    state: EditorState,
+    pos: number,
+    forward: boolean,
+    char: string,
+): number {
     let count: number = 0;
     while (
         count < 3 &&
@@ -2159,7 +2276,9 @@ function markupToggle(mark: string): Command {
 
         view.dispatch(
             view.state.changeByRange(
-                (range: SelectionRange): { range: SelectionRange; changes: ChangeSpec } => {
+                (
+                    range: SelectionRange,
+                ): { range: SelectionRange; changes: ChangeSpec } => {
                     const word: SelectionRange | null = range.empty
                         ? view.state.wordAt(range.head)
                         : range;
@@ -2169,7 +2288,12 @@ function markupToggle(mark: string): Command {
                             changes: { from: range.head, insert: mark + mark },
                         };
 
-                    const before: number = marksCount(view.state, word.from, false, mark[0]);
+                    const before: number = marksCount(
+                        view.state,
+                        word.from,
+                        false,
+                        mark[0],
+                    );
                     const after: number = marksCount(view.state, word.to, true, mark[0]);
                     const marked: boolean =
                         mark.length === 2
@@ -2255,7 +2379,10 @@ function sourcePieceOf(state: EditorState, pos: number): SyntaxNode | null {
 function lineMove(command: Command): Command {
     const move: Command = (view: EditorView): boolean => {
         const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
-        const piece: SyntaxNode | null = sourcePieceOf(view.state, view.state.selection.main.head);
+        const piece: SyntaxNode | null = sourcePieceOf(
+            view.state,
+            view.state.selection.main.head,
+        );
         if (!command(view)) return false;
         const head: number = view.state.selection.main.head;
         let held: boolean =
@@ -2263,9 +2390,13 @@ function lineMove(command: Command): Command {
             head >= piece.from &&
             head <= piece.to &&
             view.state.doc.lineAt(head).number === line.number;
-        foldedRanges(view.state).between(line.to, line.to, (from: number, to: number): void => {
-            held ||= from === line.to && to === head;
-        });
+        foldedRanges(view.state).between(
+            line.to,
+            line.to,
+            (from: number, to: number): void => {
+                held ||= from === line.to && to === head;
+            },
+        );
         if (held) move(view);
         return true;
     };
@@ -2290,7 +2421,10 @@ function lineMove(command: Command): Command {
  */
 function lineEnd(command: Command): Command {
     return (view: EditorView): boolean => {
-        const before: SyntaxNode | null = sourcePieceOf(view.state, view.state.selection.main.head);
+        const before: SyntaxNode | null = sourcePieceOf(
+            view.state,
+            view.state.selection.main.head,
+        );
         if (!command(view)) return false;
         const range: SelectionRange = view.state.selection.main;
         const line: Line = view.state.doc.lineAt(range.head);
@@ -2302,7 +2436,10 @@ function lineEnd(command: Command): Command {
             piece.from !== before?.from
         )
             view.dispatch({
-                selection: { anchor: range.empty ? line.to : range.anchor, head: line.to },
+                selection: {
+                    anchor: range.empty ? line.to : range.anchor,
+                    head: line.to,
+                },
                 userEvent: "select",
             });
         return true;
@@ -2339,7 +2476,9 @@ export const typingLine: StateField<number | null> = StateField.define<number | 
             )
         )
             return line.from;
-        return start !== null && transaction.changes.mapPos(start) === line.from ? line.from : null;
+        return start !== null && transaction.changes.mapPos(start) === line.from
+            ? line.from
+            : null;
     },
 });
 
@@ -2374,7 +2513,8 @@ const blanksLeft: Extension = Prec.high(
                 transaction.selection === undefined ||
                 !cursor.empty ||
                 !emptyIs(state, line) ||
-                transaction.newDoc.lineAt(transaction.newSelection.main.head).number === line.number
+                transaction.newDoc.lineAt(transaction.newSelection.main.head).number ===
+                    line.number
             )
                 return transaction;
             let top: Line = line;
@@ -2406,7 +2546,10 @@ const blanksLeft: Extension = Prec.high(
             return [
                 transaction,
                 {
-                    changes: { from: line.from + line.text.trimEnd().length, to: line.to },
+                    changes: {
+                        from: line.from + line.text.trimEnd().length,
+                        to: line.to,
+                    },
                     sequential: true,
                 },
             ];
@@ -2542,8 +2685,16 @@ export const markdownKeys: Extension = [
             { key: "Mod-z", run: historyIn(undo), preventDefault: true },
             { key: "Mod-Shift-z", run: historyIn(redo), preventDefault: true },
             { key: "Mod-y", run: (): boolean => true, preventDefault: true },
-            { key: "ArrowUp", run: lineMove(cursorLineUp), shift: lineMove(selectLineUp) },
-            { key: "ArrowDown", run: lineMove(cursorLineDown), shift: lineMove(selectLineDown) },
+            {
+                key: "ArrowUp",
+                run: lineMove(cursorLineUp),
+                shift: lineMove(selectLineUp),
+            },
+            {
+                key: "ArrowDown",
+                run: lineMove(cursorLineDown),
+                shift: lineMove(selectLineDown),
+            },
             {
                 key: "End",
                 run: lineEnd(cursorLineBoundaryForward),

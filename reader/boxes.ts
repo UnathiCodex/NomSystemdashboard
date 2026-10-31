@@ -341,7 +341,10 @@ export type PlanDay = {
  *   `VO_UniversityLectureLessons/TUM_2026W/01_Introduction.pdf`,
  *   none for none and for any other box.
  */
-export type BoxNew = Omit<EntryTexts, "locationLink" | "titleLink" | "attendees" | keyof Online> &
+export type BoxNew = Omit<
+    EntryTexts,
+    "locationLink" | "titleLink" | "attendees" | keyof Online
+> &
     Partial<Online> & {
         titleLink?: string;
         attendees?: Attendee[];
@@ -664,7 +667,11 @@ function carriedOf(box: Box, written: string): Box {
     let until: string = "";
     if (box.state === "open") until = berlinDateOf(new Date());
     else if (box.state === "done") until = loggedDayOf(box);
-    if (berlinDateOf(new Date(written)) > box.day || box.deadline !== "" || until <= box.day)
+    if (
+        berlinDateOf(new Date(written)) > box.day ||
+        box.deadline !== "" ||
+        until <= box.day
+    )
         return box;
     const days: number = daysOf(box.day, until);
     const laterOf: (later: number) => string = (later: number): string =>
@@ -731,7 +738,9 @@ function boxCompare(first: Box, second: Box): number {
     const rankOf: (box: Box) => number = (box: Box): number => {
         if (box.time !== "") return 0;
         if (box.deadline !== "") return 1;
-        return box.state === "dropped" || box.state === "university" || box.state === "pushed"
+        return box.state === "dropped" ||
+            box.state === "university" ||
+            box.state === "pushed"
             ? 3
             : 2;
     };
@@ -754,7 +763,8 @@ function boxCompare(first: Box, second: Box): number {
  * @returns Whether it shows on the day
  */
 function deadlineShows(box: Box, date: string): boolean {
-    const last: string = box.state === "done" && box.log !== null ? loggedDayOf(box) : box.day;
+    const last: string =
+        box.state === "done" && box.log !== null ? loggedDayOf(box) : box.day;
     return (
         date === box.day ||
         (dayAdd(box.day, -deadlineDays) <= date && date < box.day && date <= last)
@@ -811,7 +821,10 @@ export function boxesRead(start: string, end: string): PlanDay[] {
     const entries: Entry[] = [
         ...new Map(
             [
-                ...planRead("1970-01-01T00:00:00Z", berlinDayStartOf(dayAdd(end, deadlineDays))),
+                ...planRead(
+                    "1970-01-01T00:00:00Z",
+                    berlinDayStartOf(dayAdd(end, deadlineDays)),
+                ),
                 ...planOnceRead(),
             ].map((entry: Entry): [string, Entry] => [entryIdOf(entry), entry]),
         ).values(),
@@ -870,7 +883,8 @@ export function boxesCarried(date: string): Box[] {
     return planRead("1970-01-01T00:00:00Z", berlinDayStartOf(date))
         .map((entry: Entry): Box => boxOf(entry, logs))
         .filter(
-            (box: Box): boolean => box.state === "open" && box.deadline !== "" && box.day < date,
+            (box: Box): boolean =>
+                box.state === "open" && box.deadline !== "" && box.day < date,
         )
         .sort(
             (first: Box, second: Box): number =>
@@ -956,7 +970,8 @@ function boxCheck(box: BoxNew, old: Entry | null): void {
             : box.title === old.title) &&
         attendeesAllow(box.attendees ?? []);
     dateCheck(box.day);
-    if (!(kept || categoryAllows(box))) throw new Error(`No box ${box.category} ${box.title}`);
+    if (!(kept || categoryAllows(box)))
+        throw new Error(`No box ${box.category} ${box.title}`);
     if (box.time !== "" && berlinDateOf(new Date(box.time)) !== box.day)
         throw new Error(`${box.title}: its time lies on another day than ${box.day}`);
     if (
@@ -978,7 +993,9 @@ function boxCheck(box: BoxNew, old: Entry | null): void {
         ...(old === null ? [] : chaptersOf(old)),
     ];
     if (box.chapters.some((chapter: string): boolean => !offered.includes(chapter)))
-        throw new Error(`${box.title}: no chapters ${box.chapters.join(", ")} in ${box.module}`);
+        throw new Error(
+            `${box.title}: no chapters ${box.chapters.join(", ")} in ${box.module}`,
+        );
 }
 
 /**
@@ -1017,7 +1034,11 @@ function boxLinksOf(box: BoxNew, old: Entry | null): [string, (string | Link)[]]
  * @param id - Identifier of the box
  * @param links - The properties to put, see {@link boxLinksOf}
  */
-function boxLinksPut(file: string, id: string, links: [string, (string | Link)[]][]): void {
+function boxLinksPut(
+    file: string,
+    id: string,
+    links: [string, (string | Link)[]][],
+): void {
     if (links.length > 0) propertiesPut(file, id, links);
 }
 
@@ -1038,7 +1059,10 @@ function boxLinksPut(file: string, id: string, links: [string, (string | Link)[]
  */
 function todoFieldsOf(box: BoxNew, old: Entry | null): TodoFields {
     const semester: string = semesterFor(box.category, box.semester, box.day);
-    const [title, titleLink]: [string, string] = titleOf({ ...box, semester: semester }, old);
+    const [title, titleLink]: [string, string] = titleOf(
+        { ...box, semester: semester },
+        old,
+    );
     return {
         category: box.category,
         title: title,
@@ -1077,10 +1101,15 @@ function todoFieldsOf(box: BoxNew, old: Entry | null): TodoFields {
  */
 function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
     if (change.time === "" || change.minutes === null)
-        throw new Error(`${old.title} is an event of the plan and keeps its time and its duration`);
+        throw new Error(
+            `${old.title} is an event of the plan and keeps its time and its duration`,
+        );
     const start: Date = new Date(change.time);
     const semester: string = semesterFor(change.category, change.semester, change.day);
-    const [title, titleLink]: [string, string] = titleOf({ ...change, semester: semester }, old);
+    const [title, titleLink]: [string, string] = titleOf(
+        { ...change, semester: semester },
+        old,
+    );
     return {
         category: change.category,
         title: title,
@@ -1121,9 +1150,13 @@ function seriesOf(module: string, type: string): Entry[] {
     return entries
         .filter(
             (entry: Entry): boolean =>
-                entry.category === skillName && entry.module === module && entry.type === type,
+                entry.category === skillName &&
+                entry.module === module &&
+                entry.type === type,
         )
-        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
+        .sort((first: Entry, second: Entry): number =>
+            first.start.localeCompare(second.start),
+        );
 }
 
 /**
@@ -1139,7 +1172,9 @@ function seriesOf(module: string, type: string): Entry[] {
  */
 function numberNextOf(module: string, type: string, date: string): string {
     const before: number[] = seriesOf(module, type)
-        .filter((entry: Entry): boolean => dayOf(entry) < date && /^\d+$/.test(entry.number))
+        .filter(
+            (entry: Entry): boolean => dayOf(entry) < date && /^\d+$/.test(entry.number),
+        )
         .map((entry: Entry): number => Number(entry.number));
     return String(Math.max(0, ...before) + 1);
 }
@@ -1169,7 +1204,9 @@ export function boxAdd(box: BoxNew): string {
     const id: string = todoAppend(file, fields);
     boxLinksPut(file, id, links);
     if (box.category === skillName && numberedTypes.includes(box.type))
-        propertiesPut(file, id, [["x-number", [numberNextOf(box.module, box.type, box.day)]]]);
+        propertiesPut(file, id, [
+            ["x-number", [numberNextOf(box.module, box.type, box.day)]],
+        ]);
     return id;
 }
 
@@ -1238,17 +1275,26 @@ export function boxUniversity(id: string, cancelled: boolean): void {
         (other: Entry): boolean => entryIdOf(other) !== id,
     );
     const before: number[] = series
-        .filter((other: Entry): boolean => other.start < entry.start && /^\d+$/.test(other.number))
+        .filter(
+            (other: Entry): boolean =>
+                other.start < entry.start && /^\d+$/.test(other.number),
+        )
         .map((other: Entry): number => Number(other.number));
     const after: Entry[] = series.filter(
-        (other: Entry): boolean => other.start > entry.start && /^\d+$/.test(other.number),
+        (other: Entry): boolean =>
+            other.start > entry.start && /^\d+$/.test(other.number),
     );
     let number: string = "NONE";
     if (!cancelled)
-        number = before.length > 0 ? String(Math.max(...before) + 1) : (after[0]?.number ?? "1");
+        number =
+            before.length > 0
+                ? String(Math.max(...before) + 1)
+                : (after[0]?.number ?? "1");
     const step: number = cancelled ? -1 : 1;
     boxOwn(file, entry);
-    propertiesPut(file, id, [["x-number", [entry.group !== "" && !cancelled ? "1" : number]]]);
+    propertiesPut(file, id, [
+        ["x-number", [entry.group !== "" && !cancelled ? "1" : number]],
+    ]);
     if (!cancelled) overKeep(id);
     if (entry.group !== "") return;
     after.forEach((other: Entry): void => {
@@ -1340,7 +1386,8 @@ function logRename(id: string, box: Box, title: string): void {
     ).find((entry: Entry): boolean => entry.planned === id);
     if (logged === undefined || logged.foods.length > 0 || !logged.editable) return;
     const found: [string, Entry] | undefined = entryLookup(day.log, logged.id);
-    if (found !== undefined) titlePut(found[0], logged.id, { ...textsOf(logged), title: title });
+    if (found !== undefined)
+        titlePut(found[0], logged.id, { ...textsOf(logged), title: title });
 }
 
 /**
@@ -1398,7 +1445,9 @@ function textsOf(entry: Entry): EntryTexts {
  */
 function entryLater(entry: Entry, days: number): Entry {
     const laterOf: (instant: string) => string = (instant: string): string =>
-        entry.allDay ? dayAdd(instant, days) : berlinLater(new Date(instant), days).toISOString();
+        entry.allDay
+            ? dayAdd(instant, days)
+            : berlinLater(new Date(instant), days).toISOString();
     return { ...entry, start: laterOf(entry.start), end: laterOf(entry.end) };
 }
 
@@ -1488,7 +1537,9 @@ function carryWrite(found: [string, Entry, Box]): [string, Entry, Box] {
 export function boxPush(id: string): void {
     const found: [string, Entry, Box] = boxFind(id);
     if (!found[1].editable || found[2].state !== "open" || found[2].deadline !== "")
-        throw new Error(`${found[1].title} is no open box of the new system without deadline`);
+        throw new Error(
+            `${found[1].title} is no open box of the new system without deadline`,
+        );
 
     const [file, entry, box]: [string, Entry, Box] = carryWrite(found);
     const today: string = berlinDateOf(new Date());
@@ -1559,7 +1610,11 @@ export function boxDone(id: string): void {
  */
 export function boxSubmit(id: string, submitted: boolean): void {
     const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (!entry.editable || box.deadline === "" || box.state !== (submitted ? "open" : "done"))
+    if (
+        !entry.editable ||
+        box.deadline === "" ||
+        box.state !== (submitted ? "open" : "done")
+    )
         throw new Error(
             `${entry.title} cannot be ${submitted ? "ticked submitted" : "taken back"}`,
         );
@@ -1577,7 +1632,9 @@ function boxLookup(id: string): [string, Entry] | undefined {
     const at: number = id.lastIndexOf("#");
     return (
         entryLookup(day.plan, id) ??
-        (at === -1 ? undefined : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)))
+        (at === -1
+            ? undefined
+            : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)))
     );
 }
 
@@ -1651,7 +1708,11 @@ function skillBoxOpen(box: Box, module: string): boolean {
  * @param chapters - Chapters I learn, like `01_RegressionAnalysis`, none when not known yet
  * @returns The box, `undefined` when there is none
  */
-export function studyBoxOf(module: string, date: string, chapters: string[]): Box | undefined {
+export function studyBoxOf(
+    module: string,
+    date: string,
+    chapters: string[],
+): Box | undefined {
     const fits: (box: Box) => boolean = (box: Box): boolean =>
         skillBoxOpen(box, module) &&
         box.time === "" &&
@@ -1673,7 +1734,11 @@ export function studyBoxOf(module: string, date: string, chapters: string[]): Bo
  * @param chapters - Chapters of what I learn in it, like `01_RegressionAnalysis`
  * @returns The box, `undefined` when there is none
  */
-export function skillBoxOf(module: string, moment: Date, chapters: string[]): Box | undefined {
+export function skillBoxOf(
+    module: string,
+    moment: Date,
+    chapters: string[],
+): Box | undefined {
     const date: string = berlinDateOf(moment);
     const now: number = moment.getTime();
     return (

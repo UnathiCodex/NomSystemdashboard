@@ -96,10 +96,16 @@ export function rowTimesOf(time: string, minutes: number | null): string {
  * @param title - Its tooltip, like the note of its box
  * @returns The number
  */
-export function numberOf(text: string, open: (() => void) | null, title: string): HTMLElement {
+export function numberOf(
+    text: string,
+    open: (() => void) | null,
+    title: string,
+): HTMLElement {
     const number: HTMLElement = elementOf(
         open === null ? "span" : "button",
-        open === null ? "block-kind series-number" : "block-kind series-number series-open",
+        open === null
+            ? "block-kind series-number"
+            : "block-kind series-number series-open",
         text,
     );
     if (number instanceof HTMLButtonElement && open !== null) {
@@ -140,7 +146,9 @@ export function metaOf(parts: (string | Node)[][]): HTMLElement {
         const parts: HTMLElement[] = [...shown.children] as HTMLElement[];
         meta.title =
             meta.scrollWidth > meta.clientWidth ||
-            parts.some((part: HTMLElement): boolean => part.scrollWidth > part.clientWidth)
+            parts.some(
+                (part: HTMLElement): boolean => part.scrollWidth > part.clientWidth,
+            )
                 ? parts.map((part: HTMLElement): string => part.innerText).join(" · ")
                 : "";
     });

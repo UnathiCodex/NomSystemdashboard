@@ -46,7 +46,9 @@ function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
         token: (stream: StringStream, state: unknown): string | null => {
             const style: string | null = mode.token(stream, state);
             if (style === "builtin") return "variable";
-            return style === "type" && /^[a-z]+$/.test(stream.current()) ? "keyword" : style;
+            return style === "type" && /^[a-z]+$/.test(stream.current())
+                ? "keyword"
+                : style;
         },
     });
 }
@@ -124,7 +126,9 @@ export function codeHtmlOf(code: string, info: string): string | null {
         codeHighlighter,
         (text: string, classes: string): void => {
             html +=
-                classes === "" ? escaped(text) : `<span class="${classes}">${escaped(text)}</span>`;
+                classes === ""
+                    ? escaped(text)
+                    : `<span class="${classes}">${escaped(text)}</span>`;
         },
         (): void => {
             html += "\n";

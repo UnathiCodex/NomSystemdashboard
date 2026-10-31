@@ -81,7 +81,8 @@ function mathParse(cx: InlineContext, next: number, pos: number): number {
     if (next !== dollar) return -1;
 
     const rest: string = cx.slice(pos, cx.end);
-    const match: RegExpExecArray | null = mathDisplayRule.exec(rest) ?? mathInlineRule.exec(rest);
+    const match: RegExpExecArray | null =
+        mathDisplayRule.exec(rest) ?? mathInlineRule.exec(rest);
     if (match === null) return -1;
 
     return cx.addElement(cx.elt("InlineMath", pos, pos + match[0].length));

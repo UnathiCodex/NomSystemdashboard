@@ -22,7 +22,13 @@
  *   and tells which files the reader may write.
  */
 
-import { readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import {
+    readdirSync,
+    readFileSync,
+    realpathSync,
+    statSync,
+    writeFileSync,
+} from "node:fs";
 import { extname, join, sep } from "node:path";
 import { systemFiles, writeAllowed } from "./sources.ts";
 import { changesOf, textMerged } from "./edit.ts";
@@ -120,7 +126,9 @@ function nodesOf(folder: string, path: string): FileNode[] {
                 path: inner,
                 folder: entry.isDirectory(),
                 opens: entry.isFile() && opensOf(inner),
-                children: entry.isDirectory() ? nodesOf(join(folder, entry.name), inner) : [],
+                children: entry.isDirectory()
+                    ? nodesOf(join(folder, entry.name), inner)
+                    : [],
             };
         })
         .filter((node: FileNode): boolean => node.folder || node.opens);

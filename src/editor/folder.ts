@@ -67,7 +67,10 @@ export function pathOf(path: string): (Node | string)[] {
     return ["NomSkillingmodules", ...parts.slice(0, -1)].flatMap(
         (name: string, index: number): (Node | string)[] => {
             const link: HTMLAnchorElement = document.createElement("a");
-            link.href = index === 0 ? "/scripts" : folderAddressOf(parts.slice(0, index).join("/"));
+            link.href =
+                index === 0
+                    ? "/scripts"
+                    : folderAddressOf(parts.slice(0, index).join("/"));
             link.textContent = breakableOf(name);
             return index === 0 ? [link] : ["/\u200b", link];
         },
@@ -122,7 +125,9 @@ export async function folderShow(place: HTMLElement, path: string): Promise<void
         path.split("/").at(-1) ?? "",
     );
     place.hidden = false;
-    const response: Response = await fetch(`/api/notes/folder?path=${encodeURIComponent(path)}`);
+    const response: Response = await fetch(
+        `/api/notes/folder?path=${encodeURIComponent(path)}`,
+    );
     if (!response.ok) {
         list.replaceChildren(elementOf("p", "plan-none", "This folder cannot be read"));
         return;
@@ -135,7 +140,11 @@ export async function folderShow(place: HTMLElement, path: string): Promise<void
         ...folder.files.map((name: string): HTMLAnchorElement =>
             /\.(md|ics)$/i.test(name)
                 ? rowOf(name, noteAddressOf(inner(name), ""), false)
-                : rowOf(name, `/api/notes/stream?path=${encodeURIComponent(inner(name))}`, true),
+                : rowOf(
+                      name,
+                      `/api/notes/stream?path=${encodeURIComponent(inner(name))}`,
+                      true,
+                  ),
         ),
         ...(folder.folders.length + folder.files.length === 0
             ? [elementOf("p", "plan-none", "Empty")]

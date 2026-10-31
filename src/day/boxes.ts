@@ -124,7 +124,14 @@
  */
 
 import { Draggable } from "fullcalendar/interaction";
-import { boxDrop, boxLog, boxPush, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
+import {
+    boxDrop,
+    boxLog,
+    boxPush,
+    boxSubmit,
+    boxUndo,
+    boxUniversity,
+} from "./entries.ts";
 import { boxOpenEdit, boxOpenNew, entryOpenFromBox } from "./categories.ts";
 import { giftOpen } from "./gifts.ts";
 import { middleCutPut } from "./choices.ts";
@@ -339,7 +346,11 @@ let loads: number = 0;
  * @param parts - Texts and elements in it, in order
  * @returns Element
  */
-export function entryPartOf(tag: string, className: string, parts: (string | Node)[]): HTMLElement {
+export function entryPartOf(
+    tag: string,
+    className: string,
+    parts: (string | Node)[],
+): HTMLElement {
     const element: HTMLElement = document.createElement(tag);
     element.className = className;
     element.append(...parts);
@@ -383,8 +394,18 @@ export function whatOf(category: string, what: string): (string | Node)[] {
  * @param type - Its type, like `VO`, empty for none
  * @returns What it shows, like `IN0004_EinfuehrungRechnerarchitektur (VO)`
  */
-export function shownWhatOf(category: string, title: string, module: string, type: string): string {
-    if (category !== skillName || !phone || module === "" || !title.startsWith(`${module}_`))
+export function shownWhatOf(
+    category: string,
+    title: string,
+    module: string,
+    type: string,
+): string {
+    if (
+        category !== skillName ||
+        !phone ||
+        module === "" ||
+        !title.startsWith(`${module}_`)
+    )
         return summaryShownOf(title);
     return type === "" ? module : `${module} (${type})`;
 }
@@ -435,12 +456,15 @@ async function carriedFetch(day: string): Promise<Box[]> {
 function timePartsOf(box: Box, day: string): string[] {
     const first: string = box.pushed[0]?.day ?? box.day;
     const over: string =
-        box.state === "open" && box.deadline === "" && first < day ? dayTextOf(first, true) : "";
+        box.state === "open" && box.deadline === "" && first < day
+            ? dayTextOf(first, true)
+            : "";
     const start: Date | null = box.time === "" ? null : new Date(box.time);
     let when: string = start === null ? "" : timeOf(start);
     if (start !== null && box.minutes !== null)
         when = `${timeOf(start)}${rangeDash}${timeOf(new Date(start.getTime() + box.minutes * 60 * 1000))}`;
-    const length: string = box.minutes === null || start !== null ? "" : lengthOf(box.minutes);
+    const length: string =
+        box.minutes === null || start !== null ? "" : lengthOf(box.minutes);
     return [over, when, length].filter((part: string): boolean => part !== "");
 }
 
@@ -465,7 +489,9 @@ function deadlinePartsOf(box: Box, day: string, nearShown: boolean): string[] {
     const time: string = box.deadline === box.day ? "" : timeOf(new Date(box.deadline));
     const near: string = !nearShown || box.state !== "open" ? "" : nearOf(box.day, day);
     const rest: string[] = [time, near].filter((part: string): boolean => part !== "");
-    return box.day === day && rest.length > 0 ? rest : [dayTextOf(box.day, true), ...rest];
+    return box.day === day && rest.length > 0
+        ? rest
+        : [dayTextOf(box.day, true), ...rest];
 }
 
 /**
@@ -499,7 +525,9 @@ function timesOf(parts: string[], start: string): HTMLElement | null {
             "span",
             "box-part box-time",
             parts.map((part: string, index: number): string | Node =>
-                index === 0 ? `${start}${part}` : entryPartOf("span", "entry-parted", [part]),
+                index === 0
+                    ? `${start}${part}`
+                    : entryPartOf("span", "entry-parted", [part]),
             ),
         ),
         `${start}${parts.join(" · ")}`,
@@ -571,9 +599,11 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
     if (group !== "")
         meta.push(
             titledOf(
-                entryPartOf("span", meta.length === 0 ? "box-part" : "box-part entry-parted", [
-                    group,
-                ]),
+                entryPartOf(
+                    "span",
+                    meta.length === 0 ? "box-part" : "box-part entry-parted",
+                    [group],
+                ),
             ),
         );
     const deadline: HTMLElement | null = timesOf(
@@ -583,17 +613,25 @@ function boxContentOf(box: Box, day: string, nearShown: boolean): HTMLElement[] 
     const chapters: HTMLElement[] = chaptersOf(box).map(
         (chapter: Node, index: number): HTMLElement =>
             titledOf(
-                entryPartOf("span", index === 0 ? "box-part" : "box-part entry-parted", [chapter]),
+                entryPartOf("span", index === 0 ? "box-part" : "box-part entry-parted", [
+                    chapter,
+                ]),
             ),
     );
     const topics: string[] = topicsOf(box);
     return [
         titledOf(
-            entryPartOf("div", "box-what", whatOf(box.category, what === box.category ? "" : what)),
+            entryPartOf(
+                "div",
+                "box-what",
+                whatOf(box.category, what === box.category ? "" : what),
+            ),
         ),
         ...(meta.length === 0 ? [] : [entryPartOf("div", "box-meta", meta)]),
         ...(deadline === null ? [] : [entryPartOf("div", "box-meta", [deadline])]),
-        ...(chapters.length === 0 ? [] : [entryPartOf("div", "box-meta box-chapters", chapters)]),
+        ...(chapters.length === 0
+            ? []
+            : [entryPartOf("div", "box-meta box-chapters", chapters)]),
         ...(topics.length === 0
             ? []
             : [
@@ -633,7 +671,9 @@ function chaptersOf(box: Box): Node[] {
         anchor.className = "chapter-link";
         anchor.href = `/scripts?module=${encodeURIComponent(module)}&chapter=${encodeURIComponent(chapter)}`;
         anchor.textContent = chapter;
-        anchor.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
+        anchor.addEventListener("click", (event: MouseEvent): void =>
+            event.stopPropagation(),
+        );
         return anchor;
     });
 }
@@ -649,7 +689,9 @@ function chaptersOf(box: Box): Node[] {
  * @returns Its documents, in order, none for none
  */
 function topicsOf(box: Box): string[] {
-    return box.links.filter((link: Link): boolean => link.fingerprint !== "").map(linkNameOf);
+    return box.links
+        .filter((link: Link): boolean => link.fingerprint !== "")
+        .map(linkNameOf);
 }
 
 /**
@@ -671,7 +713,10 @@ function topicsOf(box: Box): string[] {
  * @param open - Opens the dialog of the gift idea for one
  * @returns One element each
  */
-function occasionsOf(occasions: Occasion[], open: (occasion: Occasion) => void): HTMLElement[] {
+function occasionsOf(
+    occasions: Occasion[],
+    open: (occasion: Occasion) => void,
+): HTMLElement[] {
     return occasions.map((occasion: Occasion): HTMLElement => {
         const what: (string | Node)[] = whatOf(occasion.category, occasion.title);
         const text: string = what
@@ -684,7 +729,9 @@ function occasionsOf(occasions: Occasion[], open: (occasion: Occasion) => void):
                 ? entryPartOf("span", "occasion-hint", [iconOf(Gift)])
                 : entryPartOf("span", "entry-parted occasion-gift", [occasion.gift]);
         const element: HTMLElement = entryPartOf("div", "box occasion", [
-            entryPartOf("div", "box-body", [entryPartOf("div", "box-what", [...what, after])]),
+            entryPartOf("div", "box-body", [
+                entryPartOf("div", "box-what", [...what, after]),
+            ]),
         ]);
         element.title =
             occasion.gift === ""
@@ -707,7 +754,9 @@ function occasionsOf(occasions: Occasion[], open: (occasion: Occasion) => void):
  */
 async function boxTap(calendar: Calendar, box: Box): Promise<void> {
     const [start, end]: [Date, Date] = boxTimesOf(box, calendar.view.currentStart);
-    await (box.category === "" ? entryOpenFromBox(box, start, end) : boxLog(box.id, start, end));
+    await (box.category === ""
+        ? entryOpenFromBox(box, start, end)
+        : boxLog(box.id, start, end));
 }
 
 /**
@@ -754,7 +803,9 @@ async function boxClick(calendar: Calendar, box: Box): Promise<void> {
 function stateOf(calendar: Calendar, box: Box): HTMLElement {
     if (box.state === "done")
         return box.deadline === ""
-            ? stateMarkOf(calendar, Check, "Logged", (): Promise<void> => boxUndo(calendar, box.id))
+            ? stateMarkOf(calendar, Check, "Logged", (): Promise<void> =>
+                  boxUndo(calendar, box.id),
+              )
             : stateMarkOf(calendar, Check, "Submitted", (): Promise<void> =>
                   boxSubmit(box.id, false),
               );
@@ -980,7 +1031,10 @@ function boxesShow(calendar: Calendar): void {
             box,
             boxElementOf(calendar, box, false),
         ]),
-        ...carried.map((box: Box): [Box, HTMLElement] => [box, boxElementOf(calendar, box, true)]),
+        ...carried.map((box: Box): [Box, HTMLElement] => [
+            box,
+            boxElementOf(calendar, box, true),
+        ]),
     ];
     const inSection: (section: string, dropped: boolean) => HTMLElement[] = (
         section: string,
@@ -1095,7 +1149,8 @@ export function boxesAgain(calendar: Calendar): void {
 export function boxReceive(calendar: Calendar, info: EventReceiveInfo): void {
     info.revert();
     const box: Box | undefined = listedOf().find(
-        (one: Box): boolean => one.state === "open" && one.id === info.draggedEl.dataset.id,
+        (one: Box): boolean =>
+            one.state === "open" && one.id === info.draggedEl.dataset.id,
     );
     if (box === undefined) {
         logFailShow(new Error(`No open box ${info.draggedEl.dataset.id ?? ""}`));
@@ -1103,9 +1158,10 @@ export function boxReceive(calendar: Calendar, info: EventReceiveInfo): void {
     }
     const start: Date = info.event.start as Date;
     const end: Date = info.event.end as Date;
-    (box.category === "" ? entryOpenFromBox(box, start, end) : boxLog(box.id, start, end)).catch(
-        logFailShow,
-    );
+    (box.category === ""
+        ? entryOpenFromBox(box, start, end)
+        : boxLog(box.id, start, end)
+    ).catch(logFailShow);
 }
 
 /**
@@ -1134,7 +1190,11 @@ function boxDragFollow(calendar: Calendar, down: PointerEvent): void {
     const day: HTMLElement | null = document.querySelector(".day");
     if (item === null) return;
     const move: (event: PointerEvent) => void = (event: PointerEvent): void => {
-        if (Math.abs(event.clientX - down.clientX) + Math.abs(event.clientY - down.clientY) > 4)
+        if (
+            Math.abs(event.clientX - down.clientX) +
+                Math.abs(event.clientY - down.clientY) >
+            4
+        )
             day?.classList.add("day-pushing");
     };
     const end: () => void = (): void => {
@@ -1207,8 +1267,8 @@ export function boxesStart(calendar: Calendar): void {
     iconPut(series, Repeat, "New series");
     series.classList.add("plus-quiet");
     series.addEventListener("click", (): void => {
-        seriesNew(dayOf(calendar.view.currentStart), (): void => {}).catch((error: unknown): void =>
-            console.error(error),
+        seriesNew(dayOf(calendar.view.currentStart), (): void => {}).catch(
+            (error: unknown): void => console.error(error),
         );
     });
     ["entry", "gift", "series"].forEach((id: string): void =>

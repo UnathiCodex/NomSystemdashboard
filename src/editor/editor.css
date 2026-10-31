@@ -18,10 +18,9 @@
 .editor-file {
     --edge-room: 2rem;
     display: grid;
-    grid-template-columns: minmax(var(--edge-room), 1fr) minmax(0, var(--reading-width)) minmax(
-            var(--edge-room),
-            1fr
-        );
+    grid-template-columns:
+        minmax(var(--edge-room), 1fr) minmax(0, var(--reading-width))
+        minmax(var(--edge-room), 1fr);
     overflow-y: auto;
     scrollbar-gutter: stable;
 }

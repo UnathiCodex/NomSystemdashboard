@@ -149,7 +149,9 @@ export function tableOpen(
     follow: (event: MouseEvent) => boolean,
 ): void {
     const editorSave: HTMLElement = document.getElementById("editor-save") as HTMLElement;
-    const editorState: HTMLElement = document.getElementById("editor-state") as HTMLElement;
+    const editorState: HTMLElement = document.getElementById(
+        "editor-state",
+    ) as HTMLElement;
     const viewer: HTMLDivElement = document.createElement("div");
     const close: HTMLButtonElement = document.createElement("button");
     const state: HTMLSpanElement = document.createElement("span");
@@ -201,10 +203,13 @@ export function tableOpen(
         ): void => {
             const input: HTMLTextAreaElement = document.createElement("textarea");
             const room: number =
-                worksheet.content.getBoundingClientRect().right - cell.getBoundingClientRect().left;
+                worksheet.content.getBoundingClientRect().right -
+                cell.getBoundingClientRect().left;
             input.className = "table-cell-input";
             input.value =
-                event instanceof KeyboardEvent && event.key.length === 1 ? "" : String(value);
+                event instanceof KeyboardEvent && event.key.length === 1
+                    ? ""
+                    : String(value);
             input.style.minWidth = `${cell.offsetWidth}px`;
             input.style.maxWidth = `${Math.max(cell.offsetWidth, room - 12)}px`;
             input.onblur = (): void => worksheet.closeEditor(cell, true);
@@ -218,7 +223,10 @@ export function tableOpen(
             input.focus();
             input.setSelectionRange(input.value.length, input.value.length);
         },
-        closeEditor: (cell: HTMLTableCellElement, keep: boolean): CellValue | undefined => {
+        closeEditor: (
+            cell: HTMLTableCellElement,
+            keep: boolean,
+        ): CellValue | undefined => {
             const input: HTMLTextAreaElement | null = cell.querySelector("textarea");
             if (input === null) return undefined;
             input.onblur = null;
@@ -236,9 +244,15 @@ export function tableOpen(
     state.className = "table-viewer-state";
     save.className = "editor-save table-viewer-save";
     save.type = "button";
-    iconPut(save, view.state.readOnly ? SaveOff : Save, view.state.readOnly ? "Read only" : "Save");
+    iconPut(
+        save,
+        view.state.readOnly ? SaveOff : Save,
+        view.state.readOnly ? "Read only" : "Save",
+    );
     save.disabled = view.state.readOnly;
-    save.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    save.addEventListener("mousedown", (event: MouseEvent): void =>
+        event.preventDefault(),
+    );
     save.addEventListener("click", (): void => {
         commit();
         editorSave.click();
@@ -345,7 +359,8 @@ export function tableOpen(
             ...rowsWritten(old.slice(2), data, count),
         ];
         let start: number = 0;
-        while (start < old.length && start < fresh.length && old[start] === fresh[start]) start++;
+        while (start < old.length && start < fresh.length && old[start] === fresh[start])
+            start++;
         let end: number = 0;
         while (
             end < old.length - start &&
@@ -361,7 +376,10 @@ export function tableOpen(
         view.dispatch({
             changes:
                 last < start
-                    ? { from: table[start - 1].to, insert: `${breakText}${insert.join(breakText)}` }
+                    ? {
+                          from: table[start - 1].to,
+                          insert: `${breakText}${insert.join(breakText)}`,
+                      }
                     : insert.length === 0
                       ? { from: table[start - 1].to, to: table[last].to }
                       : {
@@ -395,7 +413,9 @@ export function tableOpen(
         const picked: [number, number] | null = cursorOf();
         const range: [number, number, number, number] | null = rangeOf();
         if (picked === null || range === null) return;
-        const cell: DOMRect = sheet.getCellFromCoords(picked[0], picked[1]).getBoundingClientRect();
+        const cell: DOMRect = sheet
+            .getCellFromCoords(picked[0], picked[1])
+            .getBoundingClientRect();
         const room: DOMRect = sheet.content.getBoundingClientRect();
         const fixed: HTMLElement = sheet.headers[0];
         const left: number = fixed.getBoundingClientRect().right;
@@ -404,7 +424,10 @@ export function tableOpen(
         const bottom: number = room.top + sheet.content.clientHeight;
         const across: boolean = range[0] === 0 && range[2] === count - 1;
         const down: boolean = range[1] === 0 && range[3] === rowCount() - 1;
-        const kept: [number, number] = [sheet.content.scrollLeft, sheet.content.scrollTop];
+        const kept: [number, number] = [
+            sheet.content.scrollLeft,
+            sheet.content.scrollTop,
+        ];
         requestAnimationFrame((): void => {
             if (across) sheet.content.scrollLeft = kept[0];
             if (down) sheet.content.scrollTop = kept[1];
@@ -531,14 +554,16 @@ export function tableOpen(
         const end = (keep: boolean): void => {
             input.onblur = null;
             head.textContent = title;
-            if (keep && input.value.trim() !== title) sheet.setHeader(column, input.value.trim());
+            if (keep && input.value.trim() !== title)
+                sheet.setHeader(column, input.value.trim());
         };
         input.className = "table-cell-input";
         input.value = title;
         input.onblur = (): void => end(true);
         input.addEventListener("keydown", (event: KeyboardEvent): void => {
             event.stopPropagation();
-            if (event.key === "Enter" || event.key === "Escape") end(event.key === "Enter");
+            if (event.key === "Enter" || event.key === "Escape")
+                end(event.key === "Enter");
         });
         head.replaceChildren(input);
         input.focus();
@@ -569,7 +594,8 @@ export function tableOpen(
     };
 
     const keyDown = (event: KeyboardEvent): void => {
-        if (event.target instanceof HTMLInputElement || menu.matches(":popover-open")) return;
+        if (event.target instanceof HTMLInputElement || menu.matches(":popover-open"))
+            return;
         const key: string = event.key.toLowerCase();
         const cursor: [number, number] | null = cursorOf();
         if ((event.ctrlKey || event.metaKey) && key === "s") {
@@ -591,7 +617,10 @@ export function tableOpen(
             event.preventDefault();
             event.stopPropagation();
             sheet.openEditor(sheet.getCellFromCoords(cursor[0], cursor[1]), false);
-        } else if ((event.key === "Delete" || event.key === "Backspace") && !view.state.readOnly) {
+        } else if (
+            (event.key === "Delete" || event.key === "Backspace") &&
+            !view.state.readOnly
+        ) {
             event.preventDefault();
             event.stopPropagation();
             const [first, last]: [number, number] = pickedOf(cursor?.[1] ?? 0);
@@ -624,32 +653,44 @@ export function tableOpen(
         commit();
         watch.disconnect();
         window.removeEventListener("keydown", keyDown, true);
-        jspreadsheet.destroy(body as unknown as Parameters<typeof jspreadsheet.destroy>[0], true);
+        jspreadsheet.destroy(
+            body as unknown as Parameters<typeof jspreadsheet.destroy>[0],
+            true,
+        );
         viewer.remove();
     };
 
     viewer.addEventListener(
         "contextmenu",
         (event: MouseEvent): void => {
-            const cell: HTMLElement | null = (event.target as Element).closest("tbody td[data-y]");
+            const cell: HTMLElement | null = (event.target as Element).closest(
+                "tbody td[data-y]",
+            );
             if (!body.contains(event.target as Node)) return;
             event.preventDefault();
             event.stopPropagation();
             if (cell === null || view.state.readOnly || editedOf() !== null) return;
             const row: number = Number(cell.dataset.y);
             const column: number = Number(cell.dataset.x ?? 0);
-            if (!pickedHas(row)) sheet.updateSelectionFromCoords(column, row, column, row);
+            if (!pickedHas(row))
+                sheet.updateSelectionFromCoords(column, row, column, row);
             menuShow(row, event.clientX, event.clientY);
         },
         true,
     );
     viewer.addEventListener("click", (event: MouseEvent): void => {
         const link: HTMLAnchorElement | null = (event.target as Element).closest("a");
-        if (link !== null && follow(event) && !/^https?:/i.test(link.getAttribute("href") ?? ""))
+        if (
+            link !== null &&
+            follow(event) &&
+            !/^https?:/i.test(link.getAttribute("href") ?? "")
+        )
             shut();
     });
     viewer.addEventListener("dblclick", (event: MouseEvent): void => {
-        const head: HTMLElement | null = (event.target as Element).closest("thead td[data-x]");
+        const head: HTMLElement | null = (event.target as Element).closest(
+            "thead td[data-x]",
+        );
         if (head !== null && !view.state.readOnly) headEdit(head, Number(head.dataset.x));
     });
     saveShow();
@@ -813,7 +854,9 @@ function rowsWritten(old: string[], data: string[][], count: number): string[] {
 function lineWritten(text: string, cells: string[]): string {
     return cells.reduce(
         (line: string, cell: string, column: number): string =>
-            (cellsOf(line)[column] ?? "") === cell ? line : cellWritten(line, column, cell),
+            (cellsOf(line)[column] ?? "") === cell
+                ? line
+                : cellWritten(line, column, cell),
         text,
     );
 }
@@ -842,7 +885,9 @@ function barsOf(text: string): number[] {
 function cellsOf(text: string): string[] {
     const bars: number[] = barsOf(text);
     const ends: number[] =
-        text.slice(bars[bars.length - 1] + 1).trim() === "" ? bars : [...bars, text.length];
+        text.slice(bars[bars.length - 1] + 1).trim() === ""
+            ? bars
+            : [...bars, text.length];
     return ends.slice(0, -1).map((bar: number, column: number): string =>
         text
             .slice(bar + 1, ends[column + 1])
@@ -890,6 +935,7 @@ function cellWritten(text: string, column: number, value: string): string {
 
     let written: string = text.trimEnd();
     if (!written.endsWith("|") || written.endsWith("\\|")) written += " |";
-    for (let cells: number = barsOf(written).length - 1; cells < column; cells++) written += "  |";
+    for (let cells: number = barsOf(written).length - 1; cells < column; cells++)
+        written += "  |";
     return `${written} ${escaped} |`;
 }

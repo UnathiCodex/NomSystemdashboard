@@ -80,7 +80,13 @@
  *   and the type word at the start of a heading.
  */
 
-import { EditorSelection, EditorState, Prec, StateEffect, StateField } from "@codemirror/state";
+import {
+    EditorSelection,
+    EditorState,
+    Prec,
+    StateEffect,
+    StateField,
+} from "@codemirror/state";
 import { Decoration, EditorView, keymap } from "@codemirror/view";
 import { foldable, foldEffect, unfoldEffect } from "@codemirror/language";
 import { blockRule, blocksOf, tasksFollow } from "./tasks.ts";
@@ -150,10 +156,11 @@ type Alone = {
 /**
  * Effect of `Next` moving, or a click in the tree, to the end of a block, `null` for none.
  */
-const nextMoved: StateEffectType<{ block: Block; end: number } | null> = StateEffect.define<{
-    block: Block;
-    end: number;
-} | null>();
+const nextMoved: StateEffectType<{ block: Block; end: number } | null> =
+    StateEffect.define<{
+        block: Block;
+        end: number;
+    } | null>();
 
 /**
  * The round shown, `null` for a note that is no section.
@@ -172,7 +179,9 @@ let opened: string = "";
  * for Ctrl+Z, see {@link roundBack}; kept with the page in the history of the browser,
  * see {@link openedBeforeKeep}, so a reload and the way back from another note find them again.
  */
-let openedBefore: string[] = Array.isArray(history.state) ? (history.state as string[]) : [];
+let openedBefore: string[] = Array.isArray(history.state)
+    ? (history.state as string[])
+    : [];
 
 /**
  * Whether I came to the page from a note or a file of the editor, by a link or the tree,
@@ -324,27 +333,35 @@ function changesKeep(transaction: Transaction): boolean {
  * @returns The transaction, and after it the selection kept inside,
  *   when it reached beyond the block
  */
-function selectionKeep(transaction: Transaction): TransactionSpec | readonly TransactionSpec[] {
-    if (transaction.selection === undefined && !transaction.docChanged) return transaction;
+function selectionKeep(
+    transaction: Transaction,
+): TransactionSpec | readonly TransactionSpec[] {
+    if (transaction.selection === undefined && !transaction.docChanged)
+        return transaction;
     const alone: Alone | null = transaction.state.field(alonePlace);
     if (alone === null) return transaction;
     const selection: EditorSelection = transaction.newSelection;
     const inside: (place: number) => number = (place: number): number =>
         Math.min(Math.max(place, alone.from), alone.to);
-    const kept: SelectionRange[] = selection.ranges.map((range: SelectionRange): SelectionRange =>
-        range.anchor === inside(range.anchor) && range.head === inside(range.head)
-            ? range
-            : EditorSelection.range(inside(range.anchor), inside(range.head)),
+    const kept: SelectionRange[] = selection.ranges.map(
+        (range: SelectionRange): SelectionRange =>
+            range.anchor === inside(range.anchor) && range.head === inside(range.head)
+                ? range
+                : EditorSelection.range(inside(range.anchor), inside(range.head)),
     );
     if (
         kept.every(
-            (range: SelectionRange, index: number): boolean => range === selection.ranges[index],
+            (range: SelectionRange, index: number): boolean =>
+                range === selection.ranges[index],
         )
     )
         return transaction;
     return [
         transaction,
-        { selection: EditorSelection.create(kept, selection.mainIndex), sequential: true },
+        {
+            selection: EditorSelection.create(kept, selection.mainIndex),
+            sequential: true,
+        },
     ];
 }
 
@@ -366,7 +383,8 @@ function selectionKeep(transaction: Transaction): TransactionSpec | readonly Tra
 function headingFollow(update: ViewUpdate): void {
     const before: string | undefined = update.startState.field(alonePlace)?.heading;
     const after: string | undefined = update.state.field(alonePlace)?.heading;
-    if (round === null || !update.docChanged || after === undefined || after === before) return;
+    if (round === null || !update.docChanged || after === undefined || after === before)
+        return;
     const renamed: (key: string) => string = (key: string): string =>
         key === before ? after : key === `${before} again` ? `${after} again` : key;
     if (opened === "") round.at = renamed(round.at);
@@ -409,7 +427,12 @@ function aloneOf(state: EditorState, block: Block, end: number): Alone {
     if (start > 0) marks.push(Decoration.replace({ block: true }).range(0, start - 1));
     if (end < state.doc.length)
         marks.push(Decoration.replace({ block: true }).range(end + 1, state.doc.length));
-    return { from: start, to: end, heading: block.heading, decorations: Decoration.set(marks) };
+    return {
+        from: start,
+        to: end,
+        heading: block.heading,
+        decorations: Decoration.set(marks),
+    };
 }
 
 /**
@@ -438,16 +461,22 @@ function theoryIs(block: Block): boolean {
  * @returns Steps in order
  */
 function stepsOf(blocks: Block[], section: SkillSection): Step[] {
-    const step: (block: Block, again: boolean) => Step = (block: Block, again: boolean): Step => ({
+    const step: (block: Block, again: boolean) => Step = (
+        block: Block,
+        again: boolean,
+    ): Step => ({
         block: block,
         again: again,
     });
-    const theory: Step[] = blocks.filter(theoryIs).map((block: Block): Step => step(block, false));
+    const theory: Step[] = blocks
+        .filter(theoryIs)
+        .map((block: Block): Step => step(block, false));
     const cold: Block | undefined = blocks.find(
         (block: Block): boolean => block.task?.id === section.cold,
     );
     const example: Block | undefined = blocks.find(
-        (block: Block): boolean => section.example !== "" && block.task?.id === section.example,
+        (block: Block): boolean =>
+            section.example !== "" && block.task?.id === section.example,
     );
     if (section.ladder)
         return [
@@ -521,7 +550,9 @@ function waitingIs(shown: Round, step: Step): boolean {
 function placeOf(steps: Step[], at: string): number {
     const exact: number = steps.findIndex((step: Step): boolean => keyOf(step) === at);
     if (exact !== -1 || at === "") return exact;
-    const wordsOf: (key: string) => [string, string[]] = (key: string): [string, string[]] => [
+    const wordsOf: (key: string) => [string, string[]] = (
+        key: string,
+    ): [string, string[]] => [
         kindRule.exec(key)?.[1] ?? "",
         key
             .replace(kindRule, "")
@@ -716,7 +747,9 @@ function sessionShow(shown: Round): void {
  * @returns The block, `undefined` for none, like once the round is closed
  */
 function shownOf(blocks: Block[], current: Step | undefined): Block | undefined {
-    return blocks.find((block: Block): boolean => block.heading === opened) ?? current?.block;
+    return (
+        blocks.find((block: Block): boolean => block.heading === opened) ?? current?.block
+    );
 }
 
 /**
@@ -742,11 +775,17 @@ function roundDraw(view: EditorView, shown: Round): void {
     const steps: Step[] = roundStepsOf(view, shown);
     const current: Step | undefined = currentOf(shown, steps);
     const line: HTMLElement = document.getElementById("editor-round") as HTMLElement;
-    const next: HTMLButtonElement = document.getElementById("editor-next") as HTMLButtonElement;
-    (document.getElementById("editor-round-label") as HTMLElement).textContent = roundLineOf(shown);
+    const next: HTMLButtonElement = document.getElementById(
+        "editor-next",
+    ) as HTMLButtonElement;
+    (document.getElementById("editor-round-label") as HTMLElement).textContent =
+        roundLineOf(shown);
     line.hidden = false;
     sessionShow(shown);
-    const alone: Block | undefined = shownOf(blocksOf(view.state, shown.loaded.tasks), current);
+    const alone: Block | undefined = shownOf(
+        blocksOf(view.state, shown.loaded.tasks),
+        current,
+    );
     view.dispatch({
         effects: nextMoved.of(
             alone === undefined ? null : { block: alone, end: endOf(view.state, alone) },
@@ -851,7 +890,9 @@ function failShow(error: unknown): void {
  * @param steps - Its steps
  */
 function closeShow(shown: Round, steps: Step[]): void {
-    const close: HTMLButtonElement = document.getElementById("editor-close") as HTMLButtonElement;
+    const close: HTMLButtonElement = document.getElementById(
+        "editor-close",
+    ) as HTMLButtonElement;
     const results: Result[] = shown.section.results;
     close.hidden = shown.section.closed || steps.length === 0;
     close.disabled = !(
@@ -918,7 +959,9 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
         const open: (block: Block) => boolean = (block: Block): boolean =>
             theoryIs(block) ||
             block === current?.block ||
-            steps.some((step: Step): boolean => step.block === block && doneIs(shown, step));
+            steps.some(
+                (step: Step): boolean => step.block === block && doneIs(shown, step),
+            );
         const effects: StateEffect<{ from: number; to: number }>[] = [];
         blocks.forEach((block: Block): void => {
             const body: { from: number; to: number } | null = bodyOf(view.state, block);
@@ -926,7 +969,8 @@ function roundTake(view: EditorView, loaded: NoteTasks, changed: () => void): vo
                 effects.push(foldEffect.of(body));
         });
         view.dispatch({ effects: effects });
-        if (current !== undefined && current.block !== blocks[0]) blockOpen(view, current.block);
+        if (current !== undefined && current.block !== blocks[0])
+            blockOpen(view, current.block);
     }
     roundDraw(view, round);
 }
@@ -949,16 +993,18 @@ export function roundBlocksOf(view: EditorView): [string, BlockMark][] | null {
     if (round === null) return null;
     const shown: Round = round;
     const steps: Step[] = roundStepsOf(view, shown);
-    return blocksOf(view.state, shown.loaded.tasks).map((block: Block): [string, BlockMark] => {
-        const own: Step[] = steps.filter(
-            (step: Step): boolean => step.block.heading === block.heading,
-        );
-        if (own.length === 0) return [block.heading, "other"];
-        if (!own.every((step: Step): boolean => doneIs(shown, step)))
-            return [block.heading, "round"];
-        const last: Attempt | undefined = block.task?.attempts.at(-1);
-        return [block.heading, last?.result === "wrong" ? "wrong" : "done"];
-    });
+    return blocksOf(view.state, shown.loaded.tasks).map(
+        (block: Block): [string, BlockMark] => {
+            const own: Step[] = steps.filter(
+                (step: Step): boolean => step.block.heading === block.heading,
+            );
+            if (own.length === 0) return [block.heading, "other"];
+            if (!own.every((step: Step): boolean => doneIs(shown, step)))
+                return [block.heading, "round"];
+            const last: Attempt | undefined = block.task?.attempts.at(-1);
+            return [block.heading, last?.result === "wrong" ? "wrong" : "done"];
+        },
+    );
 }
 
 /**
@@ -1063,7 +1109,9 @@ export function roundBack(view: EditorView): boolean {
  * @throws {Error} - When the reader cannot be reached
  */
 export async function roundOpenedOf(path: string): Promise<string> {
-    const response: Response = await fetch(`/api/skill/opened?path=${encodeURIComponent(path)}`);
+    const response: Response = await fetch(
+        `/api/skill/opened?path=${encodeURIComponent(path)}`,
+    );
     return response.ok ? ((await response.json()) as string) : "";
 }
 

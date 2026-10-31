@@ -114,7 +114,9 @@ export function placeAddressOf(place: Place): string {
  *   the name alone without address
  */
 export function lineOf(place: Place): string {
-    return placeAddressOf(place) === "" ? place.name : `${place.name}, ${placeAddressOf(place)}`;
+    return placeAddressOf(place) === ""
+        ? place.name
+        : `${place.name}, ${placeAddressOf(place)}`;
 }
 
 /**
@@ -160,7 +162,11 @@ export function addressOf(line: string): string {
  * @param rows - My places and the rooms by their lines, see `places` of `Field` in `categories.ts`
  * @returns The place
  */
-export function placeOf(line: string, link: string, rows: { [line: string]: Place }): Place {
+export function placeOf(
+    line: string,
+    link: string,
+    rows: { [line: string]: Place },
+): Place {
     const name: string = labelOf(line);
     const row: Place | undefined = Object.values(rows).find(
         (place: Place): boolean => place.name === name,
@@ -171,7 +177,9 @@ export function placeOf(line: string, link: string, rows: { [line: string]: Plac
         .map((part: string): string => part.trim())
         .filter((part: string): boolean => part !== "");
     const town: number =
-        parts.length < 4 ? parts.findIndex((part: string): boolean => /^\d+ \S/.test(part)) : -1;
+        parts.length < 4
+            ? parts.findIndex((part: string): boolean => /^\d+ \S/.test(part))
+            : -1;
     if (town === -1)
         return {
             name: name,
@@ -228,12 +236,21 @@ export function placeEditOf(
     leave: (next: string | null) => void,
 ): HTMLElement[] {
     const name: HTMLInputElement = partFieldOf("text", place.name, "Name of the place");
-    const street: HTMLInputElement = partFieldOf("text", place.street, "Street of the place");
+    const street: HTMLInputElement = partFieldOf(
+        "text",
+        place.street,
+        "Street of the place",
+    );
     const code: HTMLInputElement = partFieldOf("text", place.code, "Code of the place");
     const city: HTMLInputElement = partFieldOf("text", place.city, "City of the place");
-    const country: HTMLInputElement = partFieldOf("text", place.country, "Country of the place");
+    const country: HTMLInputElement = partFieldOf(
+        "text",
+        place.country,
+        "Country of the place",
+    );
     const link: HTMLInputElement = partFieldOf("url", place.link, "Link of the place");
-    let follows: boolean = link.value === "" || mapsLinkIs(link.value, placeAddressOf(place));
+    let follows: boolean =
+        link.value === "" || mapsLinkIs(link.value, placeAddressOf(place));
     let changed: boolean = false;
     const typed: () => Place = (): Place => ({
         name: name.value.trim(),
@@ -248,7 +265,8 @@ export function placeEditOf(
     hint.className = "entry-none";
     hint.textContent = "Not saved: it needs a name, and a link only as a web address";
     const hintShow: () => void = (): void => {
-        hint.hidden = typed().name !== "" && (typed().link === "" || linkForm.test(typed().link));
+        hint.hidden =
+            typed().name !== "" && (typed().link === "" || linkForm.test(typed().link));
     };
     for (const part of [street, code, city, country])
         part.addEventListener("input", (): void => {
@@ -359,7 +377,10 @@ export function placeChoiceOf(
  * @param places - My places by their lines
  * @returns The places, my default place first
  */
-export function standardFirst(lines: string[], places: { [line: string]: Place }): string[] {
+export function standardFirst(
+    lines: string[],
+    places: { [line: string]: Place },
+): string[] {
     const standard: Place | undefined = Object.values(places).find(
         (place: Place): boolean => place.standard,
     );
@@ -396,7 +417,12 @@ export const wayName: string = "Way";
  * @returns Where it was, like `Home Munich -> TUM Garching`,
  *   empty for no place at all and nothing online
  */
-export function whereOf(category: string, from: string, location: string, online: string): string {
+export function whereOf(
+    category: string,
+    from: string,
+    location: string,
+    online: string,
+): string {
     const start: string = labelOf(from);
     const goal: string = labelOf(location);
     if (online !== "") return online;
@@ -422,7 +448,9 @@ function placeAnchorOf(label: string, link: string): HTMLAnchorElement {
     anchor.target = "_blank";
     anchor.rel = "noopener";
     anchor.textContent = label;
-    anchor.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
+    anchor.addEventListener("click", (event: MouseEvent): void =>
+        event.stopPropagation(),
+    );
     return anchor;
 }
 
@@ -472,7 +500,8 @@ export function whereLinkedOf(
     online: string,
     onlineLink: string,
 ): (string | Node)[] {
-    if (online !== "") return [onlineLink === "" ? online : placeAnchorOf(online, onlineLink)];
+    if (online !== "")
+        return [onlineLink === "" ? online : placeAnchorOf(online, onlineLink)];
     const start: string = labelOf(from);
     const goal: string = labelOf(location);
     const place: (string | Node)[] =

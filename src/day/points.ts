@@ -28,7 +28,12 @@
 
 import { EditorState } from "@codemirror/state";
 import { EditorView, drawSelection, keymap } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+    defaultKeymap,
+    history,
+    historyKeymap,
+    indentWithTab,
+} from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { markdownSupport } from "../editor/syntax.ts";
 import { markdownKeys } from "../editor/keys.ts";
@@ -78,7 +83,10 @@ function viewOf(list: HTMLElement): EditorView {
  */
 export function pointsShow(list: HTMLElement, text: string): void {
     viewOf(list).setState(
-        EditorState.create({ doc: text === "" ? emptyText : text, extensions: extensions }),
+        EditorState.create({
+            doc: text === "" ? emptyText : text,
+            extensions: extensions,
+        }),
     );
 }
 
@@ -105,18 +113,30 @@ export function pointsRead(list: HTMLElement): string {
  * @param changed - Tells that the points changed, like a save that waits for a pause
  * @param left - Tells that the focus left the list, like a save right away
  */
-export function pointsStart(list: HTMLElement, changed: () => void, left: () => void): void {
+export function pointsStart(
+    list: HTMLElement,
+    changed: () => void,
+    left: () => void,
+): void {
     const view: EditorView = new EditorView({
         parent: list,
         state: EditorState.create({ doc: emptyText, extensions: extensions }),
-        dispatchTransactions: (transactions: readonly Transaction[], editor: EditorView): void => {
+        dispatchTransactions: (
+            transactions: readonly Transaction[],
+            editor: EditorView,
+        ): void => {
             editor.update(transactions);
-            if (transactions.some((transaction: Transaction): boolean => transaction.docChanged))
+            if (
+                transactions.some(
+                    (transaction: Transaction): boolean => transaction.docChanged,
+                )
+            )
                 changed();
         },
     });
     list.addEventListener("focusout", (event: FocusEvent): void => {
-        if (!(event.relatedTarget instanceof Node && list.contains(event.relatedTarget))) left();
+        if (!(event.relatedTarget instanceof Node && list.contains(event.relatedTarget)))
+            left();
     });
     list.addEventListener("mousedown", (event: MouseEvent): void => {
         if (event.target instanceof Node && view.dom.contains(event.target)) return;

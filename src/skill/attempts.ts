@@ -349,7 +349,9 @@ export async function skillingLoad(): Promise<Skilling> {
  * @throws {Error} - When the reader cannot answer, like for a module without folder
  */
 export async function moduleLoad(code: string): Promise<ModuleContents> {
-    return readerAsk<ModuleContents>(`/api/skill/module?code=${encodeURIComponent(code)}`);
+    return readerAsk<ModuleContents>(
+        `/api/skill/module?code=${encodeURIComponent(code)}`,
+    );
 }
 
 /**
@@ -361,7 +363,10 @@ export async function moduleLoad(code: string): Promise<ModuleContents> {
  * @throws {Error} - When the reader does not take it
  */
 async function readerSend(method: string, address: string, body: object): Promise<void> {
-    const response: Response = await fetch(address, { method: method, body: JSON.stringify(body) });
+    const response: Response = await fetch(address, {
+        method: method,
+        body: JSON.stringify(body),
+    });
     if (!response.ok) throw new Error(`Reader answered ${response.status}`);
 }
 
@@ -487,20 +492,24 @@ export function groupsOf(tasks: SkillTask[], today: string): Group[] {
     const dueToday: SkillTask[] = tasks.filter(
         (task: SkillTask): boolean => task.due !== "" && task.due <= today,
     );
-    const later: SkillTask[] = tasks.filter((task: SkillTask): boolean => task.due > today);
+    const later: SkillTask[] = tasks.filter(
+        (task: SkillTask): boolean => task.due > today,
+    );
     return [
         { name: "Due today", tasks: dueToday.sort(byDue) },
         {
             name: "New",
             tasks: tasks.filter(
-                (task: SkillTask): boolean => task.due === "" && fresh(task) && !task.done,
+                (task: SkillTask): boolean =>
+                    task.due === "" && fresh(task) && !task.done,
             ),
         },
         { name: "Later", tasks: later.sort(byDue) },
         {
             name: "Done",
             tasks: tasks.filter(
-                (task: SkillTask): boolean => task.due === "" && (task.done || !fresh(task)),
+                (task: SkillTask): boolean =>
+                    task.due === "" && (task.done || !fresh(task)),
             ),
         },
     ];

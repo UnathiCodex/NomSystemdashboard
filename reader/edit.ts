@@ -136,7 +136,9 @@ export function textMerged(base: string, text: string, disk: string): string {
     const mine: Hunk[] = hunksOf(original, linesOf(text));
     const theirs: Hunk[] = hunksOf(original, linesOf(disk)).filter(
         (hunk: Hunk): boolean =>
-            !mine.some((own: Hunk): boolean => own.from <= hunk.to && hunk.from <= own.to),
+            !mine.some(
+                (own: Hunk): boolean => own.from <= hunk.to && hunk.from <= own.to,
+            ),
     );
     const merged: string[] = [];
     let at: number = 0;
@@ -170,7 +172,9 @@ export function changesOf(before: string, after: string): TextChange[] {
         }
         const last: TextChange | undefined = changes.at(-1);
         const change: TextChange =
-            last !== undefined && last.to === at ? last : { from: at, to: at, insert: "" };
+            last !== undefined && last.to === at
+                ? last
+                : { from: at, to: at, insert: "" };
         if (change !== last) changes.push(change);
         if (part.removed) {
             change.to += text.length;
@@ -249,9 +253,17 @@ export function noteWrite(change: NoteChange): Written {
     mkdirSync(dirname(editor.corrections), { recursive: true });
     appendFileSync(
         editor.corrections,
-        createTwoFilesPatch(`a/${change.path}`, `b/${change.path}`, old, text, stamp, stamp, {
-            headerOptions: FILE_HEADERS_ONLY,
-        }),
+        createTwoFilesPatch(
+            `a/${change.path}`,
+            `b/${change.path}`,
+            old,
+            text,
+            stamp,
+            stamp,
+            {
+                headerOptions: FILE_HEADERS_ONLY,
+            },
+        ),
     );
     writeFileSync(file, text);
     return written;

@@ -65,7 +65,10 @@ export function swipeStart(main: HTMLElement, turn: (days: number) => void): voi
     let time: number = 0;
     let state: "open" | "swipe" | "off" = "off";
     let moved: number = 0;
-    const slide: (px: number, sliding: boolean) => void = (px: number, sliding: boolean): void => {
+    const slide: (px: number, sliding: boolean) => void = (
+        px: number,
+        sliding: boolean,
+    ): void => {
         main.classList.toggle("day-swiping", !sliding);
         main.style.setProperty("--swipe", `${px}px`);
     };
@@ -106,7 +109,8 @@ export function swipeStart(main: HTMLElement, turn: (days: number) => void): voi
         state = "off";
         const width: number = main.clientWidth;
         const days: number =
-            Math.abs(moved) > width / 4 || Math.abs(moved) / (event.timeStamp - time) > flickSpeed
+            Math.abs(moved) > width / 4 ||
+            Math.abs(moved) / (event.timeStamp - time) > flickSpeed
                 ? -Math.sign(moved)
                 : 0;
         slide(days === 0 ? 0 : -days * width, true);

@@ -849,7 +849,11 @@
     text-align: right;
 }
 
-.table-viewer .jss_worksheet > :is(thead, tbody) > tr > td:is(:first-child, :nth-child(2)) {
+.table-viewer
+    .jss_worksheet
+    > :is(thead, tbody)
+    > tr
+    > td:is(:first-child, :nth-child(2)) {
     position: sticky;
     z-index: 1;
 }

@@ -736,8 +736,9 @@ const categoriesKept: () => Promise<Category[]> = changesKept(categoriesLoad);
  */
 function startRead(): Date {
     const day: string =
-        dateParse((document.getElementById("entry-start-day") as HTMLInputElement).value) ??
-        dayOf(opened.start);
+        dateParse(
+            (document.getElementById("entry-start-day") as HTMLInputElement).value,
+        ) ?? dayOf(opened.start);
     return dateOf(
         new Date(`${day}T12:00:00`),
         timeFieldRead(document.getElementById("entry-start") as HTMLInputElement),
@@ -911,7 +912,9 @@ async function realLoad(): Promise<void> {
  * - `start`: Start of the box as typed.
  */
 function endFill(): void {
-    const end: HTMLInputElement = document.getElementById("entry-end") as HTMLInputElement;
+    const end: HTMLInputElement = document.getElementById(
+        "entry-end",
+    ) as HTMLInputElement;
     if (
         opened.target !== "box" ||
         opened.box !== null ||
@@ -934,7 +937,8 @@ function endFill(): void {
  * @param minutes - Minutes of its videos together
  */
 function endFit(minutes: number): void {
-    if (timeFieldRead(document.getElementById("entry-start") as HTMLInputElement) === "") return;
+    if (timeFieldRead(document.getElementById("entry-start") as HTMLInputElement) === "")
+        return;
     timeFieldShow(
         document.getElementById("entry-end") as HTMLInputElement,
         new Date(startRead().getTime() + minutes * 60 * 1000),
@@ -980,7 +984,11 @@ function valueAdd(field: Field, value: string): void {
  * @returns Whether `Body` `Neck long` is picked for the log
  */
 function neckLongPicked(): boolean {
-    return opened.target === "log" && chosen?.name === neckLong[0] && values.title === neckLong[1];
+    return (
+        opened.target === "log" &&
+        chosen?.name === neckLong[0] &&
+        values.title === neckLong[1]
+    );
 }
 
 /**
@@ -1051,8 +1059,9 @@ function fixedValueOf(field: Field, value: string): string {
     const base: string = baseOf(value);
     if (!field.fixed || field.values.includes(base)) return value;
     return paramPut(
-        field.values.find((candidate: string): boolean => simple(candidate) === simple(base)) ??
-            base,
+        field.values.find(
+            (candidate: string): boolean => simple(candidate) === simple(base),
+        ) ?? base,
         paramOf(value),
     );
 }
@@ -1089,7 +1098,9 @@ function fixedTextOf(field: Field, text: string): string {
  */
 function fieldChoiceOf(field: Field, value: string): Choice {
     const name: string =
-        labelOf(value) === labelOf(values[field.key]) ? (edits[field.key]?.name ?? "") : "";
+        labelOf(value) === labelOf(values[field.key])
+            ? (edits[field.key]?.name ?? "")
+            : "";
     return field.key === "title"
         ? choiceOf(value)
         : placeChoiceOf(value, name !== "" ? name : labelOf(value), field.places);
@@ -1153,11 +1164,17 @@ function placeOriginOf(field: Field): Place {
  * @param address - The address below the label
  * @param field - Field, like `Place`
  */
-function placePartsShow(pencil: HTMLButtonElement, address: HTMLAnchorElement, field: Field): void {
+function placePartsShow(
+    pencil: HTMLButtonElement,
+    address: HTMLAnchorElement,
+    field: Field,
+): void {
     const line: string = values[field.key];
     const edit: Place | null = edits[field.key];
     const kept: string =
-        field.key === "location" && line === opened.values.location ? opened.locationLink : "";
+        field.key === "location" && line === opened.values.location
+            ? opened.locationLink
+            : "";
     const link: string =
         edit !== null
             ? edit.link
@@ -1225,7 +1242,9 @@ function partsShow(field: Field): void {
     placesShow();
     if (partsShown(field))
         document
-            .querySelector<HTMLInputElement>(`#entry .field-parts[data-field="${field.key}"] input`)
+            .querySelector<HTMLInputElement>(
+                `#entry .field-parts[data-field="${field.key}"] input`,
+            )
             ?.focus();
 }
 
@@ -1305,11 +1324,14 @@ function summaryPartsShow(): void {
         HTMLInputElement | null,
     ] = summaryShown;
     const value: string = summaryPickedOf();
-    if (text !== document.activeElement) text.value = param === null ? value : baseOf(value);
+    if (text !== document.activeElement)
+        text.value = param === null ? value : baseOf(value);
     if (param !== null && param !== document.activeElement) param.value = paramOf(value);
     if (address !== document.activeElement)
         address.value =
-            summaryLink === "" && chosen?.name === skillName ? skillPathOf() : summaryLink;
+            summaryLink === "" && chosen?.name === skillName
+                ? skillPathOf()
+                : summaryLink;
     pencil.hidden = titleRead(valuesRead().title) === "";
     if (chosen?.name === skillName && summaryLink === "") {
         skillPathShow(link);
@@ -1369,8 +1391,16 @@ function summaryPartsOf(
 ): [HTMLButtonElement, HTMLAnchorElement, HTMLElement] {
     const pencil: HTMLButtonElement = document.createElement("button");
     const link: HTMLAnchorElement = document.createElement("a");
-    const text: HTMLInputElement = partFieldOf("text", values.title, "Text of the summary");
-    const address: HTMLInputElement = partFieldOf("url", summaryLink, "Link of the summary");
+    const text: HTMLInputElement = partFieldOf(
+        "text",
+        values.title,
+        "Text of the summary",
+    );
+    const address: HTMLInputElement = partFieldOf(
+        "url",
+        summaryLink,
+        "Link of the summary",
+    );
     const parts: HTMLElement = document.createElement("div");
     const param: HTMLInputElement | null =
         summary === undefined ? null : partFieldOf("text", "", "Param of the summary");
@@ -1381,35 +1411,42 @@ function summaryPartsOf(
     link.rel = "noopener";
     parts.className = "field-parts";
     if (typed) parts.append(partOf("Text", text));
-    if (param !== null && paramOf(summaryPickedOf()) !== "") parts.append(partOf("Param", param));
-    if (summary !== undefined || chosen?.name === skillName) parts.append(partOf("Link", address));
+    if (param !== null && paramOf(summaryPickedOf()) !== "")
+        parts.append(partOf("Param", param));
+    if (summary !== undefined || chosen?.name === skillName)
+        parts.append(partOf("Link", address));
     iconPut(pencil, Pencil, "Change the summary");
     parts.hidden = !summaryOpen;
-    [text, ...(param === null ? [] : [param])].forEach((input: HTMLInputElement): void => {
-        input.addEventListener("focusin", (): void => {
-            shown = values.title;
-            summaryValues = values.title.split(", ");
-        });
-        input.addEventListener("input", (): void => {
-            const name: string = text.value.trim();
-            const typed: string = summaryTypedOf(
-                param === null ? name : paramPut(name, param.value),
-            );
-            values.title = summary === undefined ? typed : fixedTextOf(summary, typed);
-            saveAllow();
-        });
-        input.addEventListener("focusout", (event: FocusEvent): void => {
-            const next: string | null =
-                event.relatedTarget instanceof HTMLElement
-                    ? event.relatedTarget.getAttribute("aria-label")
-                    : null;
-            if (values.title === shown || summary === undefined) return;
-            titleRowsShow();
-            document
-                .querySelector<HTMLInputElement>(`#entry .field-parts input[aria-label="${next}"]`)
-                ?.focus();
-        });
-    });
+    [text, ...(param === null ? [] : [param])].forEach(
+        (input: HTMLInputElement): void => {
+            input.addEventListener("focusin", (): void => {
+                shown = values.title;
+                summaryValues = values.title.split(", ");
+            });
+            input.addEventListener("input", (): void => {
+                const name: string = text.value.trim();
+                const typed: string = summaryTypedOf(
+                    param === null ? name : paramPut(name, param.value),
+                );
+                values.title =
+                    summary === undefined ? typed : fixedTextOf(summary, typed);
+                saveAllow();
+            });
+            input.addEventListener("focusout", (event: FocusEvent): void => {
+                const next: string | null =
+                    event.relatedTarget instanceof HTMLElement
+                        ? event.relatedTarget.getAttribute("aria-label")
+                        : null;
+                if (values.title === shown || summary === undefined) return;
+                titleRowsShow();
+                document
+                    .querySelector<HTMLInputElement>(
+                        `#entry .field-parts input[aria-label="${next}"]`,
+                    )
+                    ?.focus();
+            });
+        },
+    );
     param?.addEventListener("input", (): void => {
         const before: string = summaryValue === -1 ? shown : summaryValues[summaryValue];
         paramEdits[baseOf(before)] = {
@@ -1436,7 +1473,9 @@ function summaryPartsOf(
  * @returns The value, with its param
  */
 function summaryPickedOf(): string {
-    return summaryValue === -1 ? values.title : (values.title.split(", ")[summaryValue] ?? "");
+    return summaryValue === -1
+        ? values.title
+        : (values.title.split(", ")[summaryValue] ?? "");
 }
 
 /**
@@ -1450,7 +1489,9 @@ function summaryPickedOf(): string {
 function summaryTypedOf(typed: string): string {
     if (summaryValue === -1) return typed;
     return summaryValues
-        .map((value: string, index: number): string => (index === summaryValue ? typed : value))
+        .map((value: string, index: number): string =>
+            index === summaryValue ? typed : value,
+        )
         .filter((value: string): boolean => value !== "")
         .join(", ");
 }
@@ -1465,7 +1506,8 @@ function summaryTypedOf(typed: string): string {
  * @param parts - The parts of the summary, which hold its text
  */
 function summaryChange(parts: HTMLElement): void {
-    if (meal !== null) meal.at(-1)?.querySelector<HTMLButtonElement>(".picker-line")?.click();
+    if (meal !== null)
+        meal.at(-1)?.querySelector<HTMLButtonElement>(".picker-line")?.click();
     else {
         summaryValue = -1;
         summaryOpen = !summaryOpen;
@@ -1560,7 +1602,12 @@ function placeSearchOf(field: Field): (text: string) => Promise<Choice[]> {
         const shown: string[] =
             text.trim() !== ""
                 ? [...new Set([...field.values, ...field.rooms])]
-                : [...new Set([...field.values, ...(line === "" ? [] : [mineOf(field) ?? line])])];
+                : [
+                      ...new Set([
+                          ...field.values,
+                          ...(line === "" ? [] : [mineOf(field) ?? line]),
+                      ]),
+                  ];
         return await searchOf(
             standardFirst(shown, field.places).map((value: string): Choice =>
                 fieldChoiceOf(field, value),
@@ -1613,7 +1660,9 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                 pick: (people: Attendee[]): void => {
                     values.with = namesOf(people);
                     addresses = { ...addresses, ...addressesOf(people) };
-                    people.forEach((person: Attendee): void => valueAdd(field, person.name));
+                    people.forEach((person: Attendee): void =>
+                        valueAdd(field, person.name),
+                    );
                     saveAllow();
                 },
             }),
@@ -1643,7 +1692,8 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             }),
         ];
     if (field.key === "title" && meal !== null) return meal;
-    if (field.key === "title" && field.many === true && !ofSeries()) return [manyRowOf(field)];
+    if (field.key === "title" && field.many === true && !ofSeries())
+        return [manyRowOf(field)];
     const place: [HTMLButtonElement, HTMLAnchorElement] | null =
         field.key === "title" ? null : placePartsOf(field);
     const summary: HTMLElement[] = field.key === "title" ? summaryPartsOf(field) : [];
@@ -1658,7 +1708,9 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                 ? placeSearchOf(field)
                 : (text: string): Promise<Choice[]> =>
                       searchOf(
-                          field.values.map((value: string): Choice => fieldChoiceOf(field, value)),
+                          field.values.map((value: string): Choice =>
+                              fieldChoiceOf(field, value),
+                          ),
                       )(text),
         picked:
             values[field.key] === ""
@@ -1699,7 +1751,9 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                 placePartsShow(place[0], place[1], field);
             }
             stepsShow(steps, field);
-            document.getElementById("entry-pain")?.toggleAttribute("hidden", !neckLongPicked());
+            document
+                .getElementById("entry-pain")
+                ?.toggleAttribute("hidden", !neckLongPicked());
             saveAllow();
             if (partsShown(field) !== shown || (shown && labelOf(line) !== before))
                 partsShow(field);
@@ -1765,7 +1819,9 @@ function manyRowOf(field: Field): HTMLElement {
                 values[field.key] = chosen
                     .map(
                         (value: string): string =>
-                            before.find((old: string): boolean => baseOf(old) === value) ?? value,
+                            before.find(
+                                (old: string): boolean => baseOf(old) === value,
+                            ) ?? value,
                     )
                     .join(", ");
                 summaryOpen = false;
@@ -1805,7 +1861,9 @@ function valueAfterOf(field: Field, home: HTMLElement, value: string): HTMLEleme
     pencil.type = "button";
     pencil.className = "entry-pencil";
     iconPut(pencil, Pencil, `Change ${value}`);
-    pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    pencil.addEventListener("mousedown", (event: MouseEvent): void =>
+        event.preventDefault(),
+    );
     pencil.addEventListener("click", (event: MouseEvent): void => {
         event.stopPropagation();
         const at: number = valueAtOf(value);
@@ -1814,7 +1872,9 @@ function valueAfterOf(field: Field, home: HTMLElement, value: string): HTMLEleme
         titleRowsShow();
         if (summaryOpen)
             document
-                .querySelector<HTMLInputElement>('#entry .field-parts input[aria-label^="Text"]')
+                .querySelector<HTMLInputElement>(
+                    '#entry .field-parts input[aria-label^="Text"]',
+                )
                 ?.focus();
     });
     shown.addEventListener("click", (event: MouseEvent): void => {
@@ -1832,7 +1892,9 @@ function valueAfterOf(field: Field, home: HTMLElement, value: string): HTMLEleme
  * @returns Its place, from 0, -1 once it changed
  */
 function valueAtOf(value: string): number {
-    return values.title.split(", ").findIndex((old: string): boolean => baseOf(old) === value);
+    return values.title
+        .split(", ")
+        .findIndex((old: string): boolean => baseOf(old) === value);
 }
 
 /**
@@ -1868,7 +1930,12 @@ function paramShownOf(value: string): HTMLElement {
  * @param aside - Elements beside it, like the pencil of the summary
  * @returns The picker
  */
-function paramPickerOf(field: Field, at: number, value: string, aside: HTMLElement[]): HTMLElement {
+function paramPickerOf(
+    field: Field,
+    at: number,
+    value: string,
+    aside: HTMLElement[],
+): HTMLElement {
     const param: string = paramOf(value);
     return choicesOf({
         search: searchOf((field.params[baseOf(value)] ?? []).map(choiceOf)),
@@ -1907,7 +1974,9 @@ function paramPick(field: Field, at: number, param: string): void {
         )
         .join(", ");
     if (paramOf(written) !== "")
-        field.params[base] = [...new Set([...(field.params[base] ?? []), paramOf(written)])];
+        field.params[base] = [
+            ...new Set([...(field.params[base] ?? []), paramOf(written)]),
+        ];
     saveAllow();
     titleRowsShow();
 }
@@ -1926,7 +1995,12 @@ function paramPick(field: Field, at: number, param: string): void {
 function paramListOpen(field: Field, home: HTMLElement, value: string): void {
     const at: number = valueAtOf(value);
     if (at === -1) return;
-    const picker: HTMLElement = paramPickerOf(field, at, values.title.split(", ")[at], []);
+    const picker: HTMLElement = paramPickerOf(
+        field,
+        at,
+        values.title.split(", ")[at],
+        [],
+    );
     home.replaceChildren(picker);
     picker.querySelector<HTMLButtonElement>(".picker-line")?.click();
 }
@@ -2016,11 +2090,28 @@ function withPartsOf(
 ): HTMLElement[] {
     return people.map((person: Attendee): HTMLElement => {
         const edit: PersonEdit =
-            setup.edits[person.name] ?? personEditOf(setup.persons, person.name, person.address);
-        const name: HTMLInputElement = partFieldOf("text", edit.name, `Name of ${person.name}`);
-        const title: HTMLInputElement = partFieldOf("text", edit.title, `Title of ${person.name}`);
-        const mail: HTMLInputElement = partFieldOf("email", edit.mail, `Mail of ${person.name}`);
-        const link: HTMLInputElement = partFieldOf("url", edit.link, `Link of ${person.name}`);
+            setup.edits[person.name] ??
+            personEditOf(setup.persons, person.name, person.address);
+        const name: HTMLInputElement = partFieldOf(
+            "text",
+            edit.name,
+            `Name of ${person.name}`,
+        );
+        const title: HTMLInputElement = partFieldOf(
+            "text",
+            edit.title,
+            `Title of ${person.name}`,
+        );
+        const mail: HTMLInputElement = partFieldOf(
+            "email",
+            edit.mail,
+            `Mail of ${person.name}`,
+        );
+        const link: HTMLInputElement = partFieldOf(
+            "url",
+            edit.link,
+            `Link of ${person.name}`,
+        );
         const take: () => void = (): void => {
             setup.edits[person.name] = {
                 name: name.value.trim(),
@@ -2031,7 +2122,9 @@ function withPartsOf(
             };
             typed(
                 person.name,
-                mail.value.trim() === "" ? standardAddressOf(person.name) : mail.value.trim(),
+                mail.value.trim() === ""
+                    ? standardAddressOf(person.name)
+                    : mail.value.trim(),
             );
         };
         [name, title, mail, link].forEach((input: HTMLInputElement): void =>
@@ -2067,7 +2160,10 @@ function withPartsOf(
  * @param people - The people of `Persons.md`
  * @returns Search for the picker
  */
-function withSearchOf(field: Field, people: Person[]): (text: string) => Promise<Choice[]> {
+function withSearchOf(
+    field: Field,
+    people: Person[],
+): (text: string) => Promise<Choice[]> {
     return async (text: string): Promise<Choice[]> => {
         const used: string[] = field.values.map(
             (name: string): string => personOf(people, name)?.name ?? name,
@@ -2106,7 +2202,9 @@ export function withChoicesOf(
         many: true,
         adding: true,
         add: async (name: string): Promise<string | null> =>
-            name.includes(";") ? null : (personOf(persons, name.trim())?.name ?? name.trim()),
+            name.includes(";")
+                ? null
+                : (personOf(persons, name.trim())?.name ?? name.trim()),
         noun: "person",
         linkOf: (name: string): string => {
             const person: Person | undefined = personOf(persons, name);
@@ -2196,7 +2294,9 @@ export function withRowOf(setup: WithSetup): HTMLElement {
             pick: (names: string[]): void => {
                 people = names.map(
                     (name: string): Attendee =>
-                        people.find((person: Attendee): boolean => person.name === name) ?? {
+                        people.find(
+                            (person: Attendee): boolean => person.name === name,
+                        ) ?? {
                             name: name,
                             address: setup.field.links[name] ?? standardAddressOf(name),
                         },
@@ -2274,10 +2374,26 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
     let open: boolean = setup.open;
     const pencil: HTMLButtonElement = document.createElement("button");
     const line: HTMLAnchorElement = document.createElement("a");
-    const label: HTMLInputElement = partFieldOf("text", online.online, "Label of the platform");
-    const provider: HTMLInputElement = partFieldOf("text", "", "Provider of the platform");
-    const channel: HTMLInputElement = partFieldOf("text", online.onlineChannel, "Channel online");
-    const title: HTMLInputElement = partFieldOf("text", online.onlineTitle, "Title online");
+    const label: HTMLInputElement = partFieldOf(
+        "text",
+        online.online,
+        "Label of the platform",
+    );
+    const provider: HTMLInputElement = partFieldOf(
+        "text",
+        "",
+        "Provider of the platform",
+    );
+    const channel: HTMLInputElement = partFieldOf(
+        "text",
+        online.onlineChannel,
+        "Channel online",
+    );
+    const title: HTMLInputElement = partFieldOf(
+        "text",
+        online.onlineTitle,
+        "Title online",
+    );
     const link: HTMLInputElement = partFieldOf("url", online.onlineLink, "Link online");
     const hint: HTMLParagraphElement = document.createElement("p");
     const parts: HTMLElement = document.createElement("div");
@@ -2295,7 +2411,8 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
         pencil.hidden = online.online === "";
         parts.hidden = !open || online.online === "";
         if (label !== document.activeElement) label.value = online.online;
-        if (provider !== document.activeElement) provider.value = platform?.provider ?? "";
+        if (provider !== document.activeElement)
+            provider.value = platform?.provider ?? "";
         if (link !== document.activeElement) link.value = target;
     };
     const take: (next: Online) => void = (next: Online): void => {
@@ -2331,7 +2448,11 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
     const write: () => void = (): void => {
         const old: string = online.online;
         platformSend(
-            { name: label.value, provider: provider.value, link: field.platforms[old]?.link ?? "" },
+            {
+                name: label.value,
+                provider: provider.value,
+                link: field.platforms[old]?.link ?? "",
+            },
             old,
         )
             .then((platform: Platform): void => {
@@ -2339,7 +2460,9 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
                 hint.hidden = true;
                 take({ ...online, online: platform.name });
                 if (platform.name !== old)
-                    row.replaceWith(onlineRowOf({ ...setup, online: online, open: open }));
+                    row.replaceWith(
+                        onlineRowOf({ ...setup, online: online, open: open }),
+                    );
             })
             .catch((error: unknown): void => {
                 console.error(error);
@@ -2381,7 +2504,8 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
                     "",
                 );
                 platformTake(setup.categories, platform, "");
-                if (!field.values.includes(platform.name)) field.values.push(platform.name);
+                if (!field.values.includes(platform.name))
+                    field.values.push(platform.name);
                 open = true;
                 setup.opened(open);
                 return platform.name;
@@ -2395,7 +2519,12 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
                 take(
                     platform === online.online
                         ? online
-                        : { online: platform, onlineLink: "", onlineChannel: "", onlineTitle: "" },
+                        : {
+                              online: platform,
+                              onlineLink: "",
+                              onlineChannel: "",
+                              onlineTitle: "",
+                          },
                 );
             },
         }),
@@ -2438,9 +2567,10 @@ function peopleRead(): Attendee[] {
         (other: Field): boolean => other.key === "with",
     );
     if (field === undefined || values.with === "") return [];
-    return values.with
-        .split(withParting)
-        .map((name: string): Attendee => ({ name: name, address: personAddressOf(field, name) }));
+    return values.with.split(withParting).map((name: string): Attendee => ({
+        name: name,
+        address: personAddressOf(field, name),
+    }));
 }
 
 /**
@@ -2571,7 +2701,9 @@ async function lastPlaceLoad(): Promise<string> {
         timeFieldRead(document.getElementById("entry-start") as HTMLInputElement) === ""
             ? dateOf(new Date(`${dayRead()}T12:00:00`), "23:59")
             : startRead();
-    const response: Response = await fetch(`/api/day/last-place?before=${before.toISOString()}`);
+    const response: Response = await fetch(
+        `/api/day/last-place?before=${before.toISOString()}`,
+    );
     return await response.json();
 }
 
@@ -2596,11 +2728,14 @@ async function lastPlaceLoad(): Promise<string> {
  * @throws {Error} - When the reader gives no valid answer
  */
 async function lastPlaceFill(category: Category): Promise<void> {
-    const way: boolean = category.fields.some((field: Field): boolean => field.key === "from");
+    const way: boolean = category.fields.some(
+        (field: Field): boolean => field.key === "from",
+    );
     const field: Field | undefined = category.fields.find(
         (other: Field): boolean => other.key === (way ? "from" : "location"),
     );
-    if (way && placeFilled !== "" && values.location === placeFilled) values.location = "";
+    if (way && placeFilled !== "" && values.location === placeFilled)
+        values.location = "";
     if (
         field === undefined ||
         opened.entry !== null ||
@@ -2613,7 +2748,8 @@ async function lastPlaceFill(category: Category): Promise<void> {
     const standard: Place | undefined = Object.values(field.places).find(
         (place: Place): boolean => place.standard,
     );
-    const line: string = last !== "" ? last : standard === undefined ? "" : lineOf(standard);
+    const line: string =
+        last !== "" ? last : standard === undefined ? "" : lineOf(standard);
     values[field.key] =
         field.values.find(
             (value: string): boolean => line !== "" && labelOf(value) === labelOf(line),
@@ -2674,7 +2810,10 @@ async function categoryPick(category: Category | null): Promise<void> {
         skillChanged();
         return;
     }
-    if ((category?.name === foodName || category?.name === cookName) && opened.target === "log") {
+    if (
+        (category?.name === foodName || category?.name === cookName) &&
+        opened.target === "log"
+    ) {
         const changing: boolean = opened.category === category.name;
         const built: HTMLElement[] = await mealOf(
             changing ? opened.foods : [],
@@ -2683,7 +2822,9 @@ async function categoryPick(category: Category | null): Promise<void> {
             category.name === cookName
                 ? null
                 : {
-                      cooked: changing ? String(opened.entry?.extendedProps.cooked ?? "") : "",
+                      cooked: changing
+                          ? String(opened.entry?.extendedProps.cooked ?? "")
+                          : "",
                       start: startRead(),
                       id: changing ? (opened.entry?.id ?? "") : "",
                   },
@@ -2815,7 +2956,10 @@ function textsRead(): BoxFields {
 function dayRead(): string {
     const deadlineDay: string | null =
         opened.target === "box"
-            ? dateParse((document.getElementById("entry-deadline-day") as HTMLInputElement).value)
+            ? dateParse(
+                  (document.getElementById("entry-deadline-day") as HTMLInputElement)
+                      .value,
+              )
             : null;
     const typed: string | null =
         deadlineDay ??
@@ -2856,12 +3000,18 @@ function endDayFill(): void {
     const day: string | null = dateParse(
         (document.getElementById("entry-start-day") as HTMLInputElement).value,
     );
-    const start: string = timeFieldRead(document.getElementById("entry-start") as HTMLInputElement);
-    const end: string = timeFieldRead(document.getElementById("entry-end") as HTMLInputElement);
+    const start: string = timeFieldRead(
+        document.getElementById("entry-start") as HTMLInputElement,
+    );
+    const end: string = timeFieldRead(
+        document.getElementById("entry-end") as HTMLInputElement,
+    );
     if (endDayTyped || day === null || start === "" || end === "") return;
     const next: Date = new Date(`${day}T12:00:00`);
     next.setDate(next.getDate() + 1);
-    const field: HTMLInputElement = document.getElementById("entry-end-day") as HTMLInputElement;
+    const field: HTMLInputElement = document.getElementById(
+        "entry-end-day",
+    ) as HTMLInputElement;
     field.value = weekdayDateTextOf(end <= start ? dayOf(next) : day);
     field.setCustomValidity("");
     endDayShow();
@@ -2934,22 +3084,29 @@ function fieldsRead(): EntryFields {
  */
 function boxFieldsRead(): BoxFields {
     const day: string =
-        dateParse((document.getElementById("entry-start-day") as HTMLInputElement).value) ??
-        dayOf(opened.start);
+        dateParse(
+            (document.getElementById("entry-start-day") as HTMLInputElement).value,
+        ) ?? dayOf(opened.start);
     const startTime: string = timeFieldRead(
         document.getElementById("entry-start") as HTMLInputElement,
     );
-    const endTime: string = timeFieldRead(document.getElementById("entry-end") as HTMLInputElement);
+    const endTime: string = timeFieldRead(
+        document.getElementById("entry-end") as HTMLInputElement,
+    );
     const length: string = timeFieldRead(
         document.getElementById("entry-length") as HTMLInputElement,
     );
     const deadlineDay: string =
-        dateParse((document.getElementById("entry-deadline-day") as HTMLInputElement).value) ?? "";
+        dateParse(
+            (document.getElementById("entry-deadline-day") as HTMLInputElement).value,
+        ) ?? "";
     const deadlineTime: string = timeFieldRead(
         document.getElementById("entry-deadline-time") as HTMLInputElement,
     );
     const start: Date | null =
-        startTime === "" || lengthOnly ? null : dateOf(new Date(`${day}T12:00:00`), startTime);
+        startTime === "" || lengthOnly
+            ? null
+            : dateOf(new Date(`${day}T12:00:00`), startTime);
     let minutes: number | null = lengthOnly
         ? length === "" || minutesOf(length) === 0
             ? null
@@ -2983,7 +3140,9 @@ function boxFieldsRead(): BoxFields {
  * @param id - Identifier of the hint, like `entry-error`
  */
 function hintShow(id: string): void {
-    const dialog: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
+    const dialog: HTMLDialogElement = document.getElementById(
+        "entry",
+    ) as HTMLDialogElement;
     document.getElementById(id)?.removeAttribute("hidden");
     dialog.scrollTo({ top: dialog.scrollHeight });
 }
@@ -3148,7 +3307,9 @@ async function entrySave(calendar: Calendar): Promise<void> {
  * @throws {Error} - When the reader does not remove the entry or the box
  */
 async function entryRemove(calendar: Calendar): Promise<void> {
-    const button: HTMLButtonElement = document.getElementById("entry-remove") as HTMLButtonElement;
+    const button: HTMLButtonElement = document.getElementById(
+        "entry-remove",
+    ) as HTMLButtonElement;
     if (!removeAsked) {
         removeAsked = true;
         iconPut(button, QuestionMark, "Really remove?");
@@ -3177,11 +3338,15 @@ function deadlineSee(): void {
         "entry-deadline-time",
     ) as HTMLInputElement;
     const off: boolean = opened.target === "box" && deadlineDay.value.trim() !== "";
-    ["entry-start-day", "entry-start", "entry-end-day", "entry-end", "entry-length"].forEach(
-        (id: string): void => {
-            (document.getElementById(id) as HTMLInputElement).disabled = off;
-        },
-    );
+    [
+        "entry-start-day",
+        "entry-start",
+        "entry-end-day",
+        "entry-end",
+        "entry-length",
+    ].forEach((id: string): void => {
+        (document.getElementById(id) as HTMLInputElement).disabled = off;
+    });
     document
         .querySelectorAll<HTMLButtonElement>("#entry-swap button")
         .forEach((swap: HTMLButtonElement): void => {
@@ -3225,10 +3390,18 @@ function timesShow(opening: EntryOpening): void {
     const startDay: HTMLInputElement = document.getElementById(
         "entry-start-day",
     ) as HTMLInputElement;
-    const endDay: HTMLInputElement = document.getElementById("entry-end-day") as HTMLInputElement;
-    const startTime: HTMLInputElement = document.getElementById("entry-start") as HTMLInputElement;
-    const endTime: HTMLInputElement = document.getElementById("entry-end") as HTMLInputElement;
-    const deadlineRow: HTMLElement = document.getElementById("entry-deadline") as HTMLElement;
+    const endDay: HTMLInputElement = document.getElementById(
+        "entry-end-day",
+    ) as HTMLInputElement;
+    const startTime: HTMLInputElement = document.getElementById(
+        "entry-start",
+    ) as HTMLInputElement;
+    const endTime: HTMLInputElement = document.getElementById(
+        "entry-end",
+    ) as HTMLInputElement;
+    const deadlineRow: HTMLElement = document.getElementById(
+        "entry-deadline",
+    ) as HTMLElement;
     const deadlineDay: HTMLInputElement = document.getElementById(
         "entry-deadline-day",
     ) as HTMLInputElement;
@@ -3243,7 +3416,11 @@ function timesShow(opening: EntryOpening): void {
     startTime.required = required;
     endTime.required = required;
     lengthOnly =
-        boxed && !required && start === null && opening.minutes !== null && deadline === "";
+        boxed &&
+        !required &&
+        start === null &&
+        opening.minutes !== null &&
+        deadline === "";
     (document.getElementById("entry-length") as HTMLInputElement).value =
         lengthOnly && opening.minutes !== null ? lengthTextOf(opening.minutes) : "";
     lengthShow();
@@ -3269,8 +3446,12 @@ function timesShow(opening: EntryOpening): void {
  * - `start`, `end`: The fields of the day of the start and of the end.
  */
 function endDayShow(): void {
-    const start: HTMLInputElement = document.getElementById("entry-start-day") as HTMLInputElement;
-    const end: HTMLInputElement = document.getElementById("entry-end-day") as HTMLInputElement;
+    const start: HTMLInputElement = document.getElementById(
+        "entry-start-day",
+    ) as HTMLInputElement;
+    const end: HTMLInputElement = document.getElementById(
+        "entry-end-day",
+    ) as HTMLInputElement;
     end.classList.toggle(
         "entry-same-day",
         end !== document.activeElement &&
@@ -3294,11 +3475,19 @@ function endDayShow(): void {
  * - `minutes`: How long the times typed last, 0 for no times.
  */
 function lengthShow(): void {
-    const length: HTMLInputElement = document.getElementById("entry-length") as HTMLInputElement;
-    const start: HTMLInputElement = document.getElementById("entry-start") as HTMLInputElement;
-    const end: HTMLInputElement = document.getElementById("entry-end") as HTMLInputElement;
+    const length: HTMLInputElement = document.getElementById(
+        "entry-length",
+    ) as HTMLInputElement;
+    const start: HTMLInputElement = document.getElementById(
+        "entry-start",
+    ) as HTMLInputElement;
+    const end: HTMLInputElement = document.getElementById(
+        "entry-end",
+    ) as HTMLInputElement;
     const swappable: boolean = opened.target === "box" && !start.required;
-    document.getElementById("entry-times")?.classList.toggle("entry-length-only", lengthOnly);
+    document
+        .getElementById("entry-times")
+        ?.classList.toggle("entry-length-only", lengthOnly);
     document.getElementById("entry-swap")?.replaceChildren(
         ...(!swappable
             ? []
@@ -3308,10 +3497,12 @@ function lengthShow(): void {
                           timeFieldRead(start) === "" || timeFieldRead(end) === ""
                               ? 0
                               : Math.round(
-                                    (endRead(startRead()).getTime() - startRead().getTime()) /
+                                    (endRead(startRead()).getTime() -
+                                        startRead().getTime()) /
                                         (60 * 1000),
                                 );
-                      length.value = !lengthOnly && minutes > 0 ? lengthTextOf(minutes) : "";
+                      length.value =
+                          !lengthOnly && minutes > 0 ? lengthTextOf(minutes) : "";
                       if (!lengthOnly) {
                           timeFieldShow(start, null);
                           timeFieldShow(end, null);
@@ -3360,7 +3551,9 @@ async function seriesShow(): Promise<void> {
     pencil.type = "button";
     pencil.className = "entry-pencil";
     iconPut(pencil, Repeat, "Change the series");
-    pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    pencil.addEventListener("mousedown", (event: MouseEvent): void =>
+        event.preventDefault(),
+    );
     of.replaceChildren();
     of.hidden = box === null || (!box.series && !seriesHas(box));
     if (box !== null && seriesHas(box)) {
@@ -3448,7 +3641,9 @@ function seriesFromBox(module: string, type: string, semester: string): void {
  * @throws {Error} - When the reader gives no valid answer
  */
 async function entryShow(opening: EntryOpening): Promise<void> {
-    const dialog: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
+    const dialog: HTMLDialogElement = document.getElementById(
+        "entry",
+    ) as HTMLDialogElement;
     categories = structuredClone(await categoriesKept());
     persons = await personsKept();
     opened = opening;
@@ -3489,7 +3684,8 @@ async function entryShow(opening: EntryOpening): Promise<void> {
         .getElementById("entry-remove")
         ?.toggleAttribute(
             "hidden",
-            opening.entry === null && (opening.box === null || opening.box.state === "done"),
+            opening.entry === null &&
+                (opening.box === null || opening.box.state === "done"),
         );
     document
         .getElementById("entry-duplicate")
@@ -3497,14 +3693,17 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     document.getElementById("entry-error")?.setAttribute("hidden", "");
     document.getElementById("entry-changed")?.setAttribute("hidden", "");
     await categoryPick(
-        categories.find((category: Category): boolean => category.name === opening.category) ??
-            null,
+        categories.find(
+            (category: Category): boolean => category.name === opening.category,
+        ) ?? null,
     );
     categoryShow();
     if (!dialog.open) dialog.showModal();
     (document.activeElement as HTMLElement | null)?.blur();
     if (chosen === null)
-        document.querySelector<HTMLButtonElement>("#entry-category .picker-line")?.click();
+        document
+            .querySelector<HTMLButtonElement>("#entry-category .picker-line")
+            ?.click();
 }
 
 /**
@@ -3515,7 +3714,9 @@ async function entryShow(opening: EntryOpening): Promise<void> {
  * @returns The box, `null` while the dialog is closed or shows a new box or an entry of the log
  */
 export function entryBoxOf(): Box | null {
-    return (document.getElementById("entry") as HTMLDialogElement).open ? opened.box : null;
+    return (document.getElementById("entry") as HTMLDialogElement).open
+        ? opened.box
+        : null;
 }
 
 /**
@@ -3602,7 +3803,11 @@ export async function entryOpenNow(calendar: Calendar): Promise<void> {
  * @param end - End of the new entry
  * @throws {Error} - When the reader gives no valid answer
  */
-export async function entryOpenSkill(module: string, start: Date, end: Date): Promise<void> {
+export async function entryOpenSkill(
+    module: string,
+    start: Date,
+    end: Date,
+): Promise<void> {
     await entryShow({
         target: "log",
         start: start,
@@ -3719,7 +3924,8 @@ export async function boxOpenNew(day: Date): Promise<void> {
  * @throws {Error} - When the reader gives no valid answer
  */
 export async function boxOpenEdit(box: Box): Promise<void> {
-    const day: Date = box.time === "" ? new Date(`${box.day}T12:00:00`) : new Date(box.time);
+    const day: Date =
+        box.time === "" ? new Date(`${box.day}T12:00:00`) : new Date(box.time);
     await entryShow({
         target: "box",
         start: day,
@@ -3837,8 +4043,12 @@ async function entryDuplicate(): Promise<void> {
  * @returns Whether the times are right
  */
 function timesCheck(): boolean {
-    const startTime: HTMLInputElement = document.getElementById("entry-start") as HTMLInputElement;
-    const endTime: HTMLInputElement = document.getElementById("entry-end") as HTMLInputElement;
+    const startTime: HTMLInputElement = document.getElementById(
+        "entry-start",
+    ) as HTMLInputElement;
+    const endTime: HTMLInputElement = document.getElementById(
+        "entry-end",
+    ) as HTMLInputElement;
     let field: HTMLInputElement | null = null;
     if (startTime.matches(":disabled") || lengthOnly) return true;
     if (timeFieldRead(startTime) === "" && timeFieldRead(endTime) !== "") {
@@ -3866,7 +4076,8 @@ function timesCheck(): boolean {
  * @param event - Input into a field of the times
  */
 function timesUnmark(event: Event): void {
-    if (timesMarked !== null && timesMarked !== event.target) timesMarked.setCustomValidity("");
+    if (timesMarked !== null && timesMarked !== event.target)
+        timesMarked.setCustomValidity("");
     timesMarked = null;
 }
 
@@ -3891,14 +4102,20 @@ function timesUnmark(event: Event): void {
  * - `dialog`: The dialog.
  */
 function enterTake(): void {
-    const form: HTMLFormElement = document.getElementById("entry-form") as HTMLFormElement;
-    const dialog: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
+    const form: HTMLFormElement = document.getElementById(
+        "entry-form",
+    ) as HTMLFormElement;
+    const dialog: HTMLDialogElement = document.getElementById(
+        "entry",
+    ) as HTMLDialogElement;
     document.addEventListener(
         "keydown",
         (event: KeyboardEvent): void => {
-            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s") return;
+            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s")
+                return;
             const target: Node = event.target as Node;
-            if (!dialog.open || (target !== document.body && !dialog.contains(target))) return;
+            if (!dialog.open || (target !== document.body && !dialog.contains(target)))
+                return;
             event.preventDefault();
             event.stopPropagation();
             (document.activeElement as HTMLElement | null)?.blur();
@@ -3988,8 +4205,9 @@ export function categoriesStart(calendar: Calendar): void {
     ["entry-start-day", "entry-end-day"].forEach((id: string): void =>
         document.getElementById(id)?.addEventListener("change", endDayShow),
     );
-    ["entry-start-day", "entry-start", "entry-end-day", "entry-end"].forEach((id: string): void =>
-        document.getElementById(id)?.addEventListener("input", timesUnmark),
+    ["entry-start-day", "entry-start", "entry-end-day", "entry-end"].forEach(
+        (id: string): void =>
+            document.getElementById(id)?.addEventListener("input", timesUnmark),
     );
     document.getElementById("entry-start")?.addEventListener("change", endFill);
     ["entry-start-day", "entry-deadline-day"].forEach((id: string): void =>
@@ -3998,7 +4216,9 @@ export function categoriesStart(calendar: Calendar): void {
             entryFileShow();
         }),
     );
-    const endDay: HTMLInputElement = document.getElementById("entry-end-day") as HTMLInputElement;
+    const endDay: HTMLInputElement = document.getElementById(
+        "entry-end-day",
+    ) as HTMLInputElement;
     endDay.addEventListener("input", (): void => {
         endDayTyped = true;
     });

@@ -104,7 +104,9 @@ const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
  * @returns The form
  */
 function sharedFormOf(sender: string): RegExp {
-    return new RegExp(`^\\d{8}T\\d{9}Z_${sender}_(?:entry|list)_[\\w.@-]{1,160}\\.(?:ics|json)$`);
+    return new RegExp(
+        `^\\d{8}T\\d{9}Z_${sender}_(?:entry|list)_[\\w.@-]{1,160}\\.(?:ics|json)$`,
+    );
 }
 
 /**
@@ -147,7 +149,9 @@ function partsOf(path: string): string[] {
  */
 function boxPathOf(boxes: string[], path: string): string[] {
     const [first, ...parts]: string[] = partsOf(path);
-    const box: string | undefined = boxes.find((one: string): boolean => basename(one) === first);
+    const box: string | undefined = boxes.find(
+        (one: string): boolean => basename(one) === first,
+    );
     if (box === undefined || parts.length === 0 || parts[0] === "dashboard")
         refuse(`No path in a box: ${path}`);
     return [box, join(box, ...parts)];
@@ -231,7 +235,9 @@ function fileWrite(file: string, bytes: Buffer | string): void {
 async function gateRun(): Promise<void> {
     const [me, caller]: string[] = process.argv.slice(2);
     if (!nameForm.test(me ?? "") || !nameForm.test(caller ?? ""))
-        refuse("The gate needs the name of the owner and of the caller, like gate.ts Sopha Vu");
+        refuse(
+            "The gate needs the name of the owner and of the caller, like gate.ts Sopha Vu",
+        );
     const theirs: string = join(kommunikationRoot, `to_${caller.toLowerCase()}`);
     const mine: string = join(kommunikationRoot, `to_${me.toLowerCase()}`);
     const boxes: string[] = [theirs, mine];
@@ -256,12 +262,14 @@ async function gateRun(): Promise<void> {
         );
     } else if (command === "get") {
         const [box, file]: string[] = boxPathOf(boxes, path);
-        if (!existsSync(file) || !statSync(file).isFile()) refuse(`No such file: ${path}`);
+        if (!existsSync(file) || !statSync(file).isFile())
+            refuse(`No such file: ${path}`);
         insideCheck(box, file);
         createReadStream(file).pipe(process.stdout);
     } else if (command === "put") {
         const [box, file]: string[] = boxPathOf(boxes, path);
-        if (existsSync(file) && !statSync(file).isFile()) refuse(`A folder, no file: ${path}`);
+        if (existsSync(file) && !statSync(file).isFile())
+            refuse(`A folder, no file: ${path}`);
         mkdirSync(dirname(file), { recursive: true });
         if (dirname(file) !== box) insideCheck(box, dirname(file));
         fileWrite(file, await inputRead(messageMost));
@@ -289,7 +297,8 @@ async function gateRun(): Promise<void> {
     } else if (command === "take" || command === "done") {
         const box: string = join(theirs, "dashboard");
         const file: string = join(box, path);
-        if (!sharedFormOf(me).test(path) || !existsSync(file)) refuse(`No such shared: ${path}`);
+        if (!sharedFormOf(me).test(path) || !existsSync(file))
+            refuse(`No such shared: ${path}`);
         insideCheck(box, file);
         if (command === "take") createReadStream(file).pipe(process.stdout);
         else {
@@ -301,4 +310,6 @@ async function gateRun(): Promise<void> {
     }
 }
 
-await gateRun().catch((error: unknown): never => refuse(`The gate failed: ${String(error)}`));
+await gateRun().catch((error: unknown): never =>
+    refuse(`The gate failed: ${String(error)}`),
+);

@@ -173,7 +173,10 @@ export const myName: string = process.env.NOM_NAME?.trim() ?? "";
 export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
     .split(",")
     .map((name: string): string => name.trim())
-    .filter((name: string): boolean => name !== "" && name.toLowerCase() !== myName.toLowerCase());
+    .filter(
+        (name: string): boolean =>
+            name !== "" && name.toLowerCase() !== myName.toLowerCase(),
+    );
 
 /**
  * Gives the folder of what the dashboards share in the box of a person
@@ -570,7 +573,10 @@ export function topicFileOf(category: string, date: string, ending: string): str
  *   or `Skilling/WokFlow_Plan.ics` in {@link calendarRoot}
  */
 export function skillFileOf(name: string, ending: string): string {
-    return join(/^[A-Z]+\d+_/.test(name) ? modulesRoot : skillingRoot, `${name}${ending}`);
+    return join(
+        /^[A-Z]+\d+_/.test(name) ? modulesRoot : skillingRoot,
+        `${name}${ending}`,
+    );
 }
 
 /**

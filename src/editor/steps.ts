@@ -133,7 +133,9 @@ class StepsWidget extends WidgetType {
         const next: HTMLButtonElement = document.createElement("button");
         const all: HTMLButtonElement = document.createElement("button");
         const more: (all: boolean) => void = (all: boolean): void => {
-            view.dispatch({ effects: stepsMore.of({ at: view.posAtDOM(buttons), all: all }) });
+            view.dispatch({
+                effects: stepsMore.of({ at: view.posAtDOM(buttons), all: all }),
+            });
         };
         buttons.className = "steps-buttons";
         next.type = "button";
@@ -198,7 +200,11 @@ function solutionOf(
             return true;
         },
     });
-    for (let index: number = steps.length - 1, next: number = count; index >= 0; index--) {
+    for (
+        let index: number = steps.length - 1, next: number = count;
+        index >= 0;
+        index--
+    ) {
         if (steps[index] === -1) steps[index] = next;
         next = steps[index];
     }
@@ -238,7 +244,11 @@ export function foldedAt(state: EditorState, from: number): boolean {
  * @returns The line, `null` for an Example without steps
  */
 function exampleStartOf(state: EditorState, heading: Line, to: number): Line | null {
-    for (let number: number = heading.number + 1; number <= state.doc.lineAt(to).number; number++) {
+    for (
+        let number: number = heading.number + 1;
+        number <= state.doc.lineAt(to).number;
+        number++
+    ) {
         const line: Line = state.doc.line(number);
         if (stepRule.test(line.text)) return line;
     }
@@ -262,7 +272,9 @@ function solutionsOf(state: EditorState): Solution[] {
         const line: Line = state.doc.line(number);
         const example: boolean = exampleRule.test(line.text);
         const section: { from: number; to: number } | null =
-            example || solutionRule.test(line.text) ? foldable(state, line.from, line.to) : null;
+            example || solutionRule.test(line.text)
+                ? foldable(state, line.from, line.to)
+                : null;
         if (section === null || foldedAt(state, line.to)) continue;
         const start: Line | null = example
             ? exampleStartOf(state, line, section.to)
@@ -285,7 +297,11 @@ function solutionsOf(state: EditorState): Solution[] {
  */
 export function exampleOpenOf(state: EditorState, heading: Line): boolean | null {
     if (!exampleRule.test(heading.text)) return null;
-    const section: { from: number; to: number } | null = foldable(state, heading.from, heading.to);
+    const section: { from: number; to: number } | null = foldable(
+        state,
+        heading.from,
+        heading.to,
+    );
     return (
         section === null ||
         exampleStartOf(state, heading, section.to) === null ||
@@ -389,7 +405,8 @@ function decorationsOf(
  */
 function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
     const clicks: StateEffect<More>[] = transaction.effects.filter(
-        (effect: StateEffect<unknown>): effect is StateEffect<More> => effect.is(stepsMore),
+        (effect: StateEffect<unknown>): effect is StateEffect<More> =>
+            effect.is(stepsMore),
     );
     if (
         clicks.length === 0 &&
@@ -416,7 +433,9 @@ function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
         if (solution !== undefined)
             shown.set(
                 solution.heading,
-                click.value.all ? Infinity : (shown.get(solution.heading) ?? solution.initial) + 1,
+                click.value.all
+                    ? Infinity
+                    : (shown.get(solution.heading) ?? solution.initial) + 1,
             );
     });
     const head: number = state.selection.main.head;
@@ -424,7 +443,11 @@ function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
         transaction.selection === undefined
             ? undefined
             : solutions.find((solution: Solution): boolean =>
-                  hiddenOf(state, solution, shown.get(solution.heading) ?? solution.initial).some(
+                  hiddenOf(
+                      state,
+                      solution,
+                      shown.get(solution.heading) ?? solution.initial,
+                  ).some(
                       (range: { from: number; to: number }): boolean =>
                           range.from < head && head <= range.to,
                   ),
@@ -445,7 +468,10 @@ const hiddenSteps: StateField<Steps> = StateField.define<Steps>({
     }),
     update: stepsUpdate,
     provide: (field: StateField<Steps>): Extension =>
-        EditorView.decorations.from(field, (value: Steps): DecorationSet => value.decorations),
+        EditorView.decorations.from(
+            field,
+            (value: Steps): DecorationSet => value.decorations,
+        ),
 });
 
 /**
@@ -461,7 +487,9 @@ const hiddenSteps: StateField<Steps> = StateField.define<Steps>({
  * @returns The transaction, and after it the cursor moved,
  *   when it stands at the end of hidden steps
  */
-function endAvoid(transaction: Transaction): TransactionSpec | readonly TransactionSpec[] {
+function endAvoid(
+    transaction: Transaction,
+): TransactionSpec | readonly TransactionSpec[] {
     if (transaction.selection === undefined || transaction.docChanged) return transaction;
     const ends: Map<number, number> = new Map();
     transaction.startState
@@ -476,19 +504,25 @@ function endAvoid(transaction: Transaction): TransactionSpec | readonly Transact
     const selection: EditorSelection = transaction.selection;
     const moved: SelectionRange[] = selection.ranges.map(
         (range: SelectionRange): SelectionRange => {
-            const start: number | undefined = range.empty ? ends.get(range.head) : undefined;
+            const start: number | undefined = range.empty
+                ? ends.get(range.head)
+                : undefined;
             return start === undefined ? range : EditorSelection.cursor(start);
         },
     );
     if (
         moved.every(
-            (range: SelectionRange, index: number): boolean => range === selection.ranges[index],
+            (range: SelectionRange, index: number): boolean =>
+                range === selection.ranges[index],
         )
     )
         return transaction;
     return [
         transaction,
-        { selection: EditorSelection.create(moved, selection.mainIndex), sequential: true },
+        {
+            selection: EditorSelection.create(moved, selection.mainIndex),
+            sequential: true,
+        },
     ];
 }
 
@@ -498,4 +532,7 @@ function endAvoid(transaction: Transaction): TransactionSpec | readonly Transact
  * with the cursor kept at the end of the last step shown, see {@link endAvoid}.
  * - {@link EditorState.transactionFilter}: Changes a transaction before it is applied.
  */
-export const solutionSteps: Extension = [hiddenSteps, EditorState.transactionFilter.of(endAvoid)];
+export const solutionSteps: Extension = [
+    hiddenSteps,
+    EditorState.transactionFilter.of(endAvoid),
+];

@@ -95,7 +95,12 @@ let returning: boolean = false;
  * @returns What it was
  */
 function whatTextOf(entry: LogEntry): string {
-    const shown: string = shownWhatOf(entry.category, entry.title, entry.module, entry.type);
+    const shown: string = shownWhatOf(
+        entry.category,
+        entry.title,
+        entry.module,
+        entry.type,
+    );
     return shown === entry.category ? "" : shown;
 }
 
@@ -165,7 +170,9 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
     const meta: HTMLElement = entryPartOf("span", "search-meta", [
         entryPartOf("span", "search-when", [
             dayTextOf(day, true),
-            entryPartOf("span", "entry-parted", [`${timeOf(start)}${rangeDash}${timeOf(end)}`]),
+            entryPartOf("span", "entry-parted", [
+                `${timeOf(start)}${rangeDash}${timeOf(end)}`,
+            ]),
         ]),
     ]);
     if (where.length > 0)
@@ -226,7 +233,9 @@ function resultsShow(calendar: Calendar): void {
  * @param calendar - Calendar of the day
  */
 async function searchOpen(calendar: Calendar): Promise<void> {
-    const dialog: HTMLDialogElement = document.getElementById("search") as HTMLDialogElement;
+    const dialog: HTMLDialogElement = document.getElementById(
+        "search",
+    ) as HTMLDialogElement;
     const results: HTMLElement = document.getElementById("search-results") as HTMLElement;
     const scrolled: number = results.scrollTop;
     dialog.showModal();
@@ -300,8 +309,12 @@ async function resultOpen(calendar: Calendar, entry: LogEntry): Promise<void> {
 export function searchStart(calendar: Calendar): void {
     document.body.insertAdjacentHTML("beforeend", searchHtml);
     const button: HTMLElement = document.getElementById("log-search") as HTMLElement;
-    const text: HTMLInputElement = document.getElementById("search-text") as HTMLInputElement;
-    document.querySelector(".search-form")?.prepend(searchFieldOf(text, "Search the log"));
+    const text: HTMLInputElement = document.getElementById(
+        "search-text",
+    ) as HTMLInputElement;
+    document
+        .querySelector(".search-form")
+        ?.prepend(searchFieldOf(text, "Search the log"));
     iconPut(button, Search, "Search the log");
     button.addEventListener("click", (): void => {
         searchOpen(calendar).catch((error: unknown): void => console.error(error));

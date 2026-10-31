@@ -128,7 +128,9 @@ export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
     const list: HTMLElement = elementOf("ol", "", "");
     history.className = "task-history";
     summary.append(
-        ...(counted ? iconWordsOf(History, String(task.attempts.length)) : [iconOf(History)]),
+        ...(counted
+            ? iconWordsOf(History, String(task.attempts.length))
+            : [iconOf(History)]),
     );
     summary.title = "History";
     summary.setAttribute(
@@ -209,7 +211,11 @@ function failShow(row: HTMLElement, error: unknown): void {
  * @param task - Task
  * @param written - Shows the task again once the attempt is written
  */
-function wrongShow(row: HTMLElement, task: SkillTask, written: () => Promise<void>): void {
+function wrongShow(
+    row: HTMLElement,
+    task: SkillTask,
+    written: () => Promise<void>,
+): void {
     const form: HTMLElement = row.querySelector(".task-form") as HTMLElement;
     const input: HTMLInputElement = document.createElement("input");
     input.type = "text";
@@ -218,8 +224,13 @@ function wrongShow(row: HTMLElement, task: SkillTask, written: () => Promise<voi
     plainKeep(input);
     input.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (event.key === "Enter")
-            attemptWrite(row, task, "wrong", input.value.trim(), written, (error: unknown): void =>
-                failShow(row, error),
+            attemptWrite(
+                row,
+                task,
+                "wrong",
+                input.value.trim(),
+                written,
+                (error: unknown): void => failShow(row, error),
             );
         else if (event.key === "Escape") form.hidden = true;
     });
@@ -278,7 +289,11 @@ export function taskRowOf(
             ? []
             : [
                   elementOf("span", "task-state", stateTextOf(task, today)),
-                  elementOf("span", "task-hint", "Right and Wrong once the solution is open"),
+                  elementOf(
+                      "span",
+                      "task-hint",
+                      "Right and Wrong once the solution is open",
+                  ),
               ]),
         more,
         ...(card && done !== undefined
@@ -387,7 +402,10 @@ export function judgeOf(
     right.disabled = !open;
     wrong.disabled = !open;
     right.setAttribute("aria-pressed", String(done?.result === "right"));
-    wrong.setAttribute("aria-pressed", String(done !== undefined && done.result !== "right"));
+    wrong.setAttribute(
+        "aria-pressed",
+        String(done !== undefined && done.result !== "right"),
+    );
     if (done !== undefined && done.error !== "") wrong.title = `Wrong: ${done.error}`;
     if (!open) {
         right.title = "Right once the solution is open";

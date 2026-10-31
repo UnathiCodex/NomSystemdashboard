@@ -48,7 +48,9 @@ const fenceForm: RegExp = /^ {0,3}(?:```|~~~)/;
  */
 export function markdownFormOf(text: string): string {
     const lines: string[] = text.split("\n");
-    const close: number = lines.slice(1).findIndex((line: string): boolean => line === "---");
+    const close: number = lines
+        .slice(1)
+        .findIndex((line: string): boolean => line === "---");
     const matter: number = lines[0] === "---" && close !== -1 ? close + 2 : 0;
     const written: string[] = lines.slice(0, matter);
     let empty: number = 0;
@@ -80,6 +82,7 @@ export function markdownFormOf(text: string): string {
         before = heading ? "heading" : "text";
         fenced = fenceForm.test(line);
     });
-    while (written.length > matter && emptyForm.test(written[written.length - 1])) written.pop();
+    while (written.length > matter && emptyForm.test(written[written.length - 1]))
+        written.pop();
     return written.length === 0 ? "" : `${written.join("\n")}\n`;
 }

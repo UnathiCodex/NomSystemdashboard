@@ -30,7 +30,13 @@ export type Session = {
     minutes: number;
     kcal: number | null;
     workout: string;
-    exercises: { name: string; sets: string; reps: string; kg: string; workout: string }[];
+    exercises: {
+        name: string;
+        sets: string;
+        reps: string;
+        kg: string;
+        workout: string;
+    }[];
     videos: {
         title: string;
         channel: string;
@@ -220,7 +226,11 @@ export async function mineLoad(): Promise<Mine> {
  * @throws {Error} - When the reader does not take it,
  *   like one without parts or with the name of another
  */
-export async function workoutSend(name: string, parts: Part[], old?: string): Promise<Mine> {
+export async function workoutSend(
+    name: string,
+    parts: Part[],
+    old?: string,
+): Promise<Mine> {
     return await answerOf<Mine>(
         await fetch("/api/sport/workouts", {
             method: "POST",
@@ -238,7 +248,9 @@ export async function workoutSend(name: string, parts: Part[], old?: string): Pr
  */
 export async function workoutDelete(name: string): Promise<Mine> {
     return await answerOf<Mine>(
-        await fetch(`/api/sport/workouts?name=${encodeURIComponent(name)}`, { method: "DELETE" }),
+        await fetch(`/api/sport/workouts?name=${encodeURIComponent(name)}`, {
+            method: "DELETE",
+        }),
     );
 }
 
@@ -270,7 +282,11 @@ export async function videoSend(
     return await answerOf<Mine>(
         await fetch("/api/sport/videos", {
             method: "POST",
-            body: JSON.stringify({ ...video, oldTitle: before?.title, oldLink: before?.link }),
+            body: JSON.stringify({
+                ...video,
+                oldTitle: before?.title,
+                oldLink: before?.link,
+            }),
         }),
     );
 }
@@ -338,5 +354,7 @@ export async function exerciseDelete(exercise: {
         reps: exercise.reps,
         kg: exercise.kg,
     });
-    return await answerOf<Mine>(await fetch(`/api/sport/exercises?${query}`, { method: "DELETE" }));
+    return await answerOf<Mine>(
+        await fetch(`/api/sport/exercises?${query}`, { method: "DELETE" }),
+    );
 }

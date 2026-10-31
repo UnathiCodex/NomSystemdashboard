@@ -113,7 +113,11 @@
     --fc-forma-background: var(--background);
     --fc-forma-foreground: var(--text-main);
     --fc-forma-muted-foreground: var(--text-muted);
-    --fc-forma-faint-foreground: color-mix(in oklab, var(--text-muted) 60%, var(--background));
+    --fc-forma-faint-foreground: color-mix(
+        in oklab,
+        var(--text-muted) 60%,
+        var(--background)
+    );
     --fc-forma-border: var(--line);
     --fc-forma-strong-border: color-mix(in oklab, var(--line) 60%, var(--text-muted));
     --fc-forma-primary: var(--chosen);
@@ -179,7 +183,9 @@
    the month smaller, see `.month-panel` */
 .panel {
     --row-padding: 0.75rem;
-    --value-start: calc(var(--row-padding) + 1px + var(--name-width) + var(--control-gap));
+    --value-start: calc(
+        var(--row-padding) + 1px + var(--name-width) + var(--control-gap)
+    );
     width: min(52rem, calc(100vw - 2 * var(--gap)));
     padding: var(--gap);
     border: 1px solid var(--line);

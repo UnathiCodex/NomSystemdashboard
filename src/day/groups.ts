@@ -177,7 +177,8 @@ function meetingsOf(groups: Group[], week: string): [Group, Session][] {
  */
 function pinnedOf(course: Course, type: string): string {
     return (
-        course.series.find((series: Series): boolean => series.rule.type === type)?.rule.group ?? ""
+        course.series.find((series: Series): boolean => series.rule.type === type)?.rule
+            .group ?? ""
     );
 }
 
@@ -230,7 +231,8 @@ function pinPick(course: Course, group: Group, show: PickShow): void {
             const series: Series | undefined = course.series.find(
                 (one: Series): boolean => one.rule.type === group.rule.type,
             );
-            if (series === undefined) course.series.push({ rule: { ...group.rule }, count: 0 });
+            if (series === undefined)
+                course.series.push({ rule: { ...group.rule }, count: 0 });
             else series.rule.group = group.rule.group;
             course.boxes
                 .filter(
@@ -306,7 +308,13 @@ function unpinPick(course: Course, type: string, show: PickShow): void {
  * @param session - Its session in the week of the box
  * @param show - Shows the pick, see {@link PickShow}
  */
-function weekPick(course: Course, box: Box, group: Group, session: Session, show: PickShow): void {
+function weekPick(
+    course: Course,
+    box: Box,
+    group: Group,
+    session: Session,
+    show: PickShow,
+): void {
     show(
         (): void => boxMove(box, group, session),
         (): Promise<null> =>
@@ -330,7 +338,9 @@ function weekPick(course: Course, box: Box, group: Group, session: Session, show
  * @returns Its tutors, `null` while unknown
  */
 function tutorsOf(group: Group): HTMLElement | null {
-    const names: string[] = group.rule.attendees.map((attendee: Attendee): string => attendee.name);
+    const names: string[] = group.rule.attendees.map(
+        (attendee: Attendee): string => attendee.name,
+    );
     const tutors: HTMLElement = elementOf("span", "group-tutors", "");
     if (names.length === 0) return null;
     tutors.append(...dottedOf(names));
@@ -351,10 +361,16 @@ function tutorsOf(group: Group): HTMLElement | null {
  * @param times - Its times, like `10:00 – 12:00`, empty for none
  * @returns Its group, its times and place, and its tutors, `null` while unknown
  */
-function groupPartsOf(group: Group, times: string): [string, HTMLElement, HTMLElement | null] {
+function groupPartsOf(
+    group: Group,
+    times: string,
+): [string, HTMLElement, HTMLElement | null] {
     const where: HTMLElement = elementOf("span", "group-detail", "");
     where.append(
-        ...[times, group.rule.online !== "" ? group.rule.online : roomOf(group.rule.location)]
+        ...[
+            times,
+            group.rule.online !== "" ? group.rule.online : roomOf(group.rule.location),
+        ]
             .filter((part: string): boolean => part !== "")
             .map((part: string, index: number): HTMLElement =>
                 elementOf("span", index === 0 ? "" : "entry-parted", part),
@@ -408,10 +424,8 @@ function groupMenuOf(
     button.append(...words, iconOf(ChevronDown));
     menuAnchor(menu, button);
     items.forEach((item: Item): void => {
-        const [name, details, tutors]: [string, HTMLElement, HTMLElement | null] = groupPartsOf(
-            item.group,
-            item.times,
-        );
+        const [name, details, tutors]: [string, HTMLElement, HTMLElement | null] =
+            groupPartsOf(item.group, item.times);
         const line: HTMLButtonElement = menuItemOf(Check, "", (): void => {
             menu.hidePopover();
             if (!item.checked) item.pick();
@@ -542,7 +556,9 @@ function groupOpenOf(course: Course, type: string): (group: string) => void {
                   },
               )
         )
-            .then((): Promise<void> => groupOpen(course.module, type, course.semester, group))
+            .then((): Promise<void> =>
+                groupOpen(course.module, type, course.semester, group),
+            )
             .catch((error: unknown): void => console.error(error));
     };
 }
@@ -626,7 +642,8 @@ export function boxGroupOf(
     const meetings: [Group, Session][] = meetingsOf(groups, mondayOf(box.day)).filter(
         ([, session]: [Group, Session]): boolean => !overOf(session),
     );
-    if (course === null || meetings.length === 0 || !pickable(box)) return groupNameOf(box);
+    if (course === null || meetings.length === 0 || !pickable(box))
+        return groupNameOf(box);
     const pinned: string = pinnedOf(course, box.type);
     return groupMenuOf(
         [box.group === "" ? "No group" : box.group],

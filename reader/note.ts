@@ -180,7 +180,10 @@ function sectionTextRead(date: string, title: SectionTitle): string {
  * @throws {Error} - When the date is not written like `2026-07-03`
  */
 export function sectionsRead(date: string): { [title in SectionTitle]: string } {
-    return { Gratitude: sectionTextRead(date, "Gratitude"), About: sectionTextRead(date, "About") };
+    return {
+        Gratitude: sectionTextRead(date, "Gratitude"),
+        About: sectionTextRead(date, "About"),
+    };
 }
 
 /**
@@ -258,7 +261,8 @@ export function sectionWrite(section: SectionNew): void {
     const { date, title, text }: SectionNew = section;
     if (!titles.includes(title)) throw new Error(`No section ${title}`);
     const file: string = noteFileOf(date);
-    if (!writeAllowed(file)) throw new Error(`No writing outside the new system: ${file}`);
+    if (!writeAllowed(file))
+        throw new Error(`No writing outside the new system: ${file}`);
 
     const lines: string[] = (noteRead(date) ?? emptyNote).split("\n");
     sectionPut(lines, title, pointLinesOf(text));

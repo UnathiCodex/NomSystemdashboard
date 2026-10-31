@@ -92,7 +92,8 @@
     top: calc(anchor(bottom) + 0.375rem);
     bottom: var(--gap);
     left: calc(
-        anchor(--list-field left) + var(--value-start) - 0.75rem - var(--menu-padding) - 1px
+        anchor(--list-field left) + var(--value-start) - 0.75rem - var(--menu-padding) -
+            1px
     );
     right: anchor(--list-field right);
     width: auto;

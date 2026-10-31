@@ -234,7 +234,9 @@ function exerciseLastOf(
     values?: { sets?: string; reps?: string; kg?: string },
 ): ExerciseDone {
     const given: boolean =
-        (values?.sets ?? "") !== "" || (values?.reps ?? "") !== "" || (values?.kg ?? "") !== "";
+        (values?.sets ?? "") !== "" ||
+        (values?.reps ?? "") !== "" ||
+        (values?.kg ?? "") !== "";
     if (given)
         return {
             name: name,
@@ -278,7 +280,10 @@ function videoFind(link: string, title: string): Video | undefined {
 function videoKcalOf(video: VideoDone): number {
     const own: Video | undefined = videoFind(video.link, video.title);
     const minutes: number = Number(video.minutes.replace(",", ".")) || 0;
-    return own?.kcal === null || own === undefined || own.minutes === null || own.minutes === 0
+    return own?.kcal === null ||
+        own === undefined ||
+        own.minutes === null ||
+        own.minutes === 0
         ? 0
         : (own.kcal / own.minutes) * minutes;
 }
@@ -360,7 +365,9 @@ function workoutPick(name: string): void {
                     title: video?.title ?? part.name,
                     channel: video?.channel ?? "",
                     minutes:
-                        video?.minutes === null || video === undefined ? "" : String(video.minutes),
+                        video?.minutes === null || video === undefined
+                            ? ""
+                            : String(video.minutes),
                     link: part.link,
                     workout: name,
                 };
@@ -480,7 +487,8 @@ function setsOf(exercise: ExerciseDone): HTMLElement {
     const unit: HTMLButtonElement = buttonOf("sport-unit", "", (): void => {
         seconds = !seconds;
         exercise.reps =
-            exercise.reps.replace(/s$/, "") + (seconds && exercise.reps !== "" ? "s" : "");
+            exercise.reps.replace(/s$/, "") +
+            (seconds && exercise.reps !== "" ? "s" : "");
         unitShow();
     });
     unitShow();
@@ -607,7 +615,9 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
             },
         ),
         removeOf(`Remove ${exercise.name}`, (): void => {
-            exercises = exercises.filter((other: ExerciseDone): boolean => other !== exercise);
+            exercises = exercises.filter(
+                (other: ExerciseDone): boolean => other !== exercise,
+            );
             rowsShow();
             videosFit();
         }),
@@ -629,8 +639,13 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
 function videoRowOf(video: VideoDone, shown: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "meal-row", "");
     const name: HTMLElement = elementOf("span", "meal-name", video.title);
-    const kcal: HTMLElement = elementOf("span", "meal-kcal", kcalTextOf(videoKcalOf(video)));
-    if (video.channel !== "") name.append(elementOf("span", "meal-unknown", ` (${video.channel})`));
+    const kcal: HTMLElement = elementOf(
+        "span",
+        "meal-kcal",
+        kcalTextOf(videoKcalOf(video)),
+    );
+    if (video.channel !== "")
+        name.append(elementOf("span", "meal-unknown", ` (${video.channel})`));
     row.append(
         name,
         fieldOf(
@@ -691,7 +706,8 @@ function blockOf(workout: string): HTMLElement[] {
                 ? ""
                 : kcalTextOf(
                       own.reduce(
-                          (sum: number, video: VideoDone): number => sum + videoKcalOf(video),
+                          (sum: number, video: VideoDone): number =>
+                              sum + videoKcalOf(video),
                           0,
                       ),
                   );
@@ -712,7 +728,9 @@ function blockOf(workout: string): HTMLElement[] {
             exercises = exercises.filter(
                 (exercise: ExerciseDone): boolean => exercise.workout !== workout,
             );
-            videos = videos.filter((video: VideoDone): boolean => video.workout !== workout);
+            videos = videos.filter(
+                (video: VideoDone): boolean => video.workout !== workout,
+            );
             rowsShow();
             videosFit();
         }),
@@ -752,7 +770,8 @@ function rowsShow(): void {
         "Add a workout or an exercise",
         true,
         (value: string): void => {
-            if (value.startsWith(workoutValue)) workoutPick(value.slice(workoutValue.length));
+            if (value.startsWith(workoutValue))
+                workoutPick(value.slice(workoutValue.length));
             else exerciseAdd(value, "");
         },
     );
@@ -780,7 +799,9 @@ export async function sportOpen(lines: SessionLines | null): Promise<void> {
     exercises = (lines?.exercises ?? []).map((line: string): ExerciseDone =>
         exerciseOf(line, before),
     );
-    videos = (lines?.videos ?? []).map((line: string): VideoDone => videoOf(line, before));
+    videos = (lines?.videos ?? []).map((line: string): VideoDone =>
+        videoOf(line, before),
+    );
     blocks = [
         ...new Set(
             [
@@ -800,7 +821,10 @@ export async function sportOpen(lines: SessionLines | null): Promise<void> {
  * @returns The place of the rows,
  *   one element whose rows count as rows of the dialog, see `sport.css`
  */
-export function sportRowsOf(change: () => void, end: (minutes: number) => void): HTMLElement[] {
+export function sportRowsOf(
+    change: () => void,
+    end: (minutes: number) => void,
+): HTMLElement[] {
     changed = change;
     fit = end;
     rowsShow();
@@ -817,10 +841,18 @@ export function sportRead(): { workout: string; exercises: string[]; videos: str
     return {
         workout: "",
         exercises: exercises.map((exercise: ExerciseDone): string =>
-            [exercise.name, exercise.sets, exercise.reps, exercise.kg, exercise.workout].join(";"),
+            [
+                exercise.name,
+                exercise.sets,
+                exercise.reps,
+                exercise.kg,
+                exercise.workout,
+            ].join(";"),
         ),
         videos: videos.map((video: VideoDone): string =>
-            [video.title, video.channel, video.minutes, video.link, video.workout].join(";"),
+            [video.title, video.channel, video.minutes, video.link, video.workout].join(
+                ";",
+            ),
         ),
     };
 }

@@ -38,7 +38,12 @@ import { breakableOf } from "../day/choices.ts";
 import { elementOf } from "../food/foods.ts";
 import "./overview.css";
 
-import type { SkillModule, SkillSection, SkillTask, Skilling } from "../skill/attempts.ts";
+import type {
+    SkillModule,
+    SkillSection,
+    SkillTask,
+    Skilling,
+} from "../skill/attempts.ts";
 
 /**
  * Tells the round of a section, see the top of this file.
@@ -132,7 +137,9 @@ export async function overviewShow(
     const list: HTMLElement = place.querySelector(".overview-list") as HTMLElement;
     const title: HTMLElement = place.querySelector(".overview-title") as HTMLElement;
     title.hidden = chapter !== "";
-    (title.querySelector(".folder-path") as HTMLElement).replaceChildren(...pathOf(module));
+    (title.querySelector(".folder-path") as HTMLElement).replaceChildren(
+        ...pathOf(module),
+    );
     (title.querySelector(".day-date") as HTMLElement).textContent = breakableOf(module);
     course.hidden = chapter !== "";
     list.hidden = chapter === "";
@@ -147,7 +154,9 @@ export async function overviewShow(
     );
     if (
         found !== undefined &&
-        found.sections.some((section: SkillSection): boolean => section.chapter === chapter)
+        found.sections.some(
+            (section: SkillSection): boolean => section.chapter === chapter,
+        )
     )
         list.replaceChildren(groupOf(found, chapter));
     place.hidden = false;
@@ -164,11 +173,16 @@ export async function overviewShow(
  * @param module - Name of the folder of the module, like `IN2028_BusinessAnalyticsMachineLearning`
  * @param chapter - Name of the chapter, like `01_RegressionAnalysis`, empty for none
  */
-export function overviewTreeShow(tree: HTMLElement, module: string, chapter: string): void {
+export function overviewTreeShow(
+    tree: HTMLElement,
+    module: string,
+    chapter: string,
+): void {
     const picked: HTMLElement | null = tree.querySelector(
         `.tree-module[data-module="${CSS.escape(module)}"]`,
     );
     const shown: HTMLElement | null =
-        picked?.querySelector(`.tree-chapter[data-chapter="${CSS.escape(chapter)}"]`) ?? null;
+        picked?.querySelector(`.tree-chapter[data-chapter="${CSS.escape(chapter)}"]`) ??
+        null;
     if (picked !== null && shown !== null) chapterShow(tree, picked, shown);
 }

@@ -7,7 +7,7 @@
     "format": "prettier --write \"reader/**/*.ts\" \"src/**/*.{ts,css}\""
   },
   "prettier": {
-    "printWidth": 100,
+    "printWidth": 90,
     "tabWidth": 4
   },
   "devDependencies": {

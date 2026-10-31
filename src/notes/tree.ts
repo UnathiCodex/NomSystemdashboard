@@ -403,7 +403,9 @@ function choiceListOf(
     let found: HTMLElement[] = [];
     const show: () => void = (): void => {
         const words: string[] = wordsOf(input.value);
-        found = choices.filter((choice: HTMLElement): boolean => matchesAll(nameOf(choice), words));
+        found = choices.filter((choice: HTMLElement): boolean =>
+            matchesAll(nameOf(choice), words),
+        );
         list.replaceChildren(
             ...found.flatMap((choice: HTMLElement, index: number): HTMLElement[] => {
                 const row: HTMLAnchorElement = document.createElement("a");
@@ -428,7 +430,8 @@ function choiceListOf(
     list.className = "tree-list";
     input.addEventListener("input", show);
     input.addEventListener("keydown", (event: KeyboardEvent): void => {
-        if (event.key === "Enter" && found.length > 0) location.assign(addressOf(found[0]));
+        if (event.key === "Enter" && found.length > 0)
+            location.assign(addressOf(found[0]));
     });
     show();
     return groupOf === null ? [list] : [searchFieldOf(input, "Search modules"), list];
@@ -503,12 +506,16 @@ export function chapterShow(
     module: HTMLElement,
     chapter: HTMLElement | null,
 ): void {
-    tree.querySelectorAll<HTMLElement>(".tree-module").forEach((other: HTMLElement): void => {
-        other.classList.toggle("picked", other === module);
-    });
-    module.querySelectorAll<HTMLElement>(".tree-chapter").forEach((other: HTMLElement): void => {
-        other.classList.toggle("picked", other === chapter);
-    });
+    tree.querySelectorAll<HTMLElement>(".tree-module").forEach(
+        (other: HTMLElement): void => {
+            other.classList.toggle("picked", other === module);
+        },
+    );
+    module
+        .querySelectorAll<HTMLElement>(".tree-chapter")
+        .forEach((other: HTMLElement): void => {
+            other.classList.toggle("picked", other === chapter);
+        });
     const modulePick: HTMLButtonElement = tree.querySelector(
         ".tree-pick-module",
     ) as HTMLButtonElement;
@@ -543,7 +550,9 @@ export function treeMark(tree: HTMLElement, shown: string): HTMLElement | null {
         file.classList.remove("shown"),
     );
     const link: HTMLElement | null =
-        shown === "" ? null : tree.querySelector(`.tree-file[data-path="${CSS.escape(shown)}"]`);
+        shown === ""
+            ? null
+            : tree.querySelector(`.tree-file[data-path="${CSS.escape(shown)}"]`);
     if (link === null) return null;
 
     link.classList.add("shown");
@@ -602,10 +611,14 @@ function searchStart(tree: HTMLElement, search: HTMLInputElement): void {
                 .map((folder: HTMLDetailsElement): string => folder.dataset.path ?? ""),
         );
         files().forEach((file: HTMLElement): void => {
-            file.classList.toggle("tree-unfound", !matchesAll(file.dataset.path ?? "", words));
+            file.classList.toggle(
+                "tree-unfound",
+                !matchesAll(file.dataset.path ?? "", words),
+            );
         });
         folders.forEach((folder: HTMLDetailsElement): void => {
-            const found: boolean = folder.querySelector(".tree-file:not(.tree-unfound)") !== null;
+            const found: boolean =
+                folder.querySelector(".tree-file:not(.tree-unfound)") !== null;
             folder.classList.toggle("tree-unfound", !found);
             if (found) folder.open = true;
         });
@@ -648,7 +661,9 @@ async function filesAgain(
         ...tree.querySelectorAll<HTMLDetailsElement>("details.tree-folder[open]"),
     ].map((folder: HTMLDetailsElement): string => folder.dataset.path ?? "");
     const top: number = tree.scrollTop;
-    const entries: HTMLElement[] = (await readerAsk<FileNode[]>("/api/edit/tree")).map(fileNodeOf);
+    const entries: HTMLElement[] = (await readerAsk<FileNode[]>("/api/edit/tree")).map(
+        fileNodeOf,
+    );
     tree.querySelectorAll(":scope > .tree-folder, :scope > .tree-file").forEach(
         (entry: Element): void => entry.remove(),
     );
@@ -674,7 +689,8 @@ export type BlockMark = "done" | "wrong" | "round" | "other";
  * Type word of a block of a section at the start of its heading, with the dot and space after it,
  * like `Definition. ` of `Definition. Population and Sample`.
  */
-export const kindRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm|Example|Task)\.[ \t]+/;
+export const kindRule: RegExp =
+    /^(Definition|Theorem|Lemma|Algorithm|Example|Task)\.[ \t]+/;
 
 /**
  * Type words as the tree writes them, short, so the names beside them keep their room,
@@ -776,8 +792,9 @@ export function roundListOf(
     next: string,
 ): HTMLElement {
     const list: HTMLDivElement = document.createElement("div");
-    const kindOf: (block: [string, BlockMark]) => string = (block: [string, BlockMark]): string =>
-        kindRule.exec(block[0])?.[1] ?? "";
+    const kindOf: (block: [string, BlockMark]) => string = (
+        block: [string, BlockMark],
+    ): string => kindRule.exec(block[0])?.[1] ?? "";
     const linkOf: (block: [string, BlockMark]) => HTMLAnchorElement = ([heading, mark]: [
         string,
         BlockMark,
@@ -802,7 +819,8 @@ export function roundListOf(
         (kind: string): boolean =>
             kind !== "" &&
             blocks.filter(
-                (block: [string, BlockMark]): boolean => kindOf(block) === kind && outside(block),
+                (block: [string, BlockMark]): boolean =>
+                    kindOf(block) === kind && outside(block),
             ).length > 1,
     );
     list.className = "tree-children tree-outline tree-round";
@@ -817,7 +835,8 @@ export function roundListOf(
         )
             return;
         const inside: [string, BlockMark][] = blocks.filter(
-            (other: [string, BlockMark]): boolean => kindOf(other) === kind && outside(other),
+            (other: [string, BlockMark]): boolean =>
+                kindOf(other) === kind && outside(other),
         );
         const fold: HTMLDetailsElement = folderOf("");
         const more: HTMLSpanElement = document.createElement("span");
@@ -902,9 +921,13 @@ export function outlineShow(
             folder.querySelector<HTMLElement>(".tree-file")?.dataset.heading ?? "",
     );
     const kinds: string[] = [
-        ...tree.querySelectorAll<HTMLDetailsElement>(".tree-round details.tree-kind[open]"),
+        ...tree.querySelectorAll<HTMLDetailsElement>(
+            ".tree-round details.tree-kind[open]",
+        ),
     ].map((fold: HTMLDetailsElement): string => fold.dataset.kind ?? "");
-    tree.querySelectorAll(".tree-outline").forEach((outline: Element): void => outline.remove());
+    tree.querySelectorAll(".tree-outline").forEach((outline: Element): void =>
+        outline.remove(),
+    );
     if (entry === null) return;
     if (round !== null) {
         entry.after(roundListOf(path, round, shown, kinds, next));
@@ -1013,28 +1036,31 @@ export async function treeShow(
     tree.classList.toggle("is-files", root === "NomManageplannings");
     if (root === "NomManageplannings") {
         const search: HTMLInputElement = document.createElement("input");
-        const entries: HTMLElement[] = (await readerAsk<FileNode[]>("/api/edit/tree")).map(
-            fileNodeOf,
-        );
+        const entries: HTMLElement[] = (
+            await readerAsk<FileNode[]>("/api/edit/tree")
+        ).map(fileNodeOf);
         tree.replaceChildren(heading, searchFieldOf(search, "Search files"), ...entries);
         searchStart(tree, search);
         treeMark(tree, shown);
         changesFollow((): void => {
-            filesAgain(tree, search, shown).catch((error: unknown): void => console.error(error));
+            filesAgain(tree, search, shown).catch((error: unknown): void =>
+                console.error(error),
+            );
         });
         return;
     }
 
     const link: HTMLAnchorElement = document.createElement("a");
-    const modules: HTMLDivElement[] = (await readerAsk<NotesModule[]>("/api/notes/modules")).map(
-        moduleNodeOf,
-    );
+    const modules: HTMLDivElement[] = (
+        await readerAsk<NotesModule[]>("/api/notes/modules")
+    ).map(moduleNodeOf);
     const nameOf: (choice: HTMLElement) => string = (choice: HTMLElement): string =>
         choice.dataset.title ?? "";
     const groupOf: (choice: HTMLElement) => string = (choice: HTMLElement): string =>
         choice.dataset.group ?? "";
-    const moduleAddressOf: (choice: HTMLElement) => string = (choice: HTMLElement): string =>
-        overviewAddressOf(choice.dataset.module ?? "", "");
+    const moduleAddressOf: (choice: HTMLElement) => string = (
+        choice: HTMLElement,
+    ): string => overviewAddressOf(choice.dataset.module ?? "", "");
     const moduleOf: () => string = (): string =>
         tree.querySelector<HTMLElement>(".tree-module.picked")?.dataset.module ?? "";
     const modulePick: [HTMLButtonElement, HTMLDivElement] = pickerOf(
@@ -1065,5 +1091,9 @@ export async function treeShow(
     );
     if (asked !== undefined)
         chapterShow(tree, asked, asked.querySelector<HTMLElement>(".tree-chapter"));
-    else tree.replaceChildren(heading, ...choiceListOf(modules, nameOf, groupOf, moduleAddressOf));
+    else
+        tree.replaceChildren(
+            heading,
+            ...choiceListOf(modules, nameOf, groupOf, moduleAddressOf),
+        );
 }

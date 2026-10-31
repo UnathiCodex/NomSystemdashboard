@@ -95,7 +95,12 @@ import {
     unitOf,
 } from "../food/foods.ts";
 import { dishesFound, dishNameOf, kcalTextOf, mealNameOf } from "../food/meals.ts";
-import { foodDetailOf, foodSearchClear, foodSearchOf, listLineOf } from "../food/search.ts";
+import {
+    foodDetailOf,
+    foodSearchClear,
+    foodSearchOf,
+    listLineOf,
+} from "../food/search.ts";
 import { crossPut, iconOf, iconPut, plusPut } from "../icons.ts";
 import { summaryShownOf } from "../persons.ts";
 import { readerAsk } from "../reader.ts";
@@ -343,7 +348,9 @@ function pickNewOf(food: Food): FoodPick {
 function foodOf(pick: FoodPick): Food | undefined {
     return (
         mine.get(keyOf(pick)) ??
-        (pick.brand === "" && pick.store === "" ? mine.get(pick.name.toLowerCase()) : undefined)
+        (pick.brand === "" && pick.store === ""
+            ? mine.get(pick.name.toLowerCase())
+            : undefined)
     );
 }
 
@@ -431,7 +438,10 @@ function kcalOf(pick: FoodPick): number {
  * @returns kcal
  */
 function mealKcalOf(meal: MealPick): number {
-    return meal.foods.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0);
+    return meal.foods.reduce(
+        (sum: number, pick: FoodPick): number => sum + kcalOf(pick),
+        0,
+    );
 }
 
 /**
@@ -491,7 +501,9 @@ function gramsFieldOf(
     input.addEventListener("input", (): void => {
         const number: number | null = numberOf(input.value.trim());
         input.setCustomValidity(
-            number === null || number >= 0 || portionsOf(input.value, portion) !== input.value
+            number === null ||
+                number >= 0 ||
+                portionsOf(input.value, portion) !== input.value
                 ? ""
                 : "A number of 0 or more, portions like 2x, or empty",
         );
@@ -597,13 +609,16 @@ function foodRowOf(
             renewed();
             if (typing !== null)
                 foodsRows
-                    .querySelector<HTMLInputElement>(`.food-detail input[aria-label="${typing}"]`)
+                    .querySelector<HTMLInputElement>(
+                        `.food-detail input[aria-label="${typing}"]`,
+                    )
                     ?.focus();
         });
     let detail: HTMLElement | null =
         food !== undefined && foodOpen === keyOf(food) ? detailFor(food) : null;
 
-    if (food === undefined) name.append(elementOf("span", "meal-unknown", " · not in my foods"));
+    if (food === undefined)
+        name.append(elementOf("span", "meal-unknown", " · not in my foods"));
     name.title = name.textContent ?? "";
     if (food !== undefined) {
         const pencil: HTMLButtonElement = buttonOf("entry-pencil", "", (): void => {
@@ -669,7 +684,11 @@ function gramsFocus(picked: FoodPick[]): void {
  */
 function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
     const row: HTMLElement = elementOf("div", "meal-row", "");
-    const kcal: HTMLElement = elementOf("span", "meal-kcal", kcalTextOf(mealKcalOf(meal)));
+    const kcal: HTMLElement = elementOf(
+        "span",
+        "meal-kcal",
+        kcalTextOf(mealKcalOf(meal)),
+    );
     const remove: HTMLButtonElement = buttonOf("", "", (): void => {
         meals = meals.filter((other: MealPick): boolean => other !== meal);
         rowsShow(changed);
@@ -726,9 +745,13 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
                     changed();
                 },
                 (): void => {
-                    meal.foods = meal.foods.filter((other: FoodPick): boolean => other !== pick);
+                    meal.foods = meal.foods.filter(
+                        (other: FoodPick): boolean => other !== pick,
+                    );
                     freshSend(meal);
-                    meals = meals.filter((other: MealPick): boolean => other.foods.length > 0);
+                    meals = meals.filter(
+                        (other: MealPick): boolean => other.foods.length > 0,
+                    );
                     rowsShow(changed);
                     changed();
                 },
@@ -755,7 +778,11 @@ function summaryShow(): void {
     const total: number =
         meals.reduce((sum: number, meal: MealPick): number => sum + mealKcalOf(meal), 0) +
         picks.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0);
-    const text: HTMLElement = elementOf("span", "meal-summary", summaryShownOf(mealTitle()));
+    const text: HTMLElement = elementOf(
+        "span",
+        "meal-summary",
+        summaryShownOf(mealTitle()),
+    );
     if (
         [...meals.flatMap((meal: MealPick): FoodPick[] => meal.foods), ...picks].some(
             (pick: FoodPick): boolean => numberOf(pick.grams) !== null,
@@ -857,14 +884,18 @@ function dishPick(dish: Dish, changed: () => void): void {
         return;
     }
     let meal: MealPick | undefined = meals.find(
-        (other: MealPick): boolean => other.name.toLowerCase() === dish.name.toLowerCase(),
+        (other: MealPick): boolean =>
+            other.name.toLowerCase() === dish.name.toLowerCase(),
     );
     if (meal === undefined) {
         meal = {
             name: dish.name,
             foods: dish.foods.map((line: string, index: number): FoodPick => {
                 const standard: number | null = dish.standard[index] ?? null;
-                return pickOf(lineOf(line), standard === null ? "" : gramsTextOf(standard));
+                return pickOf(
+                    lineOf(line),
+                    standard === null ? "" : gramsTextOf(standard),
+                );
             }),
         };
         meals.push(meal);
@@ -942,17 +973,25 @@ function dishLinesOf(query: string, changed: () => void): HTMLElement[] {
     const name: string = mealNameOf(query);
     const lines: HTMLElement[] = dishesFound(dishes, query).map(
         (dish: Dish): HTMLElement =>
-            listLineOf(dishNameOf(dish), dish.kcal, (): void => dishPick(dish, changed), null)[0],
+            listLineOf(
+                dishNameOf(dish),
+                dish.kcal,
+                (): void => dishPick(dish, changed),
+                null,
+            )[0],
     );
     if (
         name === "" ||
         /^\d{8,14}$/.test(name) ||
         [...dishes, ...meals].some(
-            (meal: Dish | MealPick): boolean => meal.name.toLowerCase() === name.toLowerCase(),
+            (meal: Dish | MealPick): boolean =>
+                meal.name.toLowerCase() === name.toLowerCase(),
         )
     )
         return lines;
-    const plus: HTMLButtonElement = buttonOf("picker-new", "", (): void => mealNew(name, changed));
+    const plus: HTMLButtonElement = buttonOf("picker-new", "", (): void =>
+        mealNew(name, changed),
+    );
     plus.replaceChildren(iconOf(Plus), `New meal “${name}”`);
     plus.title = "New meal, its foods picked next";
     return [...lines, plus];
@@ -991,10 +1030,14 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
             ...cooking,
             eaters: entries.filter(
                 (entry: Cooking & { cooked?: string }): boolean =>
-                    entry.category === foodName && entry.cooked === cooking.id && entry.id !== id,
+                    entry.category === foodName &&
+                    entry.cooked === cooking.id &&
+                    entry.id !== id,
             ).length,
         }))
-        .sort((first: Cooking, second: Cooking): number => second.start.localeCompare(first.start));
+        .sort((first: Cooking, second: Cooking): number =>
+            second.start.localeCompare(first.start),
+        );
 }
 
 /**
@@ -1036,7 +1079,9 @@ function drawnShow(changed: () => void): void {
         const pick: FoodPick = {
             ...pickOf(
                 read,
-                pot === null || !Number.isFinite(pot) ? read.grams : gramsTextOf(pot * share),
+                pot === null || !Number.isFinite(pot)
+                    ? read.grams
+                    : gramsTextOf(pot * share),
             ),
             fromCooking: true,
         };
@@ -1090,7 +1135,9 @@ function cookedRowOf(changed: () => void): HTMLElement {
         const cooking: Cooking | undefined = cookings.find(
             (one: Cooking): boolean => one.id === id,
         );
-        return cooking === undefined ? "A cooking of another day" : cookingTextOf(cooking);
+        return cooking === undefined
+            ? "A cooking of another day"
+            : cookingTextOf(cooking);
     };
     return rowOf(
         "Cooked",
@@ -1232,7 +1279,9 @@ export async function mealOf(
     const brought: Set<string> = new Set(
         drawnLines.filter((read: Line): boolean => read.meal === "").map(keyOf),
     );
-    const broughtMeals: Set<string> = new Set(drawnLines.map((read: Line): string => read.meal));
+    const broughtMeals: Set<string> = new Set(
+        drawnLines.map((read: Line): string => read.meal),
+    );
     picks.forEach((pick: FoodPick): void => {
         pick.fromCooking = brought.has(keyOf(pick));
     });

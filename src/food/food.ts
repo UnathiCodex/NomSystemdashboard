@@ -51,7 +51,14 @@
  * - `./food.css`: Look of the food view.
  */
 
-import { amountOf, buttonOf, elementOf, foodDayLoad, summaryOf, unitOf } from "./foods.ts";
+import {
+    amountOf,
+    buttonOf,
+    elementOf,
+    foodDayLoad,
+    summaryOf,
+    unitOf,
+} from "./foods.ts";
 import { foodNewShow, foodSearchOf, foodShow } from "./search.ts";
 import { mealsSectionOf } from "./meals.ts";
 import { labelOf } from "../day/places.ts";
@@ -161,10 +168,16 @@ function totalsShow(day: FoodDay): void {
             if (!eaten.known && !unknown.includes(eaten.name)) unknown.push(eaten.name);
             if (eaten.known && eaten.grams === 0 && !weightless.includes(eaten.name))
                 weightless.push(eaten.name);
-            if (eaten.known && lacks !== "" && !(lacking.get(lacks) ?? []).includes(eaten.name))
+            if (
+                eaten.known &&
+                lacks !== "" &&
+                !(lacking.get(lacks) ?? []).includes(eaten.name)
+            )
                 lacking.set(lacks, [...(lacking.get(lacks) ?? []), eaten.name]);
         }
-    const empty: number = day.meals.filter((meal: Meal): boolean => meal.foods.length === 0).length;
+    const empty: number = day.meals.filter(
+        (meal: Meal): boolean => meal.foods.length === 0,
+    ).length;
     const hints: string[] = [
         unknown.length > 0 ? `Not counted, not in my foods: ${unknown.join(", ")}` : "",
         weightless.length > 0 ? `Not counted, no grams: ${weightless.join(", ")}` : "",
@@ -226,7 +239,11 @@ function whatLineOf(
     eaten: Eaten | null,
     item: boolean,
 ): HTMLElement {
-    const line: HTMLElement = elementOf("div", item ? "food-line food-meal" : "food-line", "");
+    const line: HTMLElement = elementOf(
+        "div",
+        item ? "food-line food-meal" : "food-line",
+        "",
+    );
     line.append(
         elementOf("span", "food-what", name),
         elementOf(
@@ -285,7 +302,10 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
     for (const eaten of meal.foods)
         if (eaten.meal === "") alone.push(eaten);
         else meals.set(eaten.meal, [...(meals.get(eaten.meal) ?? []), eaten]);
-    if (meals.size === 0 && meal.title.trim().toLowerCase() !== summaryOf(alone).toLowerCase()) {
+    if (
+        meals.size === 0 &&
+        meal.title.trim().toLowerCase() !== summaryOf(alone).toLowerCase()
+    ) {
         meals.set(meal.title.trim(), alone);
         alone = [];
     }
@@ -320,7 +340,9 @@ function mealBlockOf(meal: Meal): HTMLElement {
     block.append(...mealLinesOf(meal));
     block.addEventListener("click", (event: MouseEvent): void => {
         if ((event.target as HTMLElement).closest("a") === null)
-            logEntryOpen(meal.id, meal.start).catch((error: unknown): void => console.error(error));
+            logEntryOpen(meal.id, meal.start).catch((error: unknown): void =>
+                console.error(error),
+            );
     });
     return block;
 }
@@ -339,7 +361,10 @@ function mealBlockOf(meal: Meal): HTMLElement {
  */
 async function dayShow(day: string): Promise<void> {
     shown = day;
-    (document.getElementById("food-date") as HTMLElement).textContent = dayTextOf(day, true);
+    (document.getElementById("food-date") as HTMLElement).textContent = dayTextOf(
+        day,
+        true,
+    );
     (document.getElementById("food-today") as HTMLButtonElement).disabled =
         day === calendarTodayOf();
 

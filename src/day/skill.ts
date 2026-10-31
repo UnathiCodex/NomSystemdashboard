@@ -392,7 +392,9 @@ function documentPathsOf(links: Link[]): string[] {
             contents.folder !== "" && link.path.startsWith(`${contents.folder}/`)
                 ? link.path.slice(contents.folder.length + 1)
                 : null;
-        return rest !== null && (link.fingerprint !== "" || rest.includes("/")) ? [rest] : [];
+        return rest !== null && (link.fingerprint !== "" || rest.includes("/"))
+            ? [rest]
+            : [];
     });
 }
 
@@ -494,8 +496,11 @@ function hintOf(text: string): HTMLParagraphElement {
  *   that of the dialog when left out
  * @returns Search for the picker
  */
-function moduleSearchOf(current: string = picks.module): (text: string) => Promise<Choice[]> {
-    const module: (name: string) => boolean = (name: string): boolean => moduleCode.test(name);
+function moduleSearchOf(
+    current: string = picks.module,
+): (text: string) => Promise<Choice[]> {
+    const module: (name: string) => boolean = (name: string): boolean =>
+        moduleCode.test(name);
     const named: string[] = [...skilling.skills, ...skilling.otherModules];
     const choices: Choice[] = [
         ...named.filter(module),
@@ -511,7 +516,8 @@ function moduleSearchOf(current: string = picks.module): (text: string) => Promi
                 ? choices
                 : choices.filter(
                       (choice: Choice): boolean =>
-                          choice.value === current || skilling.skills.includes(choice.value),
+                          choice.value === current ||
+                          skilling.skills.includes(choice.value),
                   );
         return await searchOf(shown)(text);
     };
@@ -537,7 +543,9 @@ function moduleSearchOf(current: string = picks.module): (text: string) => Promi
  *   or the code of a skill the list has already
  */
 function moduleFolderNameOf(text: string): string | null {
-    const typed: RegExpMatchArray | null = text.trim().match(/^([A-Za-z]+\d+)[\s_]+(.+)$/);
+    const typed: RegExpMatchArray | null = text
+        .trim()
+        .match(/^([A-Za-z]+\d+)[\s_]+(.+)$/);
     const code: string = typed?.[1].toUpperCase() ?? "";
     const words: string[] = (typed?.[2] ?? "")
         .replace(/[äöüÄÖÜß]/g, (letter: string): string => umlauts[letter])
@@ -546,10 +554,15 @@ function moduleFolderNameOf(text: string): string | null {
         .split(/[^A-Za-z\d]+/)
         .filter((word: string): boolean => word !== "")
         .map((word: string): string => {
-            const letters: string = word === word.toUpperCase() ? word.toLowerCase() : word;
+            const letters: string =
+                word === word.toUpperCase() ? word.toLowerCase() : word;
             return letters[0].toUpperCase() + letters.slice(1);
         });
-    if (!moduleCode.test(code) || words.length === 0 || skilling.folders[code] !== undefined)
+    if (
+        !moduleCode.test(code) ||
+        words.length === 0 ||
+        skilling.folders[code] !== undefined
+    )
         return null;
     return `${code}_${words.join("")}`;
 }
@@ -643,7 +656,11 @@ function semesterListOf(day: string, documents: string[], picked: string): Choic
  * @param picked - The semester picked, like `2025W`, empty for none
  * @returns Choices of the semester
  */
-export async function semestersOf(module: string, day: string, picked: string): Promise<Choice[]> {
+export async function semestersOf(
+    module: string,
+    day: string,
+    picked: string,
+): Promise<Choice[]> {
     const documents: string[] =
         module === ""
             ? []
@@ -734,7 +751,11 @@ function documentChoicesOf(chapter: string): Choice[] {
         const parts: string[] = path.split("/");
         if (chapterOfDocument(path) !== "")
             return { value: path, text: parts.at(-1) ?? path, group: "" };
-        return { value: path, text: parts.at(-1) ?? path, group: parts.slice(1, -1).join("/") };
+        return {
+            value: path,
+            text: parts.at(-1) ?? path,
+            group: parts.slice(1, -1).join("/"),
+        };
     });
 }
 
@@ -826,7 +847,9 @@ function taskRowOf(
     remove.type = "button";
     crossPut(remove, `Remove ${name}`);
     remove.addEventListener("click", (): void => {
-        picks.attempts = picks.attempts.filter((other: AttemptPick): boolean => other !== pick);
+        picks.attempts = picks.attempts.filter(
+            (other: AttemptPick): boolean => other !== pick,
+        );
         again();
     });
     detail.className = "skill-result-detail";
@@ -839,7 +862,8 @@ function taskRowOf(
             adding: false,
             empty: "Right or Wrong",
             pick: (values: string[]): void => {
-                pick.result = values[0] === "right" || values[0] === "wrong" ? values[0] : "";
+                pick.result =
+                    values[0] === "right" || values[0] === "wrong" ? values[0] : "";
                 pick.comment = "";
                 detailShow()?.focus();
                 changed();
@@ -967,7 +991,8 @@ function taskRowsOf(
     );
     const rows: HTMLElement[] = picked.map((pick: AttemptPick): HTMLElement => {
         const name: string =
-            tasks.find((task: SkillTask): boolean => task.id === pick.task)?.name ?? pick.task;
+            tasks.find((task: SkillTask): boolean => task.id === pick.task)?.name ??
+            pick.task;
         const task: HTMLDivElement = taskRowOf(pick, name, again, changed);
         task.classList.add("panel-nested", "panel-nested-twice");
         return task;
@@ -1040,7 +1065,9 @@ function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
         picks.documents.some(
             (path: string): boolean =>
                 picks.chapters.includes(chapterOfDocument(path)) &&
-                tasksOfDocument(path).some((task: SkillTask): boolean => task.id === pick.task),
+                tasksOfDocument(path).some(
+                    (task: SkillTask): boolean => task.id === pick.task,
+                ),
         ),
     );
     picks.rounds = new Map(
@@ -1083,7 +1110,8 @@ function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
             : [];
         const list: HTMLElement | undefined = documents.find(
             (one: HTMLElement): boolean =>
-                one.querySelector(":scope > .picker > .picker-head > .picker-line") !== null,
+                one.querySelector(":scope > .picker > .picker-head > .picker-line") !==
+                null,
         );
         const text: HTMLElement | null = row.querySelector(".picker-added-text");
         if (list !== undefined && text !== null) lineMove(list, text);
@@ -1095,10 +1123,20 @@ function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
     );
     if (own) rows.push(...documentRowsOf([], loose, again, false, changed));
     else if (picks.chapters.length > 0 || picks.documents.length > 0)
-        rows.push(...documentRowsOf(documentChoicesOf(""), picks.documents, again, false, changed));
+        rows.push(
+            ...documentRowsOf(
+                documentChoicesOf(""),
+                picks.documents,
+                again,
+                false,
+                changed,
+            ),
+        );
     if (
         offered.length > 0 ||
-        (contents.chapters.length === 0 && picks.chapters.length === 0 && contents.folder !== "")
+        (contents.chapters.length === 0 &&
+            picks.chapters.length === 0 &&
+            contents.folder !== "")
     )
         rows.push(
             addRowOf(
@@ -1286,20 +1324,23 @@ function documentRowsOf(
         tagOf: inPlan ? roundOfDocument : undefined,
         change: (values: string[]): void => {
             picks.documents = [
-                ...picks.documents.filter((path: string): boolean => !shown.includes(path)),
+                ...picks.documents.filter(
+                    (path: string): boolean => !shown.includes(path),
+                ),
                 ...values,
             ];
             again();
         },
     });
-    const rows: HTMLElement[] = added.flatMap((row: HTMLElement, index: number): HTMLElement[] =>
-        index < shown.length
-            ? [
-                  row,
-                  ...roundRowsOf(shown[index], row, again),
-                  ...(nested ? taskRowsOf(shown[index], row, again, changed) : []),
-              ]
-            : [row],
+    const rows: HTMLElement[] = added.flatMap(
+        (row: HTMLElement, index: number): HTMLElement[] =>
+            index < shown.length
+                ? [
+                      row,
+                      ...roundRowsOf(shown[index], row, again),
+                      ...(nested ? taskRowsOf(shown[index], row, again, changed) : []),
+                  ]
+                : [row],
     );
     if (shown.some((path: string): boolean => !contents.documents.includes(path)))
         rows.push(
@@ -1475,7 +1516,10 @@ export async function skillPairOf(
                   empty: "Add a type",
                   plus: true,
                   pick: (values: string[]): void =>
-                      again({ ...picked, type: values[0] === noType ? "" : (values[0] ?? "") }),
+                      again({
+                          ...picked,
+                          type: values[0] === noType ? "" : (values[0] ?? ""),
+                      }),
               }),
           );
     return pair;
@@ -1493,9 +1537,14 @@ export async function skillPairOf(
  * @param picked - Skill and type, like `IN2028` and `VO`
  * @returns Title, folder and plan, each empty while no skill is picked
  */
-export function skillNamesOf(picked: ModuleType): { title: string; link: string; file: string } {
+export function skillNamesOf(picked: ModuleType): {
+    title: string;
+    link: string;
+    file: string;
+} {
     const path: string = skilling.paths[picked.module] ?? "";
-    const name: string = path === "" ? picked.module : path.slice(path.lastIndexOf("/") + 1);
+    const name: string =
+        path === "" ? picked.module : path.slice(path.lastIndexOf("/") + 1);
     if (name === "") return { title: "", link: "", file: "" };
     return {
         title: picked.type === "" ? name : `${name} (${picked.type})`,
@@ -1545,7 +1594,13 @@ export async function skillFieldsShow(
     };
     await contentsLoad();
     picks.documents = documentPathsOf(values.links);
-    picksShow({ head: head, more: more, people: people, summary: summary, changed: changed });
+    picksShow({
+        head: head,
+        more: more,
+        people: people,
+        summary: summary,
+        changed: changed,
+    });
 }
 
 /**
@@ -1624,16 +1679,17 @@ export async function skillSave(
     fields: EntryFields,
     version: string,
 ): Promise<boolean> {
-    const attempts: AttemptNew[] = picks.attempts.flatMap((pick: AttemptPick): AttemptNew[] =>
-        pick.result === ""
-            ? []
-            : [
-                  {
-                      task: pick.task,
-                      result: pick.result,
-                      comment: pick.result === "wrong" ? pick.comment : "",
-                  },
-              ],
+    const attempts: AttemptNew[] = picks.attempts.flatMap(
+        (pick: AttemptPick): AttemptNew[] =>
+            pick.result === ""
+                ? []
+                : [
+                      {
+                          task: pick.task,
+                          result: pick.result,
+                          comment: pick.result === "wrong" ? pick.comment : "",
+                      },
+                  ],
     );
     const rounds: RoundPick[] = [...picks.rounds].flatMap(
         ([path, round]: [string, number]): RoundPick[] => {

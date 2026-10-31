@@ -79,7 +79,8 @@ export function suggestionsWrite(): void {
     const key: string = `${today} ${changesVersion()} ${Math.floor(Date.now() / (5 * 60 * 1000))}`;
     if (key === written) return;
     const boxes: Box[] = boxesRead(today, dayAdd(today, 1))[0].boxes.filter(
-        (box: Box): boolean => box.category === skillName && box.time === "" && box.deadline === "",
+        (box: Box): boolean =>
+            box.category === skillName && box.time === "" && box.deadline === "",
     );
     skillingRead().modules.forEach((module: SkillModule): void => {
         const due: SkillSection[] = module.sections.filter(

@@ -57,7 +57,10 @@ let version: number = 0;
  * @param response - Answer to the page
  */
 export function changesSend(response: ServerResponse): void {
-    response.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
+    response.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+    });
     response.flushHeaders();
     pages.add(response);
     response.on("close", (): void => {

@@ -199,7 +199,13 @@ import type {
 import type { Gift } from "./gifts.ts";
 import type { PlainChange } from "./rules.ts";
 import type { SectionNew } from "./note.ts";
-import type { Place, PlaceChanged, PlaceRenamed, Platform, PlatformChanged } from "./places.ts";
+import type {
+    Place,
+    PlaceChanged,
+    PlaceRenamed,
+    Platform,
+    PlatformChanged,
+} from "./places.ts";
 import type { DeviceReport } from "./devices.ts";
 import type { NotesFile, NotesStream } from "./notes.ts";
 import type { NoteChange } from "./edit.ts";
@@ -219,7 +225,9 @@ import type { Dish, Food, FoodChanged } from "./food.ts";
  */
 function responseSend(response: ServerResponse, status: number, body: unknown): void {
     const text: string = JSON.stringify(body);
-    const packed: boolean = /\bgzip\b/.test(response.req.headers["accept-encoding"] ?? "");
+    const packed: boolean = /\bgzip\b/.test(
+        response.req.headers["accept-encoding"] ?? "",
+    );
     response.statusCode = status;
     response.setHeader("Content-Type", "application/json; charset=utf-8");
     response.setHeader("Cache-Control", "no-store");
@@ -282,7 +290,8 @@ async function fileStream(
     try {
         await pipeline(file.content, response);
     } catch (error: unknown) {
-        if ((error as NodeJS.ErrnoException).code !== "ERR_STREAM_PREMATURE_CLOSE") throw error;
+        if ((error as NodeJS.ErrnoException).code !== "ERR_STREAM_PREMATURE_CLOSE")
+            throw error;
     }
 }
 
@@ -621,7 +630,9 @@ async function requestHandle(
         boxDelete(url.searchParams.get("id") ?? "");
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/repeat") {
-        const planned: Planned[] | null = repeatApply((await json(request)) as RepeatChange);
+        const planned: Planned[] | null = repeatApply(
+            (await json(request)) as RepeatChange,
+        );
         responseSend(response, planned === null ? 409 : 200, planned);
     } else if (request.method === "POST" && url.pathname === "/api/day/plain") {
         responseSend(response, 200, plainApply((await json(request)) as PlainChange));
@@ -678,7 +689,9 @@ async function requestHandle(
         listShare({ call: "placeChange", with: sent });
         responseSend(response, 200, place);
     } else if (request.method === "POST" && url.pathname === "/api/day/renamed") {
-        const changed: PlaceChanged | null = placeRename((await json(request)) as PlaceRenamed);
+        const changed: PlaceChanged | null = placeRename(
+            (await json(request)) as PlaceRenamed,
+        );
         if (changed !== null) listShare({ call: "placeChange", with: changed });
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/param-renamed") {
@@ -702,7 +715,13 @@ async function requestHandle(
         personRename(
             (await json(request)) as PersonRenamed,
             (old: string, name: string, mail: string, dry: boolean): number =>
-                attendeesRename([{ folder: calendarRoot, ending: ".ics" }], old, name, mail, dry),
+                attendeesRename(
+                    [{ folder: calendarRoot, ending: ".ics" }],
+                    old,
+                    name,
+                    mail,
+                    dry,
+                ),
         );
         responseSend(response, 200, null);
     } else if (request.method === "GET" && url.pathname === "/api/course/module") {
@@ -851,13 +870,17 @@ async function requestHandle(
     } else if (request.method === "GET" && url.pathname === "/api/food/meals") {
         responseSend(response, 200, dishesRead());
     } else if (request.method === "POST" && url.pathname === "/api/food/meals") {
-        const sent: { name?: string; foods?: string[]; short?: string; grams?: (number | null)[] } =
-            (await json(request)) as {
-                name?: string;
-                foods?: string[];
-                short?: string;
-                grams?: (number | null)[];
-            };
+        const sent: {
+            name?: string;
+            foods?: string[];
+            short?: string;
+            grams?: (number | null)[];
+        } = (await json(request)) as {
+            name?: string;
+            foods?: string[];
+            short?: string;
+            grams?: (number | null)[];
+        };
         const dishes: Dish[] = dishAdd(sent);
         listShare({ call: "mealAdd", with: sent });
         responseSend(response, 200, dishes);
@@ -889,7 +912,11 @@ async function requestHandle(
             response,
             200,
             workoutSave(
-                (await json(request)) as { old?: string; name?: string; parts?: unknown[] },
+                (await json(request)) as {
+                    old?: string;
+                    name?: string;
+                    parts?: unknown[];
+                },
             ),
         );
     } else if (request.method === "DELETE" && url.pathname === "/api/sport/workouts") {

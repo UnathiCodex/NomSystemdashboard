@@ -65,7 +65,9 @@ let month: Calendar | null = null;
  * @param pick - Shows a day, like `2026-10-23`
  */
 function monthOpen(shown: string[], pick: (day: string) => void): void {
-    const dialog: HTMLDialogElement = document.getElementById("month") as HTMLDialogElement;
+    const dialog: HTMLDialogElement = document.getElementById(
+        "month",
+    ) as HTMLDialogElement;
     dialog.showModal();
     month?.destroy();
     month = new Calendar(document.getElementById("month-calendar") as HTMLElement, {
@@ -89,7 +91,8 @@ function monthOpen(shown: string[], pick: (day: string) => void): void {
             dialog.close();
         },
         datesSet: (info: DatesSetInfo): void => {
-            (document.getElementById("month-title") as HTMLElement).textContent = info.view.title;
+            (document.getElementById("month-title") as HTMLElement).textContent =
+                info.view.title;
         },
     });
     month.render();
@@ -110,20 +113,38 @@ export function monthStart(
     pick: (day: string) => void,
 ): void {
     document.body.insertAdjacentHTML("beforeend", monthHtml);
-    iconPut(document.getElementById("month-year-back") as HTMLElement, ChevronsLeft, "Year before");
-    iconPut(document.getElementById("month-back") as HTMLElement, ChevronLeft, "Month before");
-    iconPut(document.getElementById("month-next") as HTMLElement, ChevronRight, "Month after");
-    iconPut(document.getElementById("month-year-next") as HTMLElement, ChevronsRight, "Year after");
+    iconPut(
+        document.getElementById("month-year-back") as HTMLElement,
+        ChevronsLeft,
+        "Year before",
+    );
+    iconPut(
+        document.getElementById("month-back") as HTMLElement,
+        ChevronLeft,
+        "Month before",
+    );
+    iconPut(
+        document.getElementById("month-next") as HTMLElement,
+        ChevronRight,
+        "Month after",
+    );
+    iconPut(
+        document.getElementById("month-year-next") as HTMLElement,
+        ChevronsRight,
+        "Year after",
+    );
     button.addEventListener("click", (): void => monthOpen(shown(), pick));
     (document.getElementById("month-year-back") as HTMLElement).addEventListener(
         "click",
         (): void => month?.prevYear(),
     );
-    (document.getElementById("month-back") as HTMLElement).addEventListener("click", (): void =>
-        month?.prev(),
+    (document.getElementById("month-back") as HTMLElement).addEventListener(
+        "click",
+        (): void => month?.prev(),
     );
-    (document.getElementById("month-next") as HTMLElement).addEventListener("click", (): void =>
-        month?.next(),
+    (document.getElementById("month-next") as HTMLElement).addEventListener(
+        "click",
+        (): void => month?.next(),
     );
     (document.getElementById("month-year-next") as HTMLElement).addEventListener(
         "click",

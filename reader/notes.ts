@@ -392,7 +392,8 @@ function linkResolve(link: string, note: string, files: string[]): string | null
 
     const named: (path: string) => string[] = (path: string): string[] =>
         files.filter(
-            (file: string): boolean => posix.basename(file).toLowerCase() === posix.basename(path),
+            (file: string): boolean =>
+                posix.basename(file).toLowerCase() === posix.basename(path),
         );
     let path: string = link.toLowerCase();
     let candidates: string[] = posix.basename(path).includes(".") ? named(path) : [];
@@ -469,7 +470,8 @@ function cellsOf(line: string): string[] {
 function chaptersRead(module: string): Chapter[] {
     return entriesRead(module)
         .filter(
-            (chapter: Dirent): boolean => chapter.isDirectory() && chapterFolder.test(chapter.name),
+            (chapter: Dirent): boolean =>
+                chapter.isDirectory() && chapterFolder.test(chapter.name),
         )
         .map((chapter: Dirent): Chapter => ({
             title: chapter.name,
@@ -517,7 +519,10 @@ export function modulesRead(): NotesModule[] {
  */
 export function moduleFoldersRead(): string[] {
     return entriesRead("")
-        .filter((entry: Dirent): boolean => entry.isDirectory() && moduleFolder.test(entry.name))
+        .filter(
+            (entry: Dirent): boolean =>
+                entry.isDirectory() && moduleFolder.test(entry.name),
+        )
         .map((entry: Dirent): string => entry.name)
         .sort(collator.compare);
 }
@@ -559,7 +564,9 @@ function semestersRead(): Map<string, string> {
                 ?.match(/\d{4}[WS]/g)
                 ?.sort(collator.compare)
                 .at(-1);
-            return folder === undefined || last === undefined ? [] : [[linkDecode(folder), last]];
+            return folder === undefined || last === undefined
+                ? []
+                : [[linkDecode(folder), last]];
         }),
     );
 }
@@ -603,7 +610,9 @@ export function activeModulesRead(): string[] {
  */
 export function activeSkillsRead(): string[] {
     return [
-        ...activeModulesRead().map((module: string): string => `${modulesFolder}/${module}`),
+        ...activeModulesRead().map(
+            (module: string): string => `${modulesFolder}/${module}`,
+        ),
         ...activeProjects,
     ];
 }
@@ -679,7 +688,8 @@ export function semesterFoldersRead(
         const inner: string | undefined = entriesRead(`${module}/${material}`)
             .filter(
                 (folder: Dirent): boolean =>
-                    folder.isDirectory() && /\d{4}[WS]/.exec(folder.name)?.[0] === semester,
+                    folder.isDirectory() &&
+                    /\d{4}[WS]/.exec(folder.name)?.[0] === semester,
             )
             .map((folder: Dirent): string => folder.name)
             .sort(collator.compare)[0];
@@ -714,10 +724,14 @@ export function materialFoldersOf(module: string): { [type: string]: string } {
         .map((material: Dirent): string => material.name)
         .sort(collator.compare);
     return Object.fromEntries(
-        Object.entries(materialFolders).map(([type, name]: [string, string]): [string, string] => [
-            type,
-            materials.find((folder: string): boolean => folder.startsWith(`${type}_`)) ?? name,
-        ]),
+        Object.entries(materialFolders).map(
+            ([type, name]: [string, string]): [string, string] => [
+                type,
+                materials.find((folder: string): boolean =>
+                    folder.startsWith(`${type}_`),
+                ) ?? name,
+            ],
+        ),
     );
 }
 
@@ -748,7 +762,10 @@ export function moduleFolderOf(code: string): string | undefined {
  */
 export function moduleContentsRead(module: string): ModuleContents {
     const chapters: string[] = entriesRead(module)
-        .filter((entry: Dirent): boolean => entry.isDirectory() && chapterFolder.test(entry.name))
+        .filter(
+            (entry: Dirent): boolean =>
+                entry.isDirectory() && chapterFolder.test(entry.name),
+        )
         .map((entry: Dirent): string => entry.name)
         .sort(collator.compare);
     const notes: string[] = chapters.flatMap((chapter: string): string[] =>
@@ -772,7 +789,8 @@ export function moduleContentsRead(module: string): ModuleContents {
         (folder: string): string[] =>
             entriesRead(`${module}/${folder}`)
                 .filter(
-                    (entry: Dirent): boolean => entry.isDirectory() && /\d{4}[WS]/.test(entry.name),
+                    (entry: Dirent): boolean =>
+                        entry.isDirectory() && /\d{4}[WS]/.test(entry.name),
                 )
                 .map((entry: Dirent): string => `${folder}/${entry.name}`),
     );
@@ -817,7 +835,9 @@ function linksOf(
     const note: string = path.slice(moduleOf(path).length + 1);
     const inModule: string[] = [...files.keys()];
     const links: string[] = [
-        ...[...text.matchAll(wikiLink)].map((match: RegExpExecArray): string => match[1].trim()),
+        ...[...text.matchAll(wikiLink)].map((match: RegExpExecArray): string =>
+            match[1].trim(),
+        ),
         ...[...text.matchAll(markdownLink)].map(
             (match: RegExpExecArray): string => match[1] ?? match[2],
         ),
@@ -845,7 +865,11 @@ function linksOf(
  */
 export function linkedNoteRead(path: string): LinkedNote {
     const text: string = readFileSync(diskPathOf(path), "utf8");
-    return { path: path, text: text, links: linksOf(text, path, vaultFilesRead(moduleOf(path))) };
+    return {
+        path: path,
+        text: text,
+        links: linksOf(text, path, vaultFilesRead(moduleOf(path))),
+    };
 }
 
 /**
@@ -931,9 +955,9 @@ export function fileOpen(path: string): NotesStream {
  * @throws {Error} - When the folder lies outside `NomSkillingmodules`, is missing, or is a file
  */
 export function folderRead(path: string): NotesFolder {
-    const entries: Dirent[] = readdirSync(diskPathOf(path), { withFileTypes: true }).filter(
-        (entry: Dirent): boolean => !entry.name.startsWith("."),
-    );
+    const entries: Dirent[] = readdirSync(diskPathOf(path), {
+        withFileTypes: true,
+    }).filter((entry: Dirent): boolean => !entry.name.startsWith("."));
     return {
         folders: entries
             .filter((entry: Dirent): boolean => entry.isDirectory())
@@ -975,7 +999,8 @@ export function folderMake(path: string): void {
     for (const part of parts.slice(1)) {
         folder = join(folder, part);
         if (!existsSync(folder)) mkdirSync(folder);
-        else if (!lstatSync(folder).isDirectory()) throw new Error(`No folder on the way: ${path}`);
+        else if (!lstatSync(folder).isDirectory())
+            throw new Error(`No folder on the way: ${path}`);
     }
 }
 

@@ -212,8 +212,14 @@ function ruleTextOf(value: string): string | null {
     const ordinalOf: (place: number) => string = (place: number): string =>
         `${place}${["th", "st", "nd", "rd"][place % 100 > 10 && place % 100 < 14 ? 0 : place % 10] ?? "th"}`;
     const placeOf: (place: number) => string = (place: number): string =>
-        place === -1 ? "last" : place < 0 ? `${ordinalOf(-place)} last` : ordinalOf(place);
-    const text: string[] = [every === 1 ? frequency[0] : `every ${every} ${frequency[1]}`];
+        place === -1
+            ? "last"
+            : place < 0
+              ? `${ordinalOf(-place)} last`
+              : ordinalOf(place);
+    const text: string[] = [
+        every === 1 ? frequency[0] : `every ${every} ${frequency[1]}`,
+    ];
     parts.forEach((part: string, name: string): void => {
         const list: string[] = part.split(",");
         if (name === "BYMONTH")
@@ -231,11 +237,12 @@ function ruleTextOf(value: string): string | null {
             text.push(
                 `on ${list
                     .map((day: string): string => {
-                        const [, place, weekday]: string[] = /^([+-]?\d*)([A-Z]{2})$/i.exec(
-                            day,
-                        ) ?? ["", "", day];
+                        const [, place, weekday]: string[] =
+                            /^([+-]?\d*)([A-Z]{2})$/i.exec(day) ?? ["", "", day];
                         const named: string = weekdays[weekday.toUpperCase()] ?? weekday;
-                        return place === "" ? named : `${placeOf(Number(place))} ${named}`;
+                        return place === ""
+                            ? named
+                            : `${placeOf(Number(place))} ${named}`;
                     })
                     .join(", ")}`,
             );
@@ -263,8 +270,11 @@ function readableOf(name: string, value: string): string | null {
     if (/^RRULE[;:]/i.test(name)) return ruleTextOf(value);
     if (/^TZNAME[;:]/i.test(name)) return zoneNames[value.toUpperCase()] ?? null;
     const length: RegExpExecArray | null = lengthRule.exec(value);
-    if (length !== null) return lengthOf(Number(length[1] ?? 0) * 60 + Number(length[2] ?? 0));
-    const offset: RegExpExecArray | null = /^TZOFFSET/i.test(name) ? offsetRule.exec(value) : null;
+    if (length !== null)
+        return lengthOf(Number(length[1] ?? 0) * 60 + Number(length[2] ?? 0));
+    const offset: RegExpExecArray | null = /^TZOFFSET/i.test(name)
+        ? offsetRule.exec(value)
+        : null;
     if (offset !== null) return `UTC${offset[1]}${offset[2]}:${offset[3]}`;
     return dateTextOf(value, true);
 }
@@ -295,7 +305,8 @@ function blockOf(
     ) {
         const end: Line = state.doc.line(number);
         if (/^BEGIN:/i.test(end.text)) depth += 1;
-        else if (/^END:/i.test(end.text) && depth-- === 0) return { from: to, to: end.to };
+        else if (/^END:/i.test(end.text) && depth-- === 0)
+            return { from: to, to: end.to };
     }
     return null;
 }
@@ -420,8 +431,8 @@ const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
                 read: (): number =>
                     Math.max(
                         0,
-                        (document.getElementById("editor-save")?.getBoundingClientRect().right ??
-                            0) - view.contentDOM.getBoundingClientRect().right,
+                        (document.getElementById("editor-save")?.getBoundingClientRect()
+                            .right ?? 0) - view.contentDOM.getBoundingClientRect().right,
                     ),
                 write: (overhang: number): void =>
                     view.dom.style.setProperty("--ics-overhang", `${overhang}px`),
@@ -446,13 +457,18 @@ const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
  */
 export function icsLook(): Extension {
     return [
-        codeFolding({ placeholderDOM: (): HTMLElement => document.createElement("span") }),
+        codeFolding({
+            placeholderDOM: (): HTMLElement => document.createElement("span"),
+        }),
         foldService.of(blockOf),
         overhangKeep,
         overviewKeep,
         StateField.define<DecorationSet>({
             create: decorationsOf,
-            update: (decorations: DecorationSet, transaction: Transaction): DecorationSet =>
+            update: (
+                decorations: DecorationSet,
+                transaction: Transaction,
+            ): DecorationSet =>
                 transaction.docChanged ||
                 foldedRanges(transaction.state) !== foldedRanges(transaction.startState)
                     ? decorationsOf(transaction.state)
@@ -497,7 +513,10 @@ function blocksOf(state: EditorState): Block[] {
     }
     blocks.forEach((block: Block): void =>
         block.values.forEach((value: string, key: string): void => {
-            block.values.set(key, value.replace(/\\([,;\\])/g, "$1").replace(/\\n/gi, " "));
+            block.values.set(
+                key,
+                value.replace(/\\([,;\\])/g, "$1").replace(/\\n/gi, " "),
+            );
         }),
     );
     return blocks;
@@ -539,10 +558,14 @@ function boxOf(block: Block): HTMLElement {
         values.get("ESTIMATED-DURATION") ?? values.get("DURATION") ?? "",
     );
     let length: number | null =
-        duration === null ? null : Number(duration[1] ?? 0) * 60 + Number(duration[2] ?? 0);
+        duration === null
+            ? null
+            : Number(duration[1] ?? 0) * 60 + Number(duration[2] ?? 0);
     if (start !== null && end?.[4] !== undefined)
         length =
-            (Date.parse(`${end[1]}-${end[2]}-${end[3]}T${end[4]}:${end[5]}:${end[6]}${end[7]}`) -
+            (Date.parse(
+                `${end[1]}-${end[2]}-${end[3]}T${end[4]}:${end[5]}:${end[6]}${end[7]}`,
+            ) -
                 start.getTime()) /
             60000;
     const parts: string[] = [];
@@ -622,35 +645,41 @@ const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
             shown?.remove();
             shown = null;
         };
-        const dashes: HTMLButtonElement[] = blocks.map((block: Block): HTMLButtonElement => {
-            const dash: HTMLButtonElement = document.createElement("button");
-            dash.type = "button";
-            dash.className = "ics-dash";
-            dash.setAttribute(
-                "aria-label",
-                block.values.get("SUMMARY") ?? block.values.get("TZID") ?? block.kind,
-            );
-            dash.addEventListener("click", (): void =>
-                view.dispatch({
-                    effects: EditorView.scrollIntoView(view.state.doc.line(block.line).from, {
-                        y: "start",
+        const dashes: HTMLButtonElement[] = blocks.map(
+            (block: Block): HTMLButtonElement => {
+                const dash: HTMLButtonElement = document.createElement("button");
+                dash.type = "button";
+                dash.className = "ics-dash";
+                dash.setAttribute(
+                    "aria-label",
+                    block.values.get("SUMMARY") ?? block.values.get("TZID") ?? block.kind,
+                );
+                dash.addEventListener("click", (): void =>
+                    view.dispatch({
+                        effects: EditorView.scrollIntoView(
+                            view.state.doc.line(block.line).from,
+                            {
+                                y: "start",
+                            },
+                        ),
                     }),
-                }),
-            );
-            dash.addEventListener("mouseenter", (): void => {
-                boxHide();
-                shown = boxOf(block);
-                document.body.append(shown);
-                const room: number = innerWidth - shown.offsetWidth - 8;
-                shown.style.left = `${Math.min(dash.getBoundingClientRect().left, room)}px`;
-                shown.style.top = `${overview.getBoundingClientRect().bottom + 8}px`;
-            });
-            dash.addEventListener("mouseleave", boxHide);
-            return dash;
-        });
+                );
+                dash.addEventListener("mouseenter", (): void => {
+                    boxHide();
+                    shown = boxOf(block);
+                    document.body.append(shown);
+                    const room: number = innerWidth - shown.offsetWidth - 8;
+                    shown.style.left = `${Math.min(dash.getBoundingClientRect().left, room)}px`;
+                    shown.style.top = `${overview.getBoundingClientRect().bottom + 8}px`;
+                });
+                dash.addEventListener("mouseleave", boxHide);
+                return dash;
+            },
+        );
         const follow = (): void => {
             const top: number =
-                (document.getElementById("editor-status")?.getBoundingClientRect().bottom ?? 0) + 1;
+                (document.getElementById("editor-status")?.getBoundingClientRect()
+                    .bottom ?? 0) + 1;
             const at: number = view.state.doc.lineAt(
                 view.posAtCoords(
                     { x: view.contentDOM.getBoundingClientRect().left + 1, y: top },
@@ -664,7 +693,8 @@ const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
             dashes.forEach((dash: HTMLButtonElement, index: number): void => {
                 dash.classList.toggle("ics-dash-current", index === current);
             });
-            overview.scrollLeft = (dashes[current]?.offsetLeft ?? 0) - overview.clientWidth / 2;
+            overview.scrollLeft =
+                (dashes[current]?.offsetLeft ?? 0) - overview.clientWidth / 2;
         };
         if (file === null || state === null || blocks.length === 0)
             return { destroy: (): void => {} };

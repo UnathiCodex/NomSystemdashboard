@@ -154,7 +154,8 @@ export function nowOn(day: Date): Date {
  */
 function timeParse(text: string): string | null {
     const match: RegExpMatchArray | null = text.trim().match(/^(\d{1,2})(?::?(\d{2}))?$/);
-    if (match === null || Number(match[1]) > 23 || Number(match[2] ?? 0) > 59) return null;
+    if (match === null || Number(match[1]) > 23 || Number(match[2] ?? 0) > 59)
+        return null;
     return `${match[1].padStart(2, "0")}:${match[2] ?? "00"}`;
 }
 
@@ -262,7 +263,8 @@ export function boxTimesOf(box: Box, day: Date): [Date, Date] {
  */
 export function nearOf(day: string, from: string): string {
     const days: number = Math.round(
-        (Date.parse(`${day}T12:00:00`) - Date.parse(`${from}T12:00:00`)) / (24 * 60 * 60 * 1000),
+        (Date.parse(`${day}T12:00:00`) - Date.parse(`${from}T12:00:00`)) /
+            (24 * 60 * 60 * 1000),
     );
     if (days === 0) return "today";
     if (days === 1) return "tomorrow";
