@@ -1,11 +1,7 @@
-/* Food search and every list of meals or foods: the field of the search,
-   then a small grey head and one flat line per meal or food, mine first,
-   then those of Open Food Facts with how many of how many and More;
-   a meal or food opened below its line;
-   the same look in the food view and in the entry by category of the day;
-   its field the one search field of the page, see `.search-field` in `../base.css` */
-/* Line of a meal or a food in a list, see `listLineOf` in `search.ts`: its row,
-   then the room of a small grey `×`, which every line keeps,
+/* Food search and every list of meals or foods, the same look in the food view
+   and in the entry by category of the day */
+/* Line of a meal or a food in a list, see `listLineOf` in `search.ts`:
+   the room of a small grey `×` every line keeps,
    so the numbers of all lists stand in one column */
 .food-item {
     display: grid;
@@ -17,16 +13,9 @@
     justify-content: center;
 }
 
-/* Row of a meal or a food, flat: its name,
-   then its kcal as a bare number, just as wide as five digits,
-   so the name has the room, 2rem apart at the least,
-   so a long name or one cut with … never runs up to its number,
-   like `Pasta mit Ricotta Tomaten und Paprika (Pasta, Ricotta, Tom…)   609`;
-   at least one chip high, higher for a product with its pack below its name
-   or a name going on below, its number then on the line of the name,
-   never between its lines;
-   a little room above and below, so the pack of a product stays clear of the next name;
-   a grey lighter under the pointer where a click does something */
+/* Row of a meal or a food: its kcal as wide as five digits, 2rem from the name at least,
+   so a long name never runs up to its number,
+   which stays on the line of the name, never between its lines */
 .food-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 4rem;
@@ -61,24 +50,19 @@ button.food-row {
 }
 
 /* Name of a meal or a food with its brand and store in brackets,
-   see `foodNameOf` in `foods.ts`:
-   going on below where the row has no room, never cut with dots, here,
-   in the food view and the dialogs */
+   going on below where the row has no room, never cut with dots */
 .food-name {
     overflow-wrap: break-word;
 }
 
-/* What stands in brackets after the name of a food, its brand and store, grey,
-   in the size of the name, since it only tells which one it is:
-   the one grey of the page beside white facts */
+/* What stands in brackets after the name of a food grey, in the size of the name,
+   since it only tells which one it is */
 .food-brand {
     color: var(--text-muted);
 }
 
 /* The brackets of a list all on a line of their own below their names
-   while one of them has no room on the line of its name,
-   see `bracketsWatch` in `foods.ts`:
-   all one line, or all two */
+   while one of them has no room, see `bracketsWatch` in `foods.ts` */
 .bracket-below {
     display: block;
 }
@@ -90,10 +74,7 @@ button.food-row {
     font-variant-numeric: tabular-nums;
 }
 
-/* Head of a list small and grey: what a number is per, and `kcal`,
-   the unit of every number below;
-   only as high as its words,
-   as far from the first row below it as two rows are from each other,
+/* Head of a list small and grey, as far from the first row as two rows are apart,
    so it heads them and touches none */
 .food-columns {
     min-height: 0;
@@ -103,8 +84,7 @@ button.food-row {
 }
 
 /* A meal or a food opened below its line, in line with its name,
-   a grey line at their left, smaller than the lines:
-   the foods of a meal, or the values of a food and the fields of its name */
+   a grey line at their left */
 .food-detail {
     display: flex;
     flex-direction: column;
@@ -115,8 +95,7 @@ button.food-row {
     font-size: 0.875rem;
 }
 
-/* A food of a meal opened: its name with its brackets,
-   its grams, and the room of its `×` */
+/* A food of a meal opened: its name, its grams, and the room of its `×` */
 .food-part {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto 1.5rem;
@@ -125,10 +104,8 @@ button.food-row {
 }
 
 /* The `×` of a food of a meal opened on the line of its name,
-   its icon level with the small letters,
-   as an icon beside a word stands and as the `×` of a food in the dialogs,
-   see `.meal-row` in `../day/meal.css`, in the middle of its room,
-   as the `×` of every list, see `.food-item` */
+   its icon level with the small letters, as an icon beside a word stands,
+   see `.meal-row` in `../day/meal.css` */
 .food-part > .cross-quiet {
     display: block;
     line-height: inherit;
@@ -140,10 +117,7 @@ button.food-row {
     vertical-align: middle;
 }
 
-/* The values of a food opened in two columns, as the parts of a dialog:
-   each its name small and grey, then its value or its field;
-   a value that does not change, like the protein set once when the food was made,
-   as high as a field beside it, its line below it unseen,
+/* The values of a food opened: a value that does not change as high as a field,
    so every row stands as far from the next */
 .food-facts {
     display: grid;
@@ -157,10 +131,8 @@ button.food-row {
     border-bottom: 1px solid transparent;
 }
 
-/* A value of a food of mine that changes in place, its name, brand or store:
-   as plain as every value beside it, no frame;
-   a thin line below it under the pointer, softly as every hover,
-   see `--hover-in` in `../variants.css`, and while I type,
+/* A value of a food of mine that changes in place, no frame,
+   a thin line below it under the pointer and while I type,
    so I see that a click changes it */
 .food-inline {
     width: 100%;
@@ -183,8 +155,7 @@ button.food-row {
     border-bottom-color: var(--chosen-line);
 }
 
-/* The kind of a food, `Eat` or `Drink`, a switch:
-   as plain as the values beside it, its text at their left edge */
+/* The kind of a food, a switch, as plain as the values beside it */
 .food-kind {
     text-align: start;
     cursor: pointer;
@@ -195,13 +166,8 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* The cross and the check of a form inside a list,
-   like that of a new food or meal: small and flat,
-   as modern layouts keep the buttons of a form inside a page,
-   while a dialog ends with its big ones: icon buttons one chip square,
-   see `.icon-button` in `../base.css`, both loose, the check,
-   which saves, light instead of grey,
-   as `Save` of a dialog; well apart from the last value above them */
+/* The cross and the check of a form inside a list small and flat,
+   as modern layouts keep the buttons of a form inside a page */
 .food-buttons {
     display: inline-flex;
     flex: none;
@@ -236,7 +202,7 @@ button.food-row {
     font-variant-numeric: tabular-nums;
 }
 
-/* More: loose as every button, one chip high, without frame or ground, its word grey,
+/* More: loose as every button, one chip high, its word grey,
    light under the pointer, never on a grey box, off while the next page loads */
 .food-more-button {
     min-height: var(--chip-height);
@@ -258,9 +224,7 @@ button.food-row {
     cursor: default;
 }
 
-/* Line between the sections of a search, my meals,
-   my foods and the products of Open Food Facts,
-   thin and in the grey of every line, so they stand apart at a glance */
+/* Line between the sections of a search, thin, so they stand apart at a glance */
 .food-divider {
     margin: 0.75rem 0.75rem 0.25rem;
     border: 0;
@@ -274,11 +238,8 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* Form of a food by hand at the top of the results,
-   in the look of a food of mine opened, see `.food-detail`:
-   its values in two columns, then the cross and the check;
-   a value to type on its thin line, always shown,
-   since the form starts empty, lighter while I type */
+/* Form of a food by hand in the look of a food of mine opened, see `.food-detail`:
+   a value to type on its thin line, always shown, since the form starts empty */
 .food-form {
     margin-top: 0.75rem;
 }
@@ -303,9 +264,8 @@ button.food-row:hover {
     color: var(--text-muted);
 }
 
-/* A number that changes in place,
-   like the grams of a food of a meal or the protein of a food of mine:
-   a plain value as wide as five digits, its digits right, then its unit, like `g` */
+/* A number that changes in place:
+   a plain value as wide as five digits, its digits right, then its unit */
 .food-grams {
     display: inline-flex;
     align-items: baseline;
@@ -320,10 +280,8 @@ button.food-row:hover {
     font-variant-numeric: tabular-nums;
 }
 
-/* In the values of a food, a number starts where every value of its column starts
-   and its unit follows it closely, its field as wide as what is typed;
-   a click on its unit puts the cursor into it too, so an empty one takes a click,
-   see `foodDetailOf` in `search.ts` */
+/* In the values of a food a click on the unit of a number puts the cursor into it too,
+   so an empty one takes a click */
 .food-facts > .food-grams > .food-inline-grams {
     width: auto;
     min-width: 1ch;
@@ -342,13 +300,9 @@ button.food-row:hover {
     field-sizing: fixed;
 }
 
-/* Phone: the values of a food opened,
-   of a new food and of a meal each its name small and grey above it,
+/* Phone: the values of a food opened each its name small and grey above it,
    as the rows of a dialog on a phone, so a value takes the whole width,
-   like the name `Hackfleisch gemischt zum Braten` in its field, never cut at its edge;
-   a row 0.75rem below the one above it;
-   a line of a list and More with the round corners of every button
-   on a phone, see `../variants.css` */
+   never cut at its edge */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .food-row,
     .food-more-button {
@@ -364,25 +318,21 @@ button.food-row:hover {
         margin-top: 0.5rem;
     }
 
-    /* A line of a list on a phone with its number only as wide as itself, like `380`,
-       since it stands at the right anyway, as the numbers of the day in the food view,
-       so the name keeps the rest of the line and a food
-       like `Hackfleisch gemischt zum Braten` needs fewer lines */
+    /* A line of a list on a phone with its number only as wide as itself,
+       since it stands at the right anyway, so the name keeps the rest of the line */
     .food-row {
         grid-template-columns: minmax(0, 1fr) auto;
     }
 
     /* A value to type in on a phone where it stands, but a finger high to hit:
-       its field takes a tap 0.75rem above its text, over the lower half of its name,
-       which takes no room of its row, so nothing moves */
+       a tap above its text, which takes no room of its row, so nothing moves */
     .food-facts .food-inline {
         padding-top: 0.75rem;
         margin-top: -0.75rem;
     }
 
     /* The cross and the check of a form and More on a phone as they look,
-       but a finger's width to hit, each taking a tap a little around it,
-       the cross and the check up to the middle of the room between them */
+       but a finger's width to hit, each taking a tap a little around it */
     .food-buttons button,
     .food-more-button {
         position: relative;
