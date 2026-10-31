@@ -151,12 +151,13 @@ import {
 import { personsKept, personsRename } from "../persons.ts";
 import { dayOf, semesterOf, skillName } from "../skill/attempts.ts";
 import { folderLinkShow } from "../skill/links.ts";
-import { iconPut, plusPut, QuestionMark } from "../icons.ts";
+import { iconPut, QuestionMark } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { changesKept } from "../changes.ts";
-import { Check, Copy, Pencil, Repeat, Trash, X } from "lucide";
+import { Check, Copy, Pencil, Plus, Repeat, Trash, X } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
+import type { IconNode } from "lucide";
 import type { Box } from "./boxes.ts";
 import type { Choice } from "./choices.ts";
 import type { BoxFields, EntryFields } from "./entries.ts";
@@ -286,6 +287,36 @@ const skillNone: SkillValues = {
     rounds: [],
 };
 
+/** Gives the values of no field picked. */
+function valuesNone(): { [key in FieldKey]: string } {
+    return { title: "", from: "", location: "", online: "", with: "" };
+}
+
+/** Gives what a new entry or box opens with: its times, nothing picked. */
+function openingOf(target: EntryTarget, start: Date, end: Date): EntryOpening {
+    return {
+        target: target,
+        start: start,
+        end: end,
+        time: null,
+        minutes: null,
+        category: null,
+        values: valuesNone(),
+        addresses: {},
+        titleLink: "",
+        locationLink: "",
+        onlineLink: "",
+        onlineChannel: "",
+        onlineTitle: "",
+        note: "",
+        foods: [],
+        skill: skillNone,
+        plan: null,
+        entry: null,
+        box: null,
+    };
+}
+
 /**
  * Categories with the values of their fields, a copy of those kept,
  * see {@link categoriesKept}, made as the dialog opens,
@@ -294,55 +325,21 @@ const skillNone: SkillValues = {
 let categories: Category[] = [];
 
 /** Values picked in the lists of the fields, by the field they write into. */
-let values: { [key in FieldKey]: string } = {
-    title: "",
-    from: "",
-    location: "",
-    online: "",
-    with: "",
-};
+let values: { [key in FieldKey]: string } = valuesNone();
 
 /** What the open dialog shows. */
-let opened: EntryOpening = {
-    target: "log",
-    start: new Date(),
-    end: new Date(),
-    time: null,
-    minutes: null,
-    category: null,
-    values: { title: "", from: "", location: "", online: "", with: "" },
-    addresses: {},
-    titleLink: "",
-    locationLink: "",
+let opened: EntryOpening = openingOf("log", new Date(), new Date());
+
+/**
+ * Link, channel and title of the meeting or video of the platform picked in `Online`,
+ * the link written as the `ALTREP` of its `X-ONLINE`, see {@link onlineRowOf};
+ * empty once another platform is picked; the platform itself is in {@link values}.
+ */
+let onlineParts: Omit<Online, "online"> = {
     onlineLink: "",
     onlineChannel: "",
     onlineTitle: "",
-    note: "",
-    foods: [],
-    skill: skillNone,
-    plan: null,
-    entry: null,
-    box: null,
 };
-
-/**
- * Link of the meeting or video of the platform picked in `Online`,
- * written as the `ALTREP` of its `X-ONLINE`, see {@link onlineRowOf};
- * empty once another platform is picked.
- */
-let onlineLink: string = "";
-
-/**
- * Channel of the meeting or video of the platform picked in `Online`,
- * see {@link onlineRowOf}; empty once another platform is picked.
- */
-let onlineChannel: string = "";
-
-/**
- * Title of the meeting or video of the platform picked in `Online`,
- * see {@link onlineRowOf}; empty once another platform is picked.
- */
-let onlineTitle: string = "";
 
 /**
  * Whether `Online` shows its parts below it to type, see {@link onlineRowOf},
@@ -434,19 +431,20 @@ let summaryValues: string[] = [];
  */
 let skillGiven: string = "";
 
+/** Pencil beside the summary, its link below it, its text, its link typed, its param. */
+type SummaryParts = [
+    HTMLButtonElement,
+    HTMLAnchorElement,
+    HTMLInputElement,
+    HTMLInputElement,
+    HTMLInputElement | null,
+];
+
 /**
  * Pencil beside the summary, its link below it and its fields as shown,
  * see {@link summaryPartsOf}; `null` while no summary shows them.
  */
-let summaryShown:
-    | [
-          HTMLButtonElement,
-          HTMLAnchorElement,
-          HTMLInputElement,
-          HTMLInputElement,
-          HTMLInputElement | null,
-      ]
-    | null = null;
+let summaryShown: SummaryParts | null = null;
 
 /** Category picked, `null` before picking. */
 let chosen: Category | null = null;
@@ -587,13 +585,7 @@ function startRead(): Date {
  * empty for a field the category does not have.
  */
 function valuesRead(): { [key in FieldKey]: string } {
-    const picked: { [key in FieldKey]: string } = {
-        title: "",
-        from: "",
-        location: "",
-        online: "",
-        with: "",
-    };
+    const picked: { [key in FieldKey]: string } = valuesNone();
     (chosen?.fields ?? []).forEach((field: Field): void => {
         picked[field.key] = values[field.key];
     });
@@ -629,7 +621,7 @@ function saveAllow(): void {
             : titleRead(valuesRead().title).trim() !== "");
     (document.getElementById("entry-save") as HTMLButtonElement).disabled = !named;
     summaryPartsShow();
-    realLoad().catch((error: unknown): void => console.error(error));
+    realLoad().catch(console.error);
     entryFileShow();
 }
 
@@ -938,15 +930,42 @@ function placePartsShow(
 }
 
 /**
+ * Makes a small button beside a value, as its pencil.
+ *
+ * @param still - Whether it takes no focus, so a field I leave by it keeps its place
+ */
+function pencilOf(
+    icon: IconNode,
+    words: string,
+    still: boolean = false,
+): HTMLButtonElement {
+    const pencil: HTMLButtonElement = document.createElement("button");
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    iconPut(pencil, icon, words);
+    if (still)
+        pencil.addEventListener("mousedown", (event: MouseEvent): void =>
+            event.preventDefault(),
+        );
+    return pencil;
+}
+
+/** Focuses the part of a place or a summary named so, see {@link partsOf}. */
+function partFocus(name: string | null): void {
+    document
+        .querySelector<HTMLInputElement>(
+            `#entry .field-parts input[aria-label="${name}"]`,
+        )
+        ?.focus();
+}
+
+/**
  * Makes the pencil beside the label of the place picked in a field,
  * and its address below the label, see {@link placePartsShow}.
  */
 function placePartsOf(field: Field): [HTMLButtonElement, HTMLAnchorElement] {
-    const pencil: HTMLButtonElement = document.createElement("button");
+    const pencil: HTMLButtonElement = pencilOf(Pencil, "Change the place");
     const address: HTMLAnchorElement = document.createElement("a");
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
-    iconPut(pencil, Pencil, "Change the place");
     pencil.addEventListener("click", (): void => partsToggle(field));
     address.className = "entry-address";
     address.target = "_blank";
@@ -1019,11 +1038,7 @@ function partsOf(field: Field): HTMLElement {
             },
             (next: string | null): void => {
                 placesShow();
-                document
-                    .querySelector<HTMLInputElement>(
-                        `#entry .field-parts input[aria-label="${next}"]`,
-                    )
-                    ?.focus();
+                partFocus(next);
             },
         ),
     );
@@ -1042,13 +1057,7 @@ function partsOf(field: Field): HTMLElement {
  */
 function summaryPartsShow(): void {
     if (summaryShown === null) return;
-    const [pencil, link, text, address, param]: [
-        HTMLButtonElement,
-        HTMLAnchorElement,
-        HTMLInputElement,
-        HTMLInputElement,
-        HTMLInputElement | null,
-    ] = summaryShown;
+    const [pencil, link, text, address, param]: SummaryParts = summaryShown;
     const value: string = summaryPickedOf();
     if (text !== document.activeElement)
         text.value = param === null ? value : baseOf(value);
@@ -1104,7 +1113,7 @@ function summaryPartsOf(
     summary?: Field,
     typed: boolean = summary !== undefined,
 ): [HTMLButtonElement, HTMLAnchorElement, HTMLElement] {
-    const pencil: HTMLButtonElement = document.createElement("button");
+    const pencil: HTMLButtonElement = pencilOf(Pencil, "Change the summary");
     const link: HTMLAnchorElement = document.createElement("a");
     const text: HTMLInputElement = partFieldOf(
         "text",
@@ -1120,8 +1129,6 @@ function summaryPartsOf(
     const param: HTMLInputElement | null =
         summary === undefined ? null : partFieldOf("text", "", "Param of the summary");
     let shown: string = values.title;
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
     link.className = "entry-address";
     link.rel = "noopener";
     parts.className = "field-parts";
@@ -1130,7 +1137,6 @@ function summaryPartsOf(
         parts.append(partOf("Param", param));
     if (summary !== undefined || chosen?.name === skillName)
         parts.append(partOf("Link", address));
-    iconPut(pencil, Pencil, "Change the summary");
     parts.hidden = !summaryOpen;
     [text, ...(param === null ? [] : [param])].forEach(
         (input: HTMLInputElement): void => {
@@ -1154,11 +1160,7 @@ function summaryPartsOf(
                         : null;
                 if (values.title === shown || summary === undefined) return;
                 titleRowsShow();
-                document
-                    .querySelector<HTMLInputElement>(
-                        `#entry .field-parts input[aria-label="${next}"]`,
-                    )
-                    ?.focus();
+                partFocus(next);
             });
         },
     );
@@ -1341,21 +1343,14 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             onlineRowOf({
                 field: field,
                 categories: categories,
-                online: {
-                    online: values.online,
-                    onlineLink: onlineLink,
-                    onlineChannel: onlineChannel,
-                    onlineTitle: onlineTitle,
-                },
+                online: { ...onlineParts, online: values.online },
                 open: onlineOpen,
                 opened: (open: boolean): void => {
                     onlineOpen = open;
                 },
                 pick: (online: Online): void => {
                     values.online = online.online;
-                    onlineLink = online.onlineLink;
-                    onlineChannel = online.onlineChannel;
-                    onlineTitle = online.onlineTitle;
+                    onlineParts = { ...online };
                     saveAllow();
                 },
             }),
@@ -1511,13 +1506,7 @@ function valueAfterOf(field: Field, home: HTMLElement, value: string): HTMLEleme
     const all: HTMLSpanElement = document.createElement("span");
     const found: string = values.title.split(", ")[valueAtOf(value)] ?? "";
     const shown: HTMLElement = paramShownOf(found);
-    const pencil: HTMLButtonElement = document.createElement("button");
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
-    iconPut(pencil, Pencil, `Change ${value}`);
-    pencil.addEventListener("mousedown", (event: MouseEvent): void =>
-        event.preventDefault(),
-    );
+    const pencil: HTMLButtonElement = pencilOf(Pencil, `Change ${value}`, true);
     pencil.addEventListener("click", (event: MouseEvent): void => {
         event.stopPropagation();
         const at: number = valueAtOf(value);
@@ -1550,10 +1539,8 @@ function valueAtOf(value: string): number {
 function paramShownOf(value: string): HTMLElement {
     const param: string = paramOf(value);
     if (param === "") {
-        const plus: HTMLButtonElement = document.createElement("button");
-        plus.type = "button";
-        plus.className = "entry-pencil";
-        plusPut(plus, "Add a param");
+        const plus: HTMLButtonElement = pencilOf(Plus, "Add a param");
+        plus.classList.add("plus-quiet");
         return plus;
     }
     const shown: HTMLSpanElement = document.createElement("span");
@@ -1668,9 +1655,7 @@ function peopleRead(): Attendee[] {
  * a way where it starts, then its place, then what it did online.
  */
 function placeRowsOf(): HTMLElement[] {
-    return (chosen?.fields ?? [])
-        .filter((field: Field): boolean => placeIs(field) || field.key === "online")
-        .flatMap(fieldRowsOf);
+    return rowsOf((field: Field): boolean => placeIs(field) || field.key === "online");
 }
 
 /**
@@ -1678,12 +1663,15 @@ function placeRowsOf(): HTMLElement[] {
  * those neither its summary nor where it is, which is who I was with.
  */
 function moreRowsOf(): HTMLElement[] {
-    return (chosen?.fields ?? [])
-        .filter(
-            (field: Field): boolean =>
-                field.key !== "title" && !placeIs(field) && field.key !== "online",
-        )
-        .flatMap(fieldRowsOf);
+    return rowsOf(
+        (field: Field): boolean =>
+            field.key !== "title" && !placeIs(field) && field.key !== "online",
+    );
+}
+
+/** Builds the rows of the fields of the category picked that `keep` keeps. */
+function rowsOf(keep: (field: Field) => boolean): HTMLElement[] {
+    return (chosen?.fields ?? []).filter(keep).flatMap(fieldRowsOf);
 }
 
 /**
@@ -1724,11 +1712,7 @@ function ofSeries(): boolean {
 function titleRowsShow(): void {
     document
         .getElementById("entry-fields")
-        ?.replaceChildren(
-            ...(chosen?.fields ?? [])
-                .filter((field: Field): boolean => field.key === "title")
-                .flatMap(fieldRowsOf),
-        );
+        ?.replaceChildren(...rowsOf((field: Field): boolean => field.key === "title"));
 }
 
 /**
@@ -1975,9 +1959,9 @@ function textsRead(): BoxFields {
         titleLink: summaryLink,
         location: picked.location,
         online: picked.online,
-        onlineLink: picked.online === "" ? "" : onlineLink,
-        onlineChannel: picked.online === "" ? "" : onlineChannel,
-        onlineTitle: picked.online === "" ? "" : onlineTitle,
+        onlineLink: picked.online === "" ? "" : onlineParts.onlineLink,
+        onlineChannel: picked.online === "" ? "" : onlineParts.onlineChannel,
+        onlineTitle: picked.online === "" ? "" : onlineParts.onlineTitle,
         from: picked.from,
         attendees: peopleRead(),
         module: skill.module,
@@ -2124,9 +2108,7 @@ function boxFieldsRead(): BoxFields {
  * like a meal of many foods, shows it too instead of keeping it below its rows.
  */
 function hintShow(id: string): void {
-    const dialog: HTMLDialogElement = document.getElementById(
-        "entry",
-    ) as HTMLDialogElement;
+    const dialog: HTMLDialogElement = dialogOf();
     document.getElementById(id)?.removeAttribute("hidden");
     dialog.scrollTo({ top: dialog.scrollHeight });
 }
@@ -2201,19 +2183,27 @@ async function paramsRename(dry: boolean): Promise<void> {
 async function boxSave(): Promise<void> {
     if (opened.box !== null) await boxChange(opened.box.id, boxFieldsRead());
     else await boxAdd(boxFieldsRead());
-    await placesRename(false);
-    await personsRename(personEdits, persons, false, pickedNames());
-    await paramsRename(false);
+    await renamesSend(false);
     entryClose();
 }
 
 /**
- * Gives the names picked in `With`,
+ * Writes what I changed by its parts everywhere: the places, see {@link placesRename},
+ * the people, see `personsRename` in `../persons.ts`, the names picked in `With`
  * so a person `Persons.md` does not hold yet gets its row there,
- * see `personsRename` in `../persons.ts`.
+ * and the params, see {@link paramsRename}.
+ *
+ * @param dry - Whether they are only checked, before the entry or the box is saved
  */
-function pickedNames(): string[] {
-    return peopleRead().map((person: Attendee): string => person.name);
+async function renamesSend(dry: boolean): Promise<void> {
+    await placesRename(dry);
+    await personsRename(
+        personEdits,
+        persons,
+        dry,
+        peopleRead().map((person: Attendee): string => person.name),
+    );
+    await paramsRename(dry);
 }
 
 /**
@@ -2237,9 +2227,7 @@ function pickedNames(): string[] {
  *   or a place or person I changed
  */
 async function entrySave(calendar: Calendar): Promise<void> {
-    await placesRename(true);
-    await personsRename(personEdits, persons, true, pickedNames());
-    await paramsRename(true);
+    await renamesSend(true);
     if (opened.target === "box") {
         await boxSave();
         return;
@@ -2253,9 +2241,7 @@ async function entrySave(calendar: Calendar): Promise<void> {
         saved = await entryChange(calendar, opened.entry.id, fields, version);
     else await entryAdd(calendar, fields);
     if (saved) {
-        await placesRename(false);
-        await personsRename(personEdits, persons, false, pickedNames());
-        await paramsRename(false);
+        await renamesSend(false);
         entryClose();
     } else hintShow("entry-changed");
 }
@@ -2461,13 +2447,7 @@ function lengthShow(): void {
 async function seriesShow(): Promise<void> {
     const of: HTMLElement = document.getElementById("entry-of-series") as HTMLElement;
     const box: Box | null = opened.target === "box" ? opened.box : null;
-    const pencil: HTMLButtonElement = document.createElement("button");
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
-    iconPut(pencil, Repeat, "Change the series");
-    pencil.addEventListener("mousedown", (event: MouseEvent): void =>
-        event.preventDefault(),
-    );
+    const pencil: HTMLButtonElement = pencilOf(Repeat, "Change the series", true);
     of.replaceChildren();
     of.hidden = box === null || (!box.series && !seriesHas(box));
     if (box !== null && seriesHas(box)) {
@@ -2489,9 +2469,7 @@ async function seriesShow(): Promise<void> {
         of.append(pencil, ...(group === null ? [] : [group]));
     } else if (box !== null && box.series) {
         pencil.addEventListener("click", (): void => {
-            plainOpen(box.id.split("#")[0], entryClose).catch((error: unknown): void =>
-                console.error(error),
-            );
+            plainOpen(box.id.split("#")[0], entryClose).catch(console.error);
         });
         of.append(pencil);
     }
@@ -2502,7 +2480,12 @@ async function seriesShow(): Promise<void> {
  * as once the dialog of a series opened over it saved, see {@link seriesFromBox}.
  */
 function entryClose(): void {
-    (document.getElementById("entry") as HTMLDialogElement).close();
+    dialogOf().close();
+}
+
+/** Gives the dialog of an entry or a box. */
+function dialogOf(): HTMLDialogElement {
+    return document.getElementById("entry") as HTMLDialogElement;
 }
 
 /**
@@ -2516,7 +2499,7 @@ function entryClose(): void {
  */
 function groupPick(change: () => void, send: () => Promise<unknown>): void {
     entryClose();
-    send().catch((error: unknown): void => console.error(error));
+    send().catch(console.error);
 }
 
 /**
@@ -2526,9 +2509,7 @@ function groupPick(change: () => void, send: () => Promise<unknown>): void {
  * since its box changed with its series.
  */
 function seriesFromBox(module: string, type: string, semester: string): void {
-    seriesOpen(module, type, semester, entryClose).catch((error: unknown): void =>
-        console.error(error),
-    );
+    seriesOpen(module, type, semester, entryClose).catch(console.error);
 }
 
 /**
@@ -2543,15 +2524,15 @@ function seriesFromBox(module: string, type: string, semester: string): void {
  * @throws {Error} - When the reader gives no valid answer
  */
 async function entryShow(opening: EntryOpening): Promise<void> {
-    const dialog: HTMLDialogElement = document.getElementById(
-        "entry",
-    ) as HTMLDialogElement;
+    const dialog: HTMLDialogElement = dialogOf();
     categories = structuredClone(await categoriesKept());
     persons = await personsKept();
     opened = opening;
-    onlineLink = opening.onlineLink;
-    onlineChannel = opening.onlineChannel;
-    onlineTitle = opening.onlineTitle;
+    onlineParts = {
+        onlineLink: opening.onlineLink,
+        onlineChannel: opening.onlineChannel,
+        onlineTitle: opening.onlineTitle,
+    };
     onlineOpen = false;
     summaryLink = opening.titleLink;
     summaryOpen = false;
@@ -2614,9 +2595,7 @@ async function entryShow(opening: EntryOpening): Promise<void> {
  * in it can show this one again once it closes, see `boxShow` in `series.ts`.
  */
 export function entryBoxOf(): Box | null {
-    return (document.getElementById("entry") as HTMLDialogElement).open
-        ? opened.box
-        : null;
+    return dialogOf().open ? opened.box : null;
 }
 
 /** Gives the names of who I was with as the values of `With` keep them. */
@@ -2638,27 +2617,7 @@ function addressesOf(people: Attendee[]): { [name: string]: string } {
  * @throws {Error} - When the reader gives no valid answer
  */
 export async function entryOpen(start: Date, end: Date): Promise<void> {
-    await entryShow({
-        target: "log",
-        start: start,
-        end: end,
-        time: null,
-        minutes: null,
-        category: null,
-        values: { title: "", from: "", location: "", online: "", with: "" },
-        addresses: {},
-        titleLink: "",
-        locationLink: "",
-        onlineLink: "",
-        onlineChannel: "",
-        onlineTitle: "",
-        note: "",
-        foods: [],
-        skill: skillNone,
-        plan: null,
-        entry: null,
-        box: null,
-    });
+    await entryShow(openingOf("log", start, end));
 }
 
 /**
@@ -2688,25 +2647,9 @@ export async function entryOpenSkill(
     end: Date,
 ): Promise<void> {
     await entryShow({
-        target: "log",
-        start: start,
-        end: end,
-        time: null,
-        minutes: null,
+        ...openingOf("log", start, end),
         category: skillName,
-        values: { title: "", from: "", location: "", online: "", with: "" },
-        addresses: {},
-        titleLink: "",
-        locationLink: "",
-        onlineLink: "",
-        onlineChannel: "",
-        onlineTitle: "",
-        note: "",
-        foods: [],
         skill: { ...skillNone, module: module },
-        plan: null,
-        entry: null,
-        box: null,
     });
 }
 
@@ -2720,42 +2663,13 @@ export async function entryOpenSkill(
  * @throws {Error} - When the reader gives no valid answer
  */
 export async function entryOpenFromBox(box: Box, start: Date, end: Date): Promise<void> {
-    const planned: boolean = box.category !== "";
+    const opening: Partial<EntryOpening> & { skill: SkillValues } = boxOpeningOf(box);
     await entryShow({
-        target: "log",
-        start: start,
-        end: end,
-        time: null,
-        minutes: null,
-        category: planned ? box.category : null,
-        values: planned
-            ? {
-                  title: box.title,
-                  from: box.from,
-                  location: box.location,
-                  online: box.online,
-                  with: namesOf(box.attendees),
-              }
-            : { title: "", from: "", location: "", online: "", with: "" },
-        addresses: planned ? addressesOf(box.attendees) : {},
-        titleLink: planned ? box.titleLink : "",
-        locationLink: planned ? box.locationLink : "",
-        onlineLink: planned ? box.onlineLink : "",
-        onlineChannel: planned ? box.onlineChannel : "",
-        onlineTitle: planned ? box.onlineTitle : "",
-        note: "",
-        foods: [],
-        skill: {
-            ...skillNone,
-            module: box.module,
-            type: box.type,
-            semester: box.semester,
-            chapters: box.chapters,
-            links: box.links,
-        },
+        ...openingOf("log", start, end),
+        ...(box.category === ""
+            ? { skill: opening.skill }
+            : { ...opening, category: box.category }),
         plan: box,
-        entry: null,
-        box: null,
     });
 }
 
@@ -2765,27 +2679,7 @@ export async function entryOpenFromBox(box: Box, start: Date, end: Date): Promis
  * @throws {Error} - When the reader gives no valid answer
  */
 export async function boxOpenNew(day: Date): Promise<void> {
-    await entryShow({
-        target: "box",
-        start: day,
-        end: day,
-        time: null,
-        minutes: null,
-        category: null,
-        values: { title: "", from: "", location: "", online: "", with: "" },
-        addresses: {},
-        titleLink: "",
-        locationLink: "",
-        onlineLink: "",
-        onlineChannel: "",
-        onlineTitle: "",
-        note: "",
-        foods: [],
-        skill: skillNone,
-        plan: null,
-        entry: null,
-        box: null,
-    });
+    await entryShow(openingOf("box", day, day));
 }
 
 /**
@@ -2798,12 +2692,19 @@ export async function boxOpenEdit(box: Box): Promise<void> {
     const day: Date =
         box.time === "" ? new Date(`${box.day}T12:00:00`) : new Date(box.time);
     await entryShow({
-        target: "box",
-        start: day,
-        end: day,
+        ...openingOf("box", day, day),
+        ...boxOpeningOf(box),
         time: box.time === "" ? null : day,
         minutes: box.minutes,
         category: box.category === "" ? null : box.category,
+        note: box.note,
+        box: box,
+    });
+}
+
+/** Gives what a box opens the dialog with: its fields, its links and its skill. */
+function boxOpeningOf(box: Box): Partial<EntryOpening> & { skill: SkillValues } {
+    return {
         values: {
             title: box.title,
             from: box.from,
@@ -2817,8 +2718,6 @@ export async function boxOpenEdit(box: Box): Promise<void> {
         onlineLink: box.onlineLink,
         onlineChannel: box.onlineChannel,
         onlineTitle: box.onlineTitle,
-        note: box.note,
-        foods: [],
         skill: {
             ...skillNone,
             module: box.module,
@@ -2827,10 +2726,7 @@ export async function boxOpenEdit(box: Box): Promise<void> {
             chapters: box.chapters,
             links: box.links,
         },
-        plan: null,
-        entry: null,
-        box: box,
-    });
+    };
 }
 
 /**
@@ -2842,11 +2738,7 @@ export async function entryOpenEdit(entry: EventApi): Promise<void> {
     const props: { [field: string]: string } = entry.extendedProps;
     const people: Attendee[] = entry.extendedProps.attendees ?? [];
     await entryShow({
-        target: "log",
-        start: entry.start as Date,
-        end: entry.end as Date,
-        time: null,
-        minutes: null,
+        ...openingOf("log", entry.start as Date, entry.end as Date),
         category: props.category ?? null,
         values: {
             title: entry.title,
@@ -2873,9 +2765,7 @@ export async function entryOpenEdit(entry: EventApi): Promise<void> {
             links: entry.extendedProps.links ?? [],
             rounds: entry.extendedProps.rounds ?? [],
         },
-        plan: null,
         entry: entry,
-        box: null,
     });
 }
 
@@ -2957,32 +2847,28 @@ function enterTake(): void {
     const form: HTMLFormElement = document.getElementById(
         "entry-form",
     ) as HTMLFormElement;
-    const dialog: HTMLDialogElement = document.getElementById(
-        "entry",
-    ) as HTMLDialogElement;
+    const dialog: HTMLDialogElement = dialogOf();
+    const submit = (event: KeyboardEvent): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        (document.activeElement as HTMLElement | null)?.blur();
+        form.requestSubmit();
+    };
     document.addEventListener(
         "keydown",
         (event: KeyboardEvent): void => {
             if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s")
                 return;
             const target: Node = event.target as Node;
-            if (!dialog.open || (target !== document.body && !dialog.contains(target)))
-                return;
-            event.preventDefault();
-            event.stopPropagation();
-            (document.activeElement as HTMLElement | null)?.blur();
-            form.requestSubmit();
+            if (dialog.open && (target === document.body || dialog.contains(target)))
+                submit(event);
         },
         true,
     );
     form.addEventListener(
         "keydown",
         (event: KeyboardEvent): void => {
-            if (event.key !== "Enter" || !event.ctrlKey) return;
-            event.preventDefault();
-            event.stopPropagation();
-            (document.activeElement as HTMLElement | null)?.blur();
-            form.requestSubmit();
+            if (event.key === "Enter" && event.ctrlKey) submit(event);
         },
         true,
     );
@@ -2995,6 +2881,25 @@ function enterTake(): void {
             return;
         event.preventDefault();
         event.target.blur();
+    });
+}
+
+/** Puts its icon into a button of the dialog, and what a click on it does. */
+function buttonStart(
+    id: string,
+    icon: IconNode,
+    words: string,
+    click?: () => void,
+): void {
+    const button: HTMLElement = document.getElementById(id) as HTMLElement;
+    iconPut(button, icon, words);
+    if (click !== undefined) button.addEventListener("click", click);
+}
+
+/** Lets each element of the dialog by its id take an event by `handler`. */
+function listen(ids: string[], type: string, handler: (event: Event) => void): void {
+    ids.forEach((id: string): void => {
+        document.getElementById(id)?.addEventListener(type, handler);
     });
 }
 
@@ -3012,46 +2917,30 @@ export function dayCalendarOf(): Calendar | null {
 export function categoriesStart(calendar: Calendar): void {
     dayCalendar = calendar;
     listsStart();
-    iconPut(document.getElementById("entry-cancel") as HTMLElement, X, "Cancel");
-    iconPut(document.getElementById("entry-save") as HTMLElement, Check, "Save");
-    document
-        .getElementById("entry-cancel")
-        ?.addEventListener("click", (): void => entryClose());
-    document.getElementById("entry-remove")?.addEventListener("click", (): void => {
+    buttonStart("entry-cancel", X, "Cancel", entryClose);
+    buttonStart("entry-save", Check, "Save");
+    listen(["entry-remove"], "click", (): void => {
         entryRemove(calendar).catch(errorShow);
     });
-    iconPut(document.getElementById("entry-duplicate") as HTMLElement, Copy, "Duplicate");
-    document.getElementById("entry-duplicate")?.addEventListener("click", (): void => {
+    buttonStart("entry-duplicate", Copy, "Duplicate", (): void => {
         entryDuplicate().catch(errorShow);
     });
-    iconPut(
-        document.getElementById("entry-plan-edit") as HTMLElement,
-        Pencil,
-        "Change the box in the plan",
-    );
-    document.getElementById("entry-plan-edit")?.addEventListener("click", (): void => {
+    buttonStart("entry-plan-edit", Pencil, "Change the box in the plan", (): void => {
         if (opened.plan !== null) boxOpenEdit(opened.plan).catch(errorShow);
     });
-    ["entry-deadline-day", "entry-deadline-time"].forEach((id: string): void => {
-        document.getElementById(id)?.addEventListener("input", deadlineSee);
+    listen(["entry-deadline-day", "entry-deadline-time"], "input", deadlineSee);
+    listen(["entry-start-day", "entry-start", "entry-end"], "input", endDayFill);
+    listen(["entry-start-day", "entry-end-day"], "change", endDayShow);
+    listen(
+        ["entry-start-day", "entry-start", "entry-end-day", "entry-end"],
+        "input",
+        timesUnmark,
+    );
+    listen(["entry-start"], "change", endFill);
+    listen(["entry-start-day", "entry-deadline-day"], "input", (): void => {
+        if (chosen?.name === skillName) skillDaySet(dayRead());
+        entryFileShow();
     });
-    ["entry-start-day", "entry-start", "entry-end"].forEach((id: string): void =>
-        document.getElementById(id)?.addEventListener("input", endDayFill),
-    );
-    ["entry-start-day", "entry-end-day"].forEach((id: string): void =>
-        document.getElementById(id)?.addEventListener("change", endDayShow),
-    );
-    ["entry-start-day", "entry-start", "entry-end-day", "entry-end"].forEach(
-        (id: string): void =>
-            document.getElementById(id)?.addEventListener("input", timesUnmark),
-    );
-    document.getElementById("entry-start")?.addEventListener("change", endFill);
-    ["entry-start-day", "entry-deadline-day"].forEach((id: string): void =>
-        document.getElementById(id)?.addEventListener("input", (): void => {
-            if (chosen?.name === skillName) skillDaySet(dayRead());
-            entryFileShow();
-        }),
-    );
     const endDay: HTMLInputElement = inputOf("entry-end-day");
     endDay.addEventListener("input", (): void => {
         endDayTyped = true;
