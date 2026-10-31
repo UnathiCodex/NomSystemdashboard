@@ -966,9 +966,9 @@ function markOf(icon: IconNode, word: string, back: (() => void) | null): HTMLEl
  */
 function seriesAct(send: () => Promise<unknown>): void {
     send()
-        .catch((error: unknown): void => console.error(error))
+        .catch(logged)
         .then((): Promise<void> => seriesRefresh())
-        .catch((error: unknown): void => console.error(error));
+        .catch(logged);
 }
 
 /**
@@ -979,11 +979,7 @@ function seriesAct(send: () => Promise<unknown>): void {
  */
 async function seriesRefresh(): Promise<void> {
     if (typing === null) return;
-    if (course !== null)
-        course = await readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(course.module)}` +
-                `&semester=${course.semester}`,
-        );
+    if (course !== null) course = await courseLoad(course.module, course.semester);
     formChanged();
 }
 
@@ -1172,9 +1168,7 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
         ...(grouped !== null && !grouped.made && !mineAt(box.time || box.day)
             ? [
                   pendingActionOf(Plus, "Add as a box of mine", (): void => {
-                      extraAdd(box.time || box.day).catch((error: unknown): void =>
-                          console.error(error),
-                      );
+                      extraAdd(box.time || box.day).catch(logged);
                   }),
               ]
             : []),
@@ -1258,7 +1252,7 @@ function sessionRowOf(
     );
     actions.append(
         pendingActionOf(Check, "Save this session", (): void => {
-            sessionSave(session).catch((error: unknown): void => console.error(error));
+            sessionSave(session).catch(logged);
         }),
         removeOf("Keep the session as it is", (): void => {
             sessionTyped = null;
@@ -1296,8 +1290,7 @@ async function sessionSave(session: NonNullable<typeof sessionTyped>): Promise<v
             location: session.location,
         });
     } catch (error: unknown) {
-        console.error(error);
-        formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
+        failed(error);
         return;
     }
     sessionTyped = null;
@@ -1337,8 +1330,7 @@ async function extraAdd(start: string): Promise<void> {
             extra: true,
         });
     } catch (error: unknown) {
-        console.error(error);
-        formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
+        failed(error);
         return;
     }
     await seriesRefresh();
@@ -1416,9 +1408,7 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
                   known === undefined || box.number === ""
                       ? null
                       : (): void => {
-                            boxShow(known).catch((error: unknown): void =>
-                                console.error(error),
-                            );
+                            boxShow(known).catch(logged);
                         },
                   known?.note || "Open",
               )
@@ -1452,7 +1442,7 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
         known === undefined || kinds !== undefined || box.number !== ""
             ? null
             : (): void => {
-                  boxShow(known).catch((error: unknown): void => console.error(error));
+                  boxShow(known).catch(logged);
               };
     const mine: Form | null = grouped === null ? typing : null;
     return listRowOf({
@@ -1707,7 +1697,7 @@ async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
 export function previewSoon(form: HTMLElement, preview: Preview): void {
     clearTimeout(previewWait);
     previewWait = window.setTimeout((): void => {
-        previewShow(form, preview).catch((error: unknown): void => console.error(error));
+        previewShow(form, preview).catch(logged);
     }, 150);
 }
 
@@ -1718,6 +1708,63 @@ export function previewSoon(form: HTMLElement, preview: Preview): void {
  */
 export async function courseSend<T>(address: string, body: object): Promise<T> {
     return readerAsk<T>(address, { method: "POST", body: JSON.stringify(body) });
+}
+
+/** Logs an error the dialog shows nothing of. */
+function logged(error: unknown): void {
+    console.error(error);
+}
+
+/** Logs an error of the reader and shows the hint above the buttons of the form. */
+function failed(error: unknown): void {
+    console.error(error);
+    formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
+}
+
+/** Gives the dialog of a series, its element. */
+function dialogOf(): HTMLDialogElement {
+    return document.getElementById("series") as HTMLDialogElement;
+}
+
+/** Shows the dialog of a series with nothing focused, see {@link seriesOpen}. */
+function dialogShow(): void {
+    if (!dialogOf().open) dialogOf().showModal();
+    (document.activeElement as HTMLElement | null)?.blur();
+}
+
+/**
+ * Loads the course of a module in a semester.
+ *
+ * @throws {Error} - When the reader cannot answer
+ */
+async function courseLoad(module: string, semester: string): Promise<Course> {
+    return readerAsk<Course>(
+        `/api/course/module?module=${encodeURIComponent(module)}&semester=${semester}`,
+    );
+}
+
+/**
+ * Loads the categories with the values of their fields as of now.
+ *
+ * @throws {Error} - When the reader cannot answer
+ */
+async function categoriesLoad(): Promise<Category[]> {
+    return readerAsk<Category[]>(
+        `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
+    );
+}
+
+/**
+ * Forgets what the form showed and opened, as the form of another series opens,
+ * see {@link previewForget}.
+ */
+function formReset(): void {
+    previewForget();
+    placeEdit = null;
+    placeOpen = false;
+    onlineOpen = false;
+    withOpen = [];
+    slotsFreed = [];
 }
 
 /** Gives the groups of a type of the course of the dialog. */
@@ -2457,7 +2504,7 @@ function groupPickOf(form: Form): HTMLElement {
                         .then((): Promise<void> =>
                             seriesOpen(loaded.module, form.type, loaded.semester, done),
                         )
-                        .catch((error: unknown): void => console.error(error));
+                        .catch(logged);
                 },
                 (group: string): void => groupFrom(form, group),
             ),
@@ -2493,9 +2540,7 @@ function groupWaits(form: Form): boolean {
  * the two together in the middle.
  */
 function groupFrom(form: Form, group: string): void {
-    const series: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
+    const series: HTMLDialogElement = dialogOf();
     const under: HTMLDialogElement = document.getElementById(
         "series-under",
     ) as HTMLDialogElement;
@@ -2525,7 +2570,7 @@ function underClose(): void {
     under.close();
     under.replaceChildren();
     under.style.translate = "";
-    (document.getElementById("series") as HTMLDialogElement).style.translate = "";
+    dialogOf().style.translate = "";
 }
 
 /**
@@ -2552,13 +2597,7 @@ function groupStart(type: string, group: string): void {
     };
     repeated = null;
     removeAsked = false;
-    previewForget();
-    listOpened = false;
-    placeEdit = null;
-    placeOpen = false;
-    onlineOpen = false;
-    withOpen = [];
-    slotsFreed = [];
+    formReset();
     typing = {
         type: type,
         old: rule ?? null,
@@ -2641,13 +2680,10 @@ function seriesBinOf(form: Form): HTMLButtonElement {
             .then(async (): Promise<void> => {
                 if (await groupReturn(true)) return;
                 entryBack = null;
-                (document.getElementById("series") as HTMLDialogElement).close();
+                dialogOf().close();
                 done();
             })
-            .catch((error: unknown): void => {
-                console.error(error);
-                formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
-            });
+            .catch(failed);
     });
     return bin;
 }
@@ -2665,9 +2701,7 @@ function seriesBinOf(form: Form): HTMLButtonElement {
  */
 function formFill(): void {
     if (typing === null) return;
-    const dialog: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
+    const dialog: HTMLDialogElement = dialogOf();
     const scrolled: number = dialog.scrollTop;
     const form: Form = typing;
     const picking: boolean =
@@ -2722,10 +2756,9 @@ function formFill(): void {
     cancel.addEventListener("click", (): void => {
         groupReturn(false)
             .then((back: boolean): void => {
-                if (!back)
-                    (document.getElementById("series") as HTMLDialogElement).close();
+                if (!back) dialogOf().close();
             })
-            .catch((error: unknown): void => console.error(error));
+            .catch(logged);
     });
     save.type = "submit";
     save.className = "panel-main";
@@ -2792,13 +2825,12 @@ async function formSave(): Promise<void> {
         await placeRename(typing, false);
         await personsRename(personEdits, persons, false, picked);
     } catch (error: unknown) {
-        console.error(error);
-        formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
+        failed(error);
         return;
     }
     if (await groupReturn(true)) return;
     entryBack = null;
-    (document.getElementById("series") as HTMLDialogElement).close();
+    dialogOf().close();
     done();
 }
 
@@ -2813,10 +2845,7 @@ async function formSave(): Promise<void> {
 async function groupReturn(reload: boolean): Promise<boolean> {
     if (groupBack === null || grouped === null) return false;
     if (reload && course !== null)
-        course = await readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(course.module)}` +
-                `&semester=${course.semester}`,
-        );
+        course = await courseLoad(course.module, course.semester);
     typing = groupBack;
     groupBack = null;
     grouped = null;
@@ -2837,12 +2866,10 @@ async function groupReturn(reload: boolean): Promise<boolean> {
 function dialogStart(): void {
     if (dialogStarted) return;
     dialogStarted = true;
-    const dialog: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
+    const dialog: HTMLDialogElement = dialogOf();
     formElementOf().addEventListener("submit", (event: SubmitEvent): void => {
         event.preventDefault();
-        formSave().catch((error: unknown): void => console.error(error));
+        formSave().catch(logged);
     });
     formElementOf().addEventListener("keydown", (event: KeyboardEvent): void => {
         if (
@@ -2853,16 +2880,14 @@ function dialogStart(): void {
             return;
         event.preventDefault();
         event.target.blur();
-        if (event.ctrlKey)
-            formSave().catch((error: unknown): void => console.error(error));
+        if (event.ctrlKey) formSave().catch(logged);
     });
     const entry: HTMLDialogElement = document.getElementById(
         "entry",
     ) as HTMLDialogElement;
     entry.addEventListener("close", (): void => {
         if (!entry.open) entry.removeAttribute("data-over");
-        if (dialog.open && !entry.open)
-            seriesRefresh().catch((error: unknown): void => console.error(error));
+        if (dialog.open && !entry.open) seriesRefresh().catch(logged);
     });
     const back: (event: Event) => void = (event: Event): void => {
         if (
@@ -2874,16 +2899,13 @@ function dialogStart(): void {
         )
             return;
         event.preventDefault();
-        groupReturn(false).catch((error: unknown): void => console.error(error));
+        groupReturn(false).catch(logged);
     };
     dialog.addEventListener("cancel", back);
     document.addEventListener("keydown", back);
     dialog.addEventListener("close", (): void => {
         underClose();
-        if (entryBack !== null)
-            entryBackShow(entryBack).catch((error: unknown): void =>
-                console.error(error),
-            );
+        if (entryBack !== null) entryBackShow(entryBack).catch(logged);
         entryBack = null;
         typing = null;
         plain = null;
@@ -2916,26 +2938,16 @@ export async function seriesOpen(
     removeAsked = false;
     done = saved;
     const loaded: [Course, Category[], Person[]] = await Promise.all([
-        readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(module)}` +
-                `&semester=${semester}`,
-        ),
-        readerAsk<Category[]>(
-            `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
-        ),
+        courseLoad(module, semester),
+        categoriesLoad(),
         personsKept(),
     ]);
     [course, categories, persons] = loaded;
     const rule: Rule | null =
         course.series.find((series: Series): boolean => series.rule.type === type)
             ?.rule ?? (type === examType ? examRuleOf(course) : null);
-    previewForget();
+    formReset();
     listOpened = type === examType;
-    placeEdit = null;
-    placeOpen = false;
-    onlineOpen = false;
-    withOpen = [];
-    slotsFreed = [];
     typing = {
         type: rule?.type ?? type,
         old: rule,
@@ -2961,11 +2973,7 @@ export async function seriesOpen(
     kindAsked = "";
     extraTyped = null;
     formFill();
-    const dialog: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
-    if (!dialog.open) dialog.showModal();
-    (document.activeElement as HTMLElement | null)?.blur();
+    dialogShow();
     if (rule === null && type === "")
         formElementOf().querySelector<HTMLButtonElement>(".picker-line")?.click();
 }
@@ -2988,22 +2996,13 @@ export async function groupOpen(
     plain = null;
     done = (): void => {};
     const loaded: [Course, Category[], Person[]] = await Promise.all([
-        readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(module)}` +
-                `&semester=${semester}`,
-        ),
-        readerAsk<Category[]>(
-            `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
-        ),
+        courseLoad(module, semester),
+        categoriesLoad(),
         personsKept(),
     ]);
     [course, categories, persons] = loaded;
     groupStart(type, group);
-    const dialog: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
-    if (!dialog.open) dialog.showModal();
-    (document.activeElement as HTMLElement | null)?.blur();
+    dialogShow();
 }
 
 /**
@@ -3021,13 +3020,8 @@ async function seriesRepeat(
     saved: () => void,
 ): Promise<void> {
     const loaded: [Course | null, Category[], Person[]] = await Promise.all([
-        readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(from.box.module)}` +
-                `&semester=${from.box.semester}`,
-        ).catch((): null => null),
-        readerAsk<Category[]>(
-            `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
-        ),
+        courseLoad(from.box.module, from.box.semester).catch((): null => null),
+        categoriesLoad(),
         personsKept(),
     ]);
     if (
@@ -3046,13 +3040,7 @@ async function seriesRepeat(
     groupBack = null;
     removeAsked = false;
     done = saved;
-    previewForget();
-    listOpened = false;
-    placeEdit = null;
-    placeOpen = false;
-    onlineOpen = false;
-    withOpen = [];
-    slotsFreed = [];
+    formReset();
     typing = {
         ...days,
         type: from.box.type,
@@ -3068,11 +3056,7 @@ async function seriesRepeat(
         kinds: {},
     };
     formFill();
-    const dialog: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
-    if (!dialog.open) dialog.showModal();
-    (document.activeElement as HTMLElement | null)?.blur();
+    dialogShow();
 }
 
 /**
@@ -3498,9 +3482,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     const daysOf: (part: Plain) => number[] = (part: Plain): number[] =>
         part.month > 0 ? [yearly] : part.monthDay > 0 ? [monthly] : part.weekdays;
     const loaded: [Category[], Person[]] = await Promise.all([
-        readerAsk<Category[]>(
-            `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
-        ),
+        categoriesLoad(),
         personsKept(),
     ]);
     dialogStart();
@@ -3521,13 +3503,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
         ),
     );
     done = saved;
-    previewForget();
-    listOpened = false;
-    placeEdit = null;
-    placeOpen = false;
-    onlineOpen = false;
-    withOpen = [];
-    slotsFreed = [];
+    formReset();
     const slots: Slot[] = parts
         .flatMap((part: Plain): Slot[] =>
             daysOf(part).map((weekday: number): Slot => ({
@@ -3563,11 +3539,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
         kinds: {},
     };
     formFill();
-    const dialog: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
-    if (!dialog.open) dialog.showModal();
-    (document.activeElement as HTMLElement | null)?.blur();
+    dialogShow();
 }
 
 /**
@@ -3659,7 +3631,7 @@ function freshRowsOf(): HTMLElement[] {
                     category: values[0] ?? "",
                     picked: { module: "", type: "" },
                 };
-                freshFollow().catch((error: unknown): void => console.error(error));
+                freshFollow().catch(logged);
             },
         }),
     );
@@ -3668,10 +3640,10 @@ function freshRowsOf(): HTMLElement[] {
     skillPairOf(fresh.picked, (picked: ModuleType): void => {
         if (fresh === null) return;
         fresh = { ...fresh, picked: picked };
-        freshFollow().catch((error: unknown): void => console.error(error));
+        freshFollow().catch(logged);
     })
         .then((pair: HTMLElement): void => holder.replaceChildren(pair))
-        .catch((error: unknown): void => console.error(error));
+        .catch(logged);
     return [category, rowOf("Summary", holder)];
 }
 
@@ -3706,9 +3678,7 @@ function semesterRowOf(semester: string): HTMLElement {
         noun: "semester",
         pick: (values: string[]): void => {
             if ((values[0] ?? semester) !== semester)
-                semesterSwitch(values[0]).catch((error: unknown): void =>
-                    console.error(error),
-                );
+                semesterSwitch(values[0]).catch(logged);
         },
     });
     const form: Form | null = typing;
@@ -3866,9 +3836,7 @@ async function freshFollow(): Promise<void> {
  */
 export async function seriesNew(day: string, saved: () => void): Promise<void> {
     const loaded: [Category[], Person[]] = await Promise.all([
-        readerAsk<Category[]>(
-            `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
-        ),
+        categoriesLoad(),
         personsKept(),
     ]);
     dialogStart();
@@ -3886,13 +3854,7 @@ export async function seriesNew(day: string, saved: () => void): Promise<void> {
     groupBack = null;
     removeAsked = false;
     done = saved;
-    previewForget();
-    listOpened = false;
-    placeEdit = null;
-    placeOpen = false;
-    onlineOpen = false;
-    withOpen = [];
-    slotsFreed = [];
+    formReset();
     typing = {
         type: "",
         old: null,
@@ -3913,10 +3875,6 @@ export async function seriesNew(day: string, saved: () => void): Promise<void> {
         kinds: {},
     };
     formFill();
-    const dialog: HTMLDialogElement = document.getElementById(
-        "series",
-    ) as HTMLDialogElement;
-    if (!dialog.open) dialog.showModal();
-    (document.activeElement as HTMLElement | null)?.blur();
+    dialogShow();
     formElementOf().querySelector<HTMLButtonElement>(".picker-line")?.click();
 }
