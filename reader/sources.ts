@@ -11,7 +11,8 @@
  * Every file at its own place, none from a copy elsewhere, like a draft in `.claude`.
  * It writes only into the new system
  * and, on the server that holds it, into what the dashboards share in `NomKommunikation`,
- * see {@link writeAllowed}, the editor into the notes of my modules, see {@link editor},
+ * see {@link writeAllowed}, the editor into the notes of my modules
+ * and the file of my corrections, see {@link editor},
  * and a click on a folder of a module not there yet makes it,
  * see `folderMake` in `./notes.ts`.
  * A file or folder of the new system that is missing, like the log of a year
@@ -181,14 +182,18 @@ export const notes: NotesSources = {
 /**
  * Places the editor writes, the only ones besides the files of the new system,
  * see {@link systemFiles}.
+ * - `corrections`: Each save of a note of my modules as a unified diff at its end,
+ *   out of Git, for the learn skill to turn into rules of my style.
  */
 export type EditorSources = {
     modules: string;
+    corrections: string;
 };
 
 /** {@link EditorSources} as they lie in the vault. */
 export const editor: EditorSources = {
     modules: notes.modules,
+    corrections: join(vault, ".claude", "skills", "learn", "corrections.diff"),
 };
 
 /**

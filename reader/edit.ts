@@ -2,16 +2,26 @@
  * ## Edit
  *
  * Writes a note of my modules as I saved it in the editor,
- * exactly the text sent, nothing reformatted.
+ * exactly the text sent, nothing reformatted,
+ * and first adds its change as a unified diff to the end of the file of my corrections,
+ * which the learn skill turns into rules of my style, see `editor` in `./sources.ts`.
  * When its file changed on the disk since the editor read it, like by a Claude session,
  * the text sent and that change are merged, see {@link textMerged},
  * so nothing I typed is lost.
  * Paths are those of the scripts view, from `NomSkillingmodules`.
  */
 
-import { readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
-import { extname, join, sep } from "node:path";
-import { diffArrays } from "diff";
+import {
+    appendFileSync,
+    mkdirSync,
+    readFileSync,
+    realpathSync,
+    statSync,
+    writeFileSync,
+} from "node:fs";
+import { dirname, extname, join, sep } from "node:path";
+import { createTwoFilesPatch, diffArrays, FILE_HEADERS_ONLY } from "diff";
+import { Temporal } from "temporal-polyfill";
 import { editor } from "./sources.ts";
 
 /**
@@ -161,8 +171,17 @@ function noteFileOf(path: string): string {
     return file;
 }
 
+/** Gives the time now in Berlin, like `2026-10-17 14:40:19`, for the head of a diff. */
+function stampOf(): string {
+    return Temporal.Now.plainDateTimeISO("Europe/Berlin")
+        .toString({ smallestUnit: "second" })
+        .replace("T", " ");
+}
+
 /**
- * Writes a note of my modules as I saved it, merged with a change of its file on disk.
+ * Writes a note of my modules as I saved it, merged with a change of its file on disk:
+ * first its change as `diff -u` writes it at the end of the file of my corrections,
+ * its head naming the note from `NomSkillingmodules` and the time, then the text.
  * A text without change writes nothing.
  *
  * @throws {Error} - When it is no note of my modules, see {@link noteFileOf},
@@ -179,6 +198,22 @@ export function noteWrite(change: NoteChange): Written {
     const written: Written = { text: text, changes: changesOf(change.text, text) };
     if (text === old) return written;
 
+    const stamp: string = stampOf();
+    mkdirSync(dirname(editor.corrections), { recursive: true });
+    appendFileSync(
+        editor.corrections,
+        createTwoFilesPatch(
+            `a/${change.path}`,
+            `b/${change.path}`,
+            old,
+            text,
+            stamp,
+            stamp,
+            {
+                headerOptions: FILE_HEADERS_ONLY,
+            },
+        ),
+    );
     writeFileSync(file, text);
     return written;
 }
