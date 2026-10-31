@@ -468,6 +468,11 @@ type Draft = Online & {
 };
 
 /**
+ * The fields of a new skill to-do but its place and times, see {@link skillTodoOf}.
+ */
+type TodoHead = Omit<TodoFields, keyof Place | "day" | "time" | "minutes">;
+
+/**
  * Everything of a box a change sets, see {@link draftSet}.
  */
 const allFields: Field[] = ["day", "time", "location", "online", "attendees", "group"];
@@ -873,6 +878,13 @@ function pinnedOf(groups: Group[], type: string): string {
 }
 
 /**
+ * Gives a test for the group of a type and a name.
+ */
+function groupMatch(type: string, group: string): (one: Group) => boolean {
+    return (one: Group): boolean => one.rule.type === type && one.rule.group === group;
+}
+
+/**
  * Tells whether a box of my tutorials is my own choice:
  * a session I took from a group by hand as a box of its own,
  * or a week I picked for a group, by its `X-GROUP` other than the group pinned;
@@ -998,6 +1010,15 @@ function courseBoxesRead(code: string, semester: string): Box[] {
         .sort((first: Box, second: Box): number =>
             (first.time || first.day).localeCompare(second.time || second.day),
         );
+}
+
+/**
+ * Reads the boxes of a type of a module folder of a semester, see {@link courseBoxesRead}.
+ */
+function typedBoxesRead(module: string, semester: string, type: string): Box[] {
+    return courseBoxesRead(codeOf(module), semester).filter(
+        (box: Box): boolean => box.type === type,
+    );
 }
 
 /**
@@ -1235,6 +1256,14 @@ function dayOfStart(start: string): string {
 }
 
 /**
+ * Gives the `UID` and the start of a session by its identifier,
+ * see `entryIdOf` in `calendar.ts`.
+ */
+function idPartsOf(id: string): [string, string] {
+    return [id.slice(0, id.lastIndexOf("#")), id.slice(id.lastIndexOf("#") + 1)];
+}
+
+/**
  * Gives the start of a box of a date as ISO instant, empty for a date without times.
  */
 function slotMomentOf(day: string, start: string): string {
@@ -1300,6 +1329,14 @@ function ruleCheck(rule: Rule): void {
 }
 
 /**
+ * Tells whether a box is a to-do of the new system, no date of a series of the file,
+ * the only kind the dashboard changes and numbers.
+ */
+function newTodoIs(box: Box): boolean {
+    return box.editable && box.todo && !box.series;
+}
+
+/**
  * Tells whether a change of a series may change or remove a box:
  * a to-do of the new system, no date of a series of the file, never pushed,
  * open or cancelled by the university;
@@ -1308,9 +1345,7 @@ function ruleCheck(rule: Rule): void {
  */
 function changeable(box: Box): boolean {
     return (
-        box.editable &&
-        box.todo &&
-        !box.series &&
+        newTodoIs(box) &&
         box.pushed.length === 0 &&
         (box.state === "open" || box.state === "university")
     );
@@ -1323,13 +1358,7 @@ function changeable(box: Box): boolean {
  * nor pushed away from a day, as it shows on that day.
  */
 function stateable(box: Box): boolean {
-    return (
-        box.editable &&
-        box.todo &&
-        !box.series &&
-        box.state !== "done" &&
-        box.state !== "pushed"
-    );
+    return newTodoIs(box) && box.state !== "done" && box.state !== "pushed";
 }
 
 /**
@@ -1341,7 +1370,7 @@ function stateable(box: Box): boolean {
  * while its log entry keeps its own.
  */
 function retimable(box: Box): boolean {
-    return box.editable && box.todo && !box.series && box.pushed.length === 0;
+    return newTodoIs(box) && box.pushed.length === 0;
 }
 
 /**
@@ -1543,10 +1572,7 @@ function numbersOf(drafts: Draft[], weeks: string[]): void {
         )
         .forEach((draft: Draft): void => {
             if (draft.number === "NONE") return;
-            if (
-                draft.box !== null &&
-                !(draft.box.editable && draft.box.todo && !draft.box.series)
-            ) {
+            if (draft.box !== null && !newTodoIs(draft.box)) {
                 last = /^\d+$/.test(draft.number) ? Number(draft.number) : last;
                 return;
             }
@@ -1572,12 +1598,32 @@ function numbersOf(drafts: Draft[], weeks: string[]): void {
 export function numbersRenew(module: string, type: string, semester: string): void {
     const folder: string = moduleFolderOf(codeOf(module)) ?? module;
     folderCheck(folder);
-    const typed: Box[] = courseBoxesRead(codeOf(folder), semester).filter(
-        (box: Box): boolean => box.type === type,
-    );
-    const drafts: Draft[] = typed.map(draftOf);
+    const drafts: Draft[] = typedBoxesRead(folder, semester, type).map(draftOf);
     numbersOf(drafts, tutorialWeeksOf(groupsRead(folder, semester), type));
     draftsWrite(folder, type, semester, drafts);
+}
+
+/**
+ * Gives the fields of a new skill to-do of a type of a module but its place and times,
+ * as the dialog adds one, see `todoAppend` in `calendar.ts`.
+ */
+function skillTodoOf(module: string, type: string, semester: string): TodoHead {
+    const code: string = codeOf(module);
+    const [title, titleLink]: [string, string] = titleOf(
+        { category: skillName, title: "", module: code, type: type, semester: semester },
+        null,
+    );
+    return {
+        category: skillName,
+        title: title,
+        titleLink: titleLink,
+        from: "",
+        module: code,
+        type: type,
+        semester: semester,
+        note: "",
+        deadline: "",
+    };
 }
 
 /**
@@ -1607,28 +1653,16 @@ function draftsWrite(
     drafts: Draft[],
 ): void {
     const file: string = skillFileOf(module, planEnding);
-    const code: string = codeOf(module);
-    const [title, titleLink]: [string, string] = titleOf(
-        { category: skillName, title: "", module: code, type: type, semester: semester },
-        null,
-    );
+    const head: TodoHead = skillTodoOf(module, type, semester);
     drafts.forEach((draft: Draft): void => {
         const box: Box | null = draft.box;
         if (box === null) {
             const id: string = todoAppend(file, {
-                category: skillName,
-                title: title,
-                titleLink: titleLink,
+                ...head,
                 ...placeOf(draft),
-                from: "",
-                module: code,
-                type: type,
-                semester: semester,
-                note: "",
                 day: draft.day,
                 time: draft.time === "" ? null : new Date(draft.time),
                 minutes: draft.minutes,
-                deadline: "",
             });
             propertiesPut(file, id, [
                 ["x-number", [draft.number]],
@@ -1763,9 +1797,9 @@ export function seriesApply(change: SeriesChange): Planned[] {
     const rule: Rule = change.rule;
     const old: Rule | null = change.old;
     const today: string = berlinDateOf(new Date());
-    const typed: Box[] = courseBoxesRead(codeOf(change.module), rule.semester)
-        .filter((box: Box): boolean => box.type === rule.type)
-        .map((box: Box): Box => stateSet(box, change.states?.[box.id]));
+    const typed: Box[] = typedBoxesRead(change.module, rule.semester, rule.type).map(
+        (box: Box): Box => stateSet(box, change.states?.[box.id]),
+    );
     const groups: Group[] = groupsRead(change.module, rule.semester);
     const mine: string = pinnedOf(groups, rule.type);
     const link: string = placeLinkOf(rule.location, old);
@@ -1794,13 +1828,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
                       slot.weekday ===
                       (change.before?.[date.slot] ?? rule.slots[date.slot].weekday),
               );
-    const own: Group[] =
-        mine === ""
-            ? []
-            : groups.filter(
-                  (group: Group): boolean =>
-                      group.rule.type === rule.type && group.rule.group === mine,
-              );
+    const own: Group[] = mine === "" ? [] : groups.filter(groupMatch(rule.type, mine));
     const met: Set<string> | null =
         own.length === 0
             ? null
@@ -1982,9 +2010,7 @@ export function examSet(change: ExamChange): void {
     if (
         box.category !== skillName ||
         box.type !== examType ||
-        !box.editable ||
-        !box.todo ||
-        box.series ||
+        !newTodoIs(box) ||
         (change.kind !== box.number && !examKinds.includes(change.kind)) ||
         (timed && (!retimable(box) || !timesRight(change)))
     )
@@ -2038,9 +2064,7 @@ export function groupMine(change: MineChange): Planned[] {
     const semester: string = semesterOf(berlinDateOf(new Date()));
     const groups: Group[] = groupsRead(change.module, semester);
     const pinned: string = pinnedOf(groups, change.type);
-    const typed: Box[] = courseBoxesRead(codeOf(change.module), semester).filter(
-        (box: Box): boolean => box.type === change.type,
-    );
+    const typed: Box[] = typedBoxesRead(change.module, semester, change.type);
     if (change.group === "") {
         const kept: Draft[] = typed.map((box: Box): Draft => ({
             ...draftOf(box),
@@ -2053,10 +2077,7 @@ export function groupMine(change: MineChange): Planned[] {
         }
         return plannedOf(kept);
     }
-    const group: Group | undefined = groups.find(
-        (one: Group): boolean =>
-            one.rule.type === change.type && one.rule.group === change.group,
-    );
+    const group: Group | undefined = groups.find(groupMatch(change.type, change.group));
     const now: number = Date.now();
     const coming: Session[] = (group?.sessions ?? []).filter(
         (session: Session): boolean =>
@@ -2153,10 +2174,7 @@ export function weekPick(change: PickChange): void {
     folderCheck(change.module);
     const semester: string = semesterOf(dayOfStart(change.start));
     const groups: Group[] = groupsRead(change.module, semester);
-    const group: Group | undefined = groups.find(
-        (one: Group): boolean =>
-            one.rule.type === change.type && one.rule.group === change.group,
-    );
+    const group: Group | undefined = groups.find(groupMatch(change.type, change.group));
     const session: Session | undefined = group?.sessions.find(
         (one: Session): boolean => Date.parse(one.start) === Date.parse(change.start),
     );
@@ -2168,11 +2186,7 @@ export function weekPick(change: PickChange): void {
     const weekOfSession: (one: Session) => string = (one: Session): string =>
         mondayOf(dayOfStart(one.start));
     const week: string = weekOfSession(session);
-    const typedRead: () => Box[] = (): Box[] =>
-        courseBoxesRead(codeOf(change.module), semester).filter(
-            (one: Box): boolean => one.type === change.type,
-        );
-    let typed: Box[] = typedRead();
+    let typed: Box[] = typedBoxesRead(change.module, semester, change.type);
     const at: (one: Box) => boolean = (one: Box): boolean =>
         (one.time || one.day) === session.start ||
         (one.time !== "" && Date.parse(one.time) === Date.parse(session.start));
@@ -2198,7 +2212,7 @@ export function weekPick(change: PickChange): void {
     );
     if (skipped !== undefined) {
         boxDrop(skipped.id, false);
-        typed = typedRead();
+        typed = typedBoxesRead(change.module, semester, change.type);
     }
     const open: Box[] = typed.filter(
         (one: Box): boolean =>
@@ -2259,8 +2273,7 @@ export function weekPick(change: PickChange): void {
 function groupsTake(gone: GroupGone): number {
     const file: string = skillFileOf(gone.module, planEnding);
     const found: Group[] = groupsRead(gone.module, gone.semester).filter(
-        (group: Group): boolean =>
-            group.rule.type === gone.type && group.rule.group === gone.group,
+        groupMatch(gone.type, gone.group),
     );
     found.forEach((group: Group): void =>
         group.ids.forEach((id: string): void => entryRemove(file, id)),
@@ -2283,35 +2296,17 @@ function groupsTake(gone: GroupGone): number {
  */
 function groupWrite(module: string, rule: Rule, days: string[]): string {
     const slot: Slot = rule.slots[0];
-    const code: string = codeOf(module);
-    const [title, titleLink]: [string, string] = titleOf(
-        {
-            category: skillName,
-            title: "",
-            module: code,
-            type: rule.type,
-            semester: rule.semester,
-        },
-        null,
-    );
+    const head: TodoHead = skillTodoOf(module, rule.type, rule.semester);
     const start: Date | null = slot.start === "" ? null : instantOf(days[0], slot.start);
     const fields: TodoFields = {
-        category: skillName,
-        title: title,
-        titleLink: titleLink,
+        ...head,
         location: rule.location,
         locationLink: placeLinkOf(rule.location, null),
         ...onlineFor(rule, null),
-        from: "",
         attendees: rule.attendees,
-        module: code,
-        type: rule.type,
-        semester: rule.semester,
-        note: "",
         day: days[0],
         time: start,
         minutes: slotLengthOf(slot),
-        deadline: "",
     };
     const until: string =
         start === null
@@ -2356,11 +2351,11 @@ function groupBoxesMove(
     semester: string,
 ): void {
     const found: Group | undefined = groupsRead(module, semester).find(
-        (one: Group): boolean => one.rule.type === type && one.rule.group === group,
+        groupMatch(type, group),
     );
     if (found === undefined) return;
-    const typed: Box[] = courseBoxesRead(codeOf(module), semester).filter(
-        (box: Box): boolean => box.type === type && box.group === group,
+    const typed: Box[] = typedBoxesRead(module, semester, type).filter(
+        (box: Box): boolean => box.group === group,
     );
     const moving: Box[] = typed.filter(
         (box: Box): boolean => box.state === "open" && changeable(box) && ahead(box),
@@ -2532,7 +2527,7 @@ export function groupApply(change: GroupChange): Planned[] {
                     (session: Session): boolean => dayOfStart(session.start) < date.day,
                 )
                 .pop();
-            const uid: string = before?.id.slice(0, before.id.lastIndexOf("#")) ?? "";
+            const uid: string = idPartsOf(before?.id ?? "")[0];
             return before === undefined ||
                 !near.some(
                     (session: Session): boolean =>
@@ -2674,20 +2669,10 @@ export function groupApply(change: GroupChange): Planned[] {
         dates
             .filter((date: RuleDate): boolean => cancelled(date) && met.has(date.day))
             .forEach((date: RuleDate): void => {
-                const id: string = sessionOn(date.day)?.id ?? "";
-                seriesDayRemove(
-                    file,
-                    id.slice(0, id.lastIndexOf("#")),
-                    id.slice(id.lastIndexOf("#") + 1),
-                );
+                seriesDayRemove(file, ...idPartsOf(sessionOn(date.day)?.id ?? ""));
             });
         opened.forEach((id: string | undefined): void => {
-            if (id !== undefined)
-                seriesDayRestore(
-                    file,
-                    id.slice(0, id.lastIndexOf("#")),
-                    id.slice(id.lastIndexOf("#") + 1),
-                );
+            if (id !== undefined) seriesDayRestore(file, ...idPartsOf(id));
         });
     } else {
         (old?.ids ?? [])
@@ -2739,11 +2724,8 @@ export function groupApply(change: GroupChange): Planned[] {
                 change.states?.[date.day] === "open" && skipped.has(date.day),
         )
         .map((date: RuleDate): string => date.day);
-    courseBoxesRead(codeOf(change.module), rule.semester)
-        .filter(
-            (box: Box): boolean =>
-                box.type === rule.type && box.group === rule.group && changeable(box),
-        )
+    typedBoxesRead(change.module, rule.semester, rule.type)
+        .filter((box: Box): boolean => box.group === rule.group && changeable(box))
         .forEach((box: Box): void => {
             if (box.state === "open" && off.includes(box.day))
                 boxUniversity(box.id, true);
@@ -2771,17 +2753,15 @@ export function sessionApply(change: SessionChange): void {
     const file: string = skillFileOf(change.module, planEnding);
     const sources: CalendarSource[] = [{ folder: dirname(file), ending: basename(file) }];
     const group: Group | undefined = groupsRead(change.module, change.semester).find(
-        (one: Group): boolean =>
-            one.rule.type === change.type && one.rule.group === change.group,
+        groupMatch(change.type, change.group),
     );
     const session: Session | undefined = group?.sessions.find(
         (one: Session): boolean => one.id === change.id,
     );
-    const at: number = change.id.lastIndexOf("#");
     const found: [string, Entry] | undefined =
         session === undefined
             ? undefined
-            : occurrenceLookup(sources, change.id.slice(0, at), change.id.slice(at + 1));
+            : occurrenceLookup(sources, ...idPartsOf(change.id));
     if (found === undefined || !timesRight(change))
         throw new Error(
             `No session ${change.id} of group ${change.type} ${change.group} ` +
@@ -2825,7 +2805,7 @@ function groupRename(
 ): void {
     const plan: string = skillFileOf(module, planEnding);
     groupsRead(module, semester)
-        .filter((one: Group): boolean => one.rule.type === type && one.rule.group === was)
+        .filter(groupMatch(type, was))
         .forEach((one: Group): void =>
             one.ids.forEach((id: string): void =>
                 propertiesPut(plan, id, [
@@ -2862,8 +2842,8 @@ function groupRename(
  */
 export function courseSeriesRemove(gone: Omit<GroupGone, "group">): number {
     folderCheck(gone.module);
-    const boxes: Box[] = courseBoxesRead(codeOf(gone.module), gone.semester).filter(
-        (box: Box): boolean => box.type === gone.type && box.number !== "",
+    const boxes: Box[] = typedBoxesRead(gone.module, gone.semester, gone.type).filter(
+        (box: Box): boolean => box.number !== "",
     );
     if (boxes.length === 0)
         throw new Error(`No series ${gone.type} of ${gone.semester} in ${gone.module}`);
@@ -2888,12 +2868,12 @@ export function groupRemove(gone: GroupGone): void {
         throw new Error(
             `No group ${gone.type} ${gone.group} of ${gone.semester} in ${gone.module}`,
         );
-    const kept: Draft[] = courseBoxesRead(codeOf(gone.module), gone.semester)
-        .filter((box: Box): boolean => box.type === gone.type)
-        .map((box: Box): Draft => ({
+    const kept: Draft[] = typedBoxesRead(gone.module, gone.semester, gone.type).map(
+        (box: Box): Draft => ({
             ...draftOf(box),
             removed: box.group === gone.group && ahead(box) && changeable(box),
-        }));
+        }),
+    );
     numbersOf(kept, tutorialWeeksOf(groupsRead(gone.module, gone.semester), gone.type));
     draftsWrite(gone.module, gone.type, gone.semester, kept);
 }
