@@ -44,23 +44,46 @@ body:has(> .food) {
         border-left: 1px solid var(--line);
     }
 
-    /* Only the lists of a window scroll, a search opened in one of their lines stays as it is */
     .food-foods,
-    .food-window,
-    .food-dishes,
-    .food-window > .food-search {
+    .food-window {
         display: flex;
         flex-direction: column;
         flex: 1 1 0;
         min-height: 0;
     }
 
-    .food-dishes > .dish-list,
-    .food-window > .food-search > .food-results {
+    .food-dishes,
+    #food-search {
         flex: 1 1 0;
+        min-height: 0;
+    }
+
+    /* Only the lines of a list scroll, a search opened in one of them stays as it is */
+    .food-dishes > .dish-list,
+    #food-search .food-results {
         min-height: 0;
         overflow-y: auto;
     }
+}
+
+/* A list of mine: its heading with its search field beside it, its lines below */
+.food-dishes,
+#food-search {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: calc(2 * var(--gap));
+}
+
+#food-search > .food-search {
+    display: contents;
+}
+
+.food-dishes > .dish-list,
+#food-search .food-results {
+    grid-column: 1 / -1;
+    align-self: stretch;
 }
 
 /* A thin grey line between two lists, as between the sections of a search */
