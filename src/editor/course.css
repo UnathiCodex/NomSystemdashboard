@@ -1,4 +1,4 @@
-/* Course of a module on its page, see `course.ts`: one card per type, a breath apart */
+/* Course of a module on its page, one card per type */
 .overview-course {
     display: flex;
     flex-direction: column;
@@ -12,10 +12,8 @@
     border-top: 1px solid var(--line);
 }
 
-/* Heading of a card: its type, the pencil right after it,
-   and at its right the menu of the group pinned of a type with groups;
-   the type and its pencil in the size of its name,
-   so the pencil meets the middle of its small letters */
+/* Heading of a card, its type and pencil, at its right the menu of the group pinned.
+   The type in the size of its name, so the pencil meets the middle of its small letters */
 .course-head {
     display: flex;
     align-items: baseline;
@@ -29,8 +27,7 @@
     font-size: 1rem;
 }
 
-/* The folder of the material of the semester below the heading, small and grey,
-   a link only as wide as its text, never underlined */
+/* The folder of the material of the semester, a link only as wide as its text */
 .course-folder {
     align-self: flex-start;
     margin-top: -0.5rem;
@@ -46,24 +43,19 @@ a.course-folder:hover {
     transition: color var(--hover-in);
 }
 
-/* The folder not there yet: no link,
-   so a step fainter than a link and nothing under the pointer */
+/* The folder not there yet, no link and so a step fainter */
 .course-folder-none {
     opacity: 0.6;
 }
 
-/* The list of a card, the rows of the list of the boxes in the dialog of a series,
-   see `.series-row` in `../day/series.css`, without its months,
-   every row on the same columns, folded or not */
+/* The list of a card as the boxes in the dialog of a series, every row on the same columns */
 .course-list {
     display: flex;
     flex-direction: column;
     font-variant-numeric: tabular-nums;
 }
 
-/* The line of counts of a card, as the line of the boxes of a series,
-   with a little more room above and below it,
-   so it stands apart from the folder above it and the rows below it */
+/* The counts of a card as the line of the boxes of a series, with room to stand apart */
 .course-counts {
     display: flex;
     align-items: baseline;
@@ -74,8 +66,7 @@ a.course-folder:hover {
     cursor: auto;
 }
 
-/* The chevron after the counts while some rows fold,
-   as small as the icons of the counts */
+/* The chevron after the counts, as small as their icons */
 .course-counts .series-summary > svg.lucide {
     align-self: center;
     width: 0.9375rem;
@@ -84,20 +75,19 @@ a.course-folder:hover {
     color: var(--text-muted);
 }
 
-/* The months of a card and their rows, the list of a series,
-   on the columns of a dialog */
+/* The months of a card on the columns of a dialog */
 .course-list > .series-list {
     grid-template-columns: var(--name-width) minmax(0, 1fr);
     column-gap: var(--control-gap);
     margin-top: 0;
 }
 
-/* Folded, the months of a card right below one another */
+/* Folded months right below one another */
 .course-list:not(.course-open) > .series-list {
     row-gap: 0;
 }
 
-/* The one line of a card whose rows all fold, small and grey as the counts */
+/* The one line of a card whose rows all fold */
 .course-folded {
     display: inline-flex;
     align-self: start;

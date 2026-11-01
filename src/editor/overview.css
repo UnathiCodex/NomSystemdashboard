@@ -1,11 +1,6 @@
-/* Page of a module where a note stands, or of one of its chapters,
-   see `overview.ts`, laid out as the day without its bar;
-   its text in the size and white of the day, not those of a note,
-   so a card of the course reads as the list of a series in its dialog;
-   without the browser's scroll anchoring:
-   the cards of the course are built anew as a list opens or closes,
-   so the browser would pick another row to hold still
-   each time and move the page by itself */
+/* Page of a module or of one of its chapters, laid out as the day, its text in the size and white of the day.
+   No scroll anchoring, since the cards of the course are built anew as a list opens or closes
+   and the browser would move the page by itself */
 .editor-overview {
     display: flex;
     flex-direction: column;
@@ -31,8 +26,7 @@
     gap: 0.75rem;
 }
 
-/* A row and the line of its chapter's name on one grid,
-   the round as wide as `Ready`, so the rounds of every row stand in line */
+/* A row and its chapter's name on one grid, the round as wide as `Ready` so the rounds stand in line */
 .overview-row,
 .overview-head {
     display: grid;
@@ -41,8 +35,7 @@
     align-items: baseline;
 }
 
-/* The rows of a chapter without a grey box around them, as the rows of the tree:
-   as high and as far apart, grey, white under the pointer */
+/* The rows of a chapter as the rows of the tree, without a box */
 .overview-card {
     display: flex;
     flex-direction: column;
@@ -73,21 +66,19 @@
     color: var(--text-muted);
 }
 
-/* The name of a section on one line, ending in `…` where it is too long */
 .overview-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* The round in the figures of a table, so they stand in line */
+/* Figures of a table, so the rounds stand in line */
 .overview-round {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
 
-/* A folder of my modules, see `folder.ts`, laid out as the overview of a module,
-   each folder on the way a link, never underlined */
+/* A folder of my modules, laid out as the page of a module */
 .folder-path a {
     color: var(--text-muted);
     text-decoration: none;

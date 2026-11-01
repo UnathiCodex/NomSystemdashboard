@@ -1,19 +1,11 @@
 /**
  * ## Overview
  *
- * The two pages the scripts view shows of a module where a note stands, kept simple,
- * in the look of the day view, see `../day/`, as Today, see `./today.ts`:
- * - the page of the module, once I pick it in the tree:
- *   its name with the path to it, see `pathOf` in `./folder.ts`,
- *   then its course of the university, see `./course.ts`;
- * - the page of a chapter: its name, with `Round` at the right,
- *   and below it its sections in the order of the notes, each a row
- *   with the round its view shows, see `./round.ts`;
- *   a tap on a row opens the section.
- * Nothing more, until I want more:
- * every further piece only after Claude recommends it and I say yes.
- * Everything is computed from the log by the reader,
- * see `reader/skill.ts`; nothing is kept here.
+ * The two pages of a module in the scripts view, kept simple, in the look of the day view.
+ * - The page of the module, its name with the path to it, then its course of the university.
+ * - The page of a chapter, its sections in the order of the notes, each a row with its round.
+ * Nothing more until I want more, every further piece only after Claude recommends it and I say yes.
+ * The reader computes everything from the log, nothing is kept here.
  */
 
 import { skillingLoad } from "../skill/attempts.ts";
@@ -26,20 +18,14 @@ import "./overview.css";
 
 import type { SkillModule, SkillSection, SkillTask, Skilling } from "../skill/attempts.ts";
 
-/**
- * Tells the round of a section: `0` while I never learned it,
- * `Ready` once its Task has its runs spaced.
- */
+/** The round of a section, `0` while I never learned it, `Ready` once its Task has its runs spaced. */
 function roundOf(module: SkillModule, section: SkillSection): string {
     const ready: boolean = module.tasks.some((task: SkillTask): boolean => task.id === section.cold && task.ready);
     if (ready) return "Ready";
     return String(section.round);
 }
 
-/**
- * Makes the row of a section: a link to it, its name, whole as its tooltip,
- * since a long one ends in `…`, and its round.
- */
+/** The row of a section, its name whole as its tooltip since a long one ends in `…`. */
 function rowOf(module: SkillModule, section: SkillSection): HTMLAnchorElement {
     const row: HTMLAnchorElement = document.createElement("a");
     row.className = "overview-row";
@@ -52,10 +38,7 @@ function rowOf(module: SkillModule, section: SkillSection): HTMLAnchorElement {
     return row;
 }
 
-/**
- * Makes the page of a chapter: its name with `Round` at the right,
- * then the card of its sections.
- */
+/** The page of a chapter, its name with `Round` at the right, then the card of its sections. */
 function groupOf(module: SkillModule, chapter: string): HTMLElement {
     const group: HTMLElement = elementOf("section", "overview-group", "");
     const head: HTMLElement = elementOf("div", "overview-head", "");
@@ -74,11 +57,9 @@ function groupOf(module: SkillModule, chapter: string): HTMLElement {
 }
 
 /**
- * Shows in its place the page of a module, with its course, or of one of its chapters;
- * a chapter of a module of an earlier semester,
- * whose tasks the reader does not read, shows no sections.
+ * Shows the page of a module or of one of its chapters.
+ * A chapter of a module of an earlier semester shows no sections, the reader does not read its tasks.
  *
- * @param place - Where the page goes, see `#editor-overview` in `./editor.html`
  * @param chapter - Name of the chapter, empty for the page of the module
  * @throws {Error} - When the reader cannot read the tasks or the course
  */
@@ -106,8 +87,8 @@ export async function overviewShow(place: HTMLElement, module: string, chapter: 
 }
 
 /**
- * Shows in the tree the chapter of the address, see `chapterShow` in `../notes/tree.ts`,
- * once the tree is there; the module the tree picks itself, from the address.
+ * Shows in the tree the chapter of the address, once the tree is there.
+ * The tree picks the module itself, from the address.
  *
  * @param chapter - Name of the chapter, empty for none
  */

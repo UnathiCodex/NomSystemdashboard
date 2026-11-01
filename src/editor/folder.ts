@@ -1,19 +1,11 @@
 /**
  * ## Folder
  *
- * A folder of my modules in the scripts view, at its address,
- * which the folder of the material of a card of the course opens, see `./course.ts`,
- * and so does the folder of a skill in the dialog of an entry,
- * see `skillPathShow` in `../day/skill.ts`;
- * kept simple, in the look of the page of a module, see `./overview.ts`:
- * - on top the name of the folder, above it the path to it, each part a link;
- * - below it its folders, then its files, as the reader lists them,
- *   see `folderRead` in `reader/notes.ts`, each a row by its name:
- *   a folder opens here, a Markdown or `.ics` file in the editor,
- *   any other file in a new tab of the browser,
- *   as the reader streams it, see `/api/notes/stream` in `reader/reader.ts`.
+ * A folder of my modules in the scripts view, at its address, in the look of the page of a module.
+ * - On top the name of the folder, above it the path to it, each part a link.
+ * - Below it its folders, then its files, each a row by its name.
+ *   A folder opens here, a Markdown or `.ics` file in the editor, any other file in a new tab.
  * A folder the reader cannot read says so instead.
- * The tree on the left shows the module of the folder, see `./editor.ts`.
  */
 
 import { folderAddressOf, noteAddressOf } from "../notes/tree.ts";
@@ -22,18 +14,14 @@ import { elementOf } from "../food/foods.ts";
 import "../day/boxes.css";
 import "./overview.css";
 
-/**
- * What a folder of my modules holds, see `NotesFolder` in `reader/notes.ts`.
- */
+/** What a folder of my modules holds. */
 type NotesFolder = {
     folders: string[];
     files: string[];
 };
 
 /**
- * Makes the path to a folder, and so to a module on top of its page:
- * `NomSkillingmodules`, a link to the start of my modules,
- * then each folder on the way, a link to it, each after a `/`.
+ * The path to a folder, `NomSkillingmodules` then each folder on the way, each a link after a `/`.
  *
  * @param path - Path of the folder from `NomSkillingmodules`
  */
@@ -48,9 +36,7 @@ export function pathOf(path: string): (Node | string)[] {
 }
 
 /**
- * Makes the row of a folder or a file in the folder shown,
- * its name cut in its middle where it is too long, so the ending of a file stays,
- * whole as its tooltip.
+ * The row of a folder or a file, its name cut in its middle so the ending of a file stays.
  *
  * @param tab - Whether it opens in a new tab of the browser
  */
@@ -69,11 +55,8 @@ function rowOf(name: string, address: string, tab: boolean): HTMLAnchorElement {
 }
 
 /**
- * Shows a folder of my modules in its place:
- * its name and the path to it on top at once,
- * and what it holds once the reader sent it.
+ * Shows a folder of my modules, its name and path at once, what it holds once the reader sent it.
  *
- * @param place - Where the folder goes, see `#editor-folder` in `./editor.html`
  * @param path - Path of the folder from `NomSkillingmodules`
  */
 export async function folderShow(place: HTMLElement, path: string): Promise<void> {
