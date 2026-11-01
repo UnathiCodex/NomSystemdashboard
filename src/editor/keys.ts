@@ -170,12 +170,11 @@ function pointStartOf(text: string): string | null {
 }
 
 /**
- * Gives empty lines to write above a line as its air, see {@link airMost},
- * within a quote each after the `>` of the quote, so the air stays in it.
+ * Gives an empty line to write above a line as its air, see {@link airMost},
+ * within a quote after the `>` of the quote, so the air stays in it.
  */
-function airOf(state: EditorState, line: Line, count: number): string {
-    const marks: string = quotePrefixOf(line.text).trimEnd();
-    return (marks + state.lineBreak).repeat(count);
+function airOf(state: EditorState, line: Line): string {
+    return quotePrefixOf(line.text).trimEnd() + state.lineBreak;
 }
 
 /**
@@ -407,10 +406,8 @@ function nextPointOf(state: EditorState, item: SyntaxNode): string | null {
  * Finds the folded point whose fold the cursor stands at, at its start or its end,
  * with the end of its fold.
  */
-function foldedPointOf(
-    state: EditorState,
-    head: number,
-): { item: SyntaxNode; to: number } | null {
+function foldedPointOf(state: EditorState): { item: SyntaxNode; to: number } | null {
+    const head: number = state.selection.main.head;
     let folded: { item: SyntaxNode; to: number } | null = null;
     foldedRanges(state).between(head, head, (from: number, to: number): void => {
         const item: SyntaxNode | null = itemOf(state, state.doc.lineAt(from));
@@ -426,11 +423,8 @@ function foldedPointOf(
  *
  * @returns `null` for none there or text right of the cursor
  */
-function subPointOf(
-    state: EditorState,
-    item: SyntaxNode,
-    head: number,
-): SyntaxNode | null {
+function subPointOf(state: EditorState, item: SyntaxNode): SyntaxNode | null {
+    const head: number = state.selection.main.head;
     const list: SyntaxNode | null =
         item.getChild("BulletList") ?? item.getChild("OrderedList");
     if (
@@ -459,18 +453,14 @@ const furtherContinue: Command = (view: EditorView): boolean => {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
     if (!range.empty || markEndIs(view.state, line, range.head)) return false;
-    const folded: { item: SyntaxNode; to: number } | null = foldedPointOf(
-        view.state,
-        range.head,
-    );
+    const folded: { item: SyntaxNode; to: number } | null = foldedPointOf(view.state);
     const item: SyntaxNode | null =
         folded?.item ??
         (!/^[ \t>]*$/.test(view.state.sliceDoc(line.from, range.head))
             ? itemAt(view.state)
             : null);
     if (item === null) return false;
-    const sub: SyntaxNode | null =
-        folded === null ? subPointOf(view.state, item, range.head) : null;
+    const sub: SyntaxNode | null = folded === null ? subPointOf(view.state, item) : null;
     if (
         folded === null &&
         sub === null &&
@@ -611,51 +601,39 @@ const pointEnter: Command = (view: EditorView): boolean => {
 };
 
 /**
- * Ctrl+Enter with the cursor right after the `-` or number of a point:
- * one empty line above it, the air of a half line, the point staying where it is.
- */
-const pointAir: Command = (view: EditorView): boolean => {
-    const item: SyntaxNode | null = markedItemOf(view.state);
-    if (item === null) return false;
-    const line: Line = view.state.doc.lineAt(item.from);
-    view.dispatch({
-        changes: { from: line.from, insert: airOf(view.state, line, 1) },
-        scrollIntoView: true,
-        userEvent: "input",
-    });
-    return true;
-};
-
-/**
  * Ctrl+Enter: a new block with air above it, as Enter twice in plain text.
  * In a list the next point of the same level with one empty line above it,
- * whatever text of the line it takes along.
+ * whatever text of the line it takes along, none where an empty line stands there.
+ * With the cursor right after the `-` or number of a point
+ * one empty line above it, the air of a half line, the point staying where it is.
  * In plain text, in a quote and with only blanks before the cursor Enter twice.
  */
 const airBreak: Command = (view: EditorView): boolean => {
     const enter: () => boolean = (): boolean => quoteBreak(view) || paragraphBreak(view);
-    if (pointAir(view)) return true;
+    const item: SyntaxNode | null = markedItemOf(view.state);
+    if (item !== null) return airAbove(view, view.state.doc.lineAt(item.from));
     const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
     if (
-        itemAt(view.state) !== null &&
-        !/^[ \t>]*$/.test(view.state.sliceDoc(line.from, view.state.selection.main.head))
+        itemAt(view.state) === null ||
+        /^[ \t>]*$/.test(view.state.sliceDoc(line.from, view.state.selection.main.head))
     )
-        return (furtherContinue(view) || markupContinue(view)) && airAbove(view);
-    return enter() && (enter() || true);
+        return enter() && (enter() || true);
+    if (!furtherContinue(view) && !markupContinue(view)) return false;
+    const point: Line = view.state.doc.lineAt(view.state.selection.main.head);
+    return (
+        point.number === 1 ||
+        emptyIs(view.state, view.state.doc.line(point.number - 1)) ||
+        airAbove(view, point)
+    );
 };
 
-/**
- * Puts one empty line above the line of the cursor, the new point Ctrl+Enter wrote,
- * the cursor staying in its text, none where an empty line stands there.
- */
-function airAbove(view: EditorView): boolean {
-    const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
-    if (line.number > 1 && !emptyIs(view.state, view.state.doc.line(line.number - 1)))
-        view.dispatch({
-            changes: { from: line.from, insert: airOf(view.state, line, 1) },
-            scrollIntoView: true,
-            userEvent: "input",
-        });
+/** Puts one empty line above a line, the air of a half line, the cursor in its text. */
+function airAbove(view: EditorView, line: Line): boolean {
+    view.dispatch({
+        changes: { from: line.from, insert: airOf(view.state, line) },
+        scrollIntoView: true,
+        userEvent: "input",
+    });
     return true;
 }
 
@@ -807,7 +785,7 @@ function blankIndent(inward: boolean): Command {
         const insert: string = prefix + (item === null ? "" : indentationOf(item));
         const air: string =
             !inward && !emptyIs(view.state, view.state.doc.line(line.number - 1))
-                ? airOf(view.state, line, 1)
+                ? airOf(view.state, line)
                 : "";
         view.dispatch({
             changes: {
@@ -1073,7 +1051,7 @@ function markerTaken(
         holder !== null &&
         holder.from > previous.from &&
         holder.to <= previous.to
-            ? airOf(state, line, 1)
+            ? airOf(state, line)
             : "";
     const mark: RegExpExecArray | null = /^((?:[ \t]*>[ \t]?)*\t*)([-*+]|\d+[.)])/.exec(
         line.text,
@@ -1326,9 +1304,7 @@ const paragraphBreak: Command = (view: EditorView): boolean => {
     return breakWrite(
         view,
         textStart,
-        textStart
-            ? airOf(view.state, line, 1)
-            : view.state.lineBreak + view.state.lineBreak,
+        textStart ? airOf(view.state, line) : view.state.lineBreak + view.state.lineBreak,
     );
 };
 
@@ -1512,6 +1488,7 @@ function itemIndent(inward: boolean): Command {
 
 /**
  * Swaps two blocks of whole lines that stand right below each other,
+ * the upper from line `top`, the lower from line `middle` to line `bottom`,
  * and moves the cursor along with the block it stands in,
  * never past the end of the text. Numbered points count in order again.
  *
@@ -1519,13 +1496,16 @@ function itemIndent(inward: boolean): Command {
  */
 function blocksSwap(
     view: EditorView,
-    from: number,
+    top: number,
     middle: number,
-    to: number,
+    bottom: number,
     inLower: boolean,
 ): void {
-    const upper: string = view.state.sliceDoc(from, middle - view.state.lineBreak.length);
-    const lower: string = view.state.sliceDoc(middle, to);
+    const from: number = view.state.doc.line(top).from;
+    const split: number = view.state.doc.line(middle).from;
+    const to: number = view.state.doc.line(bottom).to;
+    const upper: string = view.state.sliceDoc(from, split - view.state.lineBreak.length);
+    const lower: string = view.state.sliceDoc(split, to);
     const shift: number = inLower
         ? -(upper.length + view.state.lineBreak.length)
         : lower.length + view.state.lineBreak.length;
@@ -1647,13 +1627,7 @@ function linesMove(down: boolean): Command {
                   : point && level !== null && (depthOf(text(below)) ?? 0) < level
                     ? textLastOf(view.state, below)
                     : below;
-            blocksSwap(
-                view,
-                doc.line(first).from,
-                doc.line(below).from,
-                doc.line(bottom).to,
-                false,
-            );
+            blocksSwap(view, first, below, bottom, false);
             return true;
         }
         if (first === 1) return true;
@@ -1671,13 +1645,7 @@ function linesMove(down: boolean): Command {
                     top = number;
                 break;
             }
-        blocksSwap(
-            view,
-            doc.line(top).from,
-            doc.line(first).from,
-            doc.line(last).to,
-            true,
-        );
+        blocksSwap(view, top, first, last, true);
         return true;
     };
 }
@@ -1788,19 +1756,17 @@ function markupToggle(mark: string): Command {
 }
 
 /**
- * Pieces of syntax that show as their text where the cursor stands,
+ * Finds the link or formula around the cursor, also at its ends:
+ * a piece of syntax that shows as its text where the cursor stands,
  * see `./preview.ts`, on more rows than drawn when long, see {@link lineMove}.
  */
-const sourcePieces: string[] = ["WikiLink", "Link", "InlineMath"];
-
-/** Finds the link or formula around the cursor, also at its ends. */
 function sourcePieceOf(state: EditorState): SyntaxNode | null {
     let piece: SyntaxNode | null = null;
     syntaxTree(state).iterate({
         from: state.selection.main.head,
         to: state.selection.main.head,
         enter: (node: SyntaxNodeRef): void => {
-            if (sourcePieces.includes(node.name)) piece = node.node;
+            if (["WikiLink", "Link", "InlineMath"].includes(node.name)) piece = node.node;
         },
     });
     return piece;
