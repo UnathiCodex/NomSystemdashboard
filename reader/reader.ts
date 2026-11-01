@@ -195,7 +195,7 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * `/api/skill`, `/api/food`, `/api/sport`, `/api/persons`.
  * The range of the log comes as FullCalendar sends it, `start` and `end` with offset,
  * the range of the plan as days.
- * - `GET /api/day/boxes`, `GET /api/day/carried`, `GET /api/skill/tasks`:
+ * - `GET /api/day/boxes`, `GET /api/day/carried`:
  *   First write the chapters due today into the plan of today, see `./suggestions.ts`.
  * - `GET /api/day/plain?id=…`: The plain series of the `UID` of one of its parts.
  * - `GET /api/day/real`: The minutes the last entries like a box really lasted.
@@ -457,7 +457,6 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
     } else if (request.method === "PUT" && url.pathname === "/api/edit/file") {
         responseSend(response, 200, systemFileWrite((await json(request)) as NoteChange));
     } else if (request.method === "GET" && url.pathname === "/api/skill/tasks") {
-        suggestionsWrite();
         responseSend(response, 200, skillingRead());
     } else if (request.method === "GET" && url.pathname === "/api/skill/module") {
         responseSend(response, 200, moduleRead(url.searchParams.get("code") ?? ""));

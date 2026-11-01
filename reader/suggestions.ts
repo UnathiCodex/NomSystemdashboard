@@ -16,7 +16,7 @@
  * see `carriedOf` in `boxes.ts`.
  * A box of the chapter with a time or a deadline,
  * like a lecture or a homework sheet, keeps none out.
- * Written before the plan of today or the learning view is read, see `reader.ts`,
+ * Written before the plan of today is read, see `reader.ts`,
  * so the box stands there before I begin; nothing written is taken out again.
  * Worked out once per day, change of the new system and five minutes,
  * since every request of the plan asks for it,
