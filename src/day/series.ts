@@ -31,7 +31,7 @@
  * see `groupApply` in `reader/course.ts`.
  * Enter confirms only its field, Ctrl+Enter saves, Escape and a click beside it cancel.
  *
- * The boxes a series makes stay one calm line, see {@link previewSoon},
+ * The boxes a series makes stay one calm line, see {@link previewShow},
  * as the reader would write them, anew a moment after each change:
  * how many, what a change does, and how many happen and how many not.
  * A tap on it opens them below it as a list by month,
@@ -158,23 +158,7 @@ export type Days = {
 export type States = { [id: string]: BoxState };
 
 /** The kinds I gave the exams of a module in their form, by their days, until I save. */
-export type Kinds = { [day: string]: string };
-
-/**
- * How the boxes of a series show, see {@link previewSoon}.
- *
- * - `ask`: Asks the reader for its boxes, or a hint why it makes none,
- *   `null` while the series is not typed enough.
- * - `kinds`: Left out for every series but the exams.
- * - `filled`: Builds the rows of the form anew, once a row of a box changed it.
- */
-export type Preview = {
-    ask: (() => Promise<Planned[] | HTMLElement>) | null;
-    days: Days;
-    states: States;
-    kinds?: Kinds;
-    filled: () => void;
-};
+type Kinds = { [day: string]: string };
 
 /**
  * The form of a series as typed so far, see {@link seriesOpen},
@@ -200,7 +184,7 @@ type Form = Days &
  * - `link`: The folder its summary links, empty for none.
  * - `file`: The plan it writes into, empty while its boxes may fill several.
  */
-export type Repeated = {
+type Repeated = {
     box: BoxFields;
     summary: string;
     link: string;
@@ -439,7 +423,7 @@ function timesReady(times: Pick<Slot, "start" | "end">): boolean {
  * each a weekday, each once, with a start before its end or by its length a length,
  * each extra a day with a start before its end, and a first day on or before its last.
  */
-export function daysReady(days: Days): boolean {
+function daysReady(days: Days): boolean {
     return (
         days.slots.every(
             (slot: Slot): boolean =>
@@ -474,11 +458,12 @@ function daysMove(days: Days, from: number, to: number): void {
 }
 
 /**
- * Makes a field of a time or a day of a series, as the dialog has them, see `./times.ts`.
+ * Makes a field of a time or a day of a series, as the dialog has them, see `./times.ts`,
+ * a day written out with its weekday.
  * What I type goes into the series as I type it.
  */
 function fieldOf(
-    kind: string,
+    kind: "time-field" | "date-field",
     value: string,
     name: string,
     take: (value: string) => void,
@@ -489,7 +474,7 @@ function fieldOf(
     input.type = "text";
     input.inputMode = kind === "time-field" ? "numeric" : "decimal";
     input.autocomplete = "off";
-    input.value = value;
+    input.value = kind === "date-field" && value !== "" ? weekdayDateTextOf(value) : value;
     input.setAttribute("aria-label", name);
     if (kind === "time-field") timeFieldStart(input);
     else dateFieldStart(input);
@@ -501,31 +486,38 @@ function fieldOf(
 }
 
 /**
- * Makes two fields of a series side by side with the range dash between them,
+ * Makes the two fields of a range of a series side by side with the range dash between them,
+ * the times of a slot, an extra or a box, or the first and the last day,
  * the dash going with the second, so a narrow row breaks before it.
  */
-function rangeOf(from: HTMLInputElement, to: HTMLInputElement): HTMLElement {
-    const range: HTMLElement = elementOf("span", "entry-range", "");
-    const second: HTMLElement = elementOf("span", "entry-moment", "");
-    second.append(elementOf("span", "entry-dash", "–"), to);
-    range.append(from, second);
-    return range;
-}
-
-/** Makes the fields of the times of a slot, an extra or a box side by side. */
-function timesRangeOf(times: Pick<Slot, "start" | "end">, changed: () => void): HTMLElement {
-    const [start, end]: HTMLInputElement[] = (["start", "end"] as const).map((key: "start" | "end"): HTMLInputElement =>
+function rangeOf<Key extends string>(
+    kind: "time-field" | "date-field",
+    range: { [key in Key]: string },
+    keys: Key[],
+    names: string[],
+    changed: () => void,
+): HTMLElement {
+    const [from, to]: HTMLInputElement[] = keys.map((key: Key, at: number): HTMLInputElement =>
         fieldOf(
-            "time-field",
-            times[key],
-            key === "start" ? "Start" : "End",
-            (time: string): void => {
-                times[key] = time;
+            kind,
+            range[key],
+            names[at],
+            (value: string): void => {
+                range[key] = value;
             },
             changed,
         ),
     );
-    return rangeOf(start, end);
+    const both: HTMLElement = elementOf("span", "entry-range", "");
+    const second: HTMLElement = elementOf("span", "entry-moment", "");
+    second.append(elementOf("span", "entry-dash", "–"), to);
+    both.append(from, second);
+    return both;
+}
+
+/** Makes the fields of the times of a slot, an extra or a box side by side. */
+function timesRangeOf(times: Pick<Slot, "start" | "end">, changed: () => void): HTMLElement {
+    return rangeOf("time-field", times, ["start", "end"], ["Start", "End"], changed);
 }
 
 /** Makes the button `×` that takes a day or an extra of a series back. */
@@ -546,7 +538,7 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
  * see {@link slotToggle}, so a lecture moved from Monday to Tuesday keeps its boxes.
  * A plain series has `Month` and `Year` after Sunday, each a day alone.
  */
-export function slotRowsOf(
+function slotRowsOf(
     days: Days,
     aside: HTMLElement[],
     lengthOf: ((slot: Slot) => HTMLElement) | null,
@@ -629,27 +621,15 @@ function slotToggle(days: Days, weekday: number): void {
  * Makes the row of the first and the last day of a series,
  * each saying grey `dd.mm.yyyy` while empty, as the day of a deadline.
  */
-export function datesRowOf(days: Days, changed: () => void): HTMLElement {
-    const [first, last]: HTMLInputElement[] = (["first", "last"] as const).map(
-        (key: "first" | "last"): HTMLInputElement =>
-            fieldOf(
-                "date-field",
-                days[key] === "" ? "" : weekdayDateTextOf(days[key]),
-                key === "first" ? "First day" : "Last day",
-                (day: string): void => {
-                    days[key] = day;
-                },
-                changed,
-            ),
-    );
-    return rowOf("Dates", rangeOf(first, last));
+function datesRowOf(days: Days, changed: () => void): HTMLElement {
+    return rowOf("Dates", rangeOf("date-field", days, ["first", "last"], ["First day", "Last day"], changed));
 }
 
 /**
  * Makes the row `Entries` of the boxes a series makes,
  * showing what it showed last until the reader answers again.
  */
-export function boxesRowOf(): HTMLElement {
+function boxesRowOf(): HTMLElement {
     const preview: HTMLElement = elementOf("div", "series-preview", "");
     preview.append(...previewShown);
     const row: HTMLElement = rowOf("Entries", preview);
@@ -661,7 +641,7 @@ export function boxesRowOf(): HTMLElement {
  * Forgets what the boxes of a form showed, and folds their list,
  * as a form of another series or another new box opens.
  */
-export function previewForget(): void {
+function previewForget(): void {
     clearTimeout(previewWait);
     previewsAsked += 1;
     previewShown = [];
@@ -750,9 +730,9 @@ function markOf(icon: IconNode, word: string, back: (() => void) | null): HTMLEl
  */
 function seriesAct(send: () => Promise<unknown>): void {
     send()
-        .catch(logged)
+        .catch(console.error)
         .then((): Promise<void> => seriesRefresh())
-        .catch(logged);
+        .catch(console.error);
 }
 
 /**
@@ -831,12 +811,23 @@ async function boxesLoad(planned: Planned[]): Promise<void> {
 }
 
 /**
- * Makes one action of a box of the list not written yet,
+ * Makes a button of the dialog by its icon, its words as tooltip,
+ * like one action of a box of the list not written yet,
  * as an action of a box of the plan looks, see `./actions.ts`.
+ *
+ * @param still - Whether it takes no focus, so the extra being typed joins as it is clicked,
+ *   see {@link formFill}
  */
-function pendingActionOf(icon: IconNode, words: string, click: () => void): HTMLButtonElement {
-    const button: HTMLButtonElement = buttonOf("box-action", "", click);
+function iconButtonOf(
+    className: string,
+    icon: IconNode,
+    words: string,
+    click: () => void,
+    still: boolean = false,
+): HTMLButtonElement {
+    const button: HTMLButtonElement = buttonOf(className, "", click);
     iconPut(button, icon, words);
+    if (still) button.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     return button;
 }
 
@@ -889,22 +880,21 @@ function knownEndOf(box: Box): HTMLElement {
  * which the reader makes cancelled, `Remove` for an extra from today on.
  * Of a session of a group there already, of the days over too,
  * so a tutorial I went to is added afterwards and then logged,
- * `+`, see {@link extraAdd},
+ * `+`, see {@link groupSend},
  * but not where a box of mine stands already, see {@link mineAt},
  * and a pencil, which opens it to change alone, as the university changed it.
  * A state given shows its icon, which takes it back.
  * A day of another series of the chain of a plain series, and one the change removes,
  * show only the icon of its state, or nothing.
  */
-function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
-    const days: Days = preview.days;
+function pendingEndOf(box: Planned, form: Form): HTMLElement {
     const today: string = dayOf(new Date());
-    const extra: Extra | undefined = days.extras.find((one: Extra): boolean => one.day === box.day);
+    const extra: Extra | undefined = form.extras.find((one: Extra): boolean => one.day === box.day);
     const stated: (state: BoxState) => () => void =
         (state: BoxState): (() => void) =>
         (): void => {
-            preview.states[box.id || box.day] = state;
-            preview.filled();
+            form.states[box.id || box.day] = state;
+            formFill();
         };
     const shown: boolean = box.chained === true || box.change === "removed";
     const back: (() => void) | null = box.editable && !shown ? stated("open") : null;
@@ -913,40 +903,35 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
     if (box.state === "university") return markOf(CalendarOff, "Cancelled", back);
     if (shown) return elementOf("span", "series-end", "");
     const session: Session | undefined = sessionOf(box);
-    const buttons: HTMLButtonElement[] = [
-        ...(box.editable && (/^\d+$/.test(box.number) || grouped !== null)
-            ? [pendingActionOf(CalendarOff, "Cancel", stated("university"))]
-            : []),
-        ...(extra !== undefined && box.day >= today && !box.pushed
-            ? [
-                  pendingActionOf(CalendarMinus, "Remove", (): void => {
-                      days.extras.splice(days.extras.indexOf(extra), 1);
-                      preview.filled();
-                  }),
-              ]
-            : []),
-        ...(grouped !== null && !grouped.made && !mineAt(box.time || box.day)
-            ? [
-                  pendingActionOf(Plus, "Add as a box of mine", (): void => {
-                      extraAdd(box.time || box.day).catch(logged);
-                  }),
-              ]
-            : []),
-        ...(session !== undefined
-            ? [
-                  pendingActionOf(Pencil, "Change this session alone", (): void => {
-                      sessionTyped = {
-                          id: session.id,
-                          day: box.day,
-                          start: timeOf(new Date(session.start)),
-                          end: timeOf(new Date(Date.parse(session.start) + session.minutes * 60 * 1000)),
-                          location: session.location,
-                      };
-                      preview.filled();
-                  }),
-              ]
-            : []),
-    ];
+    const buttons: HTMLButtonElement[] = [];
+    if (box.editable && (/^\d+$/.test(box.number) || grouped !== null))
+        buttons.push(iconButtonOf("box-action", CalendarOff, "Cancel", stated("university")));
+    if (extra !== undefined && box.day >= today && !box.pushed)
+        buttons.push(
+            iconButtonOf("box-action", CalendarMinus, "Remove", (): void => {
+                form.extras.splice(form.extras.indexOf(extra), 1);
+                formFill();
+            }),
+        );
+    if (grouped !== null && !grouped.made && !mineAt(box.time || box.day))
+        buttons.push(
+            iconButtonOf("box-action", Plus, "Add as a box of mine", (): void => {
+                groupSend("/api/course/pick", { start: box.time || box.day, extra: true }).catch(console.error);
+            }),
+        );
+    if (session !== undefined)
+        buttons.push(
+            iconButtonOf("box-action", Pencil, "Change this session alone", (): void => {
+                sessionTyped = {
+                    id: session.id,
+                    day: box.day,
+                    start: timeOf(new Date(session.start)),
+                    end: timeOf(new Date(Date.parse(session.start) + session.minutes * 60 * 1000)),
+                    location: session.location,
+                };
+                formFill();
+            }),
+        );
     if (box.pushed && buttons.length === 0) return markOf(ArrowRight, "Pushed", null);
     const actions: HTMLElement = elementOf("div", buttons.length === 0 ? "series-end" : "box-actions", "");
     actions.append(...buttons);
@@ -997,8 +982,16 @@ function sessionRowOf(session: NonNullable<typeof sessionTyped>, redraw: () => v
         }),
     );
     actions.append(
-        pendingActionOf(Check, "Save this session", (): void => {
-            sessionSave(session).catch(logged);
+        iconButtonOf("box-action", Check, "Save this session", (): void => {
+            if (!timesReady(session)) return;
+            const { id, start, end, location }: NonNullable<typeof sessionTyped> = session;
+            groupSend(
+                "/api/course/session",
+                { semester: course?.semester ?? "", id: id, start: start, end: end, location: location },
+                (): void => {
+                    sessionTyped = null;
+                },
+            ).catch(console.error);
         }),
         removeOf("Keep the session as it is", (): void => {
             sessionTyped = null;
@@ -1015,30 +1008,25 @@ function sessionRowOf(session: NonNullable<typeof sessionTyped>, redraw: () => v
 }
 
 /**
- * Writes the session being changed alone while its start lies before its end,
- * then shows the list anew.
+ * Writes a session of the group of the form as saved, not as typed since, at once,
+ * then shows the list anew:
+ * the session being changed alone, see {@link sessionRowOf},
+ * or a session made a box of mine of its own, besides the box of its week,
+ * as a second tutorial in one week, see {@link pendingEndOf}.
+ * The form stays, so I take one session after another.
  * The hint of the form shows when the reader does not take it.
  *
  * @throws {Error} - When the reader cannot answer
  */
-async function sessionSave(session: NonNullable<typeof sessionTyped>): Promise<void> {
-    if (course === null || typing === null || grouped === null || !timesReady(session)) return;
+async function groupSend(address: string, body: object, sent: () => void = (): void => {}): Promise<void> {
+    if (course === null || typing === null || grouped === null) return;
     try {
-        await courseSend<null>("/api/course/session", {
-            module: course.module,
-            type: typing.type,
-            group: grouped.was,
-            semester: course.semester,
-            id: session.id,
-            start: session.start,
-            end: session.end,
-            location: session.location,
-        });
+        await courseSend<null>(address, { module: course.module, type: typing.type, group: grouped.was, ...body });
     } catch (error: unknown) {
         failed(error);
         return;
     }
-    sessionTyped = null;
+    sent();
     await seriesRefresh();
 }
 
@@ -1053,31 +1041,6 @@ function mineAt(start: string): boolean {
             one.type === typing?.type &&
             ((one.time || one.day) === start || (one.time !== "" && Date.parse(one.time) === Date.parse(start))),
     );
-}
-
-/**
- * Makes a session of the group of the form a box of mine of its own,
- * besides the box of its week, as a second tutorial in one week,
- * the group as saved, not as typed since.
- * The form stays, the session now without `+`, so I take one session after another.
- *
- * @throws {Error} - When the reader cannot answer
- */
-async function extraAdd(start: string): Promise<void> {
-    if (course === null || typing === null || grouped === null) return;
-    try {
-        await courseSend<null>("/api/course/pick", {
-            module: course.module,
-            type: typing.type,
-            group: grouped.was,
-            start: start,
-            extra: true,
-        });
-    } catch (error: unknown) {
-        failed(error);
-        return;
-    }
-    await seriesRefresh();
 }
 
 /**
@@ -1130,19 +1093,19 @@ function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void):
  * At its right edge, see {@link knownEndOf} and {@link pendingEndOf}.
  * Greyed while not open, done, skipped, cancelled or removed, as in the plan.
  */
-function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
-    const kinds: Kinds | undefined = preview.kinds;
+function boxRowOf(box: Planned, had: boolean, form: Form): HTMLElement {
+    const kinds: Kinds | undefined = form.type === examType ? form.kinds : undefined;
     const known: Box | undefined = box.change === "removed" ? undefined : boxesKnown.get(box.id);
     let word: string = box.change === "renumbered" || (box.change === "new" && !had) ? "" : box.change;
     if (word === "" && box.pushed && box.editable && box.state === "open") word = "pushed";
     if (word === "" && box.location !== undefined) word = "changed";
-    if (preview.days.extras.some((extra: Extra): boolean => extra.day === box.day))
+    if (form.extras.some((extra: Extra): boolean => extra.day === box.day))
         word = word === "" ? "extra" : `${word} extra`;
     const show: (() => void) | null =
         known === undefined
             ? null
             : (): void => {
-                  boxShow(known).catch(logged);
+                  boxShow(known).catch(console.error);
               };
     const number: HTMLElement =
         kinds === undefined
@@ -1153,7 +1116,7 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
               )
             : kindMenuOf(box.number, box.id === "" && box.day === kindAsked, (kind: string): void => {
                   kinds[box.day] = kind;
-                  preview.filled();
+                  formFill();
               });
     const place: (string | Node)[] =
         known !== undefined
@@ -1191,7 +1154,7 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
         people: known?.attendees ?? (box.attendees.length > 0 ? box.attendees : (typing?.attendees ?? [])),
         persons: persons,
         mark: word,
-        end: known !== undefined && box.chained !== true ? knownEndOf(known) : pendingEndOf(box, preview),
+        end: known !== undefined && box.chained !== true ? knownEndOf(known) : pendingEndOf(box, form),
         faded: box.change === "removed" || ["done", "dropped", "university"].includes(box.state),
     });
 }
@@ -1201,7 +1164,7 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
  * with the times of the last day of the series,
  * of the exams with the menu of its kind open, to pick it first.
  */
-function addRowOf(preview: Preview, redraw: () => void): HTMLButtonElement {
+function addRowOf(form: Form, redraw: () => void): HTMLButtonElement {
     const add: HTMLButtonElement = document.createElement("button");
     const plus: HTMLElement = elementOf("span", "series-number", "");
     add.type = "button";
@@ -1211,14 +1174,14 @@ function addRowOf(preview: Preview, redraw: () => void): HTMLButtonElement {
     plus.append(iconOf(Plus));
     add.append(plus);
     add.addEventListener("click", (): void => {
-        const last: Slot | undefined = preview.days.slots[preview.days.slots.length - 1];
+        const last: Slot | undefined = form.slots[form.slots.length - 1];
         extraTyped =
             plain !== null && !plainTimed
                 ? { day: "", start: "", end: "" }
                 : { day: "", start: last?.start ?? "", end: last?.end ?? "" };
         kindTyped = "";
         redraw();
-        if (preview.kinds === undefined) document.querySelector<HTMLInputElement>(".series-draft .date-field")?.focus();
+        if (form.type !== examType) document.querySelector<HTMLInputElement>(".series-draft .date-field")?.focus();
         else document.querySelector<HTMLElement>(".series-draft .menu")?.showPopover();
     });
     return add;
@@ -1233,12 +1196,11 @@ function addRowOf(preview: Preview, redraw: () => void): HTMLButtonElement {
  * one taken back by its `×` never,
  * though its field loses the focus as the list shows anew.
  */
-function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLElement {
+function draftRowOf(extra: Extra, form: Form, redraw: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "series-row series-draft", "");
-    const kinds: Kinds | undefined = preview.kinds;
     const day: HTMLInputElement = fieldOf(
         "date-field",
-        extra.day === "" ? "" : weekdayDateTextOf(extra.day),
+        extra.day,
         "Day of the extra",
         (typed: string): void => {
             extra.day = typed;
@@ -1249,7 +1211,7 @@ function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLEle
         plain !== null && !plainTimed ? elementOf("span", "series-times", "") : timesRangeOf(extra, (): void => {});
     times.classList.add("series-times");
     const number: HTMLElement =
-        kinds === undefined
+        form.type !== examType
             ? elementOf("span", "series-number", "")
             : kindMenuOf(kindTyped, kindAsked !== "" && extra.day === kindAsked, (kind: string): void => {
                   kindTyped = kind;
@@ -1266,8 +1228,7 @@ function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLEle
         }),
     );
     row.addEventListener("focusout", (event: FocusEvent): void => {
-        if (extraTyped === extra && !row.contains(event.relatedTarget as Node | null) && extraJoin(preview.days, kinds))
-            preview.filled();
+        if (extraTyped === extra && !row.contains(event.relatedTarget as Node | null) && extraJoin(form)) formFill();
     });
     return row;
 }
@@ -1277,13 +1238,13 @@ function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLEle
  * as the focus leaves its row or the form saves, see {@link formSave}.
  * Gives whether it joined, so the list shows anew.
  */
-function extraJoin(days: Days, kinds: Kinds | undefined): boolean {
+function extraJoin(form: Form): boolean {
     const extra: Extra | null = extraTyped;
     if (extra === null || extra.day === "" || ((plain === null || plainTimed) && !timesReady(extra))) return false;
     extraTyped = null;
-    if (kinds !== undefined && kindTyped !== "") kinds[extra.day] = kindTyped;
-    days.extras.push(extra);
-    days.extras.sort((first: Extra, second: Extra): number => first.day.localeCompare(second.day));
+    if (form.type === examType && kindTyped !== "") form.kinds[extra.day] = kindTyped;
+    form.extras.push(extra);
+    form.extras.sort((first: Extra, second: Extra): number => first.day.localeCompare(second.day));
     return true;
 }
 
@@ -1319,56 +1280,51 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
  * as the reader numbers them,
  * as my boxes are, see `groupApply` in `reader/course.ts`.
  */
-function boxListOf(planned: Planned[], preview: Preview, redraw: () => void): HTMLElement {
+function boxListOf(planned: Planned[], form: Form, redraw: () => void): HTMLElement {
     const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
     const items: [string, HTMLElement][] = planned.map((box: Planned): [string, HTMLElement] => [
         box.time || box.day,
         sessionTyped !== null && sessionOf(box)?.id === sessionTyped.id
             ? sessionRowOf(sessionTyped, redraw)
-            : boxRowOf(box, had, preview),
+            : boxRowOf(box, had, form),
     ]);
     const list: HTMLElement = monthListOf(items);
     if (grouped === null && (typing === null || !groupWaits(typing)))
-        list.append(extraTyped === null ? addRowOf(preview, redraw) : draftRowOf(extraTyped, preview, redraw));
+        list.append(extraTyped === null ? addRowOf(form, redraw) : draftRowOf(extraTyped, form, redraw));
     return list;
 }
 
 /**
  * Shows the boxes a series makes in the row of its boxes, as the reader answers:
  * their line, below it their list while opened, or the hint why it makes none.
- * Nothing while the series is not typed enough or the reader does not take it,
- * and only the answer to the last question.
+ * Nothing while the series is not typed enough, `ask` then `null`,
+ * or the reader does not take it, and only the answer to the last question.
  *
  * @throws {Error} - When the reader does not answer
  */
-async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
+async function previewShow(form: Form, ask: (() => Promise<Planned[]>) | null): Promise<void> {
     const asked: number = ++previewsAsked;
     // Puts what the boxes show into the row `Entries` of the form,
     // the row shown only while it shows something, so it never stands empty.
     const put: (shown: Node[]) => void = (shown: Node[]): void => {
         previewShown = shown;
-        const place: HTMLElement | null = form.querySelector(".series-preview");
+        const place: HTMLElement | null = formElementOf().querySelector(".series-preview");
         place?.replaceChildren(...shown);
         const row: HTMLElement | null = place?.closest<HTMLElement>(".panel-field") ?? null;
         if (row !== null) row.hidden = shown.length === 0;
     };
-    if (preview.ask === null) {
+    if (ask === null) {
         put([]);
         return;
     }
-    let answer: Planned[] | HTMLElement;
+    let planned: Planned[];
     try {
-        answer = await preview.ask();
+        planned = await ask();
     } catch (error: unknown) {
         if (asked === previewsAsked) put([]);
         throw error;
     }
     if (asked !== previewsAsked) return;
-    if (answer instanceof HTMLElement) {
-        put([answer]);
-        return;
-    }
-    const planned: Planned[] = answer;
     await boxesLoad(planned);
     if (asked !== previewsAsked) return;
     const draw: () => void = (): void =>
@@ -1377,20 +1333,9 @@ async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
                 listOpened = !listOpened;
                 draw();
             }),
-            ...(listOpened ? [boxListOf(planned, preview, draw)] : []),
+            ...(listOpened ? [boxListOf(planned, form, draw)] : []),
         ]);
     draw();
-}
-
-/**
- * Shows anew the boxes a series makes a moment after the typing rests,
- * so typing asks the reader once.
- */
-export function previewSoon(form: HTMLElement, preview: Preview): void {
-    clearTimeout(previewWait);
-    previewWait = window.setTimeout((): void => {
-        previewShow(form, preview).catch(logged);
-    }, 150);
 }
 
 /**
@@ -1400,11 +1345,6 @@ export function previewSoon(form: HTMLElement, preview: Preview): void {
  */
 export async function courseSend<T>(address: string, body: object): Promise<T> {
     return readerAsk<T>(address, { method: "POST", body: JSON.stringify(body) });
-}
-
-/** Logs an error the dialog shows nothing of. */
-function logged(error: unknown): void {
-    console.error(error);
 }
 
 /** Logs an error of the reader and shows the hint above the buttons of the form. */
@@ -1578,22 +1518,18 @@ function groupTaken(form: Form): boolean {
     );
 }
 
-/** Tells whether the form of a new group has no name yet, see {@link groupPartOf}. */
-function groupUnnamed(): boolean {
-    return grouped !== null && grouped.group === "";
-}
-
 /**
  * Tells whether the form of a series is typed enough to make boxes:
  * of a plain series as {@link plainReady} says, else its type picked,
- * but for a new box repeated, and its days, a new group not named as one there already.
+ * but for a new box repeated, and its days,
+ * a group named, see {@link groupPartOf}, not as one there already.
  */
 function formReady(form: Form): boolean {
     if (fresh !== null && (fresh.category === "" || (fresh.category === skillName && fresh.picked.module === "")))
         return false;
     if (plain !== null) return plainReady(plain, form);
     if (form.type === "" && repeated === null) return false;
-    return daysReady(form) && !groupTaken(form) && !groupUnnamed() && !groupWaits(form);
+    return daysReady(form) && !groupTaken(form) && grouped?.group !== "" && !groupWaits(form);
 }
 
 /**
@@ -1867,25 +1803,24 @@ function plannedOf(box: Box): Planned {
 /**
  * Takes a change of the form of a series:
  * allows saving while it is ready and shows anew the boxes it makes,
- * of my series waiting for my group my boxes there, see {@link keptOf}.
+ * of my series waiting for my group my boxes there, see {@link keptOf},
+ * a moment after the typing rests, so typing asks the reader once, see {@link previewShow}.
  */
 function formChanged(): void {
     const save: HTMLButtonElement | null = formElementOf().querySelector(".panel-main");
     if (typing === null || save === null) return;
     const form: Form = typing;
     const kept: Planned[] = groupWaits(form) ? keptOf(form) : [];
+    const ask: (() => Promise<Planned[]>) | null = formReady(form)
+        ? (): Promise<Planned[]> => formSend(form, true)
+        : kept.length > 0
+          ? async (): Promise<Planned[]> => kept
+          : null;
     save.disabled = !formReady(form);
-    previewSoon(formElementOf(), {
-        ask: formReady(form)
-            ? (): Promise<Planned[]> => formSend(form, true)
-            : kept.length > 0
-              ? async (): Promise<Planned[]> => kept
-              : null,
-        days: form,
-        states: form.states,
-        kinds: form.type === examType ? form.kinds : undefined,
-        filled: formFill,
-    });
+    clearTimeout(previewWait);
+    previewWait = window.setTimeout((): void => {
+        previewShow(form, ask).catch(console.error);
+    }, 150);
 }
 
 /**
@@ -2000,18 +1935,19 @@ function placeSearchOf(current: string, nameShown: (line: string) => string): (t
 function placeRowOf(form: Form): HTMLElement {
     const field: Field | undefined = skillFieldOf("location");
     const address: HTMLAnchorElement = document.createElement("a");
-    const pencil: HTMLButtonElement = document.createElement("button");
     const parts: HTMLElement = elementOf("div", "field-parts", "");
+    const pencil: HTMLButtonElement = iconButtonOf("entry-pencil", Pencil, "Change the place", (): void => {
+        placeOpen = !placeOpen;
+        parts.hidden = !placeOpen;
+        if (placeOpen) parts.querySelector("input")?.focus();
+    });
     const nameShown: (line: string) => string = (line: string): string =>
         line === form.location && placeEdit !== null && placeEdit.name !== "" ? placeEdit.name : labelOf(line);
     address.className = "entry-address";
     address.target = "_blank";
     address.rel = "noopener";
     addressShow(address, form);
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
     pencil.hidden = form.location === "";
-    iconPut(pencil, Pencil, "Change the place");
     parts.hidden = !placeOpen;
     const row: HTMLElement = rowOf(
         "Place",
@@ -2046,11 +1982,6 @@ function placeRowOf(form: Form): HTMLElement {
             },
         ),
     );
-    pencil.addEventListener("click", (): void => {
-        placeOpen = !placeOpen;
-        parts.hidden = !placeOpen;
-        if (placeOpen) parts.querySelector("input")?.focus();
-    });
     return row;
 }
 
@@ -2161,7 +2092,7 @@ function groupPickOf(form: Form): HTMLElement {
                 (_change: () => void, send: () => Promise<unknown>): void => {
                     send()
                         .then((): Promise<void> => seriesOpen(loaded.module, form.type, loaded.semester, done))
-                        .catch(logged);
+                        .catch(console.error);
                 },
                 (group: string): void => groupFrom(form, group),
             ),
@@ -2283,7 +2214,6 @@ function binShows(form: Form): boolean {
  * When the reader does not take it, the hint above the buttons says so.
  */
 function seriesBinOf(form: Form): HTMLButtonElement {
-    const bin: HTMLButtonElement = document.createElement("button");
     const ask: string = grouped === null && plain === null ? "Really remove? Its boxes done stay" : "Really remove?";
     const address: string =
         grouped !== null
@@ -2300,25 +2230,20 @@ function seriesBinOf(form: Form): HTMLButtonElement {
                     type: form.type,
                     semester: course?.semester ?? "",
                 })}`;
-    bin.type = "button";
-    bin.className = "panel-remove";
-    iconPut(bin, Trash, grouped !== null ? "Remove the group" : "Remove the series");
-    bin.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
-    bin.addEventListener("click", (): void => {
-        if (!removeAsked) {
-            removeAsked = true;
-            iconPut(bin, QuestionMark, ask);
-            return;
-        }
-        readerAsk<unknown>(address, { method: "DELETE" })
-            .then(async (): Promise<void> => {
-                if (await groupReturn(true)) return;
-                entryBack = null;
-                dialogOf().close();
-                done();
-            })
-            .catch(failed);
-    });
+    const bin: HTMLButtonElement = iconButtonOf(
+        "panel-remove",
+        Trash,
+        grouped !== null ? "Remove the group" : "Remove the series",
+        (): void => {
+            if (!removeAsked) {
+                removeAsked = true;
+                iconPut(bin, QuestionMark, ask);
+                return;
+            }
+            readerAsk<unknown>(address, { method: "DELETE" }).then(formDone).catch(failed);
+        },
+        true,
+    );
     return bin;
 }
 
@@ -2368,22 +2293,21 @@ function formFill(): void {
         ...(fresh === null ? rows : [...freshRowsOf(), ...(fresh.category === skillName ? rows.slice(1) : rows)]),
     );
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");
-    const cancel: HTMLButtonElement = document.createElement("button");
-    const save: HTMLButtonElement = document.createElement("button");
-    cancel.type = "button";
-    iconPut(cancel, X, "Cancel");
-    cancel.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
-    cancel.addEventListener("click", (): void => {
-        groupReturn(false)
-            .then((back: boolean): void => {
-                if (!back) dialogOf().close();
-            })
-            .catch(logged);
-    });
+    const cancel: HTMLButtonElement = iconButtonOf(
+        "",
+        X,
+        "Cancel",
+        (): void => {
+            groupReturn(false)
+                .then((back: boolean): void => {
+                    if (!back) dialogOf().close();
+                })
+                .catch(console.error);
+        },
+        true,
+    );
+    const save: HTMLButtonElement = iconButtonOf("panel-main", Check, "Save", (): void => {}, true);
     save.type = "submit";
-    save.className = "panel-main";
-    iconPut(save, Check, "Save");
-    save.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     const hint: HTMLElement = elementOf("p", "panel-error", "Saving failed");
     hint.hidden = true;
     const file: HTMLAnchorElement = elementOf("a", "panel-file", "") as HTMLAnchorElement;
@@ -2421,8 +2345,7 @@ async function placeRename(form: Form, dry: boolean): Promise<void> {
  */
 async function formSave(): Promise<void> {
     if (typing === null) return;
-    const exams: boolean = typing.type === examType;
-    if (extraJoin(typing, exams ? typing.kinds : undefined)) formFill();
+    if (extraJoin(typing)) formFill();
     if (!formReady(typing)) return;
     try {
         await placeRename(typing, true);
@@ -2435,6 +2358,16 @@ async function formSave(): Promise<void> {
         failed(error);
         return;
     }
+    await formDone();
+}
+
+/**
+ * Closes the form once it is saved or removed, with the dialog of the box it opened over,
+ * but the form of a group opened from my series goes back to it, see {@link groupReturn}.
+ *
+ * @throws {Error} - When the reader cannot answer
+ */
+async function formDone(): Promise<void> {
     if (await groupReturn(true)) return;
     entryBack = null;
     dialogOf().close();
@@ -2475,18 +2408,18 @@ function dialogStart(): void {
     const dialog: HTMLDialogElement = dialogOf();
     formElementOf().addEventListener("submit", (event: SubmitEvent): void => {
         event.preventDefault();
-        formSave().catch(logged);
+        formSave().catch(console.error);
     });
     formElementOf().addEventListener("keydown", (event: KeyboardEvent): void => {
         if (event.key !== "Enter" || !(event.target instanceof HTMLInputElement) || event.defaultPrevented) return;
         event.preventDefault();
         event.target.blur();
-        if (event.ctrlKey) formSave().catch(logged);
+        if (event.ctrlKey) formSave().catch(console.error);
     });
     const entry: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
     entry.addEventListener("close", (): void => {
         if (!entry.open) entry.removeAttribute("data-over");
-        if (dialog.open && !entry.open) seriesRefresh().catch(logged);
+        if (dialog.open && !entry.open) seriesRefresh().catch(console.error);
     });
     const back: (event: Event) => void = (event: Event): void => {
         if (
@@ -2497,13 +2430,13 @@ function dialogStart(): void {
         )
             return;
         event.preventDefault();
-        groupReturn(false).catch(logged);
+        groupReturn(false).catch(console.error);
     };
     dialog.addEventListener("cancel", back);
     document.addEventListener("keydown", back);
     dialog.addEventListener("close", (): void => {
         underClose();
-        if (entryBack !== null) entryBackShow(entryBack).catch(logged);
+        if (entryBack !== null) entryBackShow(entryBack).catch(console.error);
         entryBack = null;
         typing = null;
         plain = null;
@@ -2769,34 +2702,24 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
 }
 
 /**
- * Makes the switch of a series of my course or of a group between times and a length,
+ * Makes the row `Day` of a series of my course or of a group, see {@link slotRowsOf},
+ * with the switch between times and a length, see `lengthSwapOf` in `./times.ts`,
  * as a plain series has it, by its length its boxes days without time.
  * From times to a length each day takes the length of its times,
  * from a length to times its times stay to type.
  */
-function courseSwapOf(form: Form): HTMLButtonElement {
+function courseTimeRowsOf(form: Form): HTMLElement[] {
     const timed: boolean = form.slots.every((slot: Slot): boolean => slot.minutes === undefined);
-    return lengthSwapOf(timed, (): void => {
-        form.slots = form.slots.map((slot: Slot): Slot =>
-            timed
-                ? {
-                      weekday: slot.weekday,
-                      start: "",
-                      end: "",
-                      minutes: timesReady(slot) ? minutesOf(slot.end) - minutesOf(slot.start) : 0,
-                  }
-                : { weekday: slot.weekday, start: "", end: "" },
-        );
+    const swap: HTMLButtonElement = lengthSwapOf(timed, (): void => {
+        form.slots = form.slots.map((slot: Slot): Slot => ({
+            weekday: slot.weekday,
+            start: "",
+            end: "",
+            ...(timed ? { minutes: timesReady(slot) ? minutesOf(slot.end) - minutesOf(slot.start) : 0 } : {}),
+        }));
         formChanged();
         formFill();
     });
-}
-
-/**
- * Makes the row `Day` of a series of my course or of a group, see {@link slotRowsOf},
- * with the switch between times and a length, see {@link courseSwapOf}.
- */
-function courseTimeRowsOf(form: Form): HTMLElement[] {
     const lengthOf: (slot: Slot) => HTMLElement = (slot: Slot): HTMLElement =>
         fieldOf(
             "time-field",
@@ -2807,19 +2730,16 @@ function courseTimeRowsOf(form: Form): HTMLElement[] {
             },
             formChanged,
         );
-    return slotRowsOf(
-        form,
-        [courseSwapOf(form)],
-        form.slots.every((slot: Slot): boolean => slot.minutes === undefined) ? null : lengthOf,
-    );
+    return slotRowsOf(form, [swap], timed ? null : lengthOf);
 }
 
 /**
- * Makes the switch of a plain series between times and a length,
- * see `lengthSwapOf` in `./times.ts`, either way keeping its weekdays.
+ * Makes the row `Day` of a plain series, see {@link slotRowsOf},
+ * with the switch between times and a length, see `lengthSwapOf` in `./times.ts`,
+ * either way keeping its weekdays.
  */
-function plainSwapOf(form: Form): HTMLButtonElement {
-    return lengthSwapOf(plainTimed, (): void => {
+function plainTimeRowsOf(form: Form): HTMLElement[] {
+    const swap: HTMLButtonElement = lengthSwapOf(plainTimed, (): void => {
         if (plainTimed)
             plainLengths = new Map(
                 form.slots.map((slot: Slot): [number, number | null] => [
@@ -2829,21 +2749,10 @@ function plainSwapOf(form: Form): HTMLButtonElement {
                         : (plainLengths.get(slot.weekday) ?? null),
                 ]),
             );
-        form.slots = form.slots.map((slot: Slot): Slot => ({
-            weekday: slot.weekday,
-            start: "",
-            end: "",
-        }));
+        form.slots = form.slots.map((slot: Slot): Slot => ({ weekday: slot.weekday, start: "", end: "" }));
         plainTimed = !plainTimed;
         formFill();
     });
-}
-
-/**
- * Makes the row `Day` of a plain series, see {@link slotRowsOf},
- * with the switch between times and a length, see {@link plainSwapOf}.
- */
-function plainTimeRowsOf(form: Form): HTMLElement[] {
     const lengthOf: (slot: Slot) => HTMLElement = (slot: Slot): HTMLElement => {
         const minutes: number | null =
             plainLengths.get(slot.weekday) ??
@@ -2861,7 +2770,7 @@ function plainTimeRowsOf(form: Form): HTMLElement[] {
             formChanged,
         );
     };
-    return slotRowsOf(form, [plainSwapOf(form)], plainTimed ? null : lengthOf, true);
+    return slotRowsOf(form, [swap], plainTimed ? null : lengthOf, true);
 }
 
 /**
@@ -2903,11 +2812,8 @@ function plainSummaryOf(series: Plain): HTMLElement {
     }
     const rankOf: (value: string) => number = (value: string): number =>
         field.values.includes(value) ? field.values.indexOf(value) : field.values.length;
-    const pencil: HTMLButtonElement = document.createElement("button");
-    pencil.type = "button";
-    pencil.className = "entry-pencil";
+    const pencil: HTMLButtonElement = iconButtonOf("entry-pencil", Pencil, "Change the summary", (): void => {});
     pencil.hidden = series.title === "";
-    iconPut(pencil, Pencil, "Change the summary");
     const picker: HTMLElement = choicesOf({
         search: searchOf(field.values.map(choiceOf)),
         picked: series.title === "" ? [] : field.many === true ? series.title.split(", ") : [series.title],
@@ -3067,7 +2973,7 @@ function freshRowsOf(): HTMLElement[] {
                     category: values[0] ?? "",
                     picked: { module: "", type: "" },
                 };
-                freshFollow().catch(logged);
+                freshFollow().catch(console.error);
             },
         }),
     );
@@ -3076,10 +2982,10 @@ function freshRowsOf(): HTMLElement[] {
     skillPairOf(fresh.picked, (picked: ModuleType): void => {
         if (fresh === null) return;
         fresh = { ...fresh, picked: picked };
-        freshFollow().catch(logged);
+        freshFollow().catch(console.error);
     })
         .then((pair: HTMLElement): void => holder.replaceChildren(pair))
-        .catch(logged);
+        .catch(console.error);
     return [category, rowOf("Summary", holder)];
 }
 
@@ -3112,7 +3018,7 @@ function semesterRowOf(semester: string): HTMLElement {
         adding: false,
         noun: "semester",
         pick: (values: string[]): void => {
-            if ((values[0] ?? semester) !== semester) semesterSwitch(values[0]).catch(logged);
+            if ((values[0] ?? semester) !== semester) semesterSwitch(values[0]).catch(console.error);
         },
     });
     const form: Form | null = typing;
