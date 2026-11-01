@@ -644,15 +644,22 @@ fieldset.entry-times {
     margin-inline: 0.5em;
 }
 
-/* Middle dot between two people or two values of a summary on one line,
+/* Middle dot between two people on one line,
    see `dottedOf` in `../persons.ts`: an en space on each side,
    as far as the dot of `.entry-parted` and the dash of a range;
-   after the pencil of a person or a value half an en space further on each side,
+   after the pencil of a person half an en space further on each side,
    so it parts two names with their icons, as far from the pencil drawn as from the next
    name, so the room the pencil keeps right of its line taken back */
-:has(> .entry-pencil:last-child) + .value-dot,
-:has(> :last-child > .entry-pencil:last-child) + .value-dot {
+:has(> .entry-pencil:last-child) + .value-dot {
     margin-inline: -0.12em 0.25em;
+}
+
+/* Comma between two values of a summary in the line of its dialog, after their pencil:
+   the room the pencil keeps right of its line taken back,
+   and further on its right than the comma of a text,
+   so it parts two values with their plus and pencil */
+.value-comma {
+    margin-inline: -0.12em 0.5em;
 }
 
 /* Time field as wide as what it holds, while empty its grey `hh:mm`,

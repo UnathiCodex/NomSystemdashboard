@@ -1386,8 +1386,8 @@ function fieldRowsOf(field: Field): HTMLElement[] {
 /**
  * Builds the row of a summary of several values,
  * like the means of a way, since I change on it, or my body care:
- * one line of the row, the values picked parted by a middle dot,
- * which its entry writes parted by `, `;
+ * one line of the row, the values picked parted by `, ` as its entry writes them,
+ * see `.value-comma` in `day.css`;
  * its list, a menu, takes a value or takes it back by a click
  * and stays open for the next,
  * see `many` in `choices.ts`, and takes a new value where the field takes new ones.
@@ -1415,6 +1415,7 @@ function manyRowOf(field: Field): HTMLElement {
             noun: "summary",
             linkOf: (): string => "",
             afterOf: (value: string): HTMLElement => valueAfterOf(field, param, value),
+            parting: ", ",
             below: [link, linkParts, param],
             order: field.fixed
                 ? undefined

@@ -61,7 +61,6 @@ import {
     listLineOf,
 } from "../food/search.ts";
 import { crossPut, iconOf, iconPut, plusPut } from "../icons.ts";
-import { summaryShownOf } from "../persons.ts";
 import { readerAsk } from "../reader.ts";
 import { Pencil, Plus } from "lucide";
 
@@ -582,11 +581,7 @@ function summaryShow(): void {
     const total: number =
         meals.reduce((sum: number, meal: MealPick): number => sum + mealKcalOf(meal), 0) +
         picks.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0);
-    const text: HTMLElement = elementOf(
-        "span",
-        "meal-summary",
-        summaryShownOf(mealTitle()),
-    );
+    const text: HTMLElement = elementOf("span", "meal-summary", mealTitle());
     if (
         [...meals.flatMap((meal: MealPick): FoodPick[] => meal.foods), ...picks].some(
             (pick: FoodPick): boolean => numberOf(pick.grams) !== null,
@@ -799,10 +794,7 @@ async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
 /** Writes a cooking as the list of the cookings offers it: what it was and when. */
 function cookingTextOf(cooking: Cooking): string {
     const start: Date = new Date(cooking.start);
-    return (
-        `${summaryShownOf(cooking.title)} · ` +
-        `${dayTextOf(dayOf(start), true)} ${timeOf(start)}`
-    );
+    return `${cooking.title} · ${dayTextOf(dayOf(start), true)} ${timeOf(start)}`;
 }
 
 /**

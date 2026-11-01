@@ -73,7 +73,6 @@ import {
 import { boxOpenEdit, boxOpenNew, entryOpenFromBox } from "./categories.ts";
 import { giftOpen } from "./gifts.ts";
 import { middleCutPut } from "./choices.ts";
-import { summaryShownOf } from "../persons.ts";
 import { whereLinkedOf, whereOf } from "./places.ts";
 import { linkNameOf } from "../skill/links.ts";
 import { boxMinutes, boxTimesOf, lengthOf, nearOf, rangeDash, timeOf } from "./times.ts";
@@ -232,7 +231,7 @@ export function shownWhatOf(
         module === "" ||
         !title.startsWith(`${module}_`)
     )
-        return summaryShownOf(title);
+        return title;
     return type === "" ? module : `${module} (${type})`;
 }
 

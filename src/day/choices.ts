@@ -167,6 +167,8 @@ export type Choice = {
  * - `linkOf`: Address a value picked opens from the line, see {@link lineValueOf}.
  * - `afterOf`: An element right after a value picked in the line,
  *   like the pencil of a person of `With`, whose click opens no list.
+ * - `parting`: What parts the values picked in the line,
+ *   a middle dot when left out, see `dottedOf` in `../persons.ts`.
  */
 export type ChoicesSetup = {
     search: (text: string) => Promise<Choice[]>;
@@ -187,6 +189,7 @@ export type ChoicesSetup = {
     textOf?: (value: string) => string;
     linkOf?: (value: string) => string;
     afterOf?: (value: string) => HTMLElement;
+    parting?: string;
 };
 
 /**
@@ -466,7 +469,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         const shown: string[] = chosen.map(
             (value: string): string => texts.get(value) ?? setup.textOf?.(value) ?? value,
         );
-        const text: string = shown.join(valueDot);
+        const text: string = shown.join(setup.parting ?? valueDot);
         if (text === "" && setup.plus === true) {
             plusPut(line, setup.empty ?? "");
             line.classList.add("picker-empty");
@@ -489,7 +492,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
             },
         );
         if (text !== "" && setup.linkOf !== undefined)
-            line.replaceChildren(...dottedOf(values));
+            line.replaceChildren(...dottedOf(values, setup.parting));
         line.title = setup.locked ? "As planned" : text;
         line.classList.toggle("picker-empty", text === "");
     };

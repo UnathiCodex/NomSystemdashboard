@@ -28,7 +28,6 @@ import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import { lengthOf, rangeDash, timeOf } from "../day/times.ts";
 import { entryPartOf, whatOf } from "../day/boxes.ts";
 import { roomOf } from "../day/series.ts";
-import { summaryShownOf } from "../persons.ts";
 import "../day/boxes.css";
 
 import type { EditorState, Extension, Line, Range, Transaction } from "@codemirror/state";
@@ -465,7 +464,7 @@ function boxOf(block: Block): HTMLElement {
             "box-what",
             whatOf(
                 values.get("CATEGORIES") ?? "",
-                summaryShownOf(values.get("SUMMARY") ?? values.get("TZID") ?? block.kind),
+                values.get("SUMMARY") ?? values.get("TZID") ?? block.kind,
             ),
         ),
         ...(parts.length === 0

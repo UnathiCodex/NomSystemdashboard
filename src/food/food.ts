@@ -29,7 +29,6 @@ import { labelOf } from "../day/places.ts";
 import { dayAdd, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
-import { summaryShownOf } from "../persons.ts";
 import { logEntryOpen } from "../editor/dialog.ts";
 import { iconPut, plusPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
@@ -196,7 +195,7 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
     if (meal.foods.length === 0) {
         const none: HTMLElement = elementOf("div", "food-line", "");
         none.append(elementOf("span", "food-place", "No foods listed"));
-        return [entry, whatLineOf(summaryShownOf(meal.title), null, null, true), none];
+        return [entry, whatLineOf(meal.title, null, null, true), none];
     }
 
     const meals: Map<string, Eaten[]> = new Map();
@@ -216,7 +215,7 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
     return [
         entry,
         ...[...meals].flatMap(([name, foods]: [string, Eaten[]]): HTMLElement[] => [
-            whatLineOf(summaryShownOf(name), kcalOf(foods), null, true),
+            whatLineOf(name, kcalOf(foods), null, true),
             ...foods.map((eaten: Eaten): HTMLElement =>
                 whatLineOf(eaten.name, kcalOf([eaten]), eaten, false),
             ),

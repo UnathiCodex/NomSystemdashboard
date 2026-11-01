@@ -65,29 +65,26 @@ export const personsKept: () => Promise<Person[]> = changesKept((): Promise<Pers
 );
 
 /**
- * The middle dot that parts people or the values of a summary on one line,
+ * The middle dot that parts people on one line,
  * never a comma or `; `, since a name holds a comma.
  * An en space on each side, as far as every dot that parts a line.
  */
 export const valueDot: string = "\u2002·\u2002";
 
 /**
- * Shows a summary with the values its file parts by `, ` apart by {@link valueDot}.
- */
-export function summaryShownOf(summary: string): string {
-    return summary.replaceAll(", ", valueDot);
-}
-
-/**
- * Puts several people or values on one line, each apart by {@link valueDot},
+ * Puts several people on one line, each apart by {@link valueDot},
+ * or the values of a summary, apart by `parting`, the comma of its file,
  * the line going on after it where it is too long.
  */
-export function dottedOf(names: (string | Node)[]): (string | Node)[] {
+export function dottedOf(
+    names: (string | Node)[],
+    parting: string = valueDot,
+): (string | Node)[] {
     return names.flatMap((name: string | Node, index: number): (string | Node)[] => {
         if (index === 0) return [name];
         const dot: HTMLSpanElement = document.createElement("span");
-        dot.className = "value-dot";
-        dot.textContent = valueDot;
+        dot.className = parting === valueDot ? "value-dot" : "value-comma";
+        dot.textContent = parting;
         return [dot, name];
     });
 }
