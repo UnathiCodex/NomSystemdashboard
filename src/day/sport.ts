@@ -1,37 +1,19 @@
 /**
  * ## Session of sport in the entry by category
  *
- * A session of the log, `Sport`, built and working as a meal with its foods,
- * see `meal.ts`, in its look, see `meal.css`, on the computer as on a phone:
- * - Exercises: what I did, right below the summary as the foods of a meal,
- *   the one plus beside its name opening one list in the look of the search of foods,
- *   see {@link plusOfList}, which finds my workouts first, then my exercises.
- *   While the text typed is no workout of mine, `+ New workout` puts an empty block
- *   of that name into the entry, see {@link workoutNew},
- *   which goes into `Workouts.md` with its first exercise, see {@link freshSend}.
- *   `+ New exercise` makes the name typed one of mine, see {@link exerciseNew}.
- *   Each variant of mine stands with its values grey beside its name and brings them.
- *   One without values brings what I did of it the last time.
- *   A workout picked brings its block, as a meal brings its foods,
- *   its parts indented below it.
- *   An exercise picked alone stands by itself below the blocks.
- * - A row of an exercise, as that of a food: its name, its sets and repetitions,
- *   a switch `reps` or `s` for an exercise on time, its kilograms and its `×`.
- *   The `×` between the fields and the units always show,
- *   so an empty row says what to type.
- *   A video comes only with a workout,
- *   which takes it in the sport area by its link, see `../sport/lists.ts`.
- * - Its time: while the session holds only videos, its end follows them,
- *   so a slot drawn too long in the log does not stay.
- *   With an exercise beside them it stays as I typed it,
- *   since only I know how long the exercises took.
- * Its summary, place and `With` as in every category, but no note, see `categories.ts`.
- * The dialog writes each exercise as a line `X-EXERCISE` and each video as `X-VIDEO`,
- * each with the workout it belongs to,
- * so the log keeps what I did that day, whatever I change in my workouts later,
- * see `reader/sport.ts`.
- * A session written before held its one workout as `X-WORKOUT`,
- * which its parts without a workout of their own belong to.
+ * A session of the log, `Sport`, built and working as a meal with its foods.
+ * - Exercises: The one plus opens a list of my workouts, then my exercises.
+ *   `+ New workout` puts an empty block into the entry, which goes into `Workouts.md` with its first exercise.
+ *   A variant of mine brings its values, one without values what I did of it the last time.
+ *   A workout picked brings its block with its parts, an exercise alone stands below the blocks.
+ * - Row: An exercise with its sets, repetitions or seconds, kilograms and `×`.
+ *   The `×` between the fields and the units always show, so an empty row says what to type.
+ *   A video comes only with a workout.
+ * - Time: While the session holds only videos, its end follows them, so a slot drawn too long does not stay.
+ *   With an exercise it stays as I typed it, since only I know how long the exercises took.
+ * Each part is written as `X-EXERCISE` or `X-VIDEO` with its workout,
+ * so the log keeps what I did that day, whatever I change in my workouts later.
+ * An older session held its one workout as `X-WORKOUT`, which its parts without a workout belong to.
  */
 
 import { listOf, rowOf } from "./choices.ts";
@@ -72,8 +54,8 @@ type VideoDone = {
 };
 
 /**
- * What a session of the log holds, as the reader gives it with the entry.
- * - `workout`: Its `X-WORKOUT` of before, empty or missing for none.
+ * What a session of the log holds.
+ * - `workout`: Its older `X-WORKOUT`, empty or missing for none.
  */
 export type SessionLines = {
     workout?: string;
@@ -84,7 +66,7 @@ export type SessionLines = {
 /** Category of a session, `CATEGORIES:Sport`. */
 export const sportName: string = "Sport";
 
-/** Everything of mine as the reader sent it when the dialog picked `Sport`. */
+/** Everything of mine as sent when the dialog picked `Sport`. */
 let mine: Mine | null = null;
 
 /** Names of the workouts of the session, each a block, in the order picked. */
@@ -102,19 +84,16 @@ const place: HTMLElement = elementOf("div", "sport-rows", "");
 /** Lets the dialog know of a change, so it allows saving and shows what is picked. */
 let changed: () => void = (): void => undefined;
 
-/** Puts the end of a session minutes after its start, see `endFit` in `categories.ts`. */
+/** Puts the end of a session minutes after its start. */
 let fit: (minutes: number) => void = (): void => undefined;
 
-/** Workouts named new in this session, see {@link freshSend}. */
+/** Workouts named new in this session. */
 let fresh: Set<string> = new Set();
 
 /** The plus of each block, so a new workout opens its list at once. */
 let blockPluses: Map<string, HTMLButtonElement> = new Map();
 
-/**
- * Reads a line `X-EXERCISE` into its row, its workout that of the line,
- * else `before`, the `X-WORKOUT` of the session of before.
- */
+/** Reads a line `X-EXERCISE` into its row, its workout that of the line, else the older `X-WORKOUT`. */
 function exerciseOf(line: string, before: string): ExerciseDone {
     const [name, sets, reps, kg, workout]: string[] = line.split(";").map((part: string): string => part.trim());
     return {
@@ -126,7 +105,7 @@ function exerciseOf(line: string, before: string): ExerciseDone {
     };
 }
 
-/** Reads a line `X-VIDEO` into its row, its workout as {@link exerciseOf} takes it. */
+/** Reads a line `X-VIDEO` into its row, its workout as for an exercise. */
 function videoOf(line: string, before: string): VideoDone {
     const [title, channel, minutes, link, workout]: string[] = line
         .split(";")
@@ -140,11 +119,7 @@ function videoOf(line: string, before: string): VideoDone {
     };
 }
 
-/**
- * Brings an exercise with the values of the variant of mine it was picked as,
- * else with what I did of it the last time,
- * see `last` of `Mine` in `../sport/mine.ts`, empty the first time.
- */
+/** An exercise with the values of its variant, else what I did of it the last time, empty the first time. */
 function exerciseLastOf(
     name: string,
     workout: string,
@@ -165,7 +140,7 @@ function exerciseLastOf(
         : { ...exerciseOf(last, ""), name: name, workout: workout };
 }
 
-/** Finds the video of mine a video of the session names, by its link, else its title. */
+/** The video of mine a video of the session names, by its link, else its title. */
 function videoFind(link: string, title: string): Video | undefined {
     return mine?.videos.find((video: Video): boolean =>
         link !== "" ? video.link === link : video.link === "" && video.title.toLowerCase() === title.toLowerCase(),
@@ -173,8 +148,7 @@ function videoFind(link: string, title: string): Video | undefined {
 }
 
 /**
- * Gives the kcal a video of the session burns in its minutes,
- * as my video burns in its own at my weight of today, see `Video` in `reader/sport.ts`.
+ * The kcal a video of the session burns in its minutes at my weight of today.
  * 0 while the video is no longer mine or has no minutes or kind.
  */
 function videoKcalOf(video: VideoDone): number {
@@ -185,10 +159,7 @@ function videoKcalOf(video: VideoDone): number {
         : (own.kcal / own.minutes) * minutes;
 }
 
-/**
- * Fits the end of the session to its videos after a change of its parts,
- * nothing while it holds an exercise, see the top of this file.
- */
+/** Fits the end of the session to its videos, nothing while it holds an exercise. */
 function videosFit(): void {
     const minutes: number = videos.reduce(
         (sum: number, video: VideoDone): number => sum + (Number(video.minutes.replace(",", ".")) || 0),
@@ -197,10 +168,7 @@ function videosFit(): void {
     if (exercises.length === 0 && minutes > 0) fit(Math.round(minutes));
 }
 
-/**
- * Picks a workout: its block below the blocks there are, with its parts.
- * A workout the session holds already stays as it is.
- */
+/** Picks a workout, its block with its parts last, one the session holds already stays as it is. */
 function workoutPick(name: string): void {
     const picked: Workout | undefined = mine?.workouts.find((other: Workout): boolean => other.name === name);
     if (picked === undefined || blocks.includes(name)) return;
@@ -230,10 +198,7 @@ function workoutPick(name: string): void {
     videosFit();
 }
 
-/**
- * Puts an empty block of a new workout into the session, named as typed,
- * and opens its own list at once.
- */
+/** Puts an empty block of a new workout into the session and opens its list at once. */
 function workoutNew(name: string): void {
     blocks = [...blocks, name];
     fresh.add(name);
@@ -242,10 +207,8 @@ function workoutNew(name: string): void {
 }
 
 /**
- * Keeps a new workout of the session in `Workouts.md` as its exercises are now,
- * so it is mine the moment it holds one, whether the entry is saved or not,
- * as a new meal goes into `Meals.md`, see `freshSend` in `meal.ts`.
- * With its last exercise removed it leaves `Workouts.md`, which holds no workout without parts.
+ * Keeps a new workout in `Workouts.md` as its exercises are now, saved entry or not, as a new meal.
+ * With its last exercise removed it leaves, since `Workouts.md` holds no workout without parts.
  * Its block removed by its `×`, it stays mine. A workout I had before stays as it is.
  */
 function freshSend(workout: string): void {
@@ -261,9 +224,7 @@ function freshSend(workout: string): void {
 }
 
 /**
- * Adds an exercise, to a block or alone, unless it stands there already as a food is picked once,
- * and puts the cursor into its sets.
- *
+ * Adds an exercise to a block or alone, unless it stands there already, the cursor in its sets.
  * @param workout - The workout it belongs to, empty for one alone
  * @param variant - The variant of mine picked, none for one typed new
  */
@@ -280,10 +241,7 @@ function exerciseAdd(name: string, workout: string, variant?: Exercise): void {
     place.querySelector<HTMLInputElement>(`[data-part="${exercises.indexOf(added)}"] .sport-sets input`)?.focus();
 }
 
-/**
- * Adds an exercise typed new: first into `Exercises.md`, see `exerciseSend` in `../sport/mine.ts`,
- * so it is mine as a new food is, then into the session.
- */
+/** Adds an exercise typed new into `Exercises.md`, then into the session. */
 function exerciseNew(name: string, workout: string): void {
     exerciseSend(name)
         .then((sent: Mine): void => {
@@ -294,9 +252,7 @@ function exerciseNew(name: string, workout: string): void {
 }
 
 /**
- * Makes a small field of a number, as the grams of a food:
- * a change saves it, a text not taken marks it.
- *
+ * Small field of a number, a change saves it, a text not taken marks it.
  * @param saved - Takes the text typed, gives whether it was taken
  */
 function inputOf(value: string, words: string, wrong: string, saved: (text: string) => boolean): HTMLInputElement {
@@ -315,8 +271,7 @@ function inputOf(value: string, words: string, wrong: string, saved: (text: stri
 }
 
 /**
- * Makes a small field of a row with its unit after it, as the grams of a food.
- *
+ * Small field of a row with its unit after it.
  * @param className - Class of the field, which a phone puts first in its row
  */
 function fieldOf(
@@ -333,10 +288,7 @@ function fieldOf(
 }
 
 /**
- * Makes the sets and repetitions of an exercise:
- * two small fields of whole numbers with `×` between them
- * and the switch of the unit after them, `reps` or `s`.
- *
+ * Sets and repetitions of an exercise, `×` between them, the switch `reps` or `s` after them.
  * @param exercise - The exercise, changed in place
  */
 function setsOf(exercise: ExerciseDone): HTMLElement {
@@ -378,7 +330,7 @@ function setsOf(exercise: ExerciseDone): HTMLElement {
     return place;
 }
 
-/** Makes the small grey `×` of a row, which takes its part or its block back. */
+/** The `×` of a row, which takes its part or its block back. */
 function removeOf(words: string, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf("cross-quiet", "", click);
     crossPut(button, words);
@@ -386,13 +338,9 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the list of a plus as the search of foods of a meal looks, see `foodSearchOf` in `../food/search.ts`,
- * a menu of its own under the plus, see `listOf` in `choices.ts`:
- * a search field, then my workouts, only in the list of the row `Exercises`,
- * then my exercises, each found by the words typed,
- * each section ending in `+ New workout “…”` or `+ New exercise “…”` for a name none has.
- * Enter takes the first workout or exercise found, never a new one, as `firstPick` in `../food/search.ts`.
- *
+ * List of a plus as a menu, a search field, my workouts only in the row `Exercises`, then my exercises.
+ * Each section ends in `+ New workout` or `+ New exercise` for a name none has.
+ * Enter takes the first workout or exercise found, never a new one.
  * @param picker - Element the list stands in, below the rows it adds to
  * @param workout - The block it adds to, empty for the row `Exercises`, which offers my workouts too
  * @returns The plus, which opens it
@@ -494,7 +442,6 @@ function plusOfList(picker: HTMLElement, words: string, workout: string): HTMLBu
     return plus;
 }
 
-/** Makes the row of an exercise. */
 function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
     const row: HTMLElement = elementOf("div", "meal-row", "");
     const index: number = exercises.indexOf(exercise);
@@ -519,8 +466,7 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
 }
 
 /**
- * Makes the row of a video, its kcal shown anew as its minutes change.
- *
+ * Row of a video, its kcal shown anew as its minutes change.
  * @param shown - Shows the kcal of its block anew
  */
 function videoRowOf(video: VideoDone, shown: () => void): HTMLElement {
@@ -550,12 +496,8 @@ function videoRowOf(video: VideoDone, shown: () => void): HTMLElement {
 }
 
 /**
- * Makes the block of a workout, as a meal stands with its foods:
- * its row with the small grey plus right after its name,
- * the kcal of its videos and its `×`, which removes it with its parts.
- * Then its parts below it, indented under a thin grey line,
- * and the list of its plus below them, as the search of a meal stands,
- * see `mealRowsOf` in `meal.ts`.
+ * Block of a workout as a meal, its row with the plus, the kcal of its videos and its `×`.
+ * Its parts indented below it, then the list of its plus.
  */
 function blockOf(workout: string): HTMLElement[] {
     const row: HTMLElement = elementOf("div", "meal-row", "");
@@ -593,10 +535,8 @@ function blockOf(workout: string): HTMLElement[] {
 }
 
 /**
- * Shows the row of what I did anew in its place, as the row `Foods` of a meal stands,
- * see `mealOf` in `meal.ts`: its name with the plus of its list, then its blocks,
- * then the exercises picked alone and those of a workout the session no longer holds.
- * Then lets the dialog know.
+ * Shows the rows anew, the plus, then the blocks,
+ * then the exercises alone and those of a workout the session no longer holds.
  */
 function rowsShow(): void {
     const rows: HTMLElement = elementOf("div", "meal-rows", "");
@@ -616,10 +556,7 @@ function rowsShow(): void {
 }
 
 /**
- * Opens a session in the dialog: loads my workouts, exercises and videos,
- * and takes what the entry holds.
- * A workout of a part is a block, in the order the parts name them.
- *
+ * Opens a session in the dialog with everything of mine, a block for each workout in the order the parts name them.
  * @param lines - What the entry holds, `null` for a new one or one of another category
  * @throws {Error} - When the reader cannot answer
  */
@@ -640,8 +577,7 @@ export async function sportOpen(lines: SessionLines | null): Promise<void> {
 }
 
 /**
- * Gives the rows of the session for the dialog.
- *
+ * Rows of the session for the dialog.
  * @returns One element whose rows count as rows of the dialog, see `sport.css`
  */
 export function sportRowsOf(change: () => void, end: (minutes: number) => void): HTMLElement[] {
@@ -651,10 +587,7 @@ export function sportRowsOf(change: () => void, end: (minutes: number) => void):
     return [place];
 }
 
-/**
- * Reads what the session holds, as the reader writes it.
- * No `X-WORKOUT` any more, since each part names its workout.
- */
+/** What the session holds, no `X-WORKOUT` since each part names its workout. */
 export function sportRead(): { workout: string; exercises: string[]; videos: string[] } {
     return {
         workout: "",
