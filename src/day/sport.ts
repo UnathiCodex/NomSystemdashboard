@@ -2,6 +2,7 @@
  * ## Session of sport in the entry by category
  *
  * A session of the log, `Sport`, built and working as a meal with its foods.
+ * - Summary: Written by itself from its workouts and exercises, never typed, see {@link sportTitle}.
  * - Exercises: The one plus opens a list of my workouts, then my exercises.
  *   `+ New workout` puts an empty block into the entry, which goes into `Workouts.md` with its first exercise.
  *   A variant of mine brings its values, one without values what I did of it the last time.
@@ -425,7 +426,6 @@ function rowsShow(): void {
     const title: string = sportTitle();
     const summary: HTMLElement = rowOf("Summary", elementOf("span", "", title));
     summary.classList.add("panel-fixed");
-    summary.hidden = title === "";
     place.replaceChildren(summary, row);
     changed();
 }
@@ -433,7 +433,7 @@ function rowsShow(): void {
 /**
  * The summary of a session as it writes itself, as a meal from its foods,
  * its workouts that hold an exercise, then the exercises picked alone, parted by `, `.
- * Empty without exercises, then I type it.
+ * Empty without exercises, then an old entry keeps the summary it had.
  */
 export function sportTitle(): string {
     return [

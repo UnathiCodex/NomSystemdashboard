@@ -277,9 +277,6 @@ type SummaryParts = [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement, HTM
 
 let summaryShown: SummaryParts | null = null;
 
-/** The rows of the summary as typed, hidden while a session of sport writes its own. */
-let titleRows: HTMLElement[] = [];
-
 /** Category picked, `null` before picking. */
 let chosen: Category | null = null;
 
@@ -1121,18 +1118,14 @@ function ofSeries(): boolean {
     );
 }
 
-/** Shows the rows of the summary anew, of sport what I did below it, the rows below staying as they are. */
+/**
+ * Shows the rows of the summary anew, of sport what I did below it, the rows below staying as they are.
+ * A session of sport writes its summary itself, as a meal, so its typed one stays hidden, only kept for an old entry.
+ */
 function titleRowsShow(): void {
-    titleRows = rowsOf((field: Field): boolean => field.key === "title");
-    document
-        .getElementById("entry-fields")
-        ?.replaceChildren(...titleRows, ...(sportShown() ? sportRowsOf(sportChanged) : []));
-}
-
-/** Hides the typed summary while a session writes its own from its exercises, then allows saving. */
-function sportChanged(): void {
-    for (const row of titleRows) row.hidden = sportTitle() !== "";
-    saveAllow();
+    const rows: HTMLElement[] = rowsOf((field: Field): boolean => field.key === "title");
+    for (const row of rows) row.hidden = sportShown();
+    document.getElementById("entry-fields")?.replaceChildren(...rows, ...(sportShown() ? sportRowsOf(saveAllow) : []));
 }
 
 /** Shows the fields of the category picked in the order of the file, the same for every category. */
