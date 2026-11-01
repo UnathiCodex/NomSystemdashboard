@@ -457,6 +457,11 @@ function skillPartsOf(summary: string): [string, string] {
     return [/^[A-Z]+\d+_/.test(name) ? name.split("_")[0] : name, parts?.[2] ?? ""];
 }
 
+/** Reads the type of a skill entry from its line `SUMMARY`, see {@link skillPartsOf}. */
+function summaryTypeOf(line: string): string {
+    return skillPartsOf(String(ICAL.Property.fromString(line).getFirstValue() ?? ""))[1];
+}
+
 /** Turns an `ical.js` time into the form of {@link Entry}. */
 function textOf(time: ICAL.Time): string {
     return time.isDate ? time.toString() : time.toJSDate().toISOString();
@@ -1082,14 +1087,6 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
     });
     if (block !== null) return lines;
 
-    const typeOf: (component: string[]) => string = (component: string[]): string => {
-        const summary: string = unfoldedOf(component, "SUMMARY");
-        return summary === ""
-            ? ""
-            : skillPartsOf(
-                  String(ICAL.Property.fromString(summary).getFirstValue() ?? ""),
-              )[1];
-    };
     const starts: Map<string[], string> = new Map(
         blocks.map((component: string[]): [string[], string] => [
             component,
@@ -1125,7 +1122,8 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
     const keyOf: (unit: string[][]) => [number, string, number, string] = (
         unit: string[][],
     ): [number, string, number, string] => {
-        const type: string = module ? typeOf(unit[0]) : "";
+        const summary: string = module ? unfoldedOf(unit[0], "SUMMARY") : "";
+        const type: string = summary === "" ? "" : summaryTypeOf(summary);
         const place: number = typeOrder.indexOf(type);
         const group: boolean =
             unfoldedOf(unit[0], "X-GROUP") !== "" &&
@@ -1162,12 +1160,6 @@ type Summed = {
     base: string;
     link: string;
 };
-
-/**
- * Whether {@link linesWrite} spreads a link now,
- * so the files it writes for that spread no further.
- */
-let spreading: boolean = false;
 
 /**
  * Gives a summary without what stands in round brackets at its end,
@@ -1237,8 +1229,11 @@ export function sharedLinkOf(category: string, summary: string): string | undefi
  * counted without what stands in round brackets at its end, in every file,
  * so one summary has one link everywhere and a link changed once changes for all.
  * A summary without link or with the link of a platform online gives none.
+ *
+ * @param spread - Whether it spreads a link, not for the files a spread writes,
+ *   so they spread it no further
  */
-function linesWrite(file: string, text: FileLines): void {
+function linesWrite(file: string, text: FileLines, spread: boolean = true): void {
     const before: string[] = existsSync(file) ? linesRead(file).lines : [];
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(
@@ -1255,7 +1250,7 @@ function linesWrite(file: string, text: FileLines): void {
                     kindsOf(text.lines),
                 ),
         );
-    if (spreading || !file.startsWith(`${calendarRoot}/`)) return;
+    if (!spread || !file.startsWith(`${calendarRoot}/`)) return;
     const changed: Summed[] = summariesOf(text.lines).filter(
         (summed: Summed): boolean =>
             summed.category !== "" &&
@@ -1264,12 +1259,7 @@ function linesWrite(file: string, text: FileLines): void {
             !platformLinkIs(summed.link),
     );
     if (changed.length === 0) return;
-    spreading = true;
-    try {
-        calendarFilesOf().forEach((path: string): void => linkSpread(path, changed));
-    } finally {
-        spreading = false;
-    }
+    calendarFilesOf().forEach((path: string): void => linkSpread(path, changed));
 }
 
 /**
@@ -1294,7 +1284,7 @@ function linkSpread(file: string, changed: Summed[]): void {
         text.lines[summed.index] = property.toICALString();
         spread = true;
     });
-    if (spread) linesWrite(file, text);
+    if (spread) linesWrite(file, text, false);
 }
 
 /**
@@ -1318,10 +1308,7 @@ function kindsOf(lines: string[]): [string, string][] {
     let semester: string = "";
     lines.forEach((line: string): void => {
         if (begins.includes(line)) [type, semester] = ["", ""];
-        else if (line.startsWith("SUMMARY"))
-            type = skillPartsOf(
-                String(ICAL.Property.fromString(line).getFirstValue() ?? ""),
-            )[1];
+        else if (line.startsWith("SUMMARY")) type = summaryTypeOf(line);
         else if (line.startsWith("X-SEMESTER:"))
             semester = line.slice("X-SEMESTER:".length).trim();
         else if (ends.includes(line) && type !== "" && semester !== "")
@@ -2710,7 +2697,7 @@ export function seriesChainOf(
                     "SIBLING",
             )
             .map((link: ICAL.Property): string => String(link.getFirstValue()));
-    const found: Map<string, string> = new Map();
+    const found: Map<string, [string, string]> = new Map();
     const waiting: string[] = [uid];
     while (waiting.length > 0) {
         const next: string = waiting.shift() as string;
@@ -2718,7 +2705,7 @@ export function seriesChainOf(
             ([, series]: [string, ICAL.Event]): boolean => series.uid === next,
         );
         if (found.has(next) || own === undefined) continue;
-        found.set(next, own[0]);
+        found.set(next, [own[0], next]);
         waiting.push(
             ...linked(own[1]),
             ...masters
@@ -2728,10 +2715,7 @@ export function seriesChainOf(
                 .map(([, series]: [string, ICAL.Event]): string => series.uid),
         );
     }
-    return [...found.entries()].map(([id, file]: [string, string]): [string, string] => [
-        file,
-        id,
-    ]);
+    return [...found.values()];
 }
 
 /**
