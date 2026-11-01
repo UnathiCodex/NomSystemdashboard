@@ -4,7 +4,7 @@
  * Reads and writes the daily notes in `NomFrequencediary`, one per day,
  * my gratitude under `## Gratitude` and my points about the day under `## About`, one `- ` line each.
  * A section holds every line below its heading up to the next heading.
- * A further line of a point stands two spaces in, then the spacer `⠀`, as Shift+Enter writes it.
+ * A further line of a point stands in by the tabs of its point and spaces, as Shift+Enter writes it.
  * Every day gets its note at its start with both headings empty.
  * An emptied section keeps its heading, every other line of a note stays as it is.
  */
@@ -32,11 +32,8 @@ const pointStart: string = "- ";
 /** A point, of any level, by its `-` or number. */
 const pointForm: RegExp = /^[ \t]*(?:[-*+]|\d+[.)]) /;
 
-/** A further line of a point, indented, then the spacer `⠀` (U+2800), so Markdown keeps it in its point. */
-const furtherForm: RegExp = /^[ \t]+⠀/;
-
-/** A line without text: empty, or only indentation, spacers and the mark of an empty point. */
-const emptyForm: RegExp = /^[ \t⠀]*(?:(?:[-*+]|\d+[.)])[ \t⠀]*)?$/;
+/** A line without text, at most indentation with the mark of an empty point. */
+const emptyForm: RegExp = /^[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]*)?$/;
 
 /** A heading of any level, which ends the section before it. */
 const headingForm: RegExp = /^#{1,6} /;
@@ -89,21 +86,15 @@ export function sectionsRead(date: string): { [title in SectionTitle]: string } 
 
 /**
  * Keeps the lines of a section points, as the editor writes them.
- * An indented line without the spacer, as further lines were written before, gets the spacer.
- * Any other line becomes a point of its own, lines without text are left out.
+ * A point and an indented further line stay, any other line becomes a point of its own,
+ * lines without text are left out.
  */
 function pointLinesOf(text: string): string[] {
     return text
         .split("\n")
         .map((line: string): string => line.trimEnd())
         .filter((line: string): boolean => !emptyForm.test(line))
-        .map((line: string): string =>
-            pointForm.test(line) || furtherForm.test(line)
-                ? line
-                : /^[ \t]/.test(line)
-                  ? line.replace(/^[ \t]+/, "$&⠀")
-                  : `${pointStart}${line.replace(/^⠀+/, "")}`,
-        );
+        .map((line: string): string => (pointForm.test(line) || /^[ \t]/.test(line) ? line : `${pointStart}${line}`));
 }
 
 /**
