@@ -308,7 +308,7 @@ function titledOf(element: HTMLElement, text?: string): HTMLElement {
 
 /**
  * Makes the parts of a line of times, each further one after its dot,
- * in one part of the line, so they stay together on a phone too.
+ * in one part of the line, so they stay together.
  *
  * @param start - What stands before the first, empty for nothing
  */

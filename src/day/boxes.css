@@ -281,14 +281,14 @@
         inset: -0.5rem 0;
     }
 
-    /* A part of the grey line that does not fit goes whole onto the next line,
-       never cut */
-    .box-meta {
+    /* A chapter that does not fit goes whole onto the next line, never cut,
+       the only part of a grey line that opens one, every other ends in `…` */
+    .box-chapters {
         flex-wrap: wrap;
         row-gap: 0.25rem;
     }
 
-    .box-part.entry-parted {
+    .box-chapters .entry-parted {
         flex: none;
     }
 }
