@@ -503,42 +503,27 @@ function productsShow(search: Search): void {
     const query: string = search.input.value.trim();
     const products: Product[] = query === "" ? [] : (found.products ?? []);
     const above: boolean = search.tail.previousElementSibling !== null;
-    const line: HTMLElement[] = above ? [elementOf("hr", "food-divider", "")] : [];
-    if (search.loading)
-        search.tail.replaceChildren(
-            ...line,
-            listHeadOf("Open Food Facts", ""),
-            elementOf("p", "food-none", "Searching…"),
-        );
-    else if (products.length > 0)
-        search.tail.replaceChildren(
-            ...line,
-            listHeadOf("Open Food Facts", "kcal / 100 g"),
-            ...products.map((product: Product): HTMLElement => productLineOf(search, product)),
-            moreOf(search, products.length, found),
-        );
-    else if (query !== "" && found.products === null)
-        search.tail.replaceChildren(
-            ...line,
-            listHeadOf("Open Food Facts", ""),
-            elementOf("p", "food-none food-nothing", "Open Food Facts cannot be reached"),
-        );
-    else
-        search.tail.replaceChildren(
-            ...(above
-                ? []
-                : [
-                      elementOf(
-                          "p",
-                          "food-none food-nothing",
-                          query !== ""
-                              ? search.setup.nothing
-                              : search.setup.meals === null
-                                ? "No foods yet"
-                                : "No meals or foods yet",
-                      ),
-                  ]),
-        );
+    const headOf: (unit: string) => HTMLElement[] = (unit: string): HTMLElement[] => [
+        ...(above ? [elementOf("hr", "food-divider", "")] : []),
+        listHeadOf("Open Food Facts", unit),
+    ];
+    const nothing: string =
+        query !== "" ? search.setup.nothing : search.setup.meals === null ? "No foods yet" : "No meals or foods yet";
+    search.tail.replaceChildren(
+        ...(search.loading
+            ? [...headOf(""), elementOf("p", "food-none", "Searching…")]
+            : products.length > 0
+              ? [
+                    ...headOf("kcal / 100 g"),
+                    ...products.map((product: Product): HTMLElement => productLineOf(search, product)),
+                    moreOf(search, products.length, found),
+                ]
+              : query !== "" && found.products === null
+                ? [...headOf(""), elementOf("p", "food-none food-nothing", "Open Food Facts cannot be reached")]
+                : above
+                  ? []
+                  : [elementOf("p", "food-none food-nothing", nothing)]),
+    );
 }
 
 /**
