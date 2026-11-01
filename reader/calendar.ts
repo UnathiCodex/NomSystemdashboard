@@ -17,7 +17,7 @@
  * every date, time and duration in the form of the iCalendar format,
  * also in a property or a parameter of my own.
  * Puts the lines of every entry it writes into one fixed order, see {@link lineOrder},
- * folds each line over 90 characters,
+ * folds each line over 100 characters,
  * and leaves every other line as it is, byte for byte,
  * but for the order of the entries of a file, see {@link componentsSorted}.
  */
@@ -397,7 +397,7 @@ ownTexts.forEach((name: string): void => {
 });
 
 /** Most characters of a line of an `.ics` file, its line break not counted. */
-const lineMost: number = 90;
+const lineMost: number = 100;
 
 /**
  * Folds a line of an `.ics` file as the format folds one, into parts of at most
