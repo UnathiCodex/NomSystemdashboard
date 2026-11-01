@@ -42,7 +42,6 @@ import type { CalendarSource } from "./sources.ts";
  * - `titleLink`: The `ALTREP` of its `SUMMARY`,
  *   for a skill entry the folder of its skill,
  *   see `skillLinkOf` in `documents.ts`.
- *   One of a platform of `Online.md` reads as its {@link Online}.
  * - `location`: Its `LOCATION`, where I physically was.
  *   An older place online reads as its {@link Online}.
  * - `locationLink`: The `ALTREP` of its `LOCATION`.
@@ -76,7 +75,7 @@ import type { CalendarSource } from "./sources.ts";
  * - `pinned`: Whether a group of the course is the one I pinned,
  *   see `pinPut` in `course.ts`.
  * - `written`: When the entry got its day, its `DTSTAMP`,
- *   set anew whenever its `DTSTART` or its `DUE` changes, see {@link componentWrite},
+ *   set anew whenever its `DTSTART` or its `DUE` changes, see {@link componentEdit},
  *   or a box of a day over is taken back to open, see {@link stampPut},
  *   so a box is carried along only while it lies on its day or before,
  *   see `carriedOf` in `boxes.ts`.
@@ -146,8 +145,7 @@ export type Entry = {
  * one `X-ONLINE`, its platform a row of `Online.md` as value,
  * see `Platform` in `places.ts`, the link of its own meeting or video as `ALTREP`,
  * its channel as `X-CHANNEL` and its title as `X-TITLE`, each left out while empty.
- * An older entry wrote it as its place or the `ALTREP` of its `SUMMARY`,
- * which reads so, see {@link onlineOf}.
+ * An older entry wrote it as its place, which reads so, see {@link onlineOf}.
  */
 export type Online = {
     online: string;
@@ -354,7 +352,6 @@ const lineOrder: string[] = [
     "DESCRIPTION",
     "ATTACH",
     "RELATED-TO",
-    "X-PLANNED",
     "X-PUSHED",
     "X-SERIES",
     "X-NUMBER",
@@ -534,10 +531,10 @@ function sportLineOf(line: string, video: boolean): string {
  * Reads the identifier of the box a log entry was logged from:
  * the `UID` of its `RELATED-TO`,
  * and for one date of a series that date, its parameter `X-RECURRENCE-ID`, after `#`,
- * as {@link entryIdOf} writes it; else, for an older entry, its `X-PLANNED`.
+ * as {@link entryIdOf} writes it.
  * Only a `RELATED-TO` without `RELTYPE`, the standard parent, names that box;
  * one with `RELTYPE=SIBLING` is the series a series of the plan goes on from,
- * see {@link seriesPut}, and names none.
+ * see {@link seriesSiblingPut}, and names none.
  */
 function plannedOf(component: ICAL.Component): string {
     const related: ICAL.Property | undefined = component
@@ -545,7 +542,7 @@ function plannedOf(component: ICAL.Component): string {
         .find((property: ICAL.Property): boolean =>
             ["", "PARENT"].includes(String(property.getParameter("reltype") ?? "").toUpperCase()),
         );
-    if (related === undefined) return String(component.getFirstPropertyValue("x-planned") ?? "");
+    if (related === undefined) return "";
     const recurrence: string = String(related.getParameter("x-recurrence-id") ?? "");
     return recurrence === ""
         ? String(related.getFirstValue())
@@ -554,18 +551,15 @@ function plannedOf(component: ICAL.Component): string {
 
 /**
  * Reads one `X-PUSHED` of a box into a {@link Push}, see {@link pushAdd},
- * its day that of its start in Berlin time, of its date,
- * or of an older box written as a day.
+ * its day that of its start in Berlin time or of its date.
  * A push that noted only its day stands at the time of day the box has now,
  * without time for a box without.
  */
 function pushOf(property: ICAL.Property, now: ICAL.Time | null): Push {
-    const value: unknown = property.getFirstValue();
-    let day: string = String(value);
-    if (value instanceof ICAL.Time) day = value.toString().slice(0, 10);
-    else if (/^\d{8}$/.test(day)) day = icsTimeRead(day).toString();
+    const value: ICAL.Time = property.getFirstValue() as ICAL.Time;
+    const day: string = value.toString().slice(0, 10);
     const duration: string = String(property.getParameter("x-estimated-duration") ?? "");
-    const time: ICAL.Time | null = value instanceof ICAL.Time && !value.isDate ? value : now;
+    const time: ICAL.Time | null = value.isDate ? now : value;
     return {
         day: day,
         time: time === null ? "" : berlinAt(day, time.hour, time.minute, time.second).toJSDate().toISOString(),
@@ -606,43 +600,21 @@ type Placed = Online & Pick<Entry, "titleLink" | "location" | "locationLink">;
  * and the link of its summary, from its `X-ONLINE` and its `LOCATION`.
  * What an older entry wrote reads too:
  * a place `Online, <platform>`, `Online` alone for none named,
- * or a place named after its platform with `Online` among its parts,
- * the link of the place as that of its meeting, its place then empty;
- * and as the `ALTREP` of its `SUMMARY` a link of a platform of `Online.md`,
- * read as its link online, its summary then without link.
- * Its own `X-ONLINE` wins over both.
+ * the link of the place as that of its meeting, its place then empty.
+ * Its own `X-ONLINE` wins over it.
  */
 function onlineOf(component: ICAL.Component): Placed {
-    const summaryLink: string = paramOf(component, "summary", "altrep");
     const line: string = String(component.getFirstPropertyValue("location") ?? "");
     const lineLink: string = paramOf(component, "location", "altrep");
     const own: ICAL.Property | null = component.getFirstProperty("x-online");
     const parts: string[] = line.split(",").map((part: string): string => part.trim());
-    const placed: boolean =
-        parts.slice(1).some((part: string): boolean => part === "Online" || part.endsWith(" Online")) ||
-        parts[0] === "Online";
-    const linked: boolean = platformLinkIs(summaryLink);
-    const online: Online = {
-        online: "",
-        onlineLink: "",
-        onlineChannel: "",
-        onlineTitle: "",
-    };
-    if (own !== null) {
-        online.online = String(own.getFirstValue() ?? "");
-        online.onlineLink = String(own.getParameter("altrep") ?? "");
-        online.onlineChannel = String(own.getParameter("x-channel") ?? "");
-        online.onlineTitle = String(own.getParameter("x-title") ?? "");
-    } else if (placed) {
-        online.online = parts[0] === "Online" ? (parts[1] ?? "Online") : labelOf(line);
-        online.onlineLink = lineLink;
-    } else if (linked) {
-        online.online = platformOfLink(summaryLink)?.name ?? "";
-        online.onlineLink = summaryLink;
-    }
+    const placed: boolean = parts[0] === "Online";
     return {
-        ...online,
-        titleLink: linked ? "" : summaryLink,
+        online: own !== null ? String(own.getFirstValue() ?? "") : placed ? (parts[1] ?? "Online") : "",
+        onlineLink: own !== null ? String(own.getParameter("altrep") ?? "") : placed ? lineLink : "",
+        onlineChannel: String(own?.getParameter("x-channel") ?? ""),
+        onlineTitle: String(own?.getParameter("x-title") ?? ""),
+        titleLink: paramOf(component, "summary", "altrep"),
         location: placed ? "" : line,
         locationLink: placed ? "" : lineLink,
     };
@@ -887,13 +859,7 @@ export function textEntriesRead(text: string, name: string): Entry[] {
  * so it counts as none, a changed one too, see {@link occurrenceLookup}.
  */
 export function entryLookup(sources: CalendarSource[], id: string): [string, Entry] | undefined {
-    for (const file of filesOf(sources)) {
-        const entry: Entry | undefined = calendarOf(file).entries.find(
-            (candidate: Entry): boolean => candidate.id === id && candidate.recurrence === "",
-        );
-        if (entry !== undefined) return [file, entry];
-    }
-    return undefined;
+    return occurrenceLookup(sources, id, "");
 }
 
 /**
@@ -915,6 +881,7 @@ export function fileOfId(sources: CalendarSource[], id: string): string | undefi
  * else the occurrence the series itself has at that start.
  * Its range ends a moment after that start,
  * so walking the series stops right after it, see {@link occurrencesOf}.
+ * An empty start finds the entry that happens once, see {@link entryLookup}.
  */
 export function occurrenceLookup(
     sources: CalendarSource[],
@@ -922,11 +889,11 @@ export function occurrenceLookup(
     recurrence: string,
 ): [string, Entry] | undefined {
     for (const file of filesOf(sources)) {
-        const calendar: Calendar = calendarOf(file);
-        const changed: Entry | undefined = calendar.entries.find(
+        const changed: Entry | undefined = calendarOf(file).entries.find(
             (candidate: Entry): boolean => candidate.id === id && candidate.recurrence === recurrence,
         );
         if (changed !== undefined) return [file, changed];
+        if (recurrence === "") continue;
 
         const series: ICAL.Event | undefined = seriesOf(file, id);
         const day: string = recurrence.slice(0, 10);
@@ -980,6 +947,48 @@ function linesRead(file: string): FileLines {
     return { lines: lines, newline: newline };
 }
 
+/**
+ * Changes the lines of an `.ics` file of the new system and writes them back,
+ * see {@link linesWrite}.
+ *
+ * @param change - Changes the lines in place, telling whether to write them
+ * @throws {Error} - When the file lies outside the new system
+ */
+function fileChange(file: string, change: (text: FileLines) => boolean): void {
+    writeCheck(file);
+    const text: FileLines = linesRead(file);
+    if (change(text)) linesWrite(file, text);
+}
+
+/**
+ * Takes events and to-dos out of the lines of a file by their places,
+ * see {@link placesOf}, from the last, so one taken out leaves those before it where they are.
+ */
+function placesCut(lines: string[], places: [number, number][]): void {
+    [...places]
+        .sort((first: [number, number], second: [number, number]): number => second[0] - first[0])
+        .forEach(([first, after]: [number, number]): void => {
+            lines.splice(first, after - first);
+        });
+}
+
+/**
+ * Changes events and to-dos of the lines of a file by their places, see {@link placesOf},
+ * from the last, so one written anew leaves those before it where they are,
+ * each one changed in the fixed order of its lines, see {@link linesOrdered}.
+ *
+ * @param change - Changes the lines of one in place, giving how many of them changed
+ * @returns How many lines changed
+ */
+function placesChange(lines: string[], places: [number, number][], change: (component: string[]) => number): number {
+    return [...places].reverse().reduce((count: number, [first, after]: [number, number]): number => {
+        const component: string[] = lines.slice(first, after);
+        const changed: number = change(component);
+        if (changed > 0) lines.splice(first, after - first, ...linesOrdered(component));
+        return count + changed;
+    }, 0);
+}
+
 /** The first lines of an event and of a to-do. */
 const begins: string[] = ["BEGIN:VEVENT", "BEGIN:VTODO"];
 
@@ -1031,21 +1040,14 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
     const units: string[][][] = [];
     const series: Map<string, string[][]> = new Map();
     blocks
-        .filter((component: string[]): boolean => unfoldedOf(component, "RECURRENCE-ID") === "")
-        .forEach((component: string[]): void => {
-            const unit: string[][] = [component];
-            units.push(unit);
-            series.set(unfoldedOf(component, "UID"), unit);
-        });
-    blocks
-        .filter((component: string[]): boolean => unfoldedOf(component, "RECURRENCE-ID") !== "")
-        .sort((first: string[], second: string[]): number =>
-            timeOf(first, "RECURRENCE-ID").localeCompare(timeOf(second, "RECURRENCE-ID")),
-        )
-        .forEach((component: string[]): void => {
-            const unit: string[][] | undefined = series.get(unfoldedOf(component, "UID"));
-            if (unit === undefined) units.push([component]);
-            else unit.push(component);
+        .map((component: string[]): [string[], string] => [component, timeOf(component, "RECURRENCE-ID")])
+        .sort((first: [string[], string], second: [string[], string]): number => first[1].localeCompare(second[1]))
+        .forEach(([component, recurrence]: [string[], string]): void => {
+            const unit: string[][] | undefined =
+                recurrence === "" ? undefined : series.get(unfoldedOf(component, "UID"));
+            if (unit !== undefined) unit.push(component);
+            else units.push([component]);
+            if (recurrence === "") series.set(unfoldedOf(component, "UID"), units[units.length - 1]);
         });
 
     const keyOf: (unit: string[][]) => [number, string, number, string] = (
@@ -1426,18 +1428,16 @@ function seriesTimeOf(series: ICAL.Event, name: string, time: ICAL.Time): ICAL.P
  *   or holds no such series or occurrence
  */
 export function occurrenceOwn(file: string, entry: Entry): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    if (componentsOf(text.lines, entryIdOf(entry)).length > 0) return;
-
-    const series: ICAL.Event | undefined = seriesOf(file, entry.id);
-    if (series === undefined) throw new Error(`No series ${entry.id} in ${file}`);
-    const start: ICAL.Time | undefined = seriesStartOf(series, entry.recurrence);
-    if (start === undefined) throw new Error(`No occurrence ${entryIdOf(entry)}`);
-
-    const place: [number, number] = componentFind(text.lines, entry.id);
-    text.lines.splice(place[1], 0, ...occurrenceLinesOf(series, text.lines.slice(...place), start));
-    linesWrite(file, text);
+    fileChange(file, (text: FileLines): boolean => {
+        if (componentsOf(text.lines, entryIdOf(entry)).length > 0) return false;
+        const series: ICAL.Event | undefined = seriesOf(file, entry.id);
+        if (series === undefined) throw new Error(`No series ${entry.id} in ${file}`);
+        const start: ICAL.Time | undefined = seriesStartOf(series, entry.recurrence);
+        if (start === undefined) throw new Error(`No occurrence ${entryIdOf(entry)}`);
+        const place: [number, number] = componentFind(text.lines, entry.id);
+        text.lines.splice(place[1], 0, ...occurrenceLinesOf(series, text.lines.slice(...place), start));
+        return true;
+    });
 }
 
 /** Finds a start of a series, walking its starts up to it, `undefined` for none. */
@@ -1482,38 +1482,34 @@ function occurrenceLinesOf(series: ICAL.Event, lines: string[], start: ICAL.Time
  * One done, dropped, pushed, carried along or changed in anything stays,
  * since a line of its own tells it;
  * a log entry pointing to it keeps pointing to its day, see {@link relatedOf}.
- * The occurrences are walked from the last,
- * so one taken out leaves those before it where they are.
  *
  * @throws {Error} - When the file lies outside the new system
  */
 export function occurrencesTidy(file: string, uid: string): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const series: ICAL.Event | undefined = seriesOf(file, uid);
-    const master: [number, number] | undefined = componentsOf(text.lines, uid)[0];
-    if (series === undefined || master === undefined) return;
-    const lines: string[] = text.lines.slice(...master);
-    const plain: (lines: string[]) => string = (lines: string[]): string =>
-        JSON.stringify(
-            lines.filter(
-                (line: string): boolean => !/^DTSTAMP[:;]/i.test(line) && !/^STATUS:NEEDS-ACTION$/i.test(line),
-            ),
+    fileChange(file, (text: FileLines): boolean => {
+        const series: ICAL.Event | undefined = seriesOf(file, uid);
+        const master: [number, number] | undefined = componentsOf(text.lines, uid)[0];
+        if (series === undefined || master === undefined) return false;
+        const lines: string[] = text.lines.slice(...master);
+        const plain: (lines: string[]) => string = (lines: string[]): string =>
+            JSON.stringify(
+                lines.filter(
+                    (line: string): boolean => !/^DTSTAMP[:;]/i.test(line) && !/^STATUS:NEEDS-ACTION$/i.test(line),
+                ),
+            );
+        const gone: [number, number][] = placesOf(text.lines, uid).filter(
+            ([first, after]: [number, number]): boolean => {
+                const own: string[] = text.lines.slice(first, after);
+                const recurrence: string = timeOf(own, "RECURRENCE-ID");
+                const start: ICAL.Time | undefined = recurrence === "" ? undefined : seriesStartOf(series, recurrence);
+                return (
+                    start !== undefined && plain(linesOrdered(own)) === plain(occurrenceLinesOf(series, lines, start))
+                );
+            },
         );
-    let gone: number = 0;
-    placesOf(text.lines, uid)
-        .reverse()
-        .forEach(([first, after]: [number, number]): void => {
-            const own: string[] = text.lines.slice(first, after);
-            const recurrence: string = timeOf(own, "RECURRENCE-ID");
-            if (recurrence === "") return;
-            const start: ICAL.Time | undefined = seriesStartOf(series, recurrence);
-            if (start === undefined || plain(linesOrdered(own)) !== plain(occurrenceLinesOf(series, lines, start)))
-                return;
-            text.lines.splice(first, after - first);
-            gone++;
-        });
-    if (gone > 0) linesWrite(file, text);
+        placesCut(text.lines, gone);
+        return gone.length > 0;
+    });
 }
 
 /** Turns an instant into Berlin time. */
@@ -1752,7 +1748,7 @@ export function entryAppend(
     id: string = `${randomUUID()}@nomsystem`,
 ): string {
     writeCheck(file);
-    componentInsert(file, linesOf(eventOf(fields, own, id)));
+    componentInsert(file, eventLinesOf(fields, own, id));
     return id;
 }
 
@@ -1763,37 +1759,51 @@ export function entryAppend(
  */
 export function entryIcsOf(fields: EntryFields, own: OwnProperty[], id: string): string {
     const lines: string[] = newLinesOf();
-    lines.splice(lines.lastIndexOf("END:VCALENDAR"), 0, ...linesOrdered(linesOf(eventOf(fields, own, id))));
+    lines.splice(lines.lastIndexOf("END:VCALENDAR"), 0, ...linesOrdered(eventLinesOf(fields, own, id)));
     return componentsSorted(lines, false).flatMap(foldedOf).join("\r\n");
 }
 
-/** Builds the event of an entry, see {@link entryAppend}. */
-function eventOf(fields: EntryFields, own: OwnProperty[], id: string): ICAL.Component {
-    const event: ICAL.Component = new ICAL.Component("vevent");
-    event.addProperty(propertyOf("dtstart", writtenOf(fields.start)));
-    event.addProperty(propertyOf("dtend", writtenOf(fields.end)));
-    event.addPropertyWithValue("dtstamp", ICAL.Time.fromJSDate(new Date(), true));
-    event.addPropertyWithValue("uid", id);
-    fieldsAdd(event, fields, own);
-    return event;
+/** Gives the lines of the event of an entry, see {@link entryAppend}. */
+function eventLinesOf(fields: EntryFields, own: OwnProperty[], id: string): string[] {
+    const times: ICAL.Property[] = [
+        propertyOf("dtstart", writtenOf(fields.start)),
+        propertyOf("dtend", writtenOf(fields.end)),
+    ];
+    return newComponentLinesOf("vevent", id, times, fields, own);
 }
 
 /**
- * Adds the text fields that are not empty to a new event or to-do,
- * who I was with, and the properties beyond them that are not empty.
+ * Gives the lines of a new event or to-do: its first properties, its `DTSTAMP` now,
+ * its `UID`, the text fields that are not empty, who I was with,
+ * and the properties beyond them that are not empty.
+ *
+ * @param first - Its first properties, like its start and its end
  */
-function fieldsAdd(component: ICAL.Component, fields: EntryTexts, own: OwnProperty[]): void {
-    textsOf(fields)
-        .filter(([, value]: [string, string]): boolean => value !== "")
-        .forEach(([name, value]: [string, string]): void => {
-            component.addProperty(textPropertyOf(name, value, fields));
-        });
-    fields.attendees.forEach((attendee: Attendee): void => {
-        component.addProperty(attendeePropertyOf(attendee));
+function newComponentLinesOf(
+    name: string,
+    id: string,
+    first: ICAL.Property[],
+    fields: EntryTexts,
+    own: OwnProperty[],
+): string[] {
+    const component: ICAL.Component = new ICAL.Component(name);
+    [
+        ...first,
+        propertyOf("dtstamp", ICAL.Time.fromJSDate(new Date(), true)),
+        propertyOf("uid", id),
+        ...textsOf(fields)
+            .filter(([, value]: [string, string]): boolean => value !== "")
+            .map(([name, value]: [string, string]): ICAL.Property => textPropertyOf(name, value, fields)),
+        ...fields.attendees.map(attendeePropertyOf),
+        ...own
+            .filter(([, value]: OwnProperty): boolean => value !== "")
+            .map(([name, value]: OwnProperty): ICAL.Property =>
+                value instanceof ICAL.Property ? value : ownPropertyOf(name, value),
+            ),
+    ].forEach((property: ICAL.Property): void => {
+        component.addProperty(property);
     });
-    own.filter(([, value]: OwnProperty): boolean => value !== "").forEach(([name, value]: OwnProperty): void => {
-        component.addProperty(value instanceof ICAL.Property ? value : ownPropertyOf(name, value));
-    });
+    return linesOf(component);
 }
 
 /** Gives the `DTSTART` of a to-do: its day when it has no time, else its time. */
@@ -1837,15 +1847,14 @@ export function todoAppend(
 ): string {
     writeCheck(file);
     const id: string = `${randomUUID()}@nomsystem`;
-    const todo: ICAL.Component = new ICAL.Component("vtodo");
-    if (fields.deadline === "") todo.addProperty(propertyOf("dtstart", todoStartOf(fields)));
-    else todo.addProperty(propertyOf("due", deadlineTimeOf(fields.deadline)));
-    if (fields.minutes !== null) todo.addProperty(propertyOf("estimated-duration", durationOf(fields.minutes)));
-    todo.addPropertyWithValue("dtstamp", ICAL.Time.fromJSDate(new Date(), true));
-    todo.addPropertyWithValue("uid", id);
-    if (open) todo.addPropertyWithValue("status", "NEEDS-ACTION");
-    fieldsAdd(todo, fields, own);
-    componentInsert(file, linesOf(todo));
+    const first: ICAL.Property[] = [
+        fields.deadline === ""
+            ? propertyOf("dtstart", todoStartOf(fields))
+            : propertyOf("due", deadlineTimeOf(fields.deadline)),
+        ...(fields.minutes === null ? [] : [propertyOf("estimated-duration", durationOf(fields.minutes))]),
+        ...(open ? [propertyOf("status", "NEEDS-ACTION")] : []),
+    ];
+    componentInsert(file, newComponentLinesOf("vtodo", id, first, fields, own));
     return id;
 }
 
@@ -1856,12 +1865,11 @@ export function todoAppend(
  * A `SUMMARY` whose link alone changed is written anew too,
  * like that of a skill entry moved to another semester,
  * and so is an `X-ONLINE` whose link, channel or title alone changed;
- * once what it did online changes, its `LOCATION` and its `SUMMARY` are written anew too,
+ * once what it did online changes, its `LOCATION` is written anew too,
  * since an older entry wrote it there, see {@link onlineOf}.
  */
 function textsPut(component: string[], entry: Entry, fields: EntryTexts): void {
     const textsOld: [string, string][] = textsOf(entry);
-    const relinked: boolean = fields.titleLink !== entry.titleLink;
     const reonline: boolean =
         fields.online !== entry.online ||
         fields.onlineLink !== entry.onlineLink ||
@@ -1870,65 +1878,62 @@ function textsPut(component: string[], entry: Entry, fields: EntryTexts): void {
     textsOf(fields).forEach(([name, value]: [string, string], index: number): void => {
         if (
             value !== textsOld[index][1] ||
-            (name === "summary" && relinked) ||
-            (["summary", "location", "x-online"].includes(name) && reonline)
+            (name === "summary" && fields.titleLink !== entry.titleLink) ||
+            (["location", "x-online"].includes(name) && reonline)
         )
-            propertyPut(component, name, value === "" ? [] : [textPropertyOf(name, value, fields)]);
+            textPut(component, name, value, fields);
     });
     if (JSON.stringify(fields.attendees) !== JSON.stringify(entry.attendees))
         propertyPut(component, "attendee", fields.attendees.map(attendeePropertyOf));
 }
 
-/**
- * Writes the changed lines of an event or a to-do back where they stood in their file,
- * or moves them into another file, like the log of another year: writes them there first,
- * so a failure in between leaves them twice instead of losing them.
- * Its `DTSTAMP` turns now once its `DTSTART` or its `DUE` changed,
- * so it tells when it got its day, see `written` of {@link Entry}.
- *
- * @param target - Path of the `.ics` file it belongs into, `file` when it stays
- */
-function componentWrite(
-    file: string,
-    text: FileLines,
-    place: [number, number],
-    component: string[],
-    target: string,
-): void {
-    const [begin, end]: [number, number] = place;
-    const old: string[] = text.lines.slice(begin, end);
-    if (["DTSTART", "DUE"].some((name: string): boolean => unfoldedOf(old, name) !== unfoldedOf(component, name)))
-        propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
-    if (target === file) text.lines.splice(begin, end - begin, ...linesOrdered(component));
-    else {
-        componentInsert(target, component);
-        text.lines.splice(begin, end - begin);
-    }
-    linesWrite(file, text);
+/** Puts a text field into the lines of an event or a to-do, none when empty, see {@link textPropertyOf}. */
+function textPut(component: string[], name: string, value: string, fields: EntryTexts): void {
+    propertyPut(component, name, value === "" ? [] : [textPropertyOf(name, value, fields)]);
 }
 
 /**
  * Changes the event or to-do with an identifier in its file, see {@link componentFind},
- * and writes it back or moves it, see {@link componentWrite}.
+ * and writes it back where it stood,
+ * or moves it into another file, like the log of another year: writes it there first,
+ * so a failure in between leaves it twice instead of losing it.
+ * Its `DTSTAMP` turns now once its `DTSTART` or its `DUE` changed,
+ * so it tells when it got its day, see `written` of {@link Entry}.
  *
  * @param edit - Changes the lines of the event or the to-do in place
+ * @param target - Path of the `.ics` file it belongs into, `file` when it stays
+ * @param cut - Gives the places of the events and to-dos taken out of the file first,
+ *   see {@link placesCut}
  * @throws {Error} - When a file lies outside the new system
  *   or does not hold the event or the to-do once
  */
-function componentEdit(file: string, id: string, edit: (component: string[]) => void, target: string = file): void {
+function componentEdit(
+    file: string,
+    id: string,
+    edit: (component: string[]) => void,
+    target: string = file,
+    cut: (lines: string[]) => [number, number][] = (): [number, number][] => [],
+): void {
     writeCheck(file);
     writeCheck(target);
-    const text: FileLines = linesRead(file);
-    const place: [number, number] = componentFind(text.lines, id);
-    const component: string[] = text.lines.slice(...place);
-    edit(component);
-    componentWrite(file, text, place, component, target);
+    fileChange(file, (text: FileLines): boolean => {
+        placesCut(text.lines, cut(text.lines));
+        const [begin, end]: [number, number] = componentFind(text.lines, id);
+        const old: string[] = text.lines.slice(begin, end);
+        const component: string[] = [...old];
+        edit(component);
+        if (["DTSTART", "DUE"].some((name: string): boolean => unfoldedOf(old, name) !== unfoldedOf(component, name)))
+            propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
+        if (target !== file) componentInsert(target, component);
+        text.lines.splice(begin, end - begin, ...(target === file ? linesOrdered(component) : []));
+        return true;
+    });
 }
 
 /**
  * Changes fields and times of the event of an entry,
  * writing only the properties that changed,
- * and moves it into another file when one is given, see {@link componentWrite}.
+ * and moves it into another file when one is given, see {@link componentEdit}.
  *
  * @throws {Error} - When a file lies outside the new system
  *   or does not hold the event once
@@ -1949,7 +1954,7 @@ export function entryChange(file: string, entry: Entry, fields: EntryFields, tar
  * writing only the properties that changed.
  * A to-do that gets a deadline loses its `DTSTART`, and one that loses its deadline
  * gets one, see {@link todoAppend}.
- * Moves it into another file when one is given, see {@link componentWrite}.
+ * Moves it into another file when one is given, see {@link componentEdit}.
  *
  * @throws {Error} - When a file lies outside the new system
  *   or does not hold the to-do once
@@ -2020,13 +2025,9 @@ export function roundPropertyOf(mark: RoundMark): ICAL.Property {
  * @throws {Error} - When the file lies outside the new system
  *   or does not hold the event once
  */
-export function propertiesPut(
-    file: string,
-    id: string,
-    properties: [string, (string | Date | Link | ICAL.Property)[]][],
-): void {
+export function propertiesPut(file: string, id: string, properties: [string, (Value | ICAL.Property)[]][]): void {
     componentEdit(file, id, (event: string[]): void =>
-        properties.forEach(([name, values]: [string, (string | Date | Link | ICAL.Property)[]]): void =>
+        properties.forEach(([name, values]: [string, (Value | ICAL.Property)[]]): void =>
             propertyPut(event, name, values),
         ),
     );
@@ -2041,9 +2042,7 @@ export function propertiesPut(
  *   or does not hold the to-do or the event once
  */
 export function stampPut(file: string, id: string): void {
-    componentEdit(file, id, (component: string[]): void =>
-        propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]),
-    );
+    propertiesPut(file, id, [["dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]]]);
 }
 
 /**
@@ -2091,12 +2090,7 @@ export function pushAdd(file: string, id: string, entry: Entry): void {
         entry.allDay ? ICAL.Time.fromDateString(entry.start) : berlinOf(new Date(entry.start)),
     );
     if (minutes !== null) pushed.setParameter("x-estimated-duration", durationOf(minutes));
-    componentEdit(file, id, (component: string[]): void => {
-        const before: ICAL.Property[] = new ICAL.Component(ICAL.parse(component.join("\r\n"))).getAllProperties(
-            "x-pushed",
-        );
-        propertyPut(component, "x-pushed", [...before, pushed]);
-    });
+    pushesPut(file, id, (before: ICAL.Property[]): ICAL.Property[] => [...before, pushed]);
 }
 
 /**
@@ -2107,12 +2101,18 @@ export function pushAdd(file: string, id: string, entry: Entry): void {
  *   or does not hold the to-do or the event once
  */
 export function pushesKeep(file: string, id: string, kept: number): void {
-    componentEdit(file, id, (component: string[]): void => {
-        const before: ICAL.Property[] = new ICAL.Component(ICAL.parse(component.join("\r\n"))).getAllProperties(
+    pushesPut(file, id, (before: ICAL.Property[]): ICAL.Property[] => before.slice(0, kept));
+}
+
+/** Writes the `X-PUSHED`s of a box anew from those it has, see {@link pushAdd}. */
+function pushesPut(file: string, id: string, pushes: (before: ICAL.Property[]) => ICAL.Property[]): void {
+    componentEdit(file, id, (component: string[]): void =>
+        propertyPut(
+            component,
             "x-pushed",
-        );
-        propertyPut(component, "x-pushed", before.slice(0, kept));
-    });
+            pushes(new ICAL.Component(ICAL.parse(component.join("\r\n"))).getAllProperties("x-pushed")),
+        ),
+    );
 }
 
 /**
@@ -2122,34 +2122,44 @@ export function pushesKeep(file: string, id: string, kept: number): void {
  *   or does not hold the event once
  */
 export function entryRemove(file: string, id: string): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const [begin, end]: [number, number] = componentFind(text.lines, id);
-    text.lines.splice(begin, end - begin);
-    linesWrite(file, text);
+    fileChange(file, (text: FileLines): boolean => {
+        placesCut(text.lines, [componentFind(text.lines, id)]);
+        return true;
+    });
 }
 
 /**
  * Removes a series whole from an `.ics` file, as the bin of its dialog asks,
  * see `plainRemove` in `rules.ts`:
  * every component of its `UID`, the series and every occurrence changed alone.
- * The components are taken out from the last,
- * so one taken out leaves those before it where they are.
  *
  * @returns Whether the file holds no event and no to-do any more
  * @throws {Error} - When the file lies outside the new system, or holds no such series
  */
 export function seriesRemove(file: string, uid: string): boolean {
+    let empty: boolean = false;
+    fileChange(file, (text: FileLines): boolean => {
+        if (componentsOf(text.lines, uid).length === 0) throw new Error(`No series ${uid} in ${file}`);
+        placesCut(text.lines, placesOf(text.lines, uid, true));
+        empty = !text.lines.some((line: string): boolean => begins.includes(line));
+        return true;
+    });
+    return empty;
+}
+
+/**
+ * Finds the series with a `UID` in a file of the new system and one of its starts.
+ *
+ * @param what - What the start is to the error, a `day` or a `start`
+ * @throws {Error} - When the file lies outside the new system,
+ *   or holds no such series or start
+ */
+function seriesStartFind(file: string, uid: string, recurrence: string, what: string): [ICAL.Event, ICAL.Time] {
     writeCheck(file);
-    const text: FileLines = linesRead(file);
-    if (componentsOf(text.lines, uid).length === 0) throw new Error(`No series ${uid} in ${file}`);
-    placesOf(text.lines, uid, true)
-        .reverse()
-        .forEach(([first, after]: [number, number]): void => {
-            text.lines.splice(first, after - first);
-        });
-    linesWrite(file, text);
-    return !text.lines.some((line: string): boolean => begins.includes(line));
+    const series: ICAL.Event | undefined = seriesOf(file, uid);
+    const start: ICAL.Time | undefined = series === undefined ? undefined : seriesStartOf(series, recurrence);
+    if (series === undefined || start === undefined) throw new Error(`No ${what} ${recurrence} of the series ${uid}`);
+    return [series, start];
 }
 
 /**
@@ -2164,32 +2174,24 @@ export function seriesRemove(file: string, uid: string): boolean {
  *   or holds no such series or day
  */
 export function seriesDayRemove(file: string, uid: string, recurrence: string): void {
-    writeCheck(file);
-    const series: ICAL.Event | undefined = seriesOf(file, uid);
-    const start: ICAL.Time | undefined = series === undefined ? undefined : seriesStartOf(series, recurrence);
-    if (series === undefined || start === undefined) throw new Error(`No day ${recurrence} of the series ${uid}`);
-    const text: FileLines = linesRead(file);
-    const own: [number, number][] = componentsOf(text.lines, `${uid}#${recurrence}`);
-    own.reverse().forEach(([first, after]: [number, number]): void => {
-        text.lines.splice(first, after - first);
-    });
-    const place: [number, number] = componentFind(text.lines, uid);
-    const component: string[] = text.lines.slice(...place);
+    const [series, start]: [ICAL.Event, ICAL.Time] = seriesStartFind(file, uid, recurrence, "day");
     const dates: ICAL.Time[] = seriesDatesRead(series);
-    if (dates.some((date: ICAL.Time): boolean => date.compare(start) === 0))
-        propertyPut(
-            component,
-            "rdate",
-            dates
-                .filter((date: ICAL.Time): boolean => date.compare(start) !== 0)
-                .map((date: ICAL.Time): ICAL.Property => seriesTimeOf(series, "rdate", date)),
-        );
-    else
-        propertyPut(component, "exdate", [
-            ...series.component.getAllProperties("exdate"),
-            seriesTimeOf(series, "exdate", start),
-        ]);
-    componentWrite(file, text, place, component, file);
+    const edit: (component: string[]) => void = (component: string[]): void =>
+        dates.some((date: ICAL.Time): boolean => date.compare(start) === 0)
+            ? propertyPut(
+                  component,
+                  "rdate",
+                  dates
+                      .filter((date: ICAL.Time): boolean => date.compare(start) !== 0)
+                      .map((date: ICAL.Time): ICAL.Property => seriesTimeOf(series, "rdate", date)),
+              )
+            : propertyPut(component, "exdate", [
+                  ...series.component.getAllProperties("exdate"),
+                  seriesTimeOf(series, "exdate", start),
+              ]);
+    componentEdit(file, uid, edit, file, (lines: string[]): [number, number][] =>
+        componentsOf(lines, `${uid}#${recurrence}`),
+    );
 }
 
 /**
@@ -2224,31 +2226,24 @@ export function seriesDayRestore(file: string, uid: string, recurrence: string):
  *   or holds no such series or start
  */
 export function seriesCut(file: string, uid: string, last: string): void {
-    writeCheck(file);
-    const series: ICAL.Event | undefined = seriesOf(file, uid);
-    const end: ICAL.Time | undefined = series === undefined ? undefined : seriesStartOf(series, last);
-    if (series === undefined || end === undefined) throw new Error(`No start ${last} of the series ${uid}`);
+    const [series, end]: [ICAL.Event, ICAL.Time] = seriesStartFind(file, uid, last, "start");
     const rule: ICAL.Recur = (series.component.getFirstPropertyValue("rrule") as ICAL.Recur).clone();
     rule.until = end.isDate ? end : ICAL.Time.fromJSDate(end.toJSDate(), true);
-    const text: FileLines = linesRead(file);
-    calendarOf(file)
-        .entries.filter((entry: Entry): boolean => entry.id === uid && entry.recurrence > last)
-        .flatMap((entry: Entry): [number, number][] => componentsOf(text.lines, entryIdOf(entry)))
-        .sort((first: [number, number], second: [number, number]): number => second[0] - first[0])
-        .forEach(([first, after]: [number, number]): void => {
-            text.lines.splice(first, after - first);
-        });
-    const place: [number, number] = componentFind(text.lines, uid);
-    const component: string[] = text.lines.slice(...place);
-    propertyPut(component, "rrule", [ownPropertyOf("rrule", rule.toString())]);
-    propertyPut(
-        component,
-        "exdate",
-        series.component
-            .getAllProperties("exdate")
-            .filter((property: ICAL.Property): boolean => (property.getFirstValue() as ICAL.Time).compare(end) < 0),
+    const edit: (component: string[]) => void = (component: string[]): void => {
+        propertyPut(component, "rrule", [ownPropertyOf("rrule", rule.toString())]);
+        propertyPut(
+            component,
+            "exdate",
+            series.component
+                .getAllProperties("exdate")
+                .filter((property: ICAL.Property): boolean => (property.getFirstValue() as ICAL.Time).compare(end) < 0),
+        );
+    };
+    componentEdit(file, uid, edit, file, (lines: string[]): [number, number][] =>
+        calendarOf(file)
+            .entries.filter((entry: Entry): boolean => entry.id === uid && entry.recurrence > last)
+            .flatMap((entry: Entry): [number, number][] => componentsOf(lines, entryIdOf(entry))),
     );
-    componentWrite(file, text, place, component, file);
 }
 
 /**
@@ -2331,70 +2326,51 @@ export function seriesLookup(sources: CalendarSource[], uid: string): [string, E
  * so a new summary or place of the series holds on every day,
  * its own times and its own note kept;
  * one left with nothing of its own goes, see {@link occurrencesTidy}.
- * The components are written from the last,
- * so one written anew leaves those before it where they are.
  *
  * @throws {Error} - When the file lies outside the new system,
  *   or holds no such series once
  */
 export function seriesWrite(file: string, uid: string, fields: TodoFields, rule: string): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const put: (component: string[], whole: boolean) => void = (component: string[], whole: boolean): void => {
-        textsOf(fields)
-            .filter(([name]: [string, string]): boolean => name !== "description")
-            .forEach(([name, value]: [string, string]): void =>
-                propertyPut(component, name, value === "" ? [] : [textPropertyOf(name, value, fields)]),
-            );
-        propertyPut(component, "attendee", fields.attendees.map(attendeePropertyOf));
-        if (!whole) return;
-        propertyPut(component, "dtstart", [todoStartOf(fields)]);
-        propertyPut(component, "estimated-duration", fields.minutes === null ? [] : [durationOf(fields.minutes)]);
-        propertyPut(component, "rrule", [ownPropertyOf("rrule", rule)]);
-    };
-    componentFind(text.lines, uid);
-    placesOf(text.lines, uid)
-        .filter(([, after]: [number, number]): boolean => text.lines[after - 1] === "END:VTODO")
-        .reverse()
-        .forEach(([first, after]: [number, number]): void => {
-            const component: string[] = text.lines.slice(first, after);
-            put(component, unfoldedOf(component, "RECURRENCE-ID") === "");
-            text.lines.splice(first, after - first, ...linesOrdered(component));
+    fileChange(file, (text: FileLines): boolean => {
+        componentFind(text.lines, uid);
+        const todos: [number, number][] = placesOf(text.lines, uid).filter(
+            ([, after]: [number, number]): boolean => text.lines[after - 1] === "END:VTODO",
+        );
+        placesChange(text.lines, todos, (component: string[]): number => {
+            textsOf(fields)
+                .filter(([name]: [string, string]): boolean => name !== "description")
+                .forEach(([name, value]: [string, string]): void => textPut(component, name, value, fields));
+            propertyPut(component, "attendee", fields.attendees.map(attendeePropertyOf));
+            if (unfoldedOf(component, "RECURRENCE-ID") !== "") return 1;
+            propertyPut(component, "dtstart", [todoStartOf(fields)]);
+            propertyPut(component, "estimated-duration", fields.minutes === null ? [] : [durationOf(fields.minutes)]);
+            propertyPut(component, "rrule", [ownPropertyOf("rrule", rule)]);
+            return 1;
         });
-    linesWrite(file, text);
+        return true;
+    });
     occurrencesTidy(file, uid);
 }
 
 /**
- * Puts a property into a series of the plan alone,
- * its occurrences changed alone left as they are.
- * Splits a series from a day on, as its dialog asks for a change from today on,
- * see `plainApply` in `rules.ts`: the series ends the day before, see {@link seriesEnd},
- * and each new series that goes on from that day points back to it as its sibling,
- * see {@link seriesSiblingPut}, the standard parameter that tells it apart
- * from the `RELATED-TO` of a log entry, see {@link relatedOf}.
- *
- * @throws {Error} - When the file lies outside the new system,
- *   or does not hold the series once
- */
-function seriesPut(file: string, uid: string, property: ICAL.Property): void {
-    propertiesPut(file, uid, [[property.name, [property]]]);
-}
-
-/**
  * Ends a series of the plan, its rule with `UNTIL` put into it alone,
- * see {@link seriesPut}.
+ * its occurrences changed alone left as they are,
+ * as its dialog splits a series for a change from today on,
+ * see `plainApply` in `rules.ts`: the series ends the day before,
+ * and each new series that goes on from that day points back to it,
+ * see {@link seriesSiblingPut}.
  *
  * @throws {Error} - When the file lies outside the new system,
  *   or does not hold the series once
  */
 export function seriesEnd(file: string, uid: string, rule: string): void {
-    seriesPut(file, uid, ownPropertyOf("rrule", rule));
+    propertiesPut(file, uid, [["rrule", [ownPropertyOf("rrule", rule)]]]);
 }
 
 /**
- * Points a series of the plan to the series it goes on from,
- * `RELATED-TO;RELTYPE=SIBLING:<UID>`, see {@link seriesPut}.
+ * Points a series of the plan to the series it goes on from, see {@link seriesEnd},
+ * `RELATED-TO;RELTYPE=SIBLING:<UID>`, the standard parameter that tells it apart
+ * from the `RELATED-TO` of a log entry, see {@link relatedOf}.
  *
  * @throws {Error} - When the file lies outside the new system,
  *   or does not hold the series once
@@ -2402,7 +2378,7 @@ export function seriesEnd(file: string, uid: string, rule: string): void {
 export function seriesSiblingPut(file: string, uid: string, sibling: string): void {
     const link: ICAL.Property = propertyOf("related-to", sibling);
     link.setParameter("reltype", "SIBLING");
-    seriesPut(file, uid, link);
+    propertiesPut(file, uid, [["related-to", [link]]]);
 }
 
 /**
@@ -2452,8 +2428,7 @@ export function seriesChainOf(sources: CalendarSource[], uid: string): [string, 
             .map((link: ICAL.Property): string => String(link.getFirstValue()));
     const found: Map<string, [string, string]> = new Map();
     const waiting: string[] = [uid];
-    while (waiting.length > 0) {
-        const next: string = waiting.shift() as string;
+    for (const next of waiting) {
         const own: [string, ICAL.Event] | undefined = masters.find(
             ([, series]: [string, ICAL.Event]): boolean => series.uid === next,
         );
@@ -2477,17 +2452,13 @@ export function seriesChainOf(sources: CalendarSource[], uid: string): [string, 
  * @throws {Error} - When the file lies outside the new system
  */
 export function seriesTitlePut(file: string, uid: string, fields: EntryTexts): void {
-    writeCheck(file);
-    const text: FileLines = linesRead(file);
-    const summary: ICAL.Property = textPropertyOf("summary", fields.title, fields);
-    placesOf(text.lines, uid, true)
-        .reverse()
-        .forEach(([first, after]: [number, number]): void => {
-            const component: string[] = text.lines.slice(first, after);
-            propertyPut(component, "summary", fields.title === "" ? [] : [summary]);
-            text.lines.splice(first, after - first, ...linesOrdered(component));
+    fileChange(file, (text: FileLines): boolean => {
+        placesChange(text.lines, placesOf(text.lines, uid, true), (component: string[]): number => {
+            textPut(component, "summary", fields.title, fields);
+            return 1;
         });
-    linesWrite(file, text);
+        return true;
+    });
 }
 
 /**
@@ -2583,19 +2554,11 @@ function filesRewrite(files: string[], dry: boolean, change: (text: FileLines) =
 }
 
 /**
- * Changes every event and to-do of files, see {@link filesRewrite},
- * from the last, so one written anew leaves those before it where they are.
+ * Changes every event and to-do of files, see {@link filesRewrite} and {@link placesChange}.
  */
 function componentsRewrite(files: string[], dry: boolean, change: (component: string[]) => number): number {
     return filesRewrite(files, dry, (text: FileLines): number =>
-        placesOf(text.lines)
-            .reverse()
-            .reduce((count: number, [first, after]: [number, number]): number => {
-                const component: string[] = text.lines.slice(first, after);
-                const changed: number = change(component);
-                if (changed > 0) text.lines.splice(first, after - first, ...linesOrdered(component));
-                return count + changed;
-            }, 0),
+        placesChange(text.lines, placesOf(text.lines), change),
     );
 }
 
