@@ -79,10 +79,8 @@ export type Workout = {
     parts: Part[];
 };
 
-/** An exercise of mine with the workouts that hold it. */
-export type Exercise = Part & {
-    workouts: string[];
-};
+/** An exercise of mine, its values an entry brings every time. */
+export type Exercise = Part;
 
 /** A row of a table of mine, its cells by the names of its head. */
 type Row = { [column: string]: string };
@@ -318,20 +316,12 @@ function exercisesWrite(exercises: Part[]): void {
 
 /** Lists my exercises with those only in my workouts, each variant once, alphabetical. */
 function exercisesOf(workouts: Workout[], own: Part[]): Exercise[] {
-    const exercises: Exercise[] = own.map((exercise: Part): Exercise => ({ ...exercise, workouts: [] }));
-    workouts.forEach((workout: Workout): void =>
-        workout.parts.forEach((part: Part): void => {
-            let exercise: Exercise | undefined = exercises.find((other: Exercise): boolean =>
-                sameExercise(other, part),
-            );
-            if (exercise === undefined) {
-                exercise = { ...part, workouts: [] };
-                exercises.push(exercise);
-            }
-            if (!exercise.workouts.includes(workout.name)) exercise.workouts.push(workout.name);
-        }),
-    );
-    return exercises.sort((first: Exercise, second: Exercise): number => first.name.localeCompare(second.name));
+    return [...own, ...workouts.flatMap((workout: Workout): Part[] => workout.parts)]
+        .filter(
+            (exercise: Part, index: number, all: Part[]): boolean =>
+                all.findIndex((other: Part): boolean => sameExercise(other, exercise)) === index,
+        )
+        .sort((first: Exercise, second: Exercise): number => first.name.localeCompare(second.name));
 }
 
 /** Reads a line `X-EXERCISE`. */

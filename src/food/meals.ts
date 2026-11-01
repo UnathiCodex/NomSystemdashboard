@@ -25,7 +25,7 @@ import {
     unitOf,
 } from "./foods.ts";
 import { editButtonsOf, editFieldOf, foodSearchOf, inlineFieldOf, listLineOf } from "./search.ts";
-import { panelClose, panelOf, panelSearchFocus, panelShow } from "./panel.ts";
+import { panelClose, panelOf, panelSearchOpen, panelShow } from "./panel.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Plus } from "lucide";
 import { matchesAll, wordsOf } from "../search.ts";
@@ -33,7 +33,7 @@ import { changesFollow } from "../changes.ts";
 import "./meals.css";
 
 import type { Dish } from "./foods.ts";
-import type { Panel } from "./panel.ts";
+import type { Panel, PanelRow } from "./panel.ts";
 import type { Food } from "../../reader/food.ts";
 
 /**
@@ -242,7 +242,7 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
         open = fresh.toLowerCase();
         search.value = "";
         show();
-        panelSearchFocus(panel);
+        panelSearchOpen(panel);
     };
     const taken: (name: string) => boolean = (name: string): boolean =>
         dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === name.toLowerCase());
@@ -355,24 +355,23 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
                     (): void => foodOpen({ name: name, brand: brand ?? "", store: store ?? "" }),
                 );
             }),
-            foodSearchOf({
-                pick: (food: Food): void => {
-                    const added: string = `${food.name};${food.brand};${food.store}`;
-                    panelSearchFocus(panel);
-                    send(dish, [...dish.foods.filter((other: string): boolean => other !== added), added]);
-                },
-                meals: null,
-                products: true,
-                nothing: "Nothing found",
-            }),
         );
+        const search: HTMLElement = foodSearchOf({
+            pick: (food: Food): void => {
+                const added: string = `${food.name};${food.brand};${food.store}`;
+                send(dish, [...dish.foods.filter((other: string): boolean => other !== added), added]);
+            },
+            meals: null,
+            products: true,
+            nothing: "Nothing found",
+        });
         error.hidden = true;
         panelShow(
             panel,
             [
                 ["Name", rename],
-                ...(dish.foods.length === 0 ? [] : [["Short", short] as [string, HTMLElement]]),
-                ["Foods", parts],
+                ...(dish.foods.length === 0 ? [] : [["Short", short] as PanelRow]),
+                ["Foods", parts, search],
             ],
             [error],
         );

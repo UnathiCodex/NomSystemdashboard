@@ -8,7 +8,7 @@
  * - Workouts: Each with its short title grey in brackets, as a meal.
  *   Its panel holds its name, its short title, its parts with the search of my exercises below them.
  *   A new workout is kept in `Workouts.md` with its first part.
- * - Exercises: Each with the workouts that hold it and its rule, which an entry brings every time.
+ * - Exercises: Each with its rule, which an entry brings every time, as a food without the meals that hold it.
  *   One name may stand several times, each a variant with values of its own.
  *   Its `×` removes it from my workouts too.
  * Both load anew on every change of the files, not while the cursor stands in them, so nothing typed is lost.
@@ -17,13 +17,13 @@
 import { exerciseChangeSend, exerciseDelete, exerciseSend, mineLoad, workoutDelete, workoutSend } from "./mine.ts";
 import { bracketsWatch, buttonOf, elementOf, headingOf, plusOf } from "../food/foods.ts";
 import { editButtonsOf, editFieldOf, inlineFieldOf, listLineOf } from "../food/search.ts";
-import { panelClose, panelOf, panelSearchFocus, panelShow } from "../food/panel.ts";
+import { panelClose, panelOf, panelSearchOpen, panelShow } from "../food/panel.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Plus } from "lucide";
 
-import type { Panel } from "../food/panel.ts";
+import type { Panel, PanelRow } from "../food/panel.ts";
 import type { Exercise, Mine, Part, Workout } from "./mine.ts";
 
 /** Everything of mine as the reader last sent it. */
@@ -191,7 +191,7 @@ function workoutsSectionOf(): HTMLElement {
         open = fresh.toLowerCase();
         search.value = "";
         show();
-        panelSearchFocus(panel);
+        panelSearchOpen(panel);
     };
     const show: () => void = (): void => {
         if (mine.workouts.some((workout: Workout): boolean => workout.name.toLowerCase() === fresh.toLowerCase()))
@@ -268,17 +268,13 @@ function workoutsSectionOf(): HTMLElement {
                     );
                 return line;
             }),
-            partSearchOf(workout, (part: Part): void => {
-                panelSearchFocus(panel);
-                send(workout, [...workout.parts, part]);
-            }),
         );
         panelShow(
             panel,
             [
                 ["Name", rename],
-                ...(workout.parts.length === 0 ? [] : [["Short", short] as [string, HTMLElement]]),
-                ["Parts", parts],
+                ...(workout.parts.length === 0 ? [] : [["Short", short] as PanelRow]),
+                ["Parts", parts, partSearchOf(workout, (part: Part): void => send(workout, [...workout.parts, part]))],
             ],
             [],
         );
@@ -417,7 +413,7 @@ function exercisesSectionOf(): HTMLElement {
         const rows: HTMLElement[] = shown.map((exercise: Exercise): HTMLElement => {
             const key: string = variantKeyOf(exercise);
             const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
-                lineNameOf(exercise.name, exercise.workouts.join(", ")),
+                lineNameOf(exercise.name, ""),
                 null,
                 (): void => {
                     open = key;

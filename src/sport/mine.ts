@@ -44,10 +44,8 @@ export type Workout = {
     parts: Part[];
 };
 
-/** An exercise of mine with the workouts that hold it, its values an entry brings every time. */
-export type Exercise = Part & {
-    workouts: string[];
-};
+/** An exercise of mine, its values an entry brings every time. */
+export type Exercise = Part;
 
 /**
  * Everything of mine the sport area lists.
