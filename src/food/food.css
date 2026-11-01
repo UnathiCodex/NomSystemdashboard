@@ -44,18 +44,19 @@ body:has(> .food) {
         border-left: 1px solid var(--line);
     }
 
+    /* Only the lists of a window scroll, a search opened in one of their lines stays as it is */
     .food-foods,
     .food-window,
     .food-dishes,
-    .food-foods .food-search {
+    .food-window > .food-search {
         display: flex;
         flex-direction: column;
         flex: 1 1 0;
         min-height: 0;
     }
 
-    .food-foods .dish-list,
-    .food-foods .food-results {
+    .food-dishes > .dish-list,
+    .food-window > .food-search > .food-results {
         flex: 1 1 0;
         min-height: 0;
         overflow-y: auto;
