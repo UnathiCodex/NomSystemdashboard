@@ -109,17 +109,20 @@ export type SkillModule = {
  * as the reader sends it.
  *
  * - `modules`: Also those without tasks yet.
- * - `skills`: For the Skill picker, a module by its code, a project by its folder name.
+ * - `skills`: The skills of the semester for the Skill picker,
+ *   a module by its code, any other by its name, see `reader/skills.ts`.
  * - `otherModules`: The other module folders by their codes,
  *   for the search of the Skill picker.
+ * - `names`: The name of each of them, which names its entries, its plan and its log.
+ * - `paths`: The folder of each module, from `NomWorkspace`, empty for a skill without one.
  * - `links`: The link of each of them, one for all its entries and boxes,
- *   shown below the skill picked.
+ *   shown below the skill picked, empty while I entered none.
  */
 export type Skilling = {
     modules: SkillModule[];
     skills: string[];
     otherModules: string[];
-    folders: { [name: string]: string };
+    names: { [name: string]: string };
     paths: { [name: string]: string };
     links: { [name: string]: string };
     types: string[];
@@ -190,6 +193,13 @@ export type Group = {
 /** Category of skill entries in the entry by category. */
 export const skillName: string = "Skill";
 
+/**
+ * My skill of the time I spend logging, planning and thinking about my day,
+ * which alone stands in the group `Master`,
+ * first in the Skill list and in the plan, see `moduleSearchOf` in `../day/skill.ts`.
+ */
+export const masterName: string = "NomMasterplannings";
+
 /** Loads every module of the semester with its tasks from the reader. */
 export async function skillingLoad(): Promise<Skilling> {
     return readerAsk<Skilling>("/api/skill/tasks");
@@ -197,9 +207,9 @@ export async function skillingLoad(): Promise<Skilling> {
 
 /**
  * Loads what a skill offers a skill entry from the reader,
- * its chapters and its documents, none for a project.
+ * its chapters and its documents, none for a skill without module folder, like a project.
  *
- * @throws {Error} - When the reader cannot answer, like for a module without folder
+ * @throws {Error} - When the reader cannot answer, like for a skill it does not know
  */
 export async function moduleLoad(code: string): Promise<ModuleContents> {
     return readerAsk<ModuleContents>(`/api/skill/module?code=${encodeURIComponent(code)}`);

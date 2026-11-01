@@ -27,7 +27,7 @@
  *
  * A skill entry of the log is one block of learning of a type, as in the plan,
  * of any module of `NomSkillingmodules`, also one of another semester I attend,
- * or a block of work on a project of the semester, see `activeSkillsRead` in `notes.ts`,
+ * or a block of work on another skill of the semester, like a project, see `skills.ts`,
  * which behaves like a module without chapters and tasks.
  * Its title and links, see `documents.ts`.
  * The type may stay empty for any skill, like my own learning.
@@ -96,18 +96,10 @@ import {
     skillTitleOf,
     titleOf,
 } from "./documents.ts";
-import {
-    activeModulesRead,
-    activeSkillsRead,
-    codeOf,
-    fileRead,
-    moduleContentsRead,
-    moduleFolderOf,
-    moduleFoldersRead,
-    modulesRead,
-} from "./notes.ts";
+import { codeOf, fileRead, moduleContentsRead, moduleFoldersRead, modulesRead } from "./notes.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
-import { modulesFolder, projectOf, skillLog, skillNameOf } from "./sources.ts";
+import { activeSkillsRead, skillRowOf } from "./skills.ts";
+import { modulesFolder, skillLog } from "./sources.ts";
 
 import type { Box } from "./boxes.ts";
 import type { Attendee, Entry, EntryFields, Link, Online, RoundMark } from "./calendar.ts";
@@ -278,15 +270,15 @@ export type SkillModule = {
 /**
  * Everything the scripts view shows of my tasks,
  * and the skill entries of the day pick from.
- * Its `skills` go by their names, see {@link skillNameOf},
+ * Its `skills` are those of the semester by their codes, see `activeSkillsRead` in `skills.ts`,
  * its `otherModules` are for the search of the Skill picker, which reaches every module.
- * Its folders, paths and links of each, see `documents.ts`.
+ * Of each its name, the folder of its module and its link, see `documents.ts`.
  */
 export type Skilling = {
     modules: SkillModule[];
     skills: string[];
     otherModules: string[];
-    folders: { [name: string]: string };
+    names: { [name: string]: string };
     paths: { [name: string]: string };
     links: { [name: string]: string };
     types: string[];
@@ -908,11 +900,10 @@ export function skillingRead(): Skilling {
         };
     });
 
-    const active: string[] = activeModulesRead();
-    const skills: string[] = activeSkillsRead().map(skillNameOf);
+    const skills: string[] = activeSkillsRead();
     const others: string[] = moduleFoldersRead()
-        .filter((name: string): boolean => !active.includes(name))
-        .map(codeOf);
+        .map(codeOf)
+        .filter((code: string): boolean => !skills.includes(code));
     const byName: (valueOf: (name: string) => string) => { [name: string]: string } = (
         valueOf: (name: string) => string,
     ): { [name: string]: string } =>
@@ -921,7 +912,7 @@ export function skillingRead(): Skilling {
         modules: modules,
         skills: skills,
         otherModules: others,
-        folders: byName((name: string): string => skillTitleOf(name, "")),
+        names: byName((name: string): string => skillTitleOf(name, "")),
         paths: byName((name: string): string => skillFolderOf(name) ?? ""),
         links: byName(skillLinkOf),
         types: skillTypes,
@@ -929,30 +920,20 @@ export function skillingRead(): Skilling {
 }
 
 /**
- * Finds the folder of a module by its code:
- * in `NomSkillingmodules`, else among the modules of the semester,
- * whose folder may be missing yet and then counts as empty, see `notes.ts`.
+ * Reads the chapters and documents the dialog of a skill entry offers for a skill:
+ * those of the folder of its module, see `skillFolderOf` in `documents.ts`,
+ * none for a module of the semester whose folder is missing, see `notes.ts`,
+ * and none for a skill of `Skills.md` without folder, like a project,
+ * since it behaves like a module without chapters and tasks.
  *
- * @throws {Error} - When no module folder and no module of the semester has the code
- */
-function folderOf(code: string): string {
-    const folder: string | undefined =
-        moduleFolderOf(code) ?? activeModulesRead().find((name: string): boolean => codeOf(name) === code);
-    if (folder === undefined) throw new Error(`No module ${code}`);
-    return folder;
-}
-
-/**
- * Reads the chapters and documents the dialog of a skill entry offers for a skill,
- * none for a module of the semester whose folder is missing,
- * and none for a project, since it behaves like a module without chapters and tasks.
- *
- * @throws {Error} - When no module folder,
- *   no module of the semester and no project has the name
+ * @throws {Error} - When no module folder, no module of the semester
+ *   and no row of `Skills.md` has the code
  */
 export function moduleRead(code: string): ModuleContents {
-    if (projectOf(code) !== undefined) return { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
-    return moduleContentsRead(folderOf(code));
+    const folder: string | undefined = skillFolderOf(code);
+    if (folder !== undefined) return moduleContentsRead(folder.slice(modulesFolder.length + 1));
+    if (skillRowOf(code) === undefined) throw new Error(`No skill ${code}`);
+    return { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
 }
 
 /**

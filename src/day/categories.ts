@@ -107,7 +107,7 @@ import {
 import {
     skillDaySet,
     skillFieldsShow,
-    skillFolderNameOf,
+    skillNameOf,
     skillLinksRead,
     skillModuleType,
     skillPathOf,
@@ -616,7 +616,7 @@ function saveAllow(): void {
 function entryFileOf(): string {
     const folder: string = "NomManageplannings/NomManagecalendar";
     const ending: string = opened.target === "log" ? "_Log.ics" : "_Plan.ics";
-    const name: string = skillFolderNameOf();
+    const name: string = skillNameOf();
     const skills: string = /^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling";
     const fresh: boolean = opened.entry === null && opened.box === null;
     let file: string = opened.entry?.extendedProps.file ?? opened.box?.file ?? "";

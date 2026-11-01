@@ -394,16 +394,19 @@ export function chapterShow(tree: HTMLElement, module: HTMLElement, chapter: HTM
  * Marks the file or note shown in the tree, and no other:
  * picks the module and chapter of a note, see {@link chapterShow},
  * opens every folder on the way to a file and scrolls the tree to it.
+ * A folder of my new system shown, like one a skill links, opens with the folders on its way,
+ * its files unmarked.
  * `null` while it is not in the tree,
  * like a note outside the chapter folders of its module.
  */
 export function treeMark(tree: HTMLElement, shown: string): HTMLElement | null {
     tree.querySelectorAll(".tree-file.shown").forEach((file: Element): void => file.classList.remove("shown"));
+    const path: string = CSS.escape(shown);
     const link: HTMLElement | null =
-        shown === "" ? null : tree.querySelector(`.tree-file[data-path="${CSS.escape(shown)}"]`);
+        shown === "" ? null : tree.querySelector(`.tree-file[data-path="${path}"], .tree-folder[data-path="${path}"]`);
     if (link === null) return null;
 
-    link.classList.add("shown");
+    if (link.classList.contains("tree-file")) link.classList.add("shown");
     const module: HTMLElement | null = link.closest(".tree-module");
     if (module !== null) chapterShow(tree, module, link.closest(".tree-chapter"));
     let folder: HTMLDetailsElement | null = link.closest("details");

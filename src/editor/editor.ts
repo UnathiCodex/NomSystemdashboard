@@ -488,6 +488,7 @@ function treeClick(event: MouseEvent): void {
 /**
  * Starts the editor after the router has put its HTML into the page:
  * shows the tree on the left, the page of a module, chapter or folder the address names,
+ * of my new system a folder it names opened in the tree,
  * else reads the file the address names and shows it to edit, its solutions folded.
  * A section shows its round, see `./round.ts`,
  * its text hidden until its tasks are loaded,
@@ -511,7 +512,7 @@ export async function editorStart(): Promise<void> {
     const shown: Promise<void> = treeShow(
         tree,
         plannings ? "NomManageplannings" : "NomSkillingmodules",
-        path,
+        plannings && path === "" ? folder : path,
         address.get("module") ?? folder.split("/")[0],
     );
     shown.catch((error: unknown): void => console.error(error));

@@ -168,13 +168,22 @@
 }
 
 /* A group of the modules named small and grey above its first module,
-   see `.picker-group` in `../day/choices.css` */
+   a thin grey line after its name, see `.picker-group` in `../day/choices.css` */
 .tree-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin: 0.75rem 0 0;
     padding: 0 var(--tree-row-padding);
     color: var(--text-muted);
     font-size: 0.75rem;
     line-height: 1.5;
+}
+
+.tree-group::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--line);
 }
 
 .tree-list > .tree-group:first-child {

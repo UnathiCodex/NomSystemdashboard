@@ -38,7 +38,7 @@
  * A box of the plan may have it, since a session is something I intend.
  * `Skill` has only the fields `Place` and `With`:
  * a skill, a module by its code or a project by its name, and a type or none,
- * which the dialog picks itself, see `activeSkillsRead` in `./notes.ts`.
+ * which the dialog picks itself, see `activeSkillsRead` in `./skills.ts`.
  * In the log also its documents and its attempts, which only `./skill.ts` writes.
  * A box of the plan takes every category, since I plan all of my day.
  * `Drink` is no category I pick: water has its own tracker,

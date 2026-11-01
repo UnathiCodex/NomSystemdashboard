@@ -529,7 +529,7 @@ fieldset.entry-times {
 }
 
 /* Address of the place picked below its name, small and grey,
-   and so the folder of the skill picked, but that on one line, cut in its middle,
+   and so the link of the skill picked, but that on one line, cut in its middle,
    see `folderLinkShow` in `../skill/links.ts` */
 .entry-address {
     display: block;

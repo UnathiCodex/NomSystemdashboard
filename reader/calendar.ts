@@ -28,7 +28,7 @@ import { createHash, randomUUID } from "node:crypto";
 import ICAL from "ical.js";
 import { mailOf } from "./persons.ts";
 import { labelOf, linkForm, platformOfLink } from "./places.ts";
-import { calendarRoot, modulesRoot, vaultPathOf, writeAllowed } from "./sources.ts";
+import { calendarRoot, moduleName, modulesRoot, vaultPathOf, writeAllowed } from "./sources.ts";
 
 import type { CalendarSource } from "./sources.ts";
 
@@ -286,6 +286,11 @@ const calendars: Map<string, Calendar> = new Map();
  */
 const writtenFollowers: ((module: string, kinds: [string, string][]) => void)[] = [];
 
+/**
+ * What runs each time a summary is written anew with a link, see {@link linkFollow}.
+ */
+const linkFollowers: ((category: string, summary: string, link: string) => void)[] = [];
+
 /** Time zone of the times the dashboard writes, while I live in Germany. */
 const zoneName: string = "Europe/Berlin";
 
@@ -445,7 +450,7 @@ export const skillName: string = "Skill";
 function skillPartsOf(summary: string): [string, string] {
     const parts: RegExpExecArray | null = /^(.*?)\s*(?:\(([A-Z]{2})\))?$/.exec(summary.trim());
     const name: string = parts?.[1] ?? "";
-    return [/^[A-Z]+\d+_/.test(name) ? name.split("_")[0] : name, parts?.[2] ?? ""];
+    return [moduleName.test(name) ? name.split("_")[0] : name, parts?.[2] ?? ""];
 }
 
 /** Reads the type of a skill entry from its line `SUMMARY`, see {@link skillPartsOf}. */
@@ -1142,7 +1147,8 @@ export function sharedLinkOf(category: string, summary: string): string | undefi
  * A summary written anew in plan or log, with a link or another one,
  * gives its link to every entry and box of its category with the same summary,
  * counted without what stands in round brackets at its end, in every file,
- * so one summary has one link everywhere and a link changed once changes for all.
+ * so one summary has one link everywhere and a link changed once changes for all,
+ * also beyond the calendars, see {@link linkFollow}.
  * A summary without link or with the link of a platform online gives none.
  *
  * @param spread - Whether it spreads a link, not for the files a spread writes,
@@ -1170,6 +1176,11 @@ function linesWrite(file: string, text: FileLines, spread: boolean = true): void
             !platformLinkIs(summed.link),
     );
     if (changed.length === 0) return;
+    changed.forEach((summed: Summed): void =>
+        linkFollowers.forEach((follower: (category: string, summary: string, link: string) => void): void =>
+            follower(summed.category, summed.base, summed.link),
+        ),
+    );
     calendarFilesOf().forEach((path: string): void => linkSpread(path, changed));
 }
 
@@ -1202,6 +1213,17 @@ function linkSpread(file: string, changed: Summed[]): void {
  */
 export function writtenFollow(follower: (module: string, kinds: [string, string][]) => void): void {
     writtenFollowers.push(follower);
+}
+
+/**
+ * Takes what runs each time a summary is written anew with a link,
+ * with its category, the summary without what stands in round brackets at its end,
+ * and the link, see {@link linesWrite},
+ * like `skillLinkSet` in `skills.ts`, which registers itself here,
+ * since `skills.ts` reads this file and this file may not read it in turn.
+ */
+export function linkFollow(follower: (category: string, summary: string, link: string) => void): void {
+    linkFollowers.push(follower);
 }
 
 /**

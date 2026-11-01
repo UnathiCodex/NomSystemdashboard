@@ -378,23 +378,31 @@
     margin: 0;
 }
 
-/* Group of choices above its first one, as far from its first line
-   and from the line between two groups as the head of a section of the food search,
-   see `../food/search.css`,
-   so it stands farther from its first line than two lines from each other */
+/* Head of a group of choices above its first one, on a phone alike:
+   its name small and grey with a thin grey line after it,
+   as a section of the plan, see `.plan-section` in `boxes.css`,
+   its name in line with the names of the choices */
 .picker-group {
-    margin: 0 0.75rem;
-    padding: 0.25rem 0 1rem;
-    font-size: 0.75rem;
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.25rem 0.75rem;
+    font-size: var(--day-text);
+    line-height: 1;
     color: var(--text-muted);
 }
 
-/* A group after another stands apart from it by a thin line above its head,
-   as the sections of the food search */
-.picker-list > * + .picker-group {
-    margin-top: 0.75rem;
-    padding-top: 1.375rem;
+.picker-group::after {
+    content: "";
+    flex: 1;
     border-top: 1px solid var(--line);
+}
+
+/* A group after another farther from the choice above it than from its first one,
+   so its head clearly heads those below, as a section of the plan */
+.picker-list > * + .picker-group {
+    margin-top: 1rem;
 }
 
 /* Phone */
@@ -405,19 +413,6 @@
     .meal-summary:empty::before,
     .meal:has(> .meal-rows:empty)::before {
         content: none;
-    }
-
-    /* The head of a group on a phone over the whole width of the list,
-       as close to its first line as two lines to each other */
-    .picker-group {
-        width: 100%;
-        margin-inline: 0;
-        padding: 0.25rem 0.75rem 0;
-    }
-
-    .picker-list > * + .picker-group {
-        margin-top: 0.5rem;
-        padding-top: 0.75rem;
     }
 
     /* A list on a phone rises from the bottom over the whole width, like the dialog,

@@ -6,8 +6,7 @@
  * My new system is every folder in `NomManageplannings`, also one I add later,
  * but my old system, `NomSystemprevious`, which lies beside them and is never read.
  * The reader reads only the new system, my modules, see {@link notes},
- * and the files the skill entries link, in my modules and my projects,
- * see {@link activeProjects} and `./documents.ts`, and nothing that is not listed here.
+ * and the files the skill entries link, see `./documents.ts`, and nothing that is not listed here.
  * Every file at its own place, none from a copy elsewhere, like a draft in `.claude`.
  * It writes only into the new system
  * and, on the server that holds it, into what the dashboards share in `NomKommunikation`,
@@ -77,6 +76,12 @@ export const devicesFile: string = join(dataRoot, "Devices.md");
 
 /** The people I name, `Persons.md`, see `./persons.ts`. */
 export const personsFile: string = join(dataRoot, "Persons.md");
+
+/**
+ * My skills beside the modules of `Modules.md`, `Skills.md`, one row per skill with its link,
+ * each person's own, never in the code, see `./skills.ts`.
+ */
+export const skillsFile: string = join(dataRoot, "Skills.md");
 
 /**
  * Folder of my modules of the university, `NomModulesuniversity`:
@@ -210,45 +215,16 @@ export const systemFiles: SystemFilesSources = {
     previous: previousName,
 };
 
-/**
- * Skills of the semester of each of us by {@link myName} that are no modules,
- * each by its folder from `NomWorkspace`, written with `/`: my projects,
- * and the time I spend logging, planning and thinking about my day, `NomMasterplannings`,
- * Sopha's `NomFrequencediary`, linking the folder of her diary.
- * The modules of the semester come from `Modules.md`, see `activeModulesRead`
- * in `./notes.ts`. Sopha's will come from her own `Modules.md`,
- * and until she has one her reader has no modules of the semester.
- * Changed on request, when the semester's projects change.
- */
-const skillsOf: { [name: string]: string[] } = {
-    Vu: ["NomProgramprojects/AsiaWok_Wokflow_2026", "NomSystemdashboard", "NomManageplannings/NomMasterplannings"],
-    Sopha: ["NomSystemdashboard", "NomManageplannings/NomFrequencediary"],
-};
-
-/**
- * Projects of the semester of this reader,
- * Vu's when {@link myName} names none of us there, like a reader without `NOM_NAME`.
- */
-export const activeProjects: string[] = skillsOf[myName] ?? skillsOf.Vu;
-
-/** Tells whether a skill of the semester is a module, else a project. */
-export function moduleIs(skill: string): boolean {
-    return skill.startsWith(`${modulesFolder}/`);
+/** Tells whether a path from `NomWorkspace` lies in the folder of a module. */
+export function moduleIs(path: string): boolean {
+    return path.startsWith(`${modulesFolder}/`);
 }
 
 /**
- * Gives the name of a skill of the semester by its folder:
- * a module its code, the part of its folder name before `_`, a project its folder name.
+ * Name of a module, of its folder and of its plan and its log:
+ * its code, capitals and then digits, and `_` first.
  */
-export function skillNameOf(skill: string): string {
-    const folder: string = skill.split("/").at(-1) ?? skill;
-    return moduleIs(skill) ? folder.split("_")[0] : folder;
-}
-
-/** Finds the folder of a project of the semester by its name, `undefined` for none. */
-export function projectOf(name: string): string | undefined {
-    return activeProjects.find((skill: string): boolean => skillNameOf(skill) === name);
-}
+export const moduleName: RegExp = /^[A-Z]+\d+_/;
 
 /**
  * Sources of the day area, all in the new system.
@@ -379,11 +355,11 @@ export function topicFileOf(category: string, date: string, ending: string): str
 
 /**
  * Builds the path of a file of a skill, its log or its plan:
- * a module's, whose folder starts with its code, in {@link modulesRoot},
+ * a module's, see {@link moduleName}, in {@link modulesRoot},
  * any other in {@link skillingRoot}.
  */
 export function skillFileOf(name: string, ending: string): string {
-    return join(/^[A-Z]+\d+_/.test(name) ? modulesRoot : skillingRoot, `${name}${ending}`);
+    return join(moduleName.test(name) ? modulesRoot : skillingRoot, `${name}${ending}`);
 }
 
 /**

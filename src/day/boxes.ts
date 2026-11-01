@@ -71,7 +71,8 @@ import { linkNameOf } from "../skill/links.ts";
 import { boxMinutes, boxTimesOf, lengthOf, nearOf, rangeDash, timeOf } from "./times.ts";
 import { boxActionsOf } from "./actions.ts";
 import { roomOf, seriesNew } from "./series.ts";
-import { dayOf, dayTextOf, skillName } from "../skill/attempts.ts";
+import { dayOf, dayTextOf, masterName, skillName } from "../skill/attempts.ts";
+import { skillGroups } from "./skill.ts";
 import { calendarTodayOf } from "../today.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
 import { phone } from "../phone.ts";
@@ -575,18 +576,20 @@ function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTML
 }
 
 /**
- * Sections of the plan, in order, named as the Skill picker names its groups,
- * see `reader/sources.ts`.
+ * Sections of the plan, in order, the first named as the Skill list names its groups,
+ * see `skillGroups` in `skill.ts`.
  */
-const sections: string[] = ["Projects", "Modules", "Living", "Health"];
+const sections: string[] = [...skillGroups, "Living", "Health"];
 
 /**
- * Gives the section of the plan a box stands in, by the folder of the plan it lies in:
- * `Projects` for `Skilling`, else the name of the folder.
+ * Gives the section of the plan a box stands in, by the plan it lies in:
+ * `Master` for the plan of my skill of planning, see `masterName` in `../skill/attempts.ts`,
+ * `Projects` for any other in `Skilling`, else the name of its folder.
  */
 function sectionOf(box: Box): string {
-    const folder: string = box.file.split("/").at(-2) ?? "";
-    return folder === "Skilling" ? "Projects" : folder;
+    const [folder, file]: string[] = box.file.split("/").slice(-2);
+    if (folder !== "Skilling") return folder;
+    return file === `${masterName}_Plan.ics` ? "Master" : "Projects";
 }
 
 /**

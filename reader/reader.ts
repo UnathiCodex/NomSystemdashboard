@@ -66,7 +66,8 @@ import { plainApply, plainRead, plainRemove } from "./rules.ts";
 import { personRename, personsRead } from "./persons.ts";
 import { attendeesRename, paramRename } from "./calendar.ts";
 import { calendarRoot } from "./sources.ts";
-import { fileOpen, fileRead, folderMake, folderRead, linkedNoteRead, menuRead, moduleMake } from "./notes.ts";
+import { fileOpen, fileRead, folderMake, folderRead, linkedNoteRead, menuRead } from "./notes.ts";
+import { skillAdd } from "./skills.ts";
 import { noteWrite } from "./edit.ts";
 import { systemFileRead, systemFileWrite, treeRead } from "./files.ts";
 import { attemptAdd, roundAdd, moduleRead, sessionRead, skillEntryAdd, skillEntryEdit, skillingRead } from "./skill.ts";
@@ -445,9 +446,6 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
     } else if (request.method === "POST" && url.pathname === "/api/notes/folder") {
         folderMake(((await json(request)) as { path: string }).path);
         responseSend(response, 200, null);
-    } else if (request.method === "POST" && url.pathname === "/api/notes/module") {
-        moduleMake(((await json(request)) as { folder: string }).folder);
-        responseSend(response, 200, null);
     } else if (request.method === "PUT" && url.pathname === "/api/edit/note") {
         responseSend(response, 200, noteWrite((await json(request)) as NoteChange));
     } else if (request.method === "GET" && url.pathname === "/api/edit/tree") {
@@ -475,6 +473,8 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         };
         openedBlocks.set(opened.path, opened.heading);
         responseSend(response, 200, null);
+    } else if (request.method === "POST" && url.pathname === "/api/skill/skills") {
+        responseSend(response, 200, skillAdd(((await json(request)) as { name: string }).name));
     } else if (request.method === "POST" && url.pathname === "/api/skill/entry") {
         entryShare(skillEntryAdd((await json(request)) as SkillEntryNew));
         responseSend(response, 200, null);

@@ -2,7 +2,7 @@
  * ## Notes
  *
  * Reads my modules for the scripts view, read only but for a folder a click makes,
- * see {@link folderMake}, and the folder of a new module, see {@link moduleMake}:
+ * see {@link folderMake}:
  * every module with its chapters and notes for the menu, see {@link menuRead},
  * the modules of the semester for their tasks, see `skill.ts`,
  * a note with the files its links lead to, single files, and a folder,
@@ -34,7 +34,7 @@ import {
 import { extname, join, posix, sep } from "node:path";
 import { berlinDateOf, writtenFollow } from "./calendar.ts";
 import { semesterOf } from "./categories.ts";
-import { activeProjects, modulesFolder, notes } from "./sources.ts";
+import { moduleName, modulesFolder, notes } from "./sources.ts";
 
 import type { Dirent, ReadStream } from "node:fs";
 
@@ -113,7 +113,7 @@ export type NotesFolder = {
 /**
  * What a module folder holds besides its notes, for a skill entry of the day.
  *
- * - `folder`: The module folder from `NomWorkspace`, empty for a project.
+ * - `folder`: The module folder from `NomWorkspace`, empty for a skill without one, like a project.
  * - `chapters`: Names of its chapter folders, also of the empty ones.
  * - `documents`: Its files outside the chapter folders, the university's material,
  *   and the notes of its chapters, by their paths from the module folder.
@@ -188,12 +188,6 @@ const collator: Intl.Collator = new Intl.Collator(undefined, {
  * Chapter folder, like `01_RegressionAnalysis`: two digits and `_` first.
  */
 const chapterFolder: RegExp = /^\d{2}_/;
-
-/**
- * Module folder: its code, capitals and then digits, and `_` first,
- * so a folder like `_Inbox` is none.
- */
-const moduleFolder: RegExp = /^[A-Z]+\d+_/;
 
 /**
  * The folder of the material of each type in a module, as my modules name it.
@@ -388,13 +382,14 @@ export function modulesRead(): NotesModule[] {
 }
 
 /**
- * Lists every module folder in `NomSkillingmodules`,
+ * Lists every module folder in `NomSkillingmodules`, named as a module is,
+ * see `moduleName` in `sources.ts`, so a folder like `_Inbox` is none,
  * also of the modules that are not of the semester,
  * as Obsidian's file explorer sorts them.
  */
 export function moduleFoldersRead(): string[] {
     return entriesRead("")
-        .filter((entry: Dirent): boolean => entry.isDirectory() && moduleFolder.test(entry.name))
+        .filter((entry: Dirent): boolean => entry.isDirectory() && moduleName.test(entry.name))
         .map((entry: Dirent): string => entry.name)
         .sort(collator.compare);
 }
@@ -449,22 +444,6 @@ export function activeModulesRead(): string[] {
     return [...semestersRead()]
         .filter(([, semester]: [string, string]): boolean => semester === today)
         .map(([module]: [string, string]): string => module);
-}
-
-/**
- * Reads the skills of the semester of this reader,
- * each by its folder from `NomWorkspace`, written with `/`:
- * the modules of the semester first, see {@link activeModulesRead}, then its projects,
- * see `activeProjects` in `sources.ts`.
- * The Skill picker offers them first, in this order.
- * The menu of the scripts view shows no project,
- * since a project has no chapters and no tasks.
- * Each skill entry links the folder of its skill by this path,
- * see `skillLinkOf` in `documents.ts`.
- * A link in a note still opens a note of any module.
- */
-export function activeSkillsRead(): string[] {
-    return [...activeModulesRead().map((module: string): string => `${modulesFolder}/${module}`), ...activeProjects];
 }
 
 /**
@@ -757,21 +736,3 @@ export function typeFoldersMake(module: string, kinds: [string, string][]): stri
 writtenFollow((module: string, kinds: [string, string][]): void => {
     typeFoldersMake(module, kinds);
 });
-
-/**
- * Makes the empty folder of a new module in `NomSkillingmodules`,
- * picked new in the Skill list of an entry,
- * see `moduleFolderNameOf` in `src/day/skill.ts`.
- * Named as my module folders are: its code, two to four capitals and three to six digits,
- * `_`, and its name in CamelCase.
- * No row of `Modules.md` and no note.
- *
- * @throws {Error} - When the name is not named so,
- *   or a module folder has its code already
- */
-export function moduleMake(folder: string): void {
-    if (!/^[A-Z]{2,4}\d{3,6}_[A-Z][A-Za-z\d]*$/.test(folder)) throw new Error(`No name of a module folder: ${folder}`);
-    if (moduleFolderOf(codeOf(folder)) !== undefined)
-        throw new Error(`A folder of the module is there already: ${folder}`);
-    mkdirSync(join(diskPathOf(""), folder));
-}

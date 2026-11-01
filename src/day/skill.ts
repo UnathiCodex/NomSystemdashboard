@@ -4,8 +4,9 @@
  * A skill entry in the dialog, for a box of the plan and the log alike,
  * one row per field, each one line showing its value, see `choices.ts`.
  * Below the category its summary, its skill and its type side by side on one line,
- * no type for my own learning or a project, which a click opens to pick another.
- * The reader links the folder of both, which names them, see `reader/documents.ts`.
+ * no type for my own learning or a skill without module folder, like a project,
+ * which a click opens to pick another.
+ * The reader gives the name and the link of the skill, see `reader/documents.ts`.
  * Its title follows skill and type, see {@link skillTitleOf}.
  * Place, times and the link of the summary come as every category has them,
  * see `categories.ts`.
@@ -15,11 +16,12 @@
  * not when I did it:
  * the semester of the day of the dialog, which follows that day as I type it,
  * until I pick another from its list, never typed.
- * The Skill list shows the skills of the semester,
- * and its search every module folder, since I sometimes attend another module.
- * A module without folder yet I add there by its code and name typed,
- * which makes its empty folder in `NomSkillingmodules`, see {@link moduleFolderNameOf}.
- * Its row of `Modules.md` and its notes come later by hand.
+ * The Skill list shows the skills of the semester in the groups `Master`, `Projects` and `Modules`,
+ * and its search every module folder too, since I sometimes attend another module,
+ * see {@link moduleSearchOf}.
+ * A text typed that names no skill adds a new one, see {@link skillAdd},
+ * a row of `Skills.md` without link and without folder, see `reader/skills.ts`,
+ * whose link I enter by hand as the link of its summary.
  * Chapters come one after another once a skill is picked, see {@link chapterRowsOf}.
  * An entry keeps the name a chapter had, also once its folder has another name.
  * The list `Attach` holds the real documents the entry used,
@@ -63,7 +65,15 @@ import {
 } from "./choices.ts";
 import { crossPut } from "../icons.ts";
 import { plainKeep } from "../skill/task.ts";
-import { dayTextOf, groupsOf, moduleLoad, semesterOf, skillEntrySend, skillingLoad } from "../skill/attempts.ts";
+import {
+    dayTextOf,
+    groupsOf,
+    masterName,
+    moduleLoad,
+    semesterOf,
+    skillEntrySend,
+    skillingLoad,
+} from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
 import { folderLinkShow, modulesFolder } from "../skill/links.ts";
 import { changesKept } from "../changes.ts";
@@ -153,7 +163,7 @@ let skilling: Skilling = {
     modules: [],
     skills: [],
     otherModules: [],
-    folders: {},
+    names: {},
     paths: {},
     links: {},
     types: [],
@@ -186,6 +196,19 @@ const chapterNote: RegExp = /^(\d{2}_[^/]*)\/[^/]+$/;
  * Code of a module of the university, two to four capitals and then three to six digits.
  */
 const moduleCode: RegExp = /^[A-Z]{2,4}\d{3,6}$/;
+
+/**
+ * Name of a module, of its folder and of its plan and its log:
+ * its code, capitals and then digits, and `_` first,
+ * as the reader names it, see `moduleName` in `reader/sources.ts`.
+ */
+const moduleName: RegExp = /^[A-Z]+\d+_/;
+
+/**
+ * Groups of the Skill list in their order, each under its head,
+ * which name the first sections of the plan too, see `sections` in `boxes.ts`.
+ */
+export const skillGroups: string[] = ["Master", "Projects", "Modules"];
 
 /**
  * Umlauts and `ß` as the names of my module folders write them out.
@@ -231,7 +254,7 @@ let shownIn: SkillShown | null = null;
 
 /**
  * Chapters and documents of the skill picked,
- * none before one is picked and for a project.
+ * none before one is picked and for a skill without module folder, like a project.
  */
 let contents: ModuleContents = contentsNone();
 
@@ -281,20 +304,19 @@ export function skillPathOf(): string {
 }
 
 /**
- * Tells whether a skill is a module, its folder in `NomSkillingmodules`,
- * the only skills with types, so a project's summary offers no type.
+ * Tells whether a skill has its folder in `NomSkillingmodules`,
+ * the only skills with types, so the summary of any other, like a project, offers no type.
  */
 function moduleIs(code: string): boolean {
     return (skilling.paths[code] ?? "").startsWith(`${modulesFolder}/`);
 }
 
 /**
- * Gives the name of the folder of the skill picked, which names the files of its plan
- * and its log, as the reader names it, see `skillFolderNameOf` in `reader/documents.ts`.
+ * Gives the name of the skill picked, which names its entries and the files of its plan
+ * and its log, as the reader names it, see `skillNameOf` in `reader/documents.ts`.
  */
-export function skillFolderNameOf(module: string = picks.module): string {
-    const path: string = skilling.paths[module] ?? "";
-    return path === "" ? module : path.slice(path.lastIndexOf("/") + 1);
+export function skillNameOf(module: string = picks.module): string {
+    return skilling.names[module] ?? module;
 }
 
 /**
@@ -302,7 +324,7 @@ export function skillFolderNameOf(module: string = picks.module): string {
  * as the reader writes it, see `skillTitleOf` in `reader/documents.ts`.
  */
 export function skillTitleOf(): string {
-    const name: string = skillFolderNameOf();
+    const name: string = skillNameOf();
     if (picks.type === "") return name;
     return name === "" ? `(${picks.type})` : `${name} (${picks.type})`;
 }
@@ -325,21 +347,29 @@ function hintOf(text: string): HTMLParagraphElement {
 }
 
 /**
+ * Gives the group of a skill in the Skill list, see {@link skillGroups}:
+ * `Master` for my skill of planning alone, see `masterName` in `../skill/attempts.ts`,
+ * `Modules` for a skill named as a module, see {@link moduleName},
+ * whose plan and log lie in `Modules/`, `Projects` for every other one.
+ */
+function skillGroupOf(module: string): string {
+    if (module === masterName) return "Master";
+    return moduleName.test(skillNameOf(module)) ? "Modules" : "Projects";
+}
+
+/**
  * Builds the search of the Skill list:
  * while nothing is typed the skills of the semester and the skill picked,
  * while I type every skill and module folder that holds the words.
- * Modules stand apart from projects, each under its small grey head,
- * as the sections of the food search, see `.picker-group` in `choices.css`.
+ * Each stands in its group, see {@link skillGroupOf},
+ * under the head of the group, as a section of the plan, see `.picker-group` in `choices.css`.
  */
 function moduleSearchOf(current: string): (text: string) => Promise<Choice[]> {
-    const module: (name: string) => boolean = (name: string): boolean => moduleCode.test(name);
     const named: string[] = [...skilling.skills, ...skilling.otherModules];
-    const choices: Choice[] = [...named.filter(module), ...named.filter((name: string): boolean => !module(name))].map(
-        (name: string): Choice => ({
-            value: name,
-            text: skilling.folders[name] ?? name,
-            group: module(name) ? "Modules" : "Projects",
-        }),
+    const choices: Choice[] = skillGroups.flatMap((group: string): Choice[] =>
+        named
+            .filter((name: string): boolean => skillGroupOf(name) === group)
+            .map((name: string): Choice => ({ value: name, text: skillNameOf(name), group: group })),
     );
     return async (text: string): Promise<Choice[]> => {
         const shown: Choice[] =
@@ -353,18 +383,22 @@ function moduleSearchOf(current: string): (text: string) => Promise<Choice[]> {
 }
 
 /**
- * Gives the folder of a new module for the text typed in the Skill list,
- * named as my module folders are: the code in capitals, `_`,
- * and the name in CamelCase without spaces, umlauts written out, other accents gone,
- * a word all in capitals as one.
+ * Gives the name of a new skill for the text typed in the Skill list, as its row holds it:
+ * the code of a module first and a name after it named as my module folders are,
+ * so its plan and its log lie in `Modules/`:
+ * the code in capitals, `_`, and the name in CamelCase without spaces,
+ * umlauts written out, other accents gone, a word all in capitals as one;
+ * any other text as typed, its plan and its log in `Skilling/`.
  *
- * @returns `null` for a text that makes no new module: no code first, no name after it,
- *   or the code of a skill the list has already
+ * @returns `null` for a text that makes no new skill: empty, holding `|`, `/` or `\`,
+ *   which no name of a file holds, starting with `.`, a code without a name after it,
+ *   or the code of a module the list has already
  */
-function moduleFolderNameOf(text: string): string | null {
-    const typed: RegExpMatchArray | null = text.trim().match(/^([A-Za-z]+\d+)[\s_]+(.+)$/);
-    const code: string = typed?.[1].toUpperCase() ?? "";
-    const words: string[] = (typed?.[2] ?? "")
+function skillNewNameOf(text: string): string | null {
+    const typed: string = text.trim().replace(/\s+/g, " ");
+    const parts: RegExpMatchArray | null = typed.match(/^([A-Za-z]+\d+)[\s_]+(.+)$/);
+    const code: string = parts?.[1].toUpperCase() ?? "";
+    const words: string[] = (parts?.[2] ?? "")
         .replace(/[äöüÄÖÜß]/g, (letter: string): string => umlauts[letter])
         .normalize("NFD")
         .replace(/\p{M}/gu, "")
@@ -374,32 +408,32 @@ function moduleFolderNameOf(text: string): string | null {
             const letters: string = word === word.toUpperCase() ? word.toLowerCase() : word;
             return letters[0].toUpperCase() + letters.slice(1);
         });
-    if (!moduleCode.test(code) || words.length === 0 || skilling.folders[code] !== undefined) return null;
-    return `${code}_${words.join("")}`;
+    if (typed === "" || /[|/\\]/.test(typed) || typed.startsWith(".") || moduleCode.test(typed.toUpperCase()))
+        return null;
+    if (!moduleCode.test(code) || words.length === 0) return typed;
+    return skilling.names[code] === undefined ? `${code}_${words.join("")}` : null;
 }
 
 /**
- * Makes the empty folder of a new module typed in the Skill list by the reader,
- * see `moduleMake` in `reader/notes.ts`, and adds it to the modules of the list,
- * so it is picked at once.
+ * Adds a new skill typed in the Skill list as a row of `Skills.md` without link,
+ * see `skillAdd` in `reader/skills.ts`, and to the skills of the list,
+ * so it is picked at once. Makes no folder.
  *
- * @returns Code of the new module, `null` for a text that makes no new module
- * @throws {Error} - When the reader does not make it, like for a folder there already
+ * @returns Code of the new skill, `null` for a text that makes none
+ * @throws {Error} - When the reader does not add it, like for a name a skill has already
  */
-async function moduleAdd(text: string): Promise<string | null> {
-    const folder: string | null = moduleFolderNameOf(text);
-    if (folder === null) return null;
-    await readerAsk<null>("/api/notes/module", {
+async function skillAdd(text: string): Promise<string | null> {
+    const name: string | null = skillNewNameOf(text);
+    if (name === null) return null;
+    const code: string = await readerAsk<string>("/api/skill/skills", {
         method: "POST",
-        body: JSON.stringify({ folder: folder }),
+        body: JSON.stringify({ name: name }),
     });
-    const code: string = folder.slice(0, folder.indexOf("_"));
     skilling = {
         ...skilling,
-        otherModules: [...skilling.otherModules, code],
-        folders: { ...skilling.folders, [code]: folder },
-        paths: { ...skilling.paths, [code]: `${modulesFolder}/${folder}` },
-        links: { ...skilling.links, [code]: `${modulesFolder}/${folder}` },
+        skills: [...skilling.skills, code],
+        names: { ...skilling.names, [code]: name },
+        links: { ...skilling.links, [code]: "" },
     };
     return code;
 }
@@ -928,7 +962,7 @@ function documentRowsOf(
 
 /**
  * Makes the Skill list of a skill entry or a series, see {@link moduleSearchOf},
- * which adds a new module typed, see {@link moduleAdd}.
+ * which adds a new skill typed, by Enter or by the plus, see {@link skillAdd}.
  */
 function skillPickerOf(
     module: string,
@@ -941,13 +975,13 @@ function skillPickerOf(
         picked: module === "" ? [] : [module],
         many: false,
         adding: true,
-        add: moduleAdd,
-        noun: "module",
+        add: skillAdd,
+        noun: "skill",
         below: below,
         aside: aside,
         newTextOf: (text: string): string | null => {
-            const folder: string | null = moduleFolderNameOf(text);
-            return folder === null ? null : `New module ${folder}`;
+            const name: string | null = skillNewNameOf(text);
+            return name === null ? null : `New skill ${name}`;
         },
         pick: pick,
     });
@@ -1077,14 +1111,14 @@ export function skillNamesOf(picked: ModuleType): {
     link: string;
     file: string;
 } {
-    const name: string = skillFolderNameOf(picked.module);
+    const name: string = skillNameOf(picked.module);
     if (name === "") return { title: "", link: "", file: "" };
     return {
         title: picked.type === "" ? name : `${name} (${picked.type})`,
         link: skilling.links[picked.module] ?? skilling.paths[picked.module] ?? "",
         file:
             "NomManageplannings/NomManagecalendar/" +
-            `${/^[A-Z]+\d+_/.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
+            `${moduleName.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,
     };
 }
 

@@ -5,9 +5,9 @@
  * and to the documents it used, its paths from `NomWorkspace`.
  * Each link only points to more, the entry states its facts itself, see `./calendar.ts`,
  * like the chapters of my system it belongs to, one `X-CHAPTER` each.
- * Its `SUMMARY` names its skill and its type: the name of the folder of its skill
+ * Its `SUMMARY` names its skill and its type: the name of its skill
  * with its type in round brackets at the end when it has one, see {@link skillTitleOf}.
- * Its `ALTREP` is a link I set, by default the folder of the skill,
+ * Its `ALTREP` is a link I set, by default the link of the skill,
  * see {@link skillLinkOf}.
  * Every real document a skill entry used is one `ATTACH` holding just its path,
  * see `Link` in `./calendar.ts`, in the same form for every kind.
@@ -47,7 +47,8 @@ import {
     skillName,
 } from "./calendar.ts";
 import { activeModulesRead, chapterNameOf, codeOf, moduleContentsRead, moduleFolderOf } from "./notes.ts";
-import { moduleIs, modulesFolder, projectOf, skillFileOf, skillLog, vault, topicFileOf } from "./sources.ts";
+import { skillRowOf } from "./skills.ts";
+import { moduleIs, modulesFolder, skillFileOf, skillLog, vault, topicFileOf } from "./sources.ts";
 
 import type { Stats } from "node:fs";
 import type { Entry, EntryFields, Link } from "./calendar.ts";
@@ -99,42 +100,48 @@ function fingerprintOf(file: string): string {
 }
 
 /**
- * Gives the folder of a skill by its name, as a path from `NomWorkspace`:
- * a project of the semester by its folder name, a module by its code,
- * or a module of the semester whose folder is missing yet.
+ * Gives the folder of a module by its code, as a path from `NomWorkspace`:
+ * in `NomSkillingmodules`, or of a module of the semester whose folder is missing yet.
+ * A skill of `Skills.md` has a folder only as a module whose folder is there,
+ * see `./skills.ts`.
  */
 export function skillFolderOf(code: string): string | undefined {
     const module: string | undefined =
         moduleFolderOf(code) ?? activeModulesRead().find((name: string): boolean => codeOf(name) === code);
-    return projectOf(code) ?? (module === undefined ? undefined : `${modulesFolder}/${module}`);
+    return module === undefined ? undefined : `${modulesFolder}/${module}`;
 }
 
 /**
- * Gives the name of the folder of a skill, see {@link skillFolderOf},
- * a skill without folder by its name alone.
+ * Gives the name of a skill, which names its entries, its plan and its log:
+ * the name of its folder, see {@link skillFolderOf}, else of its row of `Skills.md`,
+ * else its code alone.
  */
-function skillFolderNameOf(code: string): string {
-    return skillFolderOf(code)?.split("/").at(-1) ?? code;
+function skillNameOf(code: string): string {
+    return skillFolderOf(code)?.split("/").at(-1) ?? skillRowOf(code)?.name ?? code;
 }
 
 /**
  * Gives the title a skill entry has while I type none, its `SUMMARY`:
- * the name of the folder of its skill, with its type in round brackets when it has one.
+ * the name of its skill, see {@link skillNameOf},
+ * with its type in round brackets when it has one.
  * An entry without skill by its type in brackets alone, like `(VO)`, or not at all.
  */
 export function skillTitleOf(code: string, type: string): string {
-    const name: string = skillFolderNameOf(code);
+    const name: string = skillNameOf(code);
     if (type === "") return name;
     return name === "" ? `(${type})` : `${name} (${type})`;
 }
 
 /**
  * Gives the link of a skill, the `ALTREP` of the `SUMMARY` of its entries and boxes:
- * the one they share, see `sharedLinkOf` in `./calendar.ts`,
- * else the folder of the skill.
+ * the link of its row of `Skills.md` while I entered one,
+ * else the one they share, see `sharedLinkOf` in `./calendar.ts`,
+ * else the folder of its module, empty for none.
  * The dialog fills in the same link, see `skillPathOf` in `src/day/skill.ts`.
  */
 export function skillLinkOf(code: string): string {
+    const entered: string = skillRowOf(code)?.link ?? "";
+    if (entered !== "") return entered;
     return sharedLinkOf(skillName, skillTitleOf(code, "")) ?? skillFolderOf(code) ?? "";
 }
 
@@ -170,14 +177,14 @@ export function titleOf(
 /**
  * Gives the file of the plan or of the log in `NomManagecalendar` an entry
  * or a box belongs into, see `./sources.ts`:
- * for a skill entry the log or plan of its skill, named like the folder of the skill,
+ * for a skill entry the log or plan of its skill, named like the skill, see {@link skillNameOf},
  * for any other the log or the plan of its topic in the year of its day.
  *
  * @throws {Error} - For a skill entry without skill
  */
 export function calendarFileOf(fields: { category: string; module: string }, date: string, ending: string): string {
     if (fields.category !== skillName) return topicFileOf(fields.category, date, ending);
-    const name: string = skillFolderNameOf(fields.module);
+    const name: string = skillNameOf(fields.module);
     if (name === "") throw new Error("A skill entry needs its skill");
     return skillFileOf(name, ending);
 }
