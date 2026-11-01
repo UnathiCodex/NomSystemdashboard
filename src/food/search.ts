@@ -460,7 +460,7 @@ function resultsShow(search: Search): void {
             : rest.filter((food: Food, index: number): boolean => index < shownFoods || keyOf(food) === search.open);
     const sections: HTMLElement[][] = [];
 
-    if (meals.length > 0) sections.push([listHeadOf("Meals", "kcal / meal"), ...meals]);
+    if (meals.length > 0) sections.push([listHeadOf("Meals", ""), ...meals]);
     const plus: HTMLElement[] = newFoodOf(search, query, found.foods);
     if (fresh.length > 0)
         sections.push([

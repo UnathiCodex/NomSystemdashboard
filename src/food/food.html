@@ -1,26 +1,30 @@
-<!-- Food: the bar of the shown day, below it what I ate with its totals,
+<!-- Food: the bar of the shown day with its totals, below it what I ate,
      beside my meals and my foods, see food.ts -->
 <div class="food">
     <!-- The date of the shown day between its arrows,
-         the icon back to today beside it -->
+         the icon back to today beside it,
+         the totals of the day at the right end as the trackers of the day view -->
     <div class="day-bar food-bar">
         <button class="day-arrow" id="food-before" type="button"></button>
-        <h2 class="day-title food-day-title"><span class="day-date"
-            id="food-date"></span></h2>
+        <h2 class="day-title food-day-title"><span class="day-date" id="food-date"></span></h2>
         <button class="day-today" id="food-today" type="button" disabled></button>
         <button class="day-arrow" id="food-after" type="button"></button>
+        <section class="trackers" id="food-totals"></section>
     </div>
 
-    <!-- Day: its totals, then its meals from the log, each with its foods -->
+    <!-- Day: what its totals leave out, then its meals from the log, each with its foods -->
     <section class="food-day">
-        <div id="food-totals"></div>
+        <div id="food-hints"></div>
         <div id="food-meals"></div>
     </section>
 
-    <!-- My meals, filled by meals.ts, above my foods and their search, see search.ts -->
+    <!-- My meals, filled by meals.ts, above my foods and their search, see search.ts,
+         each a window of its own where both fit side by side with the day -->
     <section class="food-foods">
-        <div id="food-dishes"></div>
-        <h2 class="food-heading" id="food-foods-heading">Foods</h2>
-        <div id="food-search"></div>
+        <div class="food-window" id="food-dishes"></div>
+        <div class="food-window">
+            <h2 class="food-heading" id="food-foods-heading">Foods</h2>
+            <div class="food-window" id="food-search"></div>
+        </div>
     </section>
 </div>

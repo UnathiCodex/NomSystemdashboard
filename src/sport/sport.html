@@ -1,22 +1,22 @@
-<!-- Sport: the bar of the shown day as the day has it; below it my sessions of that day
-     with their totals, beside my workouts, exercises and videos -->
+<!-- Sport: the bar of the shown day with its totals as the day has it;
+     below it my sessions of that day, beside my workouts and exercises -->
 <div class="food sport">
     <!-- The date of the shown day between its arrows,
-         a small icon beside it back to today, faded and off on today -->
+         a small icon beside it back to today, faded and off on today,
+         the totals of the day at the right end as the trackers of the day view -->
     <div class="day-bar food-bar">
         <button class="day-arrow" id="sport-before" type="button"></button>
-        <h2 class="day-title food-day-title"><span class="day-date"
-            id="sport-date"></span></h2>
+        <h2 class="day-title food-day-title"><span class="day-date" id="sport-date"></span></h2>
         <button class="day-today" id="sport-today" type="button" disabled></button>
         <button class="day-arrow" id="sport-after" type="button"></button>
+        <section class="trackers" id="sport-totals"></section>
     </div>
 
-    <!-- Day: its totals, then its sessions from the log -->
+    <!-- Day: its sessions from the log -->
     <section class="food-day">
-        <div id="sport-totals"></div>
         <div class="sport-sessions" id="sport-sessions"></div>
     </section>
 
-    <!-- My workouts, exercises and videos, filled by lists.ts -->
+    <!-- My workouts and exercises, filled by lists.ts -->
     <section class="food-foods" id="sport-lists"></section>
 </div>

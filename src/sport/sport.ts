@@ -4,12 +4,12 @@
  * Shows my sessions of sport on a day,
  * and my workouts and exercises, see `lists.ts`, in the scheme of the food view,
  * whose look it takes, see `../food/food.css`.
- * The bar of the day, as the day has it, between the arrows to the day before and after.
- * The day: the number of its sessions,
+ * The bar of the day, as the day has it, between the arrows to the day before and after,
+ * at its right end the number of the sessions of the day,
  * their time together and the kcal they burned above rest,
  * an estimate, see `reader/sport.ts`, written whole without `~`,
- * since every kcal of the page is rounded anyway, without goals, so the log stays a log;
- * then each session of the log with what I did.
+ * since every kcal of the page is rounded anyway, without goals, so the log stays a log.
+ * The day: each session of the log with what I did.
  * Last among the totals my weight on the day, the last one I wrote on or before it,
  * 80 kg before the first, see {@link weightEdit}; I change it every month or two,
  * so it needs no place of its own.
@@ -22,13 +22,14 @@
 
 import { sportDayLoad, weightSend } from "./mine.ts";
 import { listsOf, mineReload, ruleTextOf } from "./lists.ts";
-import { amountOf, buttonOf, elementOf, kcalTextOf } from "../food/foods.ts";
+import { amountOf, buttonOf, elementOf, kcalTextOf, totalOf } from "../food/foods.ts";
 import { lengthOf } from "../day/times.ts";
 import { dayAdd, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { iconOf, iconPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight, Pencil } from "lucide";
+import "../day/trackers.css";
 import "../food/food.css";
 import "../food/search.css";
 import "../food/meals.css";
@@ -41,39 +42,31 @@ import type { SportDay } from "../../reader/sport.ts";
 let shown: string = "";
 
 /**
- * Shows the totals of a day: on a day with sessions their number, time and kcal,
- * and on every day my weight, last, see {@link weightOf}.
+ * Shows the totals of a day in the bar, see `totalOf` in `../food/foods.ts`:
+ * the number of its sessions, their time and kcal, 0 on a day without sessions,
+ * so the bar always looks the same, and my weight, last, see {@link weightOf}.
  */
 function totalsShow(day: SportDay): void {
-    const totals: HTMLElement = elementOf("div", "food-totals", "");
-    const tiles: [string, string][] =
-        day.sessions.length === 0
-            ? []
-            : [
-                  ["Sessions", String(day.sessions.length)],
-                  ["Time", lengthOf(day.minutes)],
-                  ["Energy", kcalTextOf(day.kcal)],
-              ];
-    for (const [name, amount] of tiles) {
-        const tile: HTMLElement = elementOf("div", "food-total", "");
-        tile.append(elementOf("span", "food-label", name), elementOf("span", "food-amount", amount));
-        totals.append(tile);
-    }
-    totals.append(weightOf(day.kg));
-    document.getElementById("sport-totals")?.replaceChildren(totals);
+    document
+        .getElementById("sport-totals")
+        ?.replaceChildren(
+            totalOf("Sessions", String(day.sessions.length)),
+            totalOf("Time", lengthOf(day.minutes)),
+            totalOf("Energy", kcalTextOf(day.kcal)),
+            weightOf(day.kg),
+        );
 }
 
 /**
  * Makes the total of my weight on the shown day, the small grey pencil after it.
  */
 function weightOf(kg: number): HTMLElement {
-    const tile: HTMLElement = elementOf("div", "food-total sport-weight", "");
-    const amount: HTMLButtonElement = buttonOf("food-amount sport-weight-amount", `${amountOf(kg, 1)} kg`, (): void =>
+    const amount: HTMLButtonElement = buttonOf("sport-weight-amount", `${amountOf(kg, 1)} kg`, (): void =>
         weightEdit(tile, kg),
     );
+    const tile: HTMLElement = totalOf("Weight", amount);
     amount.append(iconOf(Pencil));
     amount.title = "Change my weight";
-    tile.append(elementOf("span", "food-label", "Weight"), amount);
     return tile;
 }
 
@@ -88,7 +81,7 @@ function weightOf(kg: number): HTMLElement {
  */
 function weightEdit(tile: HTMLElement, kg: number): void {
     const field: HTMLInputElement = document.createElement("input");
-    const amount: HTMLElement = elementOf("span", "food-amount sport-weight-amount", "");
+    const amount: HTMLElement = elementOf("span", "sport-weight-amount", "");
     let done: boolean = false;
     const save: () => void = (): void => {
         const typed: string = field.value.trim();

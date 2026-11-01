@@ -1,12 +1,6 @@
 /* Sport: what the sport view adds to the look of the food view, which it takes,
    see `../food/food.css`, `../food/search.css` and `../food/meals.css` */
 
-/* The sessions of the day below the totals, as the meals of the food view,
-   see `#food-meals` in `food.css` */
-.sport-sessions {
-    margin-top: var(--gap);
-}
-
 /* Name of a workout, an exercise or a video in a list
    with what stands grey in brackets after it, see `nameOf` in `lists.ts`:
    always one line, the name whole, the brackets cut with … where they have no room */
@@ -69,7 +63,8 @@
 }
 
 /* My weight among the totals, see `weightOf` in `sport.ts`:
-   a button without frame, the small grey pencil after it as far as every pencil,
+   a button without frame in the font of the value of a tile,
+   the small grey pencil after it as far as every pencil,
    see `.entry-pencil` in `../day/day.css`,
    as a field the same size, as wide as what is typed */
 .sport-weight-amount {
@@ -80,6 +75,7 @@
     border: 0;
     background: none;
     color: var(--text-main);
+    font: inherit;
     text-align: left;
 }
 

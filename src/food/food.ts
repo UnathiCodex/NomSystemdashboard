@@ -3,8 +3,8 @@
  *
  * Shows what I ate on a day, and my foods, in the scheme of the day view,
  * my water I count in the trackers of the day.
- * The day: the number of its meals and its totals, all alike, without goals,
- * so the log stays a log, not calorie control.
+ * The bar: the number of meals of the day and its totals, all alike, without goals,
+ * so the log stays a log, not calorie control, as tiles where the day view has its trackers.
  * Then each meal of the log, a click opening the day view's dialog of its entry,
  * to change, copy or remove it there, see {@link mealBlockOf}.
  * Every amount is rounded and an estimate anyway, so none is marked as one.
@@ -15,7 +15,7 @@
  * and loads anew the moment a file of my new system changes, see `../changes.ts`.
  */
 
-import { amountOf, buttonOf, elementOf, foodDayLoad, summaryOf, unitOf } from "./foods.ts";
+import { amountOf, buttonOf, elementOf, foodDayLoad, summaryOf, totalOf, unitOf } from "./foods.ts";
 import { foodNewShow, foodSearchOf, foodShow } from "./search.ts";
 import { mealsSectionOf } from "./meals.ts";
 import { labelOf } from "../day/places.ts";
@@ -25,6 +25,7 @@ import { changesFollow } from "../changes.ts";
 import { logEntryOpen } from "../editor/dialog.ts";
 import { iconPut, plusPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
+import "../day/trackers.css";
 import "./food.css";
 import type { Eaten, FoodDay, Meal } from "../../reader/food.ts";
 
@@ -54,25 +55,22 @@ function lacksOf(eaten: Eaten): string {
 }
 
 /**
- * Shows the totals of a day, each the sum of what is known,
- * below them a line for each kind of food or meal they leave out,
+ * Shows the totals of a day in the bar, each the sum of what is known, 0 on a day without meals,
+ * so the bar always looks the same,
+ * and in the day a line for each kind of food or meal they leave out,
  * like `Not counted, fat unknown: Gouda`.
  * - `weightless`: My foods logged without grams, which give nothing.
  */
 function totalsShow(day: FoodDay): void {
-    const totals: HTMLElement = elementOf("div", "food-totals", "");
-    const tiles: [string, string][] = [
-        ["Meals", String(day.meals.length)],
-        ["Energy", amountTextOf(day.kcal, "kcal")],
-        ["Protein", amountTextOf(day.protein, "g")],
-        ["Carbs", amountTextOf(day.carbs, "g")],
-        ["Fat", amountTextOf(day.fat, "g")],
-    ];
-    for (const [name, amount] of tiles) {
-        const tile: HTMLElement = elementOf("div", "food-total", "");
-        tile.append(elementOf("span", "food-label", name), elementOf("span", "food-amount", amount));
-        totals.append(tile);
-    }
+    document
+        .getElementById("food-totals")
+        ?.replaceChildren(
+            totalOf("Meals", String(day.meals.length)),
+            totalOf("Energy", amountTextOf(day.kcal, "kcal")),
+            totalOf("Protein", amountTextOf(day.protein, "g")),
+            totalOf("Carbs", amountTextOf(day.carbs, "g")),
+            totalOf("Fat", amountTextOf(day.fat, "g")),
+        );
 
     const unknown: string[] = [];
     const weightless: string[] = [];
@@ -95,9 +93,8 @@ function totalsShow(day: FoodDay): void {
         empty > 0 ? `Not counted: ${empty} ` + `${empty === 1 ? "meal lists" : "meals list"} no foods` : "",
     ];
     document
-        .getElementById("food-totals")
+        .getElementById("food-hints")
         ?.replaceChildren(
-            totals,
             ...hints
                 .filter((hint: string): boolean => hint !== "")
                 .map((hint: string): HTMLElement => elementOf("p", "food-hint", hint)),
@@ -209,13 +206,14 @@ async function dayShow(day: string): Promise<void> {
 
     const food: FoodDay = await foodDayLoad(day);
     if (day !== shown) return;
-    const lines: HTMLElement[] = food.meals.map(mealBlockOf);
-    if (food.meals.length > 0) totalsShow(food);
-    else {
-        document.getElementById("food-totals")?.replaceChildren();
-        lines.push(elementOf("p", "food-none", "No meals in the log on this day"));
-    }
-    document.getElementById("food-meals")?.replaceChildren(...lines);
+    totalsShow(food);
+    document
+        .getElementById("food-meals")
+        ?.replaceChildren(
+            ...(food.meals.length > 0
+                ? food.meals.map(mealBlockOf)
+                : [elementOf("p", "food-none", "No meals in the log on this day")]),
+        );
 }
 
 /**
@@ -225,6 +223,7 @@ function dayOpen(day: string): void {
     dayShow(day).catch((error: unknown): void => {
         console.error(error);
         document.getElementById("food-totals")?.replaceChildren();
+        document.getElementById("food-hints")?.replaceChildren();
         document.getElementById("food-meals")?.replaceChildren(elementOf("p", "food-none", "The meals cannot be read"));
     });
 }

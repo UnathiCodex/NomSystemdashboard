@@ -1,44 +1,74 @@
-/* Food: the day and my meals and foods side by side where both fit;
-   the page itself scrolls, no box of its own,
+/* Food, and sport in its look: the bar, below it the day,
+   then my meals and foods, the page itself scrolling,
    so the wheel, a swipe, the keys and the scrollbar all scroll it */
 .food {
     display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    align-items: flex-start;
-    gap: calc(1.5 * var(--gap)) calc(3 * var(--gap));
+    flex-direction: column;
+    gap: calc(1.5 * var(--gap));
     flex: none;
     padding: var(--top-room) var(--side-room) calc(4 * var(--gap));
 }
 
-/* The day's totals and meals in line with the date bar's arrows */
-.food-day {
-    flex: 0 1 31rem;
-    min-width: 0;
-}
-
-.food-foods {
-    flex: 1 1 30rem;
-    min-width: 0;
-}
-
-/* My meals and foods apart from the day by a thin grey line, only side by side */
-@media (min-width: 1200px) {
-    .food-foods {
-        padding-left: calc(1.5 * var(--gap));
-        border-left: 1px solid var(--line);
-    }
-}
-
-/* The page of the food view grows with its content, see `body` in `base.css` */
+/* The page grows with its content, see `body` in `base.css` */
 body:has(> .food) {
     height: auto;
     min-height: 100dvh;
 }
 
-/* Bar of the day as the day has it, see `.day-bar` in `../base.css` */
-.food-bar {
-    flex: 1 1 100%;
+/* Where the day and my lists fit side by side, the page as high as the screen, as the day view:
+   the day at the left, a thin grey line apart from my lists at the right,
+   each list a window of its own, its head standing, its lines scrolling inside it,
+   so all of them show at once */
+@media (min-width: 1200px) {
+    body:has(> .food) {
+        height: 100dvh;
+    }
+
+    .food {
+        display: grid;
+        grid-template-columns: minmax(0, 31rem) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: var(--gap) calc(3 * var(--gap));
+        flex: 1;
+        min-height: 0;
+        padding-bottom: var(--top-room);
+    }
+
+    .food-bar {
+        grid-column: 1 / -1;
+    }
+
+    .food-day {
+        overflow-y: auto;
+    }
+
+    .food-foods {
+        padding-left: calc(1.5 * var(--gap));
+        border-left: 1px solid var(--line);
+    }
+
+    .food-foods,
+    .food-window,
+    .food-dishes,
+    .food-foods .food-search {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    .food-foods .dish-list,
+    .food-foods .food-results {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+    }
+}
+
+/* The totals of the day at the right end of the bar as the trackers of the day view,
+   each only as wide as it needs, since they are more */
+.food-bar .trackers {
+    grid-auto-columns: max-content;
 }
 
 /* The date exactly where and as wide as the date of the day, see `day/day.css`,
@@ -70,44 +100,20 @@ body:has(> .food) {
     vertical-align: top;
 }
 
-/* Totals of the day side by side,
-   kcal as the one big number, in the digits of the font, which suit big numbers */
-.food-totals {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--gap) calc(2 * var(--gap));
-    margin: 0 0 0.5rem;
-}
-
-.food-total {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Name of a total, and below the totals what they leave out: small and grey */
-.food-label,
+/* What the totals leave out, small and grey above the meals of the day */
 .food-hint {
+    margin: 0;
     font-size: 0.75rem;
     color: var(--text-muted);
 }
 
-.food-hint {
-    margin: 0;
-}
-
-.food-amount {
-    font-size: 1.5rem;
-    font-weight: 600;
-    line-height: 1.25;
+#food-hints:not(:empty) {
+    margin-bottom: var(--gap);
 }
 
 /* The day's entries, each its start small and grey above it,
    so no column of times takes room beside the names;
    the kcal with the room of `9.999 kcal`, so the grams stand in one column too */
-#food-meals {
-    margin-top: var(--gap);
-}
 
 .food-line {
     display: grid;

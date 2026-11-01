@@ -244,6 +244,19 @@ export function elementOf(tag: string, className: string, text: string): HTMLEle
 }
 
 /**
+ * Makes a total of a day in the bar of the food and the sport view
+ * as a tile of the trackers of the day view, its name small and grey above its value,
+ * see `.tracker-row` in `../day/trackers.css`.
+ */
+export function totalOf(name: string, value: string | HTMLElement): HTMLElement {
+    const tile: HTMLElement = elementOf("div", "tracker-row", "");
+    const shown: HTMLElement = elementOf("span", "tracker-value", "");
+    shown.append(value);
+    tile.append(elementOf("span", "tracker-name", name), shown);
+    return tile;
+}
+
+/**
  * Makes the name of a food, the same wherever it stands,
  * its brand and store grey in brackets, since they only tell which one it is,
  * never cut, on a line of their own where one name of the list has no room,

@@ -35,7 +35,7 @@ import {
     portionGramsOf,
     unitOf,
 } from "./foods.ts";
-import { editButtonsOf, editFieldOf, foodSearchOf, inlineFieldOf, listHeadOf, listLineOf } from "./search.ts";
+import { editButtonsOf, editFieldOf, foodSearchOf, inlineFieldOf, listLineOf } from "./search.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Plus } from "lucide";
 import { matchesAll, wordsOf } from "../search.ts";
@@ -415,7 +415,8 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
         const plus: HTMLElement[] = typed === "" || taken(typed) ? [] : [newOf(typed)];
         list.replaceChildren(
             ...(naming ? [nameFormOf()] : []),
-            ...(shown.length > 0 || plus.length > 0 ? [listHeadOf("Meals", "kcal / meal"), ...rows, ...plus] : []),
+            ...rows,
+            ...plus,
             ...(dishes.length === 0 && fresh === "" && plus.length === 0 && !naming
                 ? [elementOf("p", "food-none", "No meals yet")]
                 : []),

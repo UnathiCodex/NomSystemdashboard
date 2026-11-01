@@ -42,7 +42,7 @@ import {
     workoutSend,
 } from "./mine.ts";
 import { bracketsWatch, buttonOf, elementOf, plusOf } from "../food/foods.ts";
-import { editButtonsOf, editFieldOf, inlineFieldOf, listHeadOf, listLineOf } from "../food/search.ts";
+import { editButtonsOf, editFieldOf, inlineFieldOf, listLineOf } from "../food/search.ts";
 import { lengthOf } from "../day/times.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
@@ -348,7 +348,8 @@ function workoutsSectionOf(): HTMLElement {
                       ),
                   ]
                 : []),
-            ...(shown.length > 0 || plus.length > 0 ? [listHeadOf("My workouts", "kcal"), ...rows, ...plus] : []),
+            ...rows,
+            ...plus,
         );
     };
     const workoutLinesOf: (workout: Workout) => HTMLElement[] = (workout: Workout): HTMLElement[] => {
@@ -756,11 +757,7 @@ function exercisesSectionOf(): HTMLElement {
             row.setAttribute("aria-expanded", String(open === key));
             return open === key ? [line, ruleOf(exercise)] : [line];
         });
-        list.replaceChildren(
-            ...(naming ? [nameFormOf()] : []),
-            ...(rows.length > 0 ? [listHeadOf("My exercises", ""), ...rows] : []),
-            ...plus,
-        );
+        list.replaceChildren(...(naming ? [nameFormOf()] : []), ...rows, ...plus);
     };
     const nameFormOf: () => HTMLElement = (): HTMLElement => {
         const close: () => void = (): void => {

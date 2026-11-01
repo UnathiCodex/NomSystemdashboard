@@ -74,11 +74,10 @@ button.food-row {
     font-variant-numeric: tabular-nums;
 }
 
-/* Head of a list small and grey, as far from the first row as two rows are apart,
-   so it heads them and touches none */
+/* Head of a list small and grey, close above its first row, so a list needs little room */
 .food-columns {
     min-height: 0;
-    margin: 0.75rem 0 0.625rem;
+    margin: 0.25rem 0 0;
     font-size: 0.75rem;
     color: var(--text-muted);
 }
