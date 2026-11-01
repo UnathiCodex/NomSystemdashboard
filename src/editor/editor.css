@@ -416,6 +416,19 @@
     padding-left: 1rem;
 }
 
+/* The room of a code block rendered also while it is edited, see `.markdown pre`:
+   CodeMirror measures no space between lines, so a border without color gives it,
+   the grey ending at the border */
+.editor-text .cm-editor .cm-line.cm-code-first {
+    border-top: var(--code-room) solid transparent;
+    background-clip: padding-box;
+}
+
+.editor-text .cm-editor .cm-line.cm-code-last {
+    border-bottom: var(--code-room) solid transparent;
+    background-clip: padding-box;
+}
+
 .editor-text .cm-code-block .cm-monospace {
     padding: 0;
     background: none;

@@ -356,6 +356,7 @@
    an empty line as high as a line of its text */
 .markdown {
     --empty-line: calc(var(--reading-line-height) * 1rem);
+    --code-room: 0.25rem;
     --arrow-out: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' \
 viewBox='0 0 32 32' fill='none' stroke='%23888888' stroke-width='3' \
 stroke-linecap='round' stroke-linejoin='round'><path \
@@ -369,7 +370,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
    stand right below each other;
    `:where` keeps the room of an element of the page set by its class,
    like the question of a card, see `.card-prompt` */
-.markdown :where(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, pre) {
+.markdown :where(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
     margin: 0;
 }
 
@@ -941,11 +942,19 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
 .markdown pre {
     overflow-x: auto;
     overflow-y: hidden;
+    margin-block: var(--code-room);
     padding: 0.75rem 1rem;
     border-radius: 0.25rem;
     background: var(--fill);
     line-height: 1.5;
     white-space: pre-wrap;
+}
+
+/* Two code blocks right below each other keep the room of both,
+   as the lines of two blocks being edited, see `.cm-code-first` in `../editor/editor.css` */
+.markdown pre + pre,
+.code-frame + .code-frame > pre {
+    margin-top: calc(2 * var(--code-room));
 }
 
 .markdown pre code {

@@ -296,6 +296,12 @@ const codeLine: Decoration = Decoration.line({ class: "cm-code-block" });
 /** Line of the code of a code block being edited, indented as the code rendered. */
 const codeText: Decoration = Decoration.line({ class: "cm-code-text" });
 
+/** First line of a code block being edited, with the room above the block. */
+const codeFirst: Decoration = Decoration.line({ class: "cm-code-first" });
+
+/** Last line of a code block being edited, with the room below the block. */
+const codeLast: Decoration = Decoration.line({ class: "cm-code-last" });
+
 /** Field that holds the value of the last of its effects, else its first value. */
 function effectField<T>(effect: StateEffectType<T>, first: T): StateField<T> {
     return StateField.define<T>({
@@ -1730,7 +1736,8 @@ function blockLook(look: Look, node: SyntaxNode): boolean {
 /**
  * Code block: rendered as in the scripts view while the cursor is on none of its lines,
  * else each of its lines on grey, in a font of fixed width,
- * its code between its ``` indented as rendered, see {@link codeText}.
+ * its code between its ``` indented as rendered, see {@link codeText},
+ * the room above and below it as rendered, see {@link codeFirst} and {@link codeLast}.
  */
 function codeLook(look: Look, node: SyntaxNode): boolean {
     if (!blockLook(look, node)) return false;
@@ -1738,6 +1745,7 @@ function codeLook(look: Look, node: SyntaxNode): boolean {
     linesMark(look, node.from, node.to, codeLine);
     const first: Line = look.state.doc.lineAt(node.from);
     const last: Line = look.state.doc.lineAt(node.to);
+    look.decorations.push(codeFirst.range(first.from), codeLast.range(last.from));
     const end: number =
         last.number > first.number && /^[ \t>]*(?:`{3,}|~{3,})[ \t]*$/.test(last.text) ? last.number - 1 : last.number;
     if (end > first.number)
