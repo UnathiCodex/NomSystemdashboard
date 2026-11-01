@@ -1,13 +1,8 @@
 /**
  * ## Month
  *
- * Picks the day to show from a month,
- * to jump far back or ahead much faster than day by day,
- * like to a birthday next spring to write down a gift idea for it, see `gifts.ts`:
- * a click on the date above plan and log opens the month of the shown day, marked;
- * the arrows move by a month, the double arrows by a year,
- * and a click on a day shows it and closes the month.
- * The month brings its dialog itself, `month.html`, packed into the built code by Vite.
+ * Picks the day to show from a month, to jump far much faster than day by day.
+ * A click on the date opens the month of the shown day, a click on a day shows it.
  */
 
 import { Calendar } from "fullcalendar";
@@ -28,14 +23,10 @@ import type { DateClickInfo, DatesSetInfo, DayCellInfo } from "fullcalendar";
 let month: Calendar | null = null;
 
 /**
- * Opens the month of the first shown day, drawn anew each time,
- * so the shown days are marked:
- * drawn only once the dialog shows, since FullCalendar measures its place,
- * which a closed dialog does not have.
+ * Opens the month of the first shown day, drawn anew each time, so the shown days are marked.
+ * Drawn only once the dialog shows, since FullCalendar measures its place, which a closed dialog lacks.
  * - `initialView`: Always six weeks, so the dialog keeps its height.
- * - `headerToolbar`: None, since the month and its arrows stand above it,
- *   as above plan and log.
- * - `dayCellClass`: Classes that `month.css` makes clickable, greys and marks.
+ * - `headerToolbar`: None, since the month and its arrows stand above it.
  */
 function monthOpen(shown: string[], pick: (day: string) => void): void {
     const dialog: HTMLDialogElement = document.getElementById("month") as HTMLDialogElement;
@@ -68,11 +59,7 @@ function monthOpen(shown: string[], pick: (day: string) => void): void {
     month.render();
 }
 
-/**
- * Starts the month after the router has put the HTML of its area into the page:
- * puts its dialog into the page, the button of the area opens it,
- * the arrows move it by a month, the double arrows by a year.
- */
+/** Puts the month into the page, the arrows move by a month, the double arrows by a year. */
 export function monthStart(button: HTMLElement, shown: () => string[], pick: (day: string) => void): void {
     document.body.insertAdjacentHTML("beforeend", monthHtml);
     iconPut(document.getElementById("month-year-back") as HTMLElement, ChevronsLeft, "Year before");

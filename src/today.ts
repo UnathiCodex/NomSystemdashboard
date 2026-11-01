@@ -1,31 +1,24 @@
 /**
  * ## Today
  *
- * Today, the one day of the whole page: today's calendar date, which turns at 00:00,
- * as the reader counts it.
- * A view that shows today moves on to the new day by itself at 00:00,
- * and when the page becomes visible again on a later day, like a tab left open overnight,
- * whose timer the browser may have held back.
- * A day I went to myself stays, and only marks today anew.
- * A view that can load its day again loads it whenever the page becomes visible,
- * so it never shows it as it was when the page went to the background.
- * A view opens on today, also when reloaded or started anew as the app,
- * only a link to a day opens on that day, see {@link askedDayOf}.
+ * Today, the one day of the whole page, which turns at 00:00 as the reader counts it.
+ * A view that shows today moves on by itself at 00:00 and when the page becomes visible again.
+ * That is since the browser may have held back its timer, like of a tab left open overnight.
+ * A day I went to myself stays.
+ * A view loads its day again whenever the page becomes visible, so it never shows it as it was.
+ * A view opens on today, only a link to a day opens on that day.
  */
 
 import { dayOf } from "./skill/attempts.ts";
 
-/**
- * Gives today's calendar date, which turns at 00:00.
- */
+/** Today's calendar date, which turns at 00:00. */
 export function calendarTodayOf(): string {
     return dayOf(new Date());
 }
 
 /**
- * Reads the day a link asks a view to open on, `null` for none or no valid day,
- * and takes it out of the address,
- * so a reload or a tab the browser opens again later shows today instead.
+ * The day a link asks a view to open on, `null` for none or no valid day.
+ * Takes it out of the address, so a reload shows today instead.
  */
 export function askedDayOf(): string | null {
     const asked: string | null = new URLSearchParams(location.search).get("date");
@@ -34,10 +27,8 @@ export function askedDayOf(): string | null {
 }
 
 /**
- * Moves a view on to the new day while it shows today, see the top of this file.
- * `mark` marks today anew in a view that stays on another day,
- * `again` loads the shown day again, both left out by a view without them.
- * A timer that comes a moment early only waits again.
+ * Moves a view on to the new day while it shows today, a timer a moment early only waits again.
+ * `mark` marks today anew in a view on another day, `again` loads the shown day again.
  */
 export function todayFollow(
     shown: () => string,

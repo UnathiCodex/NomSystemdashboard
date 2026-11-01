@@ -1,13 +1,9 @@
 /**
  * ## Gifts
  *
- * My gift ideas for the birthdays and holidays at the top of the plan,
- * see `reader/gifts.ts`, written only when I have one:
- * a click on a birthday or holiday opens a small dialog with one field,
- * which `Enter` or `Save` saves as its `DESCRIPTION` in its file, for every year of it;
- * an empty field, or `Remove`, takes the idea out again.
- * The plan shows each idea beside its birthday or holiday, see `boxes.ts`,
- * and loads again when the dialog closes.
+ * My gift ideas for the birthdays and holidays at the top of the plan, written only when I have one.
+ * A click on one opens a dialog with one field, saved as its `DESCRIPTION` for every year of it.
+ * An empty field, or `Remove`, takes the idea out again.
  */
 
 import { Check, Trash, X } from "lucide";
@@ -19,7 +15,7 @@ import type { Occasion } from "../../reader/boxes.ts";
 let opened: Occasion = { id: "", category: "", title: "", gift: "", file: "" };
 
 /**
- * Sends my gift idea for a birthday or holiday to the reader, empty to take it out.
+ * Sends my gift idea, empty to take it out.
  *
  * @throws {Error} - When the reader does not take it
  */
@@ -32,10 +28,7 @@ async function giftSend(id: string, gift: string): Promise<void> {
     if (!response.ok) throw new Error(`Reader answered ${response.status}`);
 }
 
-/**
- * Sends the gift idea of the field, then closes the dialog;
- * shows a hint when the reader does not take it.
- */
+/** Sends the gift idea of the field and closes the dialog, a hint when the reader does not take it. */
 function giftSave(gift: string): void {
     giftSend(opened.id, gift.trim())
         .then((): void => (document.getElementById("gift") as HTMLDialogElement).close())
@@ -45,10 +38,7 @@ function giftSave(gift: string): void {
         });
 }
 
-/**
- * Opens the dialog of the gift idea for a birthday or holiday, the field focused;
- * the bin shows only when there is an idea to take out.
- */
+/** Opens the dialog of the gift idea, the bin only when there is an idea to take out. */
 export function giftOpen(occasion: Occasion): void {
     const field: HTMLInputElement = document.getElementById("gift-text") as HTMLInputElement;
     opened = occasion;
@@ -62,10 +52,6 @@ export function giftOpen(occasion: Occasion): void {
     field.focus();
 }
 
-/**
- * Starts the dialog after the router has put its HTML into the page:
- * `Cancel` closes it, `Remove` takes the idea out, `Enter` and `Save` save it.
- */
 export function giftsStart(): void {
     iconPut(document.getElementById("gift-remove") as HTMLElement, Trash, "Remove");
     iconPut(document.getElementById("gift-cancel") as HTMLElement, X, "Cancel");
