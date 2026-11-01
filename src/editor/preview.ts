@@ -1014,12 +1014,11 @@ function blockPlaceOf(
  * Finds the place in the text of a table for a click on one of its cells:
  * its row is a line of the table, the line of `-` under the head left out,
  * the tables of the blocks being their runs of lines that begin with `|`;
- * in the row the text of the cell, after its `|`,
+ * in the row the text of the cell, after its `|` and the blanks after it,
+ * escaped `|` like in `[[…\|…]]` not counted,
  * at the letter clicked where the cell's text holds it as it is,
  * like a number, else at its start, like for a formula.
  * - `text`, `offset`: The text node clicked and the place in it, see {@link blockPlaceOf}.
- * - `bars`: How many `|` stand before the cell's text so far,
- *   escaped ones like in `[[…\|…]]` not counted.
  */
 function cellPlaceOf(
     view: EditorView,
@@ -1043,18 +1042,10 @@ function cellPlaceOf(
     const line: Line = view.state.doc.line(
         Math.min(runs[tables.indexOf(table)] + row + (row > 0 ? 1 : 0), last),
     );
-    let bars: number = 0;
-    let start: number = line.length;
-    for (let index: number = 0; index < line.length; index++)
-        if (
-            line.text[index] === "|" &&
-            line.text[index - 1] !== "\\" &&
-            bars++ === cell.cellIndex
-        ) {
-            start =
-                index + 1 + (/^[ \t]*/.exec(line.text.slice(index + 1))?.[0].length ?? 0);
-            break;
-        }
+    const bar: RegExpExecArray | undefined = [...line.text.matchAll(/(?<!\\)\|[ \t]*/g)][
+        cell.cellIndex
+    ];
+    const start: number = bar === undefined ? line.length : bar.index + bar[0].length;
     const at: number =
         text.trim() === ""
             ? -1
