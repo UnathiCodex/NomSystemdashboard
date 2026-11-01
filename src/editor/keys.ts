@@ -11,7 +11,7 @@
  *   is the most air any key writes, see {@link airMost}.
  * - Lists are written as my notes write them, see
  *   `.claude/skills/learn/styles/document-style.md`:
- *   one tab per level, never spaces, a further line of a point in spaces under its text.
+ *   one tab per level, a further line of a point in the tabs of the point and spaces under its text.
  * - Every key keeps a point in the point it stands in,
  *   with its own sub-points and further lines:
  *   none writes, moves or leaves a point between a point
@@ -118,15 +118,14 @@ function quoteMarkIs(state: EditorState, line: Line): boolean {
 /**
  * Gives the indentation of the text of a point, as my notes indent a further line of it,
  * see `.claude/skills/learn/styles/document-style.md`:
- * only spaces, as many as its `-` or number with the space after it,
- * and one more per tab before it,
+ * its tabs, then as many spaces as its `-` or number with the space after it,
  * also for a still empty point without that space.
  *
  * @returns `null` for a line that starts no point
  */
 export function textIndentationOf(text: string): string | null {
     const point: RegExpExecArray | null = /^(\t*)([-*+]|\d+[.)])(?:[ \t]|$)/.exec(text);
-    return point !== null ? " ".repeat(point[2].length + 1 + point[1].length) : null;
+    return point !== null ? point[1] + " ".repeat(point[2].length + 1) : null;
 }
 
 /**
