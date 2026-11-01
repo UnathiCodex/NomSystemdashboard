@@ -566,16 +566,12 @@ function semesterBeginOf(semester: string): string {
  * the earliest of those equally many, `undefined` for none.
  */
 function modeOf<T>(values: T[], keyOf: (value: T) => string): T | undefined {
-    const counts: Map<string, number> = new Map();
-    values.forEach((value: T): void => {
-        counts.set(keyOf(value), (counts.get(keyOf(value)) ?? 0) + 1);
-    });
+    const byKey: Map<string, T[]> = Map.groupBy(values, keyOf);
+    const countOf: (value: T) => number = (value: T): number =>
+        byKey.get(keyOf(value))?.length ?? 0;
     return values.reduce(
         (best: T | undefined, value: T): T | undefined =>
-            best === undefined ||
-            (counts.get(keyOf(value)) ?? 0) > (counts.get(keyOf(best)) ?? 0)
-                ? value
-                : best,
+            best === undefined || countOf(value) > countOf(best) ? value : best,
         undefined,
     );
 }
@@ -625,10 +621,10 @@ function weekTake<T>(
 
 /**
  * Gives the times of what a rule is read back from,
- * as a slot or an extra has them, both empty without time.
+ * as a slot or an extra has them, both empty for nothing or without time.
  */
-function timesOf(item: Dated): [string, string] {
-    return item.time === ""
+function timesOf(item: Dated | undefined): [string, string] {
+    return item === undefined || item.time === ""
         ? ["", ""]
         : [
               berlinTimeOf(new Date(item.time)),
@@ -725,8 +721,7 @@ function ruleOf(
             (item: Dated): string =>
                 `${berlinTimeOf(new Date(item.time))} ${item.minutes}`,
         );
-        const [start, end]: [string, string] =
-            timed === undefined ? ["", ""] : timesOf(timed);
+        const [start, end]: [string, string] = timesOf(timed);
         const long: Dated | undefined =
             timed !== undefined
                 ? undefined
@@ -789,8 +784,7 @@ function ruleOf(
                 false,
                 (item: Dated): string => item.day,
             );
-            const [start, end]: [string, string] =
-                taken === undefined ? ["", ""] : timesOf(taken);
+            const [start, end]: [string, string] = timesOf(taken);
             if (taken === undefined) missing.push(day);
             else days.push(taken.day);
             if (start !== "" && (start !== slot.start || end !== slot.end))
@@ -952,13 +946,9 @@ function lecturesBeginOf(semester: string): string | undefined {
 function tutorialWeeksOf(groups: Group[], type: string, days: string[] = []): string[] {
     const starts: string[] = [
         ...days,
-        ...groups
-            .filter((group: Group): boolean => group.rule.type === type)
-            .flatMap((group: Group): string[] =>
-                group.sessions.map((session: Session): string =>
-                    dayOfStart(session.start),
-                ),
-            ),
+        ...sessionDaysOf(
+            groups.filter((group: Group): boolean => group.rule.type === type),
+        ),
     ].sort();
     if (starts.length === 0) return [];
     const begin: string | undefined = lecturesBeginOf(semesterOf(starts[0]));
@@ -1096,11 +1086,8 @@ function groupsRead(module: string, semester: string): Group[] {
     );
     const keyOf: (entry: Entry) => string = (entry: Entry): string =>
         `${entry.type} ${entry.group}`;
-    return [...new Set(sessions.map(keyOf))]
-        .map((key: string): Group => {
-            const own: Entry[] = sessions.filter(
-                (entry: Entry): boolean => keyOf(entry) === key,
-            );
+    return [...Map.groupBy(sessions, keyOf).values()]
+        .map((own: Entry[]): Group => {
             const dated: Dated[] = own.map((entry: Entry): Dated => ({
                 day: dayOfStart(entry.start),
                 time: entry.allDay ? "" : entry.start,
@@ -1253,6 +1240,13 @@ function slotLengthOf(times: Pick<Slot, "start" | "end" | "minutes">): number | 
  */
 function dayOfStart(start: string): string {
     return /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : berlinDateOf(new Date(start));
+}
+
+/** Gives the days of the sessions of groups, see {@link dayOfStart}. */
+function sessionDaysOf(groups: Group[]): string[] {
+    return groups.flatMap((group: Group): string[] =>
+        group.sessions.map((session: Session): string => dayOfStart(session.start)),
+    );
 }
 
 /**
@@ -1427,8 +1421,7 @@ function madeDraftOf(target: Target): Draft {
     return {
         box: null,
         day: target.day,
-        time:
-            target.start === "" ? "" : instantOf(target.day, target.start).toISOString(),
+        time: slotMomentOf(target.day, target.start),
         minutes: target.minutes,
         ...placeOf(target),
         group: target.group,
@@ -1829,16 +1822,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
                       (change.before?.[date.slot] ?? rule.slots[date.slot].weekday),
               );
     const own: Group[] = mine === "" ? [] : groups.filter(groupMatch(rule.type, mine));
-    const met: Set<string> | null =
-        own.length === 0
-            ? null
-            : new Set(
-                  own.flatMap((group: Group): string[] =>
-                      group.sessions.map((session: Session): string =>
-                          dayOfStart(session.start),
-                      ),
-                  ),
-              );
+    const met: Set<string> | null = own.length === 0 ? null : new Set(sessionDaysOf(own));
     const held: Set<string> = new Set(typed.map(weekOf));
     const picked: Set<string> = new Set(
         mine === ""
@@ -2222,15 +2206,11 @@ export function weekPick(change: PickChange): void {
         open.find((one: Box): boolean => !chosenIs(one, pinnedOf(groups, change.type))) ??
         open[0];
     const held: Box | undefined = typed.find(at);
-    if (box !== undefined && held !== undefined && held.id !== box.id) {
-        draftsWrite(change.module, change.type, semester, [
-            { ...draftOf(box), removed: true },
-        ]);
-        return;
-    }
     if (box !== undefined) {
         draftsWrite(change.module, change.type, semester, [
-            draftSet(draftOf(box), targetOf(group, session)),
+            held !== undefined && held.id !== box.id
+                ? { ...draftOf(box), removed: true }
+                : draftSet(draftOf(box), targetOf(group, session)),
         ]);
         return;
     }
@@ -2242,14 +2222,9 @@ export function weekPick(change: PickChange): void {
     const later: boolean = typed.some((one: Box): boolean => weekOf(one) > week);
     const firsts: Session[] = later
         ? []
-        : group.sessions.filter(
-              (one: Session, index: number): boolean =>
-                  weekOfSession(one) > week &&
-                  group.sessions.findIndex(
-                      (other: Session): boolean =>
-                          weekOfSession(other) === weekOfSession(one),
-                  ) === index,
-          );
+        : [...Map.groupBy(group.sessions, weekOfSession).values()]
+              .map((own: Session[]): Session => own[0])
+              .filter((one: Session): boolean => weekOfSession(one) > week);
     const targets: Target[] = [
         targetOf(group, session),
         ...firsts.map((one: Session): Target => targetOf(group, one)),
@@ -2360,11 +2335,10 @@ function groupBoxesMove(
     const moving: Box[] = typed.filter(
         (box: Box): boolean => box.state === "open" && changeable(box) && ahead(box),
     );
-    const free: Map<string, Session[]> = new Map();
-    found.sessions.forEach((one: Session): void => {
-        const week: string = mondayOf(dayOfStart(one.start));
-        free.set(week, [...(free.get(week) ?? []), one]);
-    });
+    const free: Map<string, Session[]> = Map.groupBy(
+        found.sessions,
+        (one: Session): string => mondayOf(dayOfStart(one.start)),
+    );
     const takeOf: (box: Box, any: boolean) => Session | undefined = (
         box: Box,
         any: boolean,
@@ -2467,23 +2441,14 @@ export function groupApply(change: GroupChange): Planned[] {
     const groups: Group[] = groupsRead(change.module, rule.semester).filter(
         (group: Group): boolean => group.rule.type === rule.type,
     );
-    const old: Group | undefined = groups.find(
-        (group: Group): boolean => group.rule.group === was,
-    );
+    const old: Group | undefined = groups.find(groupMatch(rule.type, was));
     if (rule.group === "" || change.made !== (old === undefined))
         throw new Error(
             `${change.made ? "A group there already" : "No group"}: ${rule.type} ${was}`,
         );
-    if (
-        was !== rule.group &&
-        groups.some((group: Group): boolean => group.rule.group === rule.group)
-    )
+    if (was !== rule.group && groups.some(groupMatch(rule.type, rule.group)))
         throw new Error(`A group there already: ${rule.type} ${rule.group}`);
-    const met: Set<string> = new Set(
-        (old?.sessions ?? []).map((session: Session): string =>
-            dayOfStart(session.start),
-        ),
-    );
+    const met: Set<string> = new Set(sessionDaysOf(old === undefined ? [] : [old]));
     const skipped: Set<string> = new Set(
         old === undefined
             ? []
