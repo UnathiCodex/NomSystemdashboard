@@ -1,21 +1,10 @@
 /**
  * ## Entries
  *
- * Sends new, changed, moved and removed entries of the log to the reader,
- * the meal of a cooking,
- * and the boxes of the plan:
- * new, changed and removed ones, a new one repeated weekly,
- * a box logged at its real time or taken back, pushed to the next day or dropped.
- * A changed entry goes with its fingerprint as the dialog opened it,
- * so the reader refuses it once its file changed it since,
- * and a moved one with its new times alone,
- * so nothing the page holds from before is written back.
- * After a change of the log the log of the shown day loads again,
- * so the page shows what the files hold, and with it the boxes,
- * which are done once a log entry points to them, see `boxes.ts`;
- * after a change of a box alone, its sender loads the boxes again itself.
- *
- * The standard address of a name of `With` is made here, see {@link standardAddressOf}.
+ * Sends new, changed, moved, removed entries of the log and boxes of the plan to the reader.
+ * A changed entry goes with its fingerprint, so the reader refuses it once its file changed since.
+ * A moved one goes with its new times alone, so nothing the page holds from before is written back.
+ * After a change of the log the log of the shown day loads again, and with it the boxes.
  */
 
 import { searchTextOf } from "../search.ts";
@@ -27,19 +16,17 @@ import type { Attendee, Online } from "../../reader/calendar.ts";
 import type { Planned } from "../../reader/course.ts";
 
 /**
- * Fields and times of an entry of the log to send; an empty field is not written.
+ * Fields and times of an entry of the log to send, an empty field not written.
  * A field left out keeps what the file holds.
  *
  * - `titleLink`: The `ALTREP` of its `SUMMARY`.
- * - `location`: Where I physically was, whose link the reader finds itself.
- * - `module`, `type`: Of a skill entry, written by the reader only in its `SUMMARY`.
- * - `semester`: The reader fills in the semester of its day
- *   for a skill entry sent without one.
- * - `planned`: The box a new log entry is logged from, `RELATED-TO`,
- *   the reader writes it only for a new entry.
+ * - `location`: Where I physically was.
+ * - `module`, `type`: Of a skill entry, written only in its `SUMMARY`.
+ * - `semester`: The reader fills in the semester of its day when empty.
+ * - `planned`: The box a new log entry is logged from, `RELATED-TO`.
  * - `pain`: My neck pain from 0 to 10 after `Neck long`.
  * - `cooked`: For a meal drawn from a cooking, the identifier of that entry `Cook`.
- * - `workout`, `exercises`, `videos`: What a session of sport did, see `sport.ts`.
+ * - `workout`, `exercises`, `videos`: What a session of sport did.
  */
 export type EntryFields = Partial<Online> & {
     category: string;
@@ -64,13 +51,12 @@ export type EntryFields = Partial<Online> & {
 };
 
 /**
- * Fields of a box of the plan to send; an empty field is not written.
- * Those it shares with {@link EntryFields} mean the same.
+ * Fields of a box of the plan to send, an empty field not written.
  *
  * - `day`: For a box with a deadline the day of its deadline.
  * - `time`: `null` for none and for a box with a deadline.
  * - `deadline`: ISO instant, or its day without time, empty for none.
- * - `chapters`, `documents`: Of a skill box, see `SkillLinks` in `skill.ts`.
+ * - `chapters`, `documents`: Of a skill box.
  */
 export type BoxFields = Partial<Online> & {
     category: string;
@@ -92,12 +78,9 @@ export type BoxFields = Partial<Online> & {
 };
 
 /**
- * Gives the standard address of a name of `With`:
- * the name in the order it is spoken, see `spokenOf` in `../persons.ts`,
- * so a person has one address in either order of its name, in small letters,
- * ä, ö, ü and ß as ae, oe, ue and ss, other accents plainly, every other character a dot,
- * then `@invalid`, the ending reserved for addresses that never work,
- * so nothing reaches anybody.
+ * The standard address of a name of `With`, from the name in the order it is spoken,
+ * so a person has one address in either order of its name.
+ * It ends in `@invalid`, reserved for addresses that never work, so nothing reaches anybody.
  */
 export function standardAddressOf(name: string): string {
     const local: string = searchTextOf(
@@ -133,7 +116,7 @@ async function logSend(calendar: Calendar, method: string, address: string, body
     return answer;
 }
 
-/** Turns the fields of an entry into the form the reader takes, with ISO instants. */
+/** The fields of an entry with ISO instants. */
 function bodyOf(fields: EntryFields): object {
     return {
         ...fields,
@@ -142,7 +125,7 @@ function bodyOf(fields: EntryFields): object {
     };
 }
 
-/** Turns the fields of a box into the form the reader takes, its time empty for none. */
+/** The fields of a box with its time as ISO instant, empty for none. */
 function boxBodyOf(fields: BoxFields): object {
     return { ...fields, time: fields.time === null ? "" : fields.time.toISOString() };
 }
@@ -157,10 +140,8 @@ export async function entryAdd(calendar: Calendar, fields: EntryFields): Promise
 }
 
 /**
- * Changes an entry of the log, only while its file holds it as the dialog opened it:
- * the reader refuses the change with 409 once the file changed it since,
- * like a food renamed in every entry, see `entryEdit` in `reader/day.ts`;
- * the first save wins.
+ * Changes an entry of the log only while its file holds it as the dialog opened it.
+ * The reader refuses with 409 once the file changed since, so the first save wins.
  *
  * @returns Whether it is changed
  * @throws {Error} - When the reader does not take the change for another reason
@@ -182,15 +163,11 @@ export async function entryChange(
 }
 
 /**
- * Moves an entry of the log after a drag: sends its new times alone,
- * and the reader keeps every other field as its file holds it.
- * The log does not load again here, since FullCalendar shows it moved already
- * and the change of its file loads it anyway, see `changesFollow` in `../changes.ts`:
- * two loads at once showed the entry twice for a moment,
- * at its old place and its new one.
+ * Moves an entry of the log after a drag, its new times alone.
+ * The log does not load again here, since the change of its file loads it anyway.
+ * Two loads at once showed the entry twice for a moment.
  *
- * @throws {Error} - When the reader does not move it,
- *   like a meal moved before the cooking it draws from
+ * @throws {Error} - When the reader does not move it, like a meal moved before its cooking
  */
 export async function entryMove(id: string, start: Date, end: Date): Promise<void> {
     await requestSend("POST", "/api/day/moved", {
@@ -201,7 +178,7 @@ export async function entryMove(id: string, start: Date, end: Date): Promise<voi
 }
 
 /**
- * Removes an entry of the log; the reader opens the box it was logged from again.
+ * Removes an entry of the log, the reader opens the box it was logged from again.
  *
  * @throws {Error} - When the reader does not remove the entry
  */
@@ -210,10 +187,8 @@ export async function entryDelete(calendar: Calendar, id: string): Promise<void>
 }
 
 /**
- * Logs a box at its real time: the reader writes a log entry pointing to it.
- * The change of its file loads the log and the boxes again,
- * see `changesFollow` in `../changes.ts`, once only,
- * so the entry never shows twice for a moment.
+ * Logs a box at its real time in a log entry pointing to it.
+ * Only the change of its file loads the log again, so the entry never shows twice for a moment.
  *
  * @throws {Error} - When the reader does not log it, like for a box done already
  */
@@ -226,12 +201,10 @@ export async function boxLog(box: string, start: Date, end: Date): Promise<void>
 }
 
 /**
- * Takes a done box back to open: the reader removes the log entry written from it, or,
- * when that holds what I added since, only lets it go of the box,
- * see `boxUndo` in `reader/day.ts`.
+ * Takes a done box back to open.
+ * The reader removes its log entry, or only lets it go of the box when it holds what I added since.
  *
- * @throws {Error} - When the reader does not take it back,
- *   like for a box that is not done
+ * @throws {Error} - When the reader does not take it back, like for a box that is not done
  */
 export async function boxUndo(calendar: Calendar, id: string): Promise<void> {
     await logSend(calendar, "POST", "/api/day/undone", { box: id });
@@ -247,12 +220,9 @@ export async function boxAdd(fields: BoxFields): Promise<string> {
 }
 
 /**
- * Adds a new box once per date of its weekly days,
- * see `repeatApply` in `reader/course.ts`,
- * or with `dry` only tells what that would make, for the preview of the dialog.
+ * Adds a new box once per date of its weekly days, or with `dry` only tells what that would make.
  *
- * @returns The boxes it makes, by their days,
- *   `null` when the reader refuses it with 409 since the type has a box in its semester
+ * @returns The boxes it makes, `null` when refused with 409 since the type has a box in its semester
  * @throws {Error} - When the reader does not take it for another reason
  */
 export async function boxRepeat(
@@ -316,8 +286,8 @@ export async function boxBack(id: string, day: string): Promise<void> {
 }
 
 /**
- * Marks a box cancelled by the university, or takes that back;
- * the reader renumbers the later boxes of its series.
+ * Marks a box cancelled by the university, or takes that back.
+ * The reader renumbers the later boxes of its series.
  *
  * @throws {Error} - When the reader does not take it
  */
@@ -326,8 +296,7 @@ export async function boxUniversity(id: string, cancelled: boolean): Promise<voi
 }
 
 /**
- * Ticks a box with a deadline submitted, or takes the tick back;
- * its sessions stay in the log.
+ * Ticks a box with a deadline submitted, or takes the tick back, its sessions staying in the log.
  *
  * @throws {Error} - When the reader does not take it
  */

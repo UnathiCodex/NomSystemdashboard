@@ -1,21 +1,11 @@
 /**
  * ## Times
  *
- * Turns dates into the values of time fields and back,
- * for the panels of the day and the form of a series,
- * gives the times a box is logged at with one tap, and writes how near a day is.
- * A time field is one text field, typed in 24-hour form whatever the browser's language:
- * `14` is 14:00, `1415` and `14:15` are 14:15, `915` and `9:15` are 09:15.
- * When the field loses focus, its time shows as `HH:MM`;
- * any other text marks the field invalid,
- * so the browser does not send the form and says what it takes instead.
- * An empty field is left to its `required`:
- * start and end of a log entry need a time, the expected time of a box may stay empty.
- * A date field shows its day with its weekday short after it,
- * see {@link weekdayDateTextOf},
- * takes a date in my standard way with its year, and marks itself invalid the same way.
- * A box of the plan and a plain series take their time either from and to,
- * or only how long they last, see {@link lengthSwapOf}.
+ * Time and date fields, the times a box is logged at, how near a day is.
+ * A time field is one text field in 24-hour form whatever the browser's language.
+ * Any other text marks a field invalid, so the browser does not send the form.
+ * An empty field is left to its `required`.
+ * A date field takes a date in my standard way and shows its weekday after it.
  */
 
 import { ArrowLeftRight } from "lucide";
@@ -25,53 +15,34 @@ import { calendarTodayOf } from "../today.ts";
 
 import type { Box } from "./boxes.ts";
 
-/**
- * Minutes a box without expected duration lasts when it goes into the log,
- * like the last half hour `+` of the log opens.
- */
+/** Minutes a box without expected duration lasts in the log. */
 export const boxMinutes: number = 30;
 
-/**
- * The dash between the start and the end of a range written as text,
- * with a space on each side, as the dot between two parts of a line has it,
- * and as far as the dash between two fields stands from them,
- * see `--range-gap` in `../variants.css`.
- */
+/** The dash of a range written as text, as far from its parts as the dash between two fields. */
 export const rangeDash: string = " – ";
 
-/** Writes the time of a date as `HH:MM`, the value of a time field. */
+/** The time of a date as `HH:MM`. */
 export function timeOf(date: Date): string {
     return date.toTimeString().slice(0, 5);
 }
 
-/**
- * Writes a length of time in hours and minutes, each two digits, like `07h 30m`,
- * as every length of the page shows it;
- * a space that never breaks between hours and minutes, so a length stays on one line.
- */
+/** A length as `07h 30m`, with a space that never breaks, so it stays on one line. */
 export function lengthOf(minutes: number): string {
     return `${String(Math.floor(minutes / 60)).padStart(2, "0")}h\u00a0` + `${String(minutes % 60).padStart(2, "0")}m`;
 }
 
-/**
- * Writes minutes as a length in its field, hours and minutes as a time is written,
- * see {@link lengthSwapOf}.
- */
+/** Minutes as a length in its field, written as a time. */
 export function lengthTextOf(minutes: number): string {
     return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:` + String(minutes % 60).padStart(2, "0");
 }
 
-/** Gives the minutes of a time or a length typed as `hh:mm`. */
+/** The minutes of a time or a length typed as `hh:mm`. */
 export function minutesOf(time: string): number {
     const [hour, minute]: number[] = time.split(":").map(Number);
     return hour * 60 + minute;
 }
 
-/**
- * Makes the switch of the time of a box or a plain series between from and to
- * and only how long it lasts: a small icon button right beside the name of the row,
- * in the look of `.entry-name .plus-quiet` in `choices.ts`, saying what a click goes to.
- */
+/** The switch of a box or a plain series between from and to and only how long it lasts. */
 export function lengthSwapOf(timed: boolean, click: () => void): HTMLButtonElement {
     const swap: HTMLButtonElement = document.createElement("button");
     swap.type = "button";
@@ -89,21 +60,14 @@ export function dateOf(day: Date, time: string): Date {
     return date;
 }
 
-/**
- * Gives now on a shown day, to the minute:
- * now itself while the day is today, else the time of now on that day,
- * like a glass of water added to a past day at 01:10 of that day.
- */
+/** Now on a shown day, to the minute, the time of now on a day that isn't today. */
 export function nowOn(day: Date): Date {
     const now: Date = new Date();
     now.setSeconds(0, 0);
     return dayOf(day) === calendarTodayOf() ? now : dateOf(day, timeOf(now));
 }
 
-/**
- * Reads a typed time: the hours, then, with or without `:`,
- * two digits of minutes if there are any, `null` when the text is no time of the day.
- */
+/** Reads a typed time, the hours and two digits of minutes with or without `:`. */
 function timeParse(text: string): string | null {
     const match: RegExpMatchArray | null = text.trim().match(/^(\d{1,2})(?::?(\d{2}))?$/);
     if (match === null || Number(match[1]) > 23 || Number(match[2] ?? 0) > 59) return null;
@@ -116,28 +80,24 @@ export function timeFieldShow(field: HTMLInputElement, date: Date | null): void 
     field.setCustomValidity("");
 }
 
-/** Reads the time of a time field, empty when the text is no time. */
+/** The time of a time field, empty when the text is no time. */
 export function timeFieldRead(field: HTMLInputElement): string {
     return timeParse(field.value) ?? "";
 }
 
-/** Writes a day in my standard way, like `23.10.2026`, the value of a date field. */
+/** A day in my standard way, `dd.mm.yyyy`. */
 export function dateTextOf(day: string): string {
     return day.split("-").reverse().join(".");
 }
 
-/**
- * Writes a day with its weekday short after it, the value of a date field,
- * as every day of the page is written, see `dayTextOf` in `../skill/attempts.ts`.
- */
+/** A day with its weekday short after it. */
 export function weekdayDateTextOf(day: string): string {
     return dayTextOf(day, true);
 }
 
 /**
- * Reads a typed date in my standard way: day, month and year with dots between,
- * also with its weekday after it, the weekday not read, since the date says it.
- * The day at noon is no date or another day for a day the month lacks, like `31.02.2027`.
+ * Reads a typed date in my standard way, a weekday after it not read.
+ * A day the month lacks gives another day at noon, so it is no date.
  */
 export function dateParse(text: string): string | null {
     const match: RegExpMatchArray | null = text.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s*\([a-z]+\))?$/i);
@@ -148,11 +108,9 @@ export function dateParse(text: string): string | null {
 }
 
 /**
- * Gives the times a box is logged at as expected, with one tap:
- * from its expected time for its expected duration,
- * else from the coming quarter hour on the shown day, like 14:45 at 14:41,
- * since I log from the plan what I start now or am about to do, never what I finished;
- * for {@link boxMinutes} when it has no duration.
+ * The times a box is logged at with one tap, from its expected time,
+ * else from the coming quarter hour on the shown day.
+ * I log from the plan what I start now, never what I finished.
  */
 export function boxTimesOf(box: Box, day: Date): [Date, Date] {
     const length: number = (box.minutes ?? boxMinutes) * 60 * 1000;
@@ -166,8 +124,8 @@ export function boxTimesOf(box: Box, day: Date): [Date, Date] {
 }
 
 /**
- * Writes how near a day is, seen from another day: `today`, `tomorrow` or `in 3 days`.
- * Whole days count from noon to noon, so a day the clocks change counts right.
+ * How near a day is from another day.
+ * Days count from noon to noon, so a day the clocks change counts right.
  */
 export function nearOf(day: string, from: string): string {
     const days: number = Math.round(
@@ -179,10 +137,8 @@ export function nearOf(day: string, from: string): string {
 }
 
 /**
- * Starts a time field: while empty it says grey what it takes, `hh:mm`,
- * so an empty time reads as one left open, not as a gap;
- * it marks itself invalid while its text is neither empty nor a time,
- * and writes its time as `HH:MM` when it loses focus.
+ * Starts a time field, invalid while its text is neither empty nor a time, `HH:MM` when it loses focus.
+ * Its grey `hh:mm` makes an empty time read as one left open, not as a gap.
  */
 export function timeFieldStart(field: HTMLInputElement): void {
     field.placeholder = "hh:mm";
@@ -196,11 +152,7 @@ export function timeFieldStart(field: HTMLInputElement): void {
     });
 }
 
-/**
- * Starts a date field: while empty it says grey what it takes, `dd.mm.yyyy`;
- * it marks itself invalid while its text is neither empty nor a date,
- * and writes its date with its weekday when it loses focus.
- */
+/** Starts a date field, invalid while its text is neither empty nor a date, with its weekday when it loses focus. */
 export function dateFieldStart(field: HTMLInputElement): void {
     field.placeholder = "dd.mm.yyyy";
     field.addEventListener("input", (): void =>

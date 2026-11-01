@@ -1,28 +1,14 @@
 /**
  * ## Places
  *
- * The parts of a place, which I type below it in the dialog
- * of an entry and in that of a series,
- * see {@link placeEditOf}, since the fields offer only my places of `Places.md`,
- * each with its address, see `reader/places.ts`.
- * The address of a place has four parts, the columns of `Places.md`,
- * as on an envelope in German, umlauts included, see {@link Place},
- * then its link, which follows the address as the search of Google Maps,
- * see {@link mapsLinkOf}, until I type a link myself, like the NavigaTUM page of a room.
- * A place typed that is none of mine yet goes into `Places.md` at once, by its name,
- * see {@link placeSend}; the parts of any place picked change it everywhere
- * once the dialog saves, its row and every entry that names it, see {@link renameSend}.
- * An entry writes a place as one line, its name and its address, see {@link lineOf};
- * it shows by its name, the part before the first comma, see {@link labelOf},
- * and the dialog shows the whole line,
- * which opens the link of the place, written with it as its `ALTREP`, when it has one,
- * and nothing else: nothing opens a map by itself,
- * only a link stored with the place opens on a click.
- * A place is only where I physically am:
- * an entry that did something online shows its platform of `Online.md`
- * instead of its place the same way, see {@link whereLinkedOf}.
- * Below the parts of a place its star makes it my default place,
- * which a new entry starts with, see {@link standardStarOf}.
+ * The parts of a place, typed below it in a dialog, since the fields offer only my places of `Places.md`.
+ * The address has four parts, the columns of `Places.md`, as on an envelope in German.
+ * Its link follows the address as the search of Google Maps until I type a link myself.
+ * A place typed that is none of mine yet goes into `Places.md` at once.
+ * The parts of a place picked change it everywhere once the dialog saves.
+ * An entry writes a place in one line with its address and shows it by its name.
+ * Nothing opens a map by itself, only a link stored with the place opens on a click.
+ * A place is only where I physically am, an entry done online shows its platform instead.
  */
 
 import { ArrowRight, Star } from "lucide";
@@ -33,49 +19,35 @@ import { partFieldOf, partOf } from "./choices.ts";
 import type { Choice } from "./choices.ts";
 import type { Place, Platform } from "../../reader/places.ts";
 
-/**
- * A link of a place as the reader takes it, a web address without spaces,
- * see `linkForm` in `reader/places.ts`.
- */
+/** A link of a place as the reader takes it, a web address without spaces. */
 const linkForm: RegExp = /^https?:\/\/\S+$/;
 
-/**
- * Writes the address of a place in one line: its street, its code,
- * its town and its country, parted by commas, a part left out while empty.
- */
+/** The address of a place in one line, its parts parted by commas, an empty part left out. */
 export function placeAddressOf(place: Place): string {
     return [place.street, place.code, place.city, place.country]
         .filter((part: string): boolean => part !== "")
         .join(", ");
 }
 
-/**
- * Writes a place as an entry writes it into `LOCATION`,
- * as Google Calendar does, its name and its address in one line.
- */
+/** A place as an entry writes it into `LOCATION`, as Google Calendar does, name and address in one line. */
 export function lineOf(place: Place): string {
     return placeAddressOf(place) === "" ? place.name : `${place.name}, ${placeAddressOf(place)}`;
 }
 
-/**
- * Gives the name of the place of a line, the part before its first comma,
- * as the grid and the plan show it.
- */
+/** The name of the place of a line, the part before its first comma. */
 export function labelOf(line: string): string {
     return line.split(",")[0].trim();
 }
 
-/** Gives the address of a place as an entry writes it, the part after its name. */
+/** The address of a place as an entry writes it, the part after its name. */
 export function addressOf(line: string): string {
     return line.includes(",") ? line.slice(line.indexOf(",") + 1).trim() : "";
 }
 
 /**
- * Gives a place as its row holds it, my place or the room of its name;
- * one without row, like one an older entry wrote,
- * as its line says, with the link it was written with,
- * those of an older line whose code and town stand in one part parted at its first space,
- * like `85748 Garching bei München`.
+ * A place as its row holds it, my place or the room of its name.
+ * One without row is read from its line.
+ * An older line holds code and town in one part, parted at its first space.
  */
 export function placeOf(line: string, link: string, rows: { [line: string]: Place }): Place {
     const name: string = labelOf(line);
@@ -109,16 +81,10 @@ export function placeOf(line: string, link: string, rows: { [line: string]: Plac
 }
 
 /**
- * Makes the parts of a place to change it, below it in a dialog, each a part of its own,
- * see `partOf` in `choices.ts`, the columns of its row,
- * its star at the right of its label, see {@link standardStarOf};
- * the link following the address as the search of Google Maps
- * while it is that search or empty,
- * see {@link mapsLinkIs}, until I type a link myself;
- * below them a grey line while the reader would not take them.
- * Each change goes to the dialog as typed,
- * and once I leave a part I changed, the name of the part or field I went on to,
- * so the dialog shows the place anew, the cursor kept there.
+ * The parts of a place to change it below it in a dialog, the columns of its row, its star beside its label.
+ * Below them a grey line while the reader would not take them.
+ * Each change goes to the dialog as typed.
+ * Leaving a changed part gives the name of the part I went on to, so the dialog keeps the cursor there.
  */
 export function placeEditOf(
     place: Place,
@@ -185,12 +151,8 @@ export function placeEditOf(
 }
 
 /**
- * Makes the star of a place, at the right of its label:
- * filled while the place is my default place, which a new entry starts with,
- * see `lastPlaceFill` in `categories.ts`;
- * a click makes it my default place at once, or none while it is,
- * see {@link standardSend}, the star filled or emptied once the reader wrote it,
- * apart from the other parts, which wait for the dialog to save.
+ * The star of a place, filled while it is my default place, which a new entry starts with.
+ * A click sends it at once, apart from the other parts, which wait for the dialog to save.
  */
 function standardStarOf(place: Place): HTMLButtonElement {
     const star: HTMLButtonElement = document.createElement("button");
@@ -207,11 +169,7 @@ function standardStarOf(place: Place): HTMLButtonElement {
     return star;
 }
 
-/**
- * Makes the choice of a place in the list of a field of a place,
- * by its name or by the new name typed for it by its pencil,
- * my default place with its star after it, its address grey beside it.
- */
+/** The choice of a place in a list, my default place starred, its address grey beside it. */
 export function placeChoiceOf(line: string, name: string, places: { [line: string]: Place }): Choice {
     const standard: Place | undefined = Object.values(places).find((place: Place): boolean => place.standard);
     return {
@@ -223,26 +181,19 @@ export function placeChoiceOf(line: string, name: string, places: { [line: strin
     };
 }
 
-/**
- * Puts my default place, `★` in `Places.md`, first among the places of a list,
- * so it always stands on top: by its line, once, an older line of the same name left out.
- */
+/** Puts my default place first among the places of a list, an older line of the same name left out. */
 export function standardFirst(lines: string[], places: { [line: string]: Place }): string[] {
     const standard: Place | undefined = Object.values(places).find((place: Place): boolean => place.standard);
     if (standard === undefined) return lines;
     return [lineOf(standard), ...lines.filter((line: string): boolean => labelOf(line) !== standard.name)];
 }
 
-/** Category of ways, whose place shows as the route, see {@link whereOf}. */
+/** Category of ways, whose place shows as the route. */
 export const wayName: string = "Way";
 
 /**
- * Writes where an entry or a box was, by labels alone, as text,
- * which tells whether it has a place at all:
- * the route of a way, from its `X-FROM` to its `LOCATION`,
- * a missing end left out beside its arrow; the place of any other entry;
- * for an entry that did something online its platform instead.
- * The page shows it with the arrow drawn, see {@link whereLinkedOf}.
+ * Where an entry or a box was, by labels alone, as text.
+ * A way shows its route from its `X-FROM` to its `LOCATION`, an entry done online its platform.
  */
 export function whereOf(category: string, from: string, location: string, online: string): string {
     const start: string = labelOf(from);
@@ -252,11 +203,7 @@ export function whereOf(category: string, from: string, location: string, online
     return `${start} -> ${goal}`.trim();
 }
 
-/**
- * Makes the link of a place, its `ALTREP`, which opens in a new tab.
- * A click on it opens only the link, never the entry or the box it stands in,
- * so it does not reach their own click.
- */
+/** The link of a place, its `ALTREP`, in a new tab, its click not reaching the entry it stands in. */
 function placeAnchorOf(label: string, link: string): HTMLAnchorElement {
     const anchor: HTMLAnchorElement = document.createElement("a");
     anchor.className = "place-link";
@@ -268,23 +215,14 @@ function placeAnchorOf(label: string, link: string): HTMLAnchorElement {
     return anchor;
 }
 
-/**
- * Makes the arrow of a route between where a way starts and its goal:
- * drawn as an icon, not a character,
- * so it stands in the middle of the line, with a little room on both sides,
- * see `.route-arrow` in `log.css`.
- */
+/** The arrow of a route, an icon, not a character, so it stands in the middle of the line. */
 function routeArrowOf(): SVGElement {
     const arrow: SVGElement = iconOf(ArrowRight);
     arrow.classList.add("route-arrow");
     return arrow;
 }
 
-/**
- * Shows where an entry or a box was, as {@link whereOf} writes it, the arrow drawn,
- * and its place or platform a link when it has one, see {@link placeAnchorOf}.
- * A place or a platform without link is plain text, never the link itself.
- */
+/** Shows where an entry or a box was with the arrow drawn, its place or platform a link when it has one. */
 export function whereLinkedOf(
     category: string,
     from: string,
@@ -301,10 +239,7 @@ export function whereLinkedOf(
     return [start, routeArrowOf(), ...place];
 }
 
-/**
- * Gives the link of the search of an address in Google Maps,
- * in the form Google gives for a link to it, empty for an empty address.
- */
+/** The link of the search of an address in Google Maps, in the form Google gives. */
 export function mapsLinkOf(address: string): string {
     return address.trim() === ""
         ? ""
@@ -312,10 +247,8 @@ export function mapsLinkOf(address: string): string {
 }
 
 /**
- * Tells whether a link is the search of an address in Google Maps,
- * as {@link mapsLinkOf} makes it or in the form an earlier one wrote it,
- * its spaces as `+` and its code and town in one part, without a comma between them,
- * so the link of my place follows its address while it is that search.
+ * Whether a link is the search of an address in Google Maps, also in an older form.
+ * The older form has its spaces as `+` and no comma between code and town.
  * A link that cannot be decoded, like one with a `%` of its own, is compared as written.
  */
 export function mapsLinkIs(link: string, address: string): boolean {
@@ -330,12 +263,9 @@ export function mapsLinkIs(link: string, address: string): boolean {
 }
 
 /**
- * Sends a place to the reader: a new one,
- * which it adds to `Places.md`, a room to `Rooms.md`,
- * or my place with its name as it was, whose row it changes, keeping its name.
+ * Sends a new place, or my place with its old name, whose row it changes.
  *
- * @throws {Error} - When the reader does not take it,
- *   like for a name another place has or a link that is none
+ * @throws {Error} - When the reader does not take it, like for a name another place has
  */
 export async function placeSend(place: Place, old: string): Promise<Place> {
     return readerAsk<Place>("/api/day/places", {
@@ -346,13 +276,10 @@ export async function placeSend(place: Place, old: string): Promise<Place> {
 }
 
 /**
- * Sends a place changed by its parts to the reader,
- * which changes it everywhere, see `placeRename` in `reader/places.ts`;
- * or which only checks that it would, writing nothing,
- * so a dialog saves nothing it refuses.
+ * Sends a place changed by its parts, which the reader changes everywhere.
+ * With `dry` it only checks, so a dialog saves nothing it refuses.
  *
- * @throws {Error} - When the reader does not take it,
- *   like for an empty name or a link that is no web address
+ * @throws {Error} - When the reader does not take it, like for an empty name
  */
 export async function renameSend(old: string, place: Place, dry: boolean): Promise<void> {
     await readerAsk<null>("/api/day/renamed", {
@@ -363,8 +290,7 @@ export async function renameSend(old: string, place: Place, dry: boolean): Promi
 }
 
 /**
- * Sends my default place to the reader, which marks its row by `★` and no other,
- * see `placeStandardSet` in `reader/places.ts`.
+ * Sends my default place, which the reader marks by `★` and no other.
  *
  * @throws {Error} - When the reader does not take it, like for a name no place has
  */
@@ -377,12 +303,9 @@ async function standardSend(name: string): Promise<void> {
 }
 
 /**
- * Sends a platform to the reader: one typed in `Online` that is none of mine yet,
- * which it adds to `Online.md`, or my platform with its name as it was,
- * whose row it changes.
+ * Sends a new platform of `Online.md`, or my platform with its old name, whose row it changes.
  *
- * @throws {Error} - When the reader does not take it,
- * like for a name another platform has
+ * @throws {Error} - When the reader does not take it, like for a name another platform has
  */
 export async function platformSend(platform: Platform, old: string): Promise<Platform> {
     return readerAsk<Platform>("/api/day/online", {

@@ -1,11 +1,7 @@
 /**
  * ## Attendance
  *
- * Makes the rows `With` and `Online` of the dialog of an entry, see `./categories.ts`,
- * and of the dialog of a series, see `./series.ts`, alike:
- * who I am with, see {@link withRowOf},
- * and what I did online, see {@link onlineRowOf};
- * each dialog gives its field and takes what is picked.
+ * The rows `With` and `Online`, who I am with and what I did online, alike in the dialog of an entry and of a series.
  */
 
 import { choiceOf, choicesOf, partFieldOf, partOf, rowOf, searchOf } from "./choices.ts";
@@ -23,12 +19,9 @@ import type { Attendee, Online } from "../../reader/calendar.ts";
 import type { Person } from "../../reader/persons.ts";
 
 /**
- * How a row `With` is built, see {@link withRowOf}, the same in both dialogs,
- * only what it saves differs.
+ * How a row `With` is built.
  *
- * - `edits`: Each person I changed by its parts, which the row fills as I type,
- *   see {@link withPartsOf}, and its dialog sends once it saves,
- *   see `personsRename` in `../persons.ts`.
+ * - `edits`: Each person I changed by its parts, sent once the dialog saves.
  */
 export type WithSetup = {
     field: Field;
@@ -41,15 +34,10 @@ export type WithSetup = {
 };
 
 /**
- * Builds the parts below the names of `With`, as the parts of a place stand,
- * see {@link partOf}: for each person picked whose pencil opened them a block of its own,
- * indented with its thin grey line, so several people never crowd one another,
- * its `Name`, `Title`, `Mail` and `Link` as `Persons.md` holds them or as I changed them.
- * What I type goes into the edits of the dialog,
- * which writes the person everywhere once it saves, its row in `Persons.md`,
- * the columns that name people and every entry;
- * the mail is also the address of the person in this entry,
- * an empty one the name's standard address, see `standardAddressOf` in `./entries.ts`.
+ * The parts below the names of `With`, a block for each person whose pencil opened them.
+ * Each block is indented with its own thin grey line, so several people never crowd one another.
+ * What I type goes into the edits, which change the person everywhere once the dialog saves.
+ * The mail is also the address of the person in this entry, an empty one the standard address.
  */
 function withPartsOf(
     setup: WithSetup,
@@ -81,13 +69,9 @@ function withPartsOf(
 }
 
 /**
- * Builds the search of the list of `With`:
- * while nothing is typed only my own people,
- * those of `Persons.md` named `Family, …` or `Group, …`, the most used first,
- * not the lecturers an imported lecture names;
- * as I type every name my entries wrote, the most used first,
- * each as `Persons.md` names its person, see `personOf` in `../persons.ts`,
- * and every person of `Persons.md` after them.
+ * The search of the list of `With`, the most used first.
+ * While nothing is typed only my own people, `Family, …` or `Group, …`, not the lecturers of a lecture.
+ * As I type every name my entries wrote, then every person of `Persons.md`.
  */
 function withSearchOf(field: Field, people: Person[]): (text: string) => Promise<Choice[]> {
     return async (text: string): Promise<Choice[]> => {
@@ -100,10 +84,8 @@ function withSearchOf(field: Field, people: Person[]): (text: string) => Promise
 }
 
 /**
- * Gives how the list of `With` works, the one list of who I am with,
- * in its row and after the times of an exam added in the dialog of a series,
- * see `peopleRowsOf` in `./series.ts`; several people, a typed name added
- * as `Persons.md` names it, but none with `;`, see {@link withRowOf}.
+ * How the list of who I am with works, a typed name added as `Persons.md` names it.
+ * A name with `;` is refused, since `;` parts names.
  */
 export function withChoicesOf(field: Field, persons: Person[]): Omit<ChoicesSetup, "picked" | "pick"> {
     return {
@@ -121,20 +103,11 @@ export function withChoicesOf(field: Field, persons: Person[]): Omit<ChoicesSetu
 }
 
 /**
- * Builds the row of `With`, who I was with, one or more people or groups,
- * the one maker of this dialog and of that of a series, see {@link WithSetup}:
- * one line of the row, the names picked apart by a middle dot,
- * since a person of `Persons.md` holds a comma in its name,
- * see `dottedOf` in `../persons.ts`, going on over the next line where it is too long;
- * a name of a person there, also an older one spoken, is a link to its row there,
- * see `personOf` in `../persons.ts`, any other name plain text.
- * Its list, see {@link withSearchOf}, takes a name or takes it back by a click
- * and stays open for the next,
- * and adds a typed name as `Persons.md` names it, but none with `;`, which parts names;
- * right after each name its own pencil, which shows or hides below the line
- * the parts of that person to change, see {@link withPartsOf}.
- * A name picked anew takes the address it had, else that of its last entry,
- * else its standard one, see `standardAddressOf` in `./entries.ts`.
+ * The row of `With`, who I was with, one or more people or groups.
+ * The names stand apart by a middle dot, since a person of `Persons.md` holds a comma in its name.
+ * A name of a person there is a link to its row, any other name plain text.
+ * After each name its pencil shows or hides the parts of that person.
+ * A name picked anew takes the address of its last entry, else its standard one.
  */
 export function withRowOf(setup: WithSetup): HTMLElement {
     let people: Attendee[] = setup.people;
@@ -193,11 +166,9 @@ export function withRowOf(setup: WithSetup): HTMLElement {
 }
 
 /**
- * How a row `Online` is built, see {@link onlineRowOf}, the same in both dialogs,
- * only what it saves differs.
+ * How a row `Online` is built.
  *
- * - `categories`: The categories whose fields `Online` take a platform
- *   as the reader wrote it, see {@link platformTake}.
+ * - `categories`: The categories whose fields `Online` take a platform as the reader wrote it.
  */
 export type OnlineSetup = {
     field: Field;
@@ -209,27 +180,11 @@ export type OnlineSetup = {
 };
 
 /**
- * Builds the row of `Online`, what the entry did online,
- * a sibling of its place that works like it,
- * since a place is only where I physically am, see `fieldRowsOf` in `./categories.ts`,
- * the one maker of the dialog of an entry and of that of a series,
- * see {@link OnlineSetup}:
- * one line showing its platform,
- * whose list offers my platforms of `Online.md`, the most used first, searched as I type,
- * and adds a typed name as a new platform,
- * see `platformSend` in `places.ts`, its parts then open;
- * beside it the pencil while a platform is picked, which shows and hides its parts;
- * below it, as a place shows its address, small and grey, its parts that have a value,
- * joined by commas, a link that opens the link of its meeting or video,
- * else the web app of its row, never the link itself as text,
- * `Link` while nothing else shows.
- * Its parts, indented as those of a place, see {@link partOf},
- * the link last, as in every field,
- * since a click on what shows opens it: `Label`, its name, and `Provider`,
- * which change its row of `Online.md` as I leave them, a new name showing the row anew;
- * then the channel, the title and the link of the entry's own meeting or video,
- * the link holding the web app of its row, as the link of a place holds its own,
- * until I type the entry's own in its place, which alone is kept.
+ * The row of `Online`, what the entry did online, working like the place, since a place is only where I physically am.
+ * Its list offers my platforms of `Online.md` and adds a typed name as a new platform.
+ * Below it small and grey its parts that have a value, a link to its meeting or video, else to its web app.
+ * `Label` and `Provider` change its row of `Online.md` as I leave them.
+ * Channel, title and link are the entry's own, the link holding the web app until I type the entry's own.
  * Another platform picked empties all three, as a new meeting.
  */
 export function onlineRowOf(setup: OnlineSetup): HTMLElement {
@@ -369,10 +324,8 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
 }
 
 /**
- * Takes a platform as the reader wrote it into the field `Online` of every category,
- * since the platforms are one list:
- * each offers its new name in place of its old one, with its row;
- * entries written before keep what they have.
+ * Takes a platform as the reader wrote it into the field `Online` of every category, since the platforms are one list.
+ * Entries written before keep what they have.
  */
 function platformTake(categories: Category[], platform: Platform, old: string): void {
     categories
