@@ -422,8 +422,28 @@ function rowsShow(): void {
     plus.classList.add("picker-line");
     const row: HTMLElement = rowOf("Exercises", picker);
     row.querySelector(".entry-name")?.append(plus);
-    place.replaceChildren(row);
+    const title: string = sportTitle();
+    const summary: HTMLElement = rowOf("Summary", elementOf("span", "", title));
+    summary.classList.add("panel-fixed");
+    summary.hidden = title === "";
+    place.replaceChildren(summary, row);
     changed();
+}
+
+/**
+ * The summary of a session as it writes itself, as a meal from its foods,
+ * its workouts that hold an exercise, then the exercises picked alone, parted by `, `.
+ * Empty without exercises, then I type it.
+ */
+export function sportTitle(): string {
+    return [
+        ...blocks.filter((workout: string): boolean =>
+            exercises.some((exercise: ExerciseDone): boolean => exercise.workout === workout),
+        ),
+        ...exercises
+            .filter((exercise: ExerciseDone): boolean => !blocks.includes(exercise.workout))
+            .map((exercise: ExerciseDone): string => exercise.name),
+    ].join(", ");
 }
 
 /**

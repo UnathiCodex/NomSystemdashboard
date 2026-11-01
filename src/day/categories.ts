@@ -27,7 +27,7 @@
 import { choiceOf, choicesOf, fileShow, listsStart, partFieldOf, pairOf, partOf, rowOf, searchOf } from "./choices.ts";
 import { boxAdd, boxChange, boxDelete, entryAdd, entryChange, entryDelete, standardAddressOf } from "./entries.ts";
 import { cookName, foodName, mealCooked, mealFoods, mealOf, mealTitle } from "./meal.ts";
-import { sportName, sportOpen, sportRead, sportRowsOf } from "./sport.ts";
+import { sportName, sportOpen, sportRead, sportRowsOf, sportTitle } from "./sport.ts";
 import {
     addressOf,
     labelOf,
@@ -276,6 +276,9 @@ let skillGiven: string = "";
 type SummaryParts = [HTMLButtonElement, HTMLAnchorElement, HTMLInputElement, HTMLInputElement, HTMLInputElement | null];
 
 let summaryShown: SummaryParts | null = null;
+
+/** The rows of the summary as typed, hidden while a session of sport writes its own. */
+let titleRows: HTMLElement[] = [];
 
 /** Category picked, `null` before picking. */
 let chosen: Category | null = null;
@@ -1120,12 +1123,16 @@ function ofSeries(): boolean {
 
 /** Shows the rows of the summary anew, of sport what I did below it, the rows below staying as they are. */
 function titleRowsShow(): void {
+    titleRows = rowsOf((field: Field): boolean => field.key === "title");
     document
         .getElementById("entry-fields")
-        ?.replaceChildren(
-            ...rowsOf((field: Field): boolean => field.key === "title"),
-            ...(sportShown() ? sportRowsOf(saveAllow) : []),
-        );
+        ?.replaceChildren(...titleRows, ...(sportShown() ? sportRowsOf(sportChanged) : []));
+}
+
+/** Hides the typed summary while a session writes its own from its exercises, then allows saving. */
+function sportChanged(): void {
+    for (const row of titleRows) row.hidden = sportTitle() !== "";
+    saveAllow();
 }
 
 /** Shows the fields of the category picked in the order of the file, the same for every category. */
@@ -1279,6 +1286,7 @@ function categoryShow(): void {
 function titleRead(picked: string): string {
     if (chosen?.name === skillName) return values.title;
     if (foodsListed()) return mealTitle();
+    if (sportShown() && sportTitle() !== "") return sportTitle();
     return chosen?.fields.some((field: Field): boolean => field.key === "title") ? picked : (chosen?.name ?? "");
 }
 
