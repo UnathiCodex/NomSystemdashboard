@@ -248,15 +248,9 @@ const dayMinutes: number = 24 * 60;
 const deadlineDays: number = 4;
 
 /**
- * Gives the plan a box belongs into: of its skill for a skill box,
- * else of its topic in the year of its day, see `calendarFileOf` in `documents.ts`.
- */
-function planFileOf(box: { category: string; module: string }, date: string): string {
-    return calendarFileOf(box, date, planEnding);
-}
-
-/**
- * Gives the plan file a box is written into once it changes, see {@link planFileOf},
+ * Gives the plan file a box is written into once it changes, the plan it belongs into:
+ * of its skill for a skill box, else of its topic in the year of its day,
+ * see `calendarFileOf` in `documents.ts`,
  * always the file of its series for one occurrence of a series.
  */
 function planFileAfter(
@@ -265,7 +259,7 @@ function planFileAfter(
     box: { category: string; module: string },
     date: string,
 ): string {
-    return entry.recurrence === "" ? planFileOf(box, date) : file;
+    return entry.recurrence === "" ? calendarFileOf(box, date, planEnding) : file;
 }
 
 /**
@@ -373,14 +367,6 @@ function planRead(until: string): Entry[] {
 }
 
 /**
- * Reads the entries of the plan that are boxes and happen once, whenever they lie,
- * see `entriesOnceRead` in `calendar.ts`.
- */
-function planOnceRead(): Entry[] {
-    return entriesOnceRead(day.plan).filter((entry: Entry): boolean => !groupIs(entry));
-}
-
-/**
  * Finds the plan file and entry of a box by its identifier:
  * the entry that happens once with that `UID`,
  * else the occurrence named by the `UID` and the start after the last `#`,
@@ -413,7 +399,21 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
     return carriedOf(
         {
             id: entryIdOf(entry),
-            ...textsOf(entry),
+            category: entry.category,
+            title: entry.title,
+            titleLink: entry.titleLink,
+            location: entry.location,
+            locationLink: entry.locationLink,
+            online: entry.online,
+            onlineLink: entry.onlineLink,
+            onlineChannel: entry.onlineChannel,
+            onlineTitle: entry.onlineTitle,
+            from: entry.from,
+            attendees: entry.attendees,
+            module: entry.module,
+            type: entry.type,
+            semester: entry.semester,
+            note: entry.note,
             day: dayOf(entry),
             time: entry.allDay ? "" : entry.start,
             minutes: minutes,
@@ -576,9 +576,9 @@ export function boxesRead(start: string, end: string): PlanDay[] {
     const logs: Map<string, Entry> = logsOf(dayAdd(logsUntilOf(end), deadlineDays));
     const entries: Entry[] = [
         ...new Map(
-            [...planRead(dayAdd(end, deadlineDays)), ...planOnceRead()].map(
-                (entry: Entry): [string, Entry] => [entryIdOf(entry), entry],
-            ),
+            [...planRead(dayAdd(end, deadlineDays)), ...entriesOnceRead(day.plan)]
+                .filter((entry: Entry): boolean => !groupIs(entry))
+                .map((entry: Entry): [string, Entry] => [entryIdOf(entry), entry]),
         ).values(),
     ];
     const boxes: Box[] = entries.map((entry: Entry): Box => boxOf(entry, logs));
@@ -660,8 +660,7 @@ export function skillBoxesRead(until: string): Box[] {
  */
 export function boxFind(id: string): [string, Entry, Box] {
     const [file, entry]: [string, Entry] = planEntryFind(id);
-    const date: string = dayOf(entry);
-    return [file, entry, boxOf(entry, logsOf(dayAdd(logsUntilOf(date), 1)))];
+    return [file, entry, boxOf(entry, logsOf(dayAdd(logsUntilOf(dayOf(entry)), 1)))];
 }
 
 /**
@@ -745,17 +744,6 @@ function boxLinksOf(box: BoxNew, old: Entry | null): [string, (string | Link)[]]
             ["attach", []],
         ];
     return [];
-}
-
-/**
- * Writes the chapters and documents of a box, see {@link boxLinksOf}.
- */
-function boxLinksPut(
-    file: string,
-    id: string,
-    links: [string, (string | Link)[]][],
-): void {
-    if (links.length > 0) propertiesPut(file, id, links);
 }
 
 /**
@@ -854,7 +842,7 @@ function numberNextOf(module: string, type: string, date: string): string {
 }
 
 /**
- * Adds a box to the plan it belongs into, see {@link planFileOf},
+ * Adds a box to the plan it belongs into, see `calendarFileOf` in `documents.ts`,
  * a skill box with its chapters and documents,
  * a numbered one with its number, see {@link numberNextOf},
  * nothing is written while it is not right.
@@ -865,11 +853,11 @@ function numberNextOf(module: string, type: string, date: string): string {
  */
 export function boxAdd(box: BoxNew): string {
     boxCheck(box, null);
-    const file: string = planFileOf(box, box.day);
+    const file: string = calendarFileOf(box, box.day, planEnding);
     const fields: TodoFields = todoFieldsOf(box, null);
     const links: [string, (string | Link)[]][] = boxLinksOf(box, null);
     const id: string = todoAppend(file, fields);
-    boxLinksPut(file, id, links);
+    if (links.length > 0) propertiesPut(file, id, links);
     if (box.category === skillName && numberedTypes.includes(box.type))
         propertiesPut(file, id, [
             ["x-number", [numberNextOf(box.module, box.type, box.day)]],
@@ -924,17 +912,13 @@ export function boxUniversity(id: string, cancelled: boolean): void {
     )
         throw new Error(`${entry.title} is no box of the new system to mark`);
     const series: Entry[] = seriesOf(entry.module, entry.type).filter(
-        (other: Entry): boolean => entryIdOf(other) !== id,
+        (other: Entry): boolean => entryIdOf(other) !== id && /^\d+$/.test(other.number),
     );
     const before: number[] = series
-        .filter(
-            (other: Entry): boolean =>
-                other.start < entry.start && /^\d+$/.test(other.number),
-        )
+        .filter((other: Entry): boolean => other.start < entry.start)
         .map((other: Entry): number => Number(other.number));
     const after: Entry[] = series.filter(
-        (other: Entry): boolean =>
-            other.start > entry.start && /^\d+$/.test(other.number),
+        (other: Entry): boolean => other.start > entry.start,
     );
     let number: string = "NONE";
     if (!cancelled)
@@ -998,7 +982,7 @@ export function boxEdit(change: BoxChange): void {
     const target: string = planFileAfter(file, entry, change, change.day);
     if (todo !== null) todoChange(file, entry, todo, target);
     else if (event !== null) entryChange(file, entry, event, target);
-    boxLinksPut(target, change.id, links);
+    if (links.length > 0) propertiesPut(target, change.id, links);
     boxTidy(file, entry);
     if (change.title !== old.title && box.category !== skillName)
         logRename(change.id, box, change.title);
@@ -1018,8 +1002,7 @@ function logRename(id: string, box: Box, title: string): void {
     ).find((entry: Entry): boolean => entry.planned === id);
     if (logged === undefined || logged.foods.length > 0 || !logged.editable) return;
     const found: [string, Entry] | undefined = entryLookup(day.log, logged.id);
-    if (found !== undefined)
-        titlePut(found[0], logged.id, { ...textsOf(logged), title: title });
+    if (found !== undefined) titlePut(found[0], logged.id, { ...logged, title: title });
 }
 
 /**
@@ -1036,29 +1019,6 @@ export function boxDelete(id: string): void {
         throw new Error(`${entry.title} may not be removed`);
     if (entry.recurrence !== "") seriesDayRemove(file, entry.id, entry.recurrence);
     else entryRemove(file, id);
-}
-
-/**
- * Gives the text fields of an entry, as they are, for a change of its times alone.
- */
-function textsOf(entry: Entry): EntryTexts {
-    return {
-        category: entry.category,
-        title: entry.title,
-        titleLink: entry.titleLink,
-        location: entry.location,
-        locationLink: entry.locationLink,
-        online: entry.online,
-        onlineLink: entry.onlineLink,
-        onlineChannel: entry.onlineChannel,
-        onlineTitle: entry.onlineTitle,
-        from: entry.from,
-        attendees: entry.attendees,
-        module: entry.module,
-        type: entry.type,
-        semester: entry.semester,
-        note: entry.note,
-    };
 }
 
 /**
@@ -1088,10 +1048,9 @@ function boxShift(file: string, entry: Entry, days: number): string {
             file,
             entry,
             {
-                ...textsOf(entry),
+                ...entry,
                 day: day,
                 time: entry.allDay ? null : new Date(later.start),
-                minutes: entry.minutes,
                 deadline: "",
             },
             target,
@@ -1100,7 +1059,7 @@ function boxShift(file: string, entry: Entry, days: number): string {
         entryChange(
             file,
             entry,
-            { ...textsOf(entry), start: new Date(later.start), end: new Date(later.end) },
+            { ...entry, start: new Date(later.start), end: new Date(later.end) },
             target,
         );
     return target;
@@ -1237,7 +1196,7 @@ export function boxRename(id: string, title: string): void {
     if (found === undefined || !found[1].editable) return;
     const [file, entry]: [string, Entry] = found;
     boxOwn(file, entry);
-    titlePut(file, id, { ...textsOf(entry), title: title });
+    titlePut(file, id, { ...entry, title: title });
     boxTidy(file, entry);
 }
 
