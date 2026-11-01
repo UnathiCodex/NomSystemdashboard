@@ -138,6 +138,9 @@ function fieldsOf(kind: Kind): [string, string, string][] {
  */
 const searches: WeakMap<HTMLElement, Search> = new WeakMap();
 
+/** What a search shows before its first answer: nothing found. */
+const empty: FoodsFound = { foods: [], products: [], total: 0, exact: true, more: false };
+
 /**
  * Makes the head of a list or a section of meals or foods, small and grey,
  * in the columns of its lines, naming the unit of every number below once.
@@ -232,23 +235,17 @@ export function inlineFieldOf(
     words: string,
     saved: () => void,
 ): HTMLInputElement {
-    const input: HTMLInputElement = document.createElement("input");
-    input.type = "text";
-    input.className = "food-inline";
-    input.autocomplete = "off";
-    input.value = value;
-    input.setAttribute("aria-label", words);
-    input.addEventListener("keydown", (event: KeyboardEvent): void => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            input.blur();
-        } else if (event.key === "Escape") {
-            event.preventDefault();
-            event.stopPropagation();
+    const input: HTMLInputElement = editFieldOf(
+        value,
+        words,
+        (): void => input.blur(),
+        (): void => {
             input.value = value;
             input.blur();
-        }
-    });
+        },
+    );
+    input.className = "food-inline";
+    input.removeAttribute("placeholder");
     input.addEventListener("change", saved);
     return input;
 }
@@ -258,17 +255,15 @@ export function inlineFieldOf(
  * since there are only `Eat` and `Drink` and no list is needed.
  */
 function kindFieldOf(kind: Kind, saved: () => void): HTMLButtonElement {
-    const button: HTMLButtonElement = elementOf(
-        "button",
+    const button: HTMLButtonElement = buttonOf(
         "food-inline food-kind",
         kind,
-    ) as HTMLButtonElement;
-    button.type = "button";
+        (): void => {
+            button.textContent = button.textContent === "Eat" ? "Drink" : "Eat";
+            saved();
+        },
+    );
     button.setAttribute("aria-label", "Kind, a click switches it");
-    button.addEventListener("click", (): void => {
-        button.textContent = button.textContent === "Eat" ? "Drink" : "Eat";
-        saved();
-    });
     return button;
 }
 
@@ -289,15 +284,6 @@ function kindFieldOf(kind: Kind, saved: () => void): HTMLButtonElement {
 export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLElement {
     const detail: HTMLElement = elementOf("div", "food-detail", "");
     const facts: HTMLElement = elementOf("div", "food-facts", "");
-    const factAdd: (name: string, value: Node | string) => void = (
-        name: string,
-        value: Node | string,
-    ): void => {
-        facts.append(
-            elementOf("span", "food-fact", name),
-            typeof value === "string" ? elementOf("span", "", value) : value,
-        );
-    };
     const fields: Map<string, HTMLInputElement> = new Map();
     const text: (key: string) => string = (key: string): string =>
         fields.get(key)?.value.trim() ?? "";
@@ -308,21 +294,9 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
             "and no other food of mine may have this name, brand and store",
     );
     const save: () => void = (): void => {
-        const [kcal, protein, carbs, fat, portion, pack]: (number | null)[] = [
-            "kcal",
-            "protein",
-            "carbs",
-            "fat",
-            "portion",
-            "pack",
-        ].map((key: string): number | null => numberRead(text(key)));
-        if (
-            text("name") === "" ||
-            kcal === null ||
-            [kcal, protein, carbs, fat, portion, pack].some(
-                (typed: number | null): boolean => Number.isNaN(typed),
-            )
-        ) {
+        const numbers: (number | null)[] = numbersRead(text);
+        const [kcal, protein, carbs, fat, portion, pack]: (number | null)[] = numbers;
+        if (text("name") === "" || kcal === null || numbers.some(Number.isNaN)) {
             error.hidden = false;
             return;
         }
@@ -356,22 +330,13 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
     ): void => {
         const input: HTMLInputElement = inlineFieldOf(value, name, save);
         fields.set(key, input);
-        if (unit === "") {
-            factAdd(name, input);
-            return;
-        }
-        const amount: HTMLElement = elementOf("span", "food-grams", "");
-        input.inputMode = "decimal";
-        input.classList.add("food-inline-grams");
-        amount.append(input, unit);
-        amount.addEventListener("click", (): void => input.focus());
-        factAdd(name, amount);
+        facts.append(elementOf("span", "food-fact", name), unitFieldOf(input, unit));
     };
 
     fieldsOf(food.kind).forEach(([name, key, unit]: [string, string, string]): void =>
         fieldAdd(name, key, String(food[key as keyof Food] ?? ""), unit),
     );
-    factAdd("Kind", kind);
+    facts.append(elementOf("span", "food-fact", "Kind"), kind);
     fieldAdd("Barcode", "barcode", food.barcode, "");
     error.hidden = true;
     detail.append(facts, error);
@@ -504,13 +469,7 @@ const shownFoods: number = 10;
  * then the products of Open Food Facts, see {@link productsShow}.
  */
 function resultsShow(search: Search): void {
-    const found: FoodsFound = search.found ?? {
-        foods: [],
-        products: [],
-        total: 0,
-        exact: true,
-        more: false,
-    };
+    const found: FoodsFound = search.found ?? empty;
     const query: string = search.input.value.trim();
     if (search.setup.pick !== null && query === "") {
         search.results.replaceChildren();
@@ -578,13 +537,7 @@ function resultsShow(search: Search): void {
  * one grey line when nothing is found at all.
  */
 function productsShow(search: Search): void {
-    const found: FoodsFound = search.found ?? {
-        foods: [],
-        products: [],
-        total: 0,
-        exact: true,
-        more: false,
-    };
+    const found: FoodsFound = search.found ?? empty;
     const query: string = search.input.value.trim();
     const products: Product[] = query === "" ? [] : (found.products ?? []);
     const above: boolean = search.tail.previousElementSibling !== null;
@@ -684,12 +637,30 @@ function addedOf(search: Search): (food: Food) => void {
 }
 
 /**
- * Reads a number as typed, a decimal comma counting as a point,
+ * Reads the numbers of a form of a food as typed: kcal, protein, carbs, fat,
+ * portion and pack, a decimal comma counting as a point,
  * `null` for an empty field, which leaves a nutrient unknown, never 0,
  * not a number for an unreadable text, which the form refuses.
  */
-function numberRead(text: string): number | null {
-    return text.trim() === "" ? null : Number(text.trim().replace(",", "."));
+function numbersRead(text: (key: string) => string): (number | null)[] {
+    return ["kcal", "protein", "carbs", "fat", "portion", "pack"].map(
+        (key: string): number | null =>
+            text(key).trim() === "" ? null : Number(text(key).trim().replace(",", ".")),
+    );
+}
+
+/**
+ * Gives a field of a form of a food as it stands, a number with its unit after it,
+ * a click beside the number putting the cursor in it, any other field alone.
+ */
+function unitFieldOf(input: HTMLInputElement, unit: string): HTMLElement {
+    if (unit === "") return input;
+    const amount: HTMLElement = elementOf("span", "food-grams", "");
+    input.inputMode = "decimal";
+    input.classList.add("food-inline-grams");
+    amount.append(input, unit);
+    amount.addEventListener("click", (): void => input.focus());
+    return amount;
 }
 
 /**
@@ -739,22 +710,14 @@ function newFormShow(search: Search, product: Product | null): void {
         inputs.get(key)?.value.trim() ?? "";
     const close: () => void = (): void => form.remove();
     const add: () => void = (): void => {
-        const [kcal, protein, carbs, fat, portion, pack]: (number | null)[] = [
-            "kcal",
-            "protein",
-            "carbs",
-            "fat",
-            "portion",
-            "pack",
-        ].map((key: string): number | null => numberRead(text(key)));
+        const numbers: (number | null)[] = numbersRead(text);
+        const [kcal, protein, carbs, fat, portion, pack]: (number | null)[] = numbers;
         if (
             text("name") === "" ||
             text("brand") === "" ||
             text("store") === "" ||
             kcal === null ||
-            [kcal, protein, carbs, fat, portion, pack].some(
-                (typed: number | null): boolean => Number.isNaN(typed),
-            )
+            numbers.some(Number.isNaN)
         ) {
             error.hidden = false;
             return;
@@ -792,18 +755,12 @@ function newFormShow(search: Search, product: Product | null): void {
             add,
             close,
         );
-        const amount: HTMLElement = elementOf("span", "food-grams", "");
         input.className = "food-inline food-inline-new";
-        input.inputMode = unit === "" ? "text" : "decimal";
+        input.inputMode = "text";
         input.placeholder = "";
         label.addEventListener("click", (): void => input.focus());
         inputs.set(key, input);
-        if (unit !== "") {
-            input.classList.add("food-inline-grams");
-            amount.append(input, unit);
-            amount.addEventListener("click", (): void => input.focus());
-        }
-        facts.append(label, unit === "" ? input : amount);
+        facts.append(label, unitFieldOf(input, unit));
     });
     error.hidden = true;
     form.append(facts, editButtonsOf(close, add), error);
@@ -936,19 +893,8 @@ function productsLoad(search: Search, page: number): void {
         .then(take)
         .catch((error: unknown): void => {
             console.error(error);
-            take({ foods: [], products: null, total: 0, exact: true, more: false });
+            take({ ...empty, products: null });
         });
-}
-
-/**
- * Takes away the lines of a search that say nothing was found as soon as the text
- * changes,
- * since they told of the text before.
- */
-function nothingHide(search: Search): void {
-    search.results
-        .querySelectorAll(".food-nothing")
-        .forEach((line: Element): void => line.remove());
 }
 
 /**
@@ -978,7 +924,10 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
 
     search.input.addEventListener("input", (): void => {
         search.linked = false;
-        nothingHide(search);
+        // A line that says nothing was found told of the text before.
+        search.results
+            .querySelectorAll(".food-nothing")
+            .forEach((line: Element): void => line.remove());
         resultsLoad(search, pause);
     });
     search.input.addEventListener("keydown", (event: KeyboardEvent): void => {
