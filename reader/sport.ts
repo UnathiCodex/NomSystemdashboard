@@ -1,56 +1,21 @@
 /**
  * ## Sport
  *
- * Reads the sessions of a day from the log with the time they took
- * and the kcal they burned,
- * and keeps my workouts, my exercises and my videos.
- * A session is a log entry of the category `Sport`, its `SUMMARY` mine as in every category.
- * What I did it holds as a meal its foods:
- * each exercise as a line `X-EXERCISE`, like `Bench press;3;10;40;Push`,
- * and each video as a line `X-VIDEO`, its title, channel, minutes, link and workout,
- * the file holding the seconds and the minutes as durations of iCalendar,
- * see `sportIcsOf` in `calendar.ts`,
- * so the log keeps what I did that day,
- * whatever I change in my workouts and videos later.
- * A session written before named its one workout as `X-WORKOUT`,
- * which its lines without a workout belong to.
- * It burned what its videos and its minutes beyond them burn above rest at my weight of its day,
- * see {@link kcalOf}:
- * (MET − 1) × kg × hours, the MET of a kind from the 2024 Adult Compendium of Physical
- * Activities (Herrmann 2024, pacompendium.com), less the 1 MET I burn at rest anyway,
- * so a session counts only what the sport added and nothing twice.
- * An estimate, which the page writes with `~`,
- * since even the kcal of a watch
- * on the wrist are more than a fifth off (Shcherbina 2017).
- * `Workouts.md` holds my workouts, each a name of mine
- * and its parts in their order, exercises or videos, see {@link workoutsRead}.
- * A workout without parts has no row and so is none.
- * `Exercises.md` holds my exercises, those I add by themselves and those a workout got,
- * see {@link workoutSave}, each with the sets, repetitions and kilograms I do as a rule,
- * which an entry brings every time, see {@link exerciseChange}.
- * One name may stand in several rows, each its own variant,
- * known by its name and its values together, see {@link sameExercise}.
- * The list of my exercises shows each once, with the workouts that hold it,
- * also one a workout holds that `Exercises.md` lacks, like one written before it existed.
- * An exercise typed new in an entry becomes mine, as a new food does.
- * An exercise burns no kcal of its own: a session counts by its time,
- * since what a single exercise burns hangs on how long
- * and how hard I do it, which nobody writes down.
- * `Videos.md` holds my videos, each with its kind, which tells what a minute of it burns,
- * and its link, by which it stays the same video whatever its title, see {@link linkOf}.
- * A video added by hand has no link and is known by its title.
- * `Weights.md` holds my weight, which I change in the totals of the sport view,
- * see {@link weightSave}, one row per day I weighed myself, see {@link weightOn},
- * 80 kg assumed before the first.
- * Every person writes their own, so it is never in the code.
- * YouTube is asked anonymously for the title and the channel of a link,
- * by its oEmbed, which needs no key:
- * a request carries the link and the name of the dashboard, never my email or my name.
- * No name of a workout, an exercise or a video holds `|`,
- * which parts the cells of a table, or `;`,
- * which parts the lines of a session in the log.
- * The name of a workout or an exercise holds no comma either,
- * which parts the names of a list, see {@link ownNameOf}.
+ * The sessions of a day from the log with their time and their kcal.
+ * My workouts, my exercises, my videos, my weight, each in its own table, never in the code.
+ * A session is a log entry of `Sport`, holding what I did as a meal holds its foods.
+ * Each exercise is a line `X-EXERCISE`, each video a line `X-VIDEO`, with its workout.
+ * So the log keeps what I did that day, whatever I change in my workouts later.
+ * An old session names its one workout as `X-WORKOUT`, which its lines without a workout belong to.
+ * A session burns (MET − 1) × kg × hours, the MET from the 2024 Adult Compendium of Physical Activities.
+ * Less the 1 MET I burn at rest anyway, so it counts only what the sport added.
+ * An estimate written with `~`, since even a watch is more than a fifth off (Shcherbina 2017).
+ * An exercise burns no kcal of its own, since nobody writes down how long or how hard.
+ * One exercise name may stand in several rows, each its own variant.
+ * A video is known by its link, one added by hand by its title.
+ * YouTube oEmbed is asked anonymously, a request never carries my email or my name.
+ * No name holds `|` or `;`, which part table cells and log lines.
+ * A name of a workout or an exercise holds no comma either, which parts a list.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -61,11 +26,7 @@ import { sport, writeAllowed } from "./sources.ts";
 
 import type { Entry } from "./calendar.ts";
 
-/**
- * A kind of sport with what a minute of it burns:
- * the MET of the activity of the 2024 Adult Compendium
- * of Physical Activities closest to it, its `code` there, so the value can be looked up.
- */
+/** A kind of sport with the MET of its closest activity in the Compendium, its `code` there to look it up. */
 export type SportKind = {
     name: string;
     met: number;
@@ -73,10 +34,10 @@ export type SportKind = {
 };
 
 /**
- * A session of a day, as the page shows it.
+ * A session of a day.
  *
- * - `kcal`: kcal it burned above rest, see {@link kcalOf}.
- * - `workout`: The workouts it did, parted by `, `, empty for none.
+ * - `kcal`: Burned above rest.
+ * - `workout`: Its workouts parted by `, `, empty for none.
  */
 export type Session = {
     id: string;
@@ -90,10 +51,7 @@ export type Session = {
     videos: SessionVideo[];
 };
 
-/**
- * An exercise of a session, a line `X-EXERCISE`.
- * Its `reps` may be seconds, like `60s`.
- */
+/** A line `X-EXERCISE` of a session, its `reps` may be seconds. */
 export type SessionExercise = {
     name: string;
     sets: string;
@@ -102,9 +60,7 @@ export type SessionExercise = {
     workout: string;
 };
 
-/**
- * A video of a session, a line `X-VIDEO`, its `link` empty for a video added by hand.
- */
+/** A line `X-VIDEO` of a session, its `link` empty for a video added by hand. */
 export type SessionVideo = {
     title: string;
     channel: string;
@@ -113,9 +69,7 @@ export type SessionVideo = {
     workout: string;
 };
 
-/**
- * The sessions of a day with what they took together, at my weight of the day.
- */
+/** The sessions of a day with their sums, at my weight of the day. */
 export type SportDay = {
     sessions: Session[];
     minutes: number;
@@ -123,12 +77,7 @@ export type SportDay = {
     kg: number;
 };
 
-/**
- * A part of a workout: an exercise or a video.
- *
- * - `sets`, `reps`, `kg`: What an exercise brings,
- *   the values of the variant of mine it was picked as.
- */
+/** A part of a workout, an exercise with the values of its variant or a video. */
 export type Part = {
     kind: "Exercise" | "Video";
     name: string;
@@ -139,10 +88,9 @@ export type Part = {
 };
 
 /**
- * A workout of mine with its parts.
+ * A workout of mine.
  *
- * - `kcal`: What its videos burn above rest at my weight of today,
- *   when all its parts are videos of mine with minutes.
+ * - `kcal`: Burned at my weight of today when all parts are videos with minutes.
  *   `null` else, since an exercise has no minutes of its own.
  */
 export type Workout = {
@@ -151,9 +99,7 @@ export type Workout = {
     kcal: number | null;
 };
 
-/**
- * An exercise of mine, a row of `Exercises.md`: its name and what I do of it as a rule.
- */
+/** A row of `Exercises.md`, what I do of an exercise as a rule. */
 type OwnExercise = {
     name: string;
     sets: string;
@@ -161,17 +107,12 @@ type OwnExercise = {
     kg: string;
 };
 
-/**
- * An exercise of mine as the sport area lists it, with the workouts that hold it.
- */
+/** An exercise of mine with the workouts that hold it. */
 export type Exercise = OwnExercise & {
     workouts: string[];
 };
 
-/**
- * A video of mine, a row of `Videos.md`.
- * `kcal` is what it burns above rest at my weight of today.
- */
+/** A row of `Videos.md`, `kcal` at my weight of today. */
 export type Video = {
     title: string;
     channel: string;
@@ -184,9 +125,7 @@ export type Video = {
 /** A row of a table of mine, its cells by the names of its head. */
 type Row = { [column: string]: string };
 
-/**
- * A weight of mine, a row of `Weights.md`.
- */
+/** A row of `Weights.md`. */
 type Weight = {
     day: string;
     kg: number;
@@ -195,8 +134,7 @@ type Weight = {
 /**
  * Everything of mine the sport area lists.
  *
- * - `last`: What I did of each exercise the last time, its line `X-EXERCISE`,
- *   by its name in small letters, so the entry by category brings it again.
+ * - `last`: The last line `X-EXERCISE` of each exercise by its name in small letters, so an entry brings it again.
  */
 export type Mine = {
     workouts: Workout[];
@@ -206,35 +144,21 @@ export type Mine = {
     last: { [name: string]: string };
 };
 
-/**
- * What YouTube tells of a video, cleaned for `Videos.md`.
- */
+/** What YouTube tells of a video, cleaned for `Videos.md`. */
 export type VideoFound = {
     title: string;
     channel: string;
     link: string;
 };
 
-/**
- * Category of a session, `CATEGORIES:Sport`.
- */
 export const sportName: string = "Sport";
 
-/**
- * Kind of the minutes of a session beyond its videos, my exercises,
- * with the MET of the 2024 Adult Compendium:
- * resistance (weight) training, multiple exercises, 8-15 reps at varied resistance.
- */
+/** Kind of the minutes beyond the videos, resistance training of multiple exercises in the Compendium. */
 const exercisesKind: SportKind = { name: "Exercises", met: 3.5, code: "02054" };
 
 /**
- * Kinds of a video, each with the MET of the activity
- * of the 2024 Adult Compendium closest to it:
- * `HIIT` high intensity interval exercise, moderate effort.
- * `Cardio` video, exercise workouts, cardio-resistance training, moderate.
- * `Strength` calisthenics, like push-ups, sit-ups and lunges, moderate effort.
- * `Dance` Zumba, home video. `Pilates` Pilates, general.
- * `Yoga` yoga, general. `Stretching` stretching, mild.
+ * Kinds of a video, each with the MET of its closest activity in the Compendium.
+ * `Cardio` is cardio-resistance video, `Strength` calisthenics, `Dance` Zumba, `Stretching` mild.
  */
 export const videoKinds: SportKind[] = [
     { name: "HIIT", met: 7.0, code: "02210" },
@@ -246,9 +170,7 @@ export const videoKinds: SportKind[] = [
     { name: "Stretching", met: 2.3, code: "02101" },
 ];
 
-/**
- * Text a new `Workouts.md` starts with.
- */
+/** Text a new `Workouts.md` starts with. */
 const workoutsHead: string[] = [
     "# Workouts",
     "",
@@ -260,9 +182,7 @@ const workoutsHead: string[] = [
     "| --- | --- | --- | ---: | ---: | ---: | --- |",
 ];
 
-/**
- * Text a new `Videos.md` starts with.
- */
+/** Text a new `Videos.md` starts with. */
 const videosHead: string[] = [
     "# Videos",
     "",
@@ -275,9 +195,7 @@ const videosHead: string[] = [
     "| --- | --- | ---: | --- | --- |",
 ];
 
-/**
- * Text a new `Weights.md` starts with.
- */
+/** Text a new `Weights.md` starts with. */
 const weightsHead: string[] = [
     "# Weights",
     "",
@@ -288,9 +206,7 @@ const weightsHead: string[] = [
     "| --- | ---: |",
 ];
 
-/**
- * Text a new `Exercises.md` starts with.
- */
+/** Text a new `Exercises.md` starts with. */
 const exercisesHead: string[] = [
     "# Exercises",
     "",
@@ -303,51 +219,31 @@ const exercisesHead: string[] = [
     "| --- | ---: | ---: | ---: |",
 ];
 
-/**
- * Lines of a table before its rows: the header and the line below it.
- */
+/** Lines of a table before its rows, the header and the line below it. */
 const tableHead: number = 2;
 
-/**
- * Identifier of a YouTube video.
- */
 const videoId: RegExp = /^[A-Za-z0-9_-]{11}$/;
 
-/**
- * Name the dashboard gives itself when it asks YouTube, as when it asks Open Food Facts;
- * on purpose without an email or a name, so nothing about me leaves.
- */
+/** Name the dashboard gives itself when it asks YouTube, without email or name, so nothing about me leaves. */
 const agent: string = "NomSystemDashboard/0.1";
 
-/**
- * Milliseconds YouTube gets to answer.
- */
+/** Milliseconds YouTube gets to answer. */
 const answerTime: number = 5000;
 
-/**
- * Kilograms a day counts with before I ever weighed myself.
- */
+/** Kilograms before I ever weighed myself. */
 const assumedKg: number = 80;
 
-/**
- * Milliseconds of a day.
- */
 const dayLength: number = 24 * 60 * 60 * 1000;
 
 /**
- * Cleans the name of a workout or an exercise:
- * as a name, see `nameOf` in `markdown.ts`, and without a comma,
- * which parts the names of a list, like `(Bench press, Dips)`.
- * A link is no name, like a video's pasted into the wrong field.
+ * Cleans the name of a workout or an exercise, without a comma, which parts a list.
+ * A link pasted into the wrong field is no name.
  */
 function ownNameOf(name: string): string {
     return /^\s*https?:\/\//i.test(name) ? "" : nameOf(name.replace(/\s*,\s*/g, " "));
 }
 
-/**
- * Turns the text of a number into the number, a decimal comma counting as a point.
- * `null` for an empty or unreadable text and for one below 0.
- */
+/** Reads a number, a decimal comma as a point, `null` for none or one below 0. */
 function numberOf(text: unknown): number | null {
     const written: string = String(text ?? "")
         .trim()
@@ -357,10 +253,8 @@ function numberOf(text: unknown): number | null {
 }
 
 /**
- * Turns a YouTube link into the one form `Videos.md` writes,
- * so the same video pasted as `youtu.be/…`,
- * `m.youtube.com/watch?v=…&t=42` or `youtube.com/shorts/…` is always the same link.
- * Empty for a text that is no link to a video.
+ * Turns a YouTube link into one form, so the same video pasted any way is always the same link.
+ * Empty for no link to a video.
  */
 export function linkOf(text: string): string {
     let url: URL;
@@ -379,27 +273,19 @@ export function linkOf(text: string): string {
     return videoId.test(id) ? `https://www.youtube.com/watch?v=${id}` : "";
 }
 
-/**
- * Turns a day into the form `Weights.md` writes, my standard way, like `17.10.2026`.
- */
+/** Turns a day into my standard way `Weights.md` writes. */
 function dayTextOf(day: string): string {
     return day.split("-").reverse().join(".");
 }
 
-/**
- * Reads a day of `Weights.md`, written my standard way or as the reader writes days.
- * Empty for a text that is no day.
- */
+/** Reads a day of `Weights.md` written my standard way or as the reader writes days, empty for none. */
 function dayOf(text: string): string {
     const german: RegExpExecArray | null = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(text.trim());
     if (german !== null) return `${german[3]}-${german[2].padStart(2, "0")}-${german[1].padStart(2, "0")}`;
     return /^\d{4}-\d{2}-\d{2}$/.test(text.trim()) ? text.trim() : "";
 }
 
-/**
- * Reads the rows of the table of a file, each by the names of its head,
- * so a column added later or moved reads as well. A cell the row lacks is empty.
- */
+/** Reads the rows of a table by the names of its head, so a moved column reads as well. */
 function rowsRead(file: string): Row[] {
     if (!existsSync(file)) return [];
 
@@ -416,8 +302,7 @@ function rowsRead(file: string): Row[] {
 }
 
 /**
- * Writes a file of mine anew, its head, then its rows,
- * so a table written by hand turns into the table of today.
+ * Writes a table of mine anew, so one written by hand turns into the form of today.
  *
  * @throws {Error} - When the file lies outside the new system
  */
@@ -427,9 +312,7 @@ function tableWrite(file: string, head: string[], rows: string[][]): void {
     writeFileSync(file, [...head, ...rows.map((cells: string[]): string => `| ${cells.join(" | ")} |`), ""].join("\n"));
 }
 
-/**
- * Reads my weights, the latest first, one per day, the last row of a day counting.
- */
+/** Reads my weights, the latest first, the last row of a day counting. */
 function weightsRead(): Weight[] {
     const days: Map<string, number> = new Map();
     rowsRead(sport.weights).forEach((cells: Row): void => {
@@ -443,36 +326,28 @@ function weightsRead(): Weight[] {
 }
 
 /**
- * Gives my weight on a day: the last weight on or before it, else the first one after it,
- * so a session before my first weighing still counts,
- * else {@link assumedKg}, so a session always counts.
+ * Gives my last weight on or before a day.
+ * Else the first after, else {@link assumedKg}, so a session always counts.
  */
 function weightOn(weights: Weight[], day: string): number {
     return (weights.find((weight: Weight): boolean => weight.day <= day) ?? weights.at(-1))?.kg ?? assumedKg;
 }
 
-/**
- * Gives what a kind burns above rest in some minutes at a weight: (MET − 1) × kg × hours,
- * since 1 MET is what I burn at rest anyway.
- */
+/** Gives the kcal above rest, less 1 MET, since that I burn at rest anyway. */
 function kcalOf(met: number, minutes: number, kg: number): number {
     return (Math.max(0, met - 1) * kg * minutes) / 60;
 }
 
-/** Adds numbers, from the first. */
 function sumOf(numbers: number[]): number {
     return numbers.reduce((sum: number, number: number): number => sum + number, 0);
 }
 
-/** Finds a kind of a video by its name, ignoring case. */
+/** Finds a kind of a video ignoring case. */
 function videoKindOf(name: string): SportKind | undefined {
     return videoKinds.find((known: SportKind): boolean => known.name.toLowerCase() === name.toLowerCase());
 }
 
-/**
- * Reads my videos, each with what it burns at my weight of today.
- * A kind none of {@link videoKinds} counts nothing.
- */
+/** Reads my videos at my weight of today, an unknown kind counting nothing. */
 function videosRead(weights: Weight[]): Video[] {
     const kg: number = weightOn(weights, berlinDateOf(new Date()));
     return rowsRead(sport.videos)
@@ -491,10 +366,7 @@ function videosRead(weights: Weight[]): Video[] {
         });
 }
 
-/**
- * Tells whether a part is a video, by its link,
- * else for a video added by hand by its title, ignoring case.
- */
+/** Tells whether a part is a video by its link, one added by hand by its title. */
 function isVideo(part: Part, video: { title: string; link: string }): boolean {
     return (
         part.kind === "Video" &&
@@ -504,10 +376,7 @@ function isVideo(part: Part, video: { title: string; link: string }): boolean {
     );
 }
 
-/**
- * Reads my workouts, the rows of a workout its parts in their order, each once.
- * A part of the kind `Video` is a video, any other an exercise.
- */
+/** Reads my workouts, the rows its parts in order, a part of any kind but `Video` an exercise. */
 function workoutsRead(videos: Video[]): Workout[] {
     const workouts: Map<string, Workout> = new Map();
     rowsRead(sport.workouts)
@@ -543,10 +412,7 @@ function workoutsRead(videos: Video[]): Workout[] {
     });
 }
 
-/**
- * Writes my workouts into `Workouts.md` anew, a row per part.
- * A workout without parts writes no row and so is gone.
- */
+/** Writes `Workouts.md` anew, a row per part, so a workout without parts is gone. */
 function workoutsWrite(workouts: Workout[]): void {
     tableWrite(
         sport.workouts,
@@ -565,10 +431,7 @@ function workoutsWrite(workouts: Workout[]): void {
     );
 }
 
-/**
- * Writes my workouts anew once a part of one is `held`, each such part
- * in place of what `changed` gives, none to take it out.
- */
+/** Puts what `changed` gives in place of each `held` part, writing only when one is held. */
 function partsChange(held: (part: Part) => boolean, changed: (part: Part) => Part[]): void {
     const workouts: Workout[] = workoutsRead([]);
     if (!workouts.some((workout: Workout): boolean => workout.parts.some(held))) return;
@@ -580,9 +443,6 @@ function partsChange(held: (part: Part) => boolean, changed: (part: Part) => Par
     );
 }
 
-/**
- * Writes my videos into `Videos.md` anew.
- */
 function videosWrite(videos: Video[]): void {
     tableWrite(
         sport.videos,
@@ -597,10 +457,7 @@ function videosWrite(videos: Video[]): void {
     );
 }
 
-/**
- * Reads my exercises, each variant once, see {@link sameExercise}.
- * A row written before the columns of the values has them empty.
- */
+/** Reads my exercises, each variant once. */
 function exercisesRead(): OwnExercise[] {
     return rowsRead(sport.exercises)
         .map((cells: Row): OwnExercise => ({
@@ -616,9 +473,7 @@ function exercisesRead(): OwnExercise[] {
         );
 }
 
-/**
- * Writes my exercises into `Exercises.md` anew, alphabetical.
- */
+/** Writes `Exercises.md` anew, alphabetical. */
 function exercisesWrite(exercises: OwnExercise[]): void {
     tableWrite(
         sport.exercises,
@@ -629,7 +484,6 @@ function exercisesWrite(exercises: OwnExercise[]): void {
     );
 }
 
-/** Gives the exercise of mine a part of a workout is. */
 function ownOf(part: Part): OwnExercise {
     return {
         name: part.name,
@@ -639,11 +493,7 @@ function ownOf(part: Part): OwnExercise {
     };
 }
 
-/**
- * Lists my exercises, those of `Exercises.md` and those of my workouts,
- * each variant once,
- * with the workouts that hold it, alphabetical.
- */
+/** Lists my exercises with those only in my workouts, each variant once, alphabetical. */
 function exercisesOf(workouts: Workout[], own: OwnExercise[]): Exercise[] {
     const exercises: Exercise[] = own.map((exercise: OwnExercise): Exercise => ({
         ...exercise,
@@ -666,10 +516,7 @@ function exercisesOf(workouts: Workout[], own: OwnExercise[]): Exercise[] {
     return exercises.sort((first: Exercise, second: Exercise): number => first.name.localeCompare(second.name));
 }
 
-/**
- * Reads a line `X-EXERCISE` of a session, its workout that of the line,
- * else the `X-WORKOUT` of a session written before.
- */
+/** Reads a line `X-EXERCISE`, without its own workout that of `X-WORKOUT`. */
 function sessionExerciseOf(line: string, before: string): SessionExercise {
     const parts: string[] = line.split(";").map((part: string): string => part.trim());
     return {
@@ -681,10 +528,7 @@ function sessionExerciseOf(line: string, before: string): SessionExercise {
     };
 }
 
-/**
- * Reads a line `X-VIDEO` of a session, its workout that of the line,
- * else the `X-WORKOUT` of a session written before.
- */
+/** Reads a line `X-VIDEO`, without its own workout that of `X-WORKOUT`. */
 function sessionVideoOf(line: string, before: string): SessionVideo {
     const parts: string[] = line.split(";").map((part: string): string => part.trim());
     return {
@@ -697,11 +541,8 @@ function sessionVideoOf(line: string, before: string): SessionVideo {
 }
 
 /**
- * Tells whether an entry may carry the lines of a session
- * as the entry by category sends them:
- * only a session of `Sport`, and each line well formed,
- * names and titles without `|`, `;` or a line break.
- * A line of before without its workout still counts.
+ * Tells whether an entry may carry the lines of a session, only of `Sport` and each line well formed.
+ * An old line without its workout still counts.
  */
 export function sportPartsAllow(category: string, workout: string, exercises: string[], videos: string[]): boolean {
     if (workout === "" && exercises.length === 0 && videos.length === 0) return true;
@@ -737,10 +578,7 @@ export function sportPartsAllow(category: string, workout: string, exercises: st
     );
 }
 
-/**
- * Reads what I did of each exercise the last time, from every session of the log,
- * the latest line `X-EXERCISE` of each exercise by its name in small letters.
- */
+/** Reads the latest line `X-EXERCISE` of each exercise in the whole log. */
 function lastRead(): { [name: string]: string } {
     const last: { [name: string]: string } = {};
     entriesRead(sport.log, "1970-01-01T00:00:00Z", "9999-12-31T00:00:00Z")
@@ -754,9 +592,6 @@ function lastRead(): { [name: string]: string } {
     return last;
 }
 
-/**
- * Reads everything of mine the sport area lists, see {@link Mine}.
- */
 export function mineRead(): Mine {
     const videos: Video[] = videosRead(weightsRead());
     const workouts: Workout[] = workoutsRead(videos);
@@ -771,16 +606,11 @@ export function mineRead(): Mine {
 }
 
 /**
- * Reads the sessions of a day with what they took:
- * the log entries of `Sport` that start on the day in Berlin time,
- * read from noon the day before to noon the day after, which holds the whole day.
- * Each burned at my weight of the day, see {@link kcalOf}:
- * what each video burns by its kind in `Videos.md`,
- * a video I no longer have as exercises,
- * and its minutes beyond its videos as exercises, see {@link exercisesKind},
- * none should it be shorter than its videos.
+ * Reads the sessions that start on a day in Berlin time, from noon before to noon after.
+ * Each video burns by its kind, one I no longer have as exercises.
+ * The minutes beyond its videos burn as exercises.
  *
- * @throws {Error} - When the date is not written like `2026-10-17`
+ * @throws {Error} - When the date is no `YYYY-MM-DD`
  */
 export function sportDayRead(date: string): SportDay {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`No date ${date}`);
@@ -845,12 +675,10 @@ export function sportDayRead(date: string): SportDay {
 }
 
 /**
- * Writes my weight of a day into `Weights.md`, in place of the one of that day,
- * the rows by their days, the latest first, to one decimal.
+ * Writes my weight of a day into `Weights.md` to one decimal, the latest first.
  *
  * @returns The sessions of the day, counted with the new weight
- * @throws {Error} - When the day is no day, the kilograms are not above 0 and below 500,
- *   or `Weights.md` lies outside the new system
+ * @throws {Error} - When the day is none, the kilograms not between 0 and 500, or the file lies outside
  */
 export function weightSave(sent: { day?: string; kg?: unknown }): SportDay {
     const day: string = dayOf(String(sent.day ?? ""));
@@ -870,9 +698,7 @@ export function weightSave(sent: { day?: string; kg?: unknown }): SportDay {
     return sportDayRead(day);
 }
 
-/**
- * Reads a part as the page sends it, `null` for one without a name.
- */
+/** Reads a part the page sends, `null` for one without a name. */
 function partOf(sent: unknown): Part | null {
     type Sent = Partial<Record<"kind" | "name" | "link" | "sets" | "reps" | "kg", unknown>>;
     const part: Sent = (sent as Sent) ?? {};
@@ -884,10 +710,7 @@ function partOf(sent: unknown): Part | null {
     return values === null ? null : { ...values, kind: "Exercise", link: "" };
 }
 
-/**
- * Reads the sets, repetitions and kilograms of an exercise as the page sends them,
- * `null` for a value that is none.
- */
+/** Reads the values of an exercise the page sends, `null` for one that is none. */
 function valuesOf(name: string, sent: { sets?: unknown; reps?: unknown; kg?: unknown }): OwnExercise | null {
     const sets: string = String(sent.sets ?? "").trim();
     const reps: string = String(sent.reps ?? "").trim();
@@ -899,10 +722,7 @@ function valuesOf(name: string, sent: { sets?: unknown; reps?: unknown; kg?: unk
         : null;
 }
 
-/**
- * Tells whether two exercises are the same variant: the same name, ignoring case,
- * and the same sets, repetitions and kilograms.
- */
+/** Tells whether two exercises are the same variant, the name ignoring case, the values the same. */
 function sameExercise(
     first: { name: string; sets?: string; reps?: string; kg?: string },
     second: { name: string; sets?: string; reps?: string; kg?: string },
@@ -915,10 +735,6 @@ function sameExercise(
     );
 }
 
-/**
- * Tells whether two parts of a workout are the same: the same video,
- * or the same variant of an exercise.
- */
 function samePart(first: Part, second: Part): boolean {
     return (
         first.kind === second.kind &&
@@ -929,12 +745,9 @@ function samePart(first: Part, second: Part): boolean {
 }
 
 /**
- * Writes a workout into `Workouts.md`, new or changed,
- * its parts in place of those it had, at its place, a new workout last.
- * Renamed when the page sends its old name. Each part once.
- * An exercise of it whose variant `Exercises.md` lacks goes in there too.
- * - `name`: As typed for one renamed, else as a workout of mine of the name,
- *   ignoring case, already writes it.
+ * Writes a workout new or changed at its place, a new one last, renamed when the page sends its old name.
+ * A variant of an exercise `Exercises.md` lacks goes in there too.
+ * The name stays as my workout already writes it, unless renamed.
  *
  * @throws {Error} - When the name is empty, another workout has it, or it holds no part
  */
@@ -980,11 +793,9 @@ export function workoutSave(sent: { old?: string; name?: string; parts?: unknown
 }
 
 /**
- * Adds an exercise to `Exercises.md` by itself,
- * a variant of its own beside those of the same name.
- * The same variant I have changes nothing.
+ * Adds an exercise to `Exercises.md` as its own variant, one I have already changing nothing.
  *
- * @throws {Error} - When the name is empty or a value is none, see {@link valuesOf}
+ * @throws {Error} - When the name is empty or a value is none
  */
 export function exerciseAdd(sent: { name?: string; sets?: string; reps?: string; kg?: string }): Mine {
     const name: string = ownNameOf(String(sent.name ?? ""));
@@ -997,14 +808,10 @@ export function exerciseAdd(sent: { name?: string; sets?: string; reps?: string;
 }
 
 /**
- * Writes what I do of a variant of an exercise as a rule into `Exercises.md`,
- * in place of the variant the page sends as it was,
- * adding it where it is not there yet, like one of a workout only.
- * Every part of a workout that was that variant takes the new values too,
- * so a workout brings them.
- * A variant that becomes another I have already stands once.
+ * Changes the values of a variant in `Exercises.md`, adding it when only a workout had it.
+ * Every workout part of that variant takes the new values too, so a workout brings them.
  *
- * @throws {Error} - When the name is empty or a value is none, see {@link valuesOf}
+ * @throws {Error} - When the name is empty or a value is none
  */
 export function exerciseChange(sent: {
     old?: { name?: string; sets?: string; reps?: string; kg?: string };
@@ -1033,12 +840,7 @@ export function exerciseChange(sent: {
     return mineRead();
 }
 
-/**
- * Removes a variant of an exercise from `Exercises.md`
- * and from every workout that holds it,
- * so no workout names a variant I no longer have.
- * A workout left without parts is gone with it.
- */
+/** Removes a variant from `Exercises.md` and every workout, one left without parts gone with it. */
 export function exerciseRemove(sent: { name?: string; sets?: string; reps?: string; kg?: string }): Mine {
     const gone: OwnExercise = {
         name: String(sent.name ?? "").trim(),
@@ -1056,9 +858,7 @@ export function exerciseRemove(sent: { name?: string; sets?: string; reps?: stri
     return mineRead();
 }
 
-/**
- * Removes a workout from `Workouts.md`, by its name, ignoring case.
- */
+/** Removes a workout by its name, ignoring case. */
 export function workoutRemove(name: string): Mine {
     const workouts: Workout[] = workoutsRead([]);
     const kept: Workout[] = workouts.filter(
@@ -1069,11 +869,9 @@ export function workoutRemove(name: string): Mine {
 }
 
 /**
- * Asks YouTube for the title and the channel of a video by its link,
- * see the top of this file.
+ * Asks YouTube for the title and the channel of a video by its link.
  *
- * @throws {Error} - When the text is no link to a video,
- *   or YouTube does not answer in time or knows no such video
+ * @throws {Error} - When the text is no link to a video, or YouTube does not answer in time or knows none
  */
 export async function videoFind(text: string): Promise<VideoFound> {
     const link: string = linkOf(text);
@@ -1099,14 +897,10 @@ export async function videoFind(text: string): Promise<VideoFound> {
 }
 
 /**
- * Writes a video into `Videos.md`, new or changed:
- * the one of its link, else for a video added by hand the one of its title,
- * changed at its place, a new one last.
- * When the page sends the link or title it had, that one.
- * A title changed changes it in every workout that holds the video too.
+ * Writes a video new or changed at its place, found by the link or title it had, a new one last.
+ * A changed title or link changes it in every workout too.
  *
- * @throws {Error} - When the title is empty, the kind is none of {@link videoKinds},
- *   the minutes are no number, or another video has the link
+ * @throws {Error} - When the title is empty, the kind unknown, the minutes no number, or another video has the link
  */
 export function videoSave(sent: {
     title?: string;
@@ -1168,12 +962,7 @@ export function videoSave(sent: {
     return mineRead();
 }
 
-/**
- * Removes a video from `Videos.md`, by its link,
- * else for a video added by hand by its title,
- * and from every workout that holds it, so no workout names a video I no longer have.
- * A workout left without parts is gone with it.
- */
+/** Removes a video from `Videos.md` and every workout, one left without parts gone with it. */
 export function videoRemove(sent: { link?: string; title?: string }): Mine {
     const videos: Video[] = videosRead([]);
     const link: string = linkOf(String(sent.link ?? ""));

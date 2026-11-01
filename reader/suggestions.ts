@@ -1,26 +1,13 @@
 /**
  * ## Suggestions
  *
- * Puts what I learn today into the plan of today as real boxes, without asking:
- * one box per chapter with something due today,
- * see `today` of `SkillSection` in `skill.ts`,
- * the same chapters the module overview shows.
- * A box of my own learning, without type and without time,
- * like a to-do, since only its length matters, not when,
- * see `taskMinutes` and `theoryMinutes` in `trackers.ts`,
- * and one `ATTACH` per note of the chapter with something due,
- * as it stands when the box is written; its real length the log keeps.
- * A chapter gets no box while the plan of today holds a study box of it,
- * as `studyBoxOf` in `boxes.ts` takes it, open, done, skipped or pushed away,
- * nor while such a box of it from a day before is still open,
- * see `carriedOf` in `boxes.ts`.
- * A box of the chapter with a time or a deadline,
- * like a lecture or a homework sheet, keeps none out.
- * Written before the plan of today is read, see `reader.ts`,
- * so the box stands there before I begin; nothing written is taken out again.
- * Worked out once per day, change of the new system and five minutes,
- * since every request of the plan asks for it,
- * and working it out reads every note of my modules, about 0.2 s.
+ * Puts one box per chapter due today into the plan of today, without asking.
+ * A box of my own learning without type and time, since only its length matters.
+ * It holds one `ATTACH` per due note of the chapter.
+ * A chapter gets no box while today holds a study box of it in any state, or one from before is still open.
+ * A box with a time or a deadline keeps none out.
+ * Written before the plan is read, so the box stands there before I begin, never taken out again.
+ * Worked out once per day, change and five minutes, since it reads every note of my modules, about 0.2 s.
  */
 
 import { boxAdd, boxesRead } from "./boxes.ts";
@@ -34,20 +21,15 @@ import type { Box } from "./boxes.ts";
 import type { SkillModule, SkillSection } from "./skill.ts";
 
 /**
- * When the boxes were last worked out:
- * today, the count of changes of the new system and the five minutes then,
- * see `changesVersion` in `changes.ts`.
- * The five minutes catch a note
- * of my modules changed outside the new system, which tells no change.
+ * When the boxes were last worked out, today, the count of changes and the five minutes.
+ * The five minutes catch a note changed outside the new system.
  */
 let written: string = "";
 
 /**
- * Writes the boxes of the chapters due today into the plan of today,
- * but while nothing changed since the last time, see {@link written}.
+ * Writes the boxes of the chapters due today, unless nothing changed since {@link written}.
  *
- * @throws {Error} - When a folder, a note, the log or the plan cannot be read,
- *   or a box cannot be written
+ * @throws {Error} - When a folder, note, the log or the plan cannot be read, or a box cannot be written
  */
 export function suggestionsWrite(): void {
     const today: string = berlinDateOf(new Date());

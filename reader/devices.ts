@@ -1,17 +1,10 @@
 /**
  * ## Devices
  *
- * Writes what each of my devices shows of the page into `Devices.md`,
- * so the dashboard is shaped for each of them:
- * one Markdown table, one row per device, by its name in my tailnet.
- * `tailscale serve` hands every request on to the reader with the Tailscale
- * address of its device in `X-Forwarded-For`, which `tailscale whois` names.
- * A report with other sizes writes the row of its device anew,
- * the same sizes leave the file as it is.
- * A request without that address, which reached the reader without Tailscale,
- * like the browser of Claude's screenshots on skriptum,
- * and one of skriptum itself write nothing,
- * since I never look at the dashboard on skriptum.
+ * Writes what each of my devices shows of the page into `Devices.md`, one row per device by its tailnet name.
+ * `tailscale serve` hands on the address of the device in `X-Forwarded-For`, `tailscale whois` names it.
+ * Only other sizes write the row anew.
+ * A request without Tailscale or from skriptum writes nothing, since I never look at the dashboard there.
  */
 
 import { execFile } from "node:child_process";
@@ -23,7 +16,7 @@ import { berlinDateOf, berlinTimeOf } from "./calendar.ts";
 import { devicesFile, writeAllowed } from "./sources.ts";
 
 /**
- * What a device shows of the page, as the page sends it, sizes in CSS pixels.
+ * What a device shows of the page, in CSS pixels.
  * `scale` is device pixels per CSS pixel, `app` whether it runs as the installed app.
  */
 export type DeviceReport = {
@@ -38,18 +31,13 @@ export type DeviceReport = {
 /** Head of a new `Devices.md`, its table without rows. */
 const fileHead: string[] = ["| Device | Page | Scale | Screen | App | Since |", "|---|---|---|---|---|---|"];
 
-/**
- * Names a device by its Tailscale address, as my tailnet names it.
- *
- * @throws {Error} - When Tailscale does not know the address
- */
+/** Names a device by its Tailscale address, throws when Tailscale does not know it. */
 async function deviceNameOf(address: string): Promise<string> {
     const { stdout }: { stdout: string } = await promisify(execFile)("tailscale", ["whois", "--json", address]);
     const whois: { Node: { ComputedName: string } } = JSON.parse(stdout);
     return whois.Node.ComputedName;
 }
 
-/** Gives the cells of a row of `Devices.md`, without the edges of the table. */
 function cellsOf(row: string): string[] {
     return row
         .split("|")
@@ -58,13 +46,10 @@ function cellsOf(row: string): string[] {
 }
 
 /**
- * Writes the report of a device into its row of `Devices.md`,
- * every other line staying as it is.
+ * Writes the report of a device into its row of `Devices.md`.
  *
- * @param address - Tailscale address of the device, empty for a request without Tailscale
- * @throws {Error} - When Tailscale does not know the address,
- *   a size is no number above 0,
- *   or the file lies outside the new system
+ * @param address - Empty for a request without Tailscale
+ * @throws {Error} - When Tailscale does not know the address, a size is no number above 0, or the file lies outside
  */
 export async function deviceReport(report: DeviceReport, address: string): Promise<void> {
     if (address === "") return;
