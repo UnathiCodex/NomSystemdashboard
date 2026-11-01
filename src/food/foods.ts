@@ -66,10 +66,8 @@ export function unitOf(kind: Kind): string {
  * an entry of drinks alone names them all, so no summary stays empty.
  */
 export function summaryOf(named: { name: string; kind: Kind }[]): string {
-    const eaten: { name: string; kind: Kind }[] = named.filter(
-        (part: { name: string; kind: Kind }): boolean => part.kind !== "Drink",
-    );
-    return (eaten.length > 0 ? eaten : named).map((part: { name: string; kind: Kind }): string => part.name).join(", ");
+    const eaten: typeof named = named.filter((part: (typeof named)[number]): boolean => part.kind !== "Drink");
+    return (eaten.length > 0 ? eaten : named).map((part: (typeof named)[number]): string => part.name).join(", ");
 }
 
 /**
@@ -283,11 +281,9 @@ export function bracketsWatch(list: HTMLElement): void {
         const brackets: HTMLElement[] = [...list.querySelectorAll<HTMLElement>(".food-brand")].filter(
             (bracket: HTMLElement): boolean => bracket.parentElement?.closest("[data-brackets]") === list,
         );
-        brackets.forEach((bracket: HTMLElement): void => bracket.classList.remove("bracket-below"));
+        for (const bracket of brackets) bracket.classList.remove("bracket-below");
         const below: boolean = !brackets.every(fits);
-        brackets.forEach((bracket: HTMLElement): void => {
-            bracket.classList.toggle("bracket-below", below);
-        });
+        for (const bracket of brackets) bracket.classList.toggle("bracket-below", below);
     };
     new ResizeObserver((entries: ResizeObserverEntry[]): void => {
         const now: number = entries[0]?.contentRect.width ?? width;
