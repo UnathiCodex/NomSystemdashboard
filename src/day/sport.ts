@@ -3,13 +3,15 @@
  *
  * A session of the log, `Sport`, built and working as a meal with its foods,
  * see `meal.ts`, in its look, see `meal.css`, on the computer as on a phone:
- * - Exercises: what I did, the one plus beside its name opening one list,
- *   whose search finds my workouts first, then my exercises,
- *   then the basic ones of a gym, see `basicExercises` in `reader/sport.ts`,
- *   and a name typed that none has adds itself as a new exercise.
+ * - Exercises: what I did, right below the summary as the foods of a meal,
+ *   the one plus beside its name opening one list in the look of the search of foods,
+ *   see {@link plusOfList}, which finds my workouts first, then my exercises.
+ *   While the text typed is no workout of mine, `+ New workout` puts an empty block
+ *   of that name into the entry, see {@link workoutNew},
+ *   which goes into `Workouts.md` with its first exercise, see {@link freshSend}.
+ *   `+ New exercise` makes the name typed one of mine, see {@link exerciseNew}.
  *   Each variant of mine stands with its values grey beside its name and brings them.
- *   One without values, a basic one or one typed new brings
- *   what I did of it the last time.
+ *   One without values brings what I did of it the last time.
  *   A workout picked brings its block, as a meal brings its foods,
  *   its parts indented below it.
  *   An exercise picked alone stands by itself below the blocks.
@@ -32,13 +34,15 @@
  * which its parts without a workout of their own belong to.
  */
 
-import { choicesOf, rowOf, searchOf } from "./choices.ts";
-import { mineLoad } from "../sport/mine.ts";
+import { listOf, rowOf } from "./choices.ts";
+import { exerciseSend, mineLoad, workoutDelete, workoutSend } from "../sport/mine.ts";
+import { lineNameOf, newOf, ruleTextOf, typedNameOf } from "../sport/lists.ts";
 import { buttonOf, elementOf, kcalTextOf } from "../food/foods.ts";
-import { crossPut } from "../icons.ts";
+import { listHeadOf, listLineOf } from "../food/search.ts";
+import { matchesAll, wordsOf } from "../search.ts";
+import { crossPut, plusPut, searchFieldOf } from "../icons.ts";
 import "./sport.css";
 
-import type { Choice } from "./choices.ts";
 import type { Exercise, Mine, Part, Workout } from "../sport/mine.ts";
 import type { Video } from "../../reader/sport.ts";
 
@@ -101,20 +105,11 @@ let changed: () => void = (): void => undefined;
 /** Puts the end of a session minutes after its start, see `endFit` in `categories.ts`. */
 let fit: (minutes: number) => void = (): void => undefined;
 
-/** Prefix of the value of a workout in the list, tells it from an exercise of a name. */
-const workoutValue: string = "workout:";
+/** Workouts named new in this session, see {@link freshSend}. */
+let fresh: Set<string> = new Set();
 
-/**
- * Prefix of the value of a variant of mine in the list,
- * before its place among my exercises,
- * which tells two variants of one name apart.
- */
-const variantValue: string = "variant:";
-
-/** Cleans a name typed for an exercise, as the reader cleans it. */
-function nameOf(typed: string): string {
-    return typed.replace(/[|;,]/g, " ").replace(/\s+/g, " ").trim();
-}
+/** The plus of each block, so a new workout opens its list at once. */
+let blockPluses: Map<string, HTMLButtonElement> = new Map();
 
 /**
  * Reads a line `X-EXERCISE` into its row, its workout that of the line,
@@ -190,16 +185,6 @@ function videoKcalOf(video: VideoDone): number {
         : (own.kcal / own.minutes) * minutes;
 }
 
-/** Writes the values of a variant as the list shows them grey beside its name. */
-function valuesTextOf(exercise: { sets: string; reps: string; kg: string }): string {
-    const reps: string = exercise.reps.replace(/^(\d+)s$/, "$1 s");
-    const sets: string =
-        exercise.sets === "" ? reps : reps === "" ? `${exercise.sets} ×` : `${exercise.sets} × ${reps}`;
-    return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
-        .filter((part: string): boolean => part !== "")
-        .join(" · ");
-}
-
 /**
  * Fits the end of the session to its videos after a change of its parts,
  * nothing while it holds an exercise, see the top of this file.
@@ -246,22 +231,66 @@ function workoutPick(name: string): void {
 }
 
 /**
- * Adds an exercise, to a block or alone, and puts the cursor into its sets.
- *
- * @param value - Value picked, a variant by {@link variantValue} and its place,
- *   else a name as picked or typed
- * @param workout - The workout it belongs to, empty for one alone
+ * Puts an empty block of a new workout into the session, named as typed,
+ * and opens its own list at once.
  */
-function exerciseAdd(value: string, workout: string): void {
-    const variant: Exercise | undefined = value.startsWith(variantValue)
-        ? mine?.exercises[Number(value.slice(variantValue.length))]
-        : undefined;
-    const name: string = nameOf(variant?.name ?? value);
-    if (name === "") return;
-    const added: ExerciseDone = exerciseLastOf(name, workout, variant);
-    exercises = [...exercises, added];
+function workoutNew(name: string): void {
+    blocks = [...blocks, name];
+    fresh.add(name);
     rowsShow();
+    blockPluses.get(name)?.click();
+}
+
+/**
+ * Keeps a new workout of the session in `Workouts.md` as its exercises are now,
+ * so it is mine the moment it holds one, whether the entry is saved or not,
+ * as a new meal goes into `Meals.md`, see `freshSend` in `meal.ts`.
+ * With its last exercise removed it leaves `Workouts.md`, which holds no workout without parts.
+ * Its block removed by its `×`, it stays mine. A workout I had before stays as it is.
+ */
+function freshSend(workout: string): void {
+    if (!fresh.has(workout)) return;
+    const parts: Part[] = exercises
+        .filter((exercise: ExerciseDone): boolean => exercise.workout === workout)
+        .map((exercise: ExerciseDone): Part => ({ ...exercise, kind: "Exercise", link: "" }));
+    (parts.length === 0 ? workoutDelete(workout) : workoutSend(workout, parts))
+        .then((sent: Mine): void => {
+            mine = sent;
+        })
+        .catch((error: unknown): void => console.error(error));
+}
+
+/**
+ * Adds an exercise, to a block or alone, unless it stands there already as a food is picked once,
+ * and puts the cursor into its sets.
+ *
+ * @param workout - The workout it belongs to, empty for one alone
+ * @param variant - The variant of mine picked, none for one typed new
+ */
+function exerciseAdd(name: string, workout: string, variant?: Exercise): void {
+    let added: ExerciseDone | undefined = exercises.find(
+        (other: ExerciseDone): boolean => other.workout === workout && other.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (added === undefined) {
+        added = exerciseLastOf(name, workout, variant);
+        exercises = [...exercises, added];
+        rowsShow();
+        freshSend(workout);
+    }
     place.querySelector<HTMLInputElement>(`[data-part="${exercises.indexOf(added)}"] .sport-sets input`)?.focus();
+}
+
+/**
+ * Adds an exercise typed new: first into `Exercises.md`, see `exerciseSend` in `../sport/mine.ts`,
+ * so it is mine as a new food is, then into the session.
+ */
+function exerciseNew(name: string, workout: string): void {
+    exerciseSend(name)
+        .then((sent: Mine): void => {
+            mine = sent;
+            exerciseAdd(name, workout);
+        })
+        .catch((error: unknown): void => console.error(error));
 }
 
 /**
@@ -357,48 +386,112 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the list of exercises, a menu with the one plus as its line.
+ * Makes the list of a plus as the search of foods of a meal looks, see `foodSearchOf` in `../food/search.ts`,
+ * a menu of its own under the plus, see `listOf` in `choices.ts`:
+ * a search field, then my workouts, only in the list of the row `Exercises`,
+ * then my exercises, each found by the words typed,
+ * each section ending in `+ New workout “…”` or `+ New exercise “…”` for a name none has.
+ * Enter takes the first workout or exercise found, never a new one, as `firstPick` in `../food/search.ts`.
  *
- * @param workouts - Whether the list offers my workouts first,
- *   as the list of the row `Exercises` does
- * @param pick - Takes the value picked, a workout by {@link workoutValue} and its name,
- *   a variant of mine by {@link variantValue} and its place, else the name of an exercise
+ * @param picker - Element the list stands in, below the rows it adds to
+ * @param workout - The block it adds to, empty for the row `Exercises`, which offers my workouts too
+ * @returns The plus, which opens it
  */
-function listOfExercises(words: string, workouts: boolean, pick: (value: string) => void): HTMLElement {
-    const group: string = workouts ? "Exercises" : "";
-    const choices: Choice[] = [
-        ...(workouts
-            ? (mine?.workouts ?? []).map((workout: Workout): Choice => ({
-                  value: `${workoutValue}${workout.name}`,
-                  text: workout.name,
-                  group: "My workouts",
-                  detail: workout.parts.map((part: Part): string => part.name).join(", "),
-              }))
-            : []),
-        ...(mine?.exercises ?? []).map((exercise: Exercise, index: number): Choice => ({
-            value: `${variantValue}${index}`,
-            text: exercise.name,
-            group: group,
-            detail: valuesTextOf(exercise),
-        })),
-        ...(mine?.basics ?? []).map((name: string): Choice => ({
-            value: name,
-            text: name,
-            group: group,
-        })),
-    ];
-    return choicesOf({
-        search: searchOf(choices),
-        picked: [],
-        many: false,
-        adding: true,
-        noun: "exercise",
-        empty: words,
-        plus: true,
-        pick: (values: string[]): void => {
-            if (values.length > 0) pick(values[0]);
+function plusOfList(picker: HTMLElement, words: string, workout: string): HTMLButtonElement {
+    const plus: HTMLButtonElement = document.createElement("button");
+    const box: HTMLElement = elementOf("div", "picker-box meal-box", "");
+    const search: HTMLElement = elementOf("div", "food-search", "");
+    const input: HTMLInputElement = document.createElement("input");
+    const results: HTMLElement = elementOf("div", "food-results", "");
+    const taken: (pick: () => void) => () => void =
+        (pick: () => void): (() => void) =>
+        (): void => {
+            close();
+            pick();
+        };
+    const show: () => void = (): void => {
+        const typed: string = typedNameOf(input.value);
+        const found: (name: string) => boolean = (name: string): boolean => matchesAll(name, wordsOf(input.value));
+        const known: (name: string) => boolean = (name: string): boolean => name.toLowerCase() === typed.toLowerCase();
+        const sectionOf: (name: string, lines: HTMLElement[], names: string[], add: HTMLElement) => HTMLElement[] = (
+            name: string,
+            lines: HTMLElement[],
+            names: string[],
+            add: HTMLElement,
+        ): HTMLElement[] => {
+            const all: HTMLElement[] = [...lines, ...(typed === "" || names.some(known) ? [] : [add])];
+            return all.length === 0 ? [] : [listHeadOf(name, ""), ...all];
+        };
+        const workouts: Workout[] =
+            workout !== "" ? [] : (mine?.workouts ?? []).filter((one: Workout) => found(one.name));
+        const own: Exercise[] = (mine?.exercises ?? []).filter((one: Exercise): boolean => found(one.name));
+        const lines: HTMLElement[] = [
+            ...(workout !== ""
+                ? []
+                : sectionOf(
+                      "Workouts",
+                      workouts.map((one: Workout): HTMLElement => {
+                          const parts: string = one.parts.map((part: Part): string => part.name).join(", ");
+                          return listLineOf(
+                              lineNameOf(one.name, parts),
+                              one.kcal,
+                              taken((): void => workoutPick(one.name)),
+                              null,
+                          )[0];
+                      }),
+                      [...(mine?.workouts ?? []).map((one: Workout): string => one.name), ...blocks],
+                      newOf(
+                          `New workout “${typed}”`,
+                          "New workout, its exercises picked next",
+                          taken((): void => workoutNew(typed)),
+                      ),
+                  )),
+            ...sectionOf(
+                "Exercises",
+                own.map((one: Exercise): HTMLElement => {
+                    const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
+                        lineNameOf(one.name, ""),
+                        null,
+                        taken((): void => exerciseAdd(one.name, workout, one)),
+                        null,
+                    );
+                    row.querySelector(".food-value")?.replaceChildren(ruleTextOf(one));
+                    return line;
+                }),
+                (mine?.exercises ?? []).map((one: Exercise): string => one.name),
+                newOf(
+                    `New exercise “${typed}”`,
+                    "New exercise, mine from now on",
+                    taken((): void => exerciseNew(typed, workout)),
+                ),
+            ),
+        ];
+        results.replaceChildren(
+            ...(lines.length > 0 ? lines : [elementOf("p", "food-none", "Type a workout or an exercise")]),
+        );
+    };
+    const close: () => void = listOf(
+        picker,
+        plus,
+        box,
+        (): void => {
+            input.value = "";
+            show();
+            input.focus();
         },
+        (): void => {},
+    );
+    input.addEventListener("input", show);
+    input.addEventListener("keydown", (event: KeyboardEvent): void => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        results.querySelector<HTMLButtonElement>(".food-item > button.food-row")?.click();
     });
+    plusPut(plus, words);
+    search.append(searchFieldOf(input, workout === "" ? "Search workouts or exercises" : "Search exercises"), results);
+    box.append(search);
+    picker.append(box);
+    return plus;
 }
 
 /** Makes the row of an exercise. */
@@ -419,6 +512,7 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
             exercises = exercises.filter((other: ExerciseDone): boolean => other !== exercise);
             rowsShow();
             videosFit();
+            freshSend(exercise.workout);
         }),
     );
     return row;
@@ -475,11 +569,9 @@ function blockOf(workout: string): HTMLElement[] {
                 ? ""
                 : kcalTextOf(own.reduce((sum: number, video: VideoDone): number => sum + videoKcalOf(video), 0));
     };
-    const list: HTMLElement = listOfExercises(`Add an exercise to ${workout}`, false, (value: string): void =>
-        exerciseAdd(value, workout),
-    );
-    const line: HTMLElement | null = list.querySelector(".picker-line");
-    if (line !== null) name.append(line);
+    const plus: HTMLButtonElement = plusOfList(parts, `Add an exercise to ${workout}`, workout);
+    blockPluses.set(workout, plus);
+    name.append(plus);
     row.append(
         name,
         elementOf("span", "", ""),
@@ -492,39 +584,33 @@ function blockOf(workout: string): HTMLElement[] {
             videosFit();
         }),
     );
-    parts.append(
+    parts.prepend(
         ...exercises.filter((exercise: ExerciseDone): boolean => exercise.workout === workout).map(exerciseRowOf),
         ...own.map((video: VideoDone): HTMLElement => videoRowOf(video, total)),
-        list,
     );
     total();
     return [row, parts];
 }
 
 /**
- * Shows the row of what I did anew in its place, then lets the dialog know.
- * - `alone`: The exercises picked alone,
- *   and those of a workout the session no longer holds.
- * - `list`: The list of the row, whose plus goes beside its name,
- *   as `lineMove` in `choices.ts` moves it, and not the plus of a block,
- *   which stands first in the row.
+ * Shows the row of what I did anew in its place, as the row `Foods` of a meal stands,
+ * see `mealOf` in `meal.ts`: its name with the plus of its list, then its blocks,
+ * then the exercises picked alone and those of a workout the session no longer holds.
+ * Then lets the dialog know.
  */
 function rowsShow(): void {
     const rows: HTMLElement = elementOf("div", "meal-rows", "");
     const alone: ExerciseDone[] = exercises.filter(
         (exercise: ExerciseDone): boolean => !blocks.includes(exercise.workout),
     );
+    blockPluses = new Map();
     rows.append(...blocks.flatMap(blockOf), ...alone.map(exerciseRowOf));
-    const box: HTMLElement = elementOf("div", "meal", "");
-    const list: HTMLElement = listOfExercises("Add a workout or an exercise", true, (value: string): void => {
-        if (value.startsWith(workoutValue)) workoutPick(value.slice(workoutValue.length));
-        else exerciseAdd(value, "");
-    });
-    box.append(rows, list);
-    const row: HTMLElement = rowOf("Exercises", box);
-    const label: HTMLElement | null = row.querySelector(".entry-name");
-    const line: HTMLElement | null = list.querySelector(".picker-line");
-    if (label !== null && line !== null) label.append(line);
+    const picker: HTMLElement = elementOf("div", "meal picker", "");
+    picker.append(rows);
+    const plus: HTMLButtonElement = plusOfList(picker, "Add a workout or an exercise", "");
+    plus.classList.add("picker-line");
+    const row: HTMLElement = rowOf("Exercises", picker);
+    row.querySelector(".entry-name")?.append(plus);
     place.replaceChildren(row);
     changed();
 }
@@ -539,6 +625,7 @@ function rowsShow(): void {
  */
 export async function sportOpen(lines: SessionLines | null): Promise<void> {
     mine = await mineLoad();
+    fresh = new Set();
     const before: string = lines?.workout ?? "";
     exercises = (lines?.exercises ?? []).map((line: string): ExerciseDone => exerciseOf(line, before));
     videos = (lines?.videos ?? []).map((line: string): VideoDone => videoOf(line, before));

@@ -1507,12 +1507,16 @@ function ofSeries(): boolean {
 
 /**
  * Shows the rows of the summary of the category picked, also anew after its text changed,
- * the rows below it staying as they are.
+ * the rows below it staying as they are;
+ * of a session of sport right below it what I did, as the foods of a meal, see `sport.ts`.
  */
 function titleRowsShow(): void {
     document
         .getElementById("entry-fields")
-        ?.replaceChildren(...rowsOf((field: Field): boolean => field.key === "title"));
+        ?.replaceChildren(
+            ...rowsOf((field: Field): boolean => field.key === "title"),
+            ...(sportShown() ? sportRowsOf(saveAllow, endFit) : []),
+        );
 }
 
 /**
@@ -1524,9 +1528,7 @@ function titleRowsShow(): void {
 function fieldsShow(): void {
     titleRowsShow();
     placesShow();
-    document
-        .getElementById("entry-more")
-        ?.replaceChildren(...moreRowsOf(), ...painRowOf(), ...(sportShown() ? sportRowsOf(saveAllow, endFit) : []));
+    document.getElementById("entry-more")?.replaceChildren(...moreRowsOf(), ...painRowOf());
     document.getElementById("entry-note")?.closest(".panel-field")?.toggleAttribute("hidden", sportShown());
     saveAllow();
 }

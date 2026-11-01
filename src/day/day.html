@@ -16,9 +16,11 @@
              only the date at the left and the icon back to today at the right -->
         <div class="day-bar day-nav">
             <button class="day-arrow" id="day-back" type="button"></button>
-            <h2 class="day-title"><button class="day-title-button" id="day-title"
-                type="button" title="Pick a day"><span
-                class="day-date" id="day-date"></span></button></h2>
+            <h2 class="day-title">
+                <button class="day-title-button" id="day-title" type="button" title="Pick a day">
+                    <span class="day-date" id="day-date"></span>
+                </button>
+            </h2>
             <button class="day-today" id="day-today" type="button" disabled></button>
             <button class="day-arrow" id="day-next" type="button"></button>
 
@@ -70,19 +72,15 @@
         <div class="note-boxes note-folded">
             <section class="day-column">
                 <div class="column-head">
-                    <h2><button class="note-fold" type="button"
-                        aria-expanded="false">Gratitude</button></h2>
+                    <h2><button class="note-fold" type="button" aria-expanded="false">Gratitude</button></h2>
                 </div>
-                <div class="note-points editor-text markdown" id="gratitude"
-                     aria-label="Gratitude"></div>
+                <div class="note-points editor-text markdown" id="gratitude" aria-label="Gratitude"></div>
             </section>
             <section class="day-column">
                 <div class="column-head">
-                    <h2><button class="note-fold" type="button"
-                        aria-expanded="false">About</button></h2>
+                    <h2><button class="note-fold" type="button" aria-expanded="false">About</button></h2>
                 </div>
-                <div class="note-points editor-text markdown" id="about"
-                     aria-label="About"></div>
+                <div class="note-points editor-text markdown" id="about" aria-label="About"></div>
             </section>
             <p class="panel-error" id="note-boxes-error" hidden>Saving failed</p>
             <div class="day-note" id="day-note-text"></div>
@@ -120,7 +118,8 @@
         <!-- The category, one line; for a box only the categories I plan -->
         <div id="entry-category"></div>
 
-        <!-- Fields of the category: what, or the skill and its type side by side -->
+        <!-- Fields of the category: what, or the skill and its type side by side;
+             for Sport in the log below it its workouts, exercises and videos -->
         <div class="panel-form" id="entry-fields"></div>
 
         <!-- Where it is: where a way starts and its place,
@@ -150,19 +149,33 @@
                  how long right beside the name Time, see lengthShow in categories.ts;
                  the label names the day of the start by for, so a click on the row
                  never presses the switch, which would else be its first control -->
-            <label class="panel-field" for="entry-start-day"><span
-                class="entry-name">Time<span id="entry-swap"></span></span>
+            <label class="panel-field" for="entry-start-day"
+                ><span class="entry-name">Time<span id="entry-swap"></span></span>
                 <span class="entry-range">
                     <span class="entry-moment">
-                        <input class="date-field" id="entry-start-day" type="text"
-                               inputmode="decimal" autocomplete="off" required
-                               aria-label="Day of the start">
-                        <input class="time-field" id="entry-start" type="text"
-                               inputmode="numeric" autocomplete="off"
-                               aria-label="Time of the start">
-                        <input class="time-field" id="entry-length" type="text"
-                               inputmode="numeric" autocomplete="off"
-                               aria-label="How long"></span>
+                        <input
+                            class="date-field"
+                            id="entry-start-day"
+                            type="text"
+                            inputmode="decimal"
+                            autocomplete="off"
+                            required
+                            aria-label="Day of the start" />
+                        <input
+                            class="time-field"
+                            id="entry-start"
+                            type="text"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            aria-label="Time of the start" />
+                        <input
+                            class="time-field"
+                            id="entry-length"
+                            type="text"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            aria-label="How long"
+                    /></span>
                     <!-- The end with the dash before it, one unit,
                          so a narrow row, like on a phone, breaks before the dash;
                          its day hidden while it is that of the start,
@@ -174,47 +187,65 @@
                          in categories.ts, so `12:00 ⟳ Group 05` never breaks -->
                     <span class="entry-moment">
                         <span class="entry-dash" aria-hidden="true">–</span>
-                        <input class="date-field" id="entry-end-day" type="text"
-                               inputmode="decimal" autocomplete="off" required
-                               aria-label="Day of the end">
-                        <input class="time-field" id="entry-end" type="text"
-                               inputmode="numeric" autocomplete="off"
-                               aria-label="Time of the end">
-                        <span class="entry-of-series" id="entry-of-series"
-                              hidden></span></span></span></label>
-            <label class="panel-field" id="entry-deadline"><span
-                class="entry-name">Deadline</span>
+                        <input
+                            class="date-field"
+                            id="entry-end-day"
+                            type="text"
+                            inputmode="decimal"
+                            autocomplete="off"
+                            required
+                            aria-label="Day of the end" />
+                        <input
+                            class="time-field"
+                            id="entry-end"
+                            type="text"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            aria-label="Time of the end" />
+                        <span class="entry-of-series" id="entry-of-series" hidden></span></span></span
+            ></label>
+            <label class="panel-field" id="entry-deadline"
+                ><span class="entry-name">Deadline</span>
                 <span class="entry-moment">
-                    <input class="date-field" id="entry-deadline-day" type="text"
-                           inputmode="decimal" autocomplete="off"
-                           aria-label="Day of the deadline">
-                    <input class="time-field" id="entry-deadline-time" type="text"
-                           inputmode="numeric" autocomplete="off"
-                           aria-label="Time of the deadline"></span></label>
+                    <input
+                        class="date-field"
+                        id="entry-deadline-day"
+                        type="text"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        aria-label="Day of the deadline" />
+                    <input
+                        class="time-field"
+                        id="entry-deadline-time"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        aria-label="Time of the deadline" /></span
+            ></label>
         </fieldset>
 
         <!-- More fields of the category: who I was with; for Skill its semester,
-             chapters, documents and attempts; for Body my neck pain;
-             for Sport in the log its workout, exercises and videos -->
+             chapters, documents and attempts; for Body my neck pain -->
         <div class="panel-form" id="entry-more"></div>
 
         <!-- Free note, my diary of the unit,
              how it felt and what I learned, growing with its text -->
-        <label class="panel-field"><span class="entry-name">Note</span>
-            <textarea id="entry-note" rows="3" aria-label="Note"></textarea></label>
+        <label class="panel-field"
+            ><span class="entry-name">Note</span> <textarea id="entry-note" rows="3" aria-label="Note"></textarea>
+        </label>
 
         <!-- The box a log entry comes from, small and grey, with its pencil -->
-        <p class="entry-from-plan" id="entry-plan" hidden><span
-            id="entry-plan-title"></span><button class="entry-pencil" id="entry-plan-edit"
-            type="button" hidden></button></p>
+        <p class="entry-from-plan" id="entry-plan" hidden>
+            <span id="entry-plan-title"></span
+            ><button class="entry-pencil" id="entry-plan-edit" type="button" hidden></button>
+        </p>
 
         <!-- Hint when the reader does not take the entry -->
         <p class="panel-error" id="entry-error" hidden>Saving failed</p>
 
         <!-- Hint when the entry changed in its file since the dialog opened,
              so the reader refused it, see entrySave -->
-        <p class="panel-error" id="entry-changed"
-           hidden>Not saved: it changed on the disk, close and open it again</p>
+        <p class="panel-error" id="entry-changed" hidden>Not saved: it changed on the disk, close and open it again</p>
 
         <!-- The file of the entry or the box at the left, small and grey,
              a link that opens it, see fileShow in choices.ts; at the right the copy
@@ -225,8 +256,7 @@
              no button logs a box here, since its menu in the plan does that -->
         <div class="panel-buttons">
             <a class="panel-file" id="entry-file" hidden></a>
-            <button class="panel-duplicate" id="entry-duplicate" type="button"
-                    hidden></button>
+            <button class="panel-duplicate" id="entry-duplicate" type="button" hidden></button>
             <button class="panel-remove" id="entry-remove" type="button" hidden></button>
             <button id="entry-cancel" type="button"></button>
             <button class="panel-main" id="entry-save" type="submit" disabled></button>
@@ -253,9 +283,10 @@
 <dialog class="panel" id="gift" closedby="any">
     <form class="panel-form" id="gift-form">
         <p class="entry-from-plan" id="gift-occasion"></p>
-        <label class="panel-field"><span class="entry-name">Gift</span>
-            <input id="gift-text" type="text" autocomplete="off"
-                   placeholder="Gift idea"></label>
+        <label class="panel-field"
+            ><span class="entry-name">Gift</span>
+            <input id="gift-text" type="text" autocomplete="off" placeholder="Gift idea"
+        /></label>
 
         <!-- Hint when the reader does not take the idea -->
         <p class="panel-error" id="gift-error" hidden>Saving failed</p>
@@ -272,4 +303,3 @@
         </div>
     </form>
 </dialog>
-

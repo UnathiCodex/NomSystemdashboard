@@ -32,9 +32,7 @@
  * known by its name and its values together, see {@link sameExercise}.
  * The list of my exercises shows each once, with the workouts that hold it,
  * also one a workout holds that `Exercises.md` lacks, like one written before it existed.
- * The basic exercises of a gym, see {@link basicExercises}, are no list of mine:
- * the page finds them as I search, as the food search finds products of Open Food Facts,
- * and one picked becomes mine.
+ * An exercise typed new in an entry becomes mine, as a new food does.
  * An exercise burns no kcal of its own: a session counts by its time,
  * since what a single exercise burns hangs on how long
  * and how hard I do it, which nobody writes down.
@@ -197,7 +195,6 @@ type Weight = {
 /**
  * Everything of mine the sport area lists.
  *
- * - `basics`: The basic exercises of a gym that are not mine.
  * - `last`: What I did of each exercise the last time, its line `X-EXERCISE`,
  *   by its name in small letters, so the entry by category brings it again.
  */
@@ -205,7 +202,6 @@ export type Mine = {
     workouts: Workout[];
     exercises: Exercise[];
     videos: Video[];
-    basics: string[];
     kinds: string[];
     last: { [name: string]: string };
 };
@@ -305,42 +301,6 @@ const exercisesHead: string[] = [
     "",
     "| Exercise | Sets | Reps | Kg |",
     "| --- | ---: | ---: | ---: |",
-];
-
-/**
- * The basic exercises of a gym, by muscles, each by its common English name.
- */
-const basicExercises: string[] = [
-    "Bench press",
-    "Incline bench press",
-    "Chest press",
-    "Chest fly",
-    "Push-ups",
-    "Lat pulldown",
-    "Seated row",
-    "Pull-ups",
-    "Barbell row",
-    "Deadlift",
-    "Back extension",
-    "Shoulder press",
-    "Lateral raise",
-    "Face pull",
-    "Biceps curl",
-    "Hammer curl",
-    "Triceps pushdown",
-    "Dips",
-    "Squat",
-    "Leg press",
-    "Lunges",
-    "Romanian deadlift",
-    "Leg curl",
-    "Leg extension",
-    "Hip thrust",
-    "Calf raise",
-    "Plank",
-    "Crunches",
-    "Leg raise",
-    "Russian twist",
 ];
 
 /**
@@ -805,10 +765,6 @@ export function mineRead(): Mine {
         workouts: workouts,
         exercises: exercises,
         videos: videos,
-        basics: basicExercises.filter(
-            (name: string): boolean =>
-                !exercises.some((exercise: Exercise): boolean => exercise.name.toLowerCase() === name.toLowerCase()),
-        ),
         kinds: videoKinds.map((kind: SportKind): string => kind.name),
         last: lastRead(),
     };
@@ -1043,7 +999,7 @@ export function exerciseAdd(sent: { name?: string; sets?: string; reps?: string;
 /**
  * Writes what I do of a variant of an exercise as a rule into `Exercises.md`,
  * in place of the variant the page sends as it was,
- * adding it where it is not there yet, like a basic one or one of a workout only.
+ * adding it where it is not there yet, like one of a workout only.
  * Every part of a workout that was that variant takes the new values too,
  * so a workout brings them.
  * A variant that becomes another I have already stands once.

@@ -21,7 +21,7 @@
  */
 
 import { sportDayLoad, weightSend } from "./mine.ts";
-import { listsOf, mineReload } from "./lists.ts";
+import { listsOf, mineReload, ruleTextOf } from "./lists.ts";
 import { amountOf, buttonOf, elementOf, kcalTextOf } from "../food/foods.ts";
 import { lengthOf } from "../day/times.ts";
 import { dayAdd, dayTextOf } from "../skill/attempts.ts";
@@ -135,18 +135,6 @@ function weightEdit(tile: HTMLElement, kg: number): void {
 }
 
 /**
- * Writes what I did of an exercise as its line shows it: its sets and repetitions,
- * then its kilograms after a middle dot, those it has. Empty when nothing is written.
- */
-function doneTextOf(exercise: Session["exercises"][number]): string {
-    const reps: string = exercise.reps.replace(/^(\d+)s$/, "$1 s");
-    const sets: string = exercise.sets === "" ? reps : reps === "" ? exercise.sets : `${exercise.sets} × ${reps}`;
-    return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
-        .filter((part: string): boolean => part !== "")
-        .join(" · ");
-}
-
-/**
  * Builds the line of a part of a session, indented under its summary,
  * see `.food-line` in `../food/food.css`.
  */
@@ -186,7 +174,7 @@ function sessionLinesOf(session: Session): HTMLElement[] {
         entry,
         summary,
         ...(session.exercises ?? []).map((exercise: Session["exercises"][number]): HTMLElement =>
-            partLineOf(exercise.name, "", doneTextOf(exercise)),
+            partLineOf(exercise.name, "", ruleTextOf(exercise)),
         ),
         ...(session.videos ?? []).map((video: Session["videos"][number]): HTMLElement =>
             partLineOf(video.title, video.channel, video.minutes === null ? "" : lengthOf(Math.round(video.minutes))),

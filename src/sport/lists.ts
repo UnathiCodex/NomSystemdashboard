@@ -22,8 +22,6 @@
  *   a click opens it below to change that in place;
  *   one name may stand several times, each a variant with values of its own,
  *   like `Dips 3 × 10` and `Dips 4 × 8 · 10 kg`;
- *   a search finds the basic ones of a gym below them,
- *   see `basicExercises` in `reader/sport.ts`, and a click makes one mine;
  *   its `×` removes it from my workouts too.
  * My videos have no list of their own: they live in my workouts.
  * My weight, which the kcal need, I change in the totals of the day, see `sport.ts`,
@@ -59,7 +57,6 @@ let mine: Mine = {
     workouts: [],
     exercises: [],
     videos: [],
-    basics: [],
     kinds: [],
     last: {},
 };
@@ -101,7 +98,7 @@ function removeOf(words: string, asking: boolean, click: () => void): HTMLButton
  * a link is no name, so a video's link pasted into the search
  * of my workouts never becomes a workout.
  */
-function typedNameOf(typed: string): string {
+export function typedNameOf(typed: string): string {
     return linkTyped(typed) ? "" : typed.replace(/[|;,]/g, " ").replace(/\s+/g, " ").trim();
 }
 
@@ -121,7 +118,7 @@ function headingOf(name: string, plus: HTMLButtonElement | null): HTMLElement {
  * Makes the name of a line with what stands grey in brackets after it, on one line,
  * see `.sport-name` in `sport.css`, both whole as its tooltip.
  */
-function nameOf(text: string, brackets: string): HTMLElement {
+export function lineNameOf(text: string, brackets: string): HTMLElement {
     const name: HTMLElement = elementOf("span", "sport-name", "");
     name.title = brackets === "" ? text : `${text} (${brackets})`;
     name.append(elementOf("span", "", text));
@@ -188,7 +185,7 @@ function variantKeyOf(exercise: { name: string; sets?: string; reps?: string; kg
  * Writes what I do of an exercise as a rule as its line shows it,
  * like `3 × 10 · 40 kg`, `3 × 10` or `2 × 60 s`, empty while nothing is set.
  */
-function ruleTextOf(exercise: { sets?: string; reps?: string; kg?: string }): string {
+export function ruleTextOf(exercise: { sets?: string; reps?: string; kg?: string }): string {
     const reps: string = (exercise.reps ?? "").replace(/^(\d+)s$/, "$1 s");
     const given: string = exercise.sets ?? "";
     const sets: string = given === "" ? reps : reps === "" ? `${given} ×` : `${given} × ${reps}`;
@@ -356,7 +353,10 @@ function workoutsSectionOf(): HTMLElement {
     };
     const workoutLinesOf: (workout: Workout) => HTMLElement[] = (workout: Workout): HTMLElement[] => {
         const key: string = workout.name.toLowerCase();
-        const name: HTMLElement = nameOf(workout.name, workout.parts.map((part: Part): string => part.name).join(", "));
+        const name: HTMLElement = lineNameOf(
+            workout.name,
+            workout.parts.map((part: Part): string => part.name).join(", "),
+        );
         const remove: HTMLButtonElement = removeOf(`Remove ${workout.name}`, asked === key, (): void => {
             if (workout.parts.length === 0) {
                 fresh = "";
@@ -417,7 +417,7 @@ function workoutsSectionOf(): HTMLElement {
                 const videoKey: string =
                     video === undefined ? "" : video.link !== "" ? video.link : video.title.toLowerCase();
                 const line: HTMLElement = elementOf("div", "food-part", "");
-                const name: HTMLElement = nameOf(part.name, video?.channel ?? "");
+                const name: HTMLElement = lineNameOf(part.name, video?.channel ?? "");
                 if (video === undefined) line.append(name);
                 else {
                     const opening: HTMLButtonElement = buttonOf("food-link", "", (): void => {
@@ -503,7 +503,7 @@ function workoutsSectionOf(): HTMLElement {
  * Makes the row `+ New …` at the end of a list, which adds what was typed,
  * see `.picker-new` in `../base.css`.
  */
-function newOf(text: string, words: string, click: () => void): HTMLElement {
+export function newOf(text: string, words: string, click: () => void): HTMLElement {
     const button: HTMLButtonElement = buttonOf("picker-new", "", click);
     button.replaceChildren(iconOf(Plus), text);
     button.title = words;
@@ -512,8 +512,7 @@ function newOf(text: string, words: string, click: () => void): HTMLElement {
 
 /**
  * Makes the search of my exercises and videos below the parts of a workout opened,
- * the basic exercises of a gym only as I type, but those the workout holds,
- * and last `+ New exercise “Squat”` for a name typed that no exercise has;
+ * but those the workout holds, and last `+ New exercise “Squat”` for a name typed that no exercise has;
  * a click or Enter on the first adds one.
  * A YouTube link pasted into it asks YouTube for its title and channel,
  * see `videoLookup` in `mine.ts`:
@@ -551,20 +550,13 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
                 name: video.title,
                 link: video.link,
             })),
-            ...(input.value.trim() === ""
-                ? []
-                : mine.basics.map((name: string): Part => ({
-                      kind: "Exercise",
-                      name: name,
-                      link: "",
-                  }))),
         ].filter((part: Part): boolean => !held(part) && matchesAll(part.name, wordsOf(input.value)));
     const lineOf: (part: Part) => HTMLElement = (part: Part): HTMLElement => {
         const video: Video | undefined = mine.videos.find(
             (other: Video): boolean => part.kind === "Video" && other.link === part.link && other.title === part.name,
         );
         return listLineOf(
-            nameOf(part.name, part.kind === "Video" ? (video?.channel ?? "") : ruleTextOf(part)),
+            lineNameOf(part.name, part.kind === "Video" ? (video?.channel ?? "") : ruleTextOf(part)),
             video?.kcal ?? null,
             (): void => pick(part),
             null,
@@ -672,9 +664,7 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
         const lines: HTMLElement[] = found().map(lineOf);
         const plus: HTMLElement[] =
             typed === "" ||
-            [...mine.exercises.map((exercise: Exercise): string => exercise.name), ...mine.basics].some(
-                (name: string): boolean => name.toLowerCase() === typed.toLowerCase(),
-            )
+            mine.exercises.some((exercise: Exercise): boolean => exercise.name.toLowerCase() === typed.toLowerCase())
                 ? []
                 : [
                       newOf(`New exercise “${typed}”`, "New exercise of this workout", (): void =>
@@ -731,20 +721,10 @@ function exercisesSectionOf(): HTMLElement {
             matchesAll(exercise.name, wordsOf(search.value)),
         );
         const typed: string = typedNameOf(search.value);
-        const basics: HTMLElement[] =
-            typed === ""
-                ? []
-                : mine.basics
-                      .filter((name: string): boolean => matchesAll(name, wordsOf(search.value)))
-                      .map(
-                          (name: string): HTMLElement =>
-                              listLineOf(nameOf(name, ""), null, (): void => add(name), null)[0],
-                      );
-        const empty: boolean =
-            mine.exercises.some(
-                (exercise: Exercise): boolean =>
-                    variantKeyOf(exercise) === variantKeyOf({ name: typed, sets: "", reps: "", kg: "" }),
-            ) || mine.basics.some((name: string): boolean => name.toLowerCase() === typed.toLowerCase());
+        const empty: boolean = mine.exercises.some(
+            (exercise: Exercise): boolean =>
+                variantKeyOf(exercise) === variantKeyOf({ name: typed, sets: "", reps: "", kg: "" }),
+        );
         const plus: HTMLElement[] =
             typed === "" || empty
                 ? []
@@ -756,7 +736,7 @@ function exercisesSectionOf(): HTMLElement {
         const rows: HTMLElement[] = shown.flatMap((exercise: Exercise): HTMLElement[] => {
             const key: string = variantKeyOf(exercise);
             const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
-                nameOf(exercise.name, exercise.workouts.join(", ")),
+                lineNameOf(exercise.name, exercise.workouts.join(", ")),
                 null,
                 (): void => {
                     open = open === key ? "" : key;
@@ -779,7 +759,6 @@ function exercisesSectionOf(): HTMLElement {
         list.replaceChildren(
             ...(naming ? [nameFormOf()] : []),
             ...(rows.length > 0 ? [listHeadOf("My exercises", ""), ...rows] : []),
-            ...(basics.length > 0 ? [listHeadOf("Basic exercises", ""), ...basics] : []),
             ...plus,
         );
     };

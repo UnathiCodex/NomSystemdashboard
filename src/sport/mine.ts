@@ -81,7 +81,6 @@ export type Exercise = {
 /**
  * Everything of mine the sport area lists.
  *
- * - `basics`: Names of the basic exercises of a gym that are not mine, found as I search.
  * - `last`: What I did of each exercise the last time, its line `X-EXERCISE`,
  *   by its name in small letters,
  *   which the dialog brings again for one without values,
@@ -91,7 +90,6 @@ export type Mine = {
     workouts: Workout[];
     exercises: Exercise[];
     videos: Video[];
-    basics: string[];
     kinds: string[];
     last: { [name: string]: string };
 };
