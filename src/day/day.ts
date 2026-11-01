@@ -1,39 +1,15 @@
 /**
  * ## Day
  *
- * Shows the log of a day as my one calendar, a time grid of one column,
- * and beside it the plan of the day,
- * not as a calendar but as a calm list of boxes, see `boxes.ts`;
- * above both the date of the day between its arrows,
- * with a small icon back to today on any other day;
- * at the right the trackers of the day, my sleep, my glasses of water and my food,
- * and below them the daily note with my gratitude and my points about the day at its top;
- * a phone shows only plan or log, see {@link phoneShow}.
- * A click on the date opens a month to pick any day from, see `month.ts`.
- * The log is written by category:
- * `+` below the time grid opens the entry by category for the last half hour,
- * a range selected in the time grid for that range,
- * on a phone by a short press into the grid and pulling it down over the time,
- * as in Google Calendar; a click on an entry changes it.
- * Entries are moved and resized by dragging,
- * and the reader writes their new times alone into their files.
- * Entries look as Google Calendar shows them, see {@link entryContentOf}.
- * The kcal of a meal stay hidden for a try; the dialog and the trackers show them.
- * A glass of water does not show in the log at all,
- * since the counter of the trackers counts it.
- * The day opens on today's calendar date, which turns at 00:00, also after a reload,
- * and while it shows today it moves on with it;
- * only a link to a day, like from the food view, opens on that day,
- * which the address then keeps no more, see `today.ts`.
- * The day loads anew the moment a file of my new system changes, whoever changed it,
- * see `../changes.ts`, so it never shows what the files held before;
- * a change that comes while a dialog is open waits until it closes, see {@link dayAgain}.
- * The grid runs over the calendar day, from 00:00 to 24:00, and opens at 06:00;
- * an entry past midnight shows on both days, cut at midnight.
- *
- * - `./note.ts`, `./evening.ts`: Loaded with `import()` after the calendar,
- *   see {@link noteStart}.
- * - `./day.css` and the other stylesheets: Look of the day, one stylesheet per part.
+ * The log of a day as a time grid of one column, the plan beside it as a list of boxes.
+ * Above both the date between its arrows, at the right the trackers and the daily note.
+ * A phone shows plan or log, one at a time.
+ * Entries move and resize by dragging, and the reader writes only their new times.
+ * The kcal of a meal stay hidden for a try.
+ * The day opens on today's calendar date and moves on with it at 00:00.
+ * It loads anew the moment a file of my new system changes, after an open dialog closes.
+ * The grid runs from 00:00 to 24:00 and opens at 06:00.
+ * An entry past midnight shows on both days, cut at midnight.
  */
 
 import { Calendar } from "fullcalendar";
@@ -86,46 +62,27 @@ import type {
 } from "fullcalendar";
 
 /**
- * Minutes of the time grid one line of a taller entry fills, about 15:
- * half an hour of the grid is 2.05rem high, twice the margin `--slot-margin`, 0.525rem,
- * and once the line of an hour label, 1rem, see `.slot-label` in `log.css`,
- * and a line of a taller entry 1.015625rem, its text of 0.8125rem,
- * as a box of the plan, at a line height of 1.25, see `.entry-inner`;
- * a short one, as low as `eventShortHeight` in {@link dayStart} or lower,
- * has no space above and below its one line, 0.975rem high at a line height of 1.2,
- * so a quarter hour, 1.025rem high less the 1px below it, holds it.
+ * Minutes one line of a taller entry fills, a line of 1.015625rem in half an hour of 2.05rem.
+ * The 2.05rem are twice `--slot-margin` and the 1rem of an hour label, see `log.css`.
  */
 const lineMinutes: number = (1.015625 / 2.05) * 30;
 
-/**
- * Minutes of the time grid the space above and below the lines of a taller entry fills,
- * 0.42rem above its first line and as much below its last,
- * 0.84rem of the 2.05rem of half an hour, see `.entry-inner` in `log.css`.
- */
+/** Minutes of the 0.42rem above the first line and below the last of a taller entry. */
 const spaceMinutes: number = (0.84 / 2.05) * 30;
 
-/**
- * Minutes of the time grid an entry loses to its edge and to the gap below it,
- * about 4 px of the 82 px of an hour at the root of 20 px.
- */
+/** Minutes an entry loses to its edge and the gap below it, about 4 px of the 82 px of an hour. */
 const edgeMinutes: number = (4 / 82) * 60;
 
-/**
- * Shows the daily note of a day, with my gratitude and my points about the day;
- * does nothing until {@link noteStart} has loaded them.
- */
+/** Shows the daily note of a day, nothing until {@link noteStart} has loaded it. */
 let dayNoteShow: (date: string) => void = (): void => {};
 
-/**
- * Hours of the time grid, from 00:00 to 24:00 of the shown day.
- */
+/** Hours of the time grid, 00:00 to 24:00. */
 const gridHours: number = 24;
 
 /**
- * Event source of the log of the reader.
- * FullCalendar takes the field `editable` of each entry,
- * so only entries that can be changed are dragged or react to a click;
- * a glass of water does not show, since the counter of the trackers counts it.
+ * Event source of the log.
+ * Only entries with `editable` drag or react to a click.
+ * A glass of water does not show, since the counter of the trackers counts it.
  */
 function logSourceOf(): EventSourceInput {
     return {
@@ -138,37 +95,22 @@ function logSourceOf(): EventSourceInput {
     };
 }
 
-/**
- * Opens the entry by category to change a clicked entry;
- * one that cannot be changed, like an occurrence of a series, stays as it is.
- */
+/** Opens a clicked entry to change it, one that cannot change, like of a series, stays. */
 function entryClick(info: EventClickInfo): void {
     if (info.event.startEditable === true)
         entryOpenEdit(info.event).catch((error: unknown): void => console.error(error));
 }
 
-/**
- * Pixels per second the time grid scrolls at most while an entry is dragged to its edge:
- * a whole day of 24 hours, 1,920 px, in about a second,
- * so an entry dragged up from the evening reaches 00:00 in one go.
- */
+/** Pixels per second the grid scrolls at most at its edge, so a drag reaches 00:00 in one go. */
 const edgeSpeed: number = 2000;
 
-/**
- * Ends the scrolling of the time grid at its edges, `null` while no entry is dragged.
- */
+/** Ends the scrolling of the grid at its edges, `null` while no entry is dragged. */
 let edgeScrollEnd: (() => void) | null = null;
 
 /**
- * Scrolls the time grid while an entry is dragged or resized
- * and the pointer stands near its top or bottom edge, within 4rem of it or beyond,
- * the nearer the faster, as Google Calendar does;
- * and moves the entry along with every scroll, also one of the wheel,
- * by telling FullCalendar that the pointer moved where it stands,
- * so the entry stays under it and stops at 00:00 when the grid reaches its top.
- * FullCalendar's own scrolling stays off, see `dragScroll` in {@link dayStart},
- * since it kept the scroll of the start and threw a scroll of the wheel back,
- * like from 00:00 to 15:00.
+ * Scrolls the grid while an entry is dragged within 4rem of its top or bottom, the nearer the faster.
+ * Every scroll, also of the wheel, tells FullCalendar the pointer moved, so the entry stays under it.
+ * FullCalendar's own `dragScroll` stays off, since it threw a scroll of the wheel back.
  */
 function edgeScrollStart(entry: HTMLElement, pointer: MouseEvent): void {
     const grid: HTMLElement = gridOf(entry);
@@ -215,27 +157,18 @@ function edgeScrollStart(entry: HTMLElement, pointer: MouseEvent): void {
 }
 
 /**
- * An entry dragged to the edge of the time grid or onto an arrow of the date,
- * see {@link entryTurn}, so its drop in the grid itself,
- * which FullCalendar reports right after, is taken back, see {@link entryDrag};
+ * An entry dropped on a strip or arrow of another day, so its drop in the grid right after is taken back.
  * `null` again when the next drag or resize starts,
- * since a drop on a strip outside the grid brings no drop in it,
- * and the next resize of that entry, on the day it moved to, was taken back.
+ * since a drop on a strip may bring no drop in the grid, and the next resize was taken back.
  */
 let turning: { id: string; days: number } | null = null;
 
-/**
- * Whether the day was to load anew while a dialog was open,
- * so it loads once the dialog closes, see {@link dayAgain}.
- */
+/** Whether the day was to load anew while a dialog was open, so it loads once it closes. */
 let missed: boolean = false;
 
 /**
- * Writes the new start and end of an entry moved or resized by dragging into its file,
- * see `entryMove` in `entries.ts`;
- * puts it back where it was when the reader does not take the change;
- * a drop that turns it to another day, see {@link entryTurn}, it takes back,
- * since the entry moves to that day instead.
+ * Writes the new times of a dragged entry into its file, puts it back when the reader refuses.
+ * A drop that turns it to another day is taken back, since the entry moves to that day instead.
  */
 function entryDrag(calendar: Calendar, info: EventChangeInfo): void {
     const entry: EventApi = info.event;
@@ -250,9 +183,7 @@ function entryDrag(calendar: Calendar, info: EventChangeInfo): void {
     });
 }
 
-/**
- * Tells whether a point of the screen lies in an element, never for one not shown.
- */
+/** Whether a point of the screen lies in an element, never for one not shown. */
 function pointIn(element: HTMLElement | null, x: number, y: number): boolean {
     const rect: DOMRect | undefined = element?.getBoundingClientRect();
     return (
@@ -260,10 +191,7 @@ function pointIn(element: HTMLElement | null, x: number, y: number): boolean {
     );
 }
 
-/**
- * Tells to which day a point turns a dragged entry, -1, 1, or 0 for none:
- * a strip at the edge of the time grid or an arrow of the date.
- */
+/** Day a point turns a dragged entry to by a strip or an arrow of the date, -1, 1, or 0 for none. */
 function turnOf(x: number, y: number): number {
     if (pointIn(document.querySelector(".day-turn-back"), x, y) || pointIn(document.getElementById("day-back"), x, y))
         return -1;
@@ -272,9 +200,7 @@ function turnOf(x: number, y: number): number {
     return 0;
 }
 
-/**
- * Lights the strip of the day the pointer would turn a dragged entry to.
- */
+/** Lights the strip the pointer would turn a dragged entry to. */
 function turnNear(event: PointerEvent): void {
     const days: number = turnOf(event.clientX, event.clientY);
     document.querySelector(".day-turn-back")?.classList.toggle("day-turn-near", days === -1);
@@ -282,12 +208,8 @@ function turnNear(event: PointerEvent): void {
 }
 
 /**
- * Shows the two strips of the days before and after while an entry is dragged,
- * as Google Calendar turns the day when an entry is pulled to its edge:
- * one over the times at the left of the time grid, one at its right edge,
- * each its arrow and the weekday it leads to,
- * and the arrows of the date outlined, which take an entry too;
- * hides them when the drag stops.
+ * Shows the strips of the days before and after while an entry is dragged, as Google Calendar does.
+ * One lies over the times at the left of the grid, one at its right edge, each with its weekday.
  */
 function turnShow(calendar: Calendar, shown: boolean): void {
     const day: HTMLElement | null = document.querySelector(".day");
@@ -323,11 +245,7 @@ function turnShow(calendar: Calendar, shown: boolean): void {
     document.addEventListener("pointermove", turnNear);
 }
 
-/**
- * Moves an entry dropped on a strip of the day before or after,
- * or on an arrow of the date, to that day at the same time of day,
- * and the day view follows it there, as Google Calendar does.
- */
+/** Moves an entry dropped on a strip or arrow to that day at the same time, and the view follows. */
 function entryTurn(calendar: Calendar, info: EventDragStopInfo): void {
     const days: number = turnOf(info.jsEvent.clientX, info.jsEvent.clientY);
     turnShow(calendar, false);
@@ -343,10 +261,7 @@ function entryTurn(calendar: Calendar, info: EventDragStopInfo): void {
         .catch((error: unknown): void => console.error(error));
 }
 
-/**
- * Minutes of the shown part of an entry of the time grid, cut to the shown day:
- * a Sleep from 23:00 to 07:00 shown from 23:00 to 24:00 counts that hour.
- */
+/** Minutes of the part of an entry shown, cut to the shown day. */
 function shownMinutesOf(info: EventDisplayInfo): number {
     const start: Date = info.event.start as Date;
     const end: Date = info.event.end ?? start;
@@ -359,14 +274,7 @@ function shownMinutesOf(info: EventDisplayInfo): number {
     return (bottom - top) / (60 * 1000);
 }
 
-/**
- * Lines an entry of the time grid has room for, at least 1, its shown part
- * less its edge and the space above its first line and below its last,
- * so no line is cut at the bottom:
- * half an hour one, 45 minutes two, its place beside its time,
- * an hour three, its place on the third, and 75 minutes four.
- * A short entry, see `eventShortHeight` in {@link dayStart}, has room for one line.
- */
+/** Whole lines an entry has room for, at least 1, so no line is cut at the bottom. */
 function linesOf(info: EventDisplayInfo): number {
     if (info.isShort) return 1;
     const minutes: number = shownMinutesOf(info) - edgeMinutes - spaceMinutes;
@@ -374,38 +282,22 @@ function linesOf(info: EventDisplayInfo): number {
 }
 
 /**
- * Tells whether an entry of the time grid is the range being selected,
- * which FullCalendar draws as an entry, see `selectMirror` in {@link dayStart}:
- * the only one without category and what,
- * since every entry of the log and every box dragged into it has one of them.
+ * Whether an entry is the range being selected, which `selectMirror` draws as an entry.
+ * It is the only one without category and what.
  */
 function selectionIs(info: EventDisplayInfo): boolean {
     return info.isMirror && info.event.title === "" && (info.event.extendedProps.category ?? "") === "";
 }
 
 /**
- * Content of an entry of the log, as Google Calendar shows one: what first in bold,
- * then its time in the light grey of a time, then its place lighter still;
- * a dish shows its summary, which leaves its drinks out.
- * A room of the university shows what its name holds in brackets,
- * which the plan leaves out.
- * A route without room for where it starts shows `…` in its place, never a part of it,
- * and never cuts its goal, see {@link linesFit}.
- * A tutorial ends its line with the group I went to, as its box in the plan does.
- * Every line stays one line: the place gives way first where a line is too narrow,
- * then what, each cut with an ellipsis, see `log.css`;
- * so the whole entry is its tooltip.
+ * Content of an entry as Google Calendar shows one, what in bold, its time grey, its place lighter.
+ * A tutorial ends with the group I went to.
+ * Every line stays one line, the place gives way first, then what, so the whole entry is its tooltip.
  * The range being selected shows only its start and end.
- * - An entry with room for one line shows what, its time and its place,
- *   parted by a middle dot, never by commas, since names hold commas;
- *   where an entry is narrower than what and its time, as on a phone,
- *   what stays whole and its time moves onto a next line, which the entry hides.
- * - An entry with room for two lines shows what on its first line,
- *   its time and place on its second, as a box of the plan writes them;
- *   with room for three or more its place on a third line of its own,
- *   and below them its note, as many lines of it as are left.
- * - `content`: All lines, as high as the lines the entry has room for,
- *   so a line never shows cut in half at the bottom of the entry.
+ * - One line: What, time and place parted by a middle dot, never commas, since names hold commas.
+ *   Where what and time don't fit, as on a phone, the time wraps to a hidden next line.
+ * - Two lines: What, then time and place, as a box of the plan writes them.
+ * - Three or more: The place on a line of its own, then as much of the note as fits.
  */
 function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const category: string = info.event.extendedProps.category ?? "";
@@ -497,22 +389,14 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
 }
 
 /**
- * Fits the lines of an entry to the part of it in sight:
- * scrolled partly out of sight at the top,
- * an entry keeps its lines 0.42rem below the top of the grid,
- * as `.entry-lines` in `log.css` makes them stick,
- * and those its rest has no more room for hide as a whole from the bottom,
- * so no line is ever cut at the top and `Sleep: Night` stays in sight the longest.
- * A line that an entry on top of it covers, see `slotEventOverlap` in {@link dayStart},
- * ends as far before that entry as before the right edge of its own,
- * and gives way there in the same order, the place first, see `log.css`.
- * Where a way starts, `.route-start`, stands whole where it has room, else `…` alone.
- * Lines no longer on the page,
- * like those of the copy FullCalendar draws while an entry is dragged, stay as they are.
- * - `harness`: Box FullCalendar places the entry in, with its z-index,
- *   among those of the other entries of its column.
- * - `over`: Where the entries on top of it stand,
- *   those of its column with a higher z-index.
+ * Fits the lines of an entry to the part of it in sight.
+ * Scrolled partly out at the top, its lines stick below the top of the grid,
+ * and those with no more room hide whole from the bottom, so no line is cut at the top.
+ * A line an entry on top covers ends before that entry.
+ * Where a route starts, `.route-start`, stands whole where it has room, else `…` alone.
+ * Lines no longer on the page, like of the copy dragged, stay as they are.
+ * - `harness`: Box FullCalendar places the entry in, with its z-index.
+ * - `over`: The entries of its column on top of it, with a higher z-index.
  */
 function linesFit(lines: HTMLElement, grid: HTMLElement): void {
     const inside: HTMLElement | null = lines.parentElement;
@@ -545,22 +429,14 @@ function linesFit(lines: HTMLElement, grid: HTMLElement): void {
     }
 }
 
-/**
- * The grid of the log around an element in it: the nearest box around it that scrolls,
- * the whole page for an element no longer on it.
- */
+/** The nearest box around an element that scrolls, the whole page for one no longer on it. */
 function gridOf(element: HTMLElement): HTMLElement {
     let grid: HTMLElement = element;
     while (grid.parentElement !== null && getComputedStyle(grid).overflowY !== "auto") grid = grid.parentElement;
     return grid;
 }
 
-/**
- * Shows the date of the shown day above plan and log, always fully readable,
- * with the icon back to today and its daily note;
- * the boxes and the trackers follow the entries of the log,
- * see `eventsSet` in {@link dayStart}.
- */
+/** Shows the date of the shown day, the icon back to today and its daily note. */
 function dayShow(info: DatesSetInfo): void {
     const date: string = info.startStr.slice(0, 10);
     (document.getElementById("day-date") as HTMLElement).textContent = dayTextOf(date, true);
@@ -568,19 +444,14 @@ function dayShow(info: DatesSetInfo): void {
     dayNoteShow(date);
 }
 
-/**
- * Turns the small icon back to today on while the shown day is another day;
- * on today it shows faded and off, so the bar looks the same on every day;
- * also once the day turned at 00:00 while the day stays, see `todayFollow` in `today.ts`.
- */
+/** Turns the icon back to today on for another day, faded on today so the bar looks the same. */
 function todayButtonShow(date: string): void {
     (document.getElementById("day-today") as HTMLButtonElement).disabled = date === calendarTodayOf();
 }
 
 /**
- * Shows plan or log on a phone, one at a time,
- * the repeat for a new series only beside the plan, since a series is one of the plan;
- * the time grid, which measures itself again once it shows, scrolls to now then.
+ * Shows plan or log on a phone, the repeat for a new series only beside the plan.
+ * The grid measures itself again once it shows, so it scrolls to now then.
  */
 function phoneShow(calendar: Calendar, shown: "plan" | "log"): void {
     const main: HTMLElement = document.getElementById("day-main") as HTMLElement;
@@ -592,15 +463,9 @@ function phoneShow(calendar: Calendar, shown: "plan" | "log"): void {
 }
 
 /**
- * Scrolls the time grid so that now stands about in its middle,
- * its top on the full hour before, so the label of no hour is cut at the top,
- * at each load of the page and when the day moves on to the new day by itself;
- * just after midnight the grid cannot scroll above 00:00,
- * so now simply stands near its top.
- * A day without now keeps `scrollTime`, 06:00 at the top.
- * It hands the time for the top to `scrollToTime`,
- * which FullCalendar keeps and applies again once it has measured the grid,
- * so nothing undoes it.
+ * Scrolls the grid so now stands about in its middle, its top on a full hour so no label is cut.
+ * A day without now keeps `scrollTime`, 06:00.
+ * `scrollToTime` is kept and applied again once FullCalendar has measured the grid, so nothing undoes it.
  */
 function nowCenter(calendar: Calendar): void {
     const hours: number = (Date.now() - calendar.view.currentStart.getTime()) / (60 * 60 * 1000);
@@ -613,12 +478,9 @@ function nowCenter(calendar: Calendar): void {
 }
 
 /**
- * Loads the shown day again, as it lies in the files now,
- * whenever the page becomes visible and the moment a file of my new system changes:
- * its log, with its trackers, its plan,
- * and its note but while I type in a field, so nothing typed gets lost;
- * nothing while a dialog is open, which keeps the entry as it opened,
- * but once it closes, see {@link missed}.
+ * Loads the shown day again from the files, its log, plan and note.
+ * The note not while I type in a field, so nothing typed gets lost.
+ * Nothing while a dialog is open, which keeps the entry as it opened, but once it closes.
  */
 function dayAgain(calendar: Calendar): void {
     const typing: boolean = document.activeElement?.matches("input, textarea, [contenteditable='true']") ?? false;
@@ -630,9 +492,7 @@ function dayAgain(calendar: Calendar): void {
 }
 
 /**
- * Loads the daily note with `import()`, its Markdown renderer with it,
- * starts my gratitude and my points about the day,
- * and shows them for the shown day and from then on for every day shown.
+ * Loads the daily note with `import()` and shows it for every day shown.
  * `evening.ts` comes first, since it loads `note.ts` too, which is then at hand at once.
  */
 async function noteStart(calendar: Calendar): Promise<void> {
@@ -650,58 +510,22 @@ async function noteStart(calendar: Calendar): Promise<void> {
 }
 
 /**
- * Starts the day after the router has put its HTML into the page,
- * on the day a link asks for or today's calendar date, see `askedDayOf` in `today.ts`,
- * with its buttons, the swipe of a phone, the daily note and the timer of a session.
- * While the grid scrolls, the lines of every entry fit to the part of it in sight,
- * see {@link linesFit}; the calendar catches the scroll on its way down to the grid,
- * `capture`, since it never rises;
- * they fit again when the grid changes its size, like with the window,
- * since FullCalendar then moves the entries without drawing their lines anew.
- * - `headerToolbar`: None, since the date and its buttons stand above plan
- *   and log together.
- * - `allDaySlot`: Left out, since no entry of my log lasts a whole day.
- * - `slotHeaderInnerClass`: So `log.css` sets the size of the hour labels
- *   and with it the height of the slots.
- * - `eventShortHeight`: Makes entries short that have no room for one line with the space
- *   above and below it, as high as 36 px in the grid or lower:
- *   such a line needs 37 px at the page's root size of 20 px, 0.42rem above,
- *   a line of 1.0125rem and 0.42rem below, see `.entry-inner` in `log.css`,
- *   and the inside of an entry is 3 px lower than its place in the grid;
- *   so an entry of a quarter hour is short, one of half an hour, 41 px, is not.
- * - `eventMinHeight`: As high as a quarter hour, 20 px, so a shorter one,
- *   like ten minutes of my neck routine, still shows its line whole.
- * - `blockEventInnerClass`: So `log.css` cuts the lines at the edge of the entry
- *   instead of letting them stick out.
- * - `snapDuration`: Steps of 15 minutes, while the grid keeps a line every 30 minutes.
- * - `dragScroll`: FullCalendar's own scrolling at the edges is off,
- *   since it threw a scroll of the wheel back, see {@link edgeScrollStart}.
- * - `eventSourceSuccess`: Loads the trackers and the timer again each time the log
- *   was read, so an entry saved, ended or removed shows there at once.
- * - `selectMirror`: Draws the range being selected as an entry in front of the others,
- *   since FullCalendar's own grey of a selection lies behind the entries,
- *   so a range over an entry,
- *   like an hour of food during a workshop, showed only in the free strip beside it.
- * - `select`: Lets go of the range at once,
- *   so it never stays in the log as if it were an entry
- *   once the dialog is closed, also with `Esc`.
- * - `selectLongPressDelay`: Starts a selection on a phone after a short press of 300 ms,
- *   in place of FullCalendar's long press of a second,
- *   so a finger presses into the time grid and pulls the range down over the time,
- *   as in Google Calendar; a swipe moves at once, so it scrolls the grid,
- *   and once the grid scrolled FullCalendar selects nothing.
- *   An entry keeps the long press of a second before it is dragged,
- *   so a slow tap never moves it.
- * - `slotEventOverlap`: Lets an entry at the same time
- *   as a longer one lie over the right part of it, as in Google Calendar,
- *   so the longer one keeps its text at its left.
- * - `nowIndicatorLineClass`, `nowIndicatorDotClass`: So `log.css` draws the line of now
- *   calm grey behind the entries, never through their text.
- * - `slotMinTime`, `slotMaxTime`: The calendar day,
- *   as the trackers and the done boxes count it.
+ * Starts the day on the day a link asks for or today, with its buttons, swipe, note and timer.
+ * The scroll is caught with `capture` on its way down to the grid, since it never rises.
+ * Lines fit again when the grid resizes, since FullCalendar then moves entries without drawing them anew.
+ * - `allDaySlot`: Off, since no entry of my log lasts a whole day.
+ * - `eventShortHeight`: 36 px or lower is short, since one line with its space above and below needs 37 px.
+ * - `eventMinHeight`: A quarter hour, so a shorter entry still shows its line whole.
+ * - `dragScroll`: Off, since it threw a scroll of the wheel back.
+ * - `eventSourceSuccess`: Trackers and timer load again, so a saved entry shows there at once.
+ * - `selectMirror`: The range drawn in front, since FullCalendar's grey lies behind the entries.
+ * - `select`: Lets go of the range at once, so it never stays in the log after the dialog.
+ * - `selectLongPressDelay`: A short press of 300 ms selects on a phone, a swipe still scrolls.
+ *   An entry keeps the long press of a second, so a slow tap never moves it.
+ * - `slotEventOverlap`: An entry lies over the right part of a longer one, which keeps its text at its left.
+ * - `nowIndicatorLineClass`, `nowIndicatorDotClass`: So `log.css` draws now grey behind the entries.
  *
- * The theme keeps its own classes beside `slot-label`, `entry` and the others;
- * `log.css` wins because it comes after the theme's stylesheet.
+ * `log.css` wins over the theme's own classes because it comes after the theme's stylesheet.
  */
 export function dayStart(): void {
     const calendar: Calendar = new Calendar(document.getElementById("day-calendar") as HTMLElement, {
