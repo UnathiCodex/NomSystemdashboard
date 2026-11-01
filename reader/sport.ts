@@ -610,17 +610,15 @@ function workoutsRead(videos: Video[]): Workout[] {
             workouts.set(cells.Workout.toLowerCase(), workout);
         });
     return [...workouts.values()].map((workout: Workout): Workout => {
-        const found: (Video | undefined)[] = workout.parts.map(
-            (part: Part): Video | undefined =>
-                videos.find((video: Video): boolean => isVideo(part, video)),
+        const kcals: (number | null)[] = workout.parts.map(
+            (part: Part): number | null =>
+                videos.find((video: Video): boolean => isVideo(part, video))?.kcal ??
+                null,
         );
         return {
             ...workout,
-            kcal: found.every(
-                (video: Video | undefined): boolean =>
-                    video?.kcal !== null && video?.kcal !== undefined,
-            )
-                ? sumOf(found.map((video: Video | undefined): number => video?.kcal ?? 0))
+            kcal: kcals.every((kcal: number | null): kcal is number => kcal !== null)
+                ? sumOf(kcals)
                 : null,
         };
     });
@@ -948,15 +946,13 @@ export function sportDayRead(date: string): SportDay {
             const metOf: (video: SessionVideo) => number = (
                 video: SessionVideo,
             ): number =>
-                videoKinds.find(
-                    (known: SportKind): boolean =>
-                        known.name ===
-                        mine.find((other: Video): boolean =>
-                            isVideo(
-                                { kind: "Video", name: video.title, link: video.link },
-                                other,
-                            ),
-                        )?.kind,
+                videoKindOf(
+                    mine.find((other: Video): boolean =>
+                        isVideo(
+                            { kind: "Video", name: video.title, link: video.link },
+                            other,
+                        ),
+                    )?.kind ?? "",
                 )?.met ??
                 kind?.met ??
                 0;
@@ -1045,16 +1041,7 @@ function partOf(sent: unknown): Part | null {
     if (video)
         return { kind: "Video", name: name, link: linkOf(String(part.link ?? "")) };
     const values: OwnExercise | null = valuesOf(name, part);
-    return values === null
-        ? null
-        : {
-              kind: "Exercise",
-              name: name,
-              link: "",
-              sets: values.sets,
-              reps: values.reps,
-              kg: values.kg,
-          };
+    return values === null ? null : { ...values, kind: "Exercise", link: "" };
 }
 
 /**
@@ -1126,11 +1113,10 @@ export function workoutSave(sent: {
     const typed: string = ownNameOf(String(sent.name ?? ""));
     const renamed: boolean = sent.old !== undefined;
     const old: string = (renamed ? ownNameOf(String(sent.old)) : typed).toLowerCase();
-    const name: string = renamed
-        ? typed
-        : (workouts.find(
-              (workout: Workout): boolean => workout.name.toLowerCase() === old,
-          )?.name ?? typed);
+    const at: number = workouts.findIndex(
+        (workout: Workout): boolean => workout.name.toLowerCase() === old,
+    );
+    const name: string = renamed ? typed : (workouts[at]?.name ?? typed);
     const parts: Part[] = (sent.parts ?? [])
         .map(partOf)
         .filter((part: Part | null): part is Part => part !== null)
@@ -1150,9 +1136,6 @@ export function workoutSave(sent: {
     if (parts.length === 0)
         throw new Error(`No parts of a workout: ${JSON.stringify(sent.parts)}`);
 
-    const at: number = workouts.findIndex(
-        (workout: Workout): boolean => workout.name.toLowerCase() === old,
-    );
     const workout: Workout = { name: name, parts: parts, kcal: null };
     workoutsWrite(
         at === -1
@@ -1403,11 +1386,9 @@ export function videoSave(sent: {
 export function videoRemove(sent: { link?: string; title?: string }): Mine {
     const videos: Video[] = videosRead([]);
     const link: string = linkOf(String(sent.link ?? ""));
-    const title: string = nameOf(String(sent.title ?? "")).toLowerCase();
+    const title: string = nameOf(String(sent.title ?? ""));
     const gone: Video | undefined = videos.find((video: Video): boolean =>
-        link !== ""
-            ? video.link === link
-            : video.link === "" && video.title.toLowerCase() === title,
+        isVideo({ kind: "Video", name: title, link: link }, video),
     );
     if (gone === undefined) return mineRead();
 

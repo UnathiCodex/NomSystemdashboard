@@ -146,11 +146,25 @@ import type { IconNode } from "lucide";
 import type { Calendar as DayCalendar } from "fullcalendar";
 import type { Plain } from "../../reader/rules.ts";
 import type { MaterialFolder } from "../../reader/notes.ts";
-import type { Extra, Planned, Slot, Times } from "../../reader/course.ts";
+import type {
+    Course,
+    Extra,
+    Group,
+    Learned,
+    Planned,
+    Rule,
+    Series,
+    Session,
+    Slot,
+    Times,
+} from "../../reader/course.ts";
 import type { BoxState } from "../../reader/boxes.ts";
 import type { Attendee, Online } from "../../reader/calendar.ts";
 import type { Place } from "../../reader/places.ts";
 import type { Person } from "../../reader/persons.ts";
+
+// The course of a module, its series and groups, as the reader sends them.
+export type { Course, Group, Learned, Rule, Series, Session };
 
 /**
  * The days of a series as typed so far.
@@ -194,88 +208,6 @@ export type Preview = {
     states: States;
     kinds?: Kinds;
     filled: () => void;
-};
-
-/**
- * A weekly rule of a series or a group, as the reader sends it and the form sends back,
- * see `Rule` in `reader/course.ts`.
- */
-export type Rule = Online & {
-    type: string;
-    slots: Slot[];
-    extras: Extra[];
-    location: string;
-    locationLink: string;
-    attendees: Attendee[];
-    first: string;
-    last: string;
-    times: Times;
-    group: string;
-    semester: string;
-};
-
-/**
- * A series of the course, as the reader sends it: its rule read back from its boxes,
- * and how many boxes it has.
- */
-export type Series = {
-    rule: Rule;
-    count: number;
-};
-
-/** A session of a group, as the reader sends it, see `Session` in `reader/course.ts`. */
-export type Session = {
-    id: string;
-    start: string;
-    minutes: number;
-    location: string;
-    locationLink: string;
-    changed: boolean;
-};
-
-/**
- * A group of the tutorials of a module, as the reader sends it:
- * one to-do per weekday it meets on, its sessions the earliest first.
- */
-export type Group = {
-    ids: string[];
-    rule: Rule;
-    sessions: Session[];
-};
-
-/**
- * A session of my own learning of a module logged without a box,
- * see `Learned` in `reader/course.ts`.
- */
-export type Learned = Online & {
-    id: string;
-    day: string;
-    time: string;
-    minutes: number;
-    location: string;
-    locationLink: string;
-    attendees: Attendee[];
-    note: string;
-};
-
-/**
- * The course of a module in a semester, see `Course` in `reader/course.ts`.
- *
- * - `folders`: The folder of the material of the semester of each type,
- *   also one not there yet.
- * - `links`: The folder a box of each type links, as the reader writes it now.
- * - `file`: Its plan from `NomWorkspace` on.
- */
-export type Course = {
-    module: string;
-    semester: string;
-    boxes: Box[];
-    learned: Learned[];
-    series: Series[];
-    groups: Group[];
-    folders: { [type: string]: MaterialFolder };
-    links: { [type: string]: string };
-    file: string;
 };
 
 /**
@@ -672,10 +604,8 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
  */
 export function slotRowsOf(
     days: Days,
-    changed: () => void,
-    filled: () => void,
-    aside: HTMLElement[] = [],
-    lengthOf: ((slot: Slot) => HTMLElement) | null = null,
+    aside: HTMLElement[],
+    lengthOf: ((slot: Slot) => HTMLElement) | null,
     month: boolean = false,
 ): HTMLElement[] {
     const shown: number[] = [1, 2, 3, 4, 5, 6, 7, ...(month ? [monthly, yearly] : [])];
@@ -685,17 +615,15 @@ export function slotRowsOf(
             const index: number = days.slots.findIndex(
                 (slot: Slot): boolean => slot.weekday === weekday,
             );
-            const toggle: HTMLButtonElement = elementOf(
-                "button",
+            const toggle: HTMLButtonElement = buttonOf(
                 "series-weekday",
                 dayNameOf(weekday),
-            ) as HTMLButtonElement;
-            toggle.type = "button";
+                (): void => {
+                    slotToggle(days, weekday);
+                    formFill();
+                },
+            );
             toggle.setAttribute("aria-pressed", String(index !== -1));
-            toggle.addEventListener("click", (): void => {
-                slotToggle(days, weekday);
-                filled();
-            });
             return toggle;
         }),
     );
@@ -708,7 +636,7 @@ export function slotRowsOf(
                 const line: HTMLElement = elementOf("div", "series-slot", "");
                 line.append(
                     elementOf("span", "series-slot-day", dayNameOf(slot.weekday)),
-                    lengthOf === null ? timesRangeOf(slot, changed) : lengthOf(slot),
+                    lengthOf === null ? timesRangeOf(slot, formChanged) : lengthOf(slot),
                 );
                 return line;
             }),
@@ -802,18 +730,6 @@ export function boxesRowOf(): HTMLElement {
 }
 
 /**
- * Puts what the boxes of a series show into the row `Entries` of the form,
- * the row shown only while it shows something,
- * so a series not typed enough yet has no empty row.
- */
-function previewPut(form: HTMLElement, shown: Node[]): void {
-    const place: HTMLElement | null = form.querySelector(".series-preview");
-    place?.replaceChildren(...shown);
-    const row: HTMLElement | null = place?.closest<HTMLElement>(".panel-field") ?? null;
-    if (row !== null) row.hidden = shown.length === 0;
-}
-
-/**
  * Forgets what the boxes of a form showed, and folds their list,
  * as a form of another series or another new box opens.
  */
@@ -825,11 +741,6 @@ export function previewForget(): void {
     extraTyped = null;
     sessionTyped = null;
     kindAsked = "";
-}
-
-/** Writes how many there are of something, or nothing for none. */
-function countOf(count: number, words: string): string[] {
-    return count === 0 ? [] : [`${count} ${words}`];
 }
 
 /**
@@ -860,12 +771,14 @@ function summaryOf(planned: Planned[], toggle: () => void): HTMLButtonElement {
         keep: (box: Planned) => boolean,
     ): number => planned.filter(keep).length;
     const line: HTMLButtonElement = document.createElement("button");
+    // How many each change makes, none for none.
     const parts: string[] = [...(had ? ["new"] : []), "changed", "removed"].flatMap(
-        (change: string): string[] =>
-            countOf(
-                counted((box: Planned): boolean => box.change === change),
-                change,
-            ),
+        (change: string): string[] => {
+            const count: number = counted(
+                (box: Planned): boolean => box.change === change,
+            );
+            return count === 0 ? [] : [`${count} ${change}`];
+        },
     );
     const states: [number, IconNode, string][] = [
         [
@@ -1353,15 +1266,17 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
     if (word === "" && box.location !== undefined) word = "changed";
     if (preview.days.extras.some((extra: Extra): boolean => extra.day === box.day))
         word = word === "" ? "extra" : `${word} extra`;
+    const show: (() => void) | null =
+        known === undefined
+            ? null
+            : (): void => {
+                  boxShow(known).catch(logged);
+              };
     const number: HTMLElement =
         kinds === undefined
             ? numberOf(
                   box.change === "removed" ? "" : box.number.replace("NONE", "–"),
-                  known === undefined || box.number === ""
-                      ? null
-                      : (): void => {
-                            boxShow(known).catch(logged);
-                        },
+                  box.number === "" ? null : show,
                   known?.note || "Open",
               )
             : kindMenuOf(
@@ -1390,17 +1305,11 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
                   typing?.online ?? "",
                   typing?.onlineLink ?? "",
               );
-    const opening: (() => void) | null =
-        known === undefined || kinds !== undefined || box.number !== ""
-            ? null
-            : (): void => {
-                  boxShow(known).catch(logged);
-              };
     const mine: Form | null = grouped === null ? typing : null;
     return listRowOf({
         number: number,
         day: box.day,
-        open: opening,
+        open: kinds !== undefined || box.number !== "" ? null : show,
         group:
             known !== undefined && known.group !== "" && course !== null
                 ? boxGroupOf(
@@ -1605,9 +1514,15 @@ function boxListOf(
  */
 async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
     const asked: number = ++previewsAsked;
+    // Puts what the boxes show into the row `Entries` of the form,
+    // the row shown only while it shows something, so it never stands empty.
     const put: (shown: Node[]) => void = (shown: Node[]): void => {
         previewShown = shown;
-        previewPut(form, previewShown);
+        const place: HTMLElement | null = form.querySelector(".series-preview");
+        place?.replaceChildren(...shown);
+        const row: HTMLElement | null =
+            place?.closest<HTMLElement>(".panel-field") ?? null;
+        if (row !== null) row.hidden = shown.length === 0;
     };
     if (preview.ask === null) {
         put([]);
@@ -1693,14 +1608,18 @@ async function courseLoad(module: string, semester: string): Promise<Course> {
 }
 
 /**
- * Loads the categories with the values of their fields as of now.
+ * Loads what the form offers: the categories with the values of their fields as of now,
+ * and the people of `Persons.md`.
  *
  * @throws {Error} - When the reader cannot answer
  */
-async function categoriesLoad(): Promise<Category[]> {
-    return readerAsk<Category[]>(
-        `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
-    );
+async function offersLoad(): Promise<[Category[], Person[]]> {
+    return Promise.all([
+        readerAsk<Category[]>(
+            `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
+        ),
+        personsKept(),
+    ]);
 }
 
 /**
@@ -2899,12 +2818,10 @@ export async function seriesOpen(
     dialogStart();
     fresh = null;
     formsForget(saved);
-    const loaded: [Course, Category[], Person[]] = await Promise.all([
+    [course, [categories, persons]] = await Promise.all([
         courseLoad(module, semester),
-        categoriesLoad(),
-        personsKept(),
+        offersLoad(),
     ]);
-    [course, categories, persons] = loaded;
     const rule: Rule | null =
         course.series.find((series: Series): boolean => series.rule.type === type)
             ?.rule ?? (type === examType ? examRuleOf(course) : null);
@@ -2912,8 +2829,6 @@ export async function seriesOpen(
     listOpened = type === examType;
     typing = formOf(type, rule);
     kindTyped = "";
-    kindAsked = "";
-    extraTyped = null;
     formFill();
     dialogShow();
     if (rule === null && type === "")
@@ -2937,12 +2852,10 @@ export async function groupOpen(
     groupBack = null;
     plain = null;
     done = (): void => {};
-    const loaded: [Course, Category[], Person[]] = await Promise.all([
+    [course, [categories, persons]] = await Promise.all([
         courseLoad(module, semester),
-        categoriesLoad(),
-        personsKept(),
+        offersLoad(),
     ]);
-    [course, categories, persons] = loaded;
     groupStart(type, group);
     dialogShow();
 }
@@ -2961,10 +2874,9 @@ async function seriesRepeat(
     days: Days,
     saved: () => void,
 ): Promise<void> {
-    const loaded: [Course | null, Category[], Person[]] = await Promise.all([
+    const loaded: [Course | null, [Category[], Person[]]] = await Promise.all([
         courseLoad(from.box.module, from.box.semester).catch((): null => null),
-        categoriesLoad(),
-        personsKept(),
+        offersLoad(),
     ]);
     if (
         loaded[0]?.series.some(
@@ -2975,7 +2887,7 @@ async function seriesRepeat(
         return;
     }
     dialogStart();
-    [course, categories, persons] = loaded;
+    [course, [categories, persons]] = loaded;
     formsForget(saved);
     repeated = from;
     formReset();
@@ -3249,8 +3161,6 @@ function courseTimeRowsOf(form: Form): HTMLElement[] {
         );
     return slotRowsOf(
         form,
-        formChanged,
-        formFill,
         [courseSwapOf(form)],
         form.slots.every((slot: Slot): boolean => slot.minutes === undefined)
             ? null
@@ -3307,14 +3217,7 @@ function plainTimeRowsOf(form: Form): HTMLElement[] {
             formChanged,
         );
     };
-    return slotRowsOf(
-        form,
-        formChanged,
-        formFill,
-        [plainSwapOf(form)],
-        plainTimed ? null : lengthOf,
-        true,
-    );
+    return slotRowsOf(form, [plainSwapOf(form)], plainTimed ? null : lengthOf, true);
 }
 
 /**
@@ -3410,10 +3313,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     const parts: Plain[] = series.parts.length > 0 ? series.parts : [series];
     const daysOf: (part: Plain) => number[] = (part: Plain): number[] =>
         part.month > 0 ? [yearly] : part.monthDay > 0 ? [monthly] : part.weekdays;
-    const loaded: [Category[], Person[]] = await Promise.all([
-        categoriesLoad(),
-        personsKept(),
-    ]);
+    const loaded: [Category[], Person[]] = await offersLoad();
     dialogStart();
     [categories, persons] = loaded;
     course = null;
@@ -3733,10 +3633,7 @@ async function freshFollow(): Promise<void> {
  * @throws {Error} - When the reader cannot answer
  */
 export async function seriesNew(day: string, saved: () => void): Promise<void> {
-    const loaded: [Category[], Person[]] = await Promise.all([
-        categoriesLoad(),
-        personsKept(),
-    ]);
+    const loaded: [Category[], Person[]] = await offersLoad();
     dialogStart();
     [categories, persons] = loaded;
     fresh = {
