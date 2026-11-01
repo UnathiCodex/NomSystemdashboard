@@ -1,8 +1,5 @@
-/* Food search and every list of meals or foods, the same look in the food view
-   and in the entry by category of the day */
-/* Line of a meal or a food in a list, see `listLineOf` in `search.ts`:
-   the room of a small grey `×` every line keeps,
-   so the numbers of all lists stand in one column */
+/* Food search and every list of meals or foods, alike in the food view and the entry of the day */
+/* Line of a meal or a food, the room of a `×` kept in every line, so the numbers of all lists stand in one column */
 .food-item {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 1.5rem;
@@ -13,9 +10,7 @@
     justify-content: center;
 }
 
-/* Row of a meal or a food: its kcal as wide as five digits, 2rem from the name at least,
-   so a long name never runs up to its number,
-   which stays on the line of the name, never between its lines */
+/* Row of a meal or a food, its kcal 2rem from the name at least, so a long name never runs up to its number */
 .food-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 4rem;
@@ -49,32 +44,29 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* Name of a meal or a food with its brand and store in brackets,
-   going on below where the row has no room, never cut with dots */
+/* Name of a meal or a food, going on below where the row has no room, never cut */
 .food-name {
     overflow-wrap: break-word;
 }
 
-/* What stands in brackets after the name of a food grey, in the size of the name,
-   since it only tells which one it is */
+/* The brackets after the name of a food grey, since they only tell which one it is */
 .food-brand {
     color: var(--text-muted);
 }
 
-/* The brackets of a list all on a line of their own below their names
-   while one of them has no room, see `bracketsWatch` in `foods.ts` */
+/* The brackets of a list all below their names while one of them has no room */
 .bracket-below {
     display: block;
 }
 
-/* Numbers at the right of their column, every digit equally wide, so the columns align */
+/* Numbers at the right, every digit equally wide, so the columns align */
 .food-value {
     text-align: right;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
 
-/* Head of a list small and grey, close above its first row, so a list needs little room */
+/* Head of a list close above its first row, so a list needs little room */
 .food-columns {
     min-height: 0;
     margin: 0.25rem 0 0;
@@ -82,8 +74,7 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* A meal or a food opened below its line, in line with its name,
-   a grey line at their left */
+/* A meal or a food opened below its line, in line with its name */
 .food-detail {
     display: flex;
     flex-direction: column;
@@ -102,9 +93,7 @@ button.food-row {
     align-items: baseline;
 }
 
-/* The `×` of a food of a meal opened on the line of its name,
-   its icon level with the small letters, as an icon beside a word stands,
-   see `.meal-row` in `../day/meal.css` */
+/* The `×` of a food of a meal opened, its icon level with the small letters, as an icon beside a word stands */
 .food-part > .cross-quiet {
     display: block;
     line-height: inherit;
@@ -116,8 +105,7 @@ button.food-row {
     vertical-align: middle;
 }
 
-/* The values of a food opened: a value that does not change as high as a field,
-   so every row stands as far from the next */
+/* The values of a food opened, a fixed value as high as a field, so every row stands as far from the next */
 .food-facts {
     display: grid;
     grid-template-columns: max-content minmax(0, 24rem);
@@ -130,9 +118,7 @@ button.food-row {
     border-bottom: 1px solid transparent;
 }
 
-/* A value of a food of mine that changes in place, no frame,
-   a thin line below it under the pointer and while I type,
-   so I see that a click changes it */
+/* A value that changes in place, a thin line below it under the pointer, so I see that a click changes it */
 .food-inline {
     width: 100%;
     padding: 0 0 0.125rem;
@@ -165,8 +151,7 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* The cross and the check of a form inside a list small and flat,
-   as modern layouts keep the buttons of a form inside a page */
+/* The cross and the check of a form inside a list small and flat */
 .food-buttons {
     display: inline-flex;
     flex: none;
@@ -188,7 +173,7 @@ button.food-row {
     color: var(--text-main);
 }
 
-/* Below the products how many of how many, small and grey, More at the right */
+/* Below the products how many of how many, More at the right */
 .food-more {
     display: flex;
     align-items: center;
@@ -201,8 +186,7 @@ button.food-row {
     font-variant-numeric: tabular-nums;
 }
 
-/* More: loose as every button, one chip high, its word grey,
-   light under the pointer, never on a grey box, off while the next page loads */
+/* More, loose as every button, never on a grey box, off while the next page loads */
 .food-more-button {
     min-height: var(--chip-height);
     padding: 0 0.75rem;
@@ -223,7 +207,7 @@ button.food-row {
     cursor: default;
 }
 
-/* Line between the sections of a search, thin, so they stand apart at a glance */
+/* Line between the sections of a search, so they stand apart at a glance */
 .food-divider {
     margin: 0.75rem 0.75rem 0.25rem;
     border: 0;
@@ -237,8 +221,7 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* Form of a food by hand in the look of a food of mine opened, see `.food-detail`:
-   a value to type on its thin line, always shown, since the form starts empty */
+/* Form of a food by hand in the look of a food opened, its lines always shown, since the form starts empty */
 .food-form {
     margin-top: 0.75rem;
 }
@@ -251,7 +234,7 @@ button.food-row {
     border-bottom-color: var(--line);
 }
 
-/* A grey lighter under the pointer on every row a click does something on */
+/* A lighter grey under the pointer on every row a click does something on */
 button.food-row:hover {
     background: var(--fill);
 }
@@ -263,8 +246,7 @@ button.food-row:hover {
     color: var(--text-muted);
 }
 
-/* A number that changes in place:
-   a plain value as wide as five digits, its digits right, then its unit */
+/* A number that changes in place, then its unit */
 .food-grams {
     display: inline-flex;
     align-items: baseline;
@@ -279,8 +261,7 @@ button.food-row:hover {
     font-variant-numeric: tabular-nums;
 }
 
-/* In the values of a food a click on the unit of a number puts the cursor into it too,
-   so an empty one takes a click */
+/* A click on the unit of a number puts the cursor into it too, so an empty one takes a click */
 .food-facts > .food-grams > .food-inline-grams {
     width: auto;
     min-width: 1ch;
@@ -292,16 +273,13 @@ button.food-row:hover {
     cursor: text;
 }
 
-/* In the form of a new food a number has the room of five digits on its line
-   to type on, its unit after it */
+/* In the form of a new food a number has the room of five digits to type on */
 .food-form .food-facts > .food-grams > .food-inline-grams {
     width: 4rem;
     field-sizing: fixed;
 }
 
-/* Phone: the values of a food opened each its name small and grey above it,
-   as the rows of a dialog on a phone, so a value takes the whole width,
-   never cut at its edge */
+/* Phone: each value of a food opened its name above it, so a value takes the whole width, never cut */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .food-row,
     .food-more-button {
@@ -317,21 +295,18 @@ button.food-row:hover {
         margin-top: 0.5rem;
     }
 
-    /* A line of a list on a phone with its number only as wide as itself,
-       since it stands at the right anyway, so the name keeps the rest of the line */
+    /* A number only as wide as itself, so the name keeps the rest of the line */
     .food-row {
         grid-template-columns: minmax(0, 1fr) auto;
     }
 
-    /* A value to type in on a phone where it stands, but a finger high to hit:
-       a tap above its text, which takes no room of its row, so nothing moves */
+    /* A value a finger high to hit, its tap room above its text taking no room, so nothing moves */
     .food-facts .food-inline {
         padding-top: 0.75rem;
         margin-top: -0.75rem;
     }
 
-    /* The cross and the check of a form and More on a phone as they look,
-       but a finger's width to hit, each taking a tap a little around it */
+    /* The cross, the check and More as they look, but taking a tap a little around them */
     .food-buttons button,
     .food-more-button {
         position: relative;
