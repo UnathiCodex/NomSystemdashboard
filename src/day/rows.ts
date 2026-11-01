@@ -50,24 +50,17 @@ export function rowTimesOf(time: string, minutes: number | null): string {
     if (start === null) return minutes === null ? "" : lengthOf(minutes);
     return minutes === null
         ? timeOf(start)
-        : `${timeOf(start)}${rangeDash}` +
-              timeOf(new Date(start.getTime() + minutes * 60 * 1000));
+        : `${timeOf(start)}${rangeDash}` + timeOf(new Date(start.getTime() + minutes * 60 * 1000));
 }
 
 /**
  * Makes the number of a row in its small grey box,
  * a button that opens its box while it has one, else plain, empty without number.
  */
-export function numberOf(
-    text: string,
-    open: (() => void) | null,
-    title: string,
-): HTMLElement {
+export function numberOf(text: string, open: (() => void) | null, title: string): HTMLElement {
     const number: HTMLElement = elementOf(
         open === null ? "span" : "button",
-        open === null
-            ? "block-kind series-number"
-            : "block-kind series-number series-open",
+        open === null ? "block-kind series-number" : "block-kind series-number series-open",
         text,
     );
     if (number instanceof HTMLButtonElement && open !== null) {
@@ -102,9 +95,7 @@ export function metaOf(parts: (string | Node)[][]): HTMLElement {
         const parts: HTMLElement[] = [...shown.children] as HTMLElement[];
         meta.title =
             meta.scrollWidth > meta.clientWidth ||
-            parts.some(
-                (part: HTMLElement): boolean => part.scrollWidth > part.clientWidth,
-            )
+            parts.some((part: HTMLElement): boolean => part.scrollWidth > part.clientWidth)
                 ? parts.map((part: HTMLElement): string => part.innerText).join(" · ")
                 : "";
     });

@@ -35,9 +35,7 @@ function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
         token: (stream: StringStream, state: unknown): string | null => {
             const style: string | null = mode.token(stream, state);
             if (style === "builtin") return "variable";
-            return style === "type" && /^[a-z]+$/.test(stream.current())
-                ? "keyword"
-                : style;
+            return style === "type" && /^[a-z]+$/.test(stream.current()) ? "keyword" : style;
         },
     });
 }
@@ -97,17 +95,13 @@ export function codeHtmlOf(code: string, info: string): string | null {
     const language: StreamLanguage<unknown> | null = codeLanguageOf(info);
     if (language === null) return null;
     let html: string = "";
-    const escaped = (text: string): string =>
-        text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const escaped = (text: string): string => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     highlightCode(
         code,
         language.parser.parse(code),
         codeHighlighter,
         (text: string, classes: string): void => {
-            html +=
-                classes === ""
-                    ? escaped(text)
-                    : `<span class="${classes}">${escaped(text)}</span>`;
+            html += classes === "" ? escaped(text) : `<span class="${classes}">${escaped(text)}</span>`;
         },
         (): void => {
             html += "\n";

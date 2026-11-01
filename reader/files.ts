@@ -12,13 +12,7 @@
  * Paths are written from `NomManageplannings` with `/`.
  */
 
-import {
-    readdirSync,
-    readFileSync,
-    realpathSync,
-    statSync,
-    writeFileSync,
-} from "node:fs";
+import { readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { extname, join, sep } from "node:path";
 import { systemFiles, writeAllowed } from "./sources.ts";
 import { changesOf, textMerged } from "./edit.ts";
@@ -71,14 +65,10 @@ function opensOf(path: string): boolean {
  */
 function nodesOf(folder: string, path: string): FileNode[] {
     const entries: Dirent[] = readdirSync(folder, { withFileTypes: true })
-        .filter(
-            (entry: Dirent): boolean =>
-                !leftOut(entry.name) && (entry.isDirectory() || entry.isFile()),
-        )
+        .filter((entry: Dirent): boolean => !leftOut(entry.name) && (entry.isDirectory() || entry.isFile()))
         .sort(
             (first: Dirent, second: Dirent): number =>
-                Number(second.isDirectory()) - Number(first.isDirectory()) ||
-                first.name.localeCompare(second.name),
+                Number(second.isDirectory()) - Number(first.isDirectory()) || first.name.localeCompare(second.name),
         );
     return entries
         .map((entry: Dirent): FileNode => {
@@ -88,9 +78,7 @@ function nodesOf(folder: string, path: string): FileNode[] {
                 path: inner,
                 folder: entry.isDirectory(),
                 opens: entry.isFile() && opensOf(inner),
-                children: entry.isDirectory()
-                    ? nodesOf(join(folder, entry.name), inner)
-                    : [],
+                children: entry.isDirectory() ? nodesOf(join(folder, entry.name), inner) : [],
             };
         })
         .filter((node: FileNode): boolean => node.folder || node.opens);
@@ -169,10 +157,8 @@ export function systemFileWrite(change: NoteChange): Written {
         throw new Error(`No writing outside the new system: ${change.path}`);
     const bytes: Buffer = readFileSync(file);
     const old: string = bytes.toString("utf8");
-    if (!Buffer.from(old, "utf8").equals(bytes))
-        throw new Error(`No UTF-8 text, so not written: ${change.path}`);
-    const text: string =
-        old === change.base ? change.text : textMerged(change.base, change.text, old);
+    if (!Buffer.from(old, "utf8").equals(bytes)) throw new Error(`No UTF-8 text, so not written: ${change.path}`);
+    const text: string = old === change.base ? change.text : textMerged(change.base, change.text, old);
     if (text !== old) writeFileSync(file, text);
     return { text: text, changes: changesOf(change.text, text) };
 }

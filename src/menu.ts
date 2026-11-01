@@ -18,11 +18,7 @@ import type { IconNode } from "lucide";
 /**
  * Makes one item of a menu, its icon and then its words.
  */
-export function menuItemOf(
-    icon: IconNode,
-    words: string,
-    click: (event: MouseEvent) => void,
-): HTMLButtonElement {
+export function menuItemOf(icon: IconNode, words: string, click: (event: MouseEvent) => void): HTMLButtonElement {
     const item: HTMLButtonElement = document.createElement("button");
     item.type = "button";
     item.className = "menu-item";

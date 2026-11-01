@@ -30,12 +30,7 @@ import type { Box } from "./boxes.ts";
 import type { IconNode } from "lucide";
 
 /** Makes one action of a box, on a phone an item of its menu, but in a list. */
-function actionOf(
-    icon: IconNode,
-    words: string,
-    click: () => void,
-    listed: boolean,
-): HTMLButtonElement {
+function actionOf(icon: IconNode, words: string, click: () => void, listed: boolean): HTMLButtonElement {
     if (phone && !listed) return menuItemOf(icon, words, click);
     const button: HTMLButtonElement = document.createElement("button");
     button.type = "button";
@@ -102,12 +97,9 @@ export function boxActionsOf(
                 listed,
             ),
         );
-    const actions: HTMLElement =
-        phone && !listed ? menuOf(buttons) : document.createElement("div");
+    const actions: HTMLElement = phone && !listed ? menuOf(buttons) : document.createElement("div");
     if (!phone || listed) actions.append(...buttons);
     actions.classList.add("box-actions");
-    actions.addEventListener("click", (event: MouseEvent): void =>
-        event.stopPropagation(),
-    );
+    actions.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
     return actions;
 }

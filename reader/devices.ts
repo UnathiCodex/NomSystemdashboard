@@ -36,10 +36,7 @@ export type DeviceReport = {
 };
 
 /** Head of a new `Devices.md`, its table without rows. */
-const fileHead: string[] = [
-    "| Device | Page | Scale | Screen | App | Since |",
-    "|---|---|---|---|---|---|",
-];
+const fileHead: string[] = ["| Device | Page | Scale | Screen | App | Since |", "|---|---|---|---|---|---|"];
 
 /**
  * Names a device by its Tailscale address, as my tailnet names it.
@@ -47,11 +44,7 @@ const fileHead: string[] = [
  * @throws {Error} - When Tailscale does not know the address
  */
 async function deviceNameOf(address: string): Promise<string> {
-    const { stdout }: { stdout: string } = await promisify(execFile)("tailscale", [
-        "whois",
-        "--json",
-        address,
-    ]);
+    const { stdout }: { stdout: string } = await promisify(execFile)("tailscale", ["whois", "--json", address]);
     const whois: { Node: { ComputedName: string } } = JSON.parse(stdout);
     return whois.Node.ComputedName;
 }
@@ -77,22 +70,10 @@ export async function deviceReport(report: DeviceReport, address: string): Promi
     if (address === "") return;
     const name: string = await deviceNameOf(address);
     if (name === hostname()) return;
-    const sizes: number[] = [
-        report.width,
-        report.height,
-        report.scale,
-        report.screenWidth,
-        report.screenHeight,
-    ];
-    if (
-        !sizes.every(
-            (size: unknown): boolean =>
-                typeof size === "number" && Number.isFinite(size) && size > 0,
-        )
-    )
+    const sizes: number[] = [report.width, report.height, report.scale, report.screenWidth, report.screenHeight];
+    if (!sizes.every((size: unknown): boolean => typeof size === "number" && Number.isFinite(size) && size > 0))
         throw new Error(`No sizes of a device: ${sizes.join(", ")}`);
-    if (!writeAllowed(devicesFile))
-        throw new Error(`No writing outside the new system: ${devicesFile}`);
+    if (!writeAllowed(devicesFile)) throw new Error(`No writing outside the new system: ${devicesFile}`);
 
     const now: Date = new Date();
     const row: string =
@@ -101,24 +82,12 @@ export async function deviceReport(report: DeviceReport, address: string): Promi
         `| ${Math.round(report.screenWidth)} × ${Math.round(report.screenHeight)} ` +
         `| ${report.app === true ? "yes" : "no"} ` +
         `| ${berlinDateOf(now).split("-").reverse().join(".")} ${berlinTimeOf(now)} |`;
-    const lines: string[] = existsSync(devicesFile)
-        ? readFileSync(devicesFile, "utf8").split("\n")
-        : [...fileHead, ""];
+    const lines: string[] = existsSync(devicesFile) ? readFileSync(devicesFile, "utf8").split("\n") : [...fileHead, ""];
     const index: number = lines.findIndex(
-        (line: string): boolean =>
-            line.startsWith("|") && !line.startsWith("|---") && cellsOf(line)[0] === name,
+        (line: string): boolean => line.startsWith("|") && !line.startsWith("|---") && cellsOf(line)[0] === name,
     );
-    if (
-        index !== -1 &&
-        cellsOf(lines[index]).slice(0, 5).join("|") === cellsOf(row).slice(0, 5).join("|")
-    )
-        return;
-    if (index === -1)
-        lines.splice(
-            lines.findLastIndex((line: string): boolean => line.startsWith("|")) + 1,
-            0,
-            row,
-        );
+    if (index !== -1 && cellsOf(lines[index]).slice(0, 5).join("|") === cellsOf(row).slice(0, 5).join("|")) return;
+    if (index === -1) lines.splice(lines.findLastIndex((line: string): boolean => line.startsWith("|")) + 1, 0, row);
     else lines[index] = row;
     mkdirSync(dirname(devicesFile), { recursive: true });
     writeFileSync(devicesFile, lines.join("\n"));

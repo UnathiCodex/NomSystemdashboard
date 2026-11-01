@@ -105,16 +105,7 @@ import { moduleContentsRead, moduleFolderOf } from "./notes.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
 import { day, planEnding } from "./sources.ts";
 
-import type {
-    Attendee,
-    Entry,
-    EntryFields,
-    EntryTexts,
-    Link,
-    Online,
-    Push,
-    TodoFields,
-} from "./calendar.ts";
+import type { Attendee, Entry, EntryFields, EntryTexts, Link, Online, Push, TodoFields } from "./calendar.ts";
 
 /**
  * State of a box: `university` for cancelled by the university, its `X-NUMBER:NONE`,
@@ -212,10 +203,7 @@ export type PlanDay = {
  * - `documents`: Paths from the folder of its skill
  *   of the documents a skill box will use.
  */
-export type BoxNew = Omit<
-    EntryTexts,
-    "locationLink" | "titleLink" | "attendees" | keyof Online
-> &
+export type BoxNew = Omit<EntryTexts, "locationLink" | "titleLink" | "attendees" | keyof Online> &
     Partial<Online> & {
         titleLink?: string;
         attendees?: Attendee[];
@@ -253,12 +241,7 @@ const deadlineDays: number = 4;
  * see `calendarFileOf` in `documents.ts`,
  * always the file of its series for one occurrence of a series.
  */
-function planFileAfter(
-    file: string,
-    entry: Entry,
-    box: { category: string; module: string },
-    date: string,
-): string {
+function planFileAfter(file: string, entry: Entry, box: { category: string; module: string }, date: string): string {
     return entry.recurrence === "" ? calendarFileOf(box, date, planEnding) : file;
 }
 
@@ -322,10 +305,7 @@ function logsOf(to: string): Map<string, Entry> {
     return new Map(
         entriesRead(day.log, "1970-01-01T00:00:00Z", berlinDayStartOf(dayAdd(to, 1)))
             .filter((entry: Entry): boolean => entry.planned !== "")
-            .sort(
-                (first: Entry, second: Entry): number =>
-                    Date.parse(first.start) - Date.parse(second.start),
-            )
+            .sort((first: Entry, second: Entry): number => Date.parse(first.start) - Date.parse(second.start))
             .map((entry: Entry): [string, Entry] => [entry.planned, entry]),
     );
 }
@@ -387,14 +367,10 @@ function planEntryFind(id: string): [string, Entry] {
 function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
     const log: Entry | undefined = logs.get(entryIdOf(entry));
     let minutes: number | null = entry.minutes;
-    if (!entry.todo)
-        minutes = entry.allDay
-            ? null
-            : (Date.parse(entry.end) - Date.parse(entry.start)) / minuteLength;
+    if (!entry.todo) minutes = entry.allDay ? null : (Date.parse(entry.end) - Date.parse(entry.start)) / minuteLength;
     let state: BoxState = "open";
     if (entry.status === "CANCELLED") state = "dropped";
-    else if (entry.status === "COMPLETED" || (log !== undefined && entry.deadline === ""))
-        state = "done";
+    else if (entry.status === "COMPLETED" || (log !== undefined && entry.deadline === "")) state = "done";
     else if (entry.number === "NONE") state = "university";
     return carriedOf(
         {
@@ -459,12 +435,7 @@ function carriedOf(box: Box, written: string): Box {
     let until: string = "";
     if (box.state === "open") until = berlinDateOf(new Date());
     else if (box.state === "done") until = loggedDayOf(box);
-    if (
-        berlinDateOf(new Date(written)) > box.day ||
-        box.deadline !== "" ||
-        until <= box.day
-    )
-        return box;
+    if (berlinDateOf(new Date(written)) > box.day || box.deadline !== "" || until <= box.day) return box;
     const days: number = daysOf(box.day, until);
     const laterOf: (later: number) => string = (later: number): string =>
         box.time === "" ? "" : berlinLater(new Date(box.time), later).toISOString();
@@ -517,11 +488,7 @@ function boxCompare(first: Box, second: Box): number {
     const rankOf: (box: Box) => number = (box: Box): number => {
         if (box.time !== "") return 0;
         if (box.deadline !== "") return 1;
-        return box.state === "dropped" ||
-            box.state === "university" ||
-            box.state === "pushed"
-            ? 3
-            : 2;
+        return box.state === "dropped" || box.state === "university" || box.state === "pushed" ? 3 : 2;
     };
     return (
         rankOf(first) - rankOf(second) ||
@@ -536,12 +503,8 @@ function boxCompare(first: Box, second: Box): number {
  * and from {@link deadlineDays} days before, once done only until its last session.
  */
 function deadlineShows(box: Box, date: string): boolean {
-    const last: string =
-        box.state === "done" && box.log !== null ? loggedDayOf(box) : box.day;
-    return (
-        date === box.day ||
-        (dayAdd(box.day, -deadlineDays) <= date && date < box.day && date <= last)
-    );
+    const last: string = box.state === "done" && box.log !== null ? loggedDayOf(box) : box.day;
+    return date === box.day || (dayAdd(box.day, -deadlineDays) <= date && date < box.day && date <= last);
 }
 
 /**
@@ -590,18 +553,14 @@ export function boxesRead(start: string, end: string): PlanDay[] {
     const days: PlanDay[] = [];
     for (let date: string = start; date < end; date = dayAdd(date, 1)) {
         const planned: Box[] = [
-            ...boxes.filter((box: Box): boolean =>
-                box.deadline === "" ? box.day === date : deadlineShows(box, date),
-            ),
+            ...boxes.filter((box: Box): boolean => (box.deadline === "" ? box.day === date : deadlineShows(box, date))),
             ...left.filter((box: Box): boolean => box.day === date),
         ];
         days.push({
             day: date,
             occasions: occasions
                 .filter((occasion: Entry): boolean =>
-                    occasion.allDay
-                        ? occasion.start <= date && occasion.end > date
-                        : dayOf(occasion) === date,
+                    occasion.allDay ? occasion.start <= date && occasion.end > date : dayOf(occasion) === date,
                 )
                 .map((occasion: Entry): Occasion => ({
                     id: occasion.id,
@@ -627,14 +586,8 @@ export function boxesCarried(date: string): Box[] {
     const logs: Map<string, Entry> = logsOf(date);
     return planRead(date)
         .map((entry: Entry): Box => boxOf(entry, logs))
-        .filter(
-            (box: Box): boolean =>
-                box.state === "open" && box.deadline !== "" && box.day < date,
-        )
-        .sort(
-            (first: Box, second: Box): number =>
-                first.day.localeCompare(second.day) || boxCompare(first, second),
-        );
+        .filter((box: Box): boolean => box.state === "open" && box.deadline !== "" && box.day < date)
+        .sort((first: Box, second: Box): number => first.day.localeCompare(second.day) || boxCompare(first, second));
 }
 
 /**
@@ -686,19 +639,13 @@ function boxCheck(box: BoxNew, old: Entry | null): void {
     const kept: boolean =
         old !== null &&
         box.category === old.category &&
-        (box.category === skillName
-            ? box.module === old.module && box.type === old.type
-            : box.title === old.title) &&
+        (box.category === skillName ? box.module === old.module && box.type === old.type : box.title === old.title) &&
         attendeesAllow(box.attendees ?? []);
     dateCheck(box.day);
-    if (!(kept || categoryAllows(box)))
-        throw new Error(`No box ${box.category} ${box.title}`);
+    if (!(kept || categoryAllows(box))) throw new Error(`No box ${box.category} ${box.title}`);
     if (box.time !== "" && berlinDateOf(new Date(box.time)) !== box.day)
         throw new Error(`${box.title}: its time lies on another day than ${box.day}`);
-    if (
-        box.minutes !== null &&
-        !(Number.isInteger(box.minutes) && box.minutes > 0 && box.minutes <= dayMinutes)
-    )
+    if (box.minutes !== null && !(Number.isInteger(box.minutes) && box.minutes > 0 && box.minutes <= dayMinutes))
         throw new Error(`${box.title}: no duration of ${box.minutes} minutes`);
     const deadlineDay: string =
         box.deadline === "" || /^\d{4}-\d{2}-\d{2}$/.test(box.deadline)
@@ -706,8 +653,7 @@ function boxCheck(box: BoxNew, old: Entry | null): void {
             : berlinDateOf(new Date(box.deadline));
     if (box.deadline !== "" && (deadlineDay !== box.day || box.time !== ""))
         throw new Error(
-            `${box.title}: a box with a deadline lies on the day of its deadline, ` +
-                "without expected time",
+            `${box.title}: a box with a deadline lies on the day of its deadline, ` + "without expected time",
         );
     const folder: string | undefined = moduleFolderOf(box.module);
     const offered: string[] = [
@@ -715,9 +661,7 @@ function boxCheck(box: BoxNew, old: Entry | null): void {
         ...(old === null ? [] : chaptersOf(old)),
     ];
     if (box.chapters.some((chapter: string): boolean => !offered.includes(chapter)))
-        throw new Error(
-            `${box.title}: no chapters ${box.chapters.join(", ")} in ${box.module}`,
-        );
+        throw new Error(`${box.title}: no chapters ${box.chapters.join(", ")} in ${box.module}`);
 }
 
 /**
@@ -756,10 +700,7 @@ function boxLinksOf(box: BoxNew, old: Entry | null): [string, (string | Link)[]]
  */
 function boxTextsOf(box: BoxNew, old: Entry | null): EntryTexts {
     const semester: string = semesterFor(box.category, box.semester, box.day);
-    const [title, titleLink]: [string, string] = titleOf(
-        { ...box, semester: semester },
-        old,
-    );
+    const [title, titleLink]: [string, string] = titleOf({ ...box, semester: semester }, old);
     return {
         category: box.category,
         title: title,
@@ -796,9 +737,7 @@ function todoFieldsOf(box: BoxNew, old: Entry | null): TodoFields {
  */
 function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
     if (change.time === "" || change.minutes === null)
-        throw new Error(
-            `${old.title} is an event of the plan and keeps its time and its duration`,
-        );
+        throw new Error(`${old.title} is an event of the plan and keeps its time and its duration`);
     const start: Date = new Date(change.time);
     return {
         ...boxTextsOf(change, old),
@@ -817,14 +756,9 @@ function eventFieldsOf(change: BoxChange, old: Entry): EntryFields {
 function seriesOf(module: string, type: string): Entry[] {
     return planRead(dayAdd(berlinDateOf(new Date()), 2 * 366))
         .filter(
-            (entry: Entry): boolean =>
-                entry.category === skillName &&
-                entry.module === module &&
-                entry.type === type,
+            (entry: Entry): boolean => entry.category === skillName && entry.module === module && entry.type === type,
         )
-        .sort((first: Entry, second: Entry): number =>
-            first.start.localeCompare(second.start),
-        );
+        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
 }
 
 /**
@@ -834,9 +768,7 @@ function seriesOf(module: string, type: string): Entry[] {
  */
 function numberNextOf(module: string, type: string, date: string): string {
     const before: number[] = seriesOf(module, type)
-        .filter(
-            (entry: Entry): boolean => dayOf(entry) < date && /^\d+$/.test(entry.number),
-        )
+        .filter((entry: Entry): boolean => dayOf(entry) < date && /^\d+$/.test(entry.number))
         .map((entry: Entry): number => Number(entry.number));
     return String(Math.max(0, ...before) + 1);
 }
@@ -859,9 +791,7 @@ export function boxAdd(box: BoxNew): string {
     const id: string = todoAppend(file, fields);
     if (links.length > 0) propertiesPut(file, id, links);
     if (box.category === skillName && numberedTypes.includes(box.type))
-        propertiesPut(file, id, [
-            ["x-number", [numberNextOf(box.module, box.type, box.day)]],
-        ]);
+        propertiesPut(file, id, [["x-number", [numberNextOf(box.module, box.type, box.day)]]]);
     return id;
 }
 
@@ -905,11 +835,7 @@ export function boxesAdd(boxes: BoxNew[], dry: boolean): string[] {
  */
 export function boxUniversity(id: string, cancelled: boolean): void {
     const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (
-        !entry.editable ||
-        box.state !== (cancelled ? "open" : "university") ||
-        !numberedTypes.includes(entry.type)
-    )
+    if (!entry.editable || box.state !== (cancelled ? "open" : "university") || !numberedTypes.includes(entry.type))
         throw new Error(`${entry.title} is no box of the new system to mark`);
     const series: Entry[] = seriesOf(entry.module, entry.type).filter(
         (other: Entry): boolean => entryIdOf(other) !== id && /^\d+$/.test(other.number),
@@ -917,28 +843,18 @@ export function boxUniversity(id: string, cancelled: boolean): void {
     const before: number[] = series
         .filter((other: Entry): boolean => other.start < entry.start)
         .map((other: Entry): number => Number(other.number));
-    const after: Entry[] = series.filter(
-        (other: Entry): boolean => other.start > entry.start,
-    );
+    const after: Entry[] = series.filter((other: Entry): boolean => other.start > entry.start);
     let number: string = "NONE";
-    if (!cancelled)
-        number =
-            before.length > 0
-                ? String(Math.max(...before) + 1)
-                : (after[0]?.number ?? "1");
+    if (!cancelled) number = before.length > 0 ? String(Math.max(...before) + 1) : (after[0]?.number ?? "1");
     const step: number = cancelled ? -1 : 1;
     boxOwn(file, entry);
-    propertiesPut(file, id, [
-        ["x-number", [entry.group !== "" && !cancelled ? "1" : number]],
-    ]);
+    propertiesPut(file, id, [["x-number", [entry.group !== "" && !cancelled ? "1" : number]]]);
     if (!cancelled) overKeep(id);
     if (entry.group !== "") return;
     after.forEach((other: Entry): void => {
         const [otherFile, otherEntry]: [string, Entry] = planEntryFind(entryIdOf(other));
         boxOwn(otherFile, otherEntry);
-        propertiesPut(otherFile, entryIdOf(other), [
-            ["x-number", [String(Number(other.number) + step)]],
-        ]);
+        propertiesPut(otherFile, entryIdOf(other), [["x-number", [String(Number(other.number) + step)]]]);
     });
 }
 
@@ -972,20 +888,14 @@ export function boxEdit(change: BoxChange): void {
     const links: [string, (string | Link)[]][] = boxLinksOf(change, old);
     const [file, entry, box]: [string, Entry, Box] = carryWrite(found);
     boxOwn(file, entry);
-    if (
-        box.state === "open" &&
-        box.deadline === "" &&
-        change.deadline === "" &&
-        change.day !== box.day
-    )
+    if (box.state === "open" && box.deadline === "" && change.deadline === "" && change.day !== box.day)
         pushAdd(file, change.id, entry);
     const target: string = planFileAfter(file, entry, change, change.day);
     if (todo !== null) todoChange(file, entry, todo, target);
     else if (event !== null) entryChange(file, entry, event, target);
     if (links.length > 0) propertiesPut(target, change.id, links);
     boxTidy(file, entry);
-    if (change.title !== old.title && box.category !== skillName)
-        logRename(change.id, box, change.title);
+    if (change.title !== old.title && box.category !== skillName) logRename(change.id, box, change.title);
 }
 
 /**
@@ -1015,8 +925,7 @@ function logRename(id: string, box: Box, title: string): void {
  */
 export function boxDelete(id: string): void {
     const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (!entry.editable || box.state === "done")
-        throw new Error(`${entry.title} may not be removed`);
+    if (!entry.editable || box.state === "done") throw new Error(`${entry.title} may not be removed`);
     if (entry.recurrence !== "") seriesDayRemove(file, entry.id, entry.recurrence);
     else entryRemove(file, id);
 }
@@ -1027,9 +936,7 @@ export function boxDelete(id: string): void {
  */
 function entryLater(entry: Entry, days: number): Entry {
     const laterOf: (instant: string) => string = (instant: string): string =>
-        entry.allDay
-            ? dayAdd(instant, days)
-            : berlinLater(new Date(instant), days).toISOString();
+        entry.allDay ? dayAdd(instant, days) : berlinLater(new Date(instant), days).toISOString();
     return { ...entry, start: laterOf(entry.start), end: laterOf(entry.end) };
 }
 
@@ -1055,13 +962,7 @@ function boxShift(file: string, entry: Entry, days: number): string {
             },
             target,
         );
-    else
-        entryChange(
-            file,
-            entry,
-            { ...entry, start: new Date(later.start), end: new Date(later.end) },
-            target,
-        );
+    else entryChange(file, entry, { ...entry, start: new Date(later.start), end: new Date(later.end) }, target);
     return target;
 }
 
@@ -1078,8 +979,7 @@ function carryWrite(found: [string, Entry, Box]): [string, Entry, Box] {
     const carried: number = box.pushed.length - entry.pushed.length;
     if (carried === 0) return found;
     boxOwn(file, entry);
-    for (let later: number = 0; later < carried; later++)
-        pushAdd(file, box.id, entryLater(entry, later));
+    for (let later: number = 0; later < carried; later++) pushAdd(file, box.id, entryLater(entry, later));
     boxShift(file, entry, carried);
     return boxFind(box.id);
 }
@@ -1098,9 +998,7 @@ function carryWrite(found: [string, Entry, Box]): [string, Entry, Box] {
 export function boxPush(id: string): void {
     const found: [string, Entry, Box] = boxFind(id);
     if (!found[1].editable || found[2].state !== "open" || found[2].deadline !== "")
-        throw new Error(
-            `${found[1].title} is no open box of the new system without deadline`,
-        );
+        throw new Error(`${found[1].title} is no open box of the new system without deadline`);
 
     const [file, entry, box]: [string, Entry, Box] = carryWrite(found);
     const today: string = berlinDateOf(new Date());
@@ -1123,8 +1021,7 @@ export function boxPush(id: string): void {
  */
 export function boxDrop(id: string, dropped: boolean): void {
     const found: [string, Entry, Box] = boxFind(id);
-    if (!found[1].editable || found[2].state === "done")
-        throw new Error(`${found[1].title} cannot be dropped`);
+    if (!found[1].editable || found[2].state === "done") throw new Error(`${found[1].title} cannot be dropped`);
     const [file, entry]: [string, Entry, Box] = carryWrite(found);
     let status: string = "";
     if (dropped) status = "CANCELLED";
@@ -1163,14 +1060,8 @@ export function boxDone(id: string): void {
  */
 export function boxSubmit(id: string, submitted: boolean): void {
     const [file, entry, box]: [string, Entry, Box] = boxFind(id);
-    if (
-        !entry.editable ||
-        box.deadline === "" ||
-        box.state !== (submitted ? "open" : "done")
-    )
-        throw new Error(
-            `${entry.title} cannot be ${submitted ? "ticked submitted" : "taken back"}`,
-        );
+    if (!entry.editable || box.deadline === "" || box.state !== (submitted ? "open" : "done"))
+        throw new Error(`${entry.title} cannot be ${submitted ? "ticked submitted" : "taken back"}`);
     statusPut(file, id, submitted ? "COMPLETED" : "NEEDS-ACTION");
 }
 
@@ -1181,9 +1072,7 @@ function boxLookup(id: string): [string, Entry] | undefined {
     const at: number = id.lastIndexOf("#");
     return (
         entryLookup(day.plan, id) ??
-        (at === -1
-            ? undefined
-            : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)))
+        (at === -1 ? undefined : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)))
     );
 }
 
@@ -1210,8 +1099,7 @@ export function boxRename(id: string, title: string): void {
 export function boxReopen(id: string): void {
     const found: [string, Entry] | undefined = boxLookup(id);
     if (found === undefined || found[1].deadline !== "") return;
-    if (found[1].todo && found[1].editable && found[1].status === "COMPLETED")
-        statusPut(found[0], id, "NEEDS-ACTION");
+    if (found[1].todo && found[1].editable && found[1].status === "COMPLETED") statusPut(found[0], id, "NEEDS-ACTION");
     overKeep(id);
 }
 
@@ -1239,11 +1127,7 @@ function skillBoxOpen(box: Box, module: string): boolean {
  *
  * @param chapters - Chapters I learn, none when not known yet
  */
-export function studyBoxOf(
-    module: string,
-    date: string,
-    chapters: string[],
-): Box | undefined {
+export function studyBoxOf(module: string, date: string, chapters: string[]): Box | undefined {
     const fits: (box: Box) => boolean = (box: Box): boolean =>
         skillBoxOpen(box, module) &&
         box.time === "" &&
@@ -1259,11 +1143,7 @@ export function studyBoxOf(
  * one whose expected time and duration hold the moment,
  * like a tutorial, else a study box, see {@link studyBoxOf}.
  */
-export function skillBoxOf(
-    module: string,
-    moment: Date,
-    chapters: string[],
-): Box | undefined {
+export function skillBoxOf(module: string, moment: Date, chapters: string[]): Box | undefined {
     const date: string = berlinDateOf(moment);
     const now: number = moment.getTime();
     return (

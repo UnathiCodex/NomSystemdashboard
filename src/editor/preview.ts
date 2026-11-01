@@ -94,14 +94,7 @@
  */
 
 import { EditorState, Facet, RangeSet, StateEffect, StateField } from "@codemirror/state";
-import {
-    BlockWrapper,
-    Decoration,
-    EditorView,
-    ViewPlugin,
-    WidgetType,
-    keymap,
-} from "@codemirror/view";
+import { BlockWrapper, Decoration, EditorView, ViewPlugin, WidgetType, keymap } from "@codemirror/view";
 import {
     codeFolding,
     foldable,
@@ -120,21 +113,8 @@ import { codeHighlighter, codeLanguages } from "../notes/code.ts";
 import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
-import {
-    peopleLink,
-    peopleRoles,
-    personOf,
-    personRowAddressOf,
-    personsKept,
-} from "../persons.ts";
-import {
-    columnsOf,
-    emptyEndOf,
-    emptyIs,
-    quotePrefixOf,
-    textIndentationOf,
-    typingLine,
-} from "./keys.ts";
+import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
+import { columnsOf, emptyEndOf, emptyIs, quotePrefixOf, textIndentationOf, typingLine } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
 import { foldedAt } from "./steps.ts";
 import { cellTitleShow, tableOpen } from "./table.ts";
@@ -321,8 +301,7 @@ function effectField<T>(effect: StateEffectType<T>, first: T): StateField<T> {
     return StateField.define<T>({
         create: (): T => first,
         update: (value: T, transaction: Transaction): T => {
-            for (const each of transaction.effects)
-                if (each.is(effect)) return each.value;
+            for (const each of transaction.effects) if (each.is(effect)) return each.value;
             return value;
         },
     });
@@ -349,8 +328,7 @@ function focusKeep(update: ViewUpdate): void {
     if (update.view.hasFocus === update.state.field(focused)) return;
     queueMicrotask((): void => {
         const focus: boolean = update.view.hasFocus;
-        if (focus !== update.view.state.field(focused))
-            update.view.dispatch({ effects: focusChange.of(focus) });
+        if (focus !== update.view.state.field(focused)) update.view.dispatch({ effects: focusChange.of(focus) });
     });
 }
 
@@ -361,9 +339,7 @@ function focusKeep(update: ViewUpdate): void {
 const pointed: StateField<boolean> = StateField.define<boolean>({
     create: (): boolean => false,
     update: (value: boolean, transaction: Transaction): boolean =>
-        transaction.selection === undefined
-            ? value
-            : transaction.isUserEvent("select.pointer"),
+        transaction.selection === undefined ? value : transaction.isUserEvent("select.pointer"),
 });
 
 /**
@@ -371,9 +347,7 @@ const pointed: StateField<boolean> = StateField.define<boolean>({
  * with the places of the cursors that show as text at that moment,
  * or up again, `null`, see {@link frozen}.
  */
-const pressChange: StateEffectType<number[] | null> = StateEffect.define<
-    number[] | null
->();
+const pressChange: StateEffectType<number[] | null> = StateEffect.define<number[] | null>();
 
 /**
  * Places of the cursors that show as text
@@ -385,8 +359,7 @@ const pressChange: StateEffectType<number[] | null> = StateEffect.define<
 const frozen: StateField<number[] | null> = StateField.define<number[] | null>({
     create: (): number[] | null => null,
     update: (places: number[] | null, transaction: Transaction): number[] | null => {
-        for (const effect of transaction.effects)
-            if (effect.is(pressChange)) return effect.value;
+        for (const effect of transaction.effects) if (effect.is(pressChange)) return effect.value;
         return places === null || !transaction.docChanged
             ? places
             : places.map((place: number): number => transaction.changes.mapPos(place));
@@ -509,8 +482,7 @@ export class FoldWidget extends FieldsWidget {
     toDOM(view: EditorView): HTMLElement {
         const arrow: HTMLSpanElement = document.createElement("span");
         arrow.className =
-            `cm-fold ${this.item ? "cm-fold-item" : "cm-fold-heading"}` +
-            (this.folded ? " cm-folded" : "");
+            `cm-fold ${this.item ? "cm-fold-item" : "cm-fold-heading"}` + (this.folded ? " cm-folded" : "");
         arrow.title = this.folded ? "Unfold" : "Fold";
         arrow.setAttribute("aria-label", arrow.title);
         arrow.addEventListener("mousedown", (event: MouseEvent): void => {
@@ -743,8 +715,7 @@ class BlockWidget extends FieldsWidget {
                     tableOpen(
                         view,
                         view.state.doc.line(runs[index]).from,
-                        (markdown: string): HTMLElement =>
-                            blockRender(view, markdown, this.links),
+                        (markdown: string): HTMLElement => blockRender(view, markdown, this.links),
                         follow,
                     );
             });
@@ -796,16 +767,10 @@ class BlockWidget extends FieldsWidget {
         block.addEventListener("mousedown", (event: MouseEvent): void => {
             if (event.button !== 0 || targetIn(event, "select")) return;
             event.preventDefault();
-            if (!scrollbarHit(event) && !targetIn(event, "a, summary, button, table"))
-                place(event);
+            if (!scrollbarHit(event) && !targetIn(event, "a, summary, button, table")) place(event);
         });
         block.addEventListener("dblclick", (event: MouseEvent): void => {
-            if (
-                event.button === 0 &&
-                !scrollbarHit(event) &&
-                targetIn(event, "table") &&
-                !targetIn(event, "a, button")
-            )
+            if (event.button === 0 && !scrollbarHit(event) && targetIn(event, "table") && !targetIn(event, "a, button"))
                 place(event);
         });
         block.addEventListener("mouseover", cellTitleShow);
@@ -830,8 +795,7 @@ function fencesOf(markdown: string): Fence[] {
     let open: string | null = null;
     let at: number = 0;
     for (const line of markdown.split("\n")) {
-        const fence: RegExpExecArray | null =
-            /^((?:[ \t]*>[ \t]?)*[ \t]*)(`{3,}|~{3,})(.*)$/.exec(line);
+        const fence: RegExpExecArray | null = /^((?:[ \t]*>[ \t]?)*[ \t]*)(`{3,}|~{3,})(.*)$/.exec(line);
         if (fence !== null && open === null) {
             open = fence[2];
             fences.push({
@@ -901,8 +865,7 @@ function targetIn(event: Event, selector: string): boolean {
 function scrollbarHit(event: MouseEvent): boolean {
     const target: Element = event.target as Element;
     return (
-        (target.scrollWidth > target.clientWidth &&
-            event.offsetY >= target.clientHeight) ||
+        (target.scrollWidth > target.clientWidth && event.offsetY >= target.clientHeight) ||
         (target.scrollHeight > target.clientHeight && event.offsetX >= target.clientWidth)
     );
 }
@@ -915,26 +878,14 @@ function scrollbarHit(event: MouseEvent): boolean {
  * else the end of the blocks, after a code block's closing fence,
  * so typing never breaks it.
  */
-function blockPlaceOf(
-    view: EditorView,
-    from: number,
-    to: number,
-    event: MouseEvent,
-): number {
-    const caret: CaretPosition | null = document.caretPositionFromPoint(
-        event.clientX,
-        event.clientY,
-    );
-    const text: string =
-        caret?.offsetNode.nodeType === Node.TEXT_NODE
-            ? (caret.offsetNode.textContent ?? "")
-            : "";
+function blockPlaceOf(view: EditorView, from: number, to: number, event: MouseEvent): number {
+    const caret: CaretPosition | null = document.caretPositionFromPoint(event.clientX, event.clientY);
+    const text: string = caret?.offsetNode.nodeType === Node.TEXT_NODE ? (caret.offsetNode.textContent ?? "") : "";
     const offset: number = caret?.offset ?? 0;
     const cell: HTMLTableCellElement | null = (event.target as Element).closest("td, th");
     if (cell !== null) return cellPlaceOf(view, from, to, cell, text, offset);
 
-    const at: number =
-        text.trim() === "" ? -1 : view.state.sliceDoc(from, to).indexOf(text);
+    const at: number = text.trim() === "" ? -1 : view.state.sliceDoc(from, to).indexOf(text);
     return at === -1 ? to : from + at + offset;
 }
 
@@ -957,22 +908,14 @@ function cellPlaceOf(
     offset: number,
 ): number {
     const table: HTMLTableElement = cell.closest("table") as HTMLTableElement;
-    const tables: HTMLTableElement[] = [
-        ...(table.closest(".cm-rendered")?.querySelectorAll("table") ?? []),
-    ];
+    const tables: HTMLTableElement[] = [...(table.closest(".cm-rendered")?.querySelectorAll("table") ?? [])];
     const last: number = view.state.doc.lineAt(to).number;
     const runs: number[] = tableRunsOf(view, from, to);
-    const row: number = [...table.rows].indexOf(
-        cell.parentElement as HTMLTableRowElement,
-    );
+    const row: number = [...table.rows].indexOf(cell.parentElement as HTMLTableRowElement);
     if (runs[tables.indexOf(table)] === undefined || row === -1) return to;
 
-    const line: Line = view.state.doc.line(
-        Math.min(runs[tables.indexOf(table)] + row + (row > 0 ? 1 : 0), last),
-    );
-    const bar: RegExpExecArray | undefined = [...line.text.matchAll(/(?<!\\)\|[ \t]*/g)][
-        cell.cellIndex
-    ];
+    const line: Line = view.state.doc.line(Math.min(runs[tables.indexOf(table)] + row + (row > 0 ? 1 : 0), last));
+    const bar: RegExpExecArray | undefined = [...line.text.matchAll(/(?<!\\)\|[ \t]*/g)][cell.cellIndex];
     const start: number = bar === undefined ? line.length : bar.index + bar[0].length;
     const at: number =
         text.trim() === ""
@@ -1021,8 +964,7 @@ function cursorsOf(state: EditorState): number[] {
         state.field(frozen) ??
         state.selection.ranges
             .filter(
-                (range: SelectionRange): boolean =>
-                    range.empty || !state.field(pointed) || formulaHolds(state, range),
+                (range: SelectionRange): boolean => range.empty || !state.field(pointed) || formulaHolds(state, range),
             )
             .map((range: SelectionRange): number => range.head)
     );
@@ -1040,9 +982,9 @@ function upwardOf(node: SyntaxNode | null): SyntaxNode[] {
  * like a selection made by the pointer in its TeX, see {@link cursorsOf}.
  */
 function formulaHolds(state: EditorState, range: SelectionRange): boolean {
-    const formula: SyntaxNode | undefined = upwardOf(
-        syntaxTree(state).resolveInner(range.from, 1),
-    ).find((node: SyntaxNode): boolean => node.name === "InlineMath");
+    const formula: SyntaxNode | undefined = upwardOf(syntaxTree(state).resolveInner(range.from, 1)).find(
+        (node: SyntaxNode): boolean => node.name === "InlineMath",
+    );
     return formula !== undefined && formula.from <= range.from && formula.to >= range.to;
 }
 
@@ -1051,10 +993,7 @@ function formulaHolds(state: EditorState, range: SelectionRange): boolean {
  * while I am editing, see {@link cursorsOf}.
  */
 function touched(look: Look, from: number, to: number): boolean {
-    return (
-        look.focused &&
-        look.cursors.some((cursor: number): boolean => cursor >= from && cursor <= to)
-    );
+    return look.focused && look.cursors.some((cursor: number): boolean => cursor >= from && cursor <= to);
 }
 
 /** Draws a widget in place of a stretch of the text. */
@@ -1072,19 +1011,13 @@ function hide(look: Look, from: number, to: number): void {
  * with the space or tab after it, which goes with it.
  */
 function markEndOf(look: Look, mark: SyntaxNode): number {
-    return /[ \t]/.test(look.state.sliceDoc(mark.to, mark.to + 1))
-        ? mark.to + 1
-        : mark.to;
+    return /[ \t]/.test(look.state.sliceDoc(mark.to, mark.to + 1)) ? mark.to + 1 : mark.to;
 }
 
 /** Gives each line of a stretch of the text a class, like the lines of a code block. */
 function linesMark(look: Look, from: number, to: number, line: Decoration): void {
     const last: number = look.state.doc.lineAt(to).number;
-    for (
-        let number: number = look.state.doc.lineAt(from).number;
-        number <= last;
-        number++
-    )
+    for (let number: number = look.state.doc.lineAt(from).number; number <= last; number++)
         look.decorations.push(line.range(look.state.doc.line(number).from));
 }
 
@@ -1156,11 +1089,8 @@ function headingLook(look: Look, node: SyntaxNode): boolean {
     if (mark !== null) {
         const start: number = markEndOf(look, mark);
         const kind: RegExpExecArray | null =
-            node.name === "ATXHeading2"
-                ? kindRule.exec(look.state.sliceDoc(start, line.to))
-                : null;
-        if (touched(look, line.from, line.to))
-            look.decorations.push(hanging.range(mark.from, start));
+            node.name === "ATXHeading2" ? kindRule.exec(look.state.sliceDoc(start, line.to)) : null;
+        if (touched(look, line.from, line.to)) look.decorations.push(hanging.range(mark.from, start));
         else hide(look, mark.from, start);
         if (kind !== null && !touched(look, start, start + kind[1].length)) {
             look.decorations.push(kindBox.range(start, start + kind[1].length));
@@ -1177,11 +1107,7 @@ function headingLook(look: Look, node: SyntaxNode): boolean {
  */
 function markupLook(look: Look, node: SyntaxNode): boolean {
     if (!touched(look, node.from, node.to))
-        for (
-            let child: SyntaxNode | null = node.firstChild;
-            child !== null;
-            child = child.nextSibling
-        )
+        for (let child: SyntaxNode | null = node.firstChild; child !== null; child = child.nextSibling)
             if (child.name.endsWith("Mark")) hide(look, child.from, child.to);
     return true;
 }
@@ -1196,8 +1122,7 @@ function markupLook(look: Look, node: SyntaxNode): boolean {
 function linkLook(look: Look, node: SyntaxNode): boolean {
     const marks: SyntaxNode[] = node.getChildren("LinkMark");
     const url: SyntaxNode | null = node.getChild("URL");
-    if (url === null || marks.length < 2 || touched(look, node.from, node.to))
-        return true;
+    if (url === null || marks.length < 2 || touched(look, node.from, node.to)) return true;
 
     const address: string = look.state.sliceDoc(url.from, url.to).replace(/^<|>$/g, "");
     const target: string = address.split("#")[0].trim();
@@ -1205,10 +1130,7 @@ function linkLook(look: Look, node: SyntaxNode): boolean {
     hide(look, marks[1].from, node.to);
     if (marks[0].to < marks[1].from)
         look.decorations.push(
-            (externalRule.test(address)
-                ? external
-                : linkMarkOf(look.state, target)
-            ).range(marks[0].to, marks[1].from),
+            (externalRule.test(address) ? external : linkMarkOf(look.state, target)).range(marks[0].to, marks[1].from),
         );
     return true;
 }
@@ -1221,11 +1143,7 @@ function linkLook(look: Look, node: SyntaxNode): boolean {
  * the address of a Markdown link is hidden there anyway.
  */
 function urlLook(look: Look, node: SyntaxNode): boolean {
-    if (
-        node.parent?.name !== "Link" &&
-        node.parent?.name !== "Image" &&
-        !touched(look, node.from, node.to)
-    )
+    if (node.parent?.name !== "Link" && node.parent?.name !== "Image" && !touched(look, node.from, node.to))
         look.decorations.push(external.range(node.from, node.to));
     return false;
 }
@@ -1260,15 +1178,13 @@ function wikiLinkLook(look: Look, node: SyntaxNode): boolean {
     const text: string = look.state.sliceDoc(node.from, node.to);
     const open: number = node.name === "WikiEmbed" ? 3 : 2;
     const bar: RegExpExecArray | null = /\\?\|/.exec(text);
-    const shownFrom: number =
-        node.from + (bar === null ? open : bar.index + bar[0].length);
+    const shownFrom: number = node.from + (bar === null ? open : bar.index + bar[0].length);
     const shownTo: number = node.to - 2;
     const target: string = /^!?\[\[([^\]#|\\]*)/.exec(text)?.[1].trim() ?? "";
 
     hide(look, node.from, shownFrom);
     hide(look, shownTo, node.to);
-    if (shownFrom < shownTo)
-        look.decorations.push(linkMarkOf(look.state, target).range(shownFrom, shownTo));
+    if (shownFrom < shownTo) look.decorations.push(linkMarkOf(look.state, target).range(shownFrom, shownTo));
     return false;
 }
 
@@ -1290,11 +1206,7 @@ function wikiLinkLook(look: Look, node: SyntaxNode): boolean {
  *   empty for one to a place the dashboard does not open,
  *   which opens only on the computer
  */
-function linkAddressOf(
-    state: EditorState,
-    target: string,
-    heading: string,
-): string | null {
+function linkAddressOf(state: EditorState, target: string, heading: string): string | null {
     if (target === "") return `#${heading}`;
 
     const path: string | null | undefined = state.field(linkTargets)[target];
@@ -1343,13 +1255,10 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
     const display: boolean = text.startsWith("$$");
     const tex: string = display ? text.slice(2, -2) : text.slice(1, -1);
     const after: string = look.state.sliceDoc(node.to, look.state.doc.lineAt(node.to).to);
-    const punctuation: number = display
-        ? 0
-        : (punctuationRule.exec(after)?.[0].length ?? 0);
+    const punctuation: number = display ? 0 : (punctuationRule.exec(after)?.[0].length ?? 0);
     if (!touched(look, node.from, node.to)) {
         widgetPut(look, new MathWidget(tex, display, false), node.from, node.to);
-        if (punctuation > 0)
-            look.decorations.push(unbroken.range(node.from, node.to + punctuation));
+        if (punctuation > 0) look.decorations.push(unbroken.range(node.from, node.to + punctuation));
     } else if (display) {
         look.decorations.push(
             Decoration.widget({
@@ -1378,14 +1287,11 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
  */
 function listLook(look: Look, node: SyntaxNode): boolean {
     const tagName: string = node.name === "BulletList" ? "ul" : "ol";
-    const end: number =
-        node.lastChild !== null ? itemEndOf(look, node.lastChild) : node.to;
-    const parent: SyntaxNode | null =
-        node.parent?.name === "ListItem" ? node.parent : null;
+    const end: number = node.lastChild !== null ? itemEndOf(look, node.lastChild) : node.to;
+    const parent: SyntaxNode | null = node.parent?.name === "ListItem" ? node.parent : null;
     const air: number =
         parent !== null &&
-        look.state.doc.lineAt(itemDrawEndOf(look, parent)).number ===
-            look.state.doc.lineAt(end).number &&
+        look.state.doc.lineAt(itemDrawEndOf(look, parent)).number === look.state.doc.lineAt(end).number &&
         listOnIs(look, node, end)
             ? airBelowOf(look, end)
             : 0;
@@ -1414,10 +1320,7 @@ function listOnIs(look: Look, node: SyntaxNode, end: number): boolean {
     for (let up: SyntaxNode | null = node.parent; up !== null; up = up.parent)
         if (up.name === "BulletList" || up.name === "OrderedList") root = up;
     const last: Line = emptyEndOf(look.state, look.state.doc.lineAt(end), 1);
-    return (
-        last.number < look.state.doc.lines &&
-        look.state.doc.line(last.number + 1).from < root.to
-    );
+    return last.number < look.state.doc.lines && look.state.doc.line(last.number + 1).from < root.to;
 }
 
 /**
@@ -1430,14 +1333,9 @@ function listOnIs(look: Look, node: SyntaxNode, end: number): boolean {
  */
 function airBelowOf(look: Look, end: number): number {
     const typing: number | null = look.state.field(typingLine, false) ?? null;
-    for (
-        let number: number = look.state.doc.lineAt(end).number + 1;
-        number <= look.state.doc.lines;
-        number++
-    ) {
+    for (let number: number = look.state.doc.lineAt(end).number + 1; number <= look.state.doc.lines; number++) {
         const line: Line = look.state.doc.line(number);
-        if (line.from === typing || !emptyIs(look.state, line))
-            return number - look.state.doc.lineAt(end).number - 1;
+        if (line.from === typing || !emptyIs(look.state, line)) return number - look.state.doc.lineAt(end).number - 1;
     }
     return 0;
 }
@@ -1454,20 +1352,11 @@ function typingCutOf(look: Look, node: SyntaxNode, end: number): Line | null {
     const typing: number | null = look.state.field(typingLine, false) ?? null;
     const item: SyntaxNode | null = node.name === "ListItem" ? node : node.firstChild;
     const text: string = item === null ? "" : look.state.doc.lineAt(item.from).text;
-    const indentation: string | null =
-        item === null ? null : textIndentationOf(text.slice(quotePrefixOf(text).length));
-    if (
-        typing === null ||
-        indentation === null ||
-        typing <= look.state.doc.lineAt(node.from).to ||
-        typing > end
-    )
+    const indentation: string | null = item === null ? null : textIndentationOf(text.slice(quotePrefixOf(text).length));
+    if (typing === null || indentation === null || typing <= look.state.doc.lineAt(node.from).to || typing > end)
         return null;
     const line: Line = look.state.doc.lineAt(typing);
-    return columnsOf(line.text.slice(quotePrefixOf(line.text).length)) <
-        columnsOf(indentation)
-        ? line
-        : null;
+    return columnsOf(line.text.slice(quotePrefixOf(line.text).length)) < columnsOf(indentation) ? line : null;
 }
 
 /**
@@ -1479,10 +1368,8 @@ function typingCutOf(look: Look, node: SyntaxNode, end: number): Line | null {
  * see {@link typingCutOf}.
  */
 function itemDrawEndOf(look: Look, node: SyntaxNode): number {
-    const next: SyntaxNode | null =
-        node.nextSibling?.name === "ListItem" ? node.nextSibling : null;
-    const end: number =
-        next === null ? itemEndOf(look, node) : look.state.doc.lineAt(next.from).from - 1;
+    const next: SyntaxNode | null = node.nextSibling?.name === "ListItem" ? node.nextSibling : null;
+    const end: number = next === null ? itemEndOf(look, node) : look.state.doc.lineAt(next.from).from - 1;
     return (typingCutOf(look, node, end)?.from ?? end + 1) - 1;
 }
 
@@ -1494,9 +1381,7 @@ function itemDrawEndOf(look: Look, node: SyntaxNode): number {
  * see {@link listBlankIs}; those that do not reach it belong to a point it stands in.
  */
 function itemEndOf(look: Look, node: SyntaxNode): number {
-    const indentation: string | null = textIndentationOf(
-        look.state.doc.lineAt(node.from).text,
-    );
+    const indentation: string | null = textIndentationOf(look.state.doc.lineAt(node.from).text);
     if (indentation === null) return node.to;
     let end: Line = look.state.doc.lineAt(node.to);
     for (let number: number = end.number + 1; number <= look.state.doc.lines; number++) {
@@ -1519,14 +1404,10 @@ function itemEndOf(look: Look, node: SyntaxNode): number {
 function listBlankIs(state: EditorState, line: Line): boolean {
     if (!/^[ \t]+$/.test(line.text) || !emptyIs(state, line)) return false;
     let above: Line = line;
-    while (above.number > 1 && /^[ \t]*$/.test(above.text))
-        above = state.doc.line(above.number - 1);
-    return upwardOf(
-        syntaxTree(state).resolveInner(
-            above.from + (/^[ \t]*/.exec(above.text)?.[0].length ?? 0),
-            1,
-        ),
-    ).some((node: SyntaxNode): boolean => node.name === "ListItem");
+    while (above.number > 1 && /^[ \t]*$/.test(above.text)) above = state.doc.line(above.number - 1);
+    return upwardOf(syntaxTree(state).resolveInner(above.from + (/^[ \t]*/.exec(above.text)?.[0].length ?? 0), 1)).some(
+        (node: SyntaxNode): boolean => node.name === "ListItem",
+    );
 }
 
 /**
@@ -1551,8 +1432,7 @@ function itemLook(look: Look, node: SyntaxNode): boolean {
     if (node.parent?.name === "OrderedList" && mark !== null)
         attributes.value = String(parseInt(look.state.sliceDoc(mark.from, mark.to)));
     wrap(look, node, "li", attributes, itemDrawEndOf(look, node));
-    if (node.getChild("BulletList") !== null || node.getChild("OrderedList") !== null)
-        foldLook(look, line, true);
+    if (node.getChild("BulletList") !== null || node.getChild("OrderedList") !== null) foldLook(look, line, true);
     return true;
 }
 
@@ -1567,11 +1447,8 @@ function itemLook(look: Look, node: SyntaxNode): boolean {
  */
 function listMarkLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
-    const textFrom: number =
-        node.to +
-        (/^[ \t]*/.exec(look.state.sliceDoc(node.to, line.to))?.[0].length ?? 0);
-    if (/^[ \t]*$/.test(look.state.sliceDoc(line.from, node.from)))
-        hide(look, line.from, node.from);
+    const textFrom: number = node.to + (/^[ \t]*/.exec(look.state.sliceDoc(node.to, line.to))?.[0].length ?? 0);
+    if (/^[ \t]*$/.test(look.state.sliceDoc(line.from, node.from))) hide(look, line.from, node.from);
     if (!touched(look, line.from, line.to)) {
         hide(look, node.from, textFrom);
     } else if (node.parent?.parent?.name === "BulletList") {
@@ -1589,8 +1466,7 @@ function listMarkLook(look: Look, node: SyntaxNode): boolean {
  */
 function paragraphLook(look: Look, node: SyntaxNode): boolean {
     const first: Line = look.state.doc.lineAt(node.from);
-    if (/^[ \t]*$/.test(look.state.sliceDoc(first.from, node.from)))
-        hide(look, first.from, node.from);
+    if (/^[ \t]*$/.test(look.state.sliceDoc(first.from, node.from))) hide(look, first.from, node.from);
     const last: number = look.state.doc.lineAt(node.to).number;
     for (let number: number = first.number + 1; number <= last; number++) {
         const line: Line = look.state.doc.line(number);
@@ -1613,12 +1489,7 @@ function hiddenStartOf(state: EditorState, line: Line): number {
     if (blanks === line.length) return listBlankIs(state, line) ? blanks : 0;
     for (const node of upwardOf(syntaxTree(state).resolveInner(line.from + blanks, 1))) {
         if (["Paragraph", "Task", "ListItem"].includes(node.name)) return blanks;
-        if (
-            ["FencedCode", "CodeBlock", "HTMLBlock", "Table", "Blockquote"].includes(
-                node.name,
-            )
-        )
-            return 0;
+        if (["FencedCode", "CodeBlock", "HTMLBlock", "Table", "Blockquote"].includes(node.name)) return 0;
     }
     return 0;
 }
@@ -1645,8 +1516,7 @@ function gapIs(state: EditorState, line: Line, lower: boolean = false): boolean 
  * and a task box with its blank.
  */
 function pointMarkOf(text: string, box: boolean): number {
-    const mark: RegExpExecArray | null =
-        /^([ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+|$))(?:\[[ xX]\][ \t]+)?/.exec(text);
+    const mark: RegExpExecArray | null = /^([ \t]*(?:[-*+]|\d+[.)])(?:[ \t]+|$))(?:\[[ xX]\][ \t]+)?/.exec(text);
     return (box ? mark?.[0] : mark?.[1])?.length ?? 0;
 }
 
@@ -1666,11 +1536,7 @@ function textStartOf(state: EditorState, line: Line): number {
         1,
     );
     return (
-        line.from +
-        Math.max(
-            hiddenStartOf(state, line),
-            mark.name === "ListMark" ? pointMarkOf(line.text, false) : 0,
-        )
+        line.from + Math.max(hiddenStartOf(state, line), mark.name === "ListMark" ? pointMarkOf(line.text, false) : 0)
     );
 }
 
@@ -1713,8 +1579,7 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
         const before: number = state.selection.main.head;
         const down: boolean = pointer || head > before;
         const step: number = down ? 1 : -1;
-        const vertical: boolean =
-            !pointer && state.doc.lineAt(head).number !== state.doc.lineAt(before).number;
+        const vertical: boolean = !pointer && state.doc.lineAt(head).number !== state.doc.lineAt(before).number;
         let place: number = head;
         for (
             let number: number = state.doc.lineAt(before).number + step;
@@ -1750,9 +1615,7 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
             else break;
             if (state.doc.lineAt(place).number === line.number) break;
         }
-        return place === head
-            ? transaction
-            : [transaction, { selection: { anchor: place }, sequential: true }];
+        return place === head ? transaction : [transaction, { selection: { anchor: place }, sequential: true }];
     },
 );
 
@@ -1763,8 +1626,7 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
 function taskBoxLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
     const done: boolean = /x/i.test(look.state.sliceDoc(node.from, node.to));
-    if (!touched(look, line.from, line.to))
-        widgetPut(look, new TaskBoxWidget(done), node.from, node.to);
+    if (!touched(look, line.from, line.to)) widgetPut(look, new TaskBoxWidget(done), node.from, node.to);
     return false;
 }
 
@@ -1779,9 +1641,7 @@ function taskBoxLook(look: Look, node: SyntaxNode): boolean {
  * see {@link blockLook}, else shows as a quote.
  */
 function quoteLook(look: Look, node: SyntaxNode): boolean {
-    const callout: boolean = calloutRule.test(
-        look.state.sliceDoc(node.from, look.state.doc.lineAt(node.from).to),
-    );
+    const callout: boolean = calloutRule.test(look.state.sliceDoc(node.from, look.state.doc.lineAt(node.from).to));
     if (callout && !blockLook(look, node)) return false;
     const typing: number | null = look.state.field(typingLine, false) ?? null;
     let last: Line = look.state.doc.lineAt(node.to);
@@ -1798,12 +1658,8 @@ function quoteLook(look: Look, node: SyntaxNode): boolean {
  * whose rows a break would split.
  */
 function htmlTagLook(look: Look, node: SyntaxNode): boolean {
-    const tagName: string | undefined = breakRule
-        .exec(look.state.sliceDoc(node.from, node.to))?.[1]
-        .toLowerCase();
-    const table: boolean = upwardOf(node.parent).some(
-        (parent: SyntaxNode): boolean => parent.name === "Table",
-    );
+    const tagName: string | undefined = breakRule.exec(look.state.sliceDoc(node.from, node.to))?.[1].toLowerCase();
+    const table: boolean = upwardOf(node.parent).some((parent: SyntaxNode): boolean => parent.name === "Table");
     if (tagName !== undefined && !table && !touched(look, node.from, node.to))
         widgetPut(look, new BreakWidget(tagName), node.from, node.to);
     return false;
@@ -1835,33 +1691,19 @@ function blockLook(look: Look, node: SyntaxNode): boolean {
     while (
         last.nextSibling !== null &&
         renderedWhole.includes(last.nextSibling.name) &&
-        look.state.doc.lineAt(last.nextSibling.from).number ===
-            look.state.doc.lineAt(last.to).number + 1
+        look.state.doc.lineAt(last.nextSibling.from).number === look.state.doc.lineAt(last.to).number + 1
     )
         last = last.nextSibling;
     const from: number = look.state.doc.lineAt(node.from).from;
     const to: number = look.state.doc.lineAt(last.to).to;
     if (touched(look, from, to)) return true;
 
-    for (
-        let block: SyntaxNode | null = node;
-        block !== null && block.from <= last.from;
-        block = block.nextSibling
-    )
+    for (let block: SyntaxNode | null = node; block !== null && block.from <= last.from; block = block.nextSibling)
         look.rendered.push(block.from);
     const markdown: string = look.state.sliceDoc(from, to);
-    const indentation: RegExp = new RegExp(
-        `^${/^[ \t]*/.exec(markdown)?.[0] ?? ""}`,
-        "gm",
-    );
-    const block: BlockWidget = new BlockWidget(
-        markdown.replace(indentation, ""),
-        look.links,
-        to - from,
-    );
-    look.decorations.push(
-        Decoration.replace({ widget: block, block: true }).range(from, to),
-    );
+    const indentation: RegExp = new RegExp(`^${/^[ \t]*/.exec(markdown)?.[0] ?? ""}`, "gm");
+    const block: BlockWidget = new BlockWidget(markdown.replace(indentation, ""), look.links, to - from);
+    look.decorations.push(Decoration.replace({ widget: block, block: true }).range(from, to));
     return false;
 }
 
@@ -1877,16 +1719,9 @@ function codeLook(look: Look, node: SyntaxNode): boolean {
     const first: Line = look.state.doc.lineAt(node.from);
     const last: Line = look.state.doc.lineAt(node.to);
     const end: number =
-        last.number > first.number && /^[ \t>]*(?:`{3,}|~{3,})[ \t]*$/.test(last.text)
-            ? last.number - 1
-            : last.number;
+        last.number > first.number && /^[ \t>]*(?:`{3,}|~{3,})[ \t]*$/.test(last.text) ? last.number - 1 : last.number;
     if (end > first.number)
-        linesMark(
-            look,
-            look.state.doc.line(first.number + 1).from,
-            look.state.doc.line(end).to,
-            codeText,
-        );
+        linesMark(look, look.state.doc.line(first.number + 1).from, look.state.doc.line(end).to, codeText);
     return true;
 }
 
@@ -1943,9 +1778,7 @@ function spaceLook(look: Look): void {
         const line: Line = look.state.doc.line(number);
         if (listBlankIs(look.state, line)) hide(look, line.from, line.to);
         if (line.from !== typing && emptyIs(look.state, line))
-            look.decorations.push(
-                (gapIs(look.state, line, true) ? stop : gap).range(line.from),
-            );
+            look.decorations.push((gapIs(look.state, line, true) ? stop : gap).range(line.from));
     }
 }
 
@@ -1960,9 +1793,7 @@ function spaceLook(look: Look): void {
 function stopCursorOf(view: EditorView): { class: string } | null {
     const range: SelectionRange = view.state.selection.main;
     const line: Line = view.state.doc.lineAt(range.head);
-    return range.empty && gapIs(view.state, line, true)
-        ? { class: "cm-stop-cursor" }
-        : null;
+    return range.empty && gapIs(view.state, line, true) ? { class: "cm-stop-cursor" } : null;
 }
 
 /** Keeps the invisible characters on the lines of the cursor invisible. */
@@ -1971,15 +1802,8 @@ function invisibleCharsLook(look: Look): void {
 
     for (const range of look.state.selection.ranges) {
         const from: number = look.state.doc.lineAt(range.from).from;
-        for (const match of look.state
-            .sliceDoc(from, look.state.doc.lineAt(range.to).to)
-            .matchAll(invisibleRule))
-            look.decorations.push(
-                invisibleMark.range(
-                    from + match.index,
-                    from + match.index + match[0].length,
-                ),
-            );
+        for (const match of look.state.sliceDoc(from, look.state.doc.lineAt(range.to).to).matchAll(invisibleRule))
+            look.decorations.push(invisibleMark.range(from + match.index, from + match.index + match[0].length));
     }
 }
 
@@ -1995,21 +1819,14 @@ function invisibleCharsLook(look: Look): void {
  */
 function invisiblesLook(look: Look): void {
     const ranges: SelectionRange[] = look.focused
-        ? look.state.selection.ranges.filter(
-              (range: SelectionRange): boolean => !range.empty,
-          )
+        ? look.state.selection.ranges.filter((range: SelectionRange): boolean => !range.empty)
         : [];
     const selected: (pos: number) => boolean = (pos: number): boolean =>
-        ranges.some(
-            (range: SelectionRange): boolean => range.from <= pos && pos < range.to,
-        );
+        ranges.some((range: SelectionRange): boolean => range.from <= pos && pos < range.to);
     look.decorations.forEach((decoration: Range<Decoration>, index: number): void => {
         if (
             decoration.value !== hidden ||
-            !ranges.some(
-                (range: SelectionRange): boolean =>
-                    range.from < decoration.to && range.to > decoration.from,
-            )
+            !ranges.some((range: SelectionRange): boolean => range.from < decoration.to && range.to > decoration.from)
         )
             return;
         const text: string = look.state.sliceDoc(decoration.from, decoration.to);
@@ -2019,9 +1836,7 @@ function invisiblesLook(look: Look): void {
                 selected(decoration.from + at) && char === "\t" ? tabMark : " ",
             )
             .join("");
-        const before: string = /^[-*+][ \t]/.test(
-            look.state.sliceDoc(decoration.to, decoration.to + 2),
-        )
+        const before: string = /^[-*+][ \t]/.test(look.state.sliceDoc(decoration.to, decoration.to + 2))
             ? "bullet"
             : /^\d+[.)]/.test(look.state.sliceDoc(decoration.to, decoration.to + 10))
               ? "number"
@@ -2033,9 +1848,7 @@ function invisiblesLook(look: Look): void {
     });
     for (const range of ranges)
         for (const match of look.state.sliceDoc(range.from, range.to).matchAll(/\t/g))
-            look.decorations.push(
-                tabShown.range(range.from + match.index, range.from + match.index + 1),
-            );
+            look.decorations.push(tabShown.range(range.from + match.index, range.from + match.index + 1));
 }
 
 /**
@@ -2077,18 +1890,10 @@ function responsiblesLook(look: Look): void {
     for (let number: number = 1; number <= look.state.doc.lines; number++) {
         const line: Line = look.state.doc.line(number);
         if (line.text.startsWith("#")) under = line.text.trim() === responsiblesHeading;
-        else if (
-            (under || roleRule.test(line.text)) &&
-            !touched(look, line.from, line.to)
-        ) {
+        else if ((under || roleRule.test(line.text)) && !touched(look, line.from, line.to)) {
             const named: [Person, number] | undefined = responsibleOf(look.state, line);
             if (named !== undefined)
-                look.decorations.push(
-                    personMark.range(
-                        line.from + named[1],
-                        line.from + line.text.trimEnd().length,
-                    ),
-                );
+                look.decorations.push(personMark.range(line.from + named[1], line.from + line.text.trimEnd().length));
         }
     }
 }
@@ -2107,8 +1912,7 @@ function drawingOf(state: EditorState): Drawing {
         rendered: [],
     };
     syntaxTree(state).iterate({
-        enter: (node: SyntaxNodeRef): boolean =>
-            looks[node.name]?.(look, node.node) ?? true,
+        enter: (node: SyntaxNodeRef): boolean => looks[node.name]?.(look, node.node) ?? true,
     });
     responsiblesLook(look);
     spaceLook(look);
@@ -2127,13 +1931,9 @@ function drawingOf(state: EditorState): Drawing {
 function foldToggle(view: EditorView, pos: number): void {
     const line: Line = view.state.doc.lineAt(pos);
     let folded: Span | null = null;
-    foldedRanges(view.state).between(
-        line.to,
-        line.to,
-        (from: number, to: number): void => {
-            if (from === line.to) folded = { from: from, to: to };
-        },
-    );
+    foldedRanges(view.state).between(line.to, line.to, (from: number, to: number): void => {
+        if (from === line.to) folded = { from: from, to: to };
+    });
     const range: Span | null = folded ?? foldable(view.state, line.from, line.to);
     if (range !== null)
         view.dispatch({
@@ -2151,9 +1951,7 @@ export function solutionsFold(view: EditorView): void {
     const ranges: Span[] = [];
     for (let number: number = 1; number <= view.state.doc.lines; number++) {
         const line: Line = view.state.doc.line(number);
-        const range: Span | null = solutionRule.test(line.text)
-            ? foldable(view.state, line.from, line.to)
-            : null;
+        const range: Span | null = solutionRule.test(line.text) ? foldable(view.state, line.from, line.to) : null;
         if (range !== null) ranges.push(range);
     }
     view.dispatch({
@@ -2169,20 +1967,11 @@ export function solutionsFold(view: EditorView): void {
 export function headingShow(view: EditorView, heading: string): void {
     let line: Line | undefined;
     const unfolds: StateEffect<Span>[] = [];
-    for (
-        let number: number = 1;
-        heading !== "" && line === undefined && number <= view.state.doc.lines;
-        number++
-    )
-        if (headingRule.exec(view.state.doc.line(number).text)?.[1] === heading)
-            line = view.state.doc.line(number);
-    foldedRanges(view.state).between(
-        line?.from ?? 0,
-        line?.from ?? 0,
-        (from: number, to: number): void => {
-            unfolds.push(unfoldEffect.of({ from: from, to: to }));
-        },
-    );
+    for (let number: number = 1; heading !== "" && line === undefined && number <= view.state.doc.lines; number++)
+        if (headingRule.exec(view.state.doc.line(number).text)?.[1] === heading) line = view.state.doc.line(number);
+    foldedRanges(view.state).between(line?.from ?? 0, line?.from ?? 0, (from: number, to: number): void => {
+        unfolds.push(unfoldEffect.of({ from: from, to: to }));
+    });
     view.dispatch({
         effects: [...unfolds, EditorView.scrollIntoView(line?.from ?? 0, { y: "start" })],
     });
@@ -2204,33 +1993,21 @@ export function rowShow(view: EditorView, text: string): void {
         return /^\[([^\]]*)\]\([^)]*\)$/.exec(cell)?.[1].trim() ?? cell;
     };
     let line: Line | undefined;
-    for (
-        let number: number = 1;
-        text !== "" && line === undefined && number <= view.state.doc.lines;
-        number++
-    )
-        if (cellOf(view.state.doc.line(number).text) === text)
-            line = view.state.doc.line(number);
+    for (let number: number = 1; text !== "" && line === undefined && number <= view.state.doc.lines; number++)
+        if (cellOf(view.state.doc.line(number).text) === text) line = view.state.doc.line(number);
     if (line === undefined) return;
 
     const rowOf = (): HTMLTableRowElement | undefined =>
-        [
-            ...view.contentDOM.querySelectorAll<HTMLTableRowElement>(".cm-rendered tr"),
-        ].find(
-            (shown: HTMLTableRowElement): boolean =>
-                shown.cells[0]?.textContent?.trim() === text,
+        [...view.contentDOM.querySelectorAll<HTMLTableRowElement>(".cm-rendered tr")].find(
+            (shown: HTMLTableRowElement): boolean => shown.cells[0]?.textContent?.trim() === text,
         );
-    if (rowOf() === undefined)
-        view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: "start" }) });
+    if (rowOf() === undefined) view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: "start" }) });
     requestAnimationFrame((): void => {
         const row: HTMLTableRowElement | undefined = rowOf();
         const page: HTMLElement | null = view.dom.closest<HTMLElement>(".editor-file");
         if (row === undefined || page === null) return;
         row.classList.add("row-shown");
-        page.scrollTop +=
-            row.getBoundingClientRect().top -
-            page.getBoundingClientRect().top -
-            page.clientHeight / 3;
+        page.scrollTop += row.getBoundingClientRect().top - page.getBoundingClientRect().top - page.clientHeight / 3;
     });
 }
 
@@ -2262,8 +2039,7 @@ function linkFollow(view: EditorView, node: SyntaxNode): void {
     addressFollow(
         view,
         node.name === "WikiLink"
-            ? (/^\[\[([^\]|\\]*)/.exec(view.state.sliceDoc(node.from, node.to))?.[1] ??
-                  "")
+            ? (/^\[\[([^\]|\\]*)/.exec(view.state.sliceDoc(node.from, node.to))?.[1] ?? "")
             : url === null
               ? ""
               : view.state.sliceDoc(url.from, url.to).replace(/^<|>$/g, ""),
@@ -2324,11 +2100,7 @@ function linkClicked(event: MouseEvent, view: EditorView): boolean {
         return true;
     }
     followed = false;
-    if (
-        event.button !== 0 ||
-        (!targetIn(event, ".cm-follow") && !event.ctrlKey && !event.metaKey)
-    )
-        return false;
+    if (event.button !== 0 || (!targetIn(event, ".cm-follow") && !event.ctrlKey && !event.metaKey)) return false;
 
     const pos: number | null = view.posAtCoords({ x: event.clientX, y: event.clientY });
     const node: SyntaxNode | null = pos === null ? null : linkAt(view.state, pos);
@@ -2359,8 +2131,7 @@ function texOf(view: EditorView, box: Element): Span | null {
         from: from,
         to: view.state.doc.lineAt(from).to,
         enter: (node: SyntaxNodeRef): void => {
-            const marks: number =
-                view.state.sliceDoc(node.from, node.from + 2) === "$$" ? 2 : 1;
+            const marks: number = view.state.sliceDoc(node.from, node.from + 2) === "$$" ? 2 : 1;
             if (
                 tex === null &&
                 node.name === "InlineMath" &&
@@ -2385,10 +2156,7 @@ function texOf(view: EditorView, box: Element): Span | null {
 function formulaClicked(event: MouseEvent, view: EditorView): boolean {
     const tex: Span | null = formulaPressed;
     const box: Element | null = (event.target as Element).closest(".cm-math");
-    formulaPressed =
-        event.button === 0 && event.detail === 1 && box !== null
-            ? texOf(view, box)
-            : null;
+    formulaPressed = event.button === 0 && event.detail === 1 && box !== null ? texOf(view, box) : null;
     if (event.button !== 0 || event.detail !== 2 || tex === null) return false;
     event.preventDefault();
     view.dispatch({
@@ -2409,9 +2177,7 @@ function formulaClicked(event: MouseEvent, view: EditorView): boolean {
  */
 function selectionCopied(event: ClipboardEvent, view: EditorView): boolean {
     const state: EditorState = view.state;
-    const ranges: SelectionRange[] = state.selection.ranges.filter(
-        (range: SelectionRange): boolean => !range.empty,
-    );
+    const ranges: SelectionRange[] = state.selection.ranges.filter((range: SelectionRange): boolean => !range.empty);
     if (ranges.length === 0 || event.clipboardData === null) return false;
     event.preventDefault();
     event.clipboardData.setData(
@@ -2442,9 +2208,7 @@ function personClicked(event: MouseEvent, view: EditorView): boolean {
 
     const pos: number | null = view.posAtCoords({ x: event.clientX, y: event.clientY });
     const person: Person | undefined =
-        pos === null
-            ? undefined
-            : responsibleOf(view.state, view.state.doc.lineAt(pos))?.[0];
+        pos === null ? undefined : responsibleOf(view.state, view.state.doc.lineAt(pos))?.[0];
     if (person === undefined) return false;
     event.preventDefault();
     if (event.type === "click") location.assign(personRowAddressOf(person));
@@ -2463,11 +2227,7 @@ function pressHold(event: MouseEvent, view: EditorView): void {
     view.dispatch({
         effects: pressChange.of(view.state.field(focused) ? cursorsOf(view.state) : []),
     });
-    document.addEventListener(
-        "mouseup",
-        (): void => view.dispatch({ effects: pressChange.of(null) }),
-        { once: true },
-    );
+    document.addEventListener("mouseup", (): void => view.dispatch({ effects: pressChange.of(null) }), { once: true });
 }
 
 /**
@@ -2492,10 +2252,7 @@ function marginSelect(event: MouseEvent, view: EditorView): void {
                     const line: Line = view.state.doc.lineAt(pos);
                     const start: number = line.from + hiddenStartOf(view.state, line);
                     const coords: { left: number } | null = view.coordsAtPos(start);
-                    return pos === start &&
-                        start > line.from &&
-                        coords !== null &&
-                        x < coords.left - 4
+                    return pos === start && start > line.from && coords !== null && x < coords.left - 4
                         ? line.from
                         : pos;
                 };
@@ -2562,21 +2319,13 @@ export function livePreview(links: Links, place: string): Extension {
             transaction.state.field(frozen) !== transaction.startState.field(frozen) ||
             syntaxTree(transaction.state) !== syntaxTree(transaction.startState) ||
             foldedRanges(transaction.state) !== foldedRanges(transaction.startState) ||
-            transaction.state.field(linkTargets) !==
-                transaction.startState.field(linkTargets) ||
-            transaction.state.field(personsLoaded) !==
-                transaction.startState.field(personsLoaded)
+            transaction.state.field(linkTargets) !== transaction.startState.field(linkTargets) ||
+            transaction.state.field(personsLoaded) !== transaction.startState.field(personsLoaded)
                 ? drawingOf(transaction.state)
                 : drawing,
         provide: (field: StateField<Drawing>): Extension => [
-            EditorView.decorations.from(
-                field,
-                (drawing: Drawing): DecorationSet => drawing.decorations,
-            ),
-            EditorView.blockWrappers.from(
-                field,
-                (drawing: Drawing): RangeSet<BlockWrapper> => drawing.wrappers,
-            ),
+            EditorView.decorations.from(field, (drawing: Drawing): DecorationSet => drawing.decorations),
+            EditorView.blockWrappers.from(field, (drawing: Drawing): RangeSet<BlockWrapper> => drawing.wrappers),
         ],
     });
     return [

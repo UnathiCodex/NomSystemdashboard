@@ -61,12 +61,7 @@ let returning: boolean = false;
  * Empty when it is its category, like an old `Sleep`.
  */
 function whatTextOf(entry: LogEntry): string {
-    const shown: string = shownWhatOf(
-        entry.category,
-        entry.title,
-        entry.module,
-        entry.type,
-    );
+    const shown: string = shownWhatOf(entry.category, entry.title, entry.module, entry.type);
     return shown === entry.category ? "" : shown;
 }
 
@@ -107,18 +102,12 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
         entry.online,
         "",
     );
-    const people: (string | Node)[] = dottedOf(
-        entry.attendees.map((person: Attendee): string => person.name),
-    );
-    const where: (string | Node)[][] = [place, people].filter(
-        (part: (string | Node)[]): boolean => part.length > 0,
-    );
+    const people: (string | Node)[] = dottedOf(entry.attendees.map((person: Attendee): string => person.name));
+    const where: (string | Node)[][] = [place, people].filter((part: (string | Node)[]): boolean => part.length > 0);
     const meta: HTMLElement = entryPartOf("span", "search-meta", [
         entryPartOf("span", "search-when", [
             dayTextOf(day, true),
-            entryPartOf("span", "entry-parted", [
-                `${timeOf(start)}${rangeDash}${timeOf(end)}`,
-            ]),
+            entryPartOf("span", "entry-parted", [`${timeOf(start)}${rangeDash}${timeOf(end)}`]),
         ]),
     ]);
     if (where.length > 0)
@@ -127,18 +116,13 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
                 ...where[0],
                 ...where
                     .slice(1)
-                    .map((part: (string | Node)[]): HTMLElement =>
-                        entryPartOf("span", "entry-parted", part),
-                    ),
+                    .map((part: (string | Node)[]): HTMLElement => entryPartOf("span", "entry-parted", part)),
             ]),
         );
     const button: HTMLButtonElement = document.createElement("button");
     button.type = "button";
     button.className = "search-result";
-    button.append(
-        entryPartOf("span", "search-what", whatOf(entry.category, whatTextOf(entry))),
-        meta,
-    );
+    button.append(entryPartOf("span", "search-what", whatOf(entry.category, whatTextOf(entry))), meta);
     button.addEventListener("click", (): void => {
         resultOpen(calendar, entry).catch((error: unknown): void => console.error(error));
     });
@@ -149,9 +133,7 @@ function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
 
 /** Shows the entries that hold each word typed, every entry while nothing is typed. */
 function resultsShow(calendar: Calendar): void {
-    const words: string[] = wordsOf(
-        (document.getElementById("search-text") as HTMLInputElement).value,
-    );
+    const words: string[] = wordsOf((document.getElementById("search-text") as HTMLInputElement).value);
     (document.getElementById("search-results") as HTMLElement).replaceChildren(
         ...entries
             .filter((entry: LogEntry): boolean => matchesAll(searchedOf(entry), words))
@@ -165,9 +147,7 @@ function resultsShow(calendar: Calendar): void {
  * A hint in the dialog says when the reader cannot answer.
  */
 async function searchOpen(calendar: Calendar): Promise<void> {
-    const dialog: HTMLDialogElement = document.getElementById(
-        "search",
-    ) as HTMLDialogElement;
+    const dialog: HTMLDialogElement = document.getElementById("search") as HTMLDialogElement;
     const results: HTMLElement = document.getElementById("search-results") as HTMLElement;
     const scrolled: number = results.scrollTop;
     dialog.showModal();
@@ -227,12 +207,8 @@ async function resultOpen(calendar: Calendar, entry: LogEntry): Promise<void> {
 export function searchStart(calendar: Calendar): void {
     document.body.insertAdjacentHTML("beforeend", searchHtml);
     const button: HTMLElement = document.getElementById("log-search") as HTMLElement;
-    const text: HTMLInputElement = document.getElementById(
-        "search-text",
-    ) as HTMLInputElement;
-    document
-        .querySelector(".search-form")
-        ?.prepend(searchFieldOf(text, "Search the log"));
+    const text: HTMLInputElement = document.getElementById("search-text") as HTMLInputElement;
+    document.querySelector(".search-form")?.prepend(searchFieldOf(text, "Search the log"));
     iconPut(button, Search, "Search the log");
     button.addEventListener("click", (): void => {
         searchOpen(calendar).catch((error: unknown): void => console.error(error));

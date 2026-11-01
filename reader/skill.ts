@@ -107,14 +107,7 @@ import { onlineFor, placeLinkOf } from "./places.ts";
 import { modulesFolder, projectOf, skillLog, skillNameOf } from "./sources.ts";
 
 import type { Box } from "./boxes.ts";
-import type {
-    Attendee,
-    Entry,
-    EntryFields,
-    Link,
-    Online,
-    RoundMark,
-} from "./calendar.ts";
+import type { Attendee, Entry, EntryFields, Link, Online, RoundMark } from "./calendar.ts";
 import type { Chapter, ModuleContents, NoteEntry, NotesModule } from "./notes.ts";
 
 /** Result of a cold Task. */
@@ -437,8 +430,7 @@ const quarterHour: number = 15 * 60 * 1000;
 const sessionPause: number = 30 * 60 * 1000;
 
 /** Heading of a task, also the older `## Completion.` and `(cold)` forms. */
-const taskHeading: RegExp =
-    /^## ((Example|Completion|Task)\.[ \t]+(.+?)(?:[ \t]+(\(cold\)))?)[ \t]*$/;
+const taskHeading: RegExp = /^## ((Example|Completion|Task)\.[ \t]+(.+?)(?:[ \t]+(\(cold\)))?)[ \t]*$/;
 
 /** Heading of the Algorithm of a note, the one worked example. */
 const algorithmHeading: RegExp = /^##[ \t]+(Algorithm\.[ \t]+.+?)[ \t]*$/;
@@ -455,24 +447,14 @@ const sourceLine: RegExp = /^>[ \t]*(?:(?:Original|Generated):[ \t]*)?(.*?)[ \t]
  * which is its solution or the next block.
  */
 function partsOf(lines: string[], index: number): string[] {
-    const end: number = lines.findIndex(
-        (line: string, at: number): boolean => at > index && line.startsWith("#"),
-    );
+    const end: number = lines.findIndex((line: string, at: number): boolean => at > index && line.startsWith("#"));
     const body: string[] = lines.slice(index + 1, end === -1 ? lines.length : end);
-    return [
-        ...new Set(
-            body.flatMap(
-                (line: string): string[] => partLine.exec(line)?.slice(1, 2) ?? [],
-            ),
-        ),
-    ];
+    return [...new Set(body.flatMap((line: string): string[] => partLine.exec(line)?.slice(1, 2) ?? []))];
 }
 
 /** Gives the sources of a task, its source lines joined by `, `. */
 function sourceOf(lines: string[], index: number): string {
-    const end: number = lines.findIndex(
-        (line: string, at: number): boolean => at > index && !line.startsWith(">"),
-    );
+    const end: number = lines.findIndex((line: string, at: number): boolean => at > index && !line.startsWith(">"));
     const quotes: string[] = lines.slice(index + 1, end === -1 ? lines.length : end);
     return quotes
         .map((line: string): string => sourceLine.exec(line)?.[1] ?? "")
@@ -564,9 +546,7 @@ function tasksRead(): Task[] {
 function skillEntriesRead(start: string, end: string): Entry[] {
     return entriesRead(skillLog, start, end)
         .filter((entry: Entry): boolean => entry.category === skillName)
-        .sort((first: Entry, second: Entry): number =>
-            first.start.localeCompare(second.start),
-        );
+        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
 }
 
 /**
@@ -575,14 +555,10 @@ function skillEntriesRead(start: string, end: string): Entry[] {
  * unless the section names its own, once the entry's skill changed.
  */
 function roundsRead(): RoundLine[] {
-    return skillEntriesRead("1970-01-01T00:00:00Z", new Date().toISOString()).flatMap(
-        (entry: Entry): RoundLine[] => {
-            const day: string = berlinDateOf(new Date(entry.start));
-            return entry.rounds.map((mark: RoundMark): RoundLine =>
-                lineOf(mark, entry.module, entry.id, day),
-            );
-        },
-    );
+    return skillEntriesRead("1970-01-01T00:00:00Z", new Date().toISOString()).flatMap((entry: Entry): RoundLine[] => {
+        const day: string = berlinDateOf(new Date(entry.start));
+        return entry.rounds.map((mark: RoundMark): RoundLine => lineOf(mark, entry.module, entry.id, day));
+    });
 }
 
 /** Gives the name in the heading of a task, after its type word. */
@@ -668,18 +644,12 @@ function roundsOf(lines: RoundLine[]): Round[] {
 function decidedIs(round: Round): boolean {
     if (round.results.at(-1) === "right") return true;
     if (round.round === 0 || round.results.length === 0) return false;
-    return (
-        round.closed ||
-        round.results.filter((result: Result): boolean => result === "wrong").length >= 2
-    );
+    return round.closed || round.results.filter((result: Result): boolean => result === "wrong").length >= 2;
 }
 
 /** Gives whole days from one day to another, below 0 when `to` lies before `from`. */
 function daysBetween(from: string, to: string): number {
-    return Math.round(
-        (Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) /
-            (24 * 60 * 60 * 1000),
-    );
+    return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / (24 * 60 * 60 * 1000));
 }
 
 /**
@@ -690,9 +660,7 @@ function dueAfter(level: number, day: string, exam: ExamDate): string {
     if (level <= spacingDays.length) return dayAdd(day, spacingDays[level - 1]);
     const check: string = dayAdd(exam.day, -examDays);
     if (day >= check) return "";
-    return daysBetween(day, exam.day) > keepUpDays
-        ? dayAdd(day, Math.floor(daysBetween(day, check) / 2))
-        : check;
+    return daysBetween(day, exam.day) > keepUpDays ? dayAdd(day, Math.floor(daysBetween(day, check) / 2)) : check;
 }
 
 /**
@@ -742,16 +710,10 @@ function coldOf(colds: Task[], rounds: Round[], shown: Round | undefined): strin
     if (shown !== undefined && shown.task !== "") return shown.task;
     if (colds.length === 0) return "";
     const solved: (task: Task) => boolean = (task: Task): boolean =>
-        rounds.some(
-            (round: Round): boolean =>
-                round.task === task.id && round.results.includes("right"),
-        );
+        rounds.some((round: Round): boolean => round.task === task.id && round.results.includes("right"));
     return (
         colds.find((task: Task): boolean => !solved(task)) ??
-        colds[
-            rounds.filter((round: Round): boolean => round.task !== "").length %
-                colds.length
-        ]
+        colds[rounds.filter((round: Round): boolean => round.task !== "").length % colds.length]
     ).id;
 }
 
@@ -762,10 +724,8 @@ function coldOf(colds: Task[], rounds: Round[], shown: Round | undefined): strin
 function exampleOf(examples: Task[], rounds: Round[], shown: Round | undefined): string {
     if (shown !== undefined && shown.example !== "") return shown.example;
     return (
-        examples.find(
-            (task: Task): boolean =>
-                !rounds.some((round: Round): boolean => round.example === task.id),
-        )?.id ?? ""
+        examples.find((task: Task): boolean => !rounds.some((round: Round): boolean => round.example === task.id))
+            ?.id ?? ""
     );
 }
 
@@ -790,17 +750,12 @@ function sectionOf(
     const rounds: Round[] = roundsOf(lines);
     const last: Round | undefined = rounds.at(-1);
     const shown: Round | undefined =
-        last !== undefined &&
-        (!overIs(last, today) || (last.lines.at(-1)?.day ?? "") >= today)
-            ? last
-            : undefined;
+        last !== undefined && (!overIs(last, today) || (last.lines.at(-1)?.day ?? "") >= today) ? last : undefined;
     const round: number = shown?.round ?? (last === undefined ? 0 : last.round + 1);
     const all: Levels = levelsOf(rounds, "9999-12-31");
     const before: Levels = levelsOf(rounds, today);
     const cold: string = coldOf(colds, rounds, shown);
-    const days: string[] = [
-        ...new Set(lines.map((line: RoundLine): string => line.day)),
-    ].sort();
+    const days: string[] = [...new Set(lines.map((line: RoundLine): string => line.day))].sort();
     const marked: SectionToday =
         cold === ""
             ? ""
@@ -821,18 +776,14 @@ function sectionOf(
             example: exampleOf(examples, rounds, shown),
             algorithm: algorithmOf(own[0].note),
             tasks: own.length,
-            tried: own.filter((task: Task): boolean => attemptsOf(task).length > 0)
-                .length,
+            tried: own.filter((task: Task): boolean => attemptsOf(task).length > 0).length,
             round: round,
             ladder: round === 0,
             runs: before.runs,
             day: shown?.lines[0].day ?? today,
             rightDue: cold === "" ? "" : dueOf(earlier, "right", today, exam),
             wrongDue: cold === "" ? "" : dayAdd(today, retryDays),
-            at:
-                shown === undefined || shown.closed
-                    ? ""
-                    : (shown.lines.at(-1)?.step ?? ""),
+            at: shown === undefined || shown.closed ? "" : (shown.lines.at(-1)?.step ?? ""),
             closed: shown?.closed ?? false,
             results: shown?.results ?? [],
             used: (shown?.example ?? "") !== "",
@@ -842,9 +793,7 @@ function sectionOf(
         own.map((task: Task): SkillTask => ({
             ...task,
             due: task.id === cold ? all.due : "",
-            done:
-                task.kind === "example" &&
-                rounds.some((done: Round): boolean => done.example === task.id),
+            done: task.kind === "example" && rounds.some((done: Round): boolean => done.example === task.id),
             level: task.kind === "cold" ? all.level : 0,
             ready: task.kind === "cold" && all.level > spacingDays.length,
             attempts: attemptsOf(task),
@@ -862,18 +811,11 @@ function sectionOf(
  * a later one too, or by itself once every section of the chapter before has them.
  */
 function todayMarked(sections: SkillSection[], opened: string[]): SkillSection[] {
-    const tasked: (section: SkillSection) => boolean = (section: SkillSection): boolean =>
-        section.cold !== "";
-    const begun: (section: SkillSection) => boolean = (section: SkillSection): boolean =>
-        section.days.length > 0;
-    if (sections.some((section: SkillSection): boolean => section.today === "new"))
-        return sections;
+    const tasked: (section: SkillSection) => boolean = (section: SkillSection): boolean => section.cold !== "";
+    const begun: (section: SkillSection) => boolean = (section: SkillSection): boolean => section.days.length > 0;
+    if (sections.some((section: SkillSection): boolean => section.today === "new")) return sections;
     const chapters: string[] = [
-        ...new Set(
-            sections
-                .filter(tasked)
-                .map((section: SkillSection): string => section.chapter),
-        ),
+        ...new Set(sections.filter(tasked).map((section: SkillSection): string => section.chapter)),
     ];
     const open: (chapter: string) => boolean = (chapter: string): boolean =>
         opened.includes(chapter) ||
@@ -881,18 +823,14 @@ function todayMarked(sections: SkillSection[], opened: string[]): SkillSection[]
             sections
                 .filter(
                     (section: SkillSection): boolean =>
-                        tasked(section) &&
-                        section.chapter === chapters[chapters.indexOf(chapter) - 1],
+                        tasked(section) && section.chapter === chapters[chapters.indexOf(chapter) - 1],
                 )
                 .every((section: SkillSection): boolean => section.runs >= openRuns));
     const next: SkillSection | undefined = sections.find(
-        (section: SkillSection): boolean =>
-            tasked(section) && !begun(section) && open(section.chapter),
+        (section: SkillSection): boolean => tasked(section) && !begun(section) && open(section.chapter),
     );
     if (next === undefined) return sections;
-    const before: SkillSection | undefined = sections
-        .slice(0, sections.indexOf(next))
-        .findLast(tasked);
+    const before: SkillSection | undefined = sections.slice(0, sections.indexOf(next)).findLast(tasked);
     if (before !== undefined && begun(before) && before.runs < openRuns) return sections;
     return sections.map((section: SkillSection): SkillSection =>
         section === next ? { ...section, today: "new" } : section,
@@ -908,10 +846,7 @@ function openedOf(module: string, boxes: Box[], today: string): string[] {
     return boxes
         .filter(
             (box: Box): boolean =>
-                box.module === module &&
-                box.day <= today &&
-                box.state !== "dropped" &&
-                box.state !== "university",
+                box.module === module && box.day <= today && box.state !== "dropped" && box.state !== "university",
         )
         .flatMap((box: Box): string[] => box.chapters);
 }
@@ -923,16 +858,9 @@ function openedOf(module: string, boxes: Box[], today: string): string[] {
 function examOf(module: string, boxes: Box[]): ExamDate {
     const today: string = berlinDateOf(new Date());
     const planned: Box | undefined = boxes
-        .filter(
-            (box: Box): boolean =>
-                box.module === module && box.type === "FA" && box.day >= today,
-        )
-        .sort((first: Box, second: Box): number =>
-            first.day.localeCompare(second.day),
-        )[0];
-    return planned !== undefined
-        ? { day: planned.day, estimated: false }
-        : (exams[module] ?? examDefault);
+        .filter((box: Box): boolean => box.module === module && box.type === "FA" && box.day >= today)
+        .sort((first: Box, second: Box): number => first.day.localeCompare(second.day))[0];
+    return planned !== undefined ? { day: planned.day, estimated: false } : (exams[module] ?? examDefault);
 }
 
 /**
@@ -945,56 +873,37 @@ function examOf(module: string, boxes: Box[]): ExamDate {
  */
 export function skillingRead(): Skilling {
     const lines: RoundLine[] = roundsRead();
-    const bySection: Map<string, RoundLine[]> = Map.groupBy(
-        lines,
-        (line: RoundLine): string => line.section,
-    );
+    const bySection: Map<string, RoundLine[]> = Map.groupBy(lines, (line: RoundLine): string => line.section);
     const byTask: Map<string, LoggedAttempt[]> = Map.groupBy(
         attemptsOf(lines),
         (logged: LoggedAttempt): string => logged.task,
     );
     const boxes: Box[] = skillBoxesRead(dayAdd(berlinDateOf(new Date()), planDays));
     const today: string = berlinDateOf(new Date());
-    const modules: SkillModule[] = moduleTasksRead().map(
-        (module: ModuleTasks): SkillModule => {
-            const unique: Task[] = module.tasks.filter(
-                (task: Task, index: number): boolean =>
-                    module.tasks.findIndex(
-                        (known: Task): boolean => known.id === task.id,
-                    ) === index,
-            );
-            const exam: ExamDate = examOf(module.code, boxes);
-            const attemptsOf: (task: Task) => Attempt[] = (task: Task): Attempt[] =>
-                (byTask.get(task.id) ?? []).map(
-                    (logged: LoggedAttempt): Attempt => logged.attempt,
-                );
-            const built: [SkillSection, SkillTask[]][] = [
-                ...Map.groupBy(unique, (task: Task): string => task.note).values(),
-            ].map((own: Task[]): [SkillSection, SkillTask[]] =>
-                sectionOf(
-                    own,
-                    bySection.get(`${module.code}/${own[0].section}`) ?? [],
-                    attemptsOf,
-                    today,
-                    exam,
-                ),
-            );
-            return {
-                code: module.code,
-                title: module.title,
-                exam: exam,
-                tasks: built.flatMap(
-                    ([, tasks]: [SkillSection, SkillTask[]]): SkillTask[] => tasks,
-                ),
-                sections: todayMarked(
-                    built.map(
-                        ([section]: [SkillSection, SkillTask[]]): SkillSection => section,
-                    ),
-                    openedOf(module.code, boxes, today),
-                ),
-            };
-        },
-    );
+    const modules: SkillModule[] = moduleTasksRead().map((module: ModuleTasks): SkillModule => {
+        const unique: Task[] = module.tasks.filter(
+            (task: Task, index: number): boolean =>
+                module.tasks.findIndex((known: Task): boolean => known.id === task.id) === index,
+        );
+        const exam: ExamDate = examOf(module.code, boxes);
+        const attemptsOf: (task: Task) => Attempt[] = (task: Task): Attempt[] =>
+            (byTask.get(task.id) ?? []).map((logged: LoggedAttempt): Attempt => logged.attempt);
+        const built: [SkillSection, SkillTask[]][] = [
+            ...Map.groupBy(unique, (task: Task): string => task.note).values(),
+        ].map((own: Task[]): [SkillSection, SkillTask[]] =>
+            sectionOf(own, bySection.get(`${module.code}/${own[0].section}`) ?? [], attemptsOf, today, exam),
+        );
+        return {
+            code: module.code,
+            title: module.title,
+            exam: exam,
+            tasks: built.flatMap(([, tasks]: [SkillSection, SkillTask[]]): SkillTask[] => tasks),
+            sections: todayMarked(
+                built.map(([section]: [SkillSection, SkillTask[]]): SkillSection => section),
+                openedOf(module.code, boxes, today),
+            ),
+        };
+    });
 
     const active: string[] = activeModulesRead();
     const skills: string[] = activeSkillsRead().map(skillNameOf);
@@ -1004,12 +913,7 @@ export function skillingRead(): Skilling {
     const byName: (valueOf: (name: string) => string) => { [name: string]: string } = (
         valueOf: (name: string) => string,
     ): { [name: string]: string } =>
-        Object.fromEntries(
-            [...skills, ...others].map((name: string): [string, string] => [
-                name,
-                valueOf(name),
-            ]),
-        );
+        Object.fromEntries([...skills, ...others].map((name: string): [string, string] => [name, valueOf(name)]));
     return {
         modules: modules,
         skills: skills,
@@ -1030,8 +934,7 @@ export function skillingRead(): Skilling {
  */
 function folderOf(code: string): string {
     const folder: string | undefined =
-        moduleFolderOf(code) ??
-        activeModulesRead().find((name: string): boolean => codeOf(name) === code);
+        moduleFolderOf(code) ?? activeModulesRead().find((name: string): boolean => codeOf(name) === code);
     if (folder === undefined) throw new Error(`No module ${code}`);
     return folder;
 }
@@ -1045,8 +948,7 @@ function folderOf(code: string): string {
  *   no module of the semester and no project has the name
  */
 export function moduleRead(code: string): ModuleContents {
-    if (projectOf(code) !== undefined)
-        return { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
+    if (projectOf(code) !== undefined) return { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
     return moduleContentsRead(folderOf(code));
 }
 
@@ -1064,21 +966,14 @@ function markStartOf(
     picked: number | undefined,
     day: string,
 ): RoundMark {
-    const own: RoundLine[] = lines.filter(
-        (line: RoundLine): boolean => line.section === section,
-    );
+    const own: RoundLine[] = lines.filter((line: RoundLine): boolean => line.section === section);
     const last: Round | undefined = roundsOf(own).at(-1);
     const going: boolean = last !== undefined && !overIs(last, day);
-    const round: number =
-        picked ?? (last === undefined ? 0 : going ? last.round : last.round + 1);
+    const round: number = picked ?? (last === undefined ? 0 : going ? last.round : last.round + 1);
     const step: string =
-        own.findLast(
-            (line: RoundLine): boolean => line.round === round && line.step !== roundDone,
-        )?.step ?? "";
+        own.findLast((line: RoundLine): boolean => line.round === round && line.step !== roundDone)?.step ?? "";
     return {
-        section: section.startsWith(`${module}/`)
-            ? section.slice(module.length + 1)
-            : section,
+        section: section.startsWith(`${module}/`) ? section.slice(module.length + 1) : section,
         round: round,
         step: picked !== undefined || going ? step : "",
         task: "",
@@ -1120,30 +1015,21 @@ function lineOf(mark: RoundMark, module: string, entry: string, day: string): Ro
  *   the result is neither right nor wrong,
  *   or a comment comes with right
  */
-function markTried(
-    mark: RoundMark,
-    task: Task,
-    attempt: AttemptNew,
-    decided: boolean,
-): RoundMark {
+function markTried(mark: RoundMark, task: Task, attempt: AttemptNew, decided: boolean): RoundMark {
     const comment: string = attempt.comment
         .replaceAll('"', "'")
         .replace(/[\s\p{Cc}]+/gu, " ")
         .trim();
     if (task.kind === "example") {
-        if (attempt.result !== "right" || comment !== "")
-            throw new Error(`An Example has no result: ${task.id}`);
+        if (attempt.result !== "right" || comment !== "") throw new Error(`An Example has no result: ${task.id}`);
         if (mark.used !== "" && mark.used !== task.heading)
             throw new Error(`One Example per round, ${mark.used} already`);
         return { ...mark, used: task.heading };
     }
     if (decided) throw new Error(`The round of ${task.section} is decided, close it`);
-    if (attempt.result !== "right" && attempt.result !== "wrong")
-        throw new Error(`No result ${attempt.result}`);
-    if (comment !== "" && attempt.result !== "wrong")
-        throw new Error(`No comment with ${attempt.result}`);
-    const notes: string[] =
-        attempt.result === "wrong" ? [...mark.notes, comment] : [...mark.notes];
+    if (attempt.result !== "right" && attempt.result !== "wrong") throw new Error(`No result ${attempt.result}`);
+    if (comment !== "" && attempt.result !== "wrong") throw new Error(`No comment with ${attempt.result}`);
+    const notes: string[] = attempt.result === "wrong" ? [...mark.notes, comment] : [...mark.notes];
     while (notes.at(-1) === "") notes.pop();
     return {
         ...mark,
@@ -1159,12 +1045,7 @@ function markTried(
  * so the dashboard shows the next round right away and the log holds it.
  * A round decided before keeps its day.
  */
-function markDecide(
-    mark: RoundMark,
-    earlier: RoundLine[],
-    line: RoundLine,
-    exam: ExamDate,
-): RoundMark {
+function markDecide(mark: RoundMark, earlier: RoundLine[], line: RoundLine, exam: ExamDate): RoundMark {
     const rounds: Round[] = roundsOf([...earlier, line]);
     const round: Round = rounds[rounds.length - 1];
     if (round.decided === "" || round.due !== "" || mark.due !== "") return mark;
@@ -1195,24 +1076,15 @@ function markWith(
         (line: RoundLine): boolean => line.section === section,
     );
     const decided: (now: RoundMark) => boolean = (now: RoundMark): boolean =>
-        roundsOf([
-            ...earlier,
-            lineOf(now, context.module, context.entry, context.day),
-        ]).at(-1)?.decided !== "";
+        roundsOf([...earlier, lineOf(now, context.module, context.entry, context.day)]).at(-1)?.decided !== "";
     let now: RoundMark = mark;
     change.attempts.forEach((attempt: AttemptNew): void => {
         const task: Task | undefined = taskOf(context.tasks, attempt.task);
         if (task === undefined) throw new Error(`No task ${attempt.task}`);
         now = markTried(now, task, attempt, decided(now));
     });
-    if (change.step !== "")
-        now = markStepped(now, change.step, decided(now), context.tasks, section);
-    return markDecide(
-        now,
-        earlier,
-        lineOf(now, context.module, context.entry, context.day),
-        context.exam,
-    );
+    if (change.step !== "") now = markStepped(now, change.step, decided(now), context.tasks, section);
+    return markDecide(now, earlier, lineOf(now, context.module, context.entry, context.day), context.exam);
 }
 
 /**
@@ -1222,30 +1094,17 @@ function markWith(
  *
  * @throws {Error} - When it closes round 0 before its Task is right
  */
-function markStepped(
-    mark: RoundMark,
-    step: string,
-    decided: boolean,
-    tasks: Task[],
-    section: string,
-): RoundMark {
+function markStepped(mark: RoundMark, step: string, decided: boolean, tasks: Task[], section: string): RoundMark {
     if (step === roundDone && mark.round === 0 && !decided)
         throw new Error(`Round 0 of ${section} closes only once its Task is right`);
     const left: Task | undefined = tasks.find(
         (task: Task): boolean =>
-            task.kind === "example" &&
-            sectionKeyOf(task) === section &&
-            task.heading === mark.step,
+            task.kind === "example" && sectionKeyOf(task) === section && task.heading === mark.step,
     );
     const now: RoundMark =
         left === undefined || step === mark.step
             ? mark
-            : markTried(
-                  mark,
-                  left,
-                  { task: left.id, result: "right", comment: "" },
-                  decided,
-              );
+            : markTried(mark, left, { task: left.id, result: "right", comment: "" }, decided);
     return { ...now, step: step };
 }
 
@@ -1256,12 +1115,8 @@ function markStepped(
  */
 function marksWith(kept: RoundMark[], marks: RoundMark[]): RoundMark[] {
     return marks.reduce((all: RoundMark[], mark: RoundMark): RoundMark[] => {
-        const index: number = all.findLastIndex(
-            (other: RoundMark): boolean => other.section === mark.section,
-        );
-        return index === -1 || all[index].step === roundDone
-            ? [...all, mark]
-            : all.with(index, mark);
+        const index: number = all.findLastIndex((other: RoundMark): boolean => other.section === mark.section);
+        return index === -1 || all[index].step === roundDone ? [...all, mark] : all.with(index, mark);
     }, kept);
 }
 
@@ -1281,8 +1136,7 @@ function markOf(
     const own: RoundMark | undefined = kept.findLast(
         (mark: RoundMark): boolean => markSectionOf(mark, module) === section,
     );
-    if (own === undefined || own.step === roundDone)
-        return markStartOf(section, module, lines, picked, day);
+    if (own === undefined || own.step === roundDone) return markStartOf(section, module, lines, picked, day);
     return picked === undefined || picked === own.round
         ? own
         : {
@@ -1298,9 +1152,7 @@ function markOf(
  * which it never writes again.
  */
 function othersOf(lines: RoundLine[], entry: string): RoundLine[] {
-    return lines.filter(
-        (line: RoundLine): boolean => line.entry !== entry || line.step === roundDone,
-    );
+    return lines.filter((line: RoundLine): boolean => line.entry !== entry || line.step === roundDone);
 }
 
 /** Gives the section of a task with its module. */
@@ -1340,9 +1192,7 @@ function linkedSectionsOf(links: Link[], tasks: Task[]): string[] {
     return [
         ...new Set(
             tasks
-                .filter((task: Task): boolean =>
-                    links.some((link: Link): boolean => link.path === notePathOf(task)),
-                )
+                .filter((task: Task): boolean => links.some((link: Link): boolean => link.path === notePathOf(task)))
                 .map(sectionKeyOf),
         ),
     ];
@@ -1352,22 +1202,12 @@ function linkedSectionsOf(links: Link[], tasks: Task[]): string[] {
  * Gives the links of a skill entry with the note of the section of every line `X-ROUND`,
  * so every line links its note. A note it links keeps its link.
  */
-function linksWith(
-    links: Link[],
-    marks: RoundMark[],
-    module: string,
-    tasks: Task[],
-): Link[] {
-    const notes: string[] = [
-        ...new Set(markTasksOf(marks, module, tasks).map(notePathOf)),
-    ];
+function linksWith(links: Link[], marks: RoundMark[], module: string, tasks: Task[]): Link[] {
+    const notes: string[] = [...new Set(markTasksOf(marks, module, tasks).map(notePathOf))];
     return [
         ...links,
         ...notes
-            .filter(
-                (path: string): boolean =>
-                    !links.some((link: Link): boolean => link.path === path),
-            )
+            .filter((path: string): boolean => !links.some((link: Link): boolean => link.path === path))
             .map((path: string): Link => ({ path: path, fingerprint: "" })),
     ];
 }
@@ -1403,20 +1243,12 @@ function marksOfEntry(
             !tasks.some((task: Task): boolean => sectionKeyOf(task) === pick.section)
         )
             throw new Error(`No section ${pick.section}`);
-        if (!Number.isInteger(pick.round) || pick.round < 0)
-            throw new Error(`No round ${pick.round}`);
+        if (!Number.isInteger(pick.round) || pick.round < 0) throw new Error(`No round ${pick.round}`);
     });
-    if (
-        entry.attempts.some(
-            (attempt: AttemptNew): boolean => attempt.task.split("/")[0] !== entry.module,
-        )
-    )
+    if (entry.attempts.some((attempt: AttemptNew): boolean => attempt.task.split("/")[0] !== entry.module))
         throw new Error(`Only attempts at tasks of ${entry.module}`);
     const lines: RoundLine[] = roundsRead();
-    const exam: ExamDate = examOf(
-        entry.module,
-        skillBoxesRead(dayAdd(berlinDateOf(new Date()), planDays)),
-    );
+    const exam: ExamDate = examOf(entry.module, skillBoxesRead(dayAdd(berlinDateOf(new Date()), planDays)));
     const linked: string[] = linkedSectionsOf(links, tasks);
     const kept: RoundMark[] = old.marks.filter(
         (mark: RoundMark): boolean =>
@@ -1442,16 +1274,12 @@ function marksOfEntry(
                 section,
                 entry.module,
                 othersOf(lines, old.id),
-                entry.rounds.find((pick: RoundPick): boolean => pick.section === section)
-                    ?.round,
+                entry.rounds.find((pick: RoundPick): boolean => pick.section === section)?.round,
                 berlinDateOf(new Date(entry.start)),
             ),
             {
                 attempts: entry.attempts.filter((attempt: AttemptNew): boolean =>
-                    tasks.some(
-                        (task: Task): boolean =>
-                            task.id === attempt.task && sectionKeyOf(task) === section,
-                    ),
+                    tasks.some((task: Task): boolean => task.id === attempt.task && sectionKeyOf(task) === section),
                 ),
                 step: "",
             },
@@ -1496,22 +1324,14 @@ function chaptersWith(chapters: string[], worked: string[], tasks: Task[]): stri
 function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string): void {
     if (entry.type !== "" && entry.type !== keptType && !skillTypes.includes(entry.type))
         throw new Error(`No type ${entry.type}`);
-    const offered: string[] =
-        entry.module === "" ? [] : moduleRead(entry.module).chapters;
+    const offered: string[] = entry.module === "" ? [] : moduleRead(entry.module).chapters;
     const unknown: string | undefined = entry.chapters.find(
-        (chapter: string): boolean =>
-            !offered.includes(chapter) && !kept.includes(chapter),
+        (chapter: string): boolean => !offered.includes(chapter) && !kept.includes(chapter),
     );
-    if (unknown !== undefined)
-        throw new Error(`No chapter ${unknown} in ${entry.module}`);
+    if (unknown !== undefined) throw new Error(`No chapter ${unknown} in ${entry.module}`);
     if (!attendeesAllow(entry.attendees ?? []))
-        throw new Error(
-            `No people ${(entry.attendees ?? []).map(
-                (attendee: Attendee): string => attendee.name,
-            )}`,
-        );
-    if (!(new Date(entry.start) < new Date(entry.end)))
-        throw new Error("A skill entry needs an end after its start");
+        throw new Error(`No people ${(entry.attendees ?? []).map((attendee: Attendee): string => attendee.name)}`);
+    if (!(new Date(entry.start) < new Date(entry.end))) throw new Error("A skill entry needs an end after its start");
 }
 
 /**
@@ -1522,15 +1342,8 @@ function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string)
  * @param from - The box a new entry is logged from, or the entry before a change
  * @param titled - The entry before a change, whose link of its summary it keeps
  */
-function skillFieldsOf(
-    entry: SkillEntryNew,
-    from: Box | Entry | null,
-    titled: Entry | null,
-): EntryFields {
-    const [title, titleLink]: [string, string] = titleOf(
-        { ...entry, category: skillName },
-        titled,
-    );
+function skillFieldsOf(entry: SkillEntryNew, from: Box | Entry | null, titled: Entry | null): EntryFields {
+    const [title, titleLink]: [string, string] = titleOf({ ...entry, category: skillName }, titled);
     return {
         category: skillName,
         title: title,
@@ -1542,11 +1355,7 @@ function skillFieldsOf(
         attendees: entry.attendees ?? from?.attendees ?? [],
         module: entry.module,
         type: entry.type,
-        semester: semesterFor(
-            skillName,
-            entry.semester,
-            berlinDateOf(new Date(entry.start)),
-        ),
+        semester: semesterFor(skillName, entry.semester, berlinDateOf(new Date(entry.start))),
         note: entry.note.trim(),
         start: new Date(entry.start),
         end: new Date(entry.end),
@@ -1567,10 +1376,7 @@ function ownOf(
     const own: [string, string | Link | ICAL.Property][] = [
         ...links.map((link: Link): [string, Link] => ["attach", link]),
         ...chapters.map((chapter: string): [string, string] => ["x-chapter", chapter]),
-        ...marks.map((mark: RoundMark): [string, ICAL.Property] => [
-            "x-round",
-            roundPropertyOf(mark),
-        ]),
+        ...marks.map((mark: RoundMark): [string, ICAL.Property] => ["x-round", roundPropertyOf(mark)]),
     ];
     if (plan !== undefined) own.push(["related-to", plan.id]);
     if ((plan?.group ?? "") !== "") own.push(["x-group", plan?.group ?? ""]);
@@ -1593,11 +1399,7 @@ function ownOf(
  */
 export function skillEntryAdd(entry: SkillEntryNew): string {
     const tasks: Task[] = tasksRead();
-    const [marks, links]: [RoundMark[], Link[]] = marksOfEntry(
-        entry,
-        { marks: [], id: "", links: [] },
-        tasks,
-    );
+    const [marks, links]: [RoundMark[], Link[]] = marksOfEntry(entry, { marks: [], id: "", links: [] }, tasks);
     const chapters: string[] = chaptersWith(
         entry.chapters,
         markTasksOf(marks, entry.module, tasks).map((task: Task): string => task.id),
@@ -1607,20 +1409,12 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
         entry.planned !== ""
             ? boxOpenFind(entry.planned)
             : entry.module !== "" && entry.type === ""
-              ? (studyBoxOf(
-                    entry.module,
-                    berlinDateOf(new Date(entry.start)),
-                    chapters,
-                ) ?? null)
+              ? (studyBoxOf(entry.module, berlinDateOf(new Date(entry.start)), chapters) ?? null)
               : null;
     skillEntryCheck(entry, plan?.chapters ?? [], plan?.type ?? "");
 
     const fields: EntryFields = skillFieldsOf(entry, plan, null);
-    const id: string = entryAppend(
-        logFileOf(fields),
-        fields,
-        ownOf(links, chapters, marks, plan ?? undefined),
-    );
+    const id: string = entryAppend(logFileOf(fields), fields, ownOf(links, chapters, marks, plan ?? undefined));
     if (plan !== null) boxDone(plan.id);
     return id;
 }
@@ -1690,30 +1484,16 @@ export function skillEntryEdit(change: SkillEntryChange): boolean {
  *
  * @throws {Error} - When an attempt or the step is not right, see {@link markWith}
  */
-function momentWrite(
-    section: string,
-    change: { attempts: AttemptNew[]; step: string },
-    tasks: Task[],
-): void {
+function momentWrite(section: string, change: { attempts: AttemptNew[]; step: string }, tasks: Task[]): void {
     const module: string = section.split("/")[0];
     const now: Date = new Date();
     const quarter: Date = new Date(Math.ceil(now.getTime() / quarterHour) * quarterHour);
     const open: Entry | undefined = momentOf(module, now);
     const kept: RoundMark[] = open?.rounds ?? [];
-    const start: Date =
-        open === undefined
-            ? new Date(quarter.getTime() - quarterHour)
-            : new Date(open.start);
+    const start: Date = open === undefined ? new Date(quarter.getTime() - quarterHour) : new Date(open.start);
     const lines: RoundLine[] = roundsRead();
     const mark: RoundMark = markWith(
-        markOf(
-            kept,
-            section,
-            module,
-            othersOf(lines, open?.id ?? ""),
-            undefined,
-            berlinDateOf(start),
-        ),
+        markOf(kept, section, module, othersOf(lines, open?.id ?? ""), undefined, berlinDateOf(start)),
         change,
         {
             module: module,
@@ -1725,12 +1505,7 @@ function momentWrite(
         },
     );
     const marks: RoundMark[] = marksWith(kept, [mark]);
-    const links: Link[] = linksWith(
-        open === undefined ? [] : documentLinksOf(open.links),
-        marks,
-        module,
-        tasks,
-    );
+    const links: Link[] = linksWith(open === undefined ? [] : documentLinksOf(open.links), marks, module, tasks);
     const chapters: string[] = chaptersWith(
         open === undefined ? [] : chaptersOf(open),
         markTasksOf(marks, module, tasks).map((task: Task): string => task.id),
@@ -1740,11 +1515,7 @@ function momentWrite(
         const box: Box | undefined = skillBoxOf(module, now, chapters);
         const plan: Box | undefined = box?.type === "" ? box : undefined;
         const type: string = "";
-        const semester: string = semesterFor(
-            skillName,
-            plan?.semester ?? "",
-            berlinDateOf(start),
-        );
+        const semester: string = semesterFor(skillName, plan?.semester ?? "", berlinDateOf(start));
         const [title, titleLink]: [string, string] = titleOf(
             {
                 category: skillName,
@@ -1800,10 +1571,7 @@ function notePathOf(task: Task): string {
  * since only my own learning has rounds, never a lecture or a tutorial.
  */
 function momentOf(module: string, now: Date): Entry | undefined {
-    return skillEntriesRead(
-        new Date(now.getTime() - sessionPause).toISOString(),
-        now.toISOString(),
-    )
+    return skillEntriesRead(new Date(now.getTime() - sessionPause).toISOString(), now.toISOString())
         .filter((entry: Entry): boolean => entry.module === module && entry.type === "")
         .at(-1);
 }
@@ -1876,27 +1644,24 @@ export function taskRename(from: string, to: string): number {
     if (taskOf(tasks, from) !== undefined || task === undefined)
         throw new Error(`Rename the heading in its note first: ${from} to ${to}`);
     const after: string = task.heading;
-    const before: string =
-        after.slice(0, after.indexOf(". ") + 2) + from.slice(from.indexOf("/") + 1);
+    const before: string = after.slice(0, after.indexOf(". ") + 2) + from.slice(from.indexOf("/") + 1);
     let renamed: number = 0;
-    skillEntriesRead("1970-01-01T00:00:00Z", new Date().toISOString()).forEach(
-        (entry: Entry): void => {
-            const marks: RoundMark[] = entry.rounds.map((mark: RoundMark): RoundMark => {
-                if (markSectionOf(mark, entry.module) !== sectionKeyOf(task)) return mark;
-                return {
-                    ...mark,
-                    task: mark.task === before ? after : mark.task,
-                    used: mark.used === before ? after : mark.used,
-                };
-            });
-            const count: number = marks.filter(
-                (mark: RoundMark, index: number): boolean => mark !== entry.rounds[index],
-            ).length;
-            if (count === 0) return;
-            const [file]: [string, Entry] = entryFind(skillLog, entry.id);
-            propertiesPut(file, entry.id, [["x-round", marks.map(roundPropertyOf)]]);
-            renamed += count;
-        },
-    );
+    skillEntriesRead("1970-01-01T00:00:00Z", new Date().toISOString()).forEach((entry: Entry): void => {
+        const marks: RoundMark[] = entry.rounds.map((mark: RoundMark): RoundMark => {
+            if (markSectionOf(mark, entry.module) !== sectionKeyOf(task)) return mark;
+            return {
+                ...mark,
+                task: mark.task === before ? after : mark.task,
+                used: mark.used === before ? after : mark.used,
+            };
+        });
+        const count: number = marks.filter(
+            (mark: RoundMark, index: number): boolean => mark !== entry.rounds[index],
+        ).length;
+        if (count === 0) return;
+        const [file]: [string, Entry] = entryFind(skillLog, entry.id);
+        propertiesPut(file, entry.id, [["x-round", marks.map(roundPropertyOf)]]);
+        renamed += count;
+    });
     return renamed;
 }

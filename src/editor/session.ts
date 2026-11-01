@@ -46,10 +46,7 @@ export async function sessionOf(module: string): Promise<Session | null> {
  */
 export function sessionTextOf(session: Session): string {
     const start: Date = new Date(session.start);
-    return (
-        `${dayTextOf(dayOf(start), true)} · ` +
-        `${timeOf(start)}${rangeDash}${timeOf(new Date(session.end))}`
-    );
+    return `${dayTextOf(dayOf(start), true)} · ` + `${timeOf(start)}${rangeDash}${timeOf(new Date(session.end))}`;
 }
 
 /**
@@ -64,19 +61,12 @@ export async function sessionEnsure(module: string): Promise<boolean> {
     if ((await sessionOf(module)) !== null) return true;
     const categories: typeof Categories = (await dialogOf()).categories;
     const trackers: typeof Trackers = await import("../day/trackers.ts");
-    const minutes: number = (await trackers.trackersFetch(dayOf(new Date()))).settings
-        .sessionMinutes;
+    const minutes: number = (await trackers.trackersFetch(dayOf(new Date()))).settings.sessionMinutes;
     const start: Date = nowOn(new Date());
     const closed: Promise<void> = new Promise<void>((resolve: () => void): void =>
-        document
-            .getElementById("entry")
-            ?.addEventListener("close", (): void => resolve(), { once: true }),
+        document.getElementById("entry")?.addEventListener("close", (): void => resolve(), { once: true }),
     );
-    await categories.entryOpenSkill(
-        module,
-        start,
-        new Date(start.getTime() + minutes * 60 * 1000),
-    );
+    await categories.entryOpenSkill(module, start, new Date(start.getTime() + minutes * 60 * 1000));
     await closed;
     return (await sessionOf(module)) !== null;
 }

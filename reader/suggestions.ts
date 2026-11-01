@@ -51,27 +51,18 @@ let written: string = "";
  */
 export function suggestionsWrite(): void {
     const today: string = berlinDateOf(new Date());
-    const key: string =
-        `${today} ${changesVersion()} ` + Math.floor(Date.now() / (5 * 60 * 1000));
+    const key: string = `${today} ${changesVersion()} ` + Math.floor(Date.now() / (5 * 60 * 1000));
     if (key === written) return;
     const boxes: Box[] = boxesRead(today, dayAdd(today, 1))[0].boxes.filter(
-        (box: Box): boolean =>
-            box.category === skillName && box.time === "" && box.deadline === "",
+        (box: Box): boolean => box.category === skillName && box.time === "" && box.deadline === "",
     );
     skillingRead().modules.forEach((module: SkillModule): void => {
-        const due: SkillSection[] = module.sections.filter(
-            (section: SkillSection): boolean => section.today !== "",
-        );
-        const chapters: string[] = [
-            ...new Set(due.map((section: SkillSection): string => section.chapter)),
-        ];
+        const due: SkillSection[] = module.sections.filter((section: SkillSection): boolean => section.today !== "");
+        const chapters: string[] = [...new Set(due.map((section: SkillSection): string => section.chapter))];
         chapters
             .filter(
                 (chapter: string): boolean =>
-                    !boxes.some(
-                        (box: Box): boolean =>
-                            box.module === module.code && box.chapters.includes(chapter),
-                    ),
+                    !boxes.some((box: Box): boolean => box.module === module.code && box.chapters.includes(chapter)),
             )
             .forEach((chapter: string): void => {
                 const sections: SkillSection[] = due.filter(
@@ -92,9 +83,7 @@ export function suggestionsWrite(): void {
                     chapters: [chapter],
                     minutes: sections.reduce(
                         (minutes: number, section: SkillSection): number =>
-                            minutes +
-                            settings.taskMinutes +
-                            (section.today === "new" ? settings.theoryMinutes : 0),
+                            minutes + settings.taskMinutes + (section.today === "new" ? settings.theoryMinutes : 0),
                         0,
                     ),
                     documents: sections.map((section: SkillSection): string =>

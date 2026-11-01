@@ -23,10 +23,7 @@ const markdown: Marked = new Marked();
  * each its heading and every line below it up to the next heading.
  */
 function markdownOf(note: string): string {
-    return note.replace(
-        /^## (?:Gratitude|About)[ \t]*(?=\n|$)(?:\n(?!#{1,6} ).*)*\n?/gm,
-        "",
-    );
+    return note.replace(/^## (?:Gratitude|About)[ \t]*(?=\n|$)(?:\n(?!#{1,6} ).*)*\n?/gm, "");
 }
 
 /**
@@ -41,10 +38,7 @@ export async function noteShow(date: string): Promise<void> {
     const note: string | null = await response.json();
 
     const element: HTMLElement = document.getElementById("day-note-text") as HTMLElement;
-    element.innerHTML =
-        note === null
-            ? ""
-            : DOMPurify.sanitize(markdown.parse(markdownOf(note), { async: false }));
+    element.innerHTML = note === null ? "" : DOMPurify.sanitize(markdown.parse(markdownOf(note), { async: false }));
 }
 
 /**
@@ -53,12 +47,8 @@ export async function noteShow(date: string): Promise<void> {
  * @returns Markdown of each section by its title, empty for none
  * @throws {Error} - When the reader gives no valid answer
  */
-export async function sectionsLoad(
-    date: string,
-): Promise<{ [title in SectionTitle]: string }> {
-    return readerAsk<{ [title in SectionTitle]: string }>(
-        `/api/day/sections?date=${date}`,
-    );
+export async function sectionsLoad(date: string): Promise<{ [title in SectionTitle]: string }> {
+    return readerAsk<{ [title in SectionTitle]: string }>(`/api/day/sections?date=${date}`);
 }
 
 /**
@@ -67,11 +57,7 @@ export async function sectionsLoad(
  *
  * @throws {Error} - When the reader does not take the text
  */
-export async function sectionSend(
-    date: string,
-    title: SectionTitle,
-    text: string,
-): Promise<void> {
+export async function sectionSend(date: string, title: SectionTitle, text: string): Promise<void> {
     const response: Response = await fetch("/api/day/sections", {
         method: "POST",
         body: JSON.stringify({ date: date, title: title, text: text }),

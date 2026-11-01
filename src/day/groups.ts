@@ -96,10 +96,7 @@ function dayIs(session: Session): boolean {
 function sessionTimesOf(session: Session): string {
     if (dayIs(session)) return lengthOf(session.minutes);
     const start: Date = new Date(session.start);
-    return (
-        `${timeOf(start)}${rangeDash}` +
-        timeOf(new Date(start.getTime() + session.minutes * 60 * 1000))
-    );
+    return `${timeOf(start)}${rangeDash}` + timeOf(new Date(start.getTime() + session.minutes * 60 * 1000));
 }
 
 /** Tells whether a session of a group is over. */
@@ -112,10 +109,7 @@ function meetingsOf(groups: Group[], week: string): [Group, Session][] {
     return groups
         .flatMap((group: Group): [Group, Session][] =>
             group.sessions
-                .filter(
-                    (session: Session): boolean =>
-                        mondayOf(dayOf(new Date(session.start))) === week,
-                )
+                .filter((session: Session): boolean => mondayOf(dayOf(new Date(session.start))) === week)
                 .map((session: Session): [Group, Session] => [group, session]),
         )
         .sort((first: [Group, Session], second: [Group, Session]): number =>
@@ -125,10 +119,7 @@ function meetingsOf(groups: Group[], week: string): [Group, Session][] {
 
 /** Gives the group pinned of a type: the group of its series, empty for none. */
 function pinnedOf(course: Course, type: string): string {
-    return (
-        course.series.find((series: Series): boolean => series.rule.type === type)?.rule
-            .group ?? ""
-    );
+    return course.series.find((series: Series): boolean => series.rule.type === type)?.rule.group ?? "";
 }
 
 /**
@@ -168,21 +159,17 @@ function pinPick(course: Course, group: Group, show: PickShow): void {
             const series: Series | undefined = course.series.find(
                 (one: Series): boolean => one.rule.type === group.rule.type,
             );
-            if (series === undefined)
-                course.series.push({ rule: { ...group.rule }, count: 0 });
+            if (series === undefined) course.series.push({ rule: { ...group.rule }, count: 0 });
             else series.rule.group = group.rule.group;
             course.boxes
                 .filter(
                     (box: Box): boolean =>
-                        box.type === group.rule.type &&
-                        pickable(box) &&
-                        (box.group === "" || box.group === pinned),
+                        box.type === group.rule.type && pickable(box) && (box.group === "" || box.group === pinned),
                 )
                 .forEach((box: Box): void => {
                     const session: Session | undefined = group.sessions.find(
                         (one: Session): boolean =>
-                            !overOf(one) &&
-                            mondayOf(dayOf(new Date(one.start))) === mondayOf(box.day),
+                            !overOf(one) && mondayOf(dayOf(new Date(one.start))) === mondayOf(box.day),
                     );
                     if (session !== undefined) boxMove(box, group, session);
                 });
@@ -235,13 +222,7 @@ function unpinPick(course: Course, type: string, show: PickShow): void {
  * Moves one week's box to the session of a group, that week alone:
  * at once, then by the reader, see `weekPick` in `reader/course.ts`.
  */
-function weekPick(
-    course: Course,
-    box: Box,
-    group: Group,
-    session: Session,
-    show: PickShow,
-): void {
+function weekPick(course: Course, box: Box, group: Group, session: Session, show: PickShow): void {
     show(
         (): void => boxMove(box, group, session),
         (): Promise<null> =>
@@ -260,9 +241,7 @@ function weekPick(
  * so a click on them picks the group as anywhere on its row.
  */
 function tutorsOf(group: Group): HTMLElement | null {
-    const names: string[] = group.rule.attendees.map(
-        (attendee: Attendee): string => attendee.name,
-    );
+    const names: string[] = group.rule.attendees.map((attendee: Attendee): string => attendee.name);
     const tutors: HTMLElement = elementOf("span", "group-tutors", "");
     if (names.length === 0) return null;
     tutors.append(...dottedOf(names));
@@ -277,16 +256,10 @@ function tutorsOf(group: Group): HTMLElement | null {
  * see `roomOf` in `./series.ts`, as a row of the page of a module writes them;
  * and its tutors while known, see {@link tutorsOf}.
  */
-function groupPartsOf(
-    group: Group,
-    times: string,
-): [string, HTMLElement, HTMLElement | null] {
+function groupPartsOf(group: Group, times: string): [string, HTMLElement, HTMLElement | null] {
     const where: HTMLElement = elementOf("span", "group-detail", "");
     where.append(
-        ...[
-            times,
-            group.rule.online !== "" ? group.rule.online : roomOf(group.rule.location),
-        ]
+        ...[times, group.rule.online !== "" ? group.rule.online : roomOf(group.rule.location)]
             .filter((part: string): boolean => part !== "")
             .map((part: string, index: number): HTMLElement =>
                 elementOf("span", index === 0 ? "" : "entry-parted", part),
@@ -322,8 +295,7 @@ function groupMenuOf(
     button.append(...words, iconOf(ChevronDown));
     menuAnchor(menu, button);
     items.forEach((item: Item): void => {
-        const [name, details, tutors]: [string, HTMLElement, HTMLElement | null] =
-            groupPartsOf(item.group, item.times);
+        const [name, details, tutors]: [string, HTMLElement, HTMLElement | null] = groupPartsOf(item.group, item.times);
         const line: HTMLButtonElement = menuItemOf(Check, "", (): void => {
             menu.hidePopover();
             if (!item.checked) item.pick();
@@ -359,8 +331,7 @@ function groupMenuOf(
                 open(item.group.rule.group);
             }),
         );
-        if (item.day !== "" && item.day !== day)
-            menu.append(elementOf("div", "group-day", item.day));
+        if (item.day !== "" && item.day !== day) menu.append(elementOf("div", "group-day", item.day));
         day = item.day;
         menu.append(line);
     });
@@ -394,9 +365,7 @@ export function pinnedMenuOf(
         pinned === "" ? ["No group yet"] : [iconOf(Pin), `Group ${pinned}`],
         course.groups
             .filter((group: Group): boolean => group.rule.type === type)
-            .sort((first: Group, second: Group): number =>
-                keyOf(first).localeCompare(keyOf(second)),
-            )
+            .sort((first: Group, second: Group): number => keyOf(first).localeCompare(keyOf(second)))
             .map((group: Group): Item => {
                 const slot: Slot | undefined = group.rule.slots[0];
                 return {
@@ -437,9 +406,7 @@ function groupOpenOf(course: Course, type: string): (group: string) => void {
                   },
               )
         )
-            .then((): Promise<void> =>
-                groupOpen(course.module, type, course.semester, group),
-            )
+            .then((): Promise<void> => groupOpen(course.module, type, course.semester, group))
             .catch((error: unknown): void => console.error(error));
     };
 }
@@ -495,14 +462,11 @@ export function boxGroupOf(
     show: PickShow,
     open?: (group: string) => void,
 ): HTMLElement | null {
-    const groups: Group[] = (course?.groups ?? []).filter(
-        (group: Group): boolean => group.rule.type === box.type,
-    );
+    const groups: Group[] = (course?.groups ?? []).filter((group: Group): boolean => group.rule.type === box.type);
     const meetings: [Group, Session][] = meetingsOf(groups, mondayOf(box.day)).filter(
         ([, session]: [Group, Session]): boolean => !overOf(session),
     );
-    if (course === null || meetings.length === 0 || !pickable(box))
-        return groupNameOf(box);
+    if (course === null || meetings.length === 0 || !pickable(box)) return groupNameOf(box);
     const pinned: string = pinnedOf(course, box.type);
     return groupMenuOf(
         [box.group === "" ? "No group" : box.group],

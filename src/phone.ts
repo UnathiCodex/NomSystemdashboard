@@ -11,6 +11,4 @@
 /**
  * Whether the page shows on a phone, read once at the start.
  */
-export const phone: boolean = matchMedia(
-    "(max-width: 900px), (pointer: coarse) and (max-width: 1366px)",
-).matches;
+export const phone: boolean = matchMedia("(max-width: 900px), (pointer: coarse) and (max-width: 1366px)").matches;

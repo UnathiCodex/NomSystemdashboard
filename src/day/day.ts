@@ -43,15 +43,7 @@ import themePlugin from "fullcalendar/themes/forma";
 import englishLocale from "fullcalendar/locales/en-gb";
 import { entryMove } from "./entries.ts";
 import { categoriesStart, entryOpen, entryOpenEdit, entryOpenNow } from "./categories.ts";
-import {
-    boxesAgain,
-    boxesSee,
-    boxesStart,
-    boxReceive,
-    entryPartOf,
-    shownWhatOf,
-    whatOf,
-} from "./boxes.ts";
+import { boxesAgain, boxesSee, boxesStart, boxReceive, entryPartOf, shownWhatOf, whatOf } from "./boxes.ts";
 import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
 import { searchStart } from "./search.ts";
@@ -200,15 +192,13 @@ function edgeScrollStart(entry: HTMLElement, pointer: MouseEvent): void {
     };
     const step: (now: number) => void = (now: number): void => {
         const rect: DOMRect = grid.getBoundingClientRect();
-        const zone: number =
-            4 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const zone: number = 4 * parseFloat(getComputedStyle(document.documentElement).fontSize);
         const depth: number =
             x < rect.left || x > rect.right
                 ? 0
                 : Math.min(zone, Math.max(0, rect.top + zone - y)) -
                   Math.min(zone, Math.max(0, y - rect.bottom + zone));
-        grid.scrollTop -=
-            (Math.sign(depth) * edgeSpeed * (depth / zone) ** 2 * (now - last)) / 1000;
+        grid.scrollTop -= (Math.sign(depth) * edgeSpeed * (depth / zone) ** 2 * (now - last)) / 1000;
         last = now;
         frame = requestAnimationFrame(step);
     };
@@ -254,12 +244,10 @@ function entryDrag(calendar: Calendar, info: EventChangeInfo): void {
         info.revert();
         return;
     }
-    entryMove(entry.id, entry.start as Date, entry.end as Date).catch(
-        (error: unknown): void => {
-            console.error(error);
-            info.revert();
-        },
-    );
+    entryMove(entry.id, entry.start as Date, entry.end as Date).catch((error: unknown): void => {
+        console.error(error);
+        info.revert();
+    });
 }
 
 /**
@@ -268,12 +256,7 @@ function entryDrag(calendar: Calendar, info: EventChangeInfo): void {
 function pointIn(element: HTMLElement | null, x: number, y: number): boolean {
     const rect: DOMRect | undefined = element?.getBoundingClientRect();
     return (
-        rect !== undefined &&
-        rect.width > 0 &&
-        x >= rect.left &&
-        x <= rect.right &&
-        y >= rect.top &&
-        y <= rect.bottom
+        rect !== undefined && rect.width > 0 && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
     );
 }
 
@@ -282,15 +265,9 @@ function pointIn(element: HTMLElement | null, x: number, y: number): boolean {
  * a strip at the edge of the time grid or an arrow of the date.
  */
 function turnOf(x: number, y: number): number {
-    if (
-        pointIn(document.querySelector(".day-turn-back"), x, y) ||
-        pointIn(document.getElementById("day-back"), x, y)
-    )
+    if (pointIn(document.querySelector(".day-turn-back"), x, y) || pointIn(document.getElementById("day-back"), x, y))
         return -1;
-    if (
-        pointIn(document.querySelector(".day-turn-next"), x, y) ||
-        pointIn(document.getElementById("day-next"), x, y)
-    )
+    if (pointIn(document.querySelector(".day-turn-next"), x, y) || pointIn(document.getElementById("day-next"), x, y))
         return 1;
     return 0;
 }
@@ -300,12 +277,8 @@ function turnOf(x: number, y: number): number {
  */
 function turnNear(event: PointerEvent): void {
     const days: number = turnOf(event.clientX, event.clientY);
-    document
-        .querySelector(".day-turn-back")
-        ?.classList.toggle("day-turn-near", days === -1);
-    document
-        .querySelector(".day-turn-next")
-        ?.classList.toggle("day-turn-near", days === 1);
+    document.querySelector(".day-turn-back")?.classList.toggle("day-turn-near", days === -1);
+    document.querySelector(".day-turn-next")?.classList.toggle("day-turn-near", days === 1);
 }
 
 /**
@@ -323,12 +296,9 @@ function turnShow(calendar: Calendar, shown: boolean): void {
         document.removeEventListener("pointermove", turnNear);
         return;
     }
-    const grid: DOMRect = (
-        document.getElementById("day-calendar") as HTMLElement
-    ).getBoundingClientRect();
+    const grid: DOMRect = (document.getElementById("day-calendar") as HTMLElement).getBoundingClientRect();
     const lane: number =
-        document.querySelector("#day-calendar [role='gridcell']")?.getBoundingClientRect()
-            .left ?? grid.left + 48;
+        document.querySelector("#day-calendar [role='gridcell']")?.getBoundingClientRect().left ?? grid.left + 48;
     const back: HTMLElement = document.querySelector(".day-turn-back") as HTMLElement;
     const next: HTMLElement = document.querySelector(".day-turn-next") as HTMLElement;
     const weekdayOf: (days: number) => string = (days: number): string => {
@@ -410,11 +380,7 @@ function linesOf(info: EventDisplayInfo): number {
  * since every entry of the log and every box dragged into it has one of them.
  */
 function selectionIs(info: EventDisplayInfo): boolean {
-    return (
-        info.isMirror &&
-        info.event.title === "" &&
-        (info.event.extendedProps.category ?? "") === ""
-    );
+    return info.isMirror && info.event.title === "" && (info.event.extendedProps.category ?? "") === "";
 }
 
 /**
@@ -456,33 +422,18 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const place: string = whereOf(category, from, location, online);
     const link: string = info.event.extendedProps.locationLink ?? "";
     const onlineLink: string = info.event.extendedProps.onlineLink ?? "";
-    const route: (string | Node)[] = whereLinkedOf(
-        category,
-        from,
-        labelOf(location),
-        link,
-        online,
-        onlineLink,
-    );
+    const route: (string | Node)[] = whereLinkedOf(category, from, labelOf(location), link, online, onlineLink);
     const where: (string | Node)[] =
-        route.length === 3
-            ? [entryPartOf("span", "route-start", [route[0]]), ...route.slice(1)]
-            : route;
+        route.length === 3 ? [entryPartOf("span", "route-start", [route[0]]), ...route.slice(1)] : route;
     const group: string =
-        (info.event.extendedProps.group ?? "") === ""
-            ? ""
-            : `Group ${info.event.extendedProps.group}`;
+        (info.event.extendedProps.group ?? "") === "" ? "" : `Group ${info.event.extendedProps.group}`;
     const tail: HTMLElement[] =
         place === "" && group === ""
             ? []
             : [
                   entryPartOf("span", "entry-place entry-parted entry-beside", [
                       ...where,
-                      ...(group === ""
-                          ? []
-                          : place === ""
-                            ? [group]
-                            : [entryPartOf("span", "entry-parted", [group])]),
+                      ...(group === "" ? [] : place === "" ? [group] : [entryPartOf("span", "entry-parted", [group])]),
                   ]),
               ];
     const note: string = (info.event.extendedProps.note ?? "").trim();
@@ -532,13 +483,9 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const content: HTMLElement = entryPartOf("div", "entry-lines", shown);
     content.title = [
         whole
-            .map((part: string | Node): string =>
-                typeof part === "string" ? part : (part.textContent ?? ""),
-            )
+            .map((part: string | Node): string => (typeof part === "string" ? part : (part.textContent ?? "")))
             .join(""),
-        [time, place.replace("->", "→"), group]
-            .filter((part: string): boolean => part !== "")
-            .join(" · "),
+        [time, place.replace("->", "→"), group].filter((part: string): boolean => part !== "").join(" · "),
         note,
     ]
         .filter((text: string): boolean => text !== "")
@@ -571,37 +518,24 @@ function linesFit(lines: HTMLElement, grid: HTMLElement): void {
     const inside: HTMLElement | null = lines.parentElement;
     const harness: HTMLElement | null = inside?.parentElement?.parentElement ?? null;
     if (inside === null || harness === null) return;
-    const top: number =
-        grid.getBoundingClientRect().top + parseFloat(getComputedStyle(lines).top);
-    const bottom: number =
-        inside.getBoundingClientRect().bottom -
-        parseFloat(getComputedStyle(inside).paddingBottom);
-    const room: number = Math.floor(
-        (bottom - top) / parseFloat(getComputedStyle(lines).lineHeight),
-    );
+    const top: number = grid.getBoundingClientRect().top + parseFloat(getComputedStyle(lines).top);
+    const bottom: number = inside.getBoundingClientRect().bottom - parseFloat(getComputedStyle(inside).paddingBottom);
+    const room: number = Math.floor((bottom - top) / parseFloat(getComputedStyle(lines).lineHeight));
     const shownLines: number = Math.max(0, Math.min(Number(lines.dataset.lines), room));
     lines.style.maxHeight = `${shownLines}lh`;
     const depth: number = Number(getComputedStyle(harness).zIndex);
     const over: DOMRect[] = [...(harness.parentElement?.children ?? [])]
-        .filter(
-            (other: Element): boolean => Number(getComputedStyle(other).zIndex) > depth,
-        )
-        .map((other: Element): DOMRect =>
-            (other.firstElementChild as Element).getBoundingClientRect(),
-        );
+        .filter((other: Element): boolean => Number(getComputedStyle(other).zIndex) > depth)
+        .map((other: Element): DOMRect => (other.firstElementChild as Element).getBoundingClientRect());
     const end: number = parseFloat(getComputedStyle(inside).paddingInlineEnd);
     for (const line of lines.children as HTMLCollectionOf<HTMLElement>) {
         const rect: DOMRect = line.getBoundingClientRect();
         const edge: number = Math.min(
             ...over
-                .filter(
-                    (box: DOMRect): boolean =>
-                        box.top < rect.bottom && box.bottom > rect.top,
-                )
+                .filter((box: DOMRect): boolean => box.top < rect.bottom && box.bottom > rect.top)
                 .map((box: DOMRect): number => box.left),
         );
-        line.style.maxWidth =
-            edge === Infinity ? "" : `${Math.max(0, edge - end - rect.left)}px`;
+        line.style.maxWidth = edge === Infinity ? "" : `${Math.max(0, edge - end - rect.left)}px`;
     }
     for (const start of lines.querySelectorAll<HTMLElement>(".route-start")) {
         const whole: string = start.dataset.whole ?? start.textContent ?? "";
@@ -617,8 +551,7 @@ function linesFit(lines: HTMLElement, grid: HTMLElement): void {
  */
 function gridOf(element: HTMLElement): HTMLElement {
     let grid: HTMLElement = element;
-    while (grid.parentElement !== null && getComputedStyle(grid).overflowY !== "auto")
-        grid = grid.parentElement;
+    while (grid.parentElement !== null && getComputedStyle(grid).overflowY !== "auto") grid = grid.parentElement;
     return grid;
 }
 
@@ -630,10 +563,7 @@ function gridOf(element: HTMLElement): HTMLElement {
  */
 function dayShow(info: DatesSetInfo): void {
     const date: string = info.startStr.slice(0, 10);
-    (document.getElementById("day-date") as HTMLElement).textContent = dayTextOf(
-        date,
-        true,
-    );
+    (document.getElementById("day-date") as HTMLElement).textContent = dayTextOf(date, true);
     todayButtonShow(date);
     dayNoteShow(date);
 }
@@ -644,8 +574,7 @@ function dayShow(info: DatesSetInfo): void {
  * also once the day turned at 00:00 while the day stays, see `todayFollow` in `today.ts`.
  */
 function todayButtonShow(date: string): void {
-    (document.getElementById("day-today") as HTMLButtonElement).disabled =
-        date === calendarTodayOf();
+    (document.getElementById("day-today") as HTMLButtonElement).disabled = date === calendarTodayOf();
 }
 
 /**
@@ -657,9 +586,7 @@ function phoneShow(calendar: Calendar, shown: "plan" | "log"): void {
     const main: HTMLElement = document.getElementById("day-main") as HTMLElement;
     main.dataset.shown = shown;
     for (const part of ["plan", "log"])
-        document
-            .getElementById(`day-show-${part}`)
-            ?.setAttribute("aria-pressed", String(shown === part));
+        document.getElementById(`day-show-${part}`)?.setAttribute("aria-pressed", String(shown === part));
     (document.getElementById("day-series") as HTMLButtonElement).hidden = shown === "log";
     if (shown === "log") nowCenter(calendar);
 }
@@ -676,17 +603,12 @@ function phoneShow(calendar: Calendar, shown: "plan" | "log"): void {
  * so nothing undoes it.
  */
 function nowCenter(calendar: Calendar): void {
-    const hours: number =
-        (Date.now() - calendar.view.currentStart.getTime()) / (60 * 60 * 1000);
+    const hours: number = (Date.now() - calendar.view.currentStart.getTime()) / (60 * 60 * 1000);
     if (hours < 0 || hours > gridHours) return;
     const root: CSSStyleDeclaration = getComputedStyle(document.documentElement);
     const hourHeight: number =
-        2 *
-        (1 + 2 * parseFloat(root.getPropertyValue("--slot-margin"))) *
-        parseFloat(root.fontSize);
-    const visibleHours: number =
-        (document.getElementById("day-calendar") as HTMLElement).clientHeight /
-        hourHeight;
+        2 * (1 + 2 * parseFloat(root.getPropertyValue("--slot-margin"))) * parseFloat(root.fontSize);
+    const visibleHours: number = (document.getElementById("day-calendar") as HTMLElement).clientHeight / hourHeight;
     calendar.scrollToTime({ hours: Math.max(0, Math.floor(hours - visibleHours / 2)) });
 }
 
@@ -699,9 +621,7 @@ function nowCenter(calendar: Calendar): void {
  * but once it closes, see {@link missed}.
  */
 function dayAgain(calendar: Calendar): void {
-    const typing: boolean =
-        document.activeElement?.matches("input, textarea, [contenteditable='true']") ??
-        false;
+    const typing: boolean = document.activeElement?.matches("input, textarea, [contenteditable='true']") ?? false;
     missed = document.querySelector("dialog[open]") !== null;
     if (missed) return;
     calendar.refetchEvents();
@@ -784,149 +704,112 @@ async function noteStart(calendar: Calendar): Promise<void> {
  * `log.css` wins because it comes after the theme's stylesheet.
  */
 export function dayStart(): void {
-    const calendar: Calendar = new Calendar(
-        document.getElementById("day-calendar") as HTMLElement,
-        {
-            plugins: [timeGridPlugin, interactionPlugin, themePlugin],
-            locale: englishLocale,
-            initialView: "timeGridDay",
-            initialDate: askedDayOf() ?? calendarTodayOf(),
-            height: "100%",
-            headerToolbar: false,
-            dayHeaders: false,
-            allDaySlot: false,
-            slotHeaderFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
-            slotHeaderInnerClass: "slot-label",
-            eventContent: entryContentOf,
-            eventShortHeight: 36,
-            eventMinHeight: 20,
-            eventColor: "var(--log)",
-            blockEventClass: (info: EventDisplayInfo): string =>
-                selectionIs(info) ? "entry entry-selection" : "entry",
-            blockEventInnerClass: (info: EventDisplayInfo): string => {
-                if (info.isShort) return "entry-inner entry-inner-short";
-                return "entry-inner";
-            },
-            eventSources: [logSourceOf()],
-            editable: true,
-            snapDuration: "00:15:00",
-            eventDrop: (info: EventChangeInfo): void => entryDrag(calendar, info),
-            eventResize: (info: EventChangeInfo): void => entryDrag(calendar, info),
-            dragScroll: false,
-            eventDragStart: (info: EventDragStartInfo): void => {
-                turning = null;
-                turnShow(calendar, true);
-                edgeScrollStart(info.el, info.jsEvent);
-            },
-            eventDragStop: (info: EventDragStopInfo): void => {
-                edgeScrollEnd?.();
-                entryTurn(calendar, info);
-            },
-            eventResizeStart: (info: EventResizeStartInfo): void => {
-                turning = null;
-                edgeScrollStart(info.el, info.jsEvent);
-            },
-            eventResizeStop: (): void => edgeScrollEnd?.(),
-            droppable: true,
-            eventReceive: (info: EventReceiveInfo): void => boxReceive(calendar, info),
-            eventsSet: (events: EventApi[]): void => boxesSee(calendar, events),
-            eventSourceSuccess: (): void => {
-                trackersSee(calendar);
-                timerSee();
-            },
-            eventClick: entryClick,
-            selectable: true,
-            selectMirror: true,
-            selectLongPressDelay: 300,
-            select: (info: DateSelectInfo): void => {
-                calendar.unselect();
-                entryOpen(info.start, info.end).catch((error: unknown): void =>
-                    console.error(error),
-                );
-            },
-            slotEventOverlap: true,
-            nowIndicator: true,
-            nowIndicatorLineClass: "now-line",
-            nowIndicatorDotClass: "now-dot",
-            slotMinTime: "00:00:00",
-            slotMaxTime: "24:00:00",
-            scrollTime: "06:00:00",
-            datesSet: dayShow,
+    const calendar: Calendar = new Calendar(document.getElementById("day-calendar") as HTMLElement, {
+        plugins: [timeGridPlugin, interactionPlugin, themePlugin],
+        locale: englishLocale,
+        initialView: "timeGridDay",
+        initialDate: askedDayOf() ?? calendarTodayOf(),
+        height: "100%",
+        headerToolbar: false,
+        dayHeaders: false,
+        allDaySlot: false,
+        slotHeaderFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
+        slotHeaderInnerClass: "slot-label",
+        eventContent: entryContentOf,
+        eventShortHeight: 36,
+        eventMinHeight: 20,
+        eventColor: "var(--log)",
+        blockEventClass: (info: EventDisplayInfo): string => (selectionIs(info) ? "entry entry-selection" : "entry"),
+        blockEventInnerClass: (info: EventDisplayInfo): string => {
+            if (info.isShort) return "entry-inner entry-inner-short";
+            return "entry-inner";
         },
-    );
+        eventSources: [logSourceOf()],
+        editable: true,
+        snapDuration: "00:15:00",
+        eventDrop: (info: EventChangeInfo): void => entryDrag(calendar, info),
+        eventResize: (info: EventChangeInfo): void => entryDrag(calendar, info),
+        dragScroll: false,
+        eventDragStart: (info: EventDragStartInfo): void => {
+            turning = null;
+            turnShow(calendar, true);
+            edgeScrollStart(info.el, info.jsEvent);
+        },
+        eventDragStop: (info: EventDragStopInfo): void => {
+            edgeScrollEnd?.();
+            entryTurn(calendar, info);
+        },
+        eventResizeStart: (info: EventResizeStartInfo): void => {
+            turning = null;
+            edgeScrollStart(info.el, info.jsEvent);
+        },
+        eventResizeStop: (): void => edgeScrollEnd?.(),
+        droppable: true,
+        eventReceive: (info: EventReceiveInfo): void => boxReceive(calendar, info),
+        eventsSet: (events: EventApi[]): void => boxesSee(calendar, events),
+        eventSourceSuccess: (): void => {
+            trackersSee(calendar);
+            timerSee();
+        },
+        eventClick: entryClick,
+        selectable: true,
+        selectMirror: true,
+        selectLongPressDelay: 300,
+        select: (info: DateSelectInfo): void => {
+            calendar.unselect();
+            entryOpen(info.start, info.end).catch((error: unknown): void => console.error(error));
+        },
+        slotEventOverlap: true,
+        nowIndicator: true,
+        nowIndicatorLineClass: "now-line",
+        nowIndicatorDotClass: "now-dot",
+        slotMinTime: "00:00:00",
+        slotMaxTime: "24:00:00",
+        scrollTime: "06:00:00",
+        datesSet: dayShow,
+    });
 
     calendar.render();
     nowCenter(calendar);
     document.querySelector(".day")?.append(
-        ...["day-turn day-turn-back", "day-turn day-turn-next"].map(
-            (name: string): HTMLElement => {
-                const strip: HTMLElement = document.createElement("div");
-                strip.className = name;
-                return strip;
-            },
-        ),
+        ...["day-turn day-turn-back", "day-turn day-turn-next"].map((name: string): HTMLElement => {
+            const strip: HTMLElement = document.createElement("div");
+            strip.className = name;
+            return strip;
+        }),
     );
-    iconPut(
-        document.getElementById("day-back") as HTMLElement,
-        ChevronLeft,
-        "Day before",
-    );
-    iconPut(
-        document.getElementById("day-next") as HTMLElement,
-        ChevronRight,
-        "Day after",
-    );
+    iconPut(document.getElementById("day-back") as HTMLElement, ChevronLeft, "Day before");
+    iconPut(document.getElementById("day-next") as HTMLElement, ChevronRight, "Day after");
     plusPut(document.getElementById("log-new") as HTMLElement, "New entry");
-    iconPut(
-        document.getElementById("day-today") as HTMLElement,
-        CalendarCheck,
-        "Back to today",
-    );
+    iconPut(document.getElementById("day-today") as HTMLElement, CalendarCheck, "Back to today");
     iconPut(document.getElementById("day-new") as HTMLElement, Plus, "New box or entry");
     iconPut(document.getElementById("day-series") as HTMLElement, Repeat, "New series");
-    document
-        .getElementById("day-show-plan")
-        ?.addEventListener("click", (): void => phoneShow(calendar, "plan"));
-    document
-        .getElementById("day-show-log")
-        ?.addEventListener("click", (): void => phoneShow(calendar, "log"));
+    document.getElementById("day-show-plan")?.addEventListener("click", (): void => phoneShow(calendar, "plan"));
+    document.getElementById("day-show-log")?.addEventListener("click", (): void => phoneShow(calendar, "log"));
     document.getElementById("day-new")?.addEventListener("click", (): void => {
-        const shown: string =
-            (document.getElementById("day-main") as HTMLElement).dataset.shown ?? "plan";
+        const shown: string = (document.getElementById("day-main") as HTMLElement).dataset.shown ?? "plan";
         document.getElementById(shown === "log" ? "log-new" : "plan-new")?.click();
     });
     document
         .getElementById("day-series")
-        ?.addEventListener("click", (): void =>
-            document.getElementById("plan-series")?.click(),
-        );
-    document
-        .getElementById("day-back")
-        ?.addEventListener("click", (): void => calendar.prev());
-    document
-        .getElementById("day-today")
-        ?.addEventListener("click", (): void => calendar.gotoDate(calendarTodayOf()));
-    document
-        .getElementById("day-next")
-        ?.addEventListener("click", (): void => calendar.next());
+        ?.addEventListener("click", (): void => document.getElementById("plan-series")?.click());
+    document.getElementById("day-back")?.addEventListener("click", (): void => calendar.prev());
+    document.getElementById("day-today")?.addEventListener("click", (): void => calendar.gotoDate(calendarTodayOf()));
+    document.getElementById("day-next")?.addEventListener("click", (): void => calendar.next());
     if (phone)
-        swipeStart(
-            document.getElementById("day-main") as HTMLElement,
-            (days: number): void => calendar.incrementDate({ days: days }),
+        swipeStart(document.getElementById("day-main") as HTMLElement, (days: number): void =>
+            calendar.incrementDate({ days: days }),
         );
     document.getElementById("day-calendar")?.addEventListener(
         "scroll",
         (event: Event): void => {
             const grid: HTMLElement = event.target as HTMLElement;
-            for (const lines of grid.querySelectorAll<HTMLElement>(".entry-lines"))
-                linesFit(lines, grid);
+            for (const lines of grid.querySelectorAll<HTMLElement>(".entry-lines")) linesFit(lines, grid);
         },
         { capture: true },
     );
     new ResizeObserver((): void => {
-        for (const lines of document.querySelectorAll<HTMLElement>(
-            "#day-calendar .entry-lines",
-        ))
+        for (const lines of document.querySelectorAll<HTMLElement>("#day-calendar .entry-lines"))
             linesFit(lines, gridOf(lines));
     }).observe(document.getElementById("day-calendar") as HTMLElement);
     document.getElementById("log-new")?.addEventListener("click", (): void => {

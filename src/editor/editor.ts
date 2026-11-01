@@ -37,13 +37,7 @@
  */
 
 import { EditorState, Transaction } from "@codemirror/state";
-import {
-    EditorView,
-    RectangleMarker,
-    drawSelection,
-    keymap,
-    layer,
-} from "@codemirror/view";
+import { EditorView, RectangleMarker, drawSelection, keymap, layer } from "@codemirror/view";
 import { defaultKeymap, history, indentWithTab } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { icsLook } from "./ics.ts";
@@ -191,8 +185,7 @@ async function noteSave(): Promise<void> {
             });
         saved = view.state.sliceDoc() === written.text ? written.text : text;
         stateShow("Saved");
-        const reread: Opened | null =
-            saveAddress === "/api/edit/note" ? await openedRead("") : null;
+        const reread: Opened | null = saveAddress === "/api/edit/note" ? await openedRead("") : null;
         if (reread !== null) linksSet(view, reread.links);
     } catch (error: unknown) {
         console.error(error);
@@ -232,14 +225,7 @@ function keyDown(event: KeyboardEvent): void {
 function outlineRefresh(): void {
     const blocks: [string, BlockMark][] | null = roundBlocksOf(view);
     if (outlineTree !== null)
-        outlineShow(
-            outlineTree,
-            path,
-            view.state.sliceDoc(),
-            blocks,
-            roundShownOf(view),
-            roundNextOf(),
-        );
+        outlineShow(outlineTree, path, view.state.sliceDoc(), blocks, roundShownOf(view), roundNextOf());
 }
 
 /** A piece of the screen, in pixels of the window. */
@@ -266,9 +252,7 @@ function rowsOf(view: EditorView, line: HTMLElement): Box[] {
     const range: Range = document.createRange();
     range.selectNodeContents(line);
     const texts: Box[] = [];
-    for (const rect of [...range.getClientRects()].sort(
-        (a: DOMRect, b: DOMRect): number => a.top - b.top,
-    )) {
+    for (const rect of [...range.getClientRects()].sort((a: DOMRect, b: DOMRect): number => a.top - b.top)) {
         const row: Box | undefined = texts.at(-1);
         if (row !== undefined && (rect.top + rect.bottom) / 2 < row.bottom)
             row.bottom = Math.max(row.bottom, rect.bottom);
@@ -297,29 +281,18 @@ function rowsOf(view: EditorView, line: HTMLElement): Box[] {
  * like a formula too wide for its line, which scrolls sideways;
  * never a widget that holds no text, like the arrow that folds a heading.
  */
-function selectedBoxesOf(
-    view: EditorView,
-    line: HTMLElement,
-    from: number,
-    to: number,
-): Box[] {
+function selectedBoxesOf(view: EditorView, line: HTMLElement, from: number, to: number): Box[] {
     const boxes: Box[] = [];
     const range: Range = document.createRange();
     line.childNodes.forEach((child: ChildNode, index: number): void => {
         const start: number = view.posAtDOM(line, index);
         const end: number = view.posAtDOM(line, index + 1);
         if (start === end || end <= from || start >= to) return;
-        if (
-            child instanceof HTMLElement &&
-            (child.contentEditable === "false" || (start >= from && end <= to))
-        ) {
+        if (child instanceof HTMLElement && (child.contentEditable === "false" || (start >= from && end <= to))) {
             boxes.push(...child.getClientRects());
             return;
         }
-        const first: { node: Node; offset: number } = view.domAtPos(
-            Math.max(from, start),
-            1,
-        );
+        const first: { node: Node; offset: number } = view.domAtPos(Math.max(from, start), 1);
         const last: { node: Node; offset: number } = view.domAtPos(Math.min(to, end), -1);
         range.setStart(first.node, first.offset);
         range.setEnd(last.node, last.offset);
@@ -334,9 +307,7 @@ function selectedBoxesOf(
 function markedRowsOf(rows: Box[], boxes: Box[]): Box[] {
     for (const box of boxes) {
         const middle: number = (box.top + box.bottom) / 2;
-        const row: Box =
-            rows.find((candidate: Box): boolean => middle < candidate.bottom) ??
-            rows[rows.length - 1];
+        const row: Box = rows.find((candidate: Box): boolean => middle < candidate.bottom) ?? rows[rows.length - 1];
         row.left = Math.min(row.left, box.left);
         row.right = Math.max(row.right, box.right);
     }
@@ -363,30 +334,22 @@ function selectionRowsOf(view: EditorView): RectangleMarker[] {
     const rows: Box[] = [];
     if (ranges.length > 0)
         for (const element of view.contentDOM.querySelectorAll<HTMLElement>(
-            ".cm-line, " +
-                "[contenteditable=false]:not(.cm-line *, [contenteditable=false] *)",
+            ".cm-line, " + "[contenteditable=false]:not(.cm-line *, [contenteditable=false] *)",
         )) {
             const line: boolean = element.classList.contains("cm-line");
             const from: number = view.posAtDOM(element, 0);
-            const to: number = line
-                ? view.posAtDOM(element, element.childNodes.length)
-                : view.lineBlockAt(from).to;
+            const to: number = line ? view.posAtDOM(element, element.childNodes.length) : view.lineBlockAt(from).to;
             for (const range of ranges) {
                 if (range.from > to || range.to <= from) continue;
                 if (!line) {
                     const box: DOMRect = element.getBoundingClientRect();
-                    const parts: DOMRect[] = [...element.children].map(
-                        (child: Element): DOMRect => child.getBoundingClientRect(),
+                    const parts: DOMRect[] = [...element.children].map((child: Element): DOMRect =>
+                        child.getBoundingClientRect(),
                     );
                     rows.push(...markedRowsOf([rowOf(box.top, box.bottom)], parts));
                     continue;
                 }
-                const boxes: Box[] = selectedBoxesOf(
-                    view,
-                    element,
-                    Math.max(range.from, from),
-                    Math.min(range.to, to),
-                );
+                const boxes: Box[] = selectedBoxesOf(view, element, Math.max(range.from, from), Math.min(range.to, to));
                 const end: Rect | null = range.to > to ? view.coordsAtPos(to, -1) : null;
                 if (end !== null)
                     boxes.push({
@@ -418,8 +381,7 @@ function selectionRowsOf(view: EditorView): RectangleMarker[] {
 const selectionLines: Extension = layer({
     above: true,
     class: "cm-selection-lines",
-    update: (update: ViewUpdate): boolean =>
-        update.docChanged || update.selectionSet || update.viewportChanged,
+    update: (update: ViewUpdate): boolean => update.docChanged || update.selectionSet || update.viewportChanged,
     markers: selectionRowsOf,
 });
 
@@ -450,12 +412,7 @@ function extensionsOf(opened: Opened): Extension[] {
             top: (document.getElementById("editor-status") as HTMLElement).offsetHeight,
         })),
         ...(opened.markdown
-            ? [
-                  livePreview(opened.links, opened.place),
-                  solutionSteps,
-                  taskRows,
-                  roundStart(outlineRefresh),
-              ]
+            ? [livePreview(opened.links, opened.place), solutionSteps, taskRows, roundStart(outlineRefresh)]
             : []),
         ...(/\.ics$/i.test(path) ? [icsLook()] : []),
         EditorView.updateListener.of((update: ViewUpdate): void => {
@@ -473,9 +430,7 @@ function extensionsOf(opened: Opened): Extension[] {
  */
 async function openedRead(file: string): Promise<Opened | null> {
     if (file !== "") {
-        const response: Response = await fetch(
-            `/api/edit/file?path=${encodeURIComponent(file)}`,
-        );
+        const response: Response = await fetch(`/api/edit/file?path=${encodeURIComponent(file)}`);
         if (!response.ok) return null;
         const sent: SystemFile = (await response.json()) as SystemFile;
         return {
@@ -487,9 +442,7 @@ async function openedRead(file: string): Promise<Opened | null> {
         };
     }
 
-    const response: Response = await fetch(
-        `/api/notes/note?path=${encodeURIComponent(path)}`,
-    );
+    const response: Response = await fetch(`/api/notes/note?path=${encodeURIComponent(path)}`);
     if (!response.ok) return null;
     const note: LinkedNote = (await response.json()) as LinkedNote;
     const markdown: boolean = /\.md$/i.test(note.path);
@@ -509,8 +462,7 @@ async function openedRead(file: string): Promise<Opened | null> {
  */
 function addressHeadingShow(): void {
     const heading: string = decodeURIComponent(location.hash.slice(1));
-    if (heading === "")
-        (document.querySelector(".editor-file") as HTMLElement).scrollTop = 0;
+    if (heading === "") (document.querySelector(".editor-file") as HTMLElement).scrollTop = 0;
     else headingShow(view, heading);
 }
 
@@ -526,8 +478,7 @@ function treeClick(event: MouseEvent): void {
     if (link === null || event.ctrlKey || event.metaKey || event.shiftKey) return;
 
     const address: URL = new URL(link.href);
-    if (address.pathname !== "/scripts" || address.searchParams.get("path") !== path)
-        return;
+    if (address.pathname !== "/scripts" || address.searchParams.get("path") !== path) return;
     event.preventDefault();
     if (roundHeadingShow(view, decodeURIComponent(address.hash.slice(1)))) return;
     window.history.pushState(null, "", address);
@@ -564,21 +515,15 @@ export async function editorStart(): Promise<void> {
         address.get("module") ?? folder.split("/")[0],
     );
     shown.catch((error: unknown): void => console.error(error));
-    const close: HTMLButtonElement = document.getElementById(
-        "editor-close",
-    ) as HTMLButtonElement;
-    const next: HTMLButtonElement = document.getElementById(
-        "editor-next",
-    ) as HTMLButtonElement;
+    const close: HTMLButtonElement = document.getElementById("editor-close") as HTMLButtonElement;
+    const next: HTMLButtonElement = document.getElementById("editor-next") as HTMLButtonElement;
     iconPut(close, CircleCheck, "Close the round");
     close.addEventListener("click", roundClose);
     iconPut(next, ArrowRight, "Next");
     next.addEventListener("click", (): void => roundGo(view));
     if (path === "" && !plannings && folder !== "") {
         save.hidden = true;
-        (document.getElementById("editor") as HTMLElement).classList.add(
-            "editor-on-overview",
-        );
+        (document.getElementById("editor") as HTMLElement).classList.add("editor-on-overview");
         await folderShow(document.getElementById("editor-folder") as HTMLElement, folder);
         return;
     }
@@ -586,26 +531,18 @@ export async function editorStart(): Promise<void> {
         const module: string = address.get("module") ?? "";
         const chapter: string = address.get("chapter") ?? "";
         save.hidden = true;
-        (document.getElementById("editor") as HTMLElement).classList.add(
-            "editor-on-overview",
-        );
+        (document.getElementById("editor") as HTMLElement).classList.add("editor-on-overview");
         shown
             .then((): void => overviewTreeShow(tree, module, chapter))
             .catch((error: unknown): void => console.error(error));
-        await overviewShow(
-            document.getElementById("editor-overview") as HTMLElement,
-            module,
-            chapter,
-        );
+        await overviewShow(document.getElementById("editor-overview") as HTMLElement, module, chapter);
         return;
     }
     const opened: Opened | null = path === "" ? null : await openedRead(file);
     if (opened === null) {
         save.hidden = true;
         (document.getElementById("editor-state") as HTMLElement).textContent =
-            path === ""
-                ? `Choose a ${plannings ? "file" : "module"} on the left`
-                : "This file cannot be read";
+            path === "" ? `Choose a ${plannings ? "file" : "module"} on the left` : "This file cannot be read";
         return;
     }
 
@@ -618,11 +555,7 @@ export async function editorStart(): Promise<void> {
         state: EditorState.create({ doc: opened.text, extensions: extensionsOf(opened) }),
     });
     if (opened.markdown) solutionsFold(view);
-    iconPut(
-        save,
-        view.state.readOnly ? SaveOff : Save,
-        view.state.readOnly ? "Read only" : "Save",
-    );
+    iconPut(save, view.state.readOnly ? SaveOff : Save, view.state.readOnly ? "Read only" : "Save");
     save.addEventListener("click", noteSave);
     (save as HTMLButtonElement).disabled = view.state.readOnly;
     stateShow("");
@@ -639,17 +572,12 @@ export async function editorStart(): Promise<void> {
         .catch((error: unknown): void => console.error(error))
         .then(async (): Promise<void> => {
             const sectionShown: boolean = roundBlocksOf(view) !== null;
-            const heading: string =
-                sectionShown && location.hash === "" ? await kept : "";
+            const heading: string = sectionShown && location.hash === "" ? await kept : "";
             text.style.visibility = "";
             if (!sectionShown) addressHeadingShow();
             else if (location.hash !== "") {
                 roundHeadingShow(view, decodeURIComponent(location.hash.slice(1)), false);
-                window.history.replaceState(
-                    null,
-                    "",
-                    location.pathname + location.search,
-                );
+                window.history.replaceState(null, "", location.pathname + location.search);
             } else if (heading !== "") roundHeadingShow(view, heading, false);
         })
         .catch((error: unknown): void => console.error(error));

@@ -58,10 +58,7 @@ function totalsShow(day: SportDay): void {
               ];
     for (const [name, amount] of tiles) {
         const tile: HTMLElement = elementOf("div", "food-total", "");
-        tile.append(
-            elementOf("span", "food-label", name),
-            elementOf("span", "food-amount", amount),
-        );
+        tile.append(elementOf("span", "food-label", name), elementOf("span", "food-amount", amount));
         totals.append(tile);
     }
     totals.append(weightOf(day.kg));
@@ -149,12 +146,7 @@ function weightEdit(tile: HTMLElement, kg: number | null): void {
  */
 function doneTextOf(exercise: Session["exercises"][number]): string {
     const reps: string = exercise.reps.replace(/^(\d+)s$/, "$1 s");
-    const sets: string =
-        exercise.sets === ""
-            ? reps
-            : reps === ""
-              ? exercise.sets
-              : `${exercise.sets} × ${reps}`;
+    const sets: string = exercise.sets === "" ? reps : reps === "" ? exercise.sets : `${exercise.sets} × ${reps}`;
     return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
         .filter((part: string): boolean => part !== "")
         .join(" · ");
@@ -189,28 +181,17 @@ function sessionLinesOf(session: Session): HTMLElement[] {
     entry.append(start, elementOf("span", "food-value", kcalTextOf(session.kcal)));
     const kind: HTMLElement = elementOf("div", "food-line food-meal", "");
     kind.append(
-        elementOf(
-            "span",
-            "food-what",
-            session.workout === ""
-                ? session.kind
-                : `${session.kind} · ${session.workout}`,
-        ),
+        elementOf("span", "food-what", session.workout === "" ? session.kind : `${session.kind} · ${session.workout}`),
         elementOf("span", "food-value", lengthOf(session.minutes)),
     );
     return [
         entry,
         kind,
-        ...(session.exercises ?? []).map(
-            (exercise: Session["exercises"][number]): HTMLElement =>
-                partLineOf(exercise.name, "", doneTextOf(exercise)),
+        ...(session.exercises ?? []).map((exercise: Session["exercises"][number]): HTMLElement =>
+            partLineOf(exercise.name, "", doneTextOf(exercise)),
         ),
         ...(session.videos ?? []).map((video: Session["videos"][number]): HTMLElement =>
-            partLineOf(
-                video.title,
-                video.channel,
-                video.minutes === null ? "" : lengthOf(Math.round(video.minutes)),
-            ),
+            partLineOf(video.title, video.channel, video.minutes === null ? "" : lengthOf(Math.round(video.minutes))),
         ),
     ];
 }
@@ -223,12 +204,8 @@ function sessionLinesOf(session: Session): HTMLElement[] {
  */
 async function dayShow(date: string): Promise<void> {
     shown = date;
-    (document.getElementById("sport-date") as HTMLElement).textContent = dayTextOf(
-        date,
-        true,
-    );
-    (document.getElementById("sport-today") as HTMLButtonElement).disabled =
-        date === calendarTodayOf();
+    (document.getElementById("sport-date") as HTMLElement).textContent = dayTextOf(date, true);
+    (document.getElementById("sport-today") as HTMLButtonElement).disabled = date === calendarTodayOf();
 
     const day: SportDay = await sportDayLoad(date);
     if (date !== shown) return;

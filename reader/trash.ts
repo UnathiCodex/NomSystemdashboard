@@ -14,18 +14,14 @@ import { homedir } from "node:os";
 import { basename, extname, join, resolve } from "node:path";
 
 /** The trash of the user, `Trash` in `XDG_DATA_HOME`, else in `~/.local/share`. */
-const trashRoot: string = join(
-    process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"),
-    "Trash",
-);
+const trashRoot: string = join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), "Trash");
 
 /** Most numbers tried for a name the trash holds already. */
 const triesMost: number = 1000;
 
 /** Writes a moment in local time as the specification asks. */
 function dateOf(moment: Date): string {
-    const two: (value: number) => string = (value: number): string =>
-        String(value).padStart(2, "0");
+    const two: (value: number) => string = (value: number): string => String(value).padStart(2, "0");
     return (
         `${moment.getFullYear()}-${two(moment.getMonth() + 1)}-${two(moment.getDate())}` +
         `T${two(moment.getHours())}:` +
@@ -53,12 +49,9 @@ export function trashPut(thing: string): void {
         const info: string = join(trashRoot, "info", `${name}.trashinfo`);
         if (existsSync(join(trashRoot, "files", name))) continue;
         try {
-            writeFileSync(
-                info,
-                `[Trash Info]\nPath=${encodeURI(path)}\n` +
-                    `DeletionDate=${dateOf(new Date())}\n`,
-                { flag: "wx" },
-            );
+            writeFileSync(info, `[Trash Info]\nPath=${encodeURI(path)}\n` + `DeletionDate=${dateOf(new Date())}\n`, {
+                flag: "wx",
+            });
         } catch {
             continue;
         }

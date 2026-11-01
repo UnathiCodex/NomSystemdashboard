@@ -50,17 +50,12 @@ const scopes: { [kind: string]: string } = {
  * counts for no scope alone.
  */
 export function codeColorsRead(): { [kind: string]: string } {
-    const theme: { colors: { [name: string]: string }; tokenColors: TokenColor[] } =
-        JSON.parse(
-            readFileSync(
-                join(
-                    vault,
-                    "NomTechnicalsettings/EditorThemes/intellij-dark/" +
-                        "themes/intellij-dark.json",
-                ),
-                "utf8",
-            ),
-        );
+    const theme: { colors: { [name: string]: string }; tokenColors: TokenColor[] } = JSON.parse(
+        readFileSync(
+            join(vault, "NomTechnicalsettings/EditorThemes/intellij-dark/" + "themes/intellij-dark.json"),
+            "utf8",
+        ),
+    );
     const colorOf = (scope: string): string | undefined => {
         let color: string | undefined;
         let length: number = 0;

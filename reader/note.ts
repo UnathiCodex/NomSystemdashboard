@@ -57,9 +57,7 @@ const emptyForm: RegExp = /^[ \t⠀]*(?:(?:[-*+]|\d+[.)])[ \t⠀]*)?$/;
 const headingForm: RegExp = /^#{1,6} /;
 
 /** A daily note as each day starts: both headings, empty. */
-const emptyNote: string = markdownFormOf(
-    titles.map((title: SectionTitle): string => `## ${title}`).join("\n"),
-);
+const emptyNote: string = markdownFormOf(titles.map((title: SectionTitle): string => `## ${title}`).join("\n"));
 
 /**
  * Builds the path of the daily note of a date in the new system.
@@ -78,9 +76,7 @@ function noteFileOf(date: string): string {
  * and of the first line after it, `null` when the note has no such section.
  */
 function sectionFind(lines: string[], title: SectionTitle): [number, number] | null {
-    const heading: number = lines.findIndex(
-        (line: string): boolean => line.trim() === `## ${title}`,
-    );
+    const heading: number = lines.findIndex((line: string): boolean => line.trim() === `## ${title}`);
     if (heading === -1) return null;
 
     let end: number = heading + 1;
@@ -155,8 +151,7 @@ function sectionPut(lines: string[], title: SectionTitle, points: string[]): voi
         return;
     }
 
-    const next: [number, number] | null =
-        title === "Gratitude" ? sectionFind(lines, "About") : null;
+    const next: [number, number] | null = title === "Gratitude" ? sectionFind(lines, "About") : null;
     lines.splice(next?.[0] ?? lines.length, 0, ...block);
 }
 
@@ -171,8 +166,7 @@ export function sectionWrite(section: SectionNew): void {
     const { date, title, text }: SectionNew = section;
     if (!titles.includes(title)) throw new Error(`No section ${title}`);
     const file: string = noteFileOf(date);
-    if (!writeAllowed(file))
-        throw new Error(`No writing outside the new system: ${file}`);
+    if (!writeAllowed(file)) throw new Error(`No writing outside the new system: ${file}`);
 
     const lines: string[] = (noteRead(date) ?? emptyNote).split("\n");
     sectionPut(lines, title, pointLinesOf(text));

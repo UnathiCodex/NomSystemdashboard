@@ -120,12 +120,8 @@ function dateTextOf(value: string, timed: boolean): string | null {
     const date: RegExpExecArray | null = dateRule.exec(value);
     if (date === null) return null;
     if (date[4] === undefined) return dayTextOf(`${date[1]}-${date[2]}-${date[3]}`, true);
-    const moment: Date = new Date(
-        `${date[1]}-${date[2]}-${date[3]}T${date[4]}:${date[5]}:${date[6]}${date[7]}`,
-    );
-    return timed
-        ? `${dayTextOf(dayOf(moment), true)}, ${timeOf(moment)}`
-        : dayTextOf(dayOf(moment), true);
+    const moment: Date = new Date(`${date[1]}-${date[2]}-${date[3]}T${date[4]}:${date[5]}:${date[6]}${date[7]}`);
+    return timed ? `${dayTextOf(dayOf(moment), true)}, ${timeOf(moment)}` : dayTextOf(dayOf(moment), true);
 }
 
 /**
@@ -144,8 +140,7 @@ function ruleTextOf(value: string): string | null {
                 part.slice(part.indexOf("=") + 1),
             ]),
     );
-    const frequency: [string, string] | undefined =
-        frequencies[parts.get("FREQ")?.toUpperCase() ?? ""];
+    const frequency: [string, string] | undefined = frequencies[parts.get("FREQ")?.toUpperCase() ?? ""];
     if (frequency === undefined) return null;
     const every: number = Number(parts.get("INTERVAL") ?? 1);
     const ordinalOf: (place: number) => string = (place: number): string => {
@@ -153,14 +148,8 @@ function ruleTextOf(value: string): string | null {
         return `${place}${["th", "st", "nd", "rd"][teen ? 0 : place % 10] ?? "th"}`;
     };
     const placeOf: (place: number) => string = (place: number): string =>
-        place === -1
-            ? "last"
-            : place < 0
-              ? `${ordinalOf(-place)} last`
-              : ordinalOf(place);
-    const text: string[] = [
-        every === 1 ? frequency[0] : `every ${every} ${frequency[1]}`,
-    ];
+        place === -1 ? "last" : place < 0 ? `${ordinalOf(-place)} last` : ordinalOf(place);
+    const text: string[] = [every === 1 ? frequency[0] : `every ${every} ${frequency[1]}`];
     parts.forEach((part: string, name: string): void => {
         const list: string[] = part.split(",");
         if (name === "BYMONTH")
@@ -178,12 +167,9 @@ function ruleTextOf(value: string): string | null {
             text.push(
                 `on ${list
                     .map((day: string): string => {
-                        const [, place, weekday]: string[] =
-                            /^([+-]?\d*)([A-Z]{2})$/i.exec(day) ?? ["", "", day];
+                        const [, place, weekday]: string[] = /^([+-]?\d*)([A-Z]{2})$/i.exec(day) ?? ["", "", day];
                         const named: string = weekdays[weekday.toUpperCase()] ?? weekday;
-                        return place === ""
-                            ? named
-                            : `${placeOf(Number(place))} ${named}`;
+                        return place === "" ? named : `${placeOf(Number(place))} ${named}`;
                     })
                     .join(", ")}`,
             );
@@ -204,11 +190,8 @@ function readableOf(name: string, value: string): string | null {
     if (/^RRULE[;:]/i.test(name)) return ruleTextOf(value);
     if (/^TZNAME[;:]/i.test(name)) return zoneNames[value.toUpperCase()] ?? null;
     const length: RegExpExecArray | null = lengthRule.exec(value);
-    if (length !== null)
-        return lengthOf(Number(length[1] ?? 0) * 60 + Number(length[2] ?? 0));
-    const offset: RegExpExecArray | null = /^TZOFFSET/i.test(name)
-        ? offsetRule.exec(value)
-        : null;
+    if (length !== null) return lengthOf(Number(length[1] ?? 0) * 60 + Number(length[2] ?? 0));
+    const offset: RegExpExecArray | null = /^TZOFFSET/i.test(name) ? offsetRule.exec(value) : null;
     if (offset !== null) return `UTC${offset[1]}${offset[2]}:${offset[3]}`;
     return dateTextOf(value, true);
 }
@@ -220,22 +203,13 @@ function readableOf(name: string, value: string): string | null {
  *
  * @returns What it folds, `null` for nothing
  */
-function blockOf(
-    state: EditorState,
-    from: number,
-    to: number,
-): { from: number; to: number } | null {
+function blockOf(state: EditorState, from: number, to: number): { from: number; to: number } | null {
     if (!/^BEGIN:/i.test(state.sliceDoc(from, to))) return null;
     let depth: number = 0;
-    for (
-        let number: number = state.doc.lineAt(from).number + 1;
-        number <= state.doc.lines;
-        number++
-    ) {
+    for (let number: number = state.doc.lineAt(from).number + 1; number <= state.doc.lines; number++) {
         const end: Line = state.doc.line(number);
         if (/^BEGIN:/i.test(end.text)) depth += 1;
-        else if (/^END:/i.test(end.text) && depth-- === 0)
-            return { from: to, to: end.to };
+        else if (/^END:/i.test(end.text) && depth-- === 0) return { from: to, to: end.to };
     }
     return null;
 }
@@ -278,17 +252,14 @@ function decorationsOf(state: EditorState): DecorationSet {
         if (lead === 0) [property, above] = [propertyOf(state, number), 0];
         const name: RegExpExecArray | null = nameRule.exec(property);
         const readable: string | null =
-            name === null || lead === 1
-                ? null
-                : readableOf(name[0], property.slice(name[0].length));
+            name === null || lead === 1 ? null : readableOf(name[0], property.slice(name[0].length));
         decorations.push(
             Decoration.line({
                 class: `ics-line ics-depth-${step}${entry ? " ics-entry" : ""}`,
                 attributes: readable === null ? {} : { "data-readable": readable },
             }).range(line.from),
         );
-        const parameters: number =
-            name === null ? 0 : (/^[A-Z0-9-]+/i.exec(property)?.[0].length ?? 0);
+        const parameters: number = name === null ? 0 : (/^[A-Z0-9-]+/i.exec(property)?.[0].length ?? 0);
         const markPut: (mark: Decoration, from: number, to: number) => void = (
             mark: Decoration,
             from: number,
@@ -328,11 +299,10 @@ const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
                 read: (): number =>
                     Math.max(
                         0,
-                        (document.getElementById("editor-save")?.getBoundingClientRect()
-                            .right ?? 0) - view.contentDOM.getBoundingClientRect().right,
+                        (document.getElementById("editor-save")?.getBoundingClientRect().right ?? 0) -
+                            view.contentDOM.getBoundingClientRect().right,
                     ),
-                write: (overhang: number): void =>
-                    view.dom.style.setProperty("--ics-overhang", `${overhang}px`),
+                write: (overhang: number): void => view.dom.style.setProperty("--ics-overhang", `${overhang}px`),
             });
         measure();
         window.addEventListener("resize", measure);
@@ -356,16 +326,11 @@ export function icsLook(): Extension {
         overviewKeep,
         StateField.define<DecorationSet>({
             create: decorationsOf,
-            update: (
-                decorations: DecorationSet,
-                transaction: Transaction,
-            ): DecorationSet =>
-                transaction.docChanged ||
-                foldedRanges(transaction.state) !== foldedRanges(transaction.startState)
+            update: (decorations: DecorationSet, transaction: Transaction): DecorationSet =>
+                transaction.docChanged || foldedRanges(transaction.state) !== foldedRanges(transaction.startState)
                     ? decorationsOf(transaction.state)
                     : decorations,
-            provide: (field: StateField<DecorationSet>): Extension =>
-                EditorView.decorations.from(field),
+            provide: (field: StateField<DecorationSet>): Extension => EditorView.decorations.from(field),
         }),
     ];
 }
@@ -391,16 +356,12 @@ function blocksOf(state: EditorState): Block[] {
         } else if (depth === 2 && block !== undefined) {
             const found: RegExpExecArray | null = nameRule.exec(text);
             const name: string = /^[A-Z0-9-]+/i.exec(text)?.[0].toUpperCase() ?? "";
-            if (found !== null && !block.values.has(name))
-                block.values.set(name, text.slice(found[0].length));
+            if (found !== null && !block.values.has(name)) block.values.set(name, text.slice(found[0].length));
         }
     }
     blocks.forEach((block: Block): void =>
         block.values.forEach((value: string, key: string): void => {
-            block.values.set(
-                key,
-                value.replace(/\\([,;\\])/g, "$1").replace(/\\n/gi, " "),
-            );
+            block.values.set(key, value.replace(/\\([,;\\])/g, "$1").replace(/\\n/gi, " "));
         }),
     );
     return blocks;
@@ -414,46 +375,32 @@ function blocksOf(state: EditorState): Block[] {
  */
 function boxOf(block: Block): HTMLElement {
     const values: Map<string, string> = block.values;
-    const date: RegExpExecArray | null = dateRule.exec(
-        values.get("DTSTART") ?? values.get("DUE") ?? "",
-    );
+    const date: RegExpExecArray | null = dateRule.exec(values.get("DTSTART") ?? values.get("DUE") ?? "");
     const start: Date | null =
         date?.[4] === undefined
             ? null
-            : new Date(
-                  `${date[1]}-${date[2]}-${date[3]}` +
-                      `T${date[4]}:${date[5]}:${date[6]}${date[7]}`,
-              );
+            : new Date(`${date[1]}-${date[2]}-${date[3]}` + `T${date[4]}:${date[5]}:${date[6]}${date[7]}`);
     const end: RegExpExecArray | null = dateRule.exec(values.get("DTEND") ?? "");
     const duration: RegExpExecArray | null = lengthRule.exec(
         values.get("ESTIMATED-DURATION") ?? values.get("DURATION") ?? "",
     );
-    let length: number | null =
-        duration === null
-            ? null
-            : Number(duration[1] ?? 0) * 60 + Number(duration[2] ?? 0);
+    let length: number | null = duration === null ? null : Number(duration[1] ?? 0) * 60 + Number(duration[2] ?? 0);
     if (start !== null && end?.[4] !== undefined)
         length =
-            (Date.parse(
-                `${end[1]}-${end[2]}-${end[3]}T${end[4]}:${end[5]}:${end[6]}${end[7]}`,
-            ) -
-                start.getTime()) /
+            (Date.parse(`${end[1]}-${end[2]}-${end[3]}T${end[4]}:${end[5]}:${end[6]}${end[7]}`) - start.getTime()) /
             60000;
     const parts: string[] = [];
     if (date !== null)
         parts.push(
             `${values.has("DTSTART") ? "" : "Deadline: "}${
-                start === null
-                    ? dayTextOf(`${date[1]}-${date[2]}-${date[3]}`, true)
-                    : dayTextOf(dayOf(start), true)
+                start === null ? dayTextOf(`${date[1]}-${date[2]}-${date[3]}`, true) : dayTextOf(dayOf(start), true)
             }`,
         );
     if (start !== null)
         parts.push(
             length === null
                 ? timeOf(start)
-                : `${timeOf(start)}${rangeDash}` +
-                      timeOf(new Date(start.getTime() + length * 60000)),
+                : `${timeOf(start)}${rangeDash}` + timeOf(new Date(start.getTime() + length * 60000)),
         );
     else if (length !== null) parts.push(lengthOf(length));
     const place: string = values.get("X-ONLINE") || roomOf(values.get("LOCATION") ?? "");
@@ -462,10 +409,7 @@ function boxOf(block: Block): HTMLElement {
         entryPartOf(
             "div",
             "box-what",
-            whatOf(
-                values.get("CATEGORIES") ?? "",
-                values.get("SUMMARY") ?? values.get("TZID") ?? block.kind,
-            ),
+            whatOf(values.get("CATEGORIES") ?? "", values.get("SUMMARY") ?? values.get("TZID") ?? block.kind),
         ),
         ...(parts.length === 0
             ? []
@@ -474,11 +418,7 @@ function boxOf(block: Block): HTMLElement {
                       "div",
                       "box-meta",
                       parts.map((part: string, index: number): HTMLElement =>
-                          entryPartOf(
-                              "span",
-                              index === 0 ? "box-part box-time" : "box-part entry-parted",
-                              [part],
-                          ),
+                          entryPartOf("span", index === 0 ? "box-part box-time" : "box-part entry-parted", [part]),
                       ),
                   ),
               ]),
@@ -503,47 +443,34 @@ const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
             shown?.remove();
             shown = null;
         };
-        const dashes: HTMLButtonElement[] = blocks.map(
-            (block: Block): HTMLButtonElement => {
-                const dash: HTMLButtonElement = document.createElement("button");
-                dash.type = "button";
-                dash.className = "ics-dash";
-                dash.setAttribute(
-                    "aria-label",
-                    block.values.get("SUMMARY") ?? block.values.get("TZID") ?? block.kind,
-                );
-                dash.addEventListener("click", (): void =>
-                    view.dispatch({
-                        effects: EditorView.scrollIntoView(
-                            view.state.doc.line(block.line).from,
-                            {
-                                y: "start",
-                            },
-                        ),
+        const dashes: HTMLButtonElement[] = blocks.map((block: Block): HTMLButtonElement => {
+            const dash: HTMLButtonElement = document.createElement("button");
+            dash.type = "button";
+            dash.className = "ics-dash";
+            dash.setAttribute("aria-label", block.values.get("SUMMARY") ?? block.values.get("TZID") ?? block.kind);
+            dash.addEventListener("click", (): void =>
+                view.dispatch({
+                    effects: EditorView.scrollIntoView(view.state.doc.line(block.line).from, {
+                        y: "start",
                     }),
-                );
-                dash.addEventListener("mouseenter", (): void => {
-                    boxHide();
-                    shown = boxOf(block);
-                    document.body.append(shown);
-                    const room: number = innerWidth - shown.offsetWidth - 8;
-                    const left: number = dash.getBoundingClientRect().left;
-                    shown.style.left = `${Math.min(left, room)}px`;
-                    shown.style.top = `${overview.getBoundingClientRect().bottom + 8}px`;
-                });
-                dash.addEventListener("mouseleave", boxHide);
-                return dash;
-            },
-        );
+                }),
+            );
+            dash.addEventListener("mouseenter", (): void => {
+                boxHide();
+                shown = boxOf(block);
+                document.body.append(shown);
+                const room: number = innerWidth - shown.offsetWidth - 8;
+                const left: number = dash.getBoundingClientRect().left;
+                shown.style.left = `${Math.min(left, room)}px`;
+                shown.style.top = `${overview.getBoundingClientRect().bottom + 8}px`;
+            });
+            dash.addEventListener("mouseleave", boxHide);
+            return dash;
+        });
         const follow = (): void => {
-            const top: number =
-                (document.getElementById("editor-status")?.getBoundingClientRect()
-                    .bottom ?? 0) + 1;
+            const top: number = (document.getElementById("editor-status")?.getBoundingClientRect().bottom ?? 0) + 1;
             const at: number = view.state.doc.lineAt(
-                view.posAtCoords(
-                    { x: view.contentDOM.getBoundingClientRect().left + 1, y: top },
-                    false,
-                ),
+                view.posAtCoords({ x: view.contentDOM.getBoundingClientRect().left + 1, y: top }, false),
             ).number;
             const current: number = Math.max(
                 0,
@@ -552,11 +479,9 @@ const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
             dashes.forEach((dash: HTMLButtonElement, index: number): void => {
                 dash.classList.toggle("ics-dash-current", index === current);
             });
-            overview.scrollLeft =
-                (dashes[current]?.offsetLeft ?? 0) - overview.clientWidth / 2;
+            overview.scrollLeft = (dashes[current]?.offsetLeft ?? 0) - overview.clientWidth / 2;
         };
-        if (file === null || state === null || blocks.length === 0)
-            return { destroy: (): void => {} };
+        if (file === null || state === null || blocks.length === 0) return { destroy: (): void => {} };
         overview.className = "ics-overview";
         overview.setAttribute("aria-label", "Entries");
         overview.append(...dashes);

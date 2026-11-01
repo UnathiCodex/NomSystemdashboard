@@ -57,29 +57,11 @@ function withPartsOf(
     typed: (name: string, address: string) => void,
 ): HTMLElement[] {
     return people.map((person: Attendee): HTMLElement => {
-        const edit: PersonEdit =
-            setup.edits[person.name] ??
-            personEditOf(setup.persons, person.name, person.address);
-        const name: HTMLInputElement = partFieldOf(
-            "text",
-            edit.name,
-            `Name of ${person.name}`,
-        );
-        const title: HTMLInputElement = partFieldOf(
-            "text",
-            edit.title,
-            `Title of ${person.name}`,
-        );
-        const mail: HTMLInputElement = partFieldOf(
-            "email",
-            edit.mail,
-            `Mail of ${person.name}`,
-        );
-        const link: HTMLInputElement = partFieldOf(
-            "url",
-            edit.link,
-            `Link of ${person.name}`,
-        );
+        const edit: PersonEdit = setup.edits[person.name] ?? personEditOf(setup.persons, person.name, person.address);
+        const name: HTMLInputElement = partFieldOf("text", edit.name, `Name of ${person.name}`);
+        const title: HTMLInputElement = partFieldOf("text", edit.title, `Title of ${person.name}`);
+        const mail: HTMLInputElement = partFieldOf("email", edit.mail, `Mail of ${person.name}`);
+        const link: HTMLInputElement = partFieldOf("url", edit.link, `Link of ${person.name}`);
         const take: () => void = (): void => {
             setup.edits[person.name] = {
                 name: name.value.trim(),
@@ -88,24 +70,12 @@ function withPartsOf(
                 link: link.value.trim(),
                 address: person.address,
             };
-            typed(
-                person.name,
-                mail.value.trim() === ""
-                    ? standardAddressOf(person.name)
-                    : mail.value.trim(),
-            );
+            typed(person.name, mail.value.trim() === "" ? standardAddressOf(person.name) : mail.value.trim());
         };
-        [name, title, mail, link].forEach((input: HTMLInputElement): void =>
-            input.addEventListener("input", take),
-        );
+        [name, title, mail, link].forEach((input: HTMLInputElement): void => input.addEventListener("input", take));
         const block: HTMLElement = document.createElement("div");
         block.className = "field-parts";
-        block.append(
-            partOf("Name", name),
-            partOf("Title", title),
-            partOf("Mail", mail),
-            partOf("Link", link),
-        );
+        block.append(partOf("Name", name), partOf("Title", title), partOf("Mail", mail), partOf("Link", link));
         return block;
     });
 }
@@ -119,21 +89,12 @@ function withPartsOf(
  * each as `Persons.md` names its person, see `personOf` in `../persons.ts`,
  * and every person of `Persons.md` after them.
  */
-function withSearchOf(
-    field: Field,
-    people: Person[],
-): (text: string) => Promise<Choice[]> {
+function withSearchOf(field: Field, people: Person[]): (text: string) => Promise<Choice[]> {
     return async (text: string): Promise<Choice[]> => {
-        const used: string[] = field.values.map(
-            (name: string): string => personOf(people, name)?.name ?? name,
-        );
-        const all: string[] = [
-            ...new Set([...used, ...people.map((person: Person): string => person.name)]),
-        ];
+        const used: string[] = field.values.map((name: string): string => personOf(people, name)?.name ?? name);
+        const all: string[] = [...new Set([...used, ...people.map((person: Person): string => person.name)])];
         const shown: string[] =
-            text.trim() !== ""
-                ? all
-                : all.filter((name: string): boolean => /^(Family|Group), /.test(name));
+            text.trim() !== "" ? all : all.filter((name: string): boolean => /^(Family|Group), /.test(name));
         return await searchOf(shown.map(choiceOf))(text);
     };
 }
@@ -144,18 +105,13 @@ function withSearchOf(
  * see `peopleRowsOf` in `./series.ts`; several people, a typed name added
  * as `Persons.md` names it, but none with `;`, see {@link withRowOf}.
  */
-export function withChoicesOf(
-    field: Field,
-    persons: Person[],
-): Omit<ChoicesSetup, "picked" | "pick"> {
+export function withChoicesOf(field: Field, persons: Person[]): Omit<ChoicesSetup, "picked" | "pick"> {
     return {
         search: withSearchOf(field, persons),
         many: true,
         adding: true,
         add: async (name: string): Promise<string | null> =>
-            name.includes(";")
-                ? null
-                : (personOf(persons, name.trim())?.name ?? name.trim()),
+            name.includes(";") ? null : (personOf(persons, name.trim())?.name ?? name.trim()),
         noun: "person",
         linkOf: (name: string): string => {
             const person: Person | undefined = personOf(persons, name);
@@ -185,9 +141,7 @@ export function withRowOf(setup: WithSetup): HTMLElement {
     let open: string[] = setup.open;
     const parts: HTMLElement = document.createElement("div");
     const show: () => void = (): void => {
-        const shown: Attendee[] = people.filter((person: Attendee): boolean =>
-            open.includes(person.name),
-        );
+        const shown: Attendee[] = people.filter((person: Attendee): boolean => open.includes(person.name));
         parts.hidden = shown.length === 0;
         parts.replaceChildren(
             ...withPartsOf(setup, shown, (name: string, address: string): void => {
@@ -205,17 +159,11 @@ export function withRowOf(setup: WithSetup): HTMLElement {
         iconPut(pencil, Pencil, `Change ${name}`);
         pencil.addEventListener("click", (event: MouseEvent): void => {
             event.stopPropagation();
-            open = open.includes(name)
-                ? open.filter((other: string): boolean => other !== name)
-                : [...open, name];
+            open = open.includes(name) ? open.filter((other: string): boolean => other !== name) : [...open, name];
             setup.opened(open);
             show();
             if (open.includes(name))
-                parts
-                    .querySelector<HTMLInputElement>(
-                        `input[aria-label="Name of ${CSS.escape(name)}"]`,
-                    )
-                    ?.focus();
+                parts.querySelector<HTMLInputElement>(`input[aria-label="Name of ${CSS.escape(name)}"]`)?.focus();
         });
         return pencil;
     };
@@ -232,9 +180,7 @@ export function withRowOf(setup: WithSetup): HTMLElement {
             pick: (names: string[]): void => {
                 people = names.map(
                     (name: string): Attendee =>
-                        people.find(
-                            (person: Attendee): boolean => person.name === name,
-                        ) ?? {
+                        people.find((person: Attendee): boolean => person.name === name) ?? {
                             name: name,
                             address: setup.field.links[name] ?? standardAddressOf(name),
                         },
@@ -292,33 +238,16 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
     let open: boolean = setup.open;
     const pencil: HTMLButtonElement = document.createElement("button");
     const line: HTMLAnchorElement = document.createElement("a");
-    const label: HTMLInputElement = partFieldOf(
-        "text",
-        online.online,
-        "Label of the platform",
-    );
-    const provider: HTMLInputElement = partFieldOf(
-        "text",
-        "",
-        "Provider of the platform",
-    );
-    const channel: HTMLInputElement = partFieldOf(
-        "text",
-        online.onlineChannel,
-        "Channel online",
-    );
-    const title: HTMLInputElement = partFieldOf(
-        "text",
-        online.onlineTitle,
-        "Title online",
-    );
+    const label: HTMLInputElement = partFieldOf("text", online.online, "Label of the platform");
+    const provider: HTMLInputElement = partFieldOf("text", "", "Provider of the platform");
+    const channel: HTMLInputElement = partFieldOf("text", online.onlineChannel, "Channel online");
+    const title: HTMLInputElement = partFieldOf("text", online.onlineTitle, "Title online");
     const link: HTMLInputElement = partFieldOf("url", online.onlineLink, "Link online");
     const hint: HTMLParagraphElement = document.createElement("p");
     const parts: HTMLElement = document.createElement("div");
     const show: () => void = (): void => {
         const platform: Platform | undefined = field.platforms[online.online];
-        const target: string =
-            online.onlineLink !== "" ? online.onlineLink : (platform?.link ?? "");
+        const target: string = online.onlineLink !== "" ? online.onlineLink : (platform?.link ?? "");
         line.textContent =
             [platform?.provider ?? "", online.onlineChannel, online.onlineTitle]
                 .filter((part: string): boolean => part !== "")
@@ -329,8 +258,7 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
         pencil.hidden = online.online === "";
         parts.hidden = !open || online.online === "";
         if (label !== document.activeElement) label.value = online.online;
-        if (provider !== document.activeElement)
-            provider.value = platform?.provider ?? "";
+        if (provider !== document.activeElement) provider.value = platform?.provider ?? "";
         if (link !== document.activeElement) link.value = target;
     };
     const take: (next: Online) => void = (next: Online): void => {
@@ -377,10 +305,7 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
                 platformTake(setup.categories, platform, old);
                 hint.hidden = true;
                 take({ ...online, online: platform.name });
-                if (platform.name !== old)
-                    row.replaceWith(
-                        onlineRowOf({ ...setup, online: online, open: open }),
-                    );
+                if (platform.name !== old) row.replaceWith(onlineRowOf({ ...setup, online: online, open: open }));
             })
             .catch((error: unknown): void => {
                 console.error(error);
@@ -392,10 +317,7 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
     link.addEventListener("input", (): void => {
         take({
             ...online,
-            onlineLink:
-                link.value.trim() === (field.platforms[online.online]?.link ?? "")
-                    ? ""
-                    : link.value.trim(),
+            onlineLink: link.value.trim() === (field.platforms[online.online]?.link ?? "") ? "" : link.value.trim(),
         });
     });
     channel.addEventListener("input", (): void => {
@@ -417,13 +339,9 @@ export function onlineRowOf(setup: OnlineSetup): HTMLElement {
             below: [line, parts],
             add: async (name: string): Promise<string | null> => {
                 if (name.trim() === "") return null;
-                const platform: Platform = await platformSend(
-                    { name: name, provider: "", link: "" },
-                    "",
-                );
+                const platform: Platform = await platformSend({ name: name, provider: "", link: "" }, "");
                 platformTake(setup.categories, platform, "");
-                if (!field.values.includes(platform.name))
-                    field.values.push(platform.name);
+                if (!field.values.includes(platform.name)) field.values.push(platform.name);
                 open = true;
                 setup.opened(open);
                 return platform.name;
@@ -461,9 +379,7 @@ function platformTake(categories: Category[], platform: Platform, old: string): 
         .flatMap((category: Category): Field[] => category.fields)
         .filter((field: Field): boolean => field.key === "online")
         .forEach((field: Field): void => {
-            field.values = field.values.map((value: string): string =>
-                value === old ? platform.name : value,
-            );
+            field.values = field.values.map((value: string): string => (value === old ? platform.name : value));
             delete field.platforms[old];
             field.platforms[platform.name] = platform;
         });

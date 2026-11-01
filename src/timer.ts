@@ -52,10 +52,7 @@ async function runningLoad(): Promise<Running | null> {
 async function timerShow(): Promise<void> {
     const timer: HTMLElement = document.getElementById("session-timer") as HTMLElement;
     const running: Running | null = await runningLoad();
-    const left: number =
-        running === null
-            ? 0
-            : Math.ceil((Date.parse(running.end) - Date.now()) / (60 * 1000));
+    const left: number = running === null ? 0 : Math.ceil((Date.parse(running.end) - Date.now()) / (60 * 1000));
     if (running === null || left <= 0) {
         timer.replaceChildren(
             entryPartOf("span", "session-what tracker-name", ["Session"]),
@@ -68,15 +65,11 @@ async function timerShow(): Promise<void> {
     const what: HTMLElement = entryPartOf(
         "span",
         "session-what",
-        whatOf(
-            running.category,
-            shownWhatOf(running.category, running.title, running.module, running.type),
-        ),
+        whatOf(running.category, shownWhatOf(running.category, running.title, running.module, running.type)),
     );
     timer.replaceChildren(what, entryPartOf("span", "session-left", [lengthOf(left)]));
     timer.title =
-        `${what.textContent ?? ""}\n${timeOf(new Date(running.start))}${rangeDash}` +
-        timeOf(new Date(running.end));
+        `${what.textContent ?? ""}\n${timeOf(new Date(running.start))}${rangeDash}` + timeOf(new Date(running.end));
 }
 
 /**

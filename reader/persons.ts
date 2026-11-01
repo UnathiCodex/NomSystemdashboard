@@ -50,12 +50,7 @@ export type PersonRenamed = {
  * see `attendeesRename` in `./calendar.ts`, handed in,
  * since `./calendar.ts` reads this file for the mails, see {@link mailOf}.
  */
-export type AttendeesRename = (
-    old: string,
-    name: string,
-    mail: string,
-    dry: boolean,
-) => number;
+export type AttendeesRename = (old: string, name: string, mail: string, dry: boolean) => number;
 
 /**
  * Names of the columns of a table that name people, one per line, parted by `<br>`,
@@ -73,14 +68,7 @@ const actingMark: string = " (komm.)";
  * Roles a line of a list names a person by, like `- Dean: Bungartz, Hans-Joachim`,
  * see `peopleRoles` in `src/persons.ts`.
  */
-const peopleRoles: string[] = [
-    "Dean",
-    "Vice Dean",
-    "Rector",
-    "Prorector",
-    "Head",
-    "Vice Head",
-];
+const peopleRoles: string[] = ["Dean", "Vice Dean", "Rector", "Prorector", "Head", "Vice Head"];
 
 /** A link typed for a person, a web address without spaces. */
 const linkForm: RegExp = /^https?:\/\/\S+$/;
@@ -129,10 +117,7 @@ export function mailOf(name: string): string {
     return (
         personsRead().find((person: Person): boolean => {
             const parts: string[] = person.name.split(", ");
-            return (
-                person.name === name ||
-                (parts.length === 2 && `${parts[1]} ${parts[0]}` === name)
-            );
+            return person.name === name || (parts.length === 2 && `${parts[1]} ${parts[0]}` === name);
         })?.mail ?? ""
     );
 }
@@ -147,8 +132,7 @@ export function personNameOf(name: string): string {
     const named: Person[] = name.includes(",")
         ? []
         : personsRead().filter(
-              (person: Person): boolean =>
-                  person.name.split(", ")[1]?.toLowerCase() === name.toLowerCase(),
+              (person: Person): boolean => person.name.split(", ")[1]?.toLowerCase() === name.toLowerCase(),
           );
     return named.length === 1 ? named[0].name : name;
 }
@@ -178,22 +162,16 @@ function rowNameOf(line: string): string {
  */
 function personsTextOf(sent: PersonRenamed): [string, Person] {
     const lines: string[] = readFileSync(personsFile, "utf8").split("\n");
-    const first: number =
-        lines.findIndex((line: string): boolean => line.startsWith("|")) + tableHead;
-    const last: number = lines.findLastIndex((line: string): boolean =>
-        line.startsWith("|"),
-    );
+    const first: number = lines.findIndex((line: string): boolean => line.startsWith("|")) + tableHead;
+    const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
     const isRow: (index: number) => boolean = (index: number): boolean =>
         index >= first && index <= last && lines[index].startsWith("|");
     const row: number = lines.findIndex(
-        (line: string, index: number): boolean =>
-            isRow(index) && rowNameOf(line) === sent.old,
+        (line: string, index: number): boolean => isRow(index) && rowNameOf(line) === sent.old,
     );
     const target: number = lines.findIndex(
         (line: string, index: number): boolean =>
-            isRow(index) &&
-            index !== row &&
-            rowNameOf(line).toLowerCase() === sent.name.toLowerCase(),
+            isRow(index) && index !== row && rowNameOf(line).toLowerCase() === sent.name.toLowerCase(),
     );
     if (target !== -1) {
         const kept: Person = personsRead().find(
@@ -217,20 +195,12 @@ function personsTextOf(sent: PersonRenamed): [string, Person] {
     if (row === -1) lines.splice(last + 1, 0, written);
     else lines[row] = written;
     const end: number = row === -1 ? last + 1 : last;
-    const rows: string[] = lines
-        .slice(first, end + 1)
-        .sort((one: string, other: string): number => {
-            const [a, b]: string[] = [
-                rowNameOf(one).toLowerCase(),
-                rowNameOf(other).toLowerCase(),
-            ];
-            return a < b ? -1 : a > b ? 1 : 0;
-        });
+    const rows: string[] = lines.slice(first, end + 1).sort((one: string, other: string): number => {
+        const [a, b]: string[] = [rowNameOf(one).toLowerCase(), rowNameOf(other).toLowerCase()];
+        return a < b ? -1 : a > b ? 1 : 0;
+    });
     lines.splice(first, end + 1 - first, ...rows);
-    return [
-        lines.join("\n"),
-        { name: sent.name, link: sent.link, title: cells[1] ?? "", mail: sent.mail },
-    ];
+    return [lines.join("\n"), { name: sent.name, link: sent.link, title: cells[1] ?? "", mail: sent.mail }];
 }
 
 /**
@@ -265,8 +235,7 @@ function peopleTextOf(file: string, old: string, name: string): string {
             const renamed: string[] = names.map((one: string): string =>
                 one.replace(actingMark, "") === old ? one.replace(old, name) : one,
             );
-            if (renamed.join("<br>") !== names.join("<br>"))
-                cells[at] = ` ${[...new Set(renamed)].join("<br>")} `;
+            if (renamed.join("<br>") !== names.join("<br>")) cells[at] = ` ${[...new Set(renamed)].join("<br>")} `;
         });
         lines[index] = cells.join("|");
     });
@@ -302,10 +271,8 @@ export function personRename(sent: PersonRenamed, attendees: AttendeesRename): v
         mail: mail,
         link: link,
     };
-    if (cleaned.old === "" || name === "" || name.includes(";"))
-        throw new Error(`No name of a person: ${name}`);
-    if (link !== "" && !linkForm.test(link))
-        throw new Error(`No link of ${name}: ${link}`);
+    if (cleaned.old === "" || name === "" || name.includes(";")) throw new Error(`No name of a person: ${name}`);
+    if (link !== "" && !linkForm.test(link)) throw new Error(`No link of ${name}: ${link}`);
     const persons: [string, Person] = personsTextOf(cleaned);
     const tables: [string, string][] = [universityRoot, dataRoot]
         .flatMap((folder: string): string[] =>
@@ -315,20 +282,11 @@ export function personRename(sent: PersonRenamed, attendees: AttendeesRename): v
                       .map((file: string): string => join(folder, file))
                 : [],
         )
-        .map((file: string): [string, string] => [
-            file,
-            peopleTextOf(file, cleaned.old, persons[1].name),
-        ])
-        .filter(
-            ([file, text]: [string, string]): boolean =>
-                text !== readFileSync(file, "utf8"),
-        );
-    [personsFile, ...tables.map(([file]: [string, string]): string => file)].forEach(
-        (file: string): void => {
-            if (!writeAllowed(file))
-                throw new Error(`No writing outside the new system: ${file}`);
-        },
-    );
+        .map((file: string): [string, string] => [file, peopleTextOf(file, cleaned.old, persons[1].name)])
+        .filter(([file, text]: [string, string]): boolean => text !== readFileSync(file, "utf8"));
+    [personsFile, ...tables.map(([file]: [string, string]): string => file)].forEach((file: string): void => {
+        if (!writeAllowed(file)) throw new Error(`No writing outside the new system: ${file}`);
+    });
     attendees(cleaned.old, persons[1].name, persons[1].mail, true);
     if (sent.dry === true) return;
     writeFileSync(personsFile, persons[0]);

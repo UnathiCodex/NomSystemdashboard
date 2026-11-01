@@ -113,20 +113,18 @@ Object.assign(mathJax.startup.document.options, {
  * so the characters of every further note would lose their width and be cut away.
  */
 export function mathRender(element: HTMLElement): void {
-    element
-        .querySelectorAll<HTMLElement>(".math:not(.is-loaded)")
-        .forEach((math: HTMLElement): void => {
-            try {
-                math.replaceChildren(
-                    mathJax.tex2chtml(math.textContent, {
-                        display: math.classList.contains("math-block"),
-                    }),
-                );
-            } catch (error: unknown) {
-                console.error(error);
-            }
-            math.classList.add("is-loaded");
-        });
+    element.querySelectorAll<HTMLElement>(".math:not(.is-loaded)").forEach((math: HTMLElement): void => {
+        try {
+            math.replaceChildren(
+                mathJax.tex2chtml(math.textContent, {
+                    display: math.classList.contains("math-block"),
+                }),
+            );
+        } catch (error: unknown) {
+            console.error(error);
+        }
+        math.classList.add("is-loaded");
+    });
     const styles: HTMLStyleElement = mathJax.chtmlStylesheet();
     if (!styles.isConnected) document.head.append(styles);
 }

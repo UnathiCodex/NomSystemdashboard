@@ -33,14 +33,7 @@
  */
 
 import { Star } from "lucide";
-import {
-    crossPut,
-    iconOf,
-    plusPut,
-    plusTake,
-    plusTypedPut,
-    searchFieldOf,
-} from "../icons.ts";
+import { crossPut, iconOf, plusPut, plusTake, plusTypedPut, searchFieldOf } from "../icons.ts";
 import { matchesAll, searchTextOf, wordsOf } from "../search.ts";
 import { dottedOf, valueDot } from "../persons.ts";
 
@@ -88,21 +81,12 @@ export function middleCutPut(line: HTMLElement, name: string): void {
     const slash: number = name.lastIndexOf("/");
     const under: number = name.lastIndexOf("_");
     const dot: number = name.lastIndexOf(".");
-    const cut: number =
-        slash > 0
-            ? slash
-            : under > name.length - under
-              ? under
-              : dot > 0
-                ? dot
-                : name.length;
+    const cut: number = slash > 0 ? slash : under > name.length - under ? under : dot > 0 ? dot : name.length;
     let room: number = 0;
     const fit: () => void = (): void => {
         if (room === 0) return;
         const style: CSSStyleDeclaration = getComputedStyle(line);
-        measurer.font =
-            `${style.fontStyle} ${style.fontWeight} ` +
-            `${style.fontSize} ${style.fontFamily}`;
+        measurer.font = `${style.fontStyle} ${style.fontWeight} ` + `${style.fontSize} ${style.fontFamily}`;
         let start: number = cut;
         let text: string = name;
         while (measurer.measureText(text).width > room && start > 0) {
@@ -274,9 +258,7 @@ export function choiceOf(value: string): Choice {
 export function searchOf(choices: Choice[]): (text: string) => Promise<Choice[]> {
     return async (text: string): Promise<Choice[]> => {
         const words: string[] = wordsOf(text);
-        return choices.filter((choice: Choice): boolean =>
-            matchesAll(choice.text, words),
-        );
+        return choices.filter((choice: Choice): boolean => matchesAll(choice.text, words));
     };
 }
 
@@ -288,9 +270,7 @@ export function searchOf(choices: Choice[]): (text: string) => Promise<Choice[]>
 export function groupedSearchOf(choices: Choice[]): (text: string) => Promise<Choice[]> {
     return async (text: string): Promise<Choice[]> => {
         const words: string[] = wordsOf(text);
-        return choices.filter((choice: Choice): boolean =>
-            matchesAll(`${choice.group} ${choice.text}`, words),
-        );
+        return choices.filter((choice: Choice): boolean => matchesAll(`${choice.group} ${choice.text}`, words));
     };
 }
 
@@ -310,11 +290,7 @@ function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonE
  * Makes the button of a value in a list: its text, its star while it is starred,
  * and its detail grey beside it.
  */
-function valueButtonOf(
-    choice: Choice,
-    chosen: boolean,
-    click: () => void,
-): HTMLButtonElement {
+function valueButtonOf(choice: Choice, chosen: boolean, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf(choice.text, chosen, click);
     button.dataset.value = choice.value;
     if (choice.starred === true) {
@@ -449,8 +425,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
     const noun: string = setup.noun ?? "value";
     const field: HTMLLabelElement = searchFieldOf(
         input,
-        `Search ${setup.adding ? "or add " : ""}` +
-            `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`,
+        `Search ${setup.adding ? "or add " : ""}` + `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`,
     );
     let chosen: string[] = [...setup.picked];
     const texts: Map<string, string> = new Map();
@@ -459,8 +434,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
     let close: () => void = (): void => {};
 
     const linePlace: (beside: boolean) => void = (beside: boolean): void => {
-        const name: HTMLElement | null =
-            picker.closest(".panel-field")?.querySelector(":scope > .entry-name") ?? null;
+        const name: HTMLElement | null = picker.closest(".panel-field")?.querySelector(":scope > .entry-name") ?? null;
         if (setup.besideName !== true || name === null) return;
         if (beside) name.append(line);
         else head.prepend(line);
@@ -479,41 +453,26 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         linePlace(false);
         plusTake(line);
         line.textContent = text === "" ? (setup.empty ?? "") : breakableOf(text);
-        const values: (string | Node)[] = chosen.map(
-            (value: string, index: number): string | Node => {
-                const shownValue: string | Node = lineValueOf(
-                    shown[index],
-                    setup.linkOf?.(value) ?? "",
-                );
-                if (setup.afterOf === undefined) return shownValue;
-                const both: HTMLSpanElement = document.createElement("span");
-                both.append(shownValue, setup.afterOf(value));
-                return both;
-            },
-        );
-        if (text !== "" && setup.linkOf !== undefined)
-            line.replaceChildren(...dottedOf(values, setup.parting));
+        const values: (string | Node)[] = chosen.map((value: string, index: number): string | Node => {
+            const shownValue: string | Node = lineValueOf(shown[index], setup.linkOf?.(value) ?? "");
+            if (setup.afterOf === undefined) return shownValue;
+            const both: HTMLSpanElement = document.createElement("span");
+            both.append(shownValue, setup.afterOf(value));
+            return both;
+        });
+        if (text !== "" && setup.linkOf !== undefined) line.replaceChildren(...dottedOf(values, setup.parting));
         line.title = setup.locked ? "As planned" : text;
         line.classList.toggle("picker-empty", text === "");
     };
     const toggle: (value: string) => void = (value: string): void => {
-        if (chosen.includes(value))
-            chosen = chosen.filter((other: string): boolean => other !== value);
+        if (chosen.includes(value)) chosen = chosen.filter((other: string): boolean => other !== value);
         else
             chosen = setup.many
-                ? (setup.order ?? ((values: string[]): string[] => values))([
-                      ...chosen,
-                      value,
-                  ])
+                ? (setup.order ?? ((values: string[]): string[] => values))([...chosen, value])
                 : [value];
-        list.querySelectorAll<HTMLButtonElement>("button[data-value]").forEach(
-            (button: HTMLButtonElement): void => {
-                button.classList.toggle(
-                    "chosen",
-                    chosen.includes(button.dataset.value ?? ""),
-                );
-            },
-        );
+        list.querySelectorAll<HTMLButtonElement>("button[data-value]").forEach((button: HTMLButtonElement): void => {
+            button.classList.toggle("chosen", chosen.includes(button.dataset.value ?? ""));
+        });
         lineShow();
         if (!setup.many) close();
         setup.pick(chosen);
@@ -532,29 +491,23 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
                 : chosen
                       .filter(
                           (value: string): boolean =>
-                              !choices.some(
-                                  (choice: Choice): boolean => choice.value === value,
-                              ),
+                              !choices.some((choice: Choice): boolean => choice.value === value),
                       )
                       .map(choiceOf);
         found = [...missing, ...choices];
         list.replaceChildren(
             ...found.flatMap((choice: Choice, index: number): HTMLElement[] => {
-                const button: HTMLButtonElement = valueButtonOf(
-                    choice,
-                    chosen.includes(choice.value),
-                    (): void => toggle(choice.value),
+                const button: HTMLButtonElement = valueButtonOf(choice, chosen.includes(choice.value), (): void =>
+                    toggle(choice.value),
                 );
-                if (choice.group === "" || choice.group === found[index - 1]?.group)
-                    return [button];
+                if (choice.group === "" || choice.group === found[index - 1]?.group) return [button];
                 const group: HTMLParagraphElement = document.createElement("p");
                 group.className = "picker-group";
                 group.textContent = choice.group;
                 return [group, button];
             }),
         );
-        const newText: string | null =
-            setup.newTextOf === undefined ? `“${text}”` : setup.newTextOf(text);
+        const newText: string | null = setup.newTextOf === undefined ? `“${text}”` : setup.newTextOf(text);
         newButton.hidden =
             text === "" ||
             newText === null ||
@@ -574,9 +527,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         show()
             .then((): void => {
                 lineShow();
-                list.querySelector(
-                    `button[data-value="${CSS.escape(value)}"]`,
-                )?.scrollIntoView({
+                list.querySelector(`button[data-value="${CSS.escape(value)}"]`)?.scrollIntoView({
                     block: "nearest",
                 });
             })
@@ -637,16 +588,9 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         .search("")
         .then((choices: Choice[]): void => {
             long =
-                choices.reduce(
-                    (length: number, choice: Choice): number =>
-                        length + choice.text.length,
-                    0,
-                ) > searchedLength;
-            box.replaceChildren(
-                ...(long || setup.adding ? [field] : []),
-                list,
-                ...(setup.adding ? [newButton] : []),
-            );
+                choices.reduce((length: number, choice: Choice): number => length + choice.text.length, 0) >
+                searchedLength;
+            box.replaceChildren(...(long || setup.adding ? [field] : []), list, ...(setup.adding ? [newButton] : []));
             show()
                 .then(lineShow)
                 .catch((error: unknown): void => console.error(error));
@@ -733,22 +677,16 @@ export function roundTagOf(text: string): HTMLSpanElement {
  * so a chapter and its documents read as one.
  */
 export function addedRowsOf(name: string, setup: AddedSetup): HTMLDivElement[] {
-    const offered: Choice[] = setup.choices.filter(
-        (choice: Choice): boolean => !setup.picked.includes(choice.value),
-    );
+    const offered: Choice[] = setup.choices.filter((choice: Choice): boolean => !setup.picked.includes(choice.value));
     const nested: boolean = setup.nested ?? false;
-    const added: HTMLDivElement[] = setup.picked.map(
-        (value: string, index: number): HTMLDivElement =>
-            addedRowOf(
-                !nested && index === 0 ? name : "",
-                setup.textOf(value),
-                (): void =>
-                    setup.change(
-                        setup.picked.filter((other: string): boolean => other !== value),
-                    ),
-                "",
-                setup.tagOf?.(value) ?? "",
-            ),
+    const added: HTMLDivElement[] = setup.picked.map((value: string, index: number): HTMLDivElement =>
+        addedRowOf(
+            !nested && index === 0 ? name : "",
+            setup.textOf(value),
+            (): void => setup.change(setup.picked.filter((other: string): boolean => other !== value)),
+            "",
+            setup.tagOf?.(value) ?? "",
+        ),
     );
     let last: HTMLDivElement[] =
         setup.hint === undefined || setup.choices.length > 0
@@ -783,11 +721,7 @@ export function addedRowsOf(name: string, setup: AddedSetup): HTMLDivElement[] {
  *
  * @param first - Row of the first value picked, `undefined` while none is
  */
-export function addRowOf(
-    name: string,
-    first: HTMLElement | undefined,
-    picker: HTMLElement,
-): HTMLDivElement {
+export function addRowOf(name: string, first: HTMLElement | undefined, picker: HTMLElement): HTMLDivElement {
     const row: HTMLDivElement = rowOf(first === undefined ? name : "", picker);
     const place: HTMLElement | null = (first ?? row).querySelector(".entry-name");
     if (place !== null) lineMove(row, place);
@@ -819,11 +753,7 @@ export function lineMove(row: HTMLElement, place: HTMLElement): void {
  * @param keyboard - Keyboard of a phone for the field, `url` for a link, else `text`
  * @param name - What it holds, for screen readers
  */
-export function partFieldOf(
-    keyboard: string,
-    value: string,
-    name: string,
-): HTMLInputElement {
+export function partFieldOf(keyboard: string, value: string, name: string): HTMLInputElement {
     const input: HTMLInputElement = document.createElement("input");
     input.inputMode = keyboard;
     input.value = value;
@@ -863,8 +793,7 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
     row.addEventListener("click", (event: MouseEvent): void => {
         const target: HTMLElement = event.target as HTMLElement;
         const line: HTMLButtonElement | null = row.querySelector(".picker-line");
-        if (target.closest("button, input, textarea, a, label, .picker-box") !== null)
-            return;
+        if (target.closest("button, input, textarea, a, label, .picker-box") !== null) return;
         if (line !== null) line.click();
         else row.querySelector<HTMLInputElement>("input, textarea")?.focus();
     });
@@ -886,8 +815,7 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
 export function fileShow(link: HTMLAnchorElement, file: string): void {
     link.textContent = pathBreakableOf(`…/${file.split("/").slice(-2).join("/")}`);
     link.title = file;
-    link.href =
-        "/edit?file=" + encodeURIComponent(file.replace(/^NomManageplannings\//, ""));
+    link.href = "/edit?file=" + encodeURIComponent(file.replace(/^NomManageplannings\//, ""));
     link.hidden = file === "";
 }
 
@@ -901,11 +829,7 @@ export function fileShow(link: HTMLAnchorElement, file: string): void {
 function listStep(event: KeyboardEvent): void {
     if (openBox === null || !listOpen(openBox)) return;
     const focused: Element = document.activeElement ?? document.body;
-    const rows: HTMLElement[] = [
-        ...openBox.querySelectorAll<HTMLElement>(
-            "input[type=search], button:not([hidden])",
-        ),
-    ];
+    const rows: HTMLElement[] = [...openBox.querySelectorAll<HTMLElement>("input[type=search], button:not([hidden])")];
     const at: number = rows.indexOf(focused as HTMLElement);
     if (at < 0 && focused.matches("input, textarea, [contenteditable]")) return;
     event.preventDefault();

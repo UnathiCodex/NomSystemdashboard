@@ -35,14 +35,7 @@ import {
     portionGramsOf,
     unitOf,
 } from "./foods.ts";
-import {
-    editButtonsOf,
-    editFieldOf,
-    foodSearchOf,
-    inlineFieldOf,
-    listHeadOf,
-    listLineOf,
-} from "./search.ts";
+import { editButtonsOf, editFieldOf, foodSearchOf, inlineFieldOf, listHeadOf, listLineOf } from "./search.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Plus } from "lucide";
 import { matchesAll, wordsOf } from "../search.ts";
@@ -78,11 +71,7 @@ function cutOf(text: string, letters: number): string {
  * Writes a text cut after the most letters that fit, by halving, and leaves it so.
  * Gives the most letters that fit, 0 where not one does.
  */
-function lettersFit(
-    text: string,
-    put: (cut: string) => void,
-    fits: () => boolean,
-): number {
+function lettersFit(text: string, put: (cut: string) => void, fits: () => boolean): number {
     let low: number = 0;
     let high: number = text.length - 1;
     while (low < high) {
@@ -165,10 +154,7 @@ export function dishNameOf(dish: Dish): HTMLElement {
 export function dishesFound(dishes: Dish[], typed: string): Dish[] {
     return dishes.filter((dish: Dish): boolean =>
         matchesAll(
-            [
-                dish.name,
-                ...dish.foods.map((line: string): string => line.split(";")[0]),
-            ].join(" "),
+            [dish.name, ...dish.foods.map((line: string): string => line.split(";")[0])].join(" "),
             wordsOf(typed),
         ),
     );
@@ -220,20 +206,15 @@ function gramsFieldOf(
     portion: number | null,
     saved: (grams: number | null) => void,
 ): HTMLInputElement {
-    const input: HTMLInputElement = inlineFieldOf(
-        grams === null ? "" : String(grams),
-        `Grams of ${name}`,
-        (): void => {
-            const text: string = input.value.trim().replace(",", ".");
-            const typed: number | null =
-                portionGramsOf(text, portion) ?? (text === "" ? null : Number(text));
-            if (typed !== null && !(typed >= 0)) {
-                input.value = grams === null ? "" : String(grams);
-                return;
-            }
-            saved(typed);
-        },
-    );
+    const input: HTMLInputElement = inlineFieldOf(grams === null ? "" : String(grams), `Grams of ${name}`, (): void => {
+        const text: string = input.value.trim().replace(",", ".");
+        const typed: number | null = portionGramsOf(text, portion) ?? (text === "" ? null : Number(text));
+        if (typed !== null && !(typed >= 0)) {
+            input.value = grams === null ? "" : String(grams);
+            return;
+        }
+        saved(typed);
+    });
     input.inputMode = "decimal";
     input.classList.add("food-inline-grams");
     return input;
@@ -251,9 +232,7 @@ function gramsFieldOf(
  * - `show`: The row of the meal opened is no button but a row that a click closes again,
  *   since its plus stands inside it.
  */
-export function mealsSectionOf(
-    foodOpen: (food: { name: string; brand: string; store: string }) => void,
-): HTMLElement {
+export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; store: string }) => void): HTMLElement {
     const section: HTMLElement = elementOf("section", "food-dishes", "");
     const search: HTMLInputElement = document.createElement("input");
     const list: HTMLElement = elementOf("div", "dish-list", "");
@@ -274,17 +253,10 @@ export function mealsSectionOf(
             .then(take)
             .catch((error: unknown): void => {
                 console.error(error);
-                list.replaceChildren(
-                    elementOf("p", "food-none", "The meals cannot be read"),
-                );
+                list.replaceChildren(elementOf("p", "food-none", "The meals cannot be read"));
             });
     };
-    const send: (
-        dish: Dish,
-        foods: string[],
-        short?: string,
-        grams?: (number | null)[],
-    ) => void = (
+    const send: (dish: Dish, foods: string[], short?: string, grams?: (number | null)[]) => void = (
         dish: Dish,
         foods: string[],
         short?: string,
@@ -308,9 +280,7 @@ export function mealsSectionOf(
         show();
     };
     const show: () => void = (): void => {
-        const taken: boolean = dishes.some(
-            (dish: Dish): boolean => dish.name.toLowerCase() === fresh.toLowerCase(),
-        );
+        const taken: boolean = dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === fresh.toLowerCase());
         if (taken) fresh = "";
         const shown: Dish[] = [
             ...(fresh === ""
@@ -331,25 +301,22 @@ export function mealsSectionOf(
         const rows: HTMLElement[] = shown.flatMap((dish: Dish): HTMLElement[] => {
             const key: string = dish.name.toLowerCase();
             const name: HTMLElement = dishNameOf(dish);
-            const remove: HTMLButtonElement = removeOf(
-                `Remove ${dish.name}`,
-                (): void => {
-                    if (dish.foods.length === 0) {
-                        fresh = "";
-                        show();
-                        return;
-                    }
-                    if (asked !== key) {
-                        asked = key;
-                        show();
-                        return;
-                    }
-                    asked = "";
-                    dishDelete(dish.name)
-                        .then(take)
-                        .catch((error: unknown): void => console.error(error));
-                },
-            );
+            const remove: HTMLButtonElement = removeOf(`Remove ${dish.name}`, (): void => {
+                if (dish.foods.length === 0) {
+                    fresh = "";
+                    show();
+                    return;
+                }
+                if (asked !== key) {
+                    asked = key;
+                    show();
+                    return;
+                }
+                asked = "";
+                dishDelete(dish.name)
+                    .then(take)
+                    .catch((error: unknown): void => console.error(error));
+            });
             const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
                 name,
                 dish.kcal,
@@ -376,27 +343,23 @@ export function mealsSectionOf(
                 "food-error",
                 "Not changed: it needs a name, and no other meal of mine may have it",
             );
-            const rename: HTMLInputElement = inlineFieldOf(
-                dish.name,
-                "Name",
-                (): void => {
-                    if (dish.foods.length === 0) {
-                        begin(rename.value);
-                        return;
-                    }
-                    detail.inert = true;
-                    dishRename(dish.name, rename.value)
-                        .then((meals: Dish[]): void => {
-                            open = mealNameOf(rename.value).toLowerCase();
-                            take(meals);
-                        })
-                        .catch((reason: unknown): void => {
-                            console.error(reason);
-                            error.hidden = false;
-                            detail.inert = false;
-                        });
-                },
-            );
+            const rename: HTMLInputElement = inlineFieldOf(dish.name, "Name", (): void => {
+                if (dish.foods.length === 0) {
+                    begin(rename.value);
+                    return;
+                }
+                detail.inert = true;
+                dishRename(dish.name, rename.value)
+                    .then((meals: Dish[]): void => {
+                        open = mealNameOf(rename.value).toLowerCase();
+                        take(meals);
+                    })
+                    .catch((reason: unknown): void => {
+                        console.error(reason);
+                        error.hidden = false;
+                        detail.inert = false;
+                    });
+            });
             const short: HTMLInputElement = inlineFieldOf(dish.short, "Short", (): void =>
                 send(dish, dish.foods, short.value, dish.standard),
             );
@@ -404,9 +367,7 @@ export function mealsSectionOf(
             facts.append(
                 elementOf("span", "food-fact", "Name"),
                 rename,
-                ...(dish.foods.length === 0
-                    ? []
-                    : [elementOf("span", "food-fact", "Short"), short]),
+                ...(dish.foods.length === 0 ? [] : [elementOf("span", "food-fact", "Short"), short]),
                 elementOf("span", "food-fact", "Foods"),
                 parts,
             );
@@ -423,9 +384,8 @@ export function mealsSectionOf(
                                 dish,
                                 dish.foods,
                                 dish.short,
-                                dish.standard.map(
-                                    (other: number | null, at: number): number | null =>
-                                        at === index ? typed : other,
+                                dish.standard.map((other: number | null, at: number): number | null =>
+                                    at === index ? typed : other,
                                 ),
                             ),
                     );
@@ -438,9 +398,7 @@ export function mealsSectionOf(
                             ? removeOf(`Remove ${name}`, (): void =>
                                   send(
                                       dish,
-                                      dish.foods.filter(
-                                          (other: string): boolean => other !== food,
-                                      ),
+                                      dish.foods.filter((other: string): boolean => other !== food),
                                   ),
                               )
                             : null,
@@ -458,12 +416,7 @@ export function mealsSectionOf(
                 const foods: HTMLElement = foodSearchOf({
                     pick: (food: Food): void => {
                         const added: string = `${food.name};${food.brand};${food.store}`;
-                        send(dish, [
-                            ...dish.foods.filter(
-                                (other: string): boolean => other !== added,
-                            ),
-                            added,
-                        ]);
+                        send(dish, [...dish.foods.filter((other: string): boolean => other !== added), added]);
                     },
                     meals: null,
                     products: true,
@@ -479,26 +432,19 @@ export function mealsSectionOf(
         });
         const typed: string = mealNameOf(search.value);
         const plus: HTMLElement[] =
-            typed === "" ||
-            dishes.some(
-                (dish: Dish): boolean => dish.name.toLowerCase() === typed.toLowerCase(),
-            )
+            typed === "" || dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === typed.toLowerCase())
                 ? []
                 : [newOf(typed)];
         list.replaceChildren(
             ...(naming ? [nameFormOf()] : []),
-            ...(shown.length > 0 || plus.length > 0
-                ? [listHeadOf("Meals", "kcal / meal"), ...rows, ...plus]
-                : []),
+            ...(shown.length > 0 || plus.length > 0 ? [listHeadOf("Meals", "kcal / meal"), ...rows, ...plus] : []),
             ...(dishes.length === 0 && fresh === "" && plus.length === 0 && !naming
                 ? [elementOf("p", "food-none", "No meals yet")]
                 : []),
         );
     };
     const newOf: (name: string) => HTMLElement = (name: string): HTMLElement => {
-        const button: HTMLButtonElement = buttonOf("picker-new", "", (): void =>
-            begin(name),
-        );
+        const button: HTMLButtonElement = buttonOf("picker-new", "", (): void => begin(name));
         button.replaceChildren(iconOf(Plus), `New meal “${name}”`);
         button.title = "New meal, its foods picked next";
         return button;

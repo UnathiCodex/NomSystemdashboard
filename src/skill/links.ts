@@ -39,8 +39,7 @@ export function folderLinkShow(link: HTMLAnchorElement, path: string): void {
     link.replaceChildren(shown);
     link.removeAttribute("target");
     if (path.startsWith(`${modulesFolder}/`))
-        link.href =
-            "/scripts?folder=" + encodeURIComponent(path.slice(modulesFolder.length + 1));
+        link.href = "/scripts?folder=" + encodeURIComponent(path.slice(modulesFolder.length + 1));
     else link.removeAttribute("href");
     link.hidden = path === "";
 }

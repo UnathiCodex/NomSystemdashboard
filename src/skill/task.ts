@@ -34,8 +34,7 @@ import type { Attempt } from "../../reader/skill.ts";
  * `Due today` also for a task due earlier.
  */
 export function stateTextOf(task: SkillTask, today: string): string {
-    if (task.due !== "")
-        return task.due <= today ? "Due today" : `Due ${dayTextOf(task.due, true)}`;
+    if (task.due !== "") return task.due <= today ? "Due today" : `Due ${dayTextOf(task.due, true)}`;
     if (task.ready) return "Ready";
     return task.done ? "Done" : "New";
 }
@@ -46,9 +45,7 @@ export function stateTextOf(task: SkillTask, today: string): string {
  */
 export function coldLabelOf(task: SkillTask): HTMLElement {
     const done: number = task.attempts.length;
-    const right: number = task.attempts.filter(
-        (attempt: Attempt): boolean => attempt.result === "right",
-    ).length;
+    const right: number = task.attempts.filter((attempt: Attempt): boolean => attempt.result === "right").length;
     return elementOf("span", "task-cold", `cold · ${done} done · ${right} right`);
 }
 
@@ -86,16 +83,11 @@ export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
     const summary: HTMLElement = elementOf("summary", "", "");
     const list: HTMLElement = elementOf("ol", "", "");
     history.className = "task-history";
-    summary.append(
-        ...(counted
-            ? iconWordsOf(History, String(task.attempts.length))
-            : [iconOf(History)]),
-    );
+    summary.append(...(counted ? iconWordsOf(History, String(task.attempts.length)) : [iconOf(History)]));
     summary.title = "History";
     summary.setAttribute(
         "aria-label",
-        `History, ${task.attempts.length} ` +
-            (task.attempts.length === 1 ? "attempt" : "attempts"),
+        `History, ${task.attempts.length} ` + (task.attempts.length === 1 ? "attempt" : "attempts"),
     );
     list.append(
         ...task.attempts.toReversed().map((attempt: Attempt): HTMLElement => {
@@ -152,11 +144,7 @@ function failShow(row: HTMLElement, error: unknown): void {
  * Opens the field for my comment on what went wrong below a task, focused:
  * Enter writes the attempt as wrong, also with no comment, Escape closes without writing.
  */
-function wrongShow(
-    row: HTMLElement,
-    task: SkillTask,
-    written: () => Promise<void>,
-): void {
+function wrongShow(row: HTMLElement, task: SkillTask, written: () => Promise<void>): void {
     const form: HTMLElement = row.querySelector(".task-form") as HTMLElement;
     const input: HTMLInputElement = document.createElement("input");
     input.type = "text";
@@ -165,13 +153,8 @@ function wrongShow(
     plainKeep(input);
     input.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (event.key === "Enter")
-            attemptWrite(
-                row,
-                task,
-                "wrong",
-                input.value.trim(),
-                written,
-                (error: unknown): void => failShow(row, error),
+            attemptWrite(row, task, "wrong", input.value.trim(), written, (error: unknown): void =>
+                failShow(row, error),
             );
         else if (event.key === "Escape") form.hidden = true;
     });
@@ -200,9 +183,7 @@ export function taskRowOf(
     const form: HTMLElement = elementOf("div", "task-form", "");
     const more: HTMLElement = menuOf([
         menuItemOf(Check, "Right", (): void =>
-            attemptWrite(row, task, "right", "", written, (error: unknown): void =>
-                failShow(row, error),
-            ),
+            attemptWrite(row, task, "right", "", written, (error: unknown): void => failShow(row, error)),
         ),
         menuItemOf(X, "Wrong", (): void => wrongShow(row, task, written)),
     ]);
@@ -211,24 +192,16 @@ export function taskRowOf(
     };
 
     form.hidden = true;
-    const done: Attempt | undefined = task.attempts.findLast(
-        (attempt: Attempt): boolean => attempt.day === today,
-    );
+    const done: Attempt | undefined = task.attempts.findLast((attempt: Attempt): boolean => attempt.day === today);
     row.append(
         ...(card
             ? []
             : [
                   elementOf("span", "task-state", stateTextOf(task, today)),
-                  elementOf(
-                      "span",
-                      "task-hint",
-                      "Right and Wrong once the solution is open",
-                  ),
+                  elementOf("span", "task-hint", "Right and Wrong once the solution is open"),
               ]),
         more,
-        ...(card && done !== undefined
-            ? [elementOf("span", "task-state", resultTextOf(done))]
-            : []),
+        ...(card && done !== undefined ? [elementOf("span", "task-state", resultTextOf(done))] : []),
         ...(card ? [] : historyOf(task, true)),
         form,
     );
@@ -272,9 +245,7 @@ export function judgeOf(
     const wrong: HTMLButtonElement = judgeButtonOf(X, "Wrong");
     const reason: HTMLElement = elementOf("div", "task-reason", "");
     const input: HTMLInputElement = document.createElement("input");
-    const done: Attempt | undefined = task.attempts.findLast(
-        (attempt: Attempt): boolean => attempt.day === today,
-    );
+    const done: Attempt | undefined = task.attempts.findLast((attempt: Attempt): boolean => attempt.day === today);
     const failed: (error: unknown) => void = (error: unknown): void => {
         console.error(error);
         reason.replaceChildren(elementOf("p", "", "Saving failed"), input);
@@ -312,10 +283,7 @@ export function judgeOf(
     right.disabled = !open;
     wrong.disabled = !open;
     right.setAttribute("aria-pressed", String(done?.result === "right"));
-    wrong.setAttribute(
-        "aria-pressed",
-        String(done !== undefined && done.result !== "right"),
-    );
+    wrong.setAttribute("aria-pressed", String(done !== undefined && done.result !== "right"));
     if (done !== undefined && done.error !== "") wrong.title = `Wrong: ${done.error}`;
     if (!open) {
         right.title = "Right once the solution is open";

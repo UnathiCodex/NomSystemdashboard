@@ -124,10 +124,7 @@ export const myName: string = process.env.NOM_NAME?.trim() ?? "";
 export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
     .split(",")
     .map((name: string): string => name.trim())
-    .filter(
-        (name: string): boolean =>
-            name !== "" && name.toLowerCase() !== myName.toLowerCase(),
-    );
+    .filter((name: string): boolean => name !== "" && name.toLowerCase() !== myName.toLowerCase());
 
 /**
  * Gives the folder of what the dashboards share in the box of a person
@@ -224,11 +221,7 @@ export const systemFiles: SystemFilesSources = {
  * Changed on request, when the semester's projects change.
  */
 const skillsOf: { [name: string]: string[] } = {
-    Vu: [
-        "NomProgramprojects/AsiaWok_Wokflow_2026",
-        "NomSystemdashboard",
-        "NomManageplannings/NomMasterplannings",
-    ],
+    Vu: ["NomProgramprojects/AsiaWok_Wokflow_2026", "NomSystemdashboard", "NomManageplannings/NomMasterplannings"],
     Sopha: ["NomSystemdashboard", "NomManageplannings/NomFrequencediary"],
 };
 
@@ -381,10 +374,7 @@ export const topics: { [category: string]: string } = {
  * an entry by the year of its start in Berlin time, a box by the year of its day.
  */
 export function topicFileOf(category: string, date: string, ending: string): string {
-    return join(
-        calendarRoot,
-        `${topics[category] ?? "Living/Living"}_${date.slice(0, 4)}${ending}`,
-    );
+    return join(calendarRoot, `${topics[category] ?? "Living/Living"}_${date.slice(0, 4)}${ending}`);
 }
 
 /**
@@ -393,10 +383,7 @@ export function topicFileOf(category: string, date: string, ending: string): str
  * any other in {@link skillingRoot}.
  */
 export function skillFileOf(name: string, ending: string): string {
-    return join(
-        /^[A-Z]+\d+_/.test(name) ? modulesRoot : skillingRoot,
-        `${name}${ending}`,
-    );
+    return join(/^[A-Z]+\d+_/.test(name) ? modulesRoot : skillingRoot, `${name}${ending}`);
 }
 
 /**

@@ -27,16 +27,7 @@
 import { isolateHistory } from "@codemirror/commands";
 import { diffArrays } from "diff";
 import jspreadsheet from "jspreadsheet-ce";
-import {
-    ArrowDown,
-    ArrowDownToLine,
-    ArrowUp,
-    ArrowUpToLine,
-    Save,
-    SaveOff,
-    Trash,
-    X,
-} from "lucide";
+import { ArrowDown, ArrowDownToLine, ArrowUp, ArrowUpToLine, Save, SaveOff, Trash, X } from "lucide";
 import { iconPut } from "../icons.ts";
 import { menuItemOf } from "../menu.ts";
 import { peopleCellLink } from "../persons.ts";
@@ -46,13 +37,7 @@ import "jspreadsheet-ce/dist/jspreadsheet.themes.css";
 import type { Line } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 import type { ArrayChange } from "diff";
-import type {
-    CellValue,
-    Column,
-    CustomEditor,
-    HorizontalAlign,
-    WorksheetInstance,
-} from "jspreadsheet-ce";
+import type { CellValue, Column, CustomEditor, HorizontalAlign, WorksheetInstance } from "jspreadsheet-ce";
 
 /**
  * A line of a table: begins with `|`, after indentation and the `>` of a quote.
@@ -87,9 +72,7 @@ export function tableOpen(
     follow: (event: MouseEvent) => boolean,
 ): void {
     const editorSave: HTMLElement = document.getElementById("editor-save") as HTMLElement;
-    const editorState: HTMLElement = document.getElementById(
-        "editor-state",
-    ) as HTMLElement;
+    const editorState: HTMLElement = document.getElementById("editor-state") as HTMLElement;
     const viewer: HTMLDivElement = document.createElement("div");
     const close: HTMLButtonElement = document.createElement("button");
     const state: HTMLSpanElement = document.createElement("span");
@@ -102,28 +85,18 @@ export function tableOpen(
 
     /** Shows the text of a cell rendered, as the note shows it in a table. */
     const cellShow = (cell: HTMLTableCellElement, value: string): void => {
-        const head: HTMLElement | null = render(
-            `| ${cellMarkdownOf(value)} |\n| --- |`,
-        ).querySelector("th");
+        const head: HTMLElement | null = render(`| ${cellMarkdownOf(value)} |\n| --- |`).querySelector("th");
         cell.classList.add("markdown");
         cell.replaceChildren(...(head?.childNodes ?? []));
     };
 
     const markdownCell: CustomEditor = {
-        createCell: (
-            cell: HTMLTableCellElement,
-            value: CellValue,
-            x: number,
-        ): HTMLTableCellElement => {
+        createCell: (cell: HTMLTableCellElement, value: CellValue, x: number): HTMLTableCellElement => {
             cellShow(cell, String(value));
             peopleCellLink(cell, heads[x] ?? "");
             return cell;
         },
-        updateCell: (
-            cell: HTMLTableCellElement,
-            value: CellValue | undefined,
-            x: number,
-        ): CellValue | undefined => {
+        updateCell: (cell: HTMLTableCellElement, value: CellValue | undefined, x: number): CellValue | undefined => {
             cellShow(cell, String(value ?? ""));
             peopleCellLink(cell, heads[x] ?? "");
             return value;
@@ -138,14 +111,9 @@ export function tableOpen(
             event: KeyboardEvent | MouseEvent | TouchEvent | undefined,
         ): void => {
             const input: HTMLTextAreaElement = document.createElement("textarea");
-            const room: number =
-                worksheet.content.getBoundingClientRect().right -
-                cell.getBoundingClientRect().left;
+            const room: number = worksheet.content.getBoundingClientRect().right - cell.getBoundingClientRect().left;
             input.className = "table-cell-input";
-            input.value =
-                event instanceof KeyboardEvent && event.key.length === 1
-                    ? ""
-                    : String(value);
+            input.value = event instanceof KeyboardEvent && event.key.length === 1 ? "" : String(value);
             input.style.minWidth = `${cell.offsetWidth}px`;
             input.style.maxWidth = `${Math.max(cell.offsetWidth, room - 12)}px`;
             input.onblur = (): void => worksheet.closeEditor(cell, true);
@@ -159,10 +127,7 @@ export function tableOpen(
             input.focus();
             input.setSelectionRange(input.value.length, input.value.length);
         },
-        closeEditor: (
-            cell: HTMLTableCellElement,
-            keep: boolean,
-        ): CellValue | undefined => {
+        closeEditor: (cell: HTMLTableCellElement, keep: boolean): CellValue | undefined => {
             const input: HTMLTextAreaElement | null = cell.querySelector("textarea");
             if (input === null) return undefined;
             input.onblur = null;
@@ -180,15 +145,9 @@ export function tableOpen(
     state.className = "table-viewer-state";
     save.className = "editor-save table-viewer-save";
     save.type = "button";
-    iconPut(
-        save,
-        view.state.readOnly ? SaveOff : Save,
-        view.state.readOnly ? "Read only" : "Save",
-    );
+    iconPut(save, view.state.readOnly ? SaveOff : Save, view.state.readOnly ? "Read only" : "Save");
     save.disabled = view.state.readOnly;
-    save.addEventListener("mousedown", (event: MouseEvent): void =>
-        event.preventDefault(),
-    );
+    save.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     save.addEventListener("click", (): void => {
         commit();
         editorSave.click();
@@ -222,9 +181,7 @@ export function tableOpen(
         oncopy: (): string => clipboardOf(sheet.getData(true)),
         worksheets: [
             {
-                data: lines
-                    .slice(2)
-                    .map((line: Line): string[] => paddedOf(cellsOf(line.text), count)),
+                data: lines.slice(2).map((line: Line): string[] => paddedOf(cellsOf(line.text), count)),
                 columns: heads.map((head: string, column: number): Column => ({
                     title: head,
                     type: markdownCell,
@@ -255,9 +212,7 @@ export function tableOpen(
         probe.className = "table-viewer-probe";
         body.append(probe);
         let widest: number = 0;
-        const values: string[] = lines
-            .slice(2)
-            .map((line: Line): string => cellsOf(line.text)[column] ?? "");
+        const values: string[] = lines.slice(2).map((line: Line): string => cellsOf(line.text)[column] ?? "");
         for (const value of [heads[column], ...values]) {
             cellShow(probe, value);
             widest = Math.max(widest, probe.getBoundingClientRect().width);
@@ -282,14 +237,9 @@ export function tableOpen(
                 count,
             ),
         );
-        const fresh: string[] = [
-            lineWritten(old[0], titles),
-            old[1],
-            ...rowsWritten(old.slice(2), data, count),
-        ];
+        const fresh: string[] = [lineWritten(old[0], titles), old[1], ...rowsWritten(old.slice(2), data, count)];
         let start: number = 0;
-        while (start < old.length && start < fresh.length && old[start] === fresh[start])
-            start++;
+        while (start < old.length && start < fresh.length && old[start] === fresh[start]) start++;
         let end: number = 0;
         while (
             end < old.length - start &&
@@ -333,9 +283,7 @@ export function tableOpen(
         const picked: [number, number] | null = cursorOf();
         const range: [number, number, number, number] | null = rangeOf();
         if (picked === null || range === null) return;
-        const cell: DOMRect = sheet
-            .getCellFromCoords(picked[0], picked[1])
-            .getBoundingClientRect();
+        const cell: DOMRect = sheet.getCellFromCoords(picked[0], picked[1]).getBoundingClientRect();
         const room: DOMRect = sheet.content.getBoundingClientRect();
         const fixed: HTMLElement = sheet.headers[0];
         const left: number = fixed.getBoundingClientRect().right;
@@ -344,16 +292,12 @@ export function tableOpen(
         const bottom: number = room.top + sheet.content.clientHeight;
         const across: boolean = range[0] === 0 && range[2] === count - 1;
         const down: boolean = range[1] === 0 && range[3] === rowCount() - 1;
-        const kept: [number, number] = [
-            sheet.content.scrollLeft,
-            sheet.content.scrollTop,
-        ];
+        const kept: [number, number] = [sheet.content.scrollLeft, sheet.content.scrollTop];
         requestAnimationFrame((): void => {
             if (across) sheet.content.scrollLeft = kept[0];
             if (down) sheet.content.scrollTop = kept[1];
         });
-        if (!across && picked[0] > 0 && cell.left < left)
-            sheet.content.scrollLeft -= left - cell.left;
+        if (!across && picked[0] > 0 && cell.left < left) sheet.content.scrollLeft -= left - cell.left;
         else if (!across && picked[0] > 0 && cell.right > right)
             sheet.content.scrollLeft += Math.min(cell.right - right, cell.left - left);
         if (!down && cell.top < top) sheet.content.scrollTop -= top - cell.top;
@@ -367,13 +311,9 @@ export function tableOpen(
      * or as the text of the cell's `data-x` and `data-y`.
      */
     function cursorOf(): [number, number] | null {
-        const picked:
-            | [number | string, number | string, number | string, number | string]
-            | null
-            | undefined = sheet.selectedCell;
-        return picked === null || picked === undefined
-            ? null
-            : [Number(picked[2]), Number(picked[3])];
+        const picked: [number | string, number | string, number | string, number | string] | null | undefined =
+            sheet.selectedCell;
+        return picked === null || picked === undefined ? null : [Number(picked[2]), Number(picked[3])];
     }
 
     /** Gives how many rows the table has, its head left out. */
@@ -381,9 +321,7 @@ export function tableOpen(
 
     /** Gives the range picked, `null` for none. */
     function rangeOf(): [number, number, number, number] | null {
-        return sheet.selectedCell === null || sheet.selectedCell === undefined
-            ? null
-            : sheet.getSelection();
+        return sheet.selectedCell === null || sheet.selectedCell === undefined ? null : sheet.getSelection();
     }
 
     const pickedHas = (row: number): boolean => {
@@ -433,10 +371,8 @@ export function tableOpen(
             }),
             menuItemOf(ArrowUp, "Move up", (): void => move(row, -1)),
             menuItemOf(ArrowDown, "Move down", (): void => move(row, 1)),
-            menuItemOf(
-                Trash,
-                first === last ? "Remove row" : `Remove ${last - first + 1} rows`,
-                (): void => remove(first, last),
+            menuItemOf(Trash, first === last ? "Remove row" : `Remove ${last - first + 1} rows`, (): void =>
+                remove(first, last),
             ),
         ];
         items[2].disabled = row === 0;
@@ -461,16 +397,14 @@ export function tableOpen(
         const end = (keep: boolean): void => {
             input.onblur = null;
             head.textContent = title;
-            if (keep && input.value.trim() !== title)
-                sheet.setHeader(column, input.value.trim());
+            if (keep && input.value.trim() !== title) sheet.setHeader(column, input.value.trim());
         };
         input.className = "table-cell-input";
         input.value = title;
         input.onblur = (): void => end(true);
         input.addEventListener("keydown", (event: KeyboardEvent): void => {
             event.stopPropagation();
-            if (event.key === "Enter" || event.key === "Escape")
-                end(event.key === "Enter");
+            if (event.key === "Enter" || event.key === "Escape") end(event.key === "Enter");
         });
         head.replaceChildren(input);
         input.focus();
@@ -496,8 +430,7 @@ export function tableOpen(
     };
 
     const keyDown = (event: KeyboardEvent): void => {
-        if (event.target instanceof HTMLInputElement || menu.matches(":popover-open"))
-            return;
+        if (event.target instanceof HTMLInputElement || menu.matches(":popover-open")) return;
         const key: string = event.key.toLowerCase();
         const cursor: [number, number] | null = cursorOf();
         if ((event.ctrlKey || event.metaKey) && key === "s") {
@@ -519,18 +452,14 @@ export function tableOpen(
             event.preventDefault();
             event.stopPropagation();
             sheet.openEditor(sheet.getCellFromCoords(cursor[0], cursor[1]), false);
-        } else if (
-            (event.key === "Delete" || event.key === "Backspace") &&
-            !view.state.readOnly
-        ) {
+        } else if ((event.key === "Delete" || event.key === "Backspace") && !view.state.readOnly) {
             event.preventDefault();
             event.stopPropagation();
             const [first, last]: [number, number] = pickedOf(cursor?.[1] ?? 0);
             if (typeof sheet.selectedRow !== "number")
                 sheet.setValue(
                     sheet.highlighted.map(
-                        (cell: { element: HTMLTableCellElement }): HTMLTableCellElement =>
-                            cell.element,
+                        (cell: { element: HTMLTableCellElement }): HTMLTableCellElement => cell.element,
                     ),
                     "",
                 );
@@ -552,44 +481,31 @@ export function tableOpen(
         commit();
         watch.disconnect();
         window.removeEventListener("keydown", keyDown, true);
-        jspreadsheet.destroy(
-            body as unknown as Parameters<typeof jspreadsheet.destroy>[0],
-            true,
-        );
+        jspreadsheet.destroy(body as unknown as Parameters<typeof jspreadsheet.destroy>[0], true);
         viewer.remove();
     };
 
     viewer.addEventListener(
         "contextmenu",
         (event: MouseEvent): void => {
-            const cell: HTMLElement | null = (event.target as Element).closest(
-                "tbody td[data-y]",
-            );
+            const cell: HTMLElement | null = (event.target as Element).closest("tbody td[data-y]");
             if (!body.contains(event.target as Node)) return;
             event.preventDefault();
             event.stopPropagation();
             if (cell === null || view.state.readOnly || editedOf() !== null) return;
             const row: number = Number(cell.dataset.y);
             const column: number = Number(cell.dataset.x ?? 0);
-            if (!pickedHas(row))
-                sheet.updateSelectionFromCoords(column, row, column, row);
+            if (!pickedHas(row)) sheet.updateSelectionFromCoords(column, row, column, row);
             menuShow(row, event.clientX, event.clientY);
         },
         true,
     );
     viewer.addEventListener("click", (event: MouseEvent): void => {
         const link: HTMLAnchorElement | null = (event.target as Element).closest("a");
-        if (
-            link !== null &&
-            follow(event) &&
-            !/^https?:/i.test(link.getAttribute("href") ?? "")
-        )
-            shut();
+        if (link !== null && follow(event) && !/^https?:/i.test(link.getAttribute("href") ?? "")) shut();
     });
     viewer.addEventListener("dblclick", (event: MouseEvent): void => {
-        const head: HTMLElement | null = (event.target as Element).closest(
-            "thead td[data-x]",
-        );
+        const head: HTMLElement | null = (event.target as Element).closest("thead td[data-x]");
         if (head !== null && !view.state.readOnly) headEdit(head, Number(head.dataset.x));
     });
     saveShow();
@@ -649,10 +565,7 @@ function clipboardOf(rows: CellValue[][]): string {
 
 /** Gives a row with as many cells as the table has columns. */
 function paddedOf(cells: string[], count: number): string[] {
-    return Array.from(
-        { length: count },
-        (_: unknown, column: number): string => cells[column] ?? "",
-    );
+    return Array.from({ length: count }, (_: unknown, column: number): string => cells[column] ?? "");
 }
 
 /**
@@ -682,8 +595,7 @@ function rowsWritten(old: string[], data: string[][], count: number): string[] {
 
     const lines: string[] = [];
     const empty: string =
-        `${/^[ \t>]*/.exec(old[0] ?? "")?.[0] ?? ""}| ` +
-        `${Array<string>(count).fill("").join(" | ")} |`;
+        `${/^[ \t>]*/.exec(old[0] ?? "")?.[0] ?? ""}| ` + `${Array<string>(count).fill("").join(" | ")} |`;
     let left: string[] = [];
     at = 0;
     for (const part of parts) {
@@ -694,8 +606,7 @@ function rowsWritten(old: string[], data: string[][], count: number): string[] {
             for (const key of part.value) {
                 const same: string | undefined = gone.get(key)?.shift();
                 const cells: string[] = key.split("\u0000");
-                if (same !== undefined)
-                    left = left.filter((line: string): boolean => line !== same);
+                if (same !== undefined) left = left.filter((line: string): boolean => line !== same);
                 lines.push(same ?? lineWritten(left.shift() ?? empty, cells));
             }
             left = [];
@@ -712,9 +623,7 @@ function rowsWritten(old: string[], data: string[][], count: number): string[] {
 function lineWritten(text: string, cells: string[]): string {
     return cells.reduce(
         (line: string, cell: string, column: number): string =>
-            (cellsOf(line)[column] ?? "") === cell
-                ? line
-                : cellWritten(line, column, cell),
+            (cellsOf(line)[column] ?? "") === cell ? line : cellWritten(line, column, cell),
         text,
     );
 }
@@ -735,10 +644,7 @@ function barsOf(text: string): number[] {
  */
 function cellsOf(text: string): string[] {
     const bars: number[] = barsOf(text);
-    const ends: number[] =
-        text.slice(bars[bars.length - 1] + 1).trim() === ""
-            ? bars
-            : [...bars, text.length];
+    const ends: number[] = text.slice(bars[bars.length - 1] + 1).trim() === "" ? bars : [...bars, text.length];
     return ends.slice(0, -1).map((bar: number, column: number): string =>
         text
             .slice(bar + 1, ends[column + 1])
@@ -771,15 +677,11 @@ function cellWritten(text: string, column: number, value: string): string {
         const old: string = text.slice(bars[column] + 1, bars[column + 1]);
         const before: string = old.trim() === "" ? " " : (/^\s*/.exec(old)?.[0] ?? "");
         const after: string = old.trim() === "" ? " " : (/\s*$/.exec(old)?.[0] ?? "");
-        return (
-            `${text.slice(0, bars[column] + 1)}${before}${escaped}${after}` +
-            text.slice(bars[column + 1])
-        );
+        return `${text.slice(0, bars[column] + 1)}${before}${escaped}${after}` + text.slice(bars[column + 1]);
     }
 
     let written: string = text.trimEnd();
     if (!written.endsWith("|") || written.endsWith("\\|")) written += " |";
-    for (let cells: number = barsOf(written).length - 1; cells < column; cells++)
-        written += "  |";
+    for (let cells: number = barsOf(written).length - 1; cells < column; cells++) written += "  |";
     return `${written} ${escaped} |`;
 }

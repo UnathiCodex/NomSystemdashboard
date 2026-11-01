@@ -24,21 +24,14 @@ import { breakableOf } from "../day/choices.ts";
 import { elementOf } from "../food/foods.ts";
 import "./overview.css";
 
-import type {
-    SkillModule,
-    SkillSection,
-    SkillTask,
-    Skilling,
-} from "../skill/attempts.ts";
+import type { SkillModule, SkillSection, SkillTask, Skilling } from "../skill/attempts.ts";
 
 /**
  * Tells the round of a section: `0` while I never learned it,
  * `Ready` once its Task has its runs spaced.
  */
 function roundOf(module: SkillModule, section: SkillSection): string {
-    const ready: boolean = module.tasks.some(
-        (task: SkillTask): boolean => task.id === section.cold && task.ready,
-    );
+    const ready: boolean = module.tasks.some((task: SkillTask): boolean => task.id === section.cold && task.ready);
     if (ready) return "Ready";
     return String(section.round);
 }
@@ -89,18 +82,12 @@ function groupOf(module: SkillModule, chapter: string): HTMLElement {
  * @param chapter - Name of the chapter, empty for the page of the module
  * @throws {Error} - When the reader cannot read the tasks or the course
  */
-export async function overviewShow(
-    place: HTMLElement,
-    module: string,
-    chapter: string,
-): Promise<void> {
+export async function overviewShow(place: HTMLElement, module: string, chapter: string): Promise<void> {
     const course: HTMLElement = place.querySelector(".overview-course") as HTMLElement;
     const list: HTMLElement = place.querySelector(".overview-list") as HTMLElement;
     const title: HTMLElement = place.querySelector(".overview-title") as HTMLElement;
     title.hidden = chapter !== "";
-    (title.querySelector(".folder-path") as HTMLElement).replaceChildren(
-        ...pathOf(module),
-    );
+    (title.querySelector(".folder-path") as HTMLElement).replaceChildren(...pathOf(module));
     (title.querySelector(".day-date") as HTMLElement).textContent = breakableOf(module);
     course.hidden = chapter !== "";
     list.hidden = chapter === "";
@@ -113,12 +100,7 @@ export async function overviewShow(
     const found: SkillModule | undefined = skilling.modules.find(
         (candidate: SkillModule): boolean => candidate.title === module,
     );
-    if (
-        found !== undefined &&
-        found.sections.some(
-            (section: SkillSection): boolean => section.chapter === chapter,
-        )
-    )
+    if (found !== undefined && found.sections.some((section: SkillSection): boolean => section.chapter === chapter))
         list.replaceChildren(groupOf(found, chapter));
     place.hidden = false;
 }
@@ -129,16 +111,9 @@ export async function overviewShow(
  *
  * @param chapter - Name of the chapter, empty for none
  */
-export function overviewTreeShow(
-    tree: HTMLElement,
-    module: string,
-    chapter: string,
-): void {
-    const picked: HTMLElement | null = tree.querySelector(
-        `.tree-module[data-module="${CSS.escape(module)}"]`,
-    );
+export function overviewTreeShow(tree: HTMLElement, module: string, chapter: string): void {
+    const picked: HTMLElement | null = tree.querySelector(`.tree-module[data-module="${CSS.escape(module)}"]`);
     const shown: HTMLElement | null =
-        picked?.querySelector(`.tree-chapter[data-chapter="${CSS.escape(chapter)}"]`) ??
-        null;
+        picked?.querySelector(`.tree-chapter[data-chapter="${CSS.escape(chapter)}"]`) ?? null;
     if (picked !== null && shown !== null) chapterShow(tree, picked, shown);
 }

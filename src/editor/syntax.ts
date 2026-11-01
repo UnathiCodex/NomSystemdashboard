@@ -57,8 +57,7 @@ function mathParse(cx: InlineContext, next: number, pos: number): number {
     if (next !== dollar) return -1;
 
     const rest: string = cx.slice(pos, cx.end);
-    const match: RegExpExecArray | null =
-        mathDisplayRule.exec(rest) ?? mathInlineRule.exec(rest);
+    const match: RegExpExecArray | null = mathDisplayRule.exec(rest) ?? mathInlineRule.exec(rest);
     if (match === null) return -1;
 
     return cx.addElement(cx.elt("InlineMath", pos, pos + match[0].length));
@@ -117,11 +116,7 @@ function emptyPointEnds(cx: BlockContext, line: Line): boolean {
  *   a paragraph ending before a still empty point.
  */
 const obsidianSyntax: MarkdownConfig = {
-    defineNodes: [
-        "InlineMath",
-        { name: "WikiLink", style: tags.link },
-        { name: "WikiEmbed", style: tags.link },
-    ],
+    defineNodes: ["InlineMath", { name: "WikiLink", style: tags.link }, { name: "WikiEmbed", style: tags.link }],
     parseInline: [
         { name: "InlineMath", parse: mathParse },
         { name: "WikiLink", parse: wikiLinkParse, before: "Link" },

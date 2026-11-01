@@ -46,22 +46,8 @@ import {
     sharedLinkOf,
     skillName,
 } from "./calendar.ts";
-import {
-    activeModulesRead,
-    chapterNameOf,
-    codeOf,
-    moduleContentsRead,
-    moduleFolderOf,
-} from "./notes.ts";
-import {
-    moduleIs,
-    modulesFolder,
-    projectOf,
-    skillFileOf,
-    skillLog,
-    vault,
-    topicFileOf,
-} from "./sources.ts";
+import { activeModulesRead, chapterNameOf, codeOf, moduleContentsRead, moduleFolderOf } from "./notes.ts";
+import { moduleIs, modulesFolder, projectOf, skillFileOf, skillLog, vault, topicFileOf } from "./sources.ts";
 
 import type { Stats } from "node:fs";
 import type { Entry, EntryFields, Link } from "./calendar.ts";
@@ -84,11 +70,7 @@ const yearLength: number = 366 * 24 * 60 * 60 * 1000;
 
 /** Reads the entries of the whole skill log, up to a year after now. */
 function logRead(): Entry[] {
-    return entriesRead(
-        skillLog,
-        "1970-01-01T00:00:00Z",
-        new Date(Date.now() + yearLength).toISOString(),
-    );
+    return entriesRead(skillLog, "1970-01-01T00:00:00Z", new Date(Date.now() + yearLength).toISOString());
 }
 
 /** Builds the path on the disk of a path from `NomWorkspace`. */
@@ -105,12 +87,9 @@ function diskOf(path: string): string {
 function fingerprintOf(file: string): string {
     const stats: Stats = statSync(file);
     const known: Fingerprint | undefined = fingerprints.get(file);
-    if (known?.size === stats.size && known.modified === stats.mtimeMs)
-        return known.fingerprint;
+    if (known?.size === stats.size && known.modified === stats.mtimeMs) return known.fingerprint;
 
-    const fingerprint: string = createHash("sha256")
-        .update(readFileSync(file))
-        .digest("hex");
+    const fingerprint: string = createHash("sha256").update(readFileSync(file)).digest("hex");
     fingerprints.set(file, {
         size: stats.size,
         modified: stats.mtimeMs,
@@ -126,12 +105,8 @@ function fingerprintOf(file: string): string {
  */
 export function skillFolderOf(code: string): string | undefined {
     const module: string | undefined =
-        moduleFolderOf(code) ??
-        activeModulesRead().find((name: string): boolean => codeOf(name) === code);
-    return (
-        projectOf(code) ??
-        (module === undefined ? undefined : `${modulesFolder}/${module}`)
-    );
+        moduleFolderOf(code) ?? activeModulesRead().find((name: string): boolean => codeOf(name) === code);
+    return projectOf(code) ?? (module === undefined ? undefined : `${modulesFolder}/${module}`);
 }
 
 /**
@@ -183,13 +158,8 @@ export function titleOf(
     },
     from: { title: string; titleLink: string } | null,
 ): [string, string] {
-    const title: string =
-        fields.category === skillName
-            ? skillTitleOf(fields.module, fields.type)
-            : fields.title;
-    const link: string = (
-        fields.titleLink ?? (from !== null && from.title === title ? from.titleLink : "")
-    )
+    const title: string = fields.category === skillName ? skillTitleOf(fields.module, fields.type) : fields.title;
+    const link: string = (fields.titleLink ?? (from !== null && from.title === title ? from.titleLink : ""))
         .replace(/[\r\n]+/g, " ")
         .trim();
     if (link !== "") return [title, link];
@@ -205,11 +175,7 @@ export function titleOf(
  *
  * @throws {Error} - For a skill entry without skill
  */
-export function calendarFileOf(
-    fields: { category: string; module: string },
-    date: string,
-    ending: string,
-): string {
+export function calendarFileOf(fields: { category: string; module: string }, date: string, ending: string): string {
     if (fields.category !== skillName) return topicFileOf(fields.category, date, ending);
     const name: string = skillFolderNameOf(fields.module);
     if (name === "") throw new Error("A skill entry needs its skill");
@@ -225,10 +191,7 @@ export function calendarFileOf(
 function chapterLinkIs(link: Link): boolean {
     const parts: string[] = link.path.split("/");
     return (
-        link.fingerprint === "" &&
-        moduleIs(link.path) &&
-        parts.length === 3 &&
-        /^\d{2}_/.test(parts[parts.length - 1])
+        link.fingerprint === "" && moduleIs(link.path) && parts.length === 3 && /^\d{2}_/.test(parts[parts.length - 1])
     );
 }
 
@@ -241,9 +204,7 @@ export function chaptersOf(entry: Entry): string[] {
     return [
         ...new Set([
             ...entry.chapters,
-            ...entry.links
-                .filter(chapterLinkIs)
-                .map((link: Link): string => chapterNameOf(link.path)),
+            ...entry.links.filter(chapterLinkIs).map((link: Link): string => chapterNameOf(link.path)),
         ]),
     ];
 }
@@ -266,10 +227,7 @@ function documentPathOf(module: string, document: string): string {
 export function documentLinksOf(links: Link[]): Link[] {
     return links.filter((link: Link): boolean => {
         const parts: string[] = link.path.split("/");
-        return (
-            !chapterLinkIs(link) &&
-            !(link.fingerprint === "" && moduleIs(link.path) && parts.length === 2)
-        );
+        return !chapterLinkIs(link) && !(link.fingerprint === "" && moduleIs(link.path) && parts.length === 2);
     });
 }
 
@@ -291,13 +249,9 @@ export function linksOf(code: string, documents: string[], links: Link[]): Link[
     if (folder === undefined) return [];
     const module: string = moduleIs(folder) ? folder.slice(modulesFolder.length + 1) : "";
     return [...new Set(documents)].map((document: string): Link => {
-        const path: string =
-            module === "" ? `${folder}/${document}` : documentPathOf(module, document);
-        const kept: Link | undefined = links.find(
-            (link: Link): boolean => link.path === path,
-        );
-        if (kept !== undefined && (kept.fingerprint !== "" || !existsSync(diskOf(path))))
-            return kept;
+        const path: string = module === "" ? `${folder}/${document}` : documentPathOf(module, document);
+        const kept: Link | undefined = links.find((link: Link): boolean => link.path === path);
+        if (kept !== undefined && (kept.fingerprint !== "" || !existsSync(diskOf(path)))) return kept;
         if (module === "" || !moduleContentsRead(module).documents.includes(document))
             throw new Error(`No document ${document} in ${code}`);
         return {
@@ -318,10 +272,7 @@ export function linksOf(code: string, documents: string[], links: Link[]): Link[
 function linksRepairOf(entry: Entry): Link[] {
     const folder: string | undefined = moduleFolderOf(entry.module);
     const repaired: Link[] = entry.links.map((link: Link): Link => {
-        if (
-            (link.fingerprint === "" && !chapterLinkIs(link) && !noteIs(link.path)) ||
-            existsSync(diskOf(link.path))
-        )
+        if ((link.fingerprint === "" && !chapterLinkIs(link) && !noteIs(link.path)) || existsSync(diskOf(link.path)))
             return link;
         const name: string = link.path.split("/").at(-1) ?? "";
         if (link.fingerprint === "" && noteIs(link.path)) {
@@ -329,18 +280,14 @@ function linksRepairOf(entry: Entry): Link[] {
                 folder === undefined
                     ? undefined
                     : moduleContentsRead(folder).documents.find(
-                          (document: string): boolean =>
-                              document.split("/").at(-1) === name,
+                          (document: string): boolean => document.split("/").at(-1) === name,
                       );
-            if (note !== undefined && folder !== undefined)
-                return { ...link, path: documentPathOf(folder, note) };
+            if (note !== undefined && folder !== undefined) return { ...link, path: documentPathOf(folder, note) };
             return link;
         }
         if (link.fingerprint === "") {
-            const chapter: string | undefined =
-                folder === undefined ? undefined : `${modulesFolder}/${folder}/${name}`;
-            if (chapter !== undefined && existsSync(diskOf(chapter)))
-                return { ...link, path: chapter };
+            const chapter: string | undefined = folder === undefined ? undefined : `${modulesFolder}/${folder}/${name}`;
+            if (chapter !== undefined && existsSync(diskOf(chapter))) return { ...link, path: chapter };
             return link;
         }
         const found: string | undefined =
@@ -348,11 +295,9 @@ function linksRepairOf(entry: Entry): Link[] {
                 ? undefined
                 : moduleContentsRead(folder).documents.find(
                       (document: string): boolean =>
-                          fingerprintOf(diskOf(documentPathOf(folder, document))) ===
-                          link.fingerprint,
+                          fingerprintOf(diskOf(documentPathOf(folder, document))) === link.fingerprint,
                   );
-        if (found !== undefined && folder !== undefined)
-            return { ...link, path: documentPathOf(folder, found) };
+        if (found !== undefined && folder !== undefined) return { ...link, path: documentPathOf(folder, found) };
         return link;
     });
     return repaired;
@@ -390,8 +335,7 @@ function folderRepair(file: string, entry: Entry): void {
     const given: string = entry.type === "" ? parts[1] : `${parts[1]} (${entry.type})`;
     const fields: EntryFields = {
         ...entry,
-        title:
-            entry.title === given ? skillTitleOf(entry.module, entry.type) : entry.title,
+        title: entry.title === given ? skillTitleOf(entry.module, entry.type) : entry.title,
         titleLink: skillFolderOf(entry.module) ?? entry.titleLink,
         start: new Date(entry.start),
         end: new Date(entry.end),
@@ -413,27 +357,17 @@ export function linksCheck(): void {
     const entries: Entry[] = logRead()
         .filter(
             (entry: Entry): boolean =>
-                entry.category === skillName &&
-                entry.editable &&
-                (entry.titleLink !== "" || entry.links.length > 0),
+                entry.category === skillName && entry.editable && (entry.titleLink !== "" || entry.links.length > 0),
         )
-        .sort((first: Entry, second: Entry): number =>
-            first.start.localeCompare(second.start),
-        );
+        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
     entries.forEach((entry: Entry): void => {
         const [file]: [string, Entry] = entryFind(skillLog, entry.id);
         folderRepair(file, entry);
         const links: Link[] = linksRepairOf(entry);
-        if (
-            links.some(
-                (link: Link, index: number): boolean =>
-                    link.path !== entry.links[index].path,
-            )
-        ) {
+        if (links.some((link: Link, index: number): boolean => link.path !== entry.links[index].path)) {
             propertiesPut(file, entry.id, [["attach", links]]);
             links.forEach((link: Link, index: number): void => {
-                if (link.path !== entry.links[index].path)
-                    repairPrint(entry, entry.links[index].path, link.path);
+                if (link.path !== entry.links[index].path) repairPrint(entry, entry.links[index].path, link.path);
             });
         }
     });
@@ -448,11 +382,7 @@ export function linksCheckStart(): void {
         try {
             linksCheck();
         } catch (error: unknown) {
-            console.error(
-                new Date().toISOString(),
-                "The check of the links failed",
-                error,
-            );
+            console.error(new Date().toISOString(), "The check of the links failed", error);
         }
         const now: Date = new Date();
         let next: Date = berlinInstantOf(berlinDateOf(now), checkHour);

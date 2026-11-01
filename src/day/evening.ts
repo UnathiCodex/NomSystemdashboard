@@ -64,9 +64,7 @@ function errorShow(error: unknown): void {
 async function boxesSave(): Promise<void> {
     clearTimeout(waiting);
     const day: string = shown;
-    const changed: Box[] = boxes.filter(
-        (box: Box): boolean => textOf(box) !== (saved.get(box.title) ?? ""),
-    );
+    const changed: Box[] = boxes.filter((box: Box): boolean => textOf(box) !== (saved.get(box.title) ?? ""));
     if (day === "" || changed.length === 0) return;
 
     for (const box of changed) {
@@ -93,9 +91,7 @@ export async function eveningShow(day: string): Promise<void> {
     const sections: { [title in SectionTitle]: string } = await sectionsLoad(day);
     if (day !== shown) return;
     boxes.forEach((box: Box): void => pointsShow(listOf(box), sections[box.title]));
-    saved = new Map(
-        boxes.map((box: Box): [SectionTitle, string] => [box.title, textOf(box)]),
-    );
+    saved = new Map(boxes.map((box: Box): [SectionTitle, string] => [box.title, textOf(box)]));
     document.getElementById("note-boxes-error")?.setAttribute("hidden", "");
 }
 
@@ -105,14 +101,10 @@ export async function eveningShow(day: string): Promise<void> {
  * folded at every start, see `.note-fold` in `note.css`.
  */
 function foldToggle(): void {
-    const folded: boolean = (
-        document.querySelector(".note-boxes") as HTMLElement
-    ).classList.toggle("note-folded");
+    const folded: boolean = (document.querySelector(".note-boxes") as HTMLElement).classList.toggle("note-folded");
     document
         .querySelectorAll(".note-fold")
-        .forEach((fold: Element): void =>
-            fold.setAttribute("aria-expanded", String(!folded)),
-        );
+        .forEach((fold: Element): void => fold.setAttribute("aria-expanded", String(!folded)));
 }
 
 /**
@@ -131,8 +123,7 @@ export function eveningStart(): void {
     });
     boxes.forEach((box: Box): void => {
         listOf(box).addEventListener("keydown", (event: KeyboardEvent): void => {
-            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s")
-                return;
+            if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "s") return;
             event.preventDefault();
             boxesSave().catch(errorShow);
         });

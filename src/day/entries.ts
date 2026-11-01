@@ -101,12 +101,7 @@ export type BoxFields = Partial<Online> & {
  */
 export function standardAddressOf(name: string): string {
     const local: string = searchTextOf(
-        spokenOf(name)
-            .toLowerCase()
-            .replace(/ä/g, "ae")
-            .replace(/ö/g, "oe")
-            .replace(/ü/g, "ue")
-            .replace(/ß/g, "ss"),
+        spokenOf(name).toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss"),
     )
         .replace(/[^a-z0-9]+/g, ".")
         .replace(/^\.|\.$/g, "");
@@ -118,11 +113,7 @@ export function standardAddressOf(name: string): string {
  *
  * @throws {Error} - When the reader does not take the request
  */
-async function requestSend(
-    method: string,
-    address: string,
-    body: object | null,
-): Promise<unknown> {
+async function requestSend(method: string, address: string, body: object | null): Promise<unknown> {
     const response: Response = await fetch(address, {
         method: method,
         body: body === null ? null : JSON.stringify(body),
@@ -136,12 +127,7 @@ async function requestSend(
  *
  * @throws {Error} - When the reader does not take the request
  */
-async function logSend(
-    calendar: Calendar,
-    method: string,
-    address: string,
-    body: object | null,
-): Promise<unknown> {
+async function logSend(calendar: Calendar, method: string, address: string, body: object | null): Promise<unknown> {
     const answer: unknown = await requestSend(method, address, body);
     calendar.getEventSourceById("log")?.refetch();
     return answer;

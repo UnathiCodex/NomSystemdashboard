@@ -142,13 +142,7 @@ class StepsWidget extends WidgetType {
 /**
  * Finds the steps of a solution, see the top of this file.
  */
-function solutionOf(
-    state: EditorState,
-    heading: Line,
-    start: Line,
-    to: number,
-    initial: number,
-): Solution {
+function solutionOf(state: EditorState, heading: Line, start: Line, to: number, initial: number): Solution {
     const first: number = start.number;
     const last: number = state.doc.lineAt(to).number;
     const steps: number[] = Array<number>(last - first + 1).fill(-1);
@@ -159,8 +153,7 @@ function solutionOf(
         enter: (node: SyntaxNodeRef): boolean => {
             if (
                 node.from >= start.from &&
-                (node.name === "ListItem" ||
-                    (node.node.parent?.name === "Document" && !lists.includes(node.name)))
+                (node.name === "ListItem" || (node.node.parent?.name === "Document" && !lists.includes(node.name)))
             ) {
                 for (
                     let number: number = state.doc.lineAt(node.from).number;
@@ -173,11 +166,7 @@ function solutionOf(
             return true;
         },
     });
-    for (
-        let index: number = steps.length - 1, next: number = count;
-        index >= 0;
-        index--
-    ) {
+    for (let index: number = steps.length - 1, next: number = count; index >= 0; index--) {
         if (steps[index] === -1) steps[index] = next;
         next = steps[index];
     }
@@ -207,11 +196,7 @@ export function foldedAt(state: EditorState, from: number): boolean {
  * Gives the first line of the solution of an Example, `null` for one without steps.
  */
 function exampleStartOf(state: EditorState, heading: Line, to: number): Line | null {
-    for (
-        let number: number = heading.number + 1;
-        number <= state.doc.lineAt(to).number;
-        number++
-    ) {
+    for (let number: number = heading.number + 1; number <= state.doc.lineAt(to).number; number++) {
         const line: Line = state.doc.line(number);
         if (stepRule.test(line.text)) return line;
     }
@@ -228,15 +213,10 @@ function solutionsOf(state: EditorState): Solution[] {
         const line: Line = state.doc.line(number);
         const example: boolean = exampleRule.test(line.text);
         const section: { from: number; to: number } | null =
-            example || solutionRule.test(line.text)
-                ? foldable(state, line.from, line.to)
-                : null;
+            example || solutionRule.test(line.text) ? foldable(state, line.from, line.to) : null;
         if (section === null || foldedAt(state, line.to)) continue;
-        const start: Line | null = example
-            ? exampleStartOf(state, line, section.to)
-            : state.doc.line(number + 1);
-        if (start !== null)
-            solutions.push(solutionOf(state, line, start, section.to, example ? 0 : 1));
+        const start: Line | null = example ? exampleStartOf(state, line, section.to) : state.doc.line(number + 1);
+        if (start !== null) solutions.push(solutionOf(state, line, start, section.to, example ? 0 : 1));
     }
     return solutions;
 }
@@ -250,11 +230,7 @@ function solutionsOf(state: EditorState): Solution[] {
  */
 export function exampleOpenOf(state: EditorState, heading: Line): boolean | null {
     if (!exampleRule.test(heading.text)) return null;
-    const section: { from: number; to: number } | null = foldable(
-        state,
-        heading.from,
-        heading.to,
-    );
+    const section: { from: number; to: number } | null = foldable(state, heading.from, heading.to);
     return (
         section === null ||
         exampleStartOf(state, heading, section.to) === null ||
@@ -266,9 +242,7 @@ export function exampleOpenOf(state: EditorState, heading: Line): boolean | null
  * Tells whether a transaction shows more steps, by `Next step` or `Show all`.
  */
 export function stepsMoreIs(transaction: Transaction): boolean {
-    return transaction.effects.some((effect: StateEffect<unknown>): boolean =>
-        effect.is(stepsMore),
-    );
+    return transaction.effects.some((effect: StateEffect<unknown>): boolean => effect.is(stepsMore));
 }
 
 /**
@@ -276,11 +250,7 @@ export function stepsMoreIs(transaction: Transaction): boolean {
  * each run of lines of hidden steps, from the end of the line above it,
  * so the lines go with their line breaks.
  */
-function hiddenOf(
-    state: EditorState,
-    solution: Solution,
-    shown: number,
-): { from: number; to: number }[] {
+function hiddenOf(state: EditorState, solution: Solution, shown: number): { from: number; to: number }[] {
     const ranges: { from: number; to: number }[] = [];
     solution.steps.forEach((step: number, index: number): void => {
         if (step < shown) return;
@@ -297,11 +267,7 @@ function hiddenOf(
  * Builds the hidden steps of the solutions and the buttons below each,
  * which stand outside the elements of its lines, see `wrap` in `./preview.ts`.
  */
-function decorationsOf(
-    state: EditorState,
-    solutions: Solution[],
-    shown: Map<number, number>,
-): DecorationSet {
+function decorationsOf(state: EditorState, solutions: Solution[], shown: Map<number, number>): DecorationSet {
     const decorations: Range<Decoration>[] = [];
     solutions.forEach((solution: Solution): void => {
         const ranges: { from: number; to: number }[] = hiddenOf(
@@ -315,11 +281,7 @@ function decorationsOf(
                 hidden.range(range.from, range.to),
             ),
         );
-        decorations.push(
-            Decoration.widget({ widget: new StepsWidget(), block: true, side: 1 }).range(
-                solution.to,
-            ),
-        );
+        decorations.push(Decoration.widget({ widget: new StepsWidget(), block: true, side: 1 }).range(solution.to));
     });
     return Decoration.set(decorations, true);
 }
@@ -333,8 +295,7 @@ function decorationsOf(
  */
 function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
     const clicks: StateEffect<More>[] = transaction.effects.filter(
-        (effect: StateEffect<unknown>): effect is StateEffect<More> =>
-            effect.is(stepsMore),
+        (effect: StateEffect<unknown>): effect is StateEffect<More> => effect.is(stepsMore),
     );
     if (
         clicks.length === 0 &&
@@ -355,15 +316,12 @@ function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
     const solutions: Solution[] = solutionsOf(state);
     clicks.forEach((click: StateEffect<More>): void => {
         const solution: Solution | undefined = solutions.find(
-            (candidate: Solution): boolean =>
-                candidate.heading < click.value.at && click.value.at <= candidate.to,
+            (candidate: Solution): boolean => candidate.heading < click.value.at && click.value.at <= candidate.to,
         );
         if (solution !== undefined)
             shown.set(
                 solution.heading,
-                click.value.all
-                    ? Infinity
-                    : (shown.get(solution.heading) ?? solution.initial) + 1,
+                click.value.all ? Infinity : (shown.get(solution.heading) ?? solution.initial) + 1,
             );
     });
     const head: number = state.selection.main.head;
@@ -371,13 +329,8 @@ function stepsUpdate(steps: Steps, transaction: Transaction): Steps {
         transaction.selection === undefined
             ? undefined
             : solutions.find((solution: Solution): boolean =>
-                  hiddenOf(
-                      state,
-                      solution,
-                      shown.get(solution.heading) ?? solution.initial,
-                  ).some(
-                      (range: { from: number; to: number }): boolean =>
-                          range.from < head && head <= range.to,
+                  hiddenOf(state, solution, shown.get(solution.heading) ?? solution.initial).some(
+                      (range: { from: number; to: number }): boolean => range.from < head && head <= range.to,
                   ),
               );
     if (entered !== undefined) shown.set(entered.heading, Infinity);
@@ -394,10 +347,7 @@ const hiddenSteps: StateField<Steps> = StateField.define<Steps>({
     }),
     update: stepsUpdate,
     provide: (field: StateField<Steps>): Extension =>
-        EditorView.decorations.from(
-            field,
-            (value: Steps): DecorationSet => value.decorations,
-        ),
+        EditorView.decorations.from(field, (value: Steps): DecorationSet => value.decorations),
 });
 
 /**
@@ -405,9 +355,7 @@ const hiddenSteps: StateField<Steps> = StateField.define<Steps>({
  * where it would stand at the end of the hidden steps after it, which go on that line,
  * like after End there: what I type then shows where I type it.
  */
-function endAvoid(
-    transaction: Transaction,
-): TransactionSpec | readonly TransactionSpec[] {
+function endAvoid(transaction: Transaction): TransactionSpec | readonly TransactionSpec[] {
     if (transaction.selection === undefined || transaction.docChanged) return transaction;
     const ends: Map<number, number> = new Map();
     transaction.startState
@@ -420,20 +368,11 @@ function endAvoid(
             },
         );
     const selection: EditorSelection = transaction.selection;
-    const moved: SelectionRange[] = selection.ranges.map(
-        (range: SelectionRange): SelectionRange => {
-            const start: number | undefined = range.empty
-                ? ends.get(range.head)
-                : undefined;
-            return start === undefined ? range : EditorSelection.cursor(start);
-        },
-    );
-    if (
-        moved.every(
-            (range: SelectionRange, index: number): boolean =>
-                range === selection.ranges[index],
-        )
-    )
+    const moved: SelectionRange[] = selection.ranges.map((range: SelectionRange): SelectionRange => {
+        const start: number | undefined = range.empty ? ends.get(range.head) : undefined;
+        return start === undefined ? range : EditorSelection.cursor(start);
+    });
+    if (moved.every((range: SelectionRange, index: number): boolean => range === selection.ranges[index]))
         return transaction;
     return [
         transaction,
@@ -448,7 +387,4 @@ function endAvoid(
  * The steps of the solutions of a note,
  * with the cursor kept at the end of the last step shown, see {@link endAvoid}.
  */
-export const solutionSteps: Extension = [
-    hiddenSteps,
-    EditorState.transactionFilter.of(endAvoid),
-];
+export const solutionSteps: Extension = [hiddenSteps, EditorState.transactionFilter.of(endAvoid)];

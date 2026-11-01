@@ -40,14 +40,7 @@ const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];
  * Roles a line of a list names a person by, see `responsibleOf` in `./editor/preview.ts`.
  * TUM Campus Straubing has a rector in place of a dean.
  */
-export const peopleRoles: string[] = [
-    "Dean",
-    "Vice Dean",
-    "Rector",
-    "Prorector",
-    "Head",
-    "Vice Head",
-];
+export const peopleRoles: string[] = ["Dean", "Vice Dean", "Rector", "Prorector", "Head", "Vice Head"];
 
 /**
  * What parts names in a text besides a line break `<br>`:
@@ -76,10 +69,7 @@ export const valueDot: string = "\u2002·\u2002";
  * or the values of a summary, apart by `parting`, the comma of its file,
  * the line going on after it where it is too long.
  */
-export function dottedOf(
-    names: (string | Node)[],
-    parting: string = valueDot,
-): (string | Node)[] {
+export function dottedOf(names: (string | Node)[], parting: string = valueDot): (string | Node)[] {
     return names.flatMap((name: string | Node, index: number): (string | Node)[] => {
         if (index === 0) return [name];
         const dot: HTMLSpanElement = document.createElement("span");
@@ -103,10 +93,7 @@ export function spokenOf(name: string): string {
  * `undefined` for nobody of `Persons.md`, like a group.
  */
 export function personOf(persons: Person[], name: string): Person | undefined {
-    return persons.find(
-        (person: Person): boolean =>
-            person.name === name || spokenOf(person.name) === name,
-    );
+    return persons.find((person: Person): boolean => person.name === name || spokenOf(person.name) === name);
 }
 
 /**
@@ -114,10 +101,7 @@ export function personOf(persons: Person[], name: string): Person | undefined {
  * see `rowShow` in `./editor/preview.ts`.
  */
 export function personRowAddressOf(person: Person): string {
-    return (
-        `/edit?file=${encodeURIComponent(personsPath)}` +
-        `&row=${encodeURIComponent(person.name)}`
-    );
+    return `/edit?file=${encodeURIComponent(personsPath)}` + `&row=${encodeURIComponent(person.name)}`;
 }
 
 /**
@@ -145,13 +129,10 @@ function namesLink(cell: HTMLElement, persons: Person[]): void {
         .forEach((node: ChildNode): void => {
             const parts: string[] = (node.textContent ?? "").split(namesParting);
             node.replaceWith(
-                ...parts.map(
-                    (part: string, index: number): string | HTMLAnchorElement => {
-                        const person: Person | undefined =
-                            index % 2 === 0 ? personOf(persons, part) : undefined;
-                        return person === undefined ? part : personLinkOf(person, part);
-                    },
-                ),
+                ...parts.map((part: string, index: number): string | HTMLAnchorElement => {
+                    const person: Person | undefined = index % 2 === 0 ? personOf(persons, part) : undefined;
+                    return person === undefined ? part : personLinkOf(person, part);
+                }),
             );
         });
 }
@@ -172,20 +153,16 @@ export function peopleCellLink(cell: HTMLElement, head: string): void {
  * of rendered Markdown into links, see `blockRender` in `./editor/preview.ts`.
  */
 export function peopleLink(block: HTMLElement): void {
-    block
-        .querySelectorAll<HTMLTableElement>("table")
-        .forEach((table: HTMLTableElement): void => {
-            const heads: string[] = [...(table.rows[0]?.cells ?? [])].map(
-                (head: HTMLTableCellElement): string => head.textContent ?? "",
-            );
-            [...table.rows].slice(1).forEach((row: HTMLTableRowElement): void => {
-                [...row.cells].forEach(
-                    (cell: HTMLTableCellElement, column: number): void => {
-                        peopleCellLink(cell, heads[column] ?? "");
-                    },
-                );
+    block.querySelectorAll<HTMLTableElement>("table").forEach((table: HTMLTableElement): void => {
+        const heads: string[] = [...(table.rows[0]?.cells ?? [])].map(
+            (head: HTMLTableCellElement): string => head.textContent ?? "",
+        );
+        [...table.rows].slice(1).forEach((row: HTMLTableRowElement): void => {
+            [...row.cells].forEach((cell: HTMLTableCellElement, column: number): void => {
+                peopleCellLink(cell, heads[column] ?? "");
             });
         });
+    });
 }
 
 /**
@@ -193,22 +170,13 @@ export function peopleLink(block: HTMLElement): void {
  * as `Persons.md` holds it, with the address of the entry only while that is a real one,
  * not one ending in `@invalid`, see `standardAddressOf` in `./day/entries.ts`.
  */
-export function personEditOf(
-    persons: Person[],
-    name: string,
-    address: string,
-): PersonEdit {
+export function personEditOf(persons: Person[], name: string, address: string): PersonEdit {
     const person: Person | undefined = personOf(persons, name);
     return {
         name: person?.name ?? name,
         title: person?.title ?? "",
         link: person?.link ?? "",
-        mail:
-            person !== undefined && person.mail !== ""
-                ? person.mail
-                : address.endsWith("@invalid")
-                  ? ""
-                  : address,
+        mail: person !== undefined && person.mail !== "" ? person.mail : address.endsWith("@invalid") ? "" : address,
     };
 }
 

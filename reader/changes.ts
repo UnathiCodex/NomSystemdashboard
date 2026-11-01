@@ -62,22 +62,18 @@ export function changesWatch(): void {
     systemRoots
         .filter((root: string): boolean => existsSync(root))
         .forEach((root: string): void => {
-            watch(
-                root,
-                { recursive: true },
-                (_event: WatchEventType, name: string | null): void => {
-                    if (name !== null && join(root, name) === devicesFile) return;
-                    version += 1;
-                    clearTimeout(waiting);
-                    waiting = setTimeout(
-                        (): void =>
-                            pages.forEach((page: ServerResponse): void => {
-                                page.write("data: changed\n\n");
-                            }),
-                        quiet,
-                    );
-                },
-            );
+            watch(root, { recursive: true }, (_event: WatchEventType, name: string | null): void => {
+                if (name !== null && join(root, name) === devicesFile) return;
+                version += 1;
+                clearTimeout(waiting);
+                waiting = setTimeout(
+                    (): void =>
+                        pages.forEach((page: ServerResponse): void => {
+                            page.write("data: changed\n\n");
+                        }),
+                    quiet,
+                );
+            });
         });
 }
 

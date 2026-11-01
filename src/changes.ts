@@ -33,8 +33,7 @@ let lost: boolean = false;
 export function changesFollow(again: () => void): void {
     followers.push(again);
     if (source !== null) return;
-    const loadAll: () => void = (): void =>
-        followers.forEach((follower: () => void): void => follower());
+    const loadAll: () => void = (): void => followers.forEach((follower: () => void): void => follower());
     source = new EventSource("/api/changes");
     source.addEventListener("message", loadAll);
     source.addEventListener("error", (): void => {

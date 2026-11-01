@@ -141,11 +141,7 @@ export async function mineLoad(): Promise<Mine> {
  * @throws {Error} - When the reader does not take it,
  *   like one without parts or with the name of another
  */
-export async function workoutSend(
-    name: string,
-    parts: Part[],
-    old?: string,
-): Promise<Mine> {
+export async function workoutSend(name: string, parts: Part[], old?: string): Promise<Mine> {
     return await answerOf<Mine>(
         await fetch("/api/sport/workouts", {
             method: "POST",
@@ -169,9 +165,7 @@ export async function workoutDelete(name: string): Promise<Mine> {
  * @throws {Error} - When the text is no link to a video or YouTube does not answer
  */
 export async function videoLookup(link: string): Promise<VideoFound> {
-    return await answerOf<VideoFound>(
-        await fetch(`/api/sport/video?link=${encodeURIComponent(link)}`),
-    );
+    return await answerOf<VideoFound>(await fetch(`/api/sport/video?link=${encodeURIComponent(link)}`));
 }
 
 /**
@@ -181,10 +175,7 @@ export async function videoLookup(link: string): Promise<VideoFound> {
  * @returns All of mine after
  * @throws {Error} - When the reader does not take it, like one without title
  */
-export async function videoSend(
-    video: Omit<Video, "kcal">,
-    before?: { title: string; link: string },
-): Promise<Mine> {
+export async function videoSend(video: Omit<Video, "kcal">, before?: { title: string; link: string }): Promise<Mine> {
     return await answerOf<Mine>(
         await fetch("/api/sport/videos", {
             method: "POST",
@@ -249,7 +240,5 @@ export async function exerciseDelete(exercise: {
         reps: exercise.reps,
         kg: exercise.kg,
     });
-    return await answerOf<Mine>(
-        await fetch(`/api/sport/exercises?${query}`, { method: "DELETE" }),
-    );
+    return await answerOf<Mine>(await fetch(`/api/sport/exercises?${query}`, { method: "DELETE" }));
 }

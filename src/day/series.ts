@@ -59,16 +59,7 @@
  * The dialog of one of its boxes changes that box alone.
  */
 
-import {
-    breakableOf,
-    choiceOf,
-    choicesOf,
-    fileShow,
-    pairOf,
-    partFieldOf,
-    rowOf,
-    searchOf,
-} from "./choices.ts";
+import { breakableOf, choiceOf, choicesOf, fileShow, pairOf, partFieldOf, rowOf, searchOf } from "./choices.ts";
 import {
     boxTimesOf,
     dateFieldStart,
@@ -92,22 +83,8 @@ import {
     renameSend,
     standardFirst,
 } from "./places.ts";
-import {
-    boxAdd,
-    boxDrop,
-    boxLog,
-    boxRepeat,
-    boxSubmit,
-    boxUndo,
-    boxUniversity,
-} from "./entries.ts";
-import {
-    boxOpenEdit,
-    dayCalendarOf,
-    entryBoxOf,
-    entryOpenFromBox,
-    topicFileOf,
-} from "./categories.ts";
+import { boxAdd, boxDrop, boxLog, boxRepeat, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
+import { boxOpenEdit, dayCalendarOf, entryBoxOf, entryOpenFromBox, topicFileOf } from "./categories.ts";
 import { onlineRowOf, withRowOf } from "./attendance.ts";
 import { boxActionsOf } from "./actions.ts";
 import { boxesFetch } from "./boxes.ts";
@@ -122,18 +99,7 @@ import { menuAnchor, menuItemOf } from "../menu.ts";
 import { readerAsk } from "../reader.ts";
 import { folderLinkShow, modulesFolder } from "../skill/links.ts";
 import { personsKept, personsRename } from "../persons.ts";
-import {
-    ArrowRight,
-    Calendar,
-    CalendarMinus,
-    CalendarOff,
-    Check,
-    ChevronDown,
-    Pencil,
-    Plus,
-    Trash,
-    X,
-} from "lucide";
+import { ArrowRight, Calendar, CalendarMinus, CalendarOff, Check, ChevronDown, Pencil, Plus, Trash, X } from "lucide";
 import "./series.css";
 
 import type { Box, PlanDay } from "./boxes.ts";
@@ -296,9 +262,7 @@ let extraTyped: Extra | null = null;
  * The session of the group of the form being changed alone, see {@link sessionRowOf},
  * `null` while none is.
  */
-let sessionTyped:
-    | (Pick<Session, "id" | "location"> & Pick<Slot, "start" | "end"> & { day: string })
-    | null = null;
+let sessionTyped: (Pick<Session, "id" | "location"> & Pick<Slot, "start" | "end"> & { day: string }) | null = null;
 
 /** Of the exams, the kind I gave the date being typed, empty while I gave none. */
 let kindTyped: string = "";
@@ -444,11 +408,7 @@ export function weekdayNameOf(weekday: number, whole: boolean): string {
 
 /** Writes the name of a day of the form of a series short, see {@link slotRowsOf}. */
 function dayNameOf(weekday: number): string {
-    return weekday === monthly
-        ? "Month"
-        : weekday === yearly
-          ? "Year"
-          : weekdayNameOf(weekday, false);
+    return weekday === monthly ? "Month" : weekday === yearly ? "Year" : weekdayNameOf(weekday, false);
 }
 
 /**
@@ -466,11 +426,7 @@ export function roomOf(line: string): string {
  * a skill box of a numbered type with its number.
  */
 export function seriesHas(box: Box): boolean {
-    return (
-        box.category === skillName &&
-        numberedTypes.includes(box.type) &&
-        box.number !== ""
-    );
+    return box.category === skillName && numberedTypes.includes(box.type) && box.number !== "";
 }
 
 /** Tells whether a start and an end are both a time, the start before the end. */
@@ -487,14 +443,10 @@ export function daysReady(days: Days): boolean {
     return (
         days.slots.every(
             (slot: Slot): boolean =>
-                slot.weekday > 0 &&
-                (slot.minutes === undefined ? timesReady(slot) : slot.minutes > 0),
+                slot.weekday > 0 && (slot.minutes === undefined ? timesReady(slot) : slot.minutes > 0),
         ) &&
-        new Set(days.slots.map((slot: Slot): number => slot.weekday)).size ===
-            days.slots.length &&
-        days.extras.every(
-            (extra: Extra): boolean => extra.day !== "" && timesReady(extra),
-        ) &&
+        new Set(days.slots.map((slot: Slot): number => slot.weekday)).size === days.slots.length &&
+        days.extras.every((extra: Extra): boolean => extra.day !== "" && timesReady(extra)) &&
         days.first !== "" &&
         days.last !== "" &&
         days.first <= days.last
@@ -508,17 +460,15 @@ export function daysReady(days: Days): boolean {
  */
 function daysMove(days: Days, from: number, to: number): void {
     const move: (day: string) => string = (day: string): string =>
-        from !== 0 && day !== "" && weekdayOf(day) === from
-            ? dayAdd(day, to - from)
-            : day;
+        from !== 0 && day !== "" && weekdayOf(day) === from ? dayAdd(day, to - from) : day;
     days.first = move(days.first);
     days.last = move(days.last);
     days.times = Object.fromEntries(
         Object.entries(days.times).map(
-            ([day, times]: [string, Pick<Slot, "start" | "end">]): [
-                string,
-                Pick<Slot, "start" | "end">,
-            ] => [move(day), times],
+            ([day, times]: [string, Pick<Slot, "start" | "end">]): [string, Pick<Slot, "start" | "end">] => [
+                move(day),
+                times,
+            ],
         ),
     );
 }
@@ -544,9 +494,7 @@ function fieldOf(
     if (kind === "time-field") timeFieldStart(input);
     else dateFieldStart(input);
     input.addEventListener("input", (): void => {
-        take(
-            kind === "time-field" ? timeFieldRead(input) : (dateParse(input.value) ?? ""),
-        );
+        take(kind === "time-field" ? timeFieldRead(input) : (dateParse(input.value) ?? ""));
         changed();
     });
     return input;
@@ -565,21 +513,17 @@ function rangeOf(from: HTMLInputElement, to: HTMLInputElement): HTMLElement {
 }
 
 /** Makes the fields of the times of a slot, an extra or a box side by side. */
-function timesRangeOf(
-    times: Pick<Slot, "start" | "end">,
-    changed: () => void,
-): HTMLElement {
-    const [start, end]: HTMLInputElement[] = (["start", "end"] as const).map(
-        (key: "start" | "end"): HTMLInputElement =>
-            fieldOf(
-                "time-field",
-                times[key],
-                key === "start" ? "Start" : "End",
-                (time: string): void => {
-                    times[key] = time;
-                },
-                changed,
-            ),
+function timesRangeOf(times: Pick<Slot, "start" | "end">, changed: () => void): HTMLElement {
+    const [start, end]: HTMLInputElement[] = (["start", "end"] as const).map((key: "start" | "end"): HTMLInputElement =>
+        fieldOf(
+            "time-field",
+            times[key],
+            key === "start" ? "Start" : "End",
+            (time: string): void => {
+                times[key] = time;
+            },
+            changed,
+        ),
     );
     return rangeOf(start, end);
 }
@@ -612,17 +556,11 @@ export function slotRowsOf(
     const toggles: HTMLElement = elementOf("span", "series-weekdays", "");
     toggles.append(
         ...shown.map((weekday: number): HTMLButtonElement => {
-            const index: number = days.slots.findIndex(
-                (slot: Slot): boolean => slot.weekday === weekday,
-            );
-            const toggle: HTMLButtonElement = buttonOf(
-                "series-weekday",
-                dayNameOf(weekday),
-                (): void => {
-                    slotToggle(days, weekday);
-                    formFill();
-                },
-            );
+            const index: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
+            const toggle: HTMLButtonElement = buttonOf("series-weekday", dayNameOf(weekday), (): void => {
+                slotToggle(days, weekday);
+                formFill();
+            });
             toggle.setAttribute("aria-pressed", String(index !== -1));
             return toggle;
         }),
@@ -659,12 +597,8 @@ export function slotRowsOf(
  * The slots stay in the order of their weekdays, each with its `before`.
  */
 function slotToggle(days: Days, weekday: number): void {
-    const index: number = days.slots.findIndex(
-        (slot: Slot): boolean => slot.weekday === weekday,
-    );
-    const empty: number = days.slots.findIndex(
-        (slot: Slot): boolean => slot.weekday === 0 || slot.weekday >= monthly,
-    );
+    const index: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
+    const empty: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === 0 || slot.weekday >= monthly);
     if (weekday >= monthly && index === -1) {
         days.slots = [{ ...days.slots[0], weekday: weekday }];
         days.before = [0];
@@ -676,23 +610,17 @@ function slotToggle(days: Days, weekday: number): void {
             weekday: weekday,
             start: days.slots[0]?.start ?? "",
             end: days.slots[0]?.end ?? "",
-            ...(days.slots[0]?.minutes === undefined
-                ? {}
-                : { minutes: days.slots[0].minutes }),
+            ...(days.slots[0]?.minutes === undefined ? {} : { minutes: days.slots[0].minutes }),
         });
         days.before.push(freed?.[1] ?? 0);
     } else if (days.slots.length > 1) {
-        if ((days.before[index] ?? 0) !== 0)
-            slotsFreed.push([weekday, days.before[index]]);
+        if ((days.before[index] ?? 0) !== 0) slotsFreed.push([weekday, days.before[index]]);
         days.slots.splice(index, 1);
         days.before.splice(index, 1);
     }
     const pairs: [Slot, number][] = days.slots
         .map((slot: Slot, at: number): [Slot, number] => [slot, days.before[at] ?? 0])
-        .sort(
-            (first: [Slot, number], second: [Slot, number]): number =>
-                first[0].weekday - second[0].weekday,
-        );
+        .sort((first: [Slot, number], second: [Slot, number]): number => first[0].weekday - second[0].weekday);
     days.slots = pairs.map(([slot]: [Slot, number]): Slot => slot);
     days.before = pairs.map(([, before]: [Slot, number]): number => before);
 }
@@ -763,37 +691,22 @@ export function tallyOf(count: number, icon: IconNode, words: string): HTMLEleme
  * A tap opens and closes the list below it.
  */
 function summaryOf(planned: Planned[], toggle: () => void): HTMLButtonElement {
-    const kept: Planned[] = planned.filter(
-        (box: Planned): boolean => box.change !== "removed",
-    );
+    const kept: Planned[] = planned.filter((box: Planned): boolean => box.change !== "removed");
     const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
-    const counted: (keep: (box: Planned) => boolean) => number = (
-        keep: (box: Planned) => boolean,
-    ): number => planned.filter(keep).length;
+    const counted: (keep: (box: Planned) => boolean) => number = (keep: (box: Planned) => boolean): number =>
+        planned.filter(keep).length;
     const line: HTMLButtonElement = document.createElement("button");
     // How many each change makes, none for none.
-    const parts: string[] = [...(had ? ["new"] : []), "changed", "removed"].flatMap(
-        (change: string): string[] => {
-            const count: number = counted(
-                (box: Planned): boolean => box.change === change,
-            );
-            return count === 0 ? [] : [`${count} ${change}`];
-        },
-    );
+    const parts: string[] = [...(had ? ["new"] : []), "changed", "removed"].flatMap((change: string): string[] => {
+        const count: number = counted((box: Planned): boolean => box.change === change);
+        return count === 0 ? [] : [`${count} ${change}`];
+    });
     const states: [number, IconNode, string][] = [
+        [counted((box: Planned): boolean => box.change !== "removed" && box.state === "done"), Check, "done"],
         [
             counted(
                 (box: Planned): boolean =>
-                    box.change !== "removed" && box.state === "done",
-            ),
-            Check,
-            "done",
-        ],
-        [
-            counted(
-                (box: Planned): boolean =>
-                    box.change !== "removed" &&
-                    (box.state === "dropped" || box.state === "university"),
+                    box.change !== "removed" && (box.state === "dropped" || box.state === "university"),
             ),
             X,
             "skipped or cancelled",
@@ -805,9 +718,7 @@ function summaryOf(planned: Planned[], toggle: () => void): HTMLButtonElement {
     line.setAttribute("aria-expanded", String(listOpened));
     line.append(
         tallyOf(kept.length, Calendar, kept.length === 1 ? "entry" : "entries"),
-        ...parts.map((part: string): HTMLElement =>
-            elementOf("span", "entry-parted", part),
-        ),
+        ...parts.map((part: string): HTMLElement => elementOf("span", "entry-parted", part)),
         ...states.map(([count, icon, words]: [number, IconNode, string]): HTMLElement => {
             const part: HTMLElement = tallyOf(count, icon, words);
             part.classList.add("entry-parted");
@@ -867,17 +778,12 @@ async function seriesRefresh(): Promise<void> {
  * @throws {Error} - When the reader cannot answer
  */
 async function boxShow(box: Box): Promise<void> {
-    const entry: HTMLDialogElement = document.getElementById(
-        "entry",
-    ) as HTMLDialogElement;
+    const entry: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
     if (entry.open && entryBack === null) entryBack = entryBoxOf();
     if (entry.open) entry.close();
     if (box.editable) await boxOpenEdit(box);
     else if (box.state === "open") {
-        const [start, end]: [Date, Date] = boxTimesOf(
-            box,
-            new Date(`${box.day}T12:00:00`),
-        );
+        const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
         await entryOpenFromBox(box, start, end);
     }
     if (entry.open) entry.dataset.over = "";
@@ -920,9 +826,7 @@ async function boxesLoad(planned: Planned[]): Promise<void> {
                   .flatMap((plan: PlanDay): Box[] => plan.boxes)
                   .filter((box: Box): boolean => box.state !== "pushed");
     boxesKnown = new Map(
-        boxes
-            .filter((box: Box): boolean => ids.includes(box.id))
-            .map((box: Box): [string, Box] => [box.id, box]),
+        boxes.filter((box: Box): boolean => ids.includes(box.id)).map((box: Box): [string, Box] => [box.id, box]),
     );
 }
 
@@ -930,11 +834,7 @@ async function boxesLoad(planned: Planned[]): Promise<void> {
  * Makes one action of a box of the list not written yet,
  * as an action of a box of the plan looks, see `./actions.ts`.
  */
-function pendingActionOf(
-    icon: IconNode,
-    words: string,
-    click: () => void,
-): HTMLButtonElement {
+function pendingActionOf(icon: IconNode, words: string, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf("box-action", "", click);
     iconPut(button, icon, words);
     return button;
@@ -953,10 +853,7 @@ function knownEndOf(box: Box): HTMLElement {
             box,
             (): void =>
                 seriesAct(async (): Promise<void> => {
-                    const [start, end]: [Date, Date] = boxTimesOf(
-                        box,
-                        new Date(`${box.day}T12:00:00`),
-                    );
+                    const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
                     await boxLog(box.id, start, end);
                 }),
             seriesAct,
@@ -1002,9 +899,7 @@ function knownEndOf(box: Box): HTMLElement {
 function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
     const days: Days = preview.days;
     const today: string = dayOf(new Date());
-    const extra: Extra | undefined = days.extras.find(
-        (one: Extra): boolean => one.day === box.day,
-    );
+    const extra: Extra | undefined = days.extras.find((one: Extra): boolean => one.day === box.day);
     const stated: (state: BoxState) => () => void =
         (state: BoxState): (() => void) =>
         (): void => {
@@ -1044,11 +939,7 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
                           id: session.id,
                           day: box.day,
                           start: timeOf(new Date(session.start)),
-                          end: timeOf(
-                              new Date(
-                                  Date.parse(session.start) + session.minutes * 60 * 1000,
-                              ),
-                          ),
+                          end: timeOf(new Date(Date.parse(session.start) + session.minutes * 60 * 1000)),
                           location: session.location,
                       };
                       preview.filled();
@@ -1057,11 +948,7 @@ function pendingEndOf(box: Planned, preview: Preview): HTMLElement {
             : []),
     ];
     if (box.pushed && buttons.length === 0) return markOf(ArrowRight, "Pushed", null);
-    const actions: HTMLElement = elementOf(
-        "div",
-        buttons.length === 0 ? "series-end" : "box-actions",
-        "",
-    );
+    const actions: HTMLElement = elementOf("div", buttons.length === 0 ? "series-end" : "box-actions", "");
     actions.append(...buttons);
     return actions;
 }
@@ -1082,10 +969,7 @@ function sessionOf(box: Planned): Session | undefined {
         ? undefined
         : groupsOf(typing.type)
               .find((one: Group): boolean => one.rule.group === group.was)
-              ?.sessions.find(
-                  (one: Session): boolean =>
-                      Date.parse(one.start) === Date.parse(box.time),
-              );
+              ?.sessions.find((one: Session): boolean => Date.parse(one.start) === Date.parse(box.time));
 }
 
 /**
@@ -1094,10 +978,7 @@ function sessionOf(box: Planned): Session | undefined {
  * its times and its room, Save, which writes it at once,
  * my box at that session following it, and `×`, which leaves it as it is.
  */
-function sessionRowOf(
-    session: NonNullable<typeof sessionTyped>,
-    redraw: () => void,
-): HTMLElement {
+function sessionRowOf(session: NonNullable<typeof sessionTyped>, redraw: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "series-row series-session", "");
     const fields: HTMLElement = elementOf("div", "", "");
     const actions: HTMLElement = elementOf("div", "box-actions", "");
@@ -1141,8 +1022,7 @@ function sessionRowOf(
  * @throws {Error} - When the reader cannot answer
  */
 async function sessionSave(session: NonNullable<typeof sessionTyped>): Promise<void> {
-    if (course === null || typing === null || grouped === null || !timesReady(session))
-        return;
+    if (course === null || typing === null || grouped === null || !timesReady(session)) return;
     try {
         await courseSend<null>("/api/course/session", {
             module: course.module,
@@ -1171,8 +1051,7 @@ function mineAt(start: string): boolean {
     return (course?.boxes ?? []).some(
         (one: Box): boolean =>
             one.type === typing?.type &&
-            ((one.time || one.day) === start ||
-                (one.time !== "" && Date.parse(one.time) === Date.parse(start))),
+            ((one.time || one.day) === start || (one.time !== "" && Date.parse(one.time) === Date.parse(start))),
     );
 }
 
@@ -1208,11 +1087,7 @@ async function extraAdd(start: string): Promise<void> {
  * see `pinnedMenuOf` in `./groups.ts`.
  * A click on a kind gives it to the exam, but for the one checked.
  */
-function kindMenuOf(
-    kind: string,
-    asked: boolean,
-    pick: (kind: string) => void,
-): HTMLElement {
+function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void): HTMLElement {
     const place: HTMLElement = elementOf("span", "series-kind", "");
     const button: HTMLButtonElement = document.createElement("button");
     const menu: HTMLElement = document.createElement("div");
@@ -1257,12 +1132,9 @@ function kindMenuOf(
  */
 function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
     const kinds: Kinds | undefined = preview.kinds;
-    const known: Box | undefined =
-        box.change === "removed" ? undefined : boxesKnown.get(box.id);
-    let word: string =
-        box.change === "renumbered" || (box.change === "new" && !had) ? "" : box.change;
-    if (word === "" && box.pushed && box.editable && box.state === "open")
-        word = "pushed";
+    const known: Box | undefined = box.change === "removed" ? undefined : boxesKnown.get(box.id);
+    let word: string = box.change === "renumbered" || (box.change === "new" && !had) ? "" : box.change;
+    if (word === "" && box.pushed && box.editable && box.state === "open") word = "pushed";
     if (word === "" && box.location !== undefined) word = "changed";
     if (preview.days.extras.some((extra: Extra): boolean => extra.day === box.day))
         word = word === "" ? "extra" : `${word} extra`;
@@ -1279,14 +1151,10 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
                   box.number === "" ? null : show,
                   known?.note || "Open",
               )
-            : kindMenuOf(
-                  box.number,
-                  box.id === "" && box.day === kindAsked,
-                  (kind: string): void => {
-                      kinds[box.day] = kind;
-                      preview.filled();
-                  },
-              );
+            : kindMenuOf(box.number, box.id === "" && box.day === kindAsked, (kind: string): void => {
+                  kinds[box.day] = kind;
+                  preview.filled();
+              });
     const place: (string | Node)[] =
         known !== undefined
             ? whereLinkedOf(
@@ -1315,26 +1183,16 @@ function boxRowOf(box: Planned, had: boolean, preview: Preview): HTMLElement {
                 ? boxGroupOf(
                       course,
                       known,
-                      (_: () => void, send: () => Promise<unknown>): void =>
-                          seriesAct(send),
-                      mine === null
-                          ? undefined
-                          : (group: string): void => groupFrom(mine, group),
+                      (_: () => void, send: () => Promise<unknown>): void => seriesAct(send),
+                      mine === null ? undefined : (group: string): void => groupFrom(mine, group),
                   )
                 : null,
         meta: [[rowTimesOf(box.time, box.minutes)], place],
-        people:
-            known?.attendees ??
-            (box.attendees.length > 0 ? box.attendees : (typing?.attendees ?? [])),
+        people: known?.attendees ?? (box.attendees.length > 0 ? box.attendees : (typing?.attendees ?? [])),
         persons: persons,
         mark: word,
-        end:
-            known !== undefined && box.chained !== true
-                ? knownEndOf(known)
-                : pendingEndOf(box, preview),
-        faded:
-            box.change === "removed" ||
-            ["done", "dropped", "university"].includes(box.state),
+        end: known !== undefined && box.chained !== true ? knownEndOf(known) : pendingEndOf(box, preview),
+        faded: box.change === "removed" || ["done", "dropped", "university"].includes(box.state),
     });
 }
 
@@ -1360,10 +1218,7 @@ function addRowOf(preview: Preview, redraw: () => void): HTMLButtonElement {
                 : { day: "", start: last?.start ?? "", end: last?.end ?? "" };
         kindTyped = "";
         redraw();
-        if (preview.kinds === undefined)
-            document
-                .querySelector<HTMLInputElement>(".series-draft .date-field")
-                ?.focus();
+        if (preview.kinds === undefined) document.querySelector<HTMLInputElement>(".series-draft .date-field")?.focus();
         else document.querySelector<HTMLElement>(".series-draft .menu")?.showPopover();
     });
     return add;
@@ -1391,21 +1246,15 @@ function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLEle
         (): void => {},
     );
     const times: HTMLElement =
-        plain !== null && !plainTimed
-            ? elementOf("span", "series-times", "")
-            : timesRangeOf(extra, (): void => {});
+        plain !== null && !plainTimed ? elementOf("span", "series-times", "") : timesRangeOf(extra, (): void => {});
     times.classList.add("series-times");
     const number: HTMLElement =
         kinds === undefined
             ? elementOf("span", "series-number", "")
-            : kindMenuOf(
-                  kindTyped,
-                  kindAsked !== "" && extra.day === kindAsked,
-                  (kind: string): void => {
-                      kindTyped = kind;
-                      day.focus();
-                  },
-              );
+            : kindMenuOf(kindTyped, kindAsked !== "" && extra.day === kindAsked, (kind: string): void => {
+                  kindTyped = kind;
+                  day.focus();
+              });
     row.append(
         number,
         day,
@@ -1417,11 +1266,7 @@ function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLEle
         }),
     );
     row.addEventListener("focusout", (event: FocusEvent): void => {
-        if (
-            extraTyped === extra &&
-            !row.contains(event.relatedTarget as Node | null) &&
-            extraJoin(preview.days, kinds)
-        )
+        if (extraTyped === extra && !row.contains(event.relatedTarget as Node | null) && extraJoin(preview.days, kinds))
             preview.filled();
     });
     return row;
@@ -1434,18 +1279,11 @@ function draftRowOf(extra: Extra, preview: Preview, redraw: () => void): HTMLEle
  */
 function extraJoin(days: Days, kinds: Kinds | undefined): boolean {
     const extra: Extra | null = extraTyped;
-    if (
-        extra === null ||
-        extra.day === "" ||
-        ((plain === null || plainTimed) && !timesReady(extra))
-    )
-        return false;
+    if (extra === null || extra.day === "" || ((plain === null || plainTimed) && !timesReady(extra))) return false;
     extraTyped = null;
     if (kinds !== undefined && kindTyped !== "") kinds[extra.day] = kindTyped;
     days.extras.push(extra);
-    days.extras.sort((first: Extra, second: Extra): number =>
-        first.day.localeCompare(second.day),
-    );
+    days.extras.sort((first: Extra, second: Extra): number => first.day.localeCompare(second.day));
     return true;
 }
 
@@ -1458,9 +1296,10 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
     let month: string = "";
     let boxes: HTMLElement = list;
     items.forEach(([moment, row]: [string, HTMLElement]): void => {
-        const name: string = new Date(
-            `${moment.slice(0, 10)}T12:00:00`,
-        ).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+        const name: string = new Date(`${moment.slice(0, 10)}T12:00:00`).toLocaleDateString("en-GB", {
+            month: "short",
+            year: "numeric",
+        });
         if (name !== month) {
             boxes = elementOf("div", "series-boxes", "");
             list.append(elementOf("span", "entry-name series-month", name), boxes);
@@ -1480,27 +1319,17 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
  * as the reader numbers them,
  * as my boxes are, see `groupApply` in `reader/course.ts`.
  */
-function boxListOf(
-    planned: Planned[],
-    preview: Preview,
-    redraw: () => void,
-): HTMLElement {
+function boxListOf(planned: Planned[], preview: Preview, redraw: () => void): HTMLElement {
     const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
-    const items: [string, HTMLElement][] = planned.map(
-        (box: Planned): [string, HTMLElement] => [
-            box.time || box.day,
-            sessionTyped !== null && sessionOf(box)?.id === sessionTyped.id
-                ? sessionRowOf(sessionTyped, redraw)
-                : boxRowOf(box, had, preview),
-        ],
-    );
+    const items: [string, HTMLElement][] = planned.map((box: Planned): [string, HTMLElement] => [
+        box.time || box.day,
+        sessionTyped !== null && sessionOf(box)?.id === sessionTyped.id
+            ? sessionRowOf(sessionTyped, redraw)
+            : boxRowOf(box, had, preview),
+    ]);
     const list: HTMLElement = monthListOf(items);
     if (grouped === null && (typing === null || !groupWaits(typing)))
-        list.append(
-            extraTyped === null
-                ? addRowOf(preview, redraw)
-                : draftRowOf(extraTyped, preview, redraw),
-        );
+        list.append(extraTyped === null ? addRowOf(preview, redraw) : draftRowOf(extraTyped, preview, redraw));
     return list;
 }
 
@@ -1520,8 +1349,7 @@ async function previewShow(form: HTMLElement, preview: Preview): Promise<void> {
         previewShown = shown;
         const place: HTMLElement | null = form.querySelector(".series-preview");
         place?.replaceChildren(...shown);
-        const row: HTMLElement | null =
-            place?.closest<HTMLElement>(".panel-field") ?? null;
+        const row: HTMLElement | null = place?.closest<HTMLElement>(".panel-field") ?? null;
         if (row !== null) row.hidden = shown.length === 0;
     };
     if (preview.ask === null) {
@@ -1602,9 +1430,7 @@ function dialogShow(): void {
  * @throws {Error} - When the reader cannot answer
  */
 async function courseLoad(module: string, semester: string): Promise<Course> {
-    return readerAsk<Course>(
-        `/api/course/module?module=${encodeURIComponent(module)}&semester=${semester}`,
-    );
+    return readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(module)}&semester=${semester}`);
 }
 
 /**
@@ -1615,9 +1441,7 @@ async function courseLoad(module: string, semester: string): Promise<Course> {
  */
 async function offersLoad(): Promise<[Category[], Person[]]> {
     return Promise.all([
-        readerAsk<Category[]>(
-            `/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`,
-        ),
+        readerAsk<Category[]>(`/api/day/categories?now=${encodeURIComponent(new Date().toISOString())}`),
         personsKept(),
     ]);
 }
@@ -1672,9 +1496,7 @@ function formOf(type: string, rule: Rule | null): Form {
     return {
         type: rule?.type ?? type,
         old: rule,
-        slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [
-            { weekday: 0, start: "", end: "" },
-        ],
+        slots: rule?.slots.map((slot: Slot): Slot => ({ ...slot })) ?? [{ weekday: 0, start: "", end: "" }],
         before: rule?.slots.map((slot: Slot): number => slot.weekday) ?? [0],
         extras: rule?.extras.map((extra: Extra): Extra => ({ ...extra })) ?? [],
         location: rule?.location ?? "",
@@ -1691,9 +1513,7 @@ function formOf(type: string, rule: Rule | null): Form {
 
 /** Gives the groups of a type of the course of the dialog. */
 function groupsOf(type: string): Group[] {
-    return (course?.groups ?? []).filter(
-        (group: Group): boolean => group.rule.type === type,
-    );
+    return (course?.groups ?? []).filter((group: Group): boolean => group.rule.type === type);
 }
 
 /**
@@ -1712,9 +1532,9 @@ function skillFieldOf(key: string): Field | undefined {
  * see `lastPlaceFill` in `./categories.ts`.
  */
 function standardLineOf(): string {
-    const standard: Place | undefined = Object.values(
-        skillFieldOf("location")?.places ?? {},
-    ).find((place: Place): boolean => place.standard);
+    const standard: Place | undefined = Object.values(skillFieldOf("location")?.places ?? {}).find(
+        (place: Place): boolean => place.standard,
+    );
     return standard === undefined ? "" : lineOf(standard);
 }
 
@@ -1727,11 +1547,8 @@ function standardLineOf(): string {
  */
 function plainFileOf(series: Plain, form: Form): string {
     if (series.file !== "") return series.file;
-    if (series.category === skillName)
-        return skillNamesOf({ module: series.module, type: series.type }).file;
-    return series.category === "" || form.first === ""
-        ? ""
-        : topicFileOf(series.category, form.first, "_Plan.ics");
+    if (series.category === skillName) return skillNamesOf({ module: series.module, type: series.type }).file;
+    return series.category === "" || form.first === "" ? "" : topicFileOf(series.category, form.first, "_Plan.ics");
 }
 
 /**
@@ -1741,8 +1558,7 @@ function plainFileOf(series: Plain, form: Form): string {
  */
 function withAsked(): boolean {
     const category: Category | undefined = categories.find(
-        (one: Category): boolean =>
-            one.name === (plain?.category ?? repeated?.box.category),
+        (one: Category): boolean => one.name === (plain?.category ?? repeated?.box.category),
     );
     return (
         (repeated === null && plain === null) ||
@@ -1758,9 +1574,7 @@ function groupTaken(form: Form): boolean {
     return (
         grouped !== null &&
         grouped.group !== grouped.was &&
-        groupsOf(form.type).some(
-            (group: Group): boolean => group.rule.group === grouped?.group,
-        )
+        groupsOf(form.type).some((group: Group): boolean => group.rule.group === grouped?.group)
     );
 }
 
@@ -1775,11 +1589,7 @@ function groupUnnamed(): boolean {
  * but for a new box repeated, and its days, a new group not named as one there already.
  */
 function formReady(form: Form): boolean {
-    if (
-        fresh !== null &&
-        (fresh.category === "" ||
-            (fresh.category === skillName && fresh.picked.module === ""))
-    )
+    if (fresh !== null && (fresh.category === "" || (fresh.category === skillName && fresh.picked.module === "")))
         return false;
     if (plain !== null) return plainReady(plain, form);
     if (form.type === "" && repeated === null) return false;
@@ -1828,19 +1638,13 @@ async function examSend(form: Form, dry: boolean): Promise<Planned[]> {
         times: Pick<Slot, "start" | "end">,
     ): [Date, number] => {
         const start: Date = new Date(`${day}T${times.start}:00`);
-        return [
-            start,
-            (new Date(`${day}T${times.end}:00`).getTime() - start.getTime()) /
-                (60 * 1000),
-        ];
+        return [start, (new Date(`${day}T${times.end}:00`).getTime() - start.getTime()) / (60 * 1000)];
     };
     const exams: Planned[] = (course?.boxes ?? [])
         .filter((box: Box): boolean => box.type === examType)
         .map((box: Box): Planned => {
             const [start, minutes]: [Date | null, number | null] =
-                form.times[box.day] === undefined
-                    ? [null, box.minutes]
-                    : timed(box.day, form.times[box.day]);
+                form.times[box.day] === undefined ? [null, box.minutes] : timed(box.day, form.times[box.day]);
             const time: string = start === null ? box.time : start.toISOString();
             const number: string = form.kinds[box.day] ?? box.number;
             return {
@@ -1848,21 +1652,16 @@ async function examSend(form: Form, dry: boolean): Promise<Planned[]> {
                 time: time,
                 minutes: minutes,
                 number: number,
-                retimable:
-                    box.editable && box.todo && !box.series && box.pushed.length === 0,
-                change:
-                    time === box.time && minutes === box.minutes && number === box.number
-                        ? ""
-                        : "changed",
+                retimable: box.editable && box.todo && !box.series && box.pushed.length === 0,
+                change: time === box.time && minutes === box.minutes && number === box.number ? "" : "changed",
             };
         });
-    const added: [Extra, Date, number][] = form.extras.map(
-        (extra: Extra): [Extra, Date, number] => [extra, ...timed(extra.day, extra)],
-    );
+    const added: [Extra, Date, number][] = form.extras.map((extra: Extra): [Extra, Date, number] => [
+        extra,
+        ...timed(extra.day, extra),
+    ]);
     if (!dry) {
-        for (const exam of exams.filter(
-            (one: Planned): boolean => one.change === "changed",
-        ))
+        for (const exam of exams.filter((one: Planned): boolean => one.change === "changed"))
             await courseSend<null>("/api/course/exam", {
                 box: exam.id,
                 kind: exam.number,
@@ -1976,11 +1775,7 @@ async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
  * @throws {Error} - When the reader does not take it,
  *   also since the series of its type is there already
  */
-async function repeatedSend(
-    box: BoxFields,
-    form: Form,
-    dry: boolean,
-): Promise<Planned[]> {
+async function repeatedSend(box: BoxFields, form: Form, dry: boolean): Promise<Planned[]> {
     const planned: Planned[] | null = await boxRepeat(
         {
             ...box,
@@ -1992,8 +1787,7 @@ async function repeatedSend(
         form.states,
         dry,
     );
-    if (planned === null)
-        throw new Error(`${box.module} ${box.type} has its series already`);
+    if (planned === null) throw new Error(`${box.module} ${box.type} has its series already`);
     return planned;
 }
 
@@ -2050,9 +1844,7 @@ function waitingFill(form: Form): void {
  * so its list shows them while no group is mine, none to change there.
  */
 function keptOf(form: Form): Planned[] {
-    return (course?.boxes ?? [])
-        .filter((box: Box): boolean => box.type === form.type)
-        .map(plannedOf);
+    return (course?.boxes ?? []).filter((box: Box): boolean => box.type === form.type).map(plannedOf);
 }
 
 /** Gives a box there already as a row of the list shows it, to be changed nowhere. */
@@ -2103,8 +1895,7 @@ function formChanged(): void {
  */
 function addressShow(address: HTMLAnchorElement, form: Form): void {
     const link: string = placeEdit?.link ?? form.locationLink;
-    address.textContent =
-        placeEdit !== null ? placeAddressOf(placeEdit) : addressOf(form.location);
+    address.textContent = placeEdit !== null ? placeAddressOf(placeEdit) : addressOf(form.location);
     if (link !== "") address.href = link;
     else address.removeAttribute("href");
     address.hidden = address.textContent === "";
@@ -2115,11 +1906,7 @@ function addressShow(address: HTMLAnchorElement, form: Form): void {
  * see `placeOf` in `./places.ts`.
  */
 function placeOriginOf(form: Form): Place {
-    return placeOf(
-        form.location,
-        form.locationLink,
-        skillFieldOf("location")?.places ?? {},
-    );
+    return placeOf(form.location, form.locationLink, skillFieldOf("location")?.places ?? {});
 }
 
 /**
@@ -2138,18 +1925,10 @@ function seriesRowOf(form: Form): HTMLElement {
     const module: string = course?.module ?? "";
     const types: string[] = numberedTypes.filter(
         (type: string): boolean =>
-            type === form.type ||
-            !(course?.series ?? []).some(
-                (series: Series): boolean => series.rule.type === type,
-            ),
+            type === form.type || !(course?.series ?? []).some((series: Series): boolean => series.rule.type === type),
     );
-    const link: HTMLAnchorElement = elementOf(
-        "a",
-        "entry-address",
-        "",
-    ) as HTMLAnchorElement;
-    const folder: MaterialFolder | undefined =
-        repeated === null ? course?.folders[form.type] : undefined;
+    const link: HTMLAnchorElement = elementOf("a", "entry-address", "") as HTMLAnchorElement;
+    const folder: MaterialFolder | undefined = repeated === null ? course?.folders[form.type] : undefined;
     folderLinkShow(
         link,
         folder === undefined
@@ -2162,14 +1941,7 @@ function seriesRowOf(form: Form): HTMLElement {
     }
     const value: HTMLElement = elementOf("div", "", "");
     if (form.old !== null || repeated !== null || grouped !== null || groupWaits(form))
-        value.append(
-            elementOf(
-                "span",
-                "",
-                breakableOf(repeated?.summary ?? `${module} (${form.type})`),
-            ),
-            link,
-        );
+        value.append(elementOf("span", "", breakableOf(repeated?.summary ?? `${module} (${form.type})`)), link);
     else
         value.append(
             pairOf(
@@ -2201,10 +1973,7 @@ function seriesRowOf(form: Form): HTMLElement {
  * while nothing is typed my places and the place there already, my default place first,
  * as I type the rooms of the university too, see `placeChoiceOf` in `./places.ts`.
  */
-function placeSearchOf(
-    current: string,
-    nameShown: (line: string) => string,
-): (text: string) => Promise<Choice[]> {
+function placeSearchOf(current: string, nameShown: (line: string) => string): (text: string) => Promise<Choice[]> {
     const field: Field | undefined = skillFieldOf("location");
     return async (text: string): Promise<Choice[]> => {
         const values: string[] =
@@ -2234,9 +2003,7 @@ function placeRowOf(form: Form): HTMLElement {
     const pencil: HTMLButtonElement = document.createElement("button");
     const parts: HTMLElement = elementOf("div", "field-parts", "");
     const nameShown: (line: string) => string = (line: string): string =>
-        line === form.location && placeEdit !== null && placeEdit.name !== ""
-            ? placeEdit.name
-            : labelOf(line);
+        line === form.location && placeEdit !== null && placeEdit.name !== "" ? placeEdit.name : labelOf(line);
     address.className = "entry-address";
     address.target = "_blank";
     address.rel = "noopener";
@@ -2275,9 +2042,7 @@ function placeRowOf(form: Form): HTMLElement {
             },
             (next: string | null): void => {
                 row.replaceWith(placeRowOf(form));
-                formElementOf()
-                    .querySelector<HTMLInputElement>(`input[aria-label="${next}"]`)
-                    ?.focus();
+                formElementOf().querySelector<HTMLInputElement>(`input[aria-label="${next}"]`)?.focus();
             },
         ),
     );
@@ -2371,8 +2136,7 @@ function groupPartOf(): HTMLElement {
             was: grouped?.was ?? "",
         };
         hint.hidden = name !== null && (typing === null || !groupTaken(typing));
-        hint.textContent =
-            name === null ? "Invalid group name" : "Group is there already";
+        hint.textContent = name === null ? "Invalid group name" : "Group is there already";
         formChanged();
     });
     value.append(input, hint);
@@ -2387,9 +2151,7 @@ function groupPartOf(): HTMLElement {
  */
 function groupPickOf(form: Form): HTMLElement {
     const loaded: Course | null = course;
-    const plus: HTMLButtonElement = plusOf("Add a group", (): void =>
-        groupFrom(form, ""),
-    );
+    const plus: HTMLButtonElement = plusOf("Add a group", (): void => groupFrom(form, ""));
     const part: HTMLElement = elementOf("span", "series-group-pick", "");
     if (loaded !== null && groupsOf(form.type).length > 0)
         part.append(
@@ -2398,9 +2160,7 @@ function groupPickOf(form: Form): HTMLElement {
                 form.type,
                 (_change: () => void, send: () => Promise<unknown>): void => {
                     send()
-                        .then((): Promise<void> =>
-                            seriesOpen(loaded.module, form.type, loaded.semester, done),
-                        )
+                        .then((): Promise<void> => seriesOpen(loaded.module, form.type, loaded.semester, done))
                         .catch(logged);
                 },
                 (group: string): void => groupFrom(form, group),
@@ -2438,12 +2198,10 @@ function groupWaits(form: Form): boolean {
  */
 function groupFrom(form: Form, group: string): void {
     const series: HTMLDialogElement = dialogOf();
-    const under: HTMLDialogElement = document.getElementById(
-        "series-under",
-    ) as HTMLDialogElement;
+    const under: HTMLDialogElement = document.getElementById("series-under") as HTMLDialogElement;
     const copy: HTMLElement = formElementOf().cloneNode(true) as HTMLElement;
-    [copy, ...copy.querySelectorAll<HTMLElement>("[id]")].forEach(
-        (part: HTMLElement): void => part.removeAttribute("id"),
+    [copy, ...copy.querySelectorAll<HTMLElement>("[id]")].forEach((part: HTMLElement): void =>
+        part.removeAttribute("id"),
     );
     under.replaceChildren(copy);
     under.show();
@@ -2461,9 +2219,7 @@ function groupFrom(form: Form, group: string): void {
  * once that form goes back to my series or the dialog closes.
  */
 function underClose(): void {
-    const under: HTMLDialogElement = document.getElementById(
-        "series-under",
-    ) as HTMLDialogElement;
+    const under: HTMLDialogElement = document.getElementById("series-under") as HTMLDialogElement;
     under.close();
     under.replaceChildren();
     under.style.translate = "";
@@ -2479,13 +2235,10 @@ function underClose(): void {
  * The form it came from is left as it was, unsaved.
  */
 function groupStart(type: string, group: string): void {
-    const found: Group | undefined = groupsOf(type).find(
-        (one: Group): boolean => one.rule.group === group,
-    );
+    const found: Group | undefined = groupsOf(type).find((one: Group): boolean => one.rule.group === group);
     const rule: Rule | undefined = found?.rule;
     const weeks: Rule | undefined = (
-        course?.series.find((series: Series): boolean => series.rule.type === type) ??
-        course?.series[0]
+        course?.series.find((series: Series): boolean => series.rule.type === type) ?? course?.series[0]
     )?.rule;
     grouped = {
         group: group,
@@ -2531,10 +2284,7 @@ function binShows(form: Form): boolean {
  */
 function seriesBinOf(form: Form): HTMLButtonElement {
     const bin: HTMLButtonElement = document.createElement("button");
-    const ask: string =
-        grouped === null && plain === null
-            ? "Really remove? Its boxes done stay"
-            : "Really remove?";
+    const ask: string = grouped === null && plain === null ? "Really remove? Its boxes done stay" : "Really remove?";
     const address: string =
         grouped !== null
             ? `/api/course/groups?${new URLSearchParams({
@@ -2553,9 +2303,7 @@ function seriesBinOf(form: Form): HTMLButtonElement {
     bin.type = "button";
     bin.className = "panel-remove";
     iconPut(bin, Trash, grouped !== null ? "Remove the group" : "Remove the series");
-    bin.addEventListener("mousedown", (event: MouseEvent): void =>
-        event.preventDefault(),
-    );
+    bin.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     bin.addEventListener("click", (): void => {
         if (!removeAsked) {
             removeAsked = true;
@@ -2591,13 +2339,10 @@ function formFill(): void {
     const scrolled: number = dialog.scrollTop;
     const form: Form = typing;
     const picking: boolean =
-        (fresh !== null &&
-            (fresh.category === "" ||
-                (fresh.category === skillName && fresh.picked.module === ""))) ||
+        (fresh !== null && (fresh.category === "" || (fresh.category === skillName && fresh.picked.module === ""))) ||
         (plain === null && repeated === null && course === null);
     const waits: boolean = groupWaits(form);
-    const follows: boolean =
-        waits || (grouped === null && plain === null && (form.old?.group ?? "") !== "");
+    const follows: boolean = waits || (grouped === null && plain === null && (form.old?.group ?? "") !== "");
     if (waits) waitingFill(form);
     const rows: HTMLElement[] = picking
         ? []
@@ -2615,30 +2360,19 @@ function formFill(): void {
                       datesRowOf(form, formChanged),
                   ]),
                   boxesRowOf(),
-                  ...lockedOf(
-                      follows,
-                      grouped !== null || withAsked() ? peopleRowsOf(form) : [],
-                  ),
+                  ...lockedOf(follows, grouped !== null || withAsked() ? peopleRowsOf(form) : []),
               ];
     const fields: HTMLElement = elementOf("div", "panel-form", "");
-    if (grouped !== null)
-        fields.append(elementOf("h2", "series-heading", "Series: Group"));
+    if (grouped !== null) fields.append(elementOf("h2", "series-heading", "Series: Group"));
     fields.append(
-        ...(fresh === null
-            ? rows
-            : [
-                  ...freshRowsOf(),
-                  ...(fresh.category === skillName ? rows.slice(1) : rows),
-              ]),
+        ...(fresh === null ? rows : [...freshRowsOf(), ...(fresh.category === skillName ? rows.slice(1) : rows)]),
     );
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");
     const cancel: HTMLButtonElement = document.createElement("button");
     const save: HTMLButtonElement = document.createElement("button");
     cancel.type = "button";
     iconPut(cancel, X, "Cancel");
-    cancel.addEventListener("mousedown", (event: MouseEvent): void =>
-        event.preventDefault(),
-    );
+    cancel.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     cancel.addEventListener("click", (): void => {
         groupReturn(false)
             .then((back: boolean): void => {
@@ -2649,18 +2383,11 @@ function formFill(): void {
     save.type = "submit";
     save.className = "panel-main";
     iconPut(save, Check, "Save");
-    save.addEventListener("mousedown", (event: MouseEvent): void =>
-        event.preventDefault(),
-    );
+    save.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     const hint: HTMLElement = elementOf("p", "panel-error", "Saving failed");
     hint.hidden = true;
     const file: HTMLAnchorElement = elementOf("a", "panel-file", "") as HTMLAnchorElement;
-    fileShow(
-        file,
-        plain === null
-            ? (repeated?.file ?? course?.file ?? "")
-            : plainFileOf(plain, form),
-    );
+    fileShow(file, plain === null ? (repeated?.file ?? course?.file ?? "") : plainFileOf(plain, form));
     buttons.append(file, ...(binShows(form) ? [seriesBinOf(form)] : []), cancel, save);
     formElementOf().replaceChildren(fields, hint, buttons);
     formElementOf().classList.toggle("series-exams", form.type === examType);
@@ -2678,11 +2405,7 @@ function formFill(): void {
  * @throws {Error} - When the reader does not take the place, like one with an empty name
  */
 async function placeRename(form: Form, dry: boolean): Promise<void> {
-    if (
-        form.location !== "" &&
-        placeEdit !== null &&
-        JSON.stringify(placeEdit) !== JSON.stringify(placeOriginOf(form))
-    )
+    if (form.location !== "" && placeEdit !== null && JSON.stringify(placeEdit) !== JSON.stringify(placeOriginOf(form)))
         await renameSend(labelOf(form.location), placeEdit, dry);
 }
 
@@ -2703,9 +2426,7 @@ async function formSave(): Promise<void> {
     if (!formReady(typing)) return;
     try {
         await placeRename(typing, true);
-        const picked: string[] = typing.attendees.map(
-            (person: Attendee): string => person.name,
-        );
+        const picked: string[] = typing.attendees.map((person: Attendee): string => person.name);
         await personsRename(personEdits, persons, true, picked);
         await formSend(typing, false);
         await placeRename(typing, false);
@@ -2730,8 +2451,7 @@ async function formSave(): Promise<void> {
  */
 async function groupReturn(reload: boolean): Promise<boolean> {
     if (groupBack === null || grouped === null) return false;
-    if (reload && course !== null)
-        course = await courseLoad(course.module, course.semester);
+    if (reload && course !== null) course = await courseLoad(course.module, course.semester);
     typing = groupBack;
     groupBack = null;
     grouped = null;
@@ -2758,19 +2478,12 @@ function dialogStart(): void {
         formSave().catch(logged);
     });
     formElementOf().addEventListener("keydown", (event: KeyboardEvent): void => {
-        if (
-            event.key !== "Enter" ||
-            !(event.target instanceof HTMLInputElement) ||
-            event.defaultPrevented
-        )
-            return;
+        if (event.key !== "Enter" || !(event.target instanceof HTMLInputElement) || event.defaultPrevented) return;
         event.preventDefault();
         event.target.blur();
         if (event.ctrlKey) formSave().catch(logged);
     });
-    const entry: HTMLDialogElement = document.getElementById(
-        "entry",
-    ) as HTMLDialogElement;
+    const entry: HTMLDialogElement = document.getElementById("entry") as HTMLDialogElement;
     entry.addEventListener("close", (): void => {
         if (!entry.open) entry.removeAttribute("data-over");
         if (dialog.open && !entry.open) seriesRefresh().catch(logged);
@@ -2780,8 +2493,7 @@ function dialogStart(): void {
             groupBack === null ||
             !dialog.open ||
             (event instanceof KeyboardEvent &&
-                (event.key !== "Escape" ||
-                    document.querySelector(":popover-open") !== null))
+                (event.key !== "Escape" || document.querySelector(":popover-open") !== null))
         )
             return;
         event.preventDefault();
@@ -2818,21 +2530,17 @@ export async function seriesOpen(
     dialogStart();
     fresh = null;
     formsForget(saved);
-    [course, [categories, persons]] = await Promise.all([
-        courseLoad(module, semester),
-        offersLoad(),
-    ]);
+    [course, [categories, persons]] = await Promise.all([courseLoad(module, semester), offersLoad()]);
     const rule: Rule | null =
-        course.series.find((series: Series): boolean => series.rule.type === type)
-            ?.rule ?? (type === examType ? examRuleOf(course) : null);
+        course.series.find((series: Series): boolean => series.rule.type === type)?.rule ??
+        (type === examType ? examRuleOf(course) : null);
     formReset();
     listOpened = type === examType;
     typing = formOf(type, rule);
     kindTyped = "";
     formFill();
     dialogShow();
-    if (rule === null && type === "")
-        formElementOf().querySelector<HTMLButtonElement>(".picker-line")?.click();
+    if (rule === null && type === "") formElementOf().querySelector<HTMLButtonElement>(".picker-line")?.click();
 }
 
 /**
@@ -2841,21 +2549,13 @@ export async function seriesOpen(
  *
  * @throws {Error} - When the reader cannot answer
  */
-export async function groupOpen(
-    module: string,
-    type: string,
-    semester: string,
-    group: string,
-): Promise<void> {
+export async function groupOpen(module: string, type: string, semester: string, group: string): Promise<void> {
     dialogStart();
     fresh = null;
     groupBack = null;
     plain = null;
     done = (): void => {};
-    [course, [categories, persons]] = await Promise.all([
-        courseLoad(module, semester),
-        offersLoad(),
-    ]);
+    [course, [categories, persons]] = await Promise.all([courseLoad(module, semester), offersLoad()]);
     groupStart(type, group);
     dialogShow();
 }
@@ -2869,20 +2569,12 @@ export async function groupOpen(
  *
  * @throws {Error} - When the reader cannot answer
  */
-async function seriesRepeat(
-    from: Repeated,
-    days: Days,
-    saved: () => void,
-): Promise<void> {
+async function seriesRepeat(from: Repeated, days: Days, saved: () => void): Promise<void> {
     const loaded: [Course | null, [Category[], Person[]]] = await Promise.all([
         courseLoad(from.box.module, from.box.semester).catch((): null => null),
         offersLoad(),
     ]);
-    if (
-        loaded[0]?.series.some(
-            (series: Series): boolean => series.rule.type === from.box.type,
-        ) === true
-    ) {
+    if (loaded[0]?.series.some((series: Series): boolean => series.rule.type === from.box.type) === true) {
         await seriesOpen(from.box.module, from.box.type, from.box.semester, saved);
         return;
     }
@@ -2916,21 +2608,11 @@ function plainReady(series: Plain, form: Form): boolean {
         form.slots.length > 0 &&
         form.slots.every(
             (slot: Slot): boolean =>
-                slot.weekday > 0 &&
-                (plainTimed
-                    ? timesReady(slot)
-                    : (plainLengths.get(slot.weekday) ?? 0) > 0),
+                slot.weekday > 0 && (plainTimed ? timesReady(slot) : (plainLengths.get(slot.weekday) ?? 0) > 0),
         ) &&
-        new Set(form.slots.map((slot: Slot): number => slot.weekday)).size ===
-            form.slots.length;
-    const named: boolean =
-        series.category === skillName ? series.module !== "" : series.title.trim() !== "";
-    return (
-        named &&
-        days &&
-        form.first !== "" &&
-        (form.last === "" || form.first <= form.last)
-    );
+        new Set(form.slots.map((slot: Slot): number => slot.weekday)).size === form.slots.length;
+    const named: boolean = series.category === skillName ? series.module !== "" : series.title.trim() !== "";
+    return named && days && form.first !== "" && (form.last === "" || form.first <= form.last);
 }
 
 /**
@@ -2972,24 +2654,17 @@ function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
     ): string => (plainTimed ? `${start}-${end}` : String(minutes));
     const groups: Map<string, number[]> = new Map();
     form.slots.forEach((slot: Slot): void => {
-        const time: string = keyOf(
-            slot.start,
-            slot.end,
-            plainLengths.get(slot.weekday) ?? null,
-        );
+        const time: string = keyOf(slot.start, slot.end, plainLengths.get(slot.weekday) ?? null);
         groups.set(time, [...(groups.get(time) ?? []), slot.weekday]);
     });
     const owners: Map<string, Plain> = new Map();
     was.filter(
         (part: Plain): boolean =>
-            (part.start !== "") === plainTimed &&
-            groups.has(keyOf(part.start, part.end, part.minutes)),
+            (part.start !== "") === plainTimed && groups.has(keyOf(part.start, part.end, part.minutes)),
     ).forEach((part: Plain): void => {
         owners.set(keyOf(part.start, part.end, part.minutes), part);
     });
-    const free: Plain[] = was.filter(
-        (part: Plain): boolean => ![...owners.values()].includes(part),
-    );
+    const free: Plain[] = was.filter((part: Plain): boolean => ![...owners.values()].includes(part));
     [...groups.keys()]
         .filter((time: string): boolean => !owners.has(time))
         .forEach((time: string): void => {
@@ -2999,46 +2674,37 @@ function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
     const key: string =
         groups.size < 2
             ? ""
-            : series.series ||
-              series.id ||
-              `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+            : series.series || series.id || `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
     const earliest: string = was.map((part: Plain): string => part.first).sort()[0] ?? "";
     const kept: string =
-        [...owners.entries()].find(
-            ([, part]: [string, Plain]): boolean => part.id === series.id,
-        )?.[0] ?? [...groups.keys()][0];
-    const parts: Plain[] = [...groups.entries()].map(
-        ([time, weekdays]: [string, number[]]): Plain => ({
-            ...texts,
-            id: owners.get(time)?.id ?? "",
-            start: plainTimed ? time.split("-")[0] : "",
-            first:
-                owners.get(time) !== undefined && form.first === earliest
-                    ? (owners.get(time)?.first ?? form.first)
-                    : form.first,
-            end: plainTimed ? time.split("-")[1] : "",
-            minutes: plainTimed ? null : Number(time),
-            weekdays:
-                weekdays[0] >= monthly
-                    ? []
-                    : weekdays.sort(
-                          (first: number, second: number): number => first - second,
-                      ),
-            monthDay: weekdays[0] >= monthly ? Number(form.first.slice(8)) : 0,
-            month: weekdays[0] === yearly ? Number(form.first.slice(5, 7)) : 0,
-            series: key,
-            extras:
-                time !== kept
-                    ? []
-                    : plainTimed
-                      ? form.extras
-                      : form.extras.map((extra: Extra): Extra => ({
-                            day: extra.day,
-                            start: "",
-                            end: "",
-                        })),
-        }),
-    );
+        [...owners.entries()].find(([, part]: [string, Plain]): boolean => part.id === series.id)?.[0] ??
+        [...groups.keys()][0];
+    const parts: Plain[] = [...groups.entries()].map(([time, weekdays]: [string, number[]]): Plain => ({
+        ...texts,
+        id: owners.get(time)?.id ?? "",
+        start: plainTimed ? time.split("-")[0] : "",
+        first:
+            owners.get(time) !== undefined && form.first === earliest
+                ? (owners.get(time)?.first ?? form.first)
+                : form.first,
+        end: plainTimed ? time.split("-")[1] : "",
+        minutes: plainTimed ? null : Number(time),
+        weekdays:
+            weekdays[0] >= monthly ? [] : weekdays.sort((first: number, second: number): number => first - second),
+        monthDay: weekdays[0] >= monthly ? Number(form.first.slice(8)) : 0,
+        month: weekdays[0] === yearly ? Number(form.first.slice(5, 7)) : 0,
+        series: key,
+        extras:
+            time !== kept
+                ? []
+                : plainTimed
+                  ? form.extras
+                  : form.extras.map((extra: Extra): Extra => ({
+                        day: extra.day,
+                        start: "",
+                        end: "",
+                    })),
+    }));
     return [parts, free.map((part: Plain): string => part.id)];
 }
 
@@ -3074,29 +2740,18 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
                 dry: dry,
             })),
         );
-    const removed: Planned[] = planned.filter(
-        (box: Planned): boolean => box.change === "removed",
-    );
-    const moved: (box: Planned) => Planned | undefined = (
-        box: Planned,
-    ): Planned | undefined =>
-        box.change === "new"
-            ? removed.find((gone: Planned): boolean => gone.day === box.day)
-            : undefined;
+    const removed: Planned[] = planned.filter((box: Planned): boolean => box.change === "removed");
+    const moved: (box: Planned) => Planned | undefined = (box: Planned): Planned | undefined =>
+        box.change === "new" ? removed.find((gone: Planned): boolean => gone.day === box.day) : undefined;
     return planned
         .filter(
             (box: Planned, index: number): boolean =>
-                box.chained !== true ||
-                planned.findIndex((other: Planned): boolean => other.id === box.id) ===
-                    index,
+                box.chained !== true || planned.findIndex((other: Planned): boolean => other.id === box.id) === index,
         )
         .filter(
             (box: Planned): boolean =>
                 box.change !== "removed" ||
-                !planned.some(
-                    (other: Planned): boolean =>
-                        other.change === "new" && other.day === box.day,
-                ),
+                !planned.some((other: Planned): boolean => other.change === "new" && other.day === box.day),
         )
         .map((box: Planned): Planned => {
             const gone: Planned | undefined = moved(box);
@@ -3105,10 +2760,7 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
                 : {
                       ...box,
                       state: gone.state,
-                      change:
-                          gone.time === box.time && gone.minutes === box.minutes
-                              ? ""
-                              : "changed",
+                      change: gone.time === box.time && gone.minutes === box.minutes ? "" : "changed",
                   };
         })
         .sort((first: Planned, second: Planned): number =>
@@ -3123,9 +2775,7 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
  * from a length to times its times stay to type.
  */
 function courseSwapOf(form: Form): HTMLButtonElement {
-    const timed: boolean = form.slots.every(
-        (slot: Slot): boolean => slot.minutes === undefined,
-    );
+    const timed: boolean = form.slots.every((slot: Slot): boolean => slot.minutes === undefined);
     return lengthSwapOf(timed, (): void => {
         form.slots = form.slots.map((slot: Slot): Slot =>
             timed
@@ -3133,9 +2783,7 @@ function courseSwapOf(form: Form): HTMLButtonElement {
                       weekday: slot.weekday,
                       start: "",
                       end: "",
-                      minutes: timesReady(slot)
-                          ? minutesOf(slot.end) - minutesOf(slot.start)
-                          : 0,
+                      minutes: timesReady(slot) ? minutesOf(slot.end) - minutesOf(slot.start) : 0,
                   }
                 : { weekday: slot.weekday, start: "", end: "" },
         );
@@ -3162,9 +2810,7 @@ function courseTimeRowsOf(form: Form): HTMLElement[] {
     return slotRowsOf(
         form,
         [courseSwapOf(form)],
-        form.slots.every((slot: Slot): boolean => slot.minutes === undefined)
-            ? null
-            : lengthOf,
+        form.slots.every((slot: Slot): boolean => slot.minutes === undefined) ? null : lengthOf,
     );
 }
 
@@ -3202,9 +2848,7 @@ function plainTimeRowsOf(form: Form): HTMLElement[] {
         const minutes: number | null =
             plainLengths.get(slot.weekday) ??
             plainLengths.get(form.slots[0]?.weekday ?? 0) ??
-            [...plainLengths.values()].find(
-                (one: number | null): boolean => one !== null,
-            ) ??
+            [...plainLengths.values()].find((one: number | null): boolean => one !== null) ??
             null;
         plainLengths.set(slot.weekday, minutes);
         return fieldOf(
@@ -3227,9 +2871,7 @@ function plainTimeRowsOf(form: Form): HTMLElement[] {
 function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
     return [
         rowOf("Summary", plainSummaryOf(series)),
-        ...(series.category === skillName
-            ? [semesterRowOf(series.semester || semesterOf(form.first))]
-            : []),
+        ...(series.category === skillName ? [semesterRowOf(series.semester || semesterOf(form.first))] : []),
         placeRowOf(form),
         ...onlineRowsOf(form),
         ...plainTimeRowsOf(form),
@@ -3249,9 +2891,7 @@ function plainSummaryOf(series: Plain): HTMLElement {
         series.category === skillName
             ? undefined
             : categories
-                  .find(
-                      (category: Category): boolean => category.name === series.category,
-                  )
+                  .find((category: Category): boolean => category.name === series.category)
                   ?.fields.find((one: Field): boolean => one.key === "title");
     if (field === undefined) {
         const title: HTMLInputElement = partFieldOf("text", series.title, "Summary");
@@ -3270,12 +2910,7 @@ function plainSummaryOf(series: Plain): HTMLElement {
     iconPut(pencil, Pencil, "Change the summary");
     const picker: HTMLElement = choicesOf({
         search: searchOf(field.values.map(choiceOf)),
-        picked:
-            series.title === ""
-                ? []
-                : field.many === true
-                  ? series.title.split(", ")
-                  : [series.title],
+        picked: series.title === "" ? [] : field.many === true ? series.title.split(", ") : [series.title],
         many: field.many === true,
         adding: !field.fixed,
         noun: "summary",
@@ -3283,10 +2918,7 @@ function plainSummaryOf(series: Plain): HTMLElement {
             field.many !== true || field.fixed
                 ? undefined
                 : (chosen: string[]): string[] =>
-                      [...chosen].sort(
-                          (first: string, second: string): number =>
-                              rankOf(first) - rankOf(second),
-                      ),
+                      [...chosen].sort((first: string, second: string): number => rankOf(first) - rankOf(second)),
         aside: [pencil],
         pick: (values: string[]): void => {
             series.title = values.join(", ");
@@ -3322,10 +2954,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
     plainTimed = series.start !== "";
     plainLengths = new Map(
         parts.flatMap((part: Plain): [number, number | null][] =>
-            daysOf(part).map((weekday: number): [number, number | null] => [
-                weekday,
-                part.minutes,
-            ]),
+            daysOf(part).map((weekday: number): [number, number | null] => [weekday, part.minutes]),
         ),
     );
     formReset();
@@ -3343,12 +2972,8 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
         slots: slots,
         before: slots.map((): number => 0),
         extras: parts
-            .flatMap((part: Plain): Extra[] =>
-                part.extras.map((extra: Extra): Extra => ({ ...extra })),
-            )
-            .sort((first: Extra, second: Extra): number =>
-                first.day.localeCompare(second.day),
-            ),
+            .flatMap((part: Plain): Extra[] => part.extras.map((extra: Extra): Extra => ({ ...extra })))
+            .sort((first: Extra, second: Extra): number => first.day.localeCompare(second.day)),
         location: series.location,
         locationLink: placeLinkOf(series.location),
         ...onlineOf(series),
@@ -3369,23 +2994,14 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
  */
 export async function plainOpen(id: string, saved: () => void): Promise<void> {
     fresh = null;
-    await plainStart(
-        await readerAsk<Plain>(`/api/day/plain?id=${encodeURIComponent(id)}`),
-        saved,
-    );
+    await plainStart(await readerAsk<Plain>(`/api/day/plain?id=${encodeURIComponent(id)}`), saved);
 }
 
 /**
  * Gives a new plain series starting on a day, on its weekday, without times,
  * at my default place, see {@link standardLineOf}.
  */
-function plainNewOf(
-    category: string,
-    module: string,
-    type: string,
-    semester: string,
-    day: string,
-): Plain {
+function plainNewOf(category: string, module: string, type: string, semester: string, day: string): Plain {
     return {
         id: "",
         category: category,
@@ -3419,11 +3035,7 @@ function plainNewOf(
  *
  * @throws {Error} - When the reader cannot answer
  */
-export async function learningOpen(
-    module: string,
-    semester: string,
-    id: string,
-): Promise<void> {
+export async function learningOpen(module: string, semester: string, id: string): Promise<void> {
     fresh = null;
     if (id !== "") {
         await plainOpen(id, (): void => {});
@@ -3443,9 +3055,7 @@ function freshRowsOf(): HTMLElement[] {
     const category: HTMLElement = rowOf(
         "Category",
         choicesOf({
-            search: searchOf(
-                categories.map((one: Category): Choice => choiceOf(one.name)),
-            ),
+            search: searchOf(categories.map((one: Category): Choice => choiceOf(one.name))),
             picked: fresh.category === "" ? [] : [fresh.category],
             many: false,
             adding: false,
@@ -3496,29 +3106,19 @@ function semesterRowOf(semester: string): HTMLElement {
         (course === null ? (fresh?.picked.module ?? "") : course.module.split("_")[0]);
     const day: string = typing?.first || dayOf(new Date());
     const picker: HTMLElement = choicesOf({
-        search: async (text: string): Promise<Choice[]> =>
-            searchOf(await semestersOf(module, day, semester))(text),
+        search: async (text: string): Promise<Choice[]> => searchOf(await semestersOf(module, day, semester))(text),
         picked: semester === "" ? [] : [semester],
         many: false,
         adding: false,
         noun: "semester",
         pick: (values: string[]): void => {
-            if ((values[0] ?? semester) !== semester)
-                semesterSwitch(values[0]).catch(logged);
+            if ((values[0] ?? semester) !== semester) semesterSwitch(values[0]).catch(logged);
         },
     });
     const form: Form | null = typing;
-    if (
-        plain !== null ||
-        course === null ||
-        form === null ||
-        !numberedTypes.includes(form.type)
-    )
+    if (plain !== null || course === null || form === null || !numberedTypes.includes(form.type))
         return rowOf("Semester", picker);
-    const pair: HTMLDivElement = pairOf(
-        picker,
-        grouped === null ? groupPickOf(form) : groupPartOf(),
-    );
+    const pair: HTMLDivElement = pairOf(picker, grouped === null ? groupPickOf(form) : groupPartOf());
     pair.classList.add("series-semester");
     return rowOf("Semester", pair);
 }
@@ -3607,12 +3207,7 @@ async function freshFollow(): Promise<void> {
             },
             done,
         );
-        if (
-            course !== null &&
-            course.series.some(
-                (series: Series): boolean => series.rule.type === picked.type,
-            )
-        )
+        if (course !== null && course.series.some((series: Series): boolean => series.rule.type === picked.type))
             return;
         fresh = kept;
         formFill();

@@ -20,12 +20,7 @@
 
 import { EditorState } from "@codemirror/state";
 import { EditorView, drawSelection, keymap } from "@codemirror/view";
-import {
-    defaultKeymap,
-    history,
-    historyKeymap,
-    indentWithTab,
-} from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
 import { markdownSupport } from "../editor/syntax.ts";
 import { markdownKeys } from "../editor/keys.ts";
@@ -83,30 +78,17 @@ export function pointsRead(list: HTMLElement): string {
  * `changed` hears each change of the text I make, never a text shown,
  * which takes no transaction, `left` hears that the focus left the list.
  */
-export function pointsStart(
-    list: HTMLElement,
-    changed: () => void,
-    left: () => void,
-): void {
+export function pointsStart(list: HTMLElement, changed: () => void, left: () => void): void {
     const view: EditorView = new EditorView({
         parent: list,
         state: EditorState.create({ doc: emptyText, extensions: extensions }),
-        dispatchTransactions: (
-            transactions: readonly Transaction[],
-            editor: EditorView,
-        ): void => {
+        dispatchTransactions: (transactions: readonly Transaction[], editor: EditorView): void => {
             editor.update(transactions);
-            if (
-                transactions.some(
-                    (transaction: Transaction): boolean => transaction.docChanged,
-                )
-            )
-                changed();
+            if (transactions.some((transaction: Transaction): boolean => transaction.docChanged)) changed();
         },
     });
     list.addEventListener("focusout", (event: FocusEvent): void => {
-        if (!(event.relatedTarget instanceof Node && list.contains(event.relatedTarget)))
-            left();
+        if (!(event.relatedTarget instanceof Node && list.contains(event.relatedTarget))) left();
     });
     list.addEventListener("mousedown", (event: MouseEvent): void => {
         if (event.target instanceof Node && view.dom.contains(event.target)) return;

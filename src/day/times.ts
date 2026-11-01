@@ -50,10 +50,7 @@ export function timeOf(date: Date): string {
  * a space that never breaks between hours and minutes, so a length stays on one line.
  */
 export function lengthOf(minutes: number): string {
-    return (
-        `${String(Math.floor(minutes / 60)).padStart(2, "0")}h\u00a0` +
-        `${String(minutes % 60).padStart(2, "0")}m`
-    );
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}h\u00a0` + `${String(minutes % 60).padStart(2, "0")}m`;
 }
 
 /**
@@ -61,10 +58,7 @@ export function lengthOf(minutes: number): string {
  * see {@link lengthSwapOf}.
  */
 export function lengthTextOf(minutes: number): string {
-    return (
-        `${String(Math.floor(minutes / 60)).padStart(2, "0")}:` +
-        String(minutes % 60).padStart(2, "0")
-    );
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:` + String(minutes % 60).padStart(2, "0");
 }
 
 /** Gives the minutes of a time or a length typed as `hh:mm`. */
@@ -112,8 +106,7 @@ export function nowOn(day: Date): Date {
  */
 function timeParse(text: string): string | null {
     const match: RegExpMatchArray | null = text.trim().match(/^(\d{1,2})(?::?(\d{2}))?$/);
-    if (match === null || Number(match[1]) > 23 || Number(match[2] ?? 0) > 59)
-        return null;
+    if (match === null || Number(match[1]) > 23 || Number(match[2] ?? 0) > 59) return null;
     return `${match[1].padStart(2, "0")}:${match[2] ?? "00"}`;
 }
 
@@ -147,16 +140,11 @@ export function weekdayDateTextOf(day: string): string {
  * The day at noon is no date or another day for a day the month lacks, like `31.02.2027`.
  */
 export function dateParse(text: string): string | null {
-    const match: RegExpMatchArray | null = text
-        .trim()
-        .match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s*\([a-z]+\))?$/i);
+    const match: RegExpMatchArray | null = text.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s*\([a-z]+\))?$/i);
     if (match === null) return null;
-    const day: string =
-        `${match[3]}-${match[2].padStart(2, "0")}-` + match[1].padStart(2, "0");
+    const day: string = `${match[3]}-${match[2].padStart(2, "0")}-` + match[1].padStart(2, "0");
     const date: Date = new Date(`${day}T12:00:00`);
-    return date.getDate() === Number(match[1]) && date.getMonth() + 1 === Number(match[2])
-        ? day
-        : null;
+    return date.getDate() === Number(match[1]) && date.getMonth() + 1 === Number(match[2]) ? day : null;
 }
 
 /**
@@ -183,8 +171,7 @@ export function boxTimesOf(box: Box, day: Date): [Date, Date] {
  */
 export function nearOf(day: string, from: string): string {
     const days: number = Math.round(
-        (Date.parse(`${day}T12:00:00`) - Date.parse(`${from}T12:00:00`)) /
-            (24 * 60 * 60 * 1000),
+        (Date.parse(`${day}T12:00:00`) - Date.parse(`${from}T12:00:00`)) / (24 * 60 * 60 * 1000),
     );
     if (days === 0) return "today";
     if (days === 1) return "tomorrow";
@@ -201,9 +188,7 @@ export function timeFieldStart(field: HTMLInputElement): void {
     field.placeholder = "hh:mm";
     field.addEventListener("input", (): void =>
         field.setCustomValidity(
-            field.value.trim() !== "" && timeParse(field.value) === null
-                ? "Time like 14:00, 1415 or 14"
-                : "",
+            field.value.trim() !== "" && timeParse(field.value) === null ? "Time like 14:00, 1415 or 14" : "",
         ),
     );
     field.addEventListener("change", (): void => {
@@ -220,9 +205,7 @@ export function dateFieldStart(field: HTMLInputElement): void {
     field.placeholder = "dd.mm.yyyy";
     field.addEventListener("input", (): void =>
         field.setCustomValidity(
-            field.value.trim() !== "" && dateParse(field.value) === null
-                ? "Date like 23.10.2026"
-                : "",
+            field.value.trim() !== "" && dateParse(field.value) === null ? "Date like 23.10.2026" : "",
         ),
     );
     field.addEventListener("change", (): void => {

@@ -69,9 +69,7 @@ export function summaryOf(named: { name: string; kind: Kind }[]): string {
     const eaten: { name: string; kind: Kind }[] = named.filter(
         (part: { name: string; kind: Kind }): boolean => part.kind !== "Drink",
     );
-    return (eaten.length > 0 ? eaten : named)
-        .map((part: { name: string; kind: Kind }): string => part.name)
-        .join(", ");
+    return (eaten.length > 0 ? eaten : named).map((part: { name: string; kind: Kind }): string => part.name).join(", ");
 }
 
 /**
@@ -81,11 +79,8 @@ export function summaryOf(named: { name: string; kind: Kind }[]): string {
  * `null` for a text that names no portions or a food without portion.
  */
 export function portionGramsOf(text: string, portion: number | null): number | null {
-    const typed: RegExpExecArray | null =
-        /^(\d+(?:[.,]\d+)?)?\s*(st|stk|stück|x)\.?$/i.exec(text.trim());
-    return typed === null || portion === null
-        ? null
-        : Number((typed[1] ?? "1").replace(",", ".")) * portion;
+    const typed: RegExpExecArray | null = /^(\d+(?:[.,]\d+)?)?\s*(st|stk|stück|x)\.?$/i.exec(text.trim());
+    return typed === null || portion === null ? null : Number((typed[1] ?? "1").replace(",", ".")) * portion;
 }
 
 /**
@@ -94,14 +89,9 @@ export function portionGramsOf(text: string, portion: number | null): number | n
  *
  * @throws {Error} - When the reader cannot answer
  */
-export async function foodsFind(
-    query: string,
-    page: number,
-    products: boolean,
-): Promise<FoodsFound> {
+export async function foodsFind(query: string, page: number, products: boolean): Promise<FoodsFound> {
     return readerAsk<FoodsFound>(
-        `/api/food/search?q=${encodeURIComponent(query)}&page=${page}` +
-            `&products=${products ? 1 : 0}`,
+        `/api/food/search?q=${encodeURIComponent(query)}&page=${page}` + `&products=${products ? 1 : 0}`,
     );
 }
 
@@ -261,16 +251,10 @@ export function elementOf(tag: string, className: string, text: string): HTMLEle
  * never cut, on a line of their own where one name of the list has no room,
  * see {@link bracketsWatch}.
  */
-export function foodNameOf(
-    className: string,
-    name: string,
-    brand: string,
-    store: string,
-): HTMLElement {
+export function foodNameOf(className: string, name: string, brand: string, store: string): HTMLElement {
     const shown: HTMLElement = elementOf("span", className, name);
     const place: string[] = [brand, store].filter((part: string): boolean => part !== "");
-    if (place.length > 0)
-        shown.append(elementOf("span", "food-brand", ` (${place.join(", ")})`));
+    if (place.length > 0) shown.append(elementOf("span", "food-brand", ` (${place.join(", ")})`));
     return shown;
 }
 
@@ -289,23 +273,17 @@ export function bracketsWatch(list: HTMLElement): void {
     const fits: (bracket: HTMLElement) => boolean = (bracket: HTMLElement): boolean => {
         const parts: DOMRectList = bracket.getClientRects();
         const name: Node | null = bracket.parentElement?.firstChild ?? null;
-        if (parts.length === 0 || name === null || name.nodeType !== Node.TEXT_NODE)
-            return true;
+        if (parts.length === 0 || name === null || name.nodeType !== Node.TEXT_NODE) return true;
         const range: Range = document.createRange();
         range.selectNodeContents(name);
         const first: DOMRect | undefined = range.getClientRects()[0];
         return first === undefined || parts[parts.length - 1].bottom <= first.bottom + 1;
     };
     const look: () => void = (): void => {
-        const brackets: HTMLElement[] = [
-            ...list.querySelectorAll<HTMLElement>(".food-brand"),
-        ].filter(
-            (bracket: HTMLElement): boolean =>
-                bracket.parentElement?.closest("[data-brackets]") === list,
+        const brackets: HTMLElement[] = [...list.querySelectorAll<HTMLElement>(".food-brand")].filter(
+            (bracket: HTMLElement): boolean => bracket.parentElement?.closest("[data-brackets]") === list,
         );
-        brackets.forEach((bracket: HTMLElement): void =>
-            bracket.classList.remove("bracket-below"),
-        );
+        brackets.forEach((bracket: HTMLElement): void => bracket.classList.remove("bracket-below"));
         const below: boolean = !brackets.every(fits);
         brackets.forEach((bracket: HTMLElement): void => {
             bracket.classList.toggle("bracket-below", below);
@@ -323,11 +301,7 @@ export function bracketsWatch(list: HTMLElement): void {
 /**
  * Makes a button that does not send a form, also inside one.
  */
-export function buttonOf(
-    className: string,
-    text: string,
-    click: () => void,
-): HTMLButtonElement {
+export function buttonOf(className: string, text: string, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = document.createElement("button");
     button.type = "button";
     button.className = className;

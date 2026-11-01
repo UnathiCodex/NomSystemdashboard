@@ -11,14 +11,7 @@
  * Paths are those of the scripts view, from `NomSkillingmodules`.
  */
 
-import {
-    appendFileSync,
-    mkdirSync,
-    readFileSync,
-    realpathSync,
-    statSync,
-    writeFileSync,
-} from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, sep } from "node:path";
 import { createTwoFilesPatch, diffArrays, FILE_HEADERS_ONLY } from "diff";
 import { Temporal } from "temporal-polyfill";
@@ -83,8 +76,7 @@ function hunksOf(base: string[], other: string[]): Hunk[] {
             continue;
         }
         const last: Hunk | undefined = hunks.at(-1);
-        const hunk: Hunk =
-            last !== undefined && last.to === at ? last : { from: at, to: at, lines: [] };
+        const hunk: Hunk = last !== undefined && last.to === at ? last : { from: at, to: at, lines: [] };
         if (hunk !== last) hunks.push(hunk);
         if (part.removed) {
             hunk.to += part.count;
@@ -105,16 +97,11 @@ export function textMerged(base: string, text: string, disk: string): string {
     const original: string[] = linesOf(base);
     const mine: Hunk[] = hunksOf(original, linesOf(text));
     const theirs: Hunk[] = hunksOf(original, linesOf(disk)).filter(
-        (hunk: Hunk): boolean =>
-            !mine.some(
-                (own: Hunk): boolean => own.from <= hunk.to && hunk.from <= own.to,
-            ),
+        (hunk: Hunk): boolean => !mine.some((own: Hunk): boolean => own.from <= hunk.to && hunk.from <= own.to),
     );
     const merged: string[] = [];
     let at: number = 0;
-    for (const hunk of [...mine, ...theirs].sort(
-        (first: Hunk, second: Hunk): number => first.from - second.from,
-    )) {
+    for (const hunk of [...mine, ...theirs].sort((first: Hunk, second: Hunk): number => first.from - second.from)) {
         merged.push(...original.slice(at, hunk.from), ...hunk.lines);
         at = hunk.to;
     }
@@ -136,10 +123,7 @@ export function changesOf(before: string, after: string): TextChange[] {
             continue;
         }
         const last: TextChange | undefined = changes.at(-1);
-        const change: TextChange =
-            last !== undefined && last.to === at
-                ? last
-                : { from: at, to: at, insert: "" };
+        const change: TextChange = last !== undefined && last.to === at ? last : { from: at, to: at, insert: "" };
         if (change !== last) changes.push(change);
         if (part.removed) {
             change.to += text.length;
@@ -173,9 +157,7 @@ function noteFileOf(path: string): string {
 
 /** Gives the time now in Berlin, like `2026-10-17 14:40:19`, for the head of a diff. */
 function stampOf(): string {
-    return Temporal.Now.plainDateTimeISO("Europe/Berlin")
-        .toString({ smallestUnit: "second" })
-        .replace("T", " ");
+    return Temporal.Now.plainDateTimeISO("Europe/Berlin").toString({ smallestUnit: "second" }).replace("T", " ");
 }
 
 /**
@@ -191,10 +173,8 @@ export function noteWrite(change: NoteChange): Written {
     const file: string = noteFileOf(change.path);
     const bytes: Buffer = readFileSync(file);
     const old: string = bytes.toString("utf8");
-    if (!Buffer.from(old, "utf8").equals(bytes))
-        throw new Error(`No UTF-8 text, so not written: ${change.path}`);
-    const text: string =
-        old === change.base ? change.text : textMerged(change.base, change.text, old);
+    if (!Buffer.from(old, "utf8").equals(bytes)) throw new Error(`No UTF-8 text, so not written: ${change.path}`);
+    const text: string = old === change.base ? change.text : textMerged(change.base, change.text, old);
     const written: Written = { text: text, changes: changesOf(change.text, text) };
     if (text === old) return written;
 
@@ -202,17 +182,9 @@ export function noteWrite(change: NoteChange): Written {
     mkdirSync(dirname(editor.corrections), { recursive: true });
     appendFileSync(
         editor.corrections,
-        createTwoFilesPatch(
-            `a/${change.path}`,
-            `b/${change.path}`,
-            old,
-            text,
-            stamp,
-            stamp,
-            {
-                headerOptions: FILE_HEADERS_ONLY,
-            },
-        ),
+        createTwoFilesPatch(`a/${change.path}`, `b/${change.path}`, old, text, stamp, stamp, {
+            headerOptions: FILE_HEADERS_ONLY,
+        }),
     );
     writeFileSync(file, text);
     return written;

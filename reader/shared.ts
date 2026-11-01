@@ -49,14 +49,7 @@
 
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import {
-    existsSync,
-    mkdirSync,
-    readdirSync,
-    readFileSync,
-    watch,
-    writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
 import { entryAdd } from "./day.ts";
@@ -81,14 +74,7 @@ import {
     roomsRead,
 } from "./places.ts";
 import { personNameOf } from "./persons.ts";
-import {
-    dashboardBoxOf,
-    day,
-    holder,
-    myName,
-    partners,
-    writeAllowed,
-} from "./sources.ts";
+import { dashboardBoxOf, day, holder, myName, partners, writeAllowed } from "./sources.ts";
 import { trashPut } from "./trash.ts";
 
 import type { ChildProcess } from "node:child_process";
@@ -181,8 +167,7 @@ function holderIs(): boolean {
 function partnersOf(): string[] {
     return partners.filter(
         (partner: string): boolean =>
-            nameForm.test(partner) &&
-            (holderIs() || partner.toLowerCase() === holder.toLowerCase()),
+            nameForm.test(partner) && (holderIs() || partner.toLowerCase() === holder.toLowerCase()),
     );
 }
 
@@ -210,10 +195,7 @@ function sameName(first: string, second: string): boolean {
 function boxFilesOf(box: string): string[] {
     if (!existsSync(box)) return [];
     return readdirSync(box)
-        .filter(
-            (name: string): boolean =>
-                !name.startsWith(".") && /\.(?:ics|json)$/.test(name),
-        )
+        .filter((name: string): boolean => !name.startsWith(".") && /\.(?:ics|json)$/.test(name))
         .sort();
 }
 
@@ -246,14 +228,7 @@ function sshRun(words: string[], input: string = ""): Promise<string | undefined
     return new Promise((resolve: (given: string | undefined) => void): void => {
         const child: ChildProcess = spawn(
             "ssh",
-            [
-                "-o",
-                "BatchMode=yes",
-                "-o",
-                `ConnectTimeout=${reachSeconds}`,
-                `nom-${holder.toLowerCase()}`,
-                ...words,
-            ],
+            ["-o", "BatchMode=yes", "-o", `ConnectTimeout=${reachSeconds}`, `nom-${holder.toLowerCase()}`, ...words],
             { stdio: ["pipe", "pipe", "pipe"] },
         );
         const given: Buffer[] = [];
@@ -270,13 +245,8 @@ function sshRun(words: string[], input: string = ""): Promise<string | undefined
         });
         child.on("close", (code: number | null): void => {
             if (code !== 0 && !unreached)
-                console.error(
-                    new Date().toISOString(),
-                    `${holder} not reached: ${words[0]}`,
-                    told.trim(),
-                );
-            if (code === 0 && unreached)
-                console.log(new Date().toISOString(), `${holder} reached again`);
+                console.error(new Date().toISOString(), `${holder} not reached: ${words[0]}`, told.trim());
+            if (code === 0 && unreached) console.log(new Date().toISOString(), `${holder} reached again`);
             unreached = code !== 0;
             resolve(code === 0 ? Buffer.concat(given).toString("utf8") : undefined);
         });
@@ -338,10 +308,7 @@ function copyWrite(entry: Entry, partner: string): void {
     const fields: EntryFields = {
         category: entry.category,
         title: entry.title,
-        titleLink:
-            entry.category === skillName || linkForm.test(entry.titleLink)
-                ? entry.titleLink
-                : "",
+        titleLink: entry.category === skillName || linkForm.test(entry.titleLink) ? entry.titleLink : "",
         location: entry.location,
         locationLink: entry.locationLink,
         online: entry.online,
@@ -352,8 +319,7 @@ function copyWrite(entry: Entry, partner: string): void {
         attendees: [
             { name: myName, address: addressOf(myName) },
             ...entry.attendees.filter(
-                (attendee: Attendee): boolean =>
-                    !sameName(attendee.name, partner) && !sameName(attendee.name, myName),
+                (attendee: Attendee): boolean => !sameName(attendee.name, partner) && !sameName(attendee.name, myName),
             ),
         ],
         module: entry.module,
@@ -363,16 +329,9 @@ function copyWrite(entry: Entry, partner: string): void {
         start: new Date(entry.start),
         end: new Date(entry.end),
     };
-    const own: [string, string][] = entry.foods.map((food: string): [string, string] => [
-        "x-food",
-        food,
-    ]);
+    const own: [string, string][] = entry.foods.map((food: string): [string, string] => ["x-food", food]);
     if (entry.cooked !== "") own.push(["x-cooked", entry.cooked]);
-    outboxWrite(
-        partner,
-        `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`,
-        entryIcsOf(fields, own, entry.id),
-    );
+    outboxWrite(partner, `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`, entryIcsOf(fields, own, entry.id));
 }
 
 /**
@@ -400,19 +359,12 @@ export function entryShare(id: string, before: Attendee[] = []): void {
             found[1].attendees
                 .filter(
                     (attendee: Attendee): boolean =>
-                        !before.some((old: Attendee): boolean =>
-                            sameName(old.name, attendee.name),
-                        ),
+                        !before.some((old: Attendee): boolean => sameName(old.name, attendee.name)),
                 )
                 .map((attendee: Attendee): string | undefined =>
-                    partnersOf().find((partner: string): boolean =>
-                        sameName(partner, attendee.name),
-                    ),
+                    partnersOf().find((partner: string): boolean => sameName(partner, attendee.name)),
                 )
-                .filter(
-                    (partner: string | undefined): partner is string =>
-                        partner !== undefined,
-                ),
+                .filter((partner: string | undefined): partner is string => partner !== undefined),
         );
         to.forEach((partner: string): void => copyWrite(found[1], partner));
     } catch (error: unknown) {
@@ -428,18 +380,10 @@ export function listShare(change: ListChange, only?: string): void {
     if (!sharingIs()) return;
     try {
         (only === undefined ? partnersOf() : [only]).forEach((partner: string): void => {
-            outboxWrite(
-                partner,
-                `${stampOf()}_${myName}_list_${randomUUID()}.json`,
-                `${JSON.stringify(change)}\n`,
-            );
+            outboxWrite(partner, `${stampOf()}_${myName}_list_${randomUUID()}.json`, `${JSON.stringify(change)}\n`);
         });
     } catch (error: unknown) {
-        console.error(
-            new Date().toISOString(),
-            `No change shared: ${change.call}`,
-            error,
-        );
+        console.error(new Date().toISOString(), `No change shared: ${change.call}`, error);
     }
 }
 
@@ -449,9 +393,7 @@ export function listShare(change: ListChange, only?: string): void {
  * the foods first, then the meals, which name them, then the places, then the platforms.
  */
 function listsShareAll(partner: string): void {
-    foodsRead().forEach((food: Food): void =>
-        listShare({ call: "foodAdd", with: food }, partner),
-    );
+    foodsRead().forEach((food: Food): void => listShare({ call: "foodAdd", with: food }, partner));
     compositionsRead().forEach((meal: Composition): void =>
         listShare(
             {
@@ -469,9 +411,7 @@ function listsShareAll(partner: string): void {
     [...placesRead(), ...roomsRead()].forEach((place: Place): void =>
         listShare({ call: "placeAdd", with: place }, partner),
     );
-    platformsRead().forEach((platform: Platform): void =>
-        listShare({ call: "platformAdd", with: platform }, partner),
-    );
+    platformsRead().forEach((platform: Platform): void => listShare({ call: "platformAdd", with: platform }, partner));
 }
 
 /**
@@ -504,8 +444,7 @@ function listApply(change: ListChange): void {
  * as I have it once it came with us both in its `With`.
  */
 function entryNewOf(entry: Entry): EntryNew {
-    const cooking: Entry | undefined =
-        entry.cooked === "" ? undefined : entryLookup(day.log, entry.cooked)?.[1];
+    const cooking: Entry | undefined = entry.cooked === "" ? undefined : entryLookup(day.log, entry.cooked)?.[1];
     return {
         category: entry.category,
         title: entry.title,
@@ -523,9 +462,7 @@ function entryNewOf(entry: Entry): EntryNew {
         foods: entry.foods,
         planned: "",
         cooked:
-            cooking !== undefined &&
-            cooking.category === "Cook" &&
-            Date.parse(cooking.start) < Date.parse(entry.start)
+            cooking !== undefined && cooking.category === "Cook" && Date.parse(cooking.start) < Date.parse(entry.start)
                 ? entry.cooked
                 : "",
         start: entry.start,
@@ -544,10 +481,7 @@ function thingTake(name: string, text: string): boolean {
     try {
         if (name.endsWith(".ics"))
             textEntriesRead(text, name)
-                .filter(
-                    (entry: Entry): boolean =>
-                        entryLookup(day.log, entry.id) === undefined,
-                )
+                .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
                 .forEach((entry: Entry): void => {
                     entryAdd(entryNewOf(entry), entry.id);
                 });
@@ -563,8 +497,7 @@ function thingTake(name: string, text: string): boolean {
             }
         return true;
     } catch (error: unknown) {
-        if (!failed.has(name))
-            console.error(new Date().toISOString(), `My log cannot take ${name}`, error);
+        if (!failed.has(name)) console.error(new Date().toISOString(), `My log cannot take ${name}`, error);
         failed.add(name);
         return false;
     }
@@ -591,9 +524,7 @@ export function inboxTake(): void {
     const run: () => Promise<void> = async (): Promise<void> => {
         const names: string | undefined = await sshRun(["inbox"]);
         if (names === undefined) return;
-        for (const name of names
-            .split("\n")
-            .filter((one: string): boolean => one !== "")) {
+        for (const name of names.split("\n").filter((one: string): boolean => one !== "")) {
             const text: string | undefined = await sshRun(["take", name]);
             if (text === undefined) return;
             if (thingTake(name, text)) await sshRun(["done", name]);
@@ -602,11 +533,7 @@ export function inboxTake(): void {
     };
     run()
         .catch((error: unknown): void => {
-            console.error(
-                new Date().toISOString(),
-                `Nothing taken from ${holder}`,
-                error,
-            );
+            console.error(new Date().toISOString(), `Nothing taken from ${holder}`, error);
         })
         .finally((): void => {
             taking = false;

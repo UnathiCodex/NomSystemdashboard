@@ -61,38 +61,15 @@ import {
 import { giftWrite } from "./gifts.ts";
 import { noteRead, notesStart, sectionsRead, sectionWrite } from "./note.ts";
 import { categoriesRead, lastPlaceRead, semesterOf } from "./categories.ts";
-import {
-    placeAdd,
-    placeChange,
-    placeRename,
-    placeStandardSet,
-    platformAdd,
-    platformChange,
-} from "./places.ts";
+import { placeAdd, placeChange, placeRename, placeStandardSet, platformAdd, platformChange } from "./places.ts";
 import { plainApply, plainRead, plainRemove } from "./rules.ts";
 import { personRename, personsRead } from "./persons.ts";
 import { attendeesRename, paramRename } from "./calendar.ts";
 import { calendarRoot } from "./sources.ts";
-import {
-    fileOpen,
-    fileRead,
-    folderMake,
-    folderRead,
-    linkedNoteRead,
-    menuRead,
-    moduleMake,
-} from "./notes.ts";
+import { fileOpen, fileRead, folderMake, folderRead, linkedNoteRead, menuRead, moduleMake } from "./notes.ts";
 import { noteWrite } from "./edit.ts";
 import { systemFileRead, systemFileWrite, treeRead } from "./files.ts";
-import {
-    attemptAdd,
-    roundAdd,
-    moduleRead,
-    sessionRead,
-    skillEntryAdd,
-    skillEntryEdit,
-    skillingRead,
-} from "./skill.ts";
+import { attemptAdd, roundAdd, moduleRead, sessionRead, skillEntryAdd, skillEntryEdit, skillingRead } from "./skill.ts";
 import { linksCheckStart } from "./documents.ts";
 import { suggestionsWrite } from "./suggestions.ts";
 import {
@@ -146,13 +123,7 @@ import type {
 import type { Gift } from "./gifts.ts";
 import type { PlainChange } from "./rules.ts";
 import type { SectionNew } from "./note.ts";
-import type {
-    Place,
-    PlaceChanged,
-    PlaceRenamed,
-    Platform,
-    PlatformChanged,
-} from "./places.ts";
+import type { Place, PlaceChanged, PlaceRenamed, Platform, PlatformChanged } from "./places.ts";
 import type { DeviceReport } from "./devices.ts";
 import type { NotesFile, NotesStream } from "./notes.ts";
 import type { NoteChange } from "./edit.ts";
@@ -167,9 +138,7 @@ import type { Dish, Food, FoodChanged } from "./food.ts";
  */
 function responseSend(response: ServerResponse, status: number, body: unknown): void {
     const text: string = JSON.stringify(body);
-    const packed: boolean = /\bgzip\b/.test(
-        response.req.headers["accept-encoding"] ?? "",
-    );
+    const packed: boolean = /\bgzip\b/.test(response.req.headers["accept-encoding"] ?? "");
     response.statusCode = status;
     response.setHeader("Content-Type", "application/json; charset=utf-8");
     response.setHeader("Cache-Control", "no-store");
@@ -187,10 +156,7 @@ function responseSend(response: ServerResponse, status: number, body: unknown): 
  */
 function fileSend(response: ServerResponse, file: NotesFile, name: string): void {
     response.setHeader("Content-Type", file.type);
-    response.setHeader(
-        "Content-Disposition",
-        `inline; filename*=UTF-8''${encodeURIComponent(name)}`,
-    );
+    response.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(name)}`);
     response.setHeader("Cache-Control", "no-store");
     response.setHeader("Content-Security-Policy", "script-src 'none'");
     response.end(file.content);
@@ -204,23 +170,15 @@ function fileSend(response: ServerResponse, file: NotesFile, name: string): void
  *
  * @throws {Error} - When the file cannot be read to its end
  */
-async function fileStream(
-    response: ServerResponse,
-    file: NotesStream,
-    name: string,
-): Promise<void> {
+async function fileStream(response: ServerResponse, file: NotesStream, name: string): Promise<void> {
     response.setHeader("Content-Type", file.type);
-    response.setHeader(
-        "Content-Disposition",
-        `inline; filename*=UTF-8''${encodeURIComponent(name)}`,
-    );
+    response.setHeader("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(name)}`);
     response.setHeader("Cache-Control", "no-store");
     response.setHeader("Content-Security-Policy", "script-src 'none'");
     try {
         await pipeline(file.content, response);
     } catch (error: unknown) {
-        if ((error as NodeJS.ErrnoException).code !== "ERR_STREAM_PREMATURE_CLOSE")
-            throw error;
+        if ((error as NodeJS.ErrnoException).code !== "ERR_STREAM_PREMATURE_CLOSE") throw error;
     }
 }
 
@@ -271,11 +229,7 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *
  * @throws {unknown} - Error of the chosen answer thrown again
  */
-async function requestHandle(
-    page: ViteDevServer,
-    request: IncomingMessage,
-    response: ServerResponse,
-): Promise<void> {
+async function requestHandle(page: ViteDevServer, request: IncomingMessage, response: ServerResponse): Promise<void> {
     const url: URL = new URL(request.url ?? "/", "http://localhost");
     const start: string = url.searchParams.get("start") ?? "";
     const end: string = url.searchParams.get("end") ?? "";
@@ -347,9 +301,7 @@ async function requestHandle(
         boxDelete(url.searchParams.get("id") ?? "");
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/repeat") {
-        const planned: Planned[] | null = repeatApply(
-            (await json(request)) as RepeatChange,
-        );
+        const planned: Planned[] | null = repeatApply((await json(request)) as RepeatChange);
         responseSend(response, planned === null ? 409 : 200, planned);
     } else if (request.method === "POST" && url.pathname === "/api/day/plain") {
         responseSend(response, 200, plainApply((await json(request)) as PlainChange));
@@ -380,8 +332,7 @@ async function requestHandle(
         };
         boxUniversity(marked.box, marked.cancelled);
         const box: Box = boxFind(marked.box)[2];
-        if (box.group !== "")
-            numbersRenew(box.module, box.type, box.semester || semesterOf(box.day));
+        if (box.group !== "") numbersRenew(box.module, box.type, box.semester || semesterOf(box.day));
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/submitted") {
         const ticked: { box: string; submitted: boolean } = (await json(request)) as {
@@ -406,9 +357,7 @@ async function requestHandle(
         listShare({ call: "placeChange", with: sent });
         responseSend(response, 200, place);
     } else if (request.method === "POST" && url.pathname === "/api/day/renamed") {
-        const changed: PlaceChanged | null = placeRename(
-            (await json(request)) as PlaceRenamed,
-        );
+        const changed: PlaceChanged | null = placeRename((await json(request)) as PlaceRenamed);
         if (changed !== null) listShare({ call: "placeChange", with: changed });
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/param-renamed") {
@@ -432,23 +381,14 @@ async function requestHandle(
         personRename(
             (await json(request)) as PersonRenamed,
             (old: string, name: string, mail: string, dry: boolean): number =>
-                attendeesRename(
-                    [{ folder: calendarRoot, ending: ".ics" }],
-                    old,
-                    name,
-                    mail,
-                    dry,
-                ),
+                attendeesRename([{ folder: calendarRoot, ending: ".ics" }], old, name, mail, dry),
         );
         responseSend(response, 200, null);
     } else if (request.method === "GET" && url.pathname === "/api/course/module") {
         responseSend(
             response,
             200,
-            courseRead(
-                url.searchParams.get("module") ?? "",
-                url.searchParams.get("semester") ?? "",
-            ),
+            courseRead(url.searchParams.get("module") ?? "", url.searchParams.get("semester") ?? ""),
         );
     } else if (request.method === "POST" && url.pathname === "/api/course/series") {
         responseSend(response, 200, seriesApply((await json(request)) as SeriesChange));
@@ -486,10 +426,7 @@ async function requestHandle(
             }),
         );
     } else if (request.method === "POST" && url.pathname === "/api/devices") {
-        await deviceReport(
-            (await json(request)) as DeviceReport,
-            String(request.headers["x-forwarded-for"] ?? ""),
-        );
+        await deviceReport((await json(request)) as DeviceReport, String(request.headers["x-forwarded-for"] ?? ""));
         responseSend(response, 200, null);
     } else if (request.method === "GET" && url.pathname === "/api/changes") {
         changesSend(response);
@@ -613,11 +550,7 @@ async function requestHandle(
     } else if (request.method === "GET" && url.pathname === "/api/sport/day") {
         responseSend(response, 200, sportDayRead(date));
     } else if (request.method === "POST" && url.pathname === "/api/sport/weight") {
-        responseSend(
-            response,
-            200,
-            weightSave((await json(request)) as { day?: string; kg?: unknown }),
-        );
+        responseSend(response, 200, weightSave((await json(request)) as { day?: string; kg?: unknown }));
     } else if (request.method === "GET" && url.pathname === "/api/sport/mine") {
         responseSend(response, 200, mineRead());
     } else if (request.method === "POST" && url.pathname === "/api/sport/workouts") {

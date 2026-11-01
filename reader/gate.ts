@@ -50,8 +50,7 @@ import type { Dirent } from "node:fs";
 const usage: string = [
     "Allowed: readme | list | get <path> | put <path> | delete <path> | share <name>",
     "  | inbox | take <name> | done <name>",
-    "  A path starts with its box, like to_vu/2026-10-22_0930_antwort.md; " +
-        "both boxes are open to both of us.",
+    "  A path starts with its box, like to_vu/2026-10-22_0930_antwort.md; " + "both boxes are open to both of us.",
 ].join("\n");
 
 /** The most bytes a message takes, like a PDF of solutions. */
@@ -71,9 +70,7 @@ const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
 
 /** Gives the form of the name of a shared file of a sender, see `./shared.ts`. */
 function sharedFormOf(sender: string): RegExp {
-    return new RegExp(
-        `^\\d{8}T\\d{9}Z_${sender}_(?:entry|list)_[\\w.@-]{1,160}\\.(?:ics|json)$`,
-    );
+    return new RegExp(`^\\d{8}T\\d{9}Z_${sender}_(?:entry|list)_[\\w.@-]{1,160}\\.(?:ics|json)$`);
 }
 
 /** Ends the gate with a refusal. */
@@ -85,11 +82,7 @@ function refuse(reason: string, code: number = 1): never {
 /** Splits a path as the caller sends it into its parts, refusing a part not allowed. */
 function partsOf(path: string): string[] {
     const parts: string[] = path.split("/");
-    if (
-        path === "" ||
-        parts.length > partsMost ||
-        !parts.every((part: string): boolean => partForm.test(part))
-    )
+    if (path === "" || parts.length > partsMost || !parts.every((part: string): boolean => partForm.test(part)))
         refuse(`No path allowed: ${path}`);
     return parts;
 }
@@ -101,18 +94,14 @@ function partsOf(path: string): string[] {
  */
 function boxPathOf(boxes: string[], path: string): string[] {
     const [first, ...parts]: string[] = partsOf(path);
-    const box: string | undefined = boxes.find(
-        (one: string): boolean => basename(one) === first,
-    );
-    if (box === undefined || parts.length === 0 || parts[0] === "dashboard")
-        refuse(`No path in a box: ${path}`);
+    const box: string | undefined = boxes.find((one: string): boolean => basename(one) === first);
+    if (box === undefined || parts.length === 0 || parts[0] === "dashboard") refuse(`No path in a box: ${path}`);
     return [box, join(box, ...parts)];
 }
 
 /** Refuses a file or folder outside a box after symbolic links are followed. */
 function insideCheck(box: string, path: string): void {
-    if (!realpathSync(path).startsWith(`${realpathSync(box)}${sep}`))
-        refuse(`Not inside the box: ${path}`);
+    if (!realpathSync(path).startsWith(`${realpathSync(box)}${sep}`)) refuse(`Not inside the box: ${path}`);
 }
 
 /**
@@ -166,10 +155,7 @@ function fileWrite(file: string, bytes: Buffer | string): void {
 async function gateRun(): Promise<void> {
     const [me, caller]: string[] = process.argv.slice(2);
     if (!nameForm.test(me ?? "") || !nameForm.test(caller ?? ""))
-        refuse(
-            "The gate needs the name of the owner and of the caller, " +
-                "like gate.ts Sopha Vu",
-        );
+        refuse("The gate needs the name of the owner and of the caller, " + "like gate.ts Sopha Vu");
     const theirs: string = join(kommunikationRoot, `to_${caller.toLowerCase()}`);
     const mine: string = join(kommunikationRoot, `to_${me.toLowerCase()}`);
     const boxes: string[] = [theirs, mine];
@@ -186,22 +172,18 @@ async function gateRun(): Promise<void> {
         process.stdout.write(
             boxes
                 .flatMap((box: string): string[] =>
-                    filesOf(box, ["dashboard"]).map(
-                        (file: string): string => `${basename(box)}/${file}\n`,
-                    ),
+                    filesOf(box, ["dashboard"]).map((file: string): string => `${basename(box)}/${file}\n`),
                 )
                 .join(""),
         );
     } else if (command === "get") {
         const [box, file]: string[] = boxPathOf(boxes, path);
-        if (!existsSync(file) || !statSync(file).isFile())
-            refuse(`No such file: ${path}`);
+        if (!existsSync(file) || !statSync(file).isFile()) refuse(`No such file: ${path}`);
         insideCheck(box, file);
         createReadStream(file).pipe(process.stdout);
     } else if (command === "put") {
         const [box, file]: string[] = boxPathOf(boxes, path);
-        if (existsSync(file) && !statSync(file).isFile())
-            refuse(`A folder, no file: ${path}`);
+        if (existsSync(file) && !statSync(file).isFile()) refuse(`A folder, no file: ${path}`);
         mkdirSync(dirname(file), { recursive: true });
         if (dirname(file) !== box) insideCheck(box, dirname(file));
         fileWrite(file, await inputRead(messageMost));
@@ -229,8 +211,7 @@ async function gateRun(): Promise<void> {
     } else if (command === "take" || command === "done") {
         const box: string = join(theirs, "dashboard");
         const file: string = join(box, path);
-        if (!sharedFormOf(me).test(path) || !existsSync(file))
-            refuse(`No such shared: ${path}`);
+        if (!sharedFormOf(me).test(path) || !existsSync(file)) refuse(`No such shared: ${path}`);
         insideCheck(box, file);
         if (command === "take") createReadStream(file).pipe(process.stdout);
         else {
@@ -242,6 +223,4 @@ async function gateRun(): Promise<void> {
     }
 }
 
-await gateRun().catch((error: unknown): never =>
-    refuse(`The gate failed: ${String(error)}`),
-);
+await gateRun().catch((error: unknown): never => refuse(`The gate failed: ${String(error)}`));

@@ -54,9 +54,7 @@ export function placeAddressOf(place: Place): string {
  * as Google Calendar does, its name and its address in one line.
  */
 export function lineOf(place: Place): string {
-    return placeAddressOf(place) === ""
-        ? place.name
-        : `${place.name}, ${placeAddressOf(place)}`;
+    return placeAddressOf(place) === "" ? place.name : `${place.name}, ${placeAddressOf(place)}`;
 }
 
 /**
@@ -79,24 +77,15 @@ export function addressOf(line: string): string {
  * those of an older line whose code and town stand in one part parted at its first space,
  * like `85748 Garching bei München`.
  */
-export function placeOf(
-    line: string,
-    link: string,
-    rows: { [line: string]: Place },
-): Place {
+export function placeOf(line: string, link: string, rows: { [line: string]: Place }): Place {
     const name: string = labelOf(line);
-    const row: Place | undefined = Object.values(rows).find(
-        (place: Place): boolean => place.name === name,
-    );
+    const row: Place | undefined = Object.values(rows).find((place: Place): boolean => place.name === name);
     if (row !== undefined) return row;
     const parts: string[] = addressOf(line)
         .split(",")
         .map((part: string): string => part.trim())
         .filter((part: string): boolean => part !== "");
-    const town: number =
-        parts.length < 4
-            ? parts.findIndex((part: string): boolean => /^\d+ \S/.test(part))
-            : -1;
+    const town: number = parts.length < 4 ? parts.findIndex((part: string): boolean => /^\d+ \S/.test(part)) : -1;
     if (town === -1)
         return {
             name: name,
@@ -137,21 +126,12 @@ export function placeEditOf(
     leave: (next: string | null) => void,
 ): HTMLElement[] {
     const name: HTMLInputElement = partFieldOf("text", place.name, "Name of the place");
-    const street: HTMLInputElement = partFieldOf(
-        "text",
-        place.street,
-        "Street of the place",
-    );
+    const street: HTMLInputElement = partFieldOf("text", place.street, "Street of the place");
     const code: HTMLInputElement = partFieldOf("text", place.code, "Code of the place");
     const city: HTMLInputElement = partFieldOf("text", place.city, "City of the place");
-    const country: HTMLInputElement = partFieldOf(
-        "text",
-        place.country,
-        "Country of the place",
-    );
+    const country: HTMLInputElement = partFieldOf("text", place.country, "Country of the place");
     const link: HTMLInputElement = partFieldOf("url", place.link, "Link of the place");
-    let follows: boolean =
-        link.value === "" || mapsLinkIs(link.value, placeAddressOf(place));
+    let follows: boolean = link.value === "" || mapsLinkIs(link.value, placeAddressOf(place));
     let changed: boolean = false;
     const typed: () => Place = (): Place => ({
         name: name.value.trim(),
@@ -166,8 +146,7 @@ export function placeEditOf(
     hint.className = "entry-none";
     hint.textContent = "Not saved: it needs a name, and a link only as a web address";
     const hintShow: () => void = (): void => {
-        hint.hidden =
-            typed().name !== "" && (typed().link === "" || linkForm.test(typed().link));
+        hint.hidden = typed().name !== "" && (typed().link === "" || linkForm.test(typed().link));
     };
     for (const part of [street, code, city, country])
         part.addEventListener("input", (): void => {
@@ -185,11 +164,7 @@ export function placeEditOf(
         part.addEventListener("focusout", (event: FocusEvent): void => {
             if (!changed) return;
             changed = false;
-            leave(
-                event.relatedTarget instanceof HTMLElement
-                    ? event.relatedTarget.getAttribute("aria-label")
-                    : null,
-            );
+            leave(event.relatedTarget instanceof HTMLElement ? event.relatedTarget.getAttribute("aria-label") : null);
         });
     }
     hintShow();
@@ -237,14 +212,8 @@ function standardStarOf(place: Place): HTMLButtonElement {
  * by its name or by the new name typed for it by its pencil,
  * my default place with its star after it, its address grey beside it.
  */
-export function placeChoiceOf(
-    line: string,
-    name: string,
-    places: { [line: string]: Place },
-): Choice {
-    const standard: Place | undefined = Object.values(places).find(
-        (place: Place): boolean => place.standard,
-    );
+export function placeChoiceOf(line: string, name: string, places: { [line: string]: Place }): Choice {
+    const standard: Place | undefined = Object.values(places).find((place: Place): boolean => place.standard);
     return {
         value: line,
         text: name,
@@ -258,18 +227,10 @@ export function placeChoiceOf(
  * Puts my default place, `★` in `Places.md`, first among the places of a list,
  * so it always stands on top: by its line, once, an older line of the same name left out.
  */
-export function standardFirst(
-    lines: string[],
-    places: { [line: string]: Place },
-): string[] {
-    const standard: Place | undefined = Object.values(places).find(
-        (place: Place): boolean => place.standard,
-    );
+export function standardFirst(lines: string[], places: { [line: string]: Place }): string[] {
+    const standard: Place | undefined = Object.values(places).find((place: Place): boolean => place.standard);
     if (standard === undefined) return lines;
-    return [
-        lineOf(standard),
-        ...lines.filter((line: string): boolean => labelOf(line) !== standard.name),
-    ];
+    return [lineOf(standard), ...lines.filter((line: string): boolean => labelOf(line) !== standard.name)];
 }
 
 /** Category of ways, whose place shows as the route, see {@link whereOf}. */
@@ -283,12 +244,7 @@ export const wayName: string = "Way";
  * for an entry that did something online its platform instead.
  * The page shows it with the arrow drawn, see {@link whereLinkedOf}.
  */
-export function whereOf(
-    category: string,
-    from: string,
-    location: string,
-    online: string,
-): string {
+export function whereOf(category: string, from: string, location: string, online: string): string {
     const start: string = labelOf(from);
     const goal: string = labelOf(location);
     if (online !== "") return online;
@@ -308,9 +264,7 @@ function placeAnchorOf(label: string, link: string): HTMLAnchorElement {
     anchor.target = "_blank";
     anchor.rel = "noopener";
     anchor.textContent = label;
-    anchor.addEventListener("click", (event: MouseEvent): void =>
-        event.stopPropagation(),
-    );
+    anchor.addEventListener("click", (event: MouseEvent): void => event.stopPropagation());
     return anchor;
 }
 
@@ -339,12 +293,10 @@ export function whereLinkedOf(
     online: string,
     onlineLink: string,
 ): (string | Node)[] {
-    if (online !== "")
-        return [onlineLink === "" ? online : placeAnchorOf(online, onlineLink)];
+    if (online !== "") return [onlineLink === "" ? online : placeAnchorOf(online, onlineLink)];
     const start: string = labelOf(from);
     const goal: string = labelOf(location);
-    const place: (string | Node)[] =
-        goal === "" ? [] : [link === "" ? goal : placeAnchorOf(goal, link)];
+    const place: (string | Node)[] = goal === "" ? [] : [link === "" ? goal : placeAnchorOf(goal, link)];
     if (category !== wayName || (start === "" && goal === "")) return place;
     return [start, routeArrowOf(), ...place];
 }
@@ -356,8 +308,7 @@ export function whereLinkedOf(
 export function mapsLinkOf(address: string): string {
     return address.trim() === ""
         ? ""
-        : "https://www.google.com/maps/search/?api=1&query=" +
-              encodeURIComponent(address.trim());
+        : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(address.trim());
 }
 
 /**

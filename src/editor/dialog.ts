@@ -53,18 +53,13 @@ async function dialogStart(): Promise<Dialog> {
     const categories: typeof Categories = await import("../day/categories.ts");
     const full: typeof FullCalendar = await import("fullcalendar");
     const timeGrid: typeof TimeGrid = await import("fullcalendar/timegrid");
-    const calendar: FullCalendar.Calendar = new full.Calendar(
-        document.createElement("div"),
-        {
-            plugins: [timeGrid.default],
-            initialView: "timeGridDay",
-        },
-    );
+    const calendar: FullCalendar.Calendar = new full.Calendar(document.createElement("div"), {
+        plugins: [timeGrid.default],
+        initialView: "timeGridDay",
+    });
     const day: Document = new DOMParser().parseFromString(html, "text/html");
     document.body.append(
-        ...["entry", "series", "series-under"].map(
-            (id: string): HTMLElement => day.getElementById(id) as HTMLElement,
-        ),
+        ...["entry", "series", "series-under"].map((id: string): HTMLElement => day.getElementById(id) as HTMLElement),
     );
     categories.categoriesStart(calendar);
     timesStart();
@@ -95,12 +90,10 @@ export async function logEntryOpen(id: string, start: string): Promise<void> {
     const moment: number = Date.parse(start);
     const found: FullCalendar.EventInput | undefined = (
         await readerAsk<FullCalendar.EventInput[]>(
-            `/api/day/log?start=${new Date(moment).toISOString()}` +
-                `&end=${new Date(moment + 1).toISOString()}`,
+            `/api/day/log?start=${new Date(moment).toISOString()}` + `&end=${new Date(moment + 1).toISOString()}`,
         )
     ).find((entry: FullCalendar.EventInput): boolean => entry.id === id);
     dialog.calendar.removeAllEvents();
-    const entry: FullCalendar.EventApi | null =
-        found === undefined ? null : dialog.calendar.addEvent(found);
+    const entry: FullCalendar.EventApi | null = found === undefined ? null : dialog.calendar.addEvent(found);
     if (entry?.startEditable === true) await dialog.categories.entryOpenEdit(entry);
 }

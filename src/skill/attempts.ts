@@ -202,9 +202,7 @@ export async function skillingLoad(): Promise<Skilling> {
  * @throws {Error} - When the reader cannot answer, like for a module without folder
  */
 export async function moduleLoad(code: string): Promise<ModuleContents> {
-    return readerAsk<ModuleContents>(
-        `/api/skill/module?code=${encodeURIComponent(code)}`,
-    );
+    return readerAsk<ModuleContents>(`/api/skill/module?code=${encodeURIComponent(code)}`);
 }
 
 /**
@@ -239,11 +237,7 @@ export async function attemptSend(attempt: AttemptNew): Promise<void> {
  * @returns `false` when the file changed the entry since the dialog opened it
  * @throws {Error} - When the reader does not take the entry for another reason
  */
-export async function skillEntrySend(
-    id: string,
-    entry: SkillEntryNew,
-    version: string,
-): Promise<boolean> {
+export async function skillEntrySend(id: string, entry: SkillEntryNew, version: string): Promise<boolean> {
     const body: object = {
         ...entry,
         start: entry.start.toISOString(),
@@ -308,34 +302,21 @@ export function semesterOf(day: string): string {
  * the Tasks tried and not due, and the ready cold tasks. Empty groups stay.
  */
 export function groupsOf(tasks: SkillTask[], today: string): Group[] {
-    const fresh: (task: SkillTask) => boolean = (task: SkillTask): boolean =>
-        task.attempts.length === 0;
-    const byDue: (first: SkillTask, second: SkillTask) => number = (
-        first: SkillTask,
-        second: SkillTask,
-    ): number => first.due.localeCompare(second.due);
-    const dueToday: SkillTask[] = tasks.filter(
-        (task: SkillTask): boolean => task.due !== "" && task.due <= today,
-    );
-    const later: SkillTask[] = tasks.filter(
-        (task: SkillTask): boolean => task.due > today,
-    );
+    const fresh: (task: SkillTask) => boolean = (task: SkillTask): boolean => task.attempts.length === 0;
+    const byDue: (first: SkillTask, second: SkillTask) => number = (first: SkillTask, second: SkillTask): number =>
+        first.due.localeCompare(second.due);
+    const dueToday: SkillTask[] = tasks.filter((task: SkillTask): boolean => task.due !== "" && task.due <= today);
+    const later: SkillTask[] = tasks.filter((task: SkillTask): boolean => task.due > today);
     return [
         { name: "Due today", tasks: dueToday.sort(byDue) },
         {
             name: "New",
-            tasks: tasks.filter(
-                (task: SkillTask): boolean =>
-                    task.due === "" && fresh(task) && !task.done,
-            ),
+            tasks: tasks.filter((task: SkillTask): boolean => task.due === "" && fresh(task) && !task.done),
         },
         { name: "Later", tasks: later.sort(byDue) },
         {
             name: "Done",
-            tasks: tasks.filter(
-                (task: SkillTask): boolean =>
-                    task.due === "" && (task.done || !fresh(task)),
-            ),
+            tasks: tasks.filter((task: SkillTask): boolean => task.due === "" && (task.done || !fresh(task))),
         },
     ];
 }

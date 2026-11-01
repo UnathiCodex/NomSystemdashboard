@@ -121,9 +121,7 @@ function nameOf(typed: string): string {
  * else `before`, the `X-WORKOUT` of the session of before.
  */
 function exerciseOf(line: string, before: string): ExerciseDone {
-    const [name, sets, reps, kg, workout]: string[] = line
-        .split(";")
-        .map((part: string): string => part.trim());
+    const [name, sets, reps, kg, workout]: string[] = line.split(";").map((part: string): string => part.trim());
     return {
         name: name ?? "",
         sets: sets ?? "",
@@ -157,10 +155,7 @@ function exerciseLastOf(
     workout: string,
     values?: { sets?: string; reps?: string; kg?: string },
 ): ExerciseDone {
-    const given: boolean =
-        (values?.sets ?? "") !== "" ||
-        (values?.reps ?? "") !== "" ||
-        (values?.kg ?? "") !== "";
+    const given: boolean = (values?.sets ?? "") !== "" || (values?.reps ?? "") !== "" || (values?.kg ?? "") !== "";
     if (given)
         return {
             name: name,
@@ -178,9 +173,7 @@ function exerciseLastOf(
 /** Finds the video of mine a video of the session names, by its link, else its title. */
 function videoFind(link: string, title: string): Video | undefined {
     return mine?.videos.find((video: Video): boolean =>
-        link !== ""
-            ? video.link === link
-            : video.link === "" && video.title.toLowerCase() === title.toLowerCase(),
+        link !== "" ? video.link === link : video.link === "" && video.title.toLowerCase() === title.toLowerCase(),
     );
 }
 
@@ -192,10 +185,7 @@ function videoFind(link: string, title: string): Video | undefined {
 function videoKcalOf(video: VideoDone): number {
     const own: Video | undefined = videoFind(video.link, video.title);
     const minutes: number = Number(video.minutes.replace(",", ".")) || 0;
-    return own?.kcal === null ||
-        own === undefined ||
-        own.minutes === null ||
-        own.minutes === 0
+    return own?.kcal === null || own === undefined || own.minutes === null || own.minutes === 0
         ? 0
         : (own.kcal / own.minutes) * minutes;
 }
@@ -204,11 +194,7 @@ function videoKcalOf(video: VideoDone): number {
 function valuesTextOf(exercise: { sets: string; reps: string; kg: string }): string {
     const reps: string = exercise.reps.replace(/^(\d+)s$/, "$1 s");
     const sets: string =
-        exercise.sets === ""
-            ? reps
-            : reps === ""
-              ? `${exercise.sets} ×`
-              : `${exercise.sets} × ${reps}`;
+        exercise.sets === "" ? reps : reps === "" ? `${exercise.sets} ×` : `${exercise.sets} × ${reps}`;
     return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
         .filter((part: string): boolean => part !== "")
         .join(" · ");
@@ -220,8 +206,7 @@ function valuesTextOf(exercise: { sets: string; reps: string; kg: string }): str
  */
 function videosFit(): void {
     const minutes: number = videos.reduce(
-        (sum: number, video: VideoDone): number =>
-            sum + (Number(video.minutes.replace(",", ".")) || 0),
+        (sum: number, video: VideoDone): number => sum + (Number(video.minutes.replace(",", ".")) || 0),
         0,
     );
     if (exercises.length === 0 && minutes > 0) fit(Math.round(minutes));
@@ -232,9 +217,7 @@ function videosFit(): void {
  * A workout the session holds already stays as it is.
  */
 function workoutPick(name: string): void {
-    const picked: Workout | undefined = mine?.workouts.find(
-        (other: Workout): boolean => other.name === name,
-    );
+    const picked: Workout | undefined = mine?.workouts.find((other: Workout): boolean => other.name === name);
     if (picked === undefined || blocks.includes(name)) return;
     blocks = [...blocks, name];
     exercises = [
@@ -252,10 +235,7 @@ function workoutPick(name: string): void {
                 return {
                     title: video?.title ?? part.name,
                     channel: video?.channel ?? "",
-                    minutes:
-                        video?.minutes === null || video === undefined
-                            ? ""
-                            : String(video.minutes),
+                    minutes: video?.minutes === null || video === undefined ? "" : String(video.minutes),
                     link: part.link,
                     workout: name,
                 };
@@ -281,11 +261,7 @@ function exerciseAdd(value: string, workout: string): void {
     const added: ExerciseDone = exerciseLastOf(name, workout, variant);
     exercises = [...exercises, added];
     rowsShow();
-    place
-        .querySelector<HTMLInputElement>(
-            `[data-part="${exercises.indexOf(added)}"] .sport-sets input`,
-        )
-        ?.focus();
+    place.querySelector<HTMLInputElement>(`[data-part="${exercises.indexOf(added)}"] .sport-sets input`)?.focus();
 }
 
 /**
@@ -294,12 +270,7 @@ function exerciseAdd(value: string, workout: string): void {
  *
  * @param saved - Takes the text typed, gives whether it was taken
  */
-function inputOf(
-    value: string,
-    words: string,
-    wrong: string,
-    saved: (text: string) => boolean,
-): HTMLInputElement {
+function inputOf(value: string, words: string, wrong: string, saved: (text: string) => boolean): HTMLInputElement {
     const input: HTMLInputElement = document.createElement("input");
     input.type = "text";
     input.inputMode = "decimal";
@@ -352,23 +323,16 @@ function setsOf(exercise: ExerciseDone): HTMLElement {
     };
     const unit: HTMLButtonElement = buttonOf("sport-unit", "", (): void => {
         seconds = !seconds;
-        exercise.reps =
-            exercise.reps.replace(/s$/, "") +
-            (seconds && exercise.reps !== "" ? "s" : "");
+        exercise.reps = exercise.reps.replace(/s$/, "") + (seconds && exercise.reps !== "" ? "s" : "");
         unitShow();
     });
     unitShow();
     place.append(
-        inputOf(
-            exercise.sets,
-            `Sets of ${exercise.name}`,
-            "A whole number of sets",
-            (text: string): boolean => {
-                const typed: string | null = whole(text);
-                if (typed !== null) exercise.sets = typed;
-                return typed !== null;
-            },
-        ),
+        inputOf(exercise.sets, `Sets of ${exercise.name}`, "A whole number of sets", (text: string): boolean => {
+            const typed: string | null = whole(text);
+            if (typed !== null) exercise.sets = typed;
+            return typed !== null;
+        }),
         elementOf("span", "sport-times", "×"),
         inputOf(
             exercise.reps.replace(/s$/, ""),
@@ -376,8 +340,7 @@ function setsOf(exercise: ExerciseDone): HTMLElement {
             "A whole number",
             (text: string): boolean => {
                 const typed: string | null = whole(text);
-                if (typed !== null)
-                    exercise.reps = typed === "" ? "" : `${typed}${seconds ? "s" : ""}`;
+                if (typed !== null) exercise.reps = typed === "" ? "" : `${typed}${seconds ? "s" : ""}`;
                 return typed !== null;
             },
         ),
@@ -401,11 +364,7 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
  * @param pick - Takes the value picked, a workout by {@link workoutValue} and its name,
  *   a variant of mine by {@link variantValue} and its place, else the name of an exercise
  */
-function listOfExercises(
-    words: string,
-    workouts: boolean,
-    pick: (value: string) => void,
-): HTMLElement {
+function listOfExercises(words: string, workouts: boolean, pick: (value: string) => void): HTMLElement {
     const group: string = workouts ? "Exercises" : "";
     const choices: Choice[] = [
         ...(workouts
@@ -450,22 +409,14 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
     row.append(
         elementOf("span", "meal-name", exercise.name),
         setsOf(exercise),
-        fieldOf(
-            "sport-kg",
-            exercise.kg,
-            "kg",
-            `Kilograms of ${exercise.name}`,
-            (text: string): boolean => {
-                const typed: string = text.trim().replace(",", ".");
-                if (typed !== "" && !(Number(typed) >= 0)) return false;
-                exercise.kg = typed;
-                return true;
-            },
-        ),
+        fieldOf("sport-kg", exercise.kg, "kg", `Kilograms of ${exercise.name}`, (text: string): boolean => {
+            const typed: string = text.trim().replace(",", ".");
+            if (typed !== "" && !(Number(typed) >= 0)) return false;
+            exercise.kg = typed;
+            return true;
+        }),
         removeOf(`Remove ${exercise.name}`, (): void => {
-            exercises = exercises.filter(
-                (other: ExerciseDone): boolean => other !== exercise,
-            );
+            exercises = exercises.filter((other: ExerciseDone): boolean => other !== exercise);
             rowsShow();
             videosFit();
         }),
@@ -481,30 +432,19 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
 function videoRowOf(video: VideoDone, shown: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "meal-row", "");
     const name: HTMLElement = elementOf("span", "meal-name", video.title);
-    const kcal: HTMLElement = elementOf(
-        "span",
-        "meal-kcal",
-        kcalTextOf(videoKcalOf(video)),
-    );
-    if (video.channel !== "")
-        name.append(elementOf("span", "meal-unknown", ` (${video.channel})`));
+    const kcal: HTMLElement = elementOf("span", "meal-kcal", kcalTextOf(videoKcalOf(video)));
+    if (video.channel !== "") name.append(elementOf("span", "meal-unknown", ` (${video.channel})`));
     row.append(
         name,
-        fieldOf(
-            "meal-grams",
-            video.minutes,
-            "min",
-            `Minutes of ${video.title}`,
-            (text: string): boolean => {
-                const typed: string = text.trim().replace(",", ".");
-                if (typed !== "" && !(Number(typed) >= 0)) return false;
-                video.minutes = typed;
-                kcal.textContent = kcalTextOf(videoKcalOf(video));
-                shown();
-                videosFit();
-                return true;
-            },
-        ),
+        fieldOf("meal-grams", video.minutes, "min", `Minutes of ${video.title}`, (text: string): boolean => {
+            const typed: string = text.trim().replace(",", ".");
+            if (typed !== "" && !(Number(typed) >= 0)) return false;
+            video.minutes = typed;
+            kcal.textContent = kcalTextOf(videoKcalOf(video));
+            shown();
+            videosFit();
+            return true;
+        }),
         kcal,
         removeOf(`Remove ${video.title}`, (): void => {
             videos = videos.filter((other: VideoDone): boolean => other !== video);
@@ -528,25 +468,15 @@ function blockOf(workout: string): HTMLElement[] {
     const name: HTMLElement = elementOf("span", "meal-name", workout);
     const kcal: HTMLElement = elementOf("span", "meal-kcal", "");
     const parts: HTMLElement = elementOf("div", "meal-parts", "");
-    const own: VideoDone[] = videos.filter(
-        (video: VideoDone): boolean => video.workout === workout,
-    );
+    const own: VideoDone[] = videos.filter((video: VideoDone): boolean => video.workout === workout);
     const total: () => void = (): void => {
         kcal.textContent =
             own.length === 0
                 ? ""
-                : kcalTextOf(
-                      own.reduce(
-                          (sum: number, video: VideoDone): number =>
-                              sum + videoKcalOf(video),
-                          0,
-                      ),
-                  );
+                : kcalTextOf(own.reduce((sum: number, video: VideoDone): number => sum + videoKcalOf(video), 0));
     };
-    const list: HTMLElement = listOfExercises(
-        `Add an exercise to ${workout}`,
-        false,
-        (value: string): void => exerciseAdd(value, workout),
+    const list: HTMLElement = listOfExercises(`Add an exercise to ${workout}`, false, (value: string): void =>
+        exerciseAdd(value, workout),
     );
     const line: HTMLElement | null = list.querySelector(".picker-line");
     if (line !== null) name.append(line);
@@ -556,20 +486,14 @@ function blockOf(workout: string): HTMLElement[] {
         kcal,
         removeOf(`Remove ${workout}`, (): void => {
             blocks = blocks.filter((other: string): boolean => other !== workout);
-            exercises = exercises.filter(
-                (exercise: ExerciseDone): boolean => exercise.workout !== workout,
-            );
-            videos = videos.filter(
-                (video: VideoDone): boolean => video.workout !== workout,
-            );
+            exercises = exercises.filter((exercise: ExerciseDone): boolean => exercise.workout !== workout);
+            videos = videos.filter((video: VideoDone): boolean => video.workout !== workout);
             rowsShow();
             videosFit();
         }),
     );
     parts.append(
-        ...exercises
-            .filter((exercise: ExerciseDone): boolean => exercise.workout === workout)
-            .map(exerciseRowOf),
+        ...exercises.filter((exercise: ExerciseDone): boolean => exercise.workout === workout).map(exerciseRowOf),
         ...own.map((video: VideoDone): HTMLElement => videoRowOf(video, total)),
         list,
     );
@@ -592,15 +516,10 @@ function rowsShow(): void {
     );
     rows.append(...blocks.flatMap(blockOf), ...alone.map(exerciseRowOf));
     const box: HTMLElement = elementOf("div", "meal", "");
-    const list: HTMLElement = listOfExercises(
-        "Add a workout or an exercise",
-        true,
-        (value: string): void => {
-            if (value.startsWith(workoutValue))
-                workoutPick(value.slice(workoutValue.length));
-            else exerciseAdd(value, "");
-        },
-    );
+    const list: HTMLElement = listOfExercises("Add a workout or an exercise", true, (value: string): void => {
+        if (value.startsWith(workoutValue)) workoutPick(value.slice(workoutValue.length));
+        else exerciseAdd(value, "");
+    });
     box.append(rows, list);
     const row: HTMLElement = rowOf("Exercises", box);
     const label: HTMLElement | null = row.querySelector(".entry-name");
@@ -621,12 +540,8 @@ function rowsShow(): void {
 export async function sportOpen(lines: SessionLines | null): Promise<void> {
     mine = await mineLoad();
     const before: string = lines?.workout ?? "";
-    exercises = (lines?.exercises ?? []).map((line: string): ExerciseDone =>
-        exerciseOf(line, before),
-    );
-    videos = (lines?.videos ?? []).map((line: string): VideoDone =>
-        videoOf(line, before),
-    );
+    exercises = (lines?.exercises ?? []).map((line: string): ExerciseDone => exerciseOf(line, before));
+    videos = (lines?.videos ?? []).map((line: string): VideoDone => videoOf(line, before));
     blocks = [
         ...new Set(
             [
@@ -642,10 +557,7 @@ export async function sportOpen(lines: SessionLines | null): Promise<void> {
  *
  * @returns One element whose rows count as rows of the dialog, see `sport.css`
  */
-export function sportRowsOf(
-    change: () => void,
-    end: (minutes: number) => void,
-): HTMLElement[] {
+export function sportRowsOf(change: () => void, end: (minutes: number) => void): HTMLElement[] {
     changed = change;
     fit = end;
     rowsShow();
@@ -660,18 +572,10 @@ export function sportRead(): { workout: string; exercises: string[]; videos: str
     return {
         workout: "",
         exercises: exercises.map((exercise: ExerciseDone): string =>
-            [
-                exercise.name,
-                exercise.sets,
-                exercise.reps,
-                exercise.kg,
-                exercise.workout,
-            ].join(";"),
+            [exercise.name, exercise.sets, exercise.reps, exercise.kg, exercise.workout].join(";"),
         ),
         videos: videos.map((video: VideoDone): string =>
-            [video.title, video.channel, video.minutes, video.link, video.workout].join(
-                ";",
-            ),
+            [video.title, video.channel, video.minutes, video.link, video.workout].join(";"),
         ),
     };
 }

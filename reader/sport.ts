@@ -281,9 +281,7 @@ const videosHead: string[] = [
     "",
     "My videos: the title and the channel as YouTube gives them, " +
         "the minutes I do, the kind, which tells what a minute",
-    "burns, one of " +
-        videoKinds.map((kind: SportKind): string => kind.name).join(", ") +
-        ", and the link, by which",
+    "burns, one of " + videoKinds.map((kind: SportKind): string => kind.name).join(", ") + ", and the link, by which",
     "a video stays the same whatever its title.",
     "",
     "| Video | Channel | Minutes | Kind | Link |",
@@ -296,10 +294,8 @@ const videosHead: string[] = [
 const weightsHead: string[] = [
     "# Weights",
     "",
-    "My weight, a row whenever I weigh myself, like once a month or two: " +
-        "the day and the kilograms.",
-    "The sport area counts the kcal of a session " +
-        "with the last weight on or before its day.",
+    "My weight, a row whenever I weigh myself, like once a month or two: " + "the day and the kilograms.",
+    "The sport area counts the kcal of a session " + "with the last weight on or before its day.",
     "",
     "| Day | Weight |",
     "| --- | ---: |",
@@ -422,9 +418,7 @@ export function linkOf(text: string): string {
         host === "youtu.be"
             ? url.pathname.slice(1).split("/")[0]
             : host === "youtube.com"
-              ? (url.searchParams.get("v") ??
-                /^\/(?:shorts|live|embed)\/([^/]+)/.exec(url.pathname)?.[1] ??
-                "")
+              ? (url.searchParams.get("v") ?? /^\/(?:shorts|live|embed)\/([^/]+)/.exec(url.pathname)?.[1] ?? "")
               : "";
     return videoId.test(id) ? `https://www.youtube.com/watch?v=${id}` : "";
 }
@@ -441,11 +435,8 @@ function dayTextOf(day: string): string {
  * Empty for a text that is no day.
  */
 function dayOf(text: string): string {
-    const german: RegExpExecArray | null = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(
-        text.trim(),
-    );
-    if (german !== null)
-        return `${german[3]}-${german[2].padStart(2, "0")}-${german[1].padStart(2, "0")}`;
+    const german: RegExpExecArray | null = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(text.trim());
+    if (german !== null) return `${german[3]}-${german[2].padStart(2, "0")}-${german[1].padStart(2, "0")}`;
     return /^\d{4}-\d{2}-\d{2}$/.test(text.trim()) ? text.trim() : "";
 }
 
@@ -463,10 +454,7 @@ function rowsRead(file: string): Row[] {
     return rows.slice(tableHead).map((line: string): Row => {
         const cells: string[] = cellsOf(line);
         return Object.fromEntries(
-            head.map((name: string, index: number): [string, string] => [
-                name,
-                cells[index] ?? "",
-            ]),
+            head.map((name: string, index: number): [string, string] => [name, cells[index] ?? ""]),
         );
     });
 }
@@ -478,17 +466,9 @@ function rowsRead(file: string): Row[] {
  * @throws {Error} - When the file lies outside the new system
  */
 function tableWrite(file: string, head: string[], rows: string[][]): void {
-    if (!writeAllowed(file))
-        throw new Error(`No writing outside the new system: ${file}`);
+    if (!writeAllowed(file)) throw new Error(`No writing outside the new system: ${file}`);
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(
-        file,
-        [
-            ...head,
-            ...rows.map((cells: string[]): string => `| ${cells.join(" | ")} |`),
-            "",
-        ].join("\n"),
-    );
+    writeFileSync(file, [...head, ...rows.map((cells: string[]): string => `| ${cells.join(" | ")} |`), ""].join("\n"));
 }
 
 /**
@@ -503,9 +483,7 @@ function weightsRead(): Weight[] {
     });
     return [...days]
         .map(([day, kg]: [string, number]): Weight => ({ day: day, kg: kg }))
-        .sort((first: Weight, second: Weight): number =>
-            second.day.localeCompare(first.day),
-        );
+        .sort((first: Weight, second: Weight): number => second.day.localeCompare(first.day));
 }
 
 /**
@@ -513,10 +491,7 @@ function weightsRead(): Weight[] {
  * so a session before my first weighing still counts.
  */
 function weightOn(weights: Weight[], day: string): number | null {
-    return (
-        (weights.find((weight: Weight): boolean => weight.day <= day) ?? weights.at(-1))
-            ?.kg ?? null
-    );
+    return (weights.find((weight: Weight): boolean => weight.day <= day) ?? weights.at(-1))?.kg ?? null;
 }
 
 /**
@@ -534,9 +509,7 @@ function sumOf(numbers: number[]): number {
 
 /** Finds a kind of a video by its name, ignoring case. */
 function videoKindOf(name: string): SportKind | undefined {
-    return videoKinds.find(
-        (known: SportKind): boolean => known.name.toLowerCase() === name.toLowerCase(),
-    );
+    return videoKinds.find((known: SportKind): boolean => known.name.toLowerCase() === name.toLowerCase());
 }
 
 /**
@@ -556,10 +529,7 @@ function videosRead(weights: Weight[]): Video[] {
                 minutes: minutes,
                 kind: kind?.name ?? cells.Kind ?? "",
                 link: linkOf(cells.Link ?? ""),
-                kcal:
-                    minutes === null || kind === undefined
-                        ? null
-                        : kcalOf(kind.met, minutes, kg),
+                kcal: minutes === null || kind === undefined ? null : kcalOf(kind.met, minutes, kg),
             };
         });
 }
@@ -584,10 +554,7 @@ function isVideo(part: Part, video: { title: string; link: string }): boolean {
 function workoutsRead(videos: Video[]): Workout[] {
     const workouts: Map<string, Workout> = new Map();
     rowsRead(sport.workouts)
-        .filter(
-            (cells: Row): boolean =>
-                (cells.Workout ?? "") !== "" && (cells.Part ?? "") !== "",
-        )
+        .filter((cells: Row): boolean => (cells.Workout ?? "") !== "" && (cells.Part ?? "") !== "")
         .forEach((cells: Row): void => {
             const workout: Workout = workouts.get(cells.Workout.toLowerCase()) ?? {
                 name: cells.Workout,
@@ -605,21 +572,16 @@ function workoutsRead(videos: Video[]): Workout[] {
                           reps: cells.Reps ?? "",
                           kg: cells.Kg ?? "",
                       };
-            if (!workout.parts.some((other: Part): boolean => samePart(other, part)))
-                workout.parts.push(part);
+            if (!workout.parts.some((other: Part): boolean => samePart(other, part))) workout.parts.push(part);
             workouts.set(cells.Workout.toLowerCase(), workout);
         });
     return [...workouts.values()].map((workout: Workout): Workout => {
         const kcals: (number | null)[] = workout.parts.map(
-            (part: Part): number | null =>
-                videos.find((video: Video): boolean => isVideo(part, video))?.kcal ??
-                null,
+            (part: Part): number | null => videos.find((video: Video): boolean => isVideo(part, video))?.kcal ?? null,
         );
         return {
             ...workout,
-            kcal: kcals.every((kcal: number | null): kcal is number => kcal !== null)
-                ? sumOf(kcals)
-                : null,
+            kcal: kcals.every((kcal: number | null): kcal is number => kcal !== null) ? sumOf(kcals) : null,
         };
     });
 }
@@ -650,18 +612,13 @@ function workoutsWrite(workouts: Workout[]): void {
  * Writes my workouts anew once a part of one is `held`, each such part
  * in place of what `changed` gives, none to take it out.
  */
-function partsChange(
-    held: (part: Part) => boolean,
-    changed: (part: Part) => Part[],
-): void {
+function partsChange(held: (part: Part) => boolean, changed: (part: Part) => Part[]): void {
     const workouts: Workout[] = workoutsRead([]);
     if (!workouts.some((workout: Workout): boolean => workout.parts.some(held))) return;
     workoutsWrite(
         workouts.map((workout: Workout): Workout => ({
             ...workout,
-            parts: workout.parts.flatMap((part: Part): Part[] =>
-                held(part) ? changed(part) : [part],
-            ),
+            parts: workout.parts.flatMap((part: Part): Part[] => (held(part) ? changed(part) : [part])),
         })),
     );
 }
@@ -698,9 +655,7 @@ function exercisesRead(): OwnExercise[] {
         .filter(
             (exercise: OwnExercise, index: number, all: OwnExercise[]): boolean =>
                 exercise.name !== "" &&
-                all.findIndex((other: OwnExercise): boolean =>
-                    sameExercise(other, exercise),
-                ) === index,
+                all.findIndex((other: OwnExercise): boolean => sameExercise(other, exercise)) === index,
         );
 }
 
@@ -712,15 +667,8 @@ function exercisesWrite(exercises: OwnExercise[]): void {
         sport.exercises,
         exercisesHead,
         [...exercises]
-            .sort((first: OwnExercise, second: OwnExercise): number =>
-                first.name.localeCompare(second.name),
-            )
-            .map((exercise: OwnExercise): string[] => [
-                exercise.name,
-                exercise.sets,
-                exercise.reps,
-                exercise.kg,
-            ]),
+            .sort((first: OwnExercise, second: OwnExercise): number => first.name.localeCompare(second.name))
+            .map((exercise: OwnExercise): string[] => [exercise.name, exercise.sets, exercise.reps, exercise.kg]),
     );
 }
 
@@ -748,20 +696,17 @@ function exercisesOf(workouts: Workout[], own: OwnExercise[]): Exercise[] {
         workout.parts
             .filter((part: Part): boolean => part.kind === "Exercise")
             .forEach((part: Part): void => {
-                let exercise: Exercise | undefined = exercises.find(
-                    (other: Exercise): boolean => sameExercise(other, part),
+                let exercise: Exercise | undefined = exercises.find((other: Exercise): boolean =>
+                    sameExercise(other, part),
                 );
                 if (exercise === undefined) {
                     exercise = { ...ownOf(part), workouts: [] };
                     exercises.push(exercise);
                 }
-                if (!exercise.workouts.includes(workout.name))
-                    exercise.workouts.push(workout.name);
+                if (!exercise.workouts.includes(workout.name)) exercise.workouts.push(workout.name);
             }),
     );
-    return exercises.sort((first: Exercise, second: Exercise): number =>
-        first.name.localeCompare(second.name),
-    );
+    return exercises.sort((first: Exercise, second: Exercise): number => first.name.localeCompare(second.name));
 }
 
 /**
@@ -801,17 +746,10 @@ function sessionVideoOf(line: string, before: string): SessionVideo {
  * names and titles without `|`, `;` or a line break.
  * A line of before without its workout still counts.
  */
-export function sportPartsAllow(
-    category: string,
-    workout: string,
-    exercises: string[],
-    videos: string[],
-): boolean {
+export function sportPartsAllow(category: string, workout: string, exercises: string[], videos: string[]): boolean {
     if (workout === "" && exercises.length === 0 && videos.length === 0) return true;
-    const clean: (text: string) => boolean = (text: string): boolean =>
-        !/[|;\r\n]/.test(text);
-    const number: (text: string) => boolean = (text: string): boolean =>
-        text.trim() === "" || numberOf(text) !== null;
+    const clean: (text: string) => boolean = (text: string): boolean => !/[|;\r\n]/.test(text);
+    const number: (text: string) => boolean = (text: string): boolean => text.trim() === "" || numberOf(text) !== null;
     return (
         category === sportName &&
         clean(workout) &&
@@ -850,9 +788,7 @@ function lastRead(): { [name: string]: string } {
     const last: { [name: string]: string } = {};
     entriesRead(sport.log, "1970-01-01T00:00:00Z", "9999-12-31T00:00:00Z")
         .filter((entry: Entry): boolean => entry.category === sportName)
-        .sort((first: Entry, second: Entry): number =>
-            first.start.localeCompare(second.start),
-        )
+        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
         .forEach((entry: Entry): void =>
             (entry.exercises ?? []).forEach((line: string): void => {
                 last[sessionExerciseOf(line, "").name.toLowerCase()] = line;
@@ -874,10 +810,7 @@ export function mineRead(): Mine {
         videos: videos,
         basics: basicExercises.filter(
             (name: string): boolean =>
-                !exercises.some(
-                    (exercise: Exercise): boolean =>
-                        exercise.name.toLowerCase() === name.toLowerCase(),
-                ),
+                !exercises.some((exercise: Exercise): boolean => exercise.name.toLowerCase() === name.toLowerCase()),
         ),
         kinds: videoKinds.map((kind: SportKind): string => kind.name),
         last: lastRead(),
@@ -910,55 +843,38 @@ export function sportDayRead(date: string): SportDay {
     )
         .filter(
             (entry: Entry): boolean =>
-                entry.category === sportName &&
-                !entry.allDay &&
-                berlinDateOf(new Date(entry.start)) === date,
+                entry.category === sportName && !entry.allDay && berlinDateOf(new Date(entry.start)) === date,
         )
-        .sort((first: Entry, second: Entry): number =>
-            first.start.localeCompare(second.start),
-        )
+        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
         .map((entry: Entry): Session => {
             const minutes: number =
-                Math.max(
-                    0,
-                    Math.round((Date.parse(entry.end) - Date.parse(entry.start)) / 60000),
-                ) || 0;
+                Math.max(0, Math.round((Date.parse(entry.end) - Date.parse(entry.start)) / 60000)) || 0;
             const kind: SportKind | undefined = sportKinds.find(
                 (known: SportKind): boolean => known.name === summaryBaseOf(entry.title),
             );
             const before: string = entry.workout ?? "";
-            const exercises: SessionExercise[] = (entry.exercises ?? []).map(
-                (line: string): SessionExercise => sessionExerciseOf(line, before),
+            const exercises: SessionExercise[] = (entry.exercises ?? []).map((line: string): SessionExercise =>
+                sessionExerciseOf(line, before),
             );
-            const videos: SessionVideo[] = (entry.videos ?? []).map(
-                (line: string): SessionVideo => sessionVideoOf(line, before),
+            const videos: SessionVideo[] = (entry.videos ?? []).map((line: string): SessionVideo =>
+                sessionVideoOf(line, before),
             );
             const workouts: string[] = [
                 ...new Set(
                     [...exercises, ...videos]
-                        .map(
-                            (part: SessionExercise | SessionVideo): string =>
-                                part.workout,
-                        )
+                        .map((part: SessionExercise | SessionVideo): string => part.workout)
                         .filter((workout: string): boolean => workout !== ""),
                 ),
             ];
-            const metOf: (video: SessionVideo) => number = (
-                video: SessionVideo,
-            ): number =>
+            const metOf: (video: SessionVideo) => number = (video: SessionVideo): number =>
                 videoKindOf(
                     mine.find((other: Video): boolean =>
-                        isVideo(
-                            { kind: "Video", name: video.title, link: video.link },
-                            other,
-                        ),
+                        isVideo({ kind: "Video", name: video.title, link: video.link }, other),
                     )?.kind ?? "",
                 )?.met ??
                 kind?.met ??
                 0;
-            const watched: number = sumOf(
-                videos.map((video: SessionVideo): number => video.minutes ?? 0),
-            );
+            const watched: number = sumOf(videos.map((video: SessionVideo): number => video.minutes ?? 0));
             return {
                 id: entry.id,
                 start: entry.start,
@@ -971,11 +887,9 @@ export function sportDayRead(date: string): SportDay {
                         : kind.name === "Home workout" && videos.length > 0 && kg !== null
                           ? sumOf(
                                 videos.map(
-                                    (video: SessionVideo): number =>
-                                        kcalOf(metOf(video), video.minutes ?? 0, kg) ?? 0,
+                                    (video: SessionVideo): number => kcalOf(metOf(video), video.minutes ?? 0, kg) ?? 0,
                                 ),
-                            ) +
-                            (kcalOf(kind.met, Math.max(0, minutes - watched), kg) ?? 0)
+                            ) + (kcalOf(kind.met, Math.max(0, minutes - watched), kg) ?? 0)
                           : kcalOf(kind.met, minutes, kg),
                 workout: workouts.length > 0 ? workouts.join(", ") : before,
                 exercises: exercises,
@@ -1004,23 +918,17 @@ export function sportDayRead(date: string): SportDay {
 export function weightSave(sent: { day?: string; kg?: unknown }): SportDay {
     const day: string = dayOf(String(sent.day ?? ""));
     const kg: number | null = numberOf(sent.kg);
-    if (day === "" || Number.isNaN(Date.parse(day)))
-        throw new Error(`No day: ${sent.day}`);
+    if (day === "" || Number.isNaN(Date.parse(day))) throw new Error(`No day: ${sent.day}`);
     if (kg === null || kg <= 0 || kg >= 500) throw new Error(`No weight: ${sent.kg}`);
 
     const weights: Weight[] = [
         ...weightsRead().filter((weight: Weight): boolean => weight.day !== day),
         { day: day, kg: Math.round(kg * 10) / 10 },
-    ].sort((first: Weight, second: Weight): number =>
-        second.day.localeCompare(first.day),
-    );
+    ].sort((first: Weight, second: Weight): number => second.day.localeCompare(first.day));
     tableWrite(
         sport.weights,
         weightsHead,
-        weights.map((weight: Weight): string[] => [
-            dayTextOf(weight.day),
-            weight.kg.toFixed(1),
-        ]),
+        weights.map((weight: Weight): string[] => [dayTextOf(weight.day), weight.kg.toFixed(1)]),
     );
     return sportDayRead(day);
 }
@@ -1029,17 +937,12 @@ export function weightSave(sent: { day?: string; kg?: unknown }): SportDay {
  * Reads a part as the page sends it, `null` for one without a name.
  */
 function partOf(sent: unknown): Part | null {
-    type Sent = Partial<
-        Record<"kind" | "name" | "link" | "sets" | "reps" | "kg", unknown>
-    >;
+    type Sent = Partial<Record<"kind" | "name" | "link" | "sets" | "reps" | "kg", unknown>>;
     const part: Sent = (sent as Sent) ?? {};
     const video: boolean = part.kind === "Video";
-    const name: string = video
-        ? nameOf(String(part.name ?? ""))
-        : ownNameOf(String(part.name ?? ""));
+    const name: string = video ? nameOf(String(part.name ?? "")) : ownNameOf(String(part.name ?? ""));
     if (name === "") return null;
-    if (video)
-        return { kind: "Video", name: name, link: linkOf(String(part.link ?? "")) };
+    if (video) return { kind: "Video", name: name, link: linkOf(String(part.link ?? "")) };
     const values: OwnExercise | null = valuesOf(name, part);
     return values === null ? null : { ...values, kind: "Exercise", link: "" };
 }
@@ -1048,18 +951,13 @@ function partOf(sent: unknown): Part | null {
  * Reads the sets, repetitions and kilograms of an exercise as the page sends them,
  * `null` for a value that is none.
  */
-function valuesOf(
-    name: string,
-    sent: { sets?: unknown; reps?: unknown; kg?: unknown },
-): OwnExercise | null {
+function valuesOf(name: string, sent: { sets?: unknown; reps?: unknown; kg?: unknown }): OwnExercise | null {
     const sets: string = String(sent.sets ?? "").trim();
     const reps: string = String(sent.reps ?? "").trim();
     const kg: string = String(sent.kg ?? "")
         .trim()
         .replace(",", ".");
-    return /^\d*$/.test(sets) &&
-        /^(?:\d+s?)?$/.test(reps) &&
-        (kg === "" || numberOf(kg) !== null)
+    return /^\d*$/.test(sets) && /^(?:\d+s?)?$/.test(reps) && (kg === "" || numberOf(kg) !== null)
         ? { name: name, sets: sets, reps: reps, kg: kg }
         : null;
 }
@@ -1088,8 +986,7 @@ function samePart(first: Part, second: Part): boolean {
     return (
         first.kind === second.kind &&
         (first.kind === "Video"
-            ? first.name.toLowerCase() === second.name.toLowerCase() &&
-              first.link === second.link
+            ? first.name.toLowerCase() === second.name.toLowerCase() && first.link === second.link
             : sameExercise(first, second))
     );
 }
@@ -1104,18 +1001,12 @@ function samePart(first: Part, second: Part): boolean {
  *
  * @throws {Error} - When the name is empty, another workout has it, or it holds no part
  */
-export function workoutSave(sent: {
-    old?: string;
-    name?: string;
-    parts?: unknown[];
-}): Mine {
+export function workoutSave(sent: { old?: string; name?: string; parts?: unknown[] }): Mine {
     const workouts: Workout[] = workoutsRead([]);
     const typed: string = ownNameOf(String(sent.name ?? ""));
     const renamed: boolean = sent.old !== undefined;
     const old: string = (renamed ? ownNameOf(String(sent.old)) : typed).toLowerCase();
-    const at: number = workouts.findIndex(
-        (workout: Workout): boolean => workout.name.toLowerCase() === old,
-    );
+    const at: number = workouts.findIndex((workout: Workout): boolean => workout.name.toLowerCase() === old);
     const name: string = renamed ? typed : (workouts[at]?.name ?? typed);
     const parts: Part[] = (sent.parts ?? [])
         .map(partOf)
@@ -1128,28 +1019,23 @@ export function workoutSave(sent: {
     if (
         workouts.some(
             (workout: Workout): boolean =>
-                workout.name.toLowerCase() === name.toLowerCase() &&
-                workout.name.toLowerCase() !== old,
+                workout.name.toLowerCase() === name.toLowerCase() && workout.name.toLowerCase() !== old,
         )
     )
         throw new Error(`Another workout is called ${name}`);
-    if (parts.length === 0)
-        throw new Error(`No parts of a workout: ${JSON.stringify(sent.parts)}`);
+    if (parts.length === 0) throw new Error(`No parts of a workout: ${JSON.stringify(sent.parts)}`);
 
     const workout: Workout = { name: name, parts: parts, kcal: null };
     workoutsWrite(
         at === -1
             ? [...workouts, workout]
-            : workouts.map((other: Workout, index: number): Workout =>
-                  index === at ? workout : other,
-              ),
+            : workouts.map((other: Workout, index: number): Workout => (index === at ? workout : other)),
     );
     const own: OwnExercise[] = exercisesRead();
     const fresh: OwnExercise[] = parts
         .filter(
             (part: Part): boolean =>
-                part.kind === "Exercise" &&
-                !own.some((other: OwnExercise): boolean => sameExercise(other, part)),
+                part.kind === "Exercise" && !own.some((other: OwnExercise): boolean => sameExercise(other, part)),
         )
         .map(ownOf);
     if (fresh.length > 0) exercisesWrite([...own, ...fresh]);
@@ -1163,20 +1049,13 @@ export function workoutSave(sent: {
  *
  * @throws {Error} - When the name is empty or a value is none, see {@link valuesOf}
  */
-export function exerciseAdd(sent: {
-    name?: string;
-    sets?: string;
-    reps?: string;
-    kg?: string;
-}): Mine {
+export function exerciseAdd(sent: { name?: string; sets?: string; reps?: string; kg?: string }): Mine {
     const name: string = ownNameOf(String(sent.name ?? ""));
     const added: OwnExercise | null = valuesOf(name, sent);
-    if (name === "" || added === null)
-        throw new Error(`No exercise: ${JSON.stringify(sent)}`);
+    if (name === "" || added === null) throw new Error(`No exercise: ${JSON.stringify(sent)}`);
 
     const own: OwnExercise[] = exercisesRead();
-    if (!own.some((other: OwnExercise): boolean => sameExercise(other, added)))
-        exercisesWrite([...own, added]);
+    if (!own.some((other: OwnExercise): boolean => sameExercise(other, added))) exercisesWrite([...own, added]);
     return mineRead();
 }
 
@@ -1203,22 +1082,16 @@ export function exerciseChange(sent: {
         throw new Error(`No sets, repetitions or kilograms: ${JSON.stringify(sent)}`);
 
     const own: OwnExercise[] = exercisesRead();
-    const at: number = own.findIndex((other: OwnExercise): boolean =>
-        sameExercise(other, old),
-    );
+    const at: number = own.findIndex((other: OwnExercise): boolean => sameExercise(other, old));
     const exercise: OwnExercise = { ...changed, name: at === -1 ? name : own[at].name };
     exercisesWrite(
         at === -1
             ? [...own, exercise]
-            : own.map((other: OwnExercise, index: number): OwnExercise =>
-                  index === at ? exercise : other,
-              ),
+            : own.map((other: OwnExercise, index: number): OwnExercise => (index === at ? exercise : other)),
     );
     partsChange(
         (part: Part): boolean => part.kind === "Exercise" && sameExercise(part, old),
-        (part: Part): Part[] => [
-            { ...part, sets: exercise.sets, reps: exercise.reps, kg: exercise.kg },
-        ],
+        (part: Part): Part[] => [{ ...part, sets: exercise.sets, reps: exercise.reps, kg: exercise.kg }],
     );
     return mineRead();
 }
@@ -1229,12 +1102,7 @@ export function exerciseChange(sent: {
  * so no workout names a variant I no longer have.
  * A workout left without parts is gone with it.
  */
-export function exerciseRemove(sent: {
-    name?: string;
-    sets?: string;
-    reps?: string;
-    kg?: string;
-}): Mine {
+export function exerciseRemove(sent: { name?: string; sets?: string; reps?: string; kg?: string }): Mine {
     const gone: OwnExercise = {
         name: String(sent.name ?? "").trim(),
         sets: String(sent.sets ?? "").trim(),
@@ -1243,9 +1111,7 @@ export function exerciseRemove(sent: {
     };
     const own: OwnExercise[] = exercisesRead();
     if (own.some((other: OwnExercise): boolean => sameExercise(other, gone)))
-        exercisesWrite(
-            own.filter((other: OwnExercise): boolean => !sameExercise(other, gone)),
-        );
+        exercisesWrite(own.filter((other: OwnExercise): boolean => !sameExercise(other, gone)));
     partsChange(
         (part: Part): boolean => part.kind === "Exercise" && sameExercise(part, gone),
         (): Part[] => [],
@@ -1259,8 +1125,7 @@ export function exerciseRemove(sent: {
 export function workoutRemove(name: string): Mine {
     const workouts: Workout[] = workoutsRead([]);
     const kept: Workout[] = workouts.filter(
-        (workout: Workout): boolean =>
-            workout.name.toLowerCase() !== name.trim().toLowerCase(),
+        (workout: Workout): boolean => workout.name.toLowerCase() !== name.trim().toLowerCase(),
     );
     if (kept.length !== workouts.length) workoutsWrite(kept);
     return mineRead();
@@ -1330,21 +1195,14 @@ export function videoSave(sent: {
               };
     if (title === "") throw new Error("No title of a video");
     if (kind === undefined) throw new Error(`No kind of a video: ${sent.kind}`);
-    if (String(sent.minutes ?? "").trim() !== "" && minutes === null)
-        throw new Error(`No minutes: ${sent.minutes}`);
+    if (String(sent.minutes ?? "").trim() !== "" && minutes === null) throw new Error(`No minutes: ${sent.minutes}`);
 
     const at: number = videos.findIndex((video: Video): boolean =>
         before.link !== ""
             ? video.link === before.link
-            : video.link === "" &&
-              video.title.toLowerCase() === before.title.toLowerCase(),
+            : video.link === "" && video.title.toLowerCase() === before.title.toLowerCase(),
     );
-    if (
-        link !== "" &&
-        videos.some(
-            (video: Video, index: number): boolean => index !== at && video.link === link,
-        )
-    )
+    if (link !== "" && videos.some((video: Video, index: number): boolean => index !== at && video.link === link))
         throw new Error(`Another video has the link ${link}`);
     const video: Video = {
         title: title,
@@ -1357,9 +1215,7 @@ export function videoSave(sent: {
     videosWrite(
         at === -1
             ? [...videos, video]
-            : videos.map((other: Video, index: number): Video =>
-                  index === at ? video : other,
-              ),
+            : videos.map((other: Video, index: number): Video => (index === at ? video : other)),
     );
     if (at !== -1 && (videos[at].title !== title || videos[at].link !== link)) {
         const old: Video = videos[at];
@@ -1367,9 +1223,7 @@ export function videoSave(sent: {
             workoutsRead([]).map((workout: Workout): Workout => ({
                 ...workout,
                 parts: workout.parts.map((part: Part): Part =>
-                    isVideo(part, old)
-                        ? { kind: "Video", name: title, link: link }
-                        : part,
+                    isVideo(part, old) ? { kind: "Video", name: title, link: link } : part,
                 ),
             })),
         );

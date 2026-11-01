@@ -159,11 +159,7 @@ const cookName: string = "Cook";
 /**
  * Gives the log an entry belongs into, see the top of this file.
  */
-export function logFileOf(fields: {
-    category: string;
-    module: string;
-    start: Date;
-}): string {
+export function logFileOf(fields: { category: string; module: string; start: Date }): string {
     return calendarFileOf(fields, berlinDateOf(fields.start), logEnding);
 }
 
@@ -191,15 +187,8 @@ function fieldsOf(
           })
         | null,
 ): EntryFields {
-    const semester: string = semesterFor(
-        entry.category,
-        entry.semester,
-        berlinDateOf(new Date(entry.start)),
-    );
-    const [title, titleLink]: [string, string] = titleOf(
-        { ...entry, semester: semester },
-        from,
-    );
+    const semester: string = semesterFor(entry.category, entry.semester, berlinDateOf(new Date(entry.start)));
+    const [title, titleLink]: [string, string] = titleOf({ ...entry, semester: semester }, from);
     return {
         category: entry.category,
         title: title,
@@ -231,11 +220,7 @@ function fieldsOf(
  * @throws {Error} - When the fields or foods are not allowed
  *   or the end is not after the start
  */
-function fieldsCheck(
-    fields: EntryFields,
-    foods: string[],
-    old: Entry | Box | null,
-): void {
+function fieldsCheck(fields: EntryFields, foods: string[], old: Entry | Box | null): void {
     const kept: boolean =
         old !== null &&
         old.title !== "" &&
@@ -244,15 +229,10 @@ function fieldsCheck(
             ? fields.module === old.module && fields.type === old.type
             : fields.title === old.title) &&
         attendeesAllow(fields.attendees);
-    if (!(kept || categoryAllows(fields)))
-        throw new Error(`No log entry ${fields.category} ${fields.title}`);
-    if (
-        foods.length > 0 &&
-        !([foodName, cookName].includes(fields.category) && foods.every(foodLineAllows))
-    )
+    if (!(kept || categoryAllows(fields))) throw new Error(`No log entry ${fields.category} ${fields.title}`);
+    if (foods.length > 0 && !([foodName, cookName].includes(fields.category) && foods.every(foodLineAllows)))
         throw new Error(`No foods ${foods.join(", ")} for ${fields.title}`);
-    if (!(fields.start < fields.end))
-        throw new Error(`${fields.title} needs an end after its start`);
+    if (!(fields.start < fields.end)) throw new Error(`${fields.title} needs an end after its start`);
 }
 
 /**
@@ -284,15 +264,9 @@ export function entryNowRead(): Entry | null {
         entriesRead(day.log, new Date(now).toISOString(), new Date(now + 1).toISOString())
             .filter(
                 (entry: Entry): boolean =>
-                    !entry.allDay &&
-                    !glassIs(entry) &&
-                    Date.parse(entry.start) <= now &&
-                    now < Date.parse(entry.end),
+                    !entry.allDay && !glassIs(entry) && Date.parse(entry.start) <= now && now < Date.parse(entry.end),
             )
-            .sort(
-                (first: Entry, second: Entry): number =>
-                    Date.parse(first.start) - Date.parse(second.start),
-            )
+            .sort((first: Entry, second: Entry): number => Date.parse(first.start) - Date.parse(second.start))
             .at(-1) ?? null
     );
 }
@@ -304,9 +278,7 @@ export function entryNowRead(): Entry | null {
  */
 export function logAllRead(): Entry[] {
     return entriesOnceRead(day.log)
-        .filter(
-            (entry: Entry): boolean => entry.editable && !entry.todo && !glassIs(entry),
-        )
+        .filter((entry: Entry): boolean => entry.editable && !entry.todo && !glassIs(entry))
         .sort((one: Entry, other: Entry): number => other.start.localeCompare(one.start));
 }
 
@@ -316,17 +288,9 @@ export function logAllRead(): Entry[] {
  *
  * @throws {Error} - When the entry is no session of sport or a line is not well formed
  */
-function sportCheck(
-    category: string,
-    workout: string,
-    exercises: string[],
-    videos: string[],
-): void {
+function sportCheck(category: string, workout: string, exercises: string[], videos: string[]): void {
     if (!sportPartsAllow(category, workout, exercises, videos))
-        throw new Error(
-            `No session ${JSON.stringify({ workout, exercises, videos })} ` +
-                `for ${category}`,
-        );
+        throw new Error(`No session ${JSON.stringify({ workout, exercises, videos })} ` + `for ${category}`);
 }
 
 /**
@@ -348,22 +312,12 @@ function painCheck(pain: string): void {
  *   or the cooking is no entry `Cook` of the log that starts
  *   before the meal, but for the one kept
  */
-function cookedCheck(
-    category: string,
-    start: Date,
-    cooked: string,
-    kept: string = "",
-): void {
+function cookedCheck(category: string, start: Date, cooked: string, kept: string = ""): void {
     if (cooked === "") return;
-    if (category !== foodName)
-        throw new Error(`Only a meal draws from a cooking: ${category}`);
+    if (category !== foodName) throw new Error(`Only a meal draws from a cooking: ${category}`);
     const cooking: Entry | undefined = entryLookup(day.log, cooked)?.[1];
     if (cooking === undefined && cooked === kept) return;
-    if (
-        cooking === undefined ||
-        cooking.category !== cookName ||
-        Date.parse(cooking.start) >= start.getTime()
-    )
+    if (cooking === undefined || cooking.category !== cookName || Date.parse(cooking.start) >= start.getTime())
         throw new Error(`No cooking before the meal: ${cooked}`);
 }
 
@@ -389,28 +343,18 @@ function cookedCheck(
  *   `undefined` while it is as the meals drew it
  */
 function cookedShare(cooked: string, before?: string[]): void {
-    const found: [string, Entry] | undefined =
-        cooked === "" ? undefined : entryLookup(day.log, cooked);
+    const found: [string, Entry] | undefined = cooked === "" ? undefined : entryLookup(day.log, cooked);
     if (found === undefined) return;
     const keyOf: (line: string) => string = (line: string): string => {
         const parts: string[] = line.split(";");
-        return [parts[0], parts[1] ?? "", parts[2] ?? "", parts[4] ?? ""]
-            .join(";")
-            .toLowerCase();
+        return [parts[0], parts[1] ?? "", parts[2] ?? "", parts[4] ?? ""].join(";").toLowerCase();
     };
     const drawn: Set<string> = new Set((before ?? found[1].foods).map(keyOf));
     const drawnGrams: Map<string, string> = new Map(
-        (before ?? found[1].foods).map((line: string): [string, string] => [
-            keyOf(line),
-            line.split(";")[3] ?? "",
-        ]),
+        (before ?? found[1].foods).map((line: string): [string, string] => [keyOf(line), line.split(";")[3] ?? ""]),
     );
     const potKeys: Set<string> = new Set(found[1].foods.map(keyOf));
-    const eaters: Entry[] = entriesRead(
-        day.log,
-        "1970-01-01T00:00:00Z",
-        "9999-12-31T00:00:00Z",
-    ).filter(
+    const eaters: Entry[] = entriesRead(day.log, "1970-01-01T00:00:00Z", "9999-12-31T00:00:00Z").filter(
         (entry: Entry): boolean => entry.category === foodName && entry.cooked === cooked,
     );
     eaters.forEach((entry: Entry): void => {
@@ -421,28 +365,17 @@ function cookedShare(cooked: string, before?: string[]): void {
         );
         const lines: string[] = [
             ...found[1].foods
-                .filter(
-                    (line: string): boolean =>
-                        had.has(keyOf(line)) || !drawn.has(keyOf(line)),
-                )
+                .filter((line: string): boolean => had.has(keyOf(line)) || !drawn.has(keyOf(line)))
                 .map((line: string): string => {
                     const parts: string[] = line.split(";");
-                    const grams: RegExpExecArray | null = /^(~?)\s*(\d+(?:\.\d+)?)$/.exec(
-                        (parts[3] ?? "").trim(),
-                    );
-                    if (
-                        grams === null ||
-                        (had.has(keyOf(line)) && drawnGrams.get(keyOf(line)) === parts[3])
-                    )
+                    const grams: RegExpExecArray | null = /^(~?)\s*(\d+(?:\.\d+)?)$/.exec((parts[3] ?? "").trim());
+                    if (grams === null || (had.has(keyOf(line)) && drawnGrams.get(keyOf(line)) === parts[3]))
                         return had.get(keyOf(line)) ?? line;
                     const share: number = Number(grams[2]) / eaters.length;
                     parts[3] = `${grams[1]}${Math.round(share * 10) / 10}`;
                     return parts.join(";");
                 }),
-            ...entry.foods.filter(
-                (line: string): boolean =>
-                    !drawn.has(keyOf(line)) && !potKeys.has(keyOf(line)),
-            ),
+            ...entry.foods.filter((line: string): boolean => !drawn.has(keyOf(line)) && !potKeys.has(keyOf(line))),
         ];
         const foods: string[] = foodsRanked(lines);
         const file: string | undefined = entryLookup(day.log, entry.id)?.[0];
@@ -460,31 +393,17 @@ function cookedShare(cooked: string, before?: string[]): void {
  * since plans run long (Buehler 1994).
  * Like means the same category and title, or for `Skill` the same module and type.
  */
-export function realMinutesRead(
-    category: string,
-    title: string,
-    module: string,
-    type: string,
-): number[] {
+export function realMinutesRead(category: string, title: string, module: string, type: string): number[] {
     const now: Date = new Date();
     const like: (entry: Entry) => boolean = (entry: Entry): boolean =>
         entry.category === category &&
         !entry.allDay &&
-        (category === skillName
-            ? entry.module === module && entry.type === type
-            : entry.title === title);
+        (category === skillName ? entry.module === module && entry.type === type : entry.title === title);
     return entriesRead(day.log, "1970-01-01T00:00:00Z", now.toISOString())
-        .filter(
-            (entry: Entry): boolean =>
-                like(entry) && Date.parse(entry.end) <= now.getTime(),
-        )
-        .sort((first: Entry, second: Entry): number =>
-            second.start.localeCompare(first.start),
-        )
+        .filter((entry: Entry): boolean => like(entry) && Date.parse(entry.end) <= now.getTime())
+        .sort((first: Entry, second: Entry): number => second.start.localeCompare(first.start))
         .slice(0, realCount)
-        .map((entry: Entry): number =>
-            Math.round((Date.parse(entry.end) - Date.parse(entry.start)) / 60000),
-        );
+        .map((entry: Entry): number => Math.round((Date.parse(entry.end) - Date.parse(entry.start)) / 60000));
 }
 
 /**
@@ -511,23 +430,18 @@ export function entryAdd(entry: EntryNew, id?: string): string {
     const exercises: string[] = entry.exercises ?? [];
     const videos: string[] = entry.videos ?? [];
     sportCheck(fields.category, workout, exercises, videos);
-    const own: [string, string | Link][] = foodsRanked(entry.foods).map(
-        (food: string): [string, string] => ["x-food", food],
-    );
+    const own: [string, string | Link][] = foodsRanked(entry.foods).map((food: string): [string, string] => [
+        "x-food",
+        food,
+    ]);
     if (entry.planned !== "") own.push(["related-to", entry.planned]);
     if ((plan?.group ?? "") !== "") own.push(["x-group", plan?.group ?? ""]);
     if (pain !== "") own.push(["x-pain", pain]);
     if (cooked !== "") own.push(["x-cooked", cooked]);
     if (workout !== "") own.push(["x-workout", workout]);
     own.push(
-        ...exercises.map((line: string): [string, string] => [
-            "x-exercise",
-            sportIcsOf(line, false),
-        ]),
-        ...videos.map((line: string): [string, string] => [
-            "x-video",
-            sportIcsOf(line, true),
-        ]),
+        ...exercises.map((line: string): [string, string] => ["x-exercise", sportIcsOf(line, false)]),
+        ...videos.map((line: string): [string, string] => ["x-video", sportIcsOf(line, true)]),
     );
     const added: string = entryAppend(logFileOf(fields), fields, own, id);
     if (entry.planned !== "") boxDone(entry.planned);
@@ -551,15 +465,11 @@ export function entryAdd(entry: EntryNew, id?: string): string {
  */
 export function boxLog(logged: BoxLogged): string {
     const box: Box = boxOpenFind(logged.box);
-    if (box.category === "")
-        throw new Error(`${box.title} has no category; the dialog logs it`);
+    if (box.category === "") throw new Error(`${box.title} has no category; the dialog logs it`);
 
     const skill: boolean = box.category === skillName;
     const semester: string = semesterFor(box.category, box.semester, box.day);
-    const [title, titleLink]: [string, string] = titleOf(
-        { ...box, semester: semester },
-        box,
-    );
+    const [title, titleLink]: [string, string] = titleOf({ ...box, semester: semester }, box);
     const fields: EntryFields = {
         category: box.category,
         title: title,
@@ -583,14 +493,8 @@ export function boxLog(logged: BoxLogged): string {
     const id: string = entryAppend(logFileOf(fields), fields, [
         ["related-to", box.id],
         ...(box.group === "" ? [] : [["x-group", box.group] as [string, string]]),
-        ...(skill ? documentLinksOf(box.links) : []).map((link: Link): [string, Link] => [
-            "attach",
-            link,
-        ]),
-        ...(skill ? box.chapters : []).map((chapter: string): [string, string] => [
-            "x-chapter",
-            chapter,
-        ]),
+        ...(skill ? documentLinksOf(box.links) : []).map((link: Link): [string, Link] => ["attach", link]),
+        ...(skill ? box.chapters : []).map((chapter: string): [string, string] => ["x-chapter", chapter]),
     ]);
     boxDone(box.id);
     return id;
@@ -608,16 +512,13 @@ export function boxLog(logged: BoxLogged): string {
  */
 export function boxUndo(id: string): void {
     const [, , box]: [string, Entry, Box] = boxFind(id);
-    if (box.state !== "done" || box.deadline !== "")
-        throw new Error(`${box.title} is not done by a log entry`);
+    if (box.state !== "done" || box.deadline !== "") throw new Error(`${box.title} is not done by a log entry`);
     const logged: Entry | undefined =
         box.log === null
             ? undefined
-            : entriesRead(
-                  day.log,
-                  box.log.start,
-                  new Date(Date.parse(box.log.end) + 1).toISOString(),
-              ).find((entry: Entry): boolean => entry.planned === id);
+            : entriesRead(day.log, box.log.start, new Date(Date.parse(box.log.end) + 1).toISOString()).find(
+                  (entry: Entry): boolean => entry.planned === id,
+              );
     if (logged !== undefined) {
         const [file]: [string, Entry] = entryFind(day.log, logged.id);
         if (logged.rounds.length > 0 || logged.note.trim() !== "")
@@ -647,46 +548,30 @@ function entryWrite(file: string, entry: Entry, change: EntryNew): void {
     const fields: EntryFields = fieldsOf(change, entry);
     fieldsCheck(fields, change.foods, entry);
     painCheck(change.pain ?? "");
-    cookedCheck(
-        fields.category,
-        fields.start,
-        change.cooked ?? entry.cooked,
-        entry.cooked,
-    );
+    cookedCheck(fields.category, fields.start, change.cooked ?? entry.cooked, entry.cooked);
     const workout: string = (change.workout ?? entry.workout ?? "").trim();
     const exercises: string[] = change.exercises ?? entry.exercises ?? [];
     const videos: string[] = change.videos ?? entry.videos ?? [];
     sportCheck(fields.category, workout, exercises, videos);
     const foods: string[] = foodsRanked(change.foods);
-    if (foods.join("\n") !== entry.foods.join("\n"))
-        propertiesPut(file, entry.id, [["x-food", foods]]);
+    if (foods.join("\n") !== entry.foods.join("\n")) propertiesPut(file, entry.id, [["x-food", foods]]);
     if (change.pain !== undefined && change.pain !== entry.pain)
-        propertiesPut(file, entry.id, [
-            ["x-pain", change.pain === "" ? [] : [change.pain]],
-        ]);
+        propertiesPut(file, entry.id, [["x-pain", change.pain === "" ? [] : [change.pain]]]);
     if (change.cooked !== undefined && change.cooked !== entry.cooked)
-        propertiesPut(file, entry.id, [
-            ["x-cooked", change.cooked === "" ? [] : [change.cooked]],
-        ]);
+        propertiesPut(file, entry.id, [["x-cooked", change.cooked === "" ? [] : [change.cooked]]]);
     if (workout !== (entry.workout ?? ""))
         propertiesPut(file, entry.id, [["x-workout", workout === "" ? [] : [workout]]]);
     if (exercises.join("\n") !== (entry.exercises ?? []).join("\n"))
         propertiesPut(file, entry.id, [
-            [
-                "x-exercise",
-                exercises.map((line: string): string => sportIcsOf(line, false)),
-            ],
+            ["x-exercise", exercises.map((line: string): string => sportIcsOf(line, false))],
         ]);
     if (videos.join("\n") !== (entry.videos ?? []).join("\n"))
-        propertiesPut(file, entry.id, [
-            ["x-video", videos.map((line: string): string => sportIcsOf(line, true))],
-        ]);
+        propertiesPut(file, entry.id, [["x-video", videos.map((line: string): string => sportIcsOf(line, true))]]);
     entryChange(file, entry, fields, logFileOf(fields));
     if (entry.planned !== "" && foods.length === 0 && fields.title !== entry.title)
         boxRename(entry.planned, fields.title);
     cookedShare(entry.cooked);
-    if (change.cooked !== undefined && change.cooked !== entry.cooked)
-        cookedShare(change.cooked);
+    if (change.cooked !== undefined && change.cooked !== entry.cooked) cookedShare(change.cooked);
     if (fields.category === cookName) cookedShare(entry.id, entry.foods);
 }
 

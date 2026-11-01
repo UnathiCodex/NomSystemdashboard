@@ -51,14 +51,7 @@ import { boxActionsOf } from "../day/actions.ts";
 import { whereLinkedOf } from "../day/places.ts";
 import { personsKept } from "../persons.ts";
 import { listRowOf, numberOf, rowTimesOf } from "../day/rows.ts";
-import {
-    learningOpen,
-    monthListOf,
-    numberedTypes,
-    roomOf,
-    seriesOpen,
-    tallyOf,
-} from "../day/series.ts";
+import { learningOpen, monthListOf, numberedTypes, roomOf, seriesOpen, tallyOf } from "../day/series.ts";
 import { boxGroupOf, pinnedMenuOf } from "../day/groups.ts";
 import { boxTimesOf } from "../day/times.ts";
 import { calendarTodayOf } from "../today.ts";
@@ -69,16 +62,7 @@ import { modulesFolder } from "../skill/links.ts";
 import { skillName } from "../skill/attempts.ts";
 import { changesFollow } from "../changes.ts";
 import { readerAsk } from "../reader.ts";
-import {
-    ArrowRight,
-    Calendar,
-    CalendarOff,
-    Check,
-    ChevronDown,
-    ChevronUp,
-    Pencil,
-    X,
-} from "lucide";
+import { ArrowRight, Calendar, CalendarOff, Check, ChevronDown, ChevronUp, Pencil, X } from "lucide";
 import "../day/boxes.css";
 import "../day/log.css";
 import "../day/day.css";
@@ -153,9 +137,7 @@ let dialogFollowed: boolean = false;
  * Gives the groups of a type of the course shown.
  */
 function groupsOf(type: string): Group[] {
-    return (shown?.groups ?? []).filter(
-        (group: Group): boolean => group.rule.type === type,
-    );
+    return (shown?.groups ?? []).filter((group: Group): boolean => group.rule.type === type);
 }
 
 /**
@@ -165,9 +147,7 @@ function groupsOf(type: string): Group[] {
  */
 async function courseLoad(): Promise<void> {
     [shown, persons] = await Promise.all([
-        readerAsk<Course>(
-            `/api/course/module?module=${encodeURIComponent(module)}&semester=`,
-        ),
+        readerAsk<Course>(`/api/course/module?module=${encodeURIComponent(module)}&semester=`),
         personsKept(),
     ]);
     cardsShow();
@@ -220,10 +200,7 @@ async function boxOpen(box: Box): Promise<void> {
     const dialog: Dialog = await dialogShow();
     if (box.editable) await dialog.categories.boxOpenEdit(box);
     else if (box.state === "open") {
-        const [start, end]: [Date, Date] = boxTimesOf(
-            box,
-            new Date(`${box.day}T12:00:00`),
-        );
+        const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
         await dialog.categories.entryOpenFromBox(box, start, end);
     }
 }
@@ -235,10 +212,7 @@ async function boxOpen(box: Box): Promise<void> {
  */
 function actionsOf(box: Box): HTMLElement {
     const log: () => Promise<void> = async (): Promise<void> => {
-        const [start, end]: [Date, Date] = boxTimesOf(
-            box,
-            new Date(`${box.day}T12:00:00`),
-        );
+        const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
         await boxLog(box.id, start, end);
     };
     return boxActionsOf(box, (): void => act(log), act, true);
@@ -250,8 +224,7 @@ function actionsOf(box: Box): HTMLElement {
  * a click on it takes that back, for a box that can be changed.
  */
 function stateOf(box: Box): HTMLElement {
-    const undo: () => Promise<void> = async (): Promise<void> =>
-        boxUndo((await dialogShow()).calendar, box.id);
+    const undo: () => Promise<void> = async (): Promise<void> => boxUndo((await dialogShow()).calendar, box.id);
     let state: [IconNode, string, (() => Promise<void>) | null] = [
         CalendarOff,
         "Cancelled",
@@ -266,9 +239,7 @@ function stateOf(box: Box): HTMLElement {
         state = [
             X,
             "Skipped",
-            box.editable && box.state === "dropped"
-                ? (): Promise<void> => boxDrop(box.id, false)
-                : null,
+            box.editable && box.state === "dropped" ? (): Promise<void> => boxDrop(box.id, false) : null,
         ];
     const [icon, word, back]: [IconNode, string, (() => Promise<void>) | null] = state;
     const button: HTMLElement = document.createElement(back === null ? "span" : "button");
@@ -332,14 +303,7 @@ function boxRowOf(
         group: boxGroupOf(shown, box, groupPick),
         meta: [
             [rowTimesOf(box.time, box.minutes)],
-            whereLinkedOf(
-                box.category,
-                box.from,
-                roomOf(box.location),
-                box.locationLink,
-                box.online,
-                box.onlineLink,
-            ),
+            whereLinkedOf(box.category, box.from, roomOf(box.location), box.locationLink, box.online, box.onlineLink),
             [box.chapters.join(", ")],
         ],
         people: box.attendees,
@@ -377,42 +341,21 @@ function foldOf(type: string): HTMLButtonElement {
  * @param learned - How many sessions of the card `Learning` it counts besides its boxes,
  *   all done; none when left out
  */
-function countsOf(
-    type: string,
-    boxes: Box[],
-    folds: boolean,
-    learned: number = 0,
-): HTMLElement {
+function countsOf(type: string, boxes: Box[], folds: boolean, learned: number = 0): HTMLElement {
     const line: HTMLElement = elementOf("div", "course-counts", "");
-    const counts: HTMLElement = folds
-        ? foldOf(type)
-        : elementOf("span", "series-summary course-still", "");
+    const counts: HTMLElement = folds ? foldOf(type) : elementOf("span", "series-summary course-still", "");
     const states: [number, IconNode, string][] = [
+        [boxes.filter((box: Box): boolean => box.state === "done").length + learned, Check, "done"],
         [
-            boxes.filter((box: Box): boolean => box.state === "done").length + learned,
-            Check,
-            "done",
-        ],
-        [
-            boxes.filter(
-                (box: Box): boolean =>
-                    box.state === "dropped" || box.state === "university" || overIs(box),
-            ).length,
+            boxes.filter((box: Box): boolean => box.state === "dropped" || box.state === "university" || overIs(box))
+                .length,
             X,
             "skipped or cancelled",
         ],
-        [
-            boxes.filter((box: Box): boolean => box.pushed.length > 0).length,
-            ArrowRight,
-            "pushed",
-        ],
+        [boxes.filter((box: Box): boolean => box.pushed.length > 0).length, ArrowRight, "pushed"],
     ];
     counts.append(
-        tallyOf(
-            boxes.length + learned,
-            Calendar,
-            boxes.length + learned === 1 ? "entry" : "entries",
-        ),
+        tallyOf(boxes.length + learned, Calendar, boxes.length + learned === 1 ? "entry" : "entries"),
         ...states.map(([count, icon, words]: [number, IconNode, string]): HTMLElement => {
             const part: HTMLElement = tallyOf(count, icon, words);
             part.classList.add("entry-parted");
@@ -435,20 +378,13 @@ function listOf(type: string, boxes: Box[]): [HTMLElement, HTMLElement] {
     const today: string = calendarTodayOf();
     const past: Box[] = boxes.filter((box: Box): boolean => box.day < today);
     const coming: Box[] = boxes.filter((box: Box): boolean => box.day >= today);
-    const next: Box | undefined = coming.find(
-        (box: Box): boolean => box.state === "open",
-    );
-    const cut: number =
-        next === undefined ? shownAhead : coming.indexOf(next) + shownAhead;
+    const next: Box | undefined = coming.find((box: Box): boolean => box.state === "open");
+    const cut: number = next === undefined ? shownAhead : coming.indexOf(next) + shownAhead;
     const folded: Box[] = [
         ...past.filter((box: Box): boolean => box.state === "open" && box.type === "FA"),
         ...coming.slice(0, cut),
     ];
-    const list: HTMLElement = elementOf(
-        "div",
-        type === "FA" ? "course-list series-kinds" : "course-list",
-        "",
-    );
+    const list: HTMLElement = elementOf("div", type === "FA" ? "course-list series-kinds" : "course-list", "");
     list.classList.toggle("course-open", opened.has(type));
     list.append(
         monthListOf(
@@ -522,9 +458,7 @@ function learnedRowOf(learned: Learned, number: number): HTMLElement {
  * folded by the one rule of every card, see {@link listOf}.
  */
 function learningListOf(): [HTMLElement, HTMLElement] {
-    const boxes: Box[] = (shown?.boxes ?? []).filter(
-        (box: Box): boolean => box.type === "",
-    );
+    const boxes: Box[] = (shown?.boxes ?? []).filter((box: Box): boolean => box.type === "");
     const learned: Learned[] = shown?.learned ?? [];
     const items: [string, boolean, (number: number) => HTMLElement][] = [
         ...boxes.map((box: Box): [string, boolean, (number: number) => HTMLElement] => [
@@ -532,13 +466,11 @@ function learningListOf(): [HTMLElement, HTMLElement] {
             box.state === "open",
             (number: number): HTMLElement => boxRowOf(box, String(number)),
         ]),
-        ...learned.map(
-            (session: Learned): [string, boolean, (number: number) => HTMLElement] => [
-                session.time,
-                false,
-                (number: number): HTMLElement => learnedRowOf(session, number),
-            ],
-        ),
+        ...learned.map((session: Learned): [string, boolean, (number: number) => HTMLElement] => [
+            session.time,
+            false,
+            (number: number): HTMLElement => learnedRowOf(session, number),
+        ]),
     ].sort(
         (
             first: [string, boolean, (number: number) => HTMLElement],
@@ -547,46 +479,24 @@ function learningListOf(): [HTMLElement, HTMLElement] {
     );
     const today: string = calendarTodayOf();
     const coming: number = items.findIndex(
-        ([moment]: [string, boolean, (number: number) => HTMLElement]): boolean =>
-            moment.slice(0, 10) >= today,
+        ([moment]: [string, boolean, (number: number) => HTMLElement]): boolean => moment.slice(0, 10) >= today,
     );
     const next: number = items.findIndex(
         ([moment, open]: [string, boolean, (number: number) => HTMLElement]): boolean =>
             open && moment.slice(0, 10) >= today,
     );
-    const shownTo: number =
-        next !== -1
-            ? next + shownAhead
-            : coming === -1
-              ? items.length
-              : coming + shownAhead;
+    const shownTo: number = next !== -1 ? next + shownAhead : coming === -1 ? items.length : coming + shownAhead;
     const folded: number[] = items
-        .map(
-            (
-                _: [string, boolean, (number: number) => HTMLElement],
-                index: number,
-            ): number => index,
-        )
-        .filter(
-            (index: number): boolean =>
-                items[index][0].slice(0, 10) >= today && index < shownTo,
-        );
+        .map((_: [string, boolean, (number: number) => HTMLElement], index: number): number => index)
+        .filter((index: number): boolean => items[index][0].slice(0, 10) >= today && index < shownTo);
     const list: HTMLElement = elementOf("div", "course-list", "");
     list.classList.toggle("course-open", opened.has(""));
     list.append(
         monthListOf(
             (opened.has("")
-                ? items.map(
-                      (
-                          _: [string, boolean, (number: number) => HTMLElement],
-                          index: number,
-                      ): number => index,
-                  )
+                ? items.map((_: [string, boolean, (number: number) => HTMLElement], index: number): number => index)
                 : folded
-            ).map((index: number): [string, HTMLElement] => [
-                items[index][0],
-                items[index][2](index + 1),
-            ]),
+            ).map((index: number): [string, HTMLElement] => [items[index][0], items[index][2](index + 1)]),
         ),
     );
     if (!opened.has("") && folded.length === 0 && items.length > 0)
@@ -594,13 +504,7 @@ function learningListOf(): [HTMLElement, HTMLElement] {
             foldedOf(
                 "",
                 items.length,
-                items.every(
-                    ([, open]: [
-                        string,
-                        boolean,
-                        (number: number) => HTMLElement,
-                    ]): boolean => !open,
-                ),
+                items.every(([, open]: [string, boolean, (number: number) => HTMLElement]): boolean => !open),
             ),
         );
     return [countsOf("", boxes, folded.length < items.length, learned.length), list];
@@ -612,9 +516,7 @@ function learningListOf(): [HTMLElement, HTMLElement] {
  * the series its planned boxes belong to while they belong to one, else a new one.
  */
 function learningShow(): void {
-    const series: Box | undefined = (shown?.boxes ?? []).find(
-        (box: Box): boolean => box.type === "" && box.series,
-    );
+    const series: Box | undefined = (shown?.boxes ?? []).find((box: Box): boolean => box.type === "" && box.series);
     dialogShow()
         .then((): Promise<void> =>
             learningOpen(
@@ -637,22 +539,15 @@ function headOf(type: string, series: Series | undefined): HTMLElement {
     const head: HTMLElement = elementOf("div", "course-head", "");
     const title: HTMLElement = elementOf("div", "course-title", "");
     title.append(
-        elementOf(
-            "h3",
-            "overview-chapter",
-            type === "" ? "Learning" : `${typeNames.get(type) ?? type} (${type})`,
-        ),
+        elementOf("h3", "overview-chapter", type === "" ? "Learning" : `${typeNames.get(type) ?? type} (${type})`),
     );
     head.append(title);
-    if (shown !== null && groupsOf(type).length > 0)
-        head.append(pinnedMenuOf(shown, type, groupPick));
+    if (shown !== null && groupsOf(type).length > 0) head.append(pinnedMenuOf(shown, type, groupPick));
     const pencil: HTMLButtonElement = document.createElement("button");
     pencil.type = "button";
     pencil.className = "entry-pencil";
     iconPut(pencil, Pencil, "Change the series");
-    pencil.addEventListener("click", (): void =>
-        type === "" ? learningShow() : seriesShow(type),
-    );
+    pencil.addEventListener("click", (): void => (type === "" ? learningShow() : seriesShow(type)));
     title.append(pencil);
     return head;
 }
@@ -668,8 +563,7 @@ function folderLinkOf(folder: MaterialFolder): HTMLElement {
     const link: HTMLElement = document.createElement(folder.exists ? "a" : "span");
     link.className = folder.exists ? "course-folder" : "course-folder course-folder-none";
     link.textContent = `…/${folder.path}`;
-    if (link instanceof HTMLAnchorElement)
-        link.href = folderAddressOf(`${module}/${folder.path}`);
+    if (link instanceof HTMLAnchorElement) link.href = folderAddressOf(`${module}/${folder.path}`);
     else link.title = "Not there yet";
     return link;
 }
@@ -679,12 +573,8 @@ function folderLinkOf(folder: MaterialFolder): HTMLElement {
  * then while it has boxes its line of counts and the list of its boxes.
  */
 function cardOf(type: string): HTMLElement {
-    const boxes: Box[] = (shown?.boxes ?? []).filter(
-        (box: Box): boolean => box.type === type,
-    );
-    const series: Series | undefined = shown?.series.find(
-        (one: Series): boolean => one.rule.type === type,
-    );
+    const boxes: Box[] = (shown?.boxes ?? []).filter((box: Box): boolean => box.type === type);
+    const series: Series | undefined = shown?.series.find((one: Series): boolean => one.rule.type === type);
     const card: HTMLElement = elementOf("section", "overview-group course-card", "");
     const folder: MaterialFolder | undefined = shown?.folders[type];
     const [counts, list]: [HTMLElement, HTMLElement] = listOf(type, boxes);
@@ -707,8 +597,7 @@ function learningCardOf(): HTMLElement {
     const folder: HTMLAnchorElement = document.createElement("a");
     const [counts, list]: [HTMLElement, HTMLElement] = learningListOf();
     const some: boolean =
-        (shown?.learned.length ?? 0) > 0 ||
-        (shown?.boxes ?? []).some((box: Box): boolean => box.type === "");
+        (shown?.learned.length ?? 0) > 0 || (shown?.boxes ?? []).some((box: Box): boolean => box.type === "");
     folder.className = "course-folder";
     folder.href = folderAddressOf(module);
     folder.textContent = `${modulesFolder}/${module}`;

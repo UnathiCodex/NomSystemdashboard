@@ -236,8 +236,7 @@ function diskPathOf(path: string): string {
 
     const root: string = realpathSync(notes.modules);
     const file: string = realpathSync(placeOf(path));
-    if (file !== root && !file.startsWith(`${root}${sep}`))
-        throw new Error(`No reading outside the modules: ${path}`);
+    if (file !== root && !file.startsWith(`${root}${sep}`)) throw new Error(`No reading outside the modules: ${path}`);
     return file;
 }
 
@@ -282,12 +281,7 @@ function filesRead(folder: string): string[] {
  * each full path by its path in the module.
  */
 function vaultFilesRead(module: string): Map<string, string> {
-    return new Map(
-        filesRead(module).map((file: string): [string, string] => [
-            file.slice(module.length + 1),
-            file,
-        ]),
-    );
+    return new Map(filesRead(module).map((file: string): [string, string] => [file.slice(module.length + 1), file]));
 }
 
 /**
@@ -310,10 +304,7 @@ function linkResolve(link: string, note: string, files: string[]): string | null
     if (link === "") return note;
 
     const named: (path: string) => string[] = (path: string): string[] =>
-        files.filter(
-            (file: string): boolean =>
-                posix.basename(file).toLowerCase() === posix.basename(path),
-        );
+        files.filter((file: string): boolean => posix.basename(file).toLowerCase() === posix.basename(path));
     let path: string = link.toLowerCase();
     let candidates: string[] = posix.basename(path).includes(".") ? named(path) : [];
     if (candidates.length === 0) {
@@ -323,25 +314,17 @@ function linkResolve(link: string, note: string, files: string[]): string | null
     if (candidates.length === 0) return null;
     if (!path.includes("/") && candidates.length === 1) return candidates[0];
 
-    const folder: string = note.includes("/")
-        ? note.slice(0, note.lastIndexOf("/")).toLowerCase()
-        : "";
+    const folder: string = note.includes("/") ? note.slice(0, note.lastIndexOf("/")).toLowerCase() : "";
     const exact: string =
-        path.startsWith("./") || path.startsWith("../")
-            ? posix.join(folder, path)
-            : path.replace(/^\//, "");
-    const found: string | undefined = candidates.find(
-        (file: string): boolean => file.toLowerCase() === exact,
-    );
+        path.startsWith("./") || path.startsWith("../") ? posix.join(folder, path) : path.replace(/^\//, "");
+    const found: string | undefined = candidates.find((file: string): boolean => file.toLowerCase() === exact);
     if (found !== undefined) return found;
     if (link.startsWith("/")) return null;
 
     const endings: string[] = candidates
         .filter((file: string): boolean => file.toLowerCase().endsWith(path))
         .sort((first: string, second: string): number => first.length - second.length);
-    const nearby: string | undefined = endings.find((file: string): boolean =>
-        file.toLowerCase().startsWith(folder),
-    );
+    const nearby: string | undefined = endings.find((file: string): boolean => file.toLowerCase().startsWith(folder));
     if (nearby !== undefined) return nearby;
     if (endings.length > 0) return endings[0];
     return null;
@@ -377,28 +360,18 @@ function cellsOf(line: string): string[] {
  */
 function chaptersRead(module: string): Chapter[] {
     return entriesRead(module)
-        .filter(
-            (chapter: Dirent): boolean =>
-                chapter.isDirectory() && chapterFolder.test(chapter.name),
-        )
+        .filter((chapter: Dirent): boolean => chapter.isDirectory() && chapterFolder.test(chapter.name))
         .map((chapter: Dirent): Chapter => ({
             title: chapter.name,
             notes: entriesRead(`${module}/${chapter.name}`)
-                .filter(
-                    (note: Dirent): boolean =>
-                        !note.isDirectory() && note.name.toLowerCase().endsWith(".md"),
-                )
+                .filter((note: Dirent): boolean => !note.isDirectory() && note.name.toLowerCase().endsWith(".md"))
                 .map((note: Dirent): NoteEntry => ({
                     name: note.name,
                     path: `${module}/${chapter.name}/${note.name}`,
                 }))
-                .sort((first: NoteEntry, second: NoteEntry): number =>
-                    collator.compare(first.name, second.name),
-                ),
+                .sort((first: NoteEntry, second: NoteEntry): number => collator.compare(first.name, second.name)),
         }))
-        .sort((first: Chapter, second: Chapter): number =>
-            collator.compare(first.title, second.title),
-        )
+        .sort((first: Chapter, second: Chapter): number => collator.compare(first.title, second.title))
         .filter((chapter: Chapter): boolean => chapter.notes.length > 0);
 }
 
@@ -421,10 +394,7 @@ export function modulesRead(): NotesModule[] {
  */
 export function moduleFoldersRead(): string[] {
     return entriesRead("")
-        .filter(
-            (entry: Dirent): boolean =>
-                entry.isDirectory() && moduleFolder.test(entry.name),
-        )
+        .filter((entry: Dirent): boolean => entry.isDirectory() && moduleFolder.test(entry.name))
         .map((entry: Dirent): string => entry.name)
         .sort(collator.compare);
 }
@@ -461,9 +431,7 @@ function semestersRead(): Map<string, string> {
                 ?.match(/\d{4}[WS]/g)
                 ?.sort(collator.compare)
                 .at(-1);
-            return folder === undefined || last === undefined
-                ? []
-                : [[linkDecode(folder), last]];
+            return folder === undefined || last === undefined ? [] : [[linkDecode(folder), last]];
         }),
     );
 }
@@ -496,12 +464,7 @@ export function activeModulesRead(): string[] {
  * A link in a note still opens a note of any module.
  */
 export function activeSkillsRead(): string[] {
-    return [
-        ...activeModulesRead().map(
-            (module: string): string => `${modulesFolder}/${module}`,
-        ),
-        ...activeProjects,
-    ];
+    return [...activeModulesRead().map((module: string): string => `${modulesFolder}/${module}`), ...activeProjects];
 }
 
 /**
@@ -541,15 +504,9 @@ export function menuRead(): MenuModule[] {
  *
  * @returns Folders by type, each its path from the module folder, and whether it is there
  */
-export function semesterFoldersRead(
-    module: string,
-    semester: string,
-): { [type: string]: MaterialFolder } {
+export function semesterFoldersRead(module: string, semester: string): { [type: string]: MaterialFolder } {
     const materials: string[] = entriesRead(module)
-        .filter(
-            (material: Dirent): boolean =>
-                material.isDirectory() && /^[A-Z]{2}_/.test(material.name),
-        )
+        .filter((material: Dirent): boolean => material.isDirectory() && /^[A-Z]{2}_/.test(material.name))
         .map((material: Dirent): string => material.name)
         .sort(collator.compare);
     const folders: { [type: string]: MaterialFolder } = {};
@@ -557,20 +514,16 @@ export function semesterFoldersRead(
         const type: string = material.slice(0, 2);
         const inner: string | undefined = entriesRead(`${module}/${material}`)
             .filter(
-                (folder: Dirent): boolean =>
-                    folder.isDirectory() &&
-                    /\d{4}[WS]/.exec(folder.name)?.[0] === semester,
+                (folder: Dirent): boolean => folder.isDirectory() && /\d{4}[WS]/.exec(folder.name)?.[0] === semester,
             )
             .map((folder: Dirent): string => folder.name)
             .sort(collator.compare)[0];
         if (inner !== undefined && folders[type] === undefined)
             folders[type] = { path: `${material}/${inner}`, exists: true };
     });
-    Object.entries(materialFoldersOf(module)).forEach(
-        ([type, material]: [string, string]): void => {
-            folders[type] ??= { path: `${material}/TUM_${semester}`, exists: false };
-        },
-    );
+    Object.entries(materialFoldersOf(module)).forEach(([type, material]: [string, string]): void => {
+        folders[type] ??= { path: `${material}/TUM_${semester}`, exists: false };
+    });
     return folders;
 }
 
@@ -583,21 +536,14 @@ export function semesterFoldersRead(
  */
 export function materialFoldersOf(module: string): { [type: string]: string } {
     const materials: string[] = entriesRead(module)
-        .filter(
-            (material: Dirent): boolean =>
-                material.isDirectory() && /^[A-Z]{2}_/.test(material.name),
-        )
+        .filter((material: Dirent): boolean => material.isDirectory() && /^[A-Z]{2}_/.test(material.name))
         .map((material: Dirent): string => material.name)
         .sort(collator.compare);
     return Object.fromEntries(
-        Object.entries(materialFolders).map(
-            ([type, name]: [string, string]): [string, string] => [
-                type,
-                materials.find((folder: string): boolean =>
-                    folder.startsWith(`${type}_`),
-                ) ?? name,
-            ],
-        ),
+        Object.entries(materialFolders).map(([type, name]: [string, string]): [string, string] => [
+            type,
+            materials.find((folder: string): boolean => folder.startsWith(`${type}_`)) ?? name,
+        ]),
     );
 }
 
@@ -616,18 +562,12 @@ export function moduleFolderOf(code: string): string | undefined {
  */
 export function moduleContentsRead(module: string): ModuleContents {
     const chapters: string[] = entriesRead(module)
-        .filter(
-            (entry: Dirent): boolean =>
-                entry.isDirectory() && chapterFolder.test(entry.name),
-        )
+        .filter((entry: Dirent): boolean => entry.isDirectory() && chapterFolder.test(entry.name))
         .map((entry: Dirent): string => entry.name)
         .sort(collator.compare);
     const notes: string[] = chapters.flatMap((chapter: string): string[] =>
         entriesRead(`${module}/${chapter}`)
-            .filter(
-                (note: Dirent): boolean =>
-                    !note.isDirectory() && note.name.toLowerCase().endsWith(".md"),
-            )
+            .filter((note: Dirent): boolean => !note.isDirectory() && note.name.toLowerCase().endsWith(".md"))
             .map((note: Dirent): string => `${chapter}/${note.name}`),
     );
     const material: string[] = entriesRead(module)
@@ -639,14 +579,10 @@ export function moduleContentsRead(module: string): ModuleContents {
                 : [`${module}/${entry.name}`],
         )
         .map((file: string): string => file.slice(module.length + 1));
-    const inner: string[] = Object.values(materialFoldersOf(module)).flatMap(
-        (folder: string): string[] =>
-            entriesRead(`${module}/${folder}`)
-                .filter(
-                    (entry: Dirent): boolean =>
-                        entry.isDirectory() && /\d{4}[WS]/.test(entry.name),
-                )
-                .map((entry: Dirent): string => `${folder}/${entry.name}`),
+    const inner: string[] = Object.values(materialFoldersOf(module)).flatMap((folder: string): string[] =>
+        entriesRead(`${module}/${folder}`)
+            .filter((entry: Dirent): boolean => entry.isDirectory() && /\d{4}[WS]/.test(entry.name))
+            .map((entry: Dirent): string => `${folder}/${entry.name}`),
     );
     return {
         folder: `${modulesFolder}/${module}`,
@@ -670,20 +606,12 @@ export function chapterNameOf(path: string): string {
  * Markdown links and images of a note lead to, see {@link linkResolve}.
  * Links out of the vault, like `https://…`, stay out.
  */
-function linksOf(
-    text: string,
-    path: string,
-    files: Map<string, string>,
-): { [link: string]: string | null } {
+function linksOf(text: string, path: string, files: Map<string, string>): { [link: string]: string | null } {
     const note: string = path.slice(moduleOf(path).length + 1);
     const inModule: string[] = [...files.keys()];
     const links: string[] = [
-        ...[...text.matchAll(wikiLink)].map((match: RegExpExecArray): string =>
-            match[1].trim(),
-        ),
-        ...[...text.matchAll(markdownLink)].map(
-            (match: RegExpExecArray): string => match[1] ?? match[2],
-        ),
+        ...[...text.matchAll(wikiLink)].map((match: RegExpExecArray): string => match[1].trim()),
+        ...[...text.matchAll(markdownLink)].map((match: RegExpExecArray): string => match[1] ?? match[2]),
     ].filter((link: string): boolean => !external.test(link));
 
     return Object.fromEntries(
@@ -788,8 +716,7 @@ export function folderMake(path: string): void {
     for (const part of parts.slice(1)) {
         folder = join(folder, part);
         if (!existsSync(folder)) mkdirSync(folder);
-        else if (!lstatSync(folder).isDirectory())
-            throw new Error(`No folder on the way: ${path}`);
+        else if (!lstatSync(folder).isDirectory()) throw new Error(`No folder on the way: ${path}`);
     }
 }
 
@@ -808,22 +735,22 @@ export function folderMake(path: string): void {
  */
 export function typeFoldersMake(module: string, kinds: [string, string][]): string[] {
     const made: string[] = [];
-    new Set(
-        kinds.map(([type, semester]: [string, string]): string => `${type} ${semester}`),
-    ).forEach((kind: string): void => {
-        const [type, semester]: string[] = kind.split(" ");
-        const folder: MaterialFolder | undefined =
-            materialFolders[type] === undefined || !/^\d{4}[WS]$/.test(semester)
-                ? undefined
-                : semesterFoldersRead(module, semester)[type];
-        if (folder === undefined || folder.exists) return;
-        try {
-            folderMake(`${module}/${folder.path}`);
-            made.push(`${module}/${folder.path}`);
-        } catch (error: unknown) {
-            console.error(error);
-        }
-    });
+    new Set(kinds.map(([type, semester]: [string, string]): string => `${type} ${semester}`)).forEach(
+        (kind: string): void => {
+            const [type, semester]: string[] = kind.split(" ");
+            const folder: MaterialFolder | undefined =
+                materialFolders[type] === undefined || !/^\d{4}[WS]$/.test(semester)
+                    ? undefined
+                    : semesterFoldersRead(module, semester)[type];
+            if (folder === undefined || folder.exists) return;
+            try {
+                folderMake(`${module}/${folder.path}`);
+                made.push(`${module}/${folder.path}`);
+            } catch (error: unknown) {
+                console.error(error);
+            }
+        },
+    );
     return made;
 }
 
@@ -843,8 +770,7 @@ writtenFollow((module: string, kinds: [string, string][]): void => {
  *   or a module folder has its code already
  */
 export function moduleMake(folder: string): void {
-    if (!/^[A-Z]{2,4}\d{3,6}_[A-Z][A-Za-z\d]*$/.test(folder))
-        throw new Error(`No name of a module folder: ${folder}`);
+    if (!/^[A-Z]{2,4}\d{3,6}_[A-Z][A-Za-z\d]*$/.test(folder)) throw new Error(`No name of a module folder: ${folder}`);
     if (moduleFolderOf(codeOf(folder)) !== undefined)
         throw new Error(`A folder of the module is there already: ${folder}`);
     mkdirSync(join(diskPathOf(""), folder));

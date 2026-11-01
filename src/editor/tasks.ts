@@ -34,12 +34,7 @@ import type {
     Transaction,
 } from "@codemirror/state";
 import type { DecorationSet } from "@codemirror/view";
-import type {
-    SkillModule,
-    SkillSection,
-    SkillTask,
-    Skilling,
-} from "../skill/attempts.ts";
+import type { SkillModule, SkillSection, SkillTask, Skilling } from "../skill/attempts.ts";
 
 /**
  * The tasks of the note, as loaded for its rows.
@@ -130,10 +125,7 @@ abstract class TaskWidget<Open extends boolean | null> extends WidgetType {
      * which keeps the page where it is.
      */
     override eq(other: TaskWidget<Open>): boolean {
-        return (
-            other.open === this.open &&
-            JSON.stringify(other.task) === JSON.stringify(this.task)
-        );
+        return other.open === this.open && JSON.stringify(other.task) === JSON.stringify(this.task);
     }
 
     /**
@@ -158,9 +150,7 @@ class RowWidget extends TaskWidget<boolean | null> {
         return taskRowOf(
             this.task,
             this.loaded.today,
-            this.open === null
-                ? null
-                : Object.assign(new EventTarget(), { open: this.open }),
+            this.open === null ? null : Object.assign(new EventTarget(), { open: this.open }),
             false,
             (): Promise<void> => tasksLoad(view, this.loaded.path),
         );
@@ -236,16 +226,12 @@ function solutionOpenOf(state: EditorState, heading: Line): boolean | null {
 export function blocksOf(state: EditorState, tasks: SkillTask[]): Block[] {
     const blocks: Block[] = [];
     for (let number: number = 1; number <= state.doc.lines; number++) {
-        const heading: string | undefined = blockRule.exec(
-            state.doc.line(number).text,
-        )?.[1];
+        const heading: string | undefined = blockRule.exec(state.doc.line(number).text)?.[1];
         if (heading !== undefined)
             blocks.push({
                 heading: heading,
                 line: number,
-                task:
-                    tasks.find((task: SkillTask): boolean => task.heading === heading) ??
-                    null,
+                task: tasks.find((task: SkillTask): boolean => task.heading === heading) ?? null,
             });
     }
     return blocks;
@@ -264,13 +250,11 @@ function decorationsOf(state: EditorState, loaded: NoteTasks | null): Decoration
         if (block.task === null || block.task.kind === "example") continue;
         const task: SkillTask = block.task;
         const line: Line = state.doc.line(block.line);
-        const cold: RegExpExecArray | null =
-            task.kind === "cold" ? coldMark.exec(line.text) : null;
+        const cold: RegExpExecArray | null = task.kind === "cold" ? coldMark.exec(line.text) : null;
         if (
             cold !== null &&
             !state.selection.ranges.some(
-                (range: SelectionRange): boolean =>
-                    range.from <= line.to && range.to >= line.from,
+                (range: SelectionRange): boolean => range.from <= line.to && range.to >= line.from,
             )
         )
             decorations.push(
@@ -283,11 +267,7 @@ function decorationsOf(state: EditorState, loaded: NoteTasks | null): Decoration
             decorations.push(judgedLine.range(line.from));
             decorations.push(
                 Decoration.widget({
-                    widget: new JudgeWidget(
-                        task,
-                        loaded,
-                        solutionOpenOf(state, line) ?? true,
-                    ),
+                    widget: new JudgeWidget(task, loaded, solutionOpenOf(state, line) ?? true),
                     side: 2,
                 }).range(line.to),
             );
@@ -349,8 +329,7 @@ export const taskRows: Extension = StateField.define<Rows>({
     create: (): Rows => ({ loaded: null, decorations: Decoration.none }),
     update: (rows: Rows, transaction: Transaction): Rows => {
         let loaded: NoteTasks | null = rows.loaded;
-        for (const effect of transaction.effects)
-            if (effect.is(tasksLoaded)) loaded = effect.value;
+        for (const effect of transaction.effects) if (effect.is(tasksLoaded)) loaded = effect.value;
         if (
             loaded === rows.loaded &&
             !transaction.docChanged &&
@@ -362,8 +341,5 @@ export const taskRows: Extension = StateField.define<Rows>({
         return { loaded: loaded, decorations: decorationsOf(transaction.state, loaded) };
     },
     provide: (field: StateField<Rows>): Extension =>
-        EditorView.decorations.from(
-            field,
-            (rows: Rows): DecorationSet => rows.decorations,
-        ),
+        EditorView.decorations.from(field, (rows: Rows): DecorationSet => rows.decorations),
 });

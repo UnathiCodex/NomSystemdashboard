@@ -50,19 +50,13 @@ function giftSave(gift: string): void {
  * the bin shows only when there is an idea to take out.
  */
 export function giftOpen(occasion: Occasion): void {
-    const field: HTMLInputElement = document.getElementById(
-        "gift-text",
-    ) as HTMLInputElement;
+    const field: HTMLInputElement = document.getElementById("gift-text") as HTMLInputElement;
     opened = occasion;
     (document.getElementById("gift-occasion") as HTMLElement).textContent =
-        occasion.category === ""
-            ? occasion.title
-            : `${occasion.category}: ${occasion.title}`;
+        occasion.category === "" ? occasion.title : `${occasion.category}: ${occasion.title}`;
     field.value = occasion.gift;
     fileShow(document.getElementById("gift-file") as HTMLAnchorElement, occasion.file);
-    document
-        .getElementById("gift-remove")
-        ?.toggleAttribute("hidden", occasion.gift === "");
+    document.getElementById("gift-remove")?.toggleAttribute("hidden", occasion.gift === "");
     document.getElementById("gift-error")?.setAttribute("hidden", "");
     (document.getElementById("gift") as HTMLDialogElement).showModal();
     field.focus();
@@ -78,16 +72,10 @@ export function giftsStart(): void {
     iconPut(document.getElementById("gift-save") as HTMLElement, Check, "Save");
     document
         .getElementById("gift-cancel")
-        ?.addEventListener("click", (): void =>
-            (document.getElementById("gift") as HTMLDialogElement).close(),
-        );
-    document
-        .getElementById("gift-remove")
-        ?.addEventListener("click", (): void => giftSave(""));
-    document
-        .getElementById("gift-form")
-        ?.addEventListener("submit", (event: SubmitEvent): void => {
-            event.preventDefault();
-            giftSave((document.getElementById("gift-text") as HTMLInputElement).value);
-        });
+        ?.addEventListener("click", (): void => (document.getElementById("gift") as HTMLDialogElement).close());
+    document.getElementById("gift-remove")?.addEventListener("click", (): void => giftSave(""));
+    document.getElementById("gift-form")?.addEventListener("submit", (event: SubmitEvent): void => {
+        event.preventDefault();
+        giftSave((document.getElementById("gift-text") as HTMLInputElement).value);
+    });
 }

@@ -205,16 +205,7 @@ const sleepWhats: string[] = ["Night", "Day"];
  * as German writes them, like my other names.
  * A way may use several, since I change on it.
  */
-const transports: string[] = [
-    "Walk",
-    "Bike",
-    "Bus",
-    "Tram",
-    "U-Bahn",
-    "S-Bahn",
-    "Train",
-    "Car",
-];
+const transports: string[] = ["Walk", "Bike", "Bus", "Tram", "U-Bahn", "S-Bahn", "Train", "Car"];
 
 /**
  * Categories the dialog leaves out, though the reader takes them:
@@ -237,11 +228,7 @@ const retiredWhats: { [category: string]: string[] } = {
 const categories: Category[] = [
     {
         name: skillName,
-        fields: [
-            { name: "Place", key: "location", values: [], steps: {}, fixed: false },
-            onlineField,
-            withField,
-        ],
+        fields: [{ name: "Place", key: "location", values: [], steps: {}, fixed: false }, onlineField, withField],
     },
     {
         name: "Sleep",
@@ -353,16 +340,13 @@ export function semesterOf(day: string): string {
  */
 export function semesterFor(category: string, semester: string, day: string): string {
     if (category !== skillName) return "";
-    if (semester !== "" && !semesterForm.test(semester))
-        throw new Error(`No semester ${semester}`);
+    if (semester !== "" && !semesterForm.test(semester)) throw new Error(`No semester ${semester}`);
     return semester === "" ? semesterOf(day) : semester;
 }
 
 /** Reads the timed log entries up to an instant, from the first entry of the log on. */
 function logsRead(now: string): Entry[] {
-    return entriesRead(day.log, "1970-01-01T00:00:00Z", now).filter(
-        (log: Entry): boolean => !log.allDay,
-    );
+    return entriesRead(day.log, "1970-01-01T00:00:00Z", now).filter((log: Entry): boolean => !log.allDay);
 }
 
 /**
@@ -371,10 +355,7 @@ function logsRead(now: string): Entry[] {
  * Their places and where their ways start, each as often as it was used.
  */
 function placeUsesOf(logs: Entry[]): string[] {
-    return logs.flatMap((log: Entry): string[] => [
-        labelOf(log.location),
-        labelOf(log.from),
-    ]);
+    return logs.flatMap((log: Entry): string[] => [labelOf(log.location), labelOf(log.from)]);
 }
 
 /** Lists the platforms of log entries, each as often as it was used. */
@@ -396,23 +377,15 @@ function titleUsesOf(logs: Entry[], name: string, many: boolean): string[] {
  * Gives the params each value of a summary had in log entries, by value,
  * in round brackets at its end, the most used first.
  */
-function paramsOf(
-    logs: Entry[],
-    name: string,
-    many: boolean,
-): { [value: string]: string[] } {
-    const uses: string[] = titleUsesOf(logs, name, many).filter(
-        (use: string): boolean => summaryBaseOf(use) !== use,
-    );
+function paramsOf(logs: Entry[], name: string, many: boolean): { [value: string]: string[] } {
+    const uses: string[] = titleUsesOf(logs, name, many).filter((use: string): boolean => summaryBaseOf(use) !== use);
     return Object.fromEntries(
         [...new Set(uses.map(summaryBaseOf))].map((base: string): [string, string[]] => [
             base,
             valuesOrder(
                 uses
                     .filter((use: string): boolean => summaryBaseOf(use) === base)
-                    .map((use: string): string =>
-                        use.slice(summaryBaseOf(use).length).trim().slice(1, -1),
-                    ),
+                    .map((use: string): string => use.slice(summaryBaseOf(use).length).trim().slice(1, -1)),
                 [],
             ),
         ]),
@@ -421,9 +394,7 @@ function paramsOf(
 
 /** Lists the people of log entries by their names, each as often as it was used. */
 function peopleUsesOf(logs: Entry[]): string[] {
-    return logs.flatMap((log: Entry): string[] =>
-        log.attendees.map((attendee: Attendee): string => attendee.name),
-    );
+    return logs.flatMap((log: Entry): string[] => log.attendees.map((attendee: Attendee): string => attendee.name));
 }
 
 /**
@@ -433,14 +404,9 @@ function peopleUsesOf(logs: Entry[]): string[] {
 function addressesOf(logs: Entry[]): { [name: string]: string } {
     return Object.fromEntries(
         [...logs]
-            .sort((first: Entry, second: Entry): number =>
-                first.start.localeCompare(second.start),
-            )
+            .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
             .flatMap((log: Entry): [string, string][] =>
-                log.attendees.map((attendee: Attendee): [string, string] => [
-                    attendee.name,
-                    attendee.address,
-                ]),
+                log.attendees.map((attendee: Attendee): [string, string] => [attendee.name, attendee.address]),
             ),
     );
 }
@@ -455,15 +421,12 @@ function valuesOrder(uses: string[], offered: string[]): string[] {
             .filter((value: string): boolean => value !== "")
             .map((value: string): [string, number] => [value, 0]),
     );
-    uses.filter((value: string): boolean => counts.has(value)).forEach(
-        (value: string): void => {
-            counts.set(value, (counts.get(value) ?? 0) + 1);
-        },
-    );
+    uses.filter((value: string): boolean => counts.has(value)).forEach((value: string): void => {
+        counts.set(value, (counts.get(value) ?? 0) + 1);
+    });
     return [...counts.keys()].sort(
         (first: string, second: string): number =>
-            (counts.get(second) ?? 0) - (counts.get(first) ?? 0) ||
-            first.localeCompare(second),
+            (counts.get(second) ?? 0) - (counts.get(first) ?? 0) || first.localeCompare(second),
     );
 }
 
@@ -477,25 +440,13 @@ function stepsWithNoteOf(
     steps: { [what: string]: string[] },
 ): { [what: string]: string[] } {
     return Object.fromEntries(
-        Object.entries(steps).map(
-            ([what, own]: [string, string[]]): [string, string[]] => {
-                const last: Entry | undefined = logs
-                    .filter(
-                        (log: Entry): boolean =>
-                            log.category === name &&
-                            log.title === what &&
-                            log.note.trim() !== "",
-                    )
-                    .sort((first: Entry, second: Entry): number =>
-                        first.start.localeCompare(second.start),
-                    )
-                    .at(-1);
-                return [
-                    what,
-                    last === undefined ? own : [...own, `Last time: ${last.note.trim()}`],
-                ];
-            },
-        ),
+        Object.entries(steps).map(([what, own]: [string, string[]]): [string, string[]] => {
+            const last: Entry | undefined = logs
+                .filter((log: Entry): boolean => log.category === name && log.title === what && log.note.trim() !== "")
+                .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
+                .at(-1);
+            return [what, last === undefined ? own : [...own, `Last time: ${last.note.trim()}`]];
+        }),
     );
 }
 
@@ -518,27 +469,17 @@ export function categoriesRead(now: string): CategoryShown[] {
         placeUsesOf(logs).filter((use: string): boolean => names.includes(use)),
         names,
     ).map((name: string): string => lineOf(mine[names.indexOf(name)]));
-    const platformNames: string[] = platformsRead().map(
-        (platform: Platform): string => platform.name,
-    );
+    const platformNames: string[] = platformsRead().map((platform: Platform): string => platform.name);
     const platforms: string[] = valuesOrder(
         onlineUsesOf(logs).filter((use: string): boolean => platformNames.includes(use)),
         platformNames,
     );
     const rowsOnline: { [name: string]: Platform } = Object.fromEntries(
-        platformsRead().map((platform: Platform): [string, Platform] => [
-            platform.name,
-            platform,
-        ]),
+        platformsRead().map((platform: Platform): [string, Platform] => [platform.name, platform]),
     );
-    const rooms: Place[] = roomsRead().filter(
-        (room: Place): boolean => !names.includes(room.name),
-    );
+    const rooms: Place[] = roomsRead().filter((room: Place): boolean => !names.includes(room.name));
     const rows: { [line: string]: Place } = Object.fromEntries(
-        [...mine, ...rooms].map((place: Place): [string, Place] => [
-            lineOf(place),
-            place,
-        ]),
+        [...mine, ...rooms].map((place: Place): [string, Place] => [lineOf(place), place]),
     );
     const people: string[] = valuesOrder(peopleUsesOf(logs), partners.map(personNameOf));
     const addresses: { [name: string]: string } = addressesOf(logs);
@@ -560,30 +501,17 @@ export function categoriesRead(now: string): CategoryShown[] {
                               : [
                                     ...field.values,
                                     ...valuesOrder(
-                                        titleUsesOf(
-                                            logs,
-                                            category.name,
-                                            field.many === true,
-                                        ).map(summaryBaseOf),
+                                        titleUsesOf(logs, category.name, field.many === true).map(summaryBaseOf),
                                         [],
-                                    ).filter(
-                                        (value: string): boolean =>
-                                            !field.values.includes(value),
-                                    ),
+                                    ).filter((value: string): boolean => !field.values.includes(value)),
                                 ].filter(
-                                    (value: string): boolean =>
-                                        !(retiredWhats[category.name] ?? []).includes(
-                                            value,
-                                        ),
+                                    (value: string): boolean => !(retiredWhats[category.name] ?? []).includes(value),
                                 ),
                 steps: stepsWithNoteOf(logs, category.name, field.steps),
                 rooms: ["location", "from"].includes(field.key) ? rooms.map(lineOf) : [],
                 places: ["location", "from"].includes(field.key) ? rows : {},
                 links: field.key === "with" ? addresses : {},
-                params:
-                    field.key === "title"
-                        ? paramsOf(logs, category.name, field.many === true)
-                        : {},
+                params: field.key === "title" ? paramsOf(logs, category.name, field.many === true) : {},
                 platforms: field.key === "online" ? rowsOnline : {},
             })),
         }));
@@ -601,9 +529,7 @@ export function lastPlaceRead(before: string): string {
     const names: string[] = placesRead().map((place: Place): string => place.name);
     const last: Entry | undefined = logsRead(before)
         .filter((log: Entry): boolean => names.includes(labelOf(log.location)))
-        .sort((first: Entry, second: Entry): number =>
-            second.start.localeCompare(first.start),
-        )[0];
+        .sort((first: Entry, second: Entry): number => second.start.localeCompare(first.start))[0];
     return last?.location ?? "";
 }
 
@@ -635,10 +561,7 @@ export function attendeesAllow(attendees: Attendee[]): boolean {
  * see `skillTitleOf` in `./documents.ts`.
  */
 export function categoryAllows(
-    fields: Omit<
-        EntryTexts,
-        "locationLink" | "titleLink" | "attendees" | keyof Online
-    > & {
+    fields: Omit<EntryTexts, "locationLink" | "titleLink" | "attendees" | keyof Online> & {
         attendees?: Attendee[];
     },
 ): boolean {
@@ -654,22 +577,14 @@ export function categoryAllows(
         );
 
     const keys: FieldKey[] = category.fields.map((field: Field): FieldKey => field.key);
-    const what: Field | undefined = category.fields.find(
-        (field: Field): boolean => field.key === "title",
-    );
+    const what: Field | undefined = category.fields.find((field: Field): boolean => field.key === "title");
     const whatAllowed: boolean =
         what === undefined
             ? fields.title === category.name
             : fields.title.trim() !== "" &&
               (!what.fixed ||
-                  (what.many === true ? fields.title.split(", ") : [fields.title]).every(
-                      (value: string): boolean =>
-                          what.values.includes(summaryBaseOf(value)),
+                  (what.many === true ? fields.title.split(", ") : [fields.title]).every((value: string): boolean =>
+                      what.values.includes(summaryBaseOf(value)),
                   ));
-    return (
-        whatAllowed &&
-        (keys.includes("from") || fields.from === "") &&
-        fields.module === "" &&
-        fields.type === ""
-    );
+    return whatAllowed && (keys.includes("from") || fields.from === "") && fields.module === "" && fields.type === "";
 }
