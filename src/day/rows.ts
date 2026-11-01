@@ -1,16 +1,9 @@
 /**
  * ## Rows
  *
- * One row of a box in a list, built alike wherever boxes stand in a list,
- * so the lists never look or work apart:
- * in the list `Entries` of the dialog of a series, see `./series.ts`,
- * and in a card of the course on the page of a module, see `../editor/course.ts`.
- * A row is the same unit as a box of the plan: its number, its day with its weekday,
- * grey its group, times, place and first person, see {@link metaOf},
- * and at its right edge its actions while open, else the icon of its state.
+ * One row of a box in a list, built alike wherever boxes stand in a list, so the lists never look apart.
+ * Its number, its day, grey its group, times, place and first person, at its right its actions or state.
  * Greyed while not open, as a box of the plan no longer open.
- * Every row has the same columns, see `.series-row` in `./series.css`,
- * so the rows of a list stand alike.
  */
 
 import { personLinkOf, personOf } from "../persons.ts";
@@ -20,12 +13,10 @@ import type { Attendee } from "../../reader/calendar.ts";
 import type { Person } from "../../reader/persons.ts";
 
 /**
- * The parts of a row, see the top of this file.
+ * The parts of a row.
  *
- * - `open`: Opens its box from its day, of a box without number, like a day of my sleep,
- *   so it opens there instead, `null` for none, its number opening it.
- * - `meta`: The parts of its first grey line, see {@link metaOf}.
- * - `mark`: What more there is to say, last on its first line, empty for nothing.
+ * - `open`: Opens a box without number from its day, `null` when its number opens it.
+ * - `mark`: What more there is to say, last on its first line.
  */
 export type RowParts = {
     number: HTMLElement;
@@ -40,11 +31,7 @@ export type RowParts = {
     faded: boolean;
 };
 
-/**
- * Writes the times of a box for its row: its start and end,
- * its start alone without length, or without times only its length,
- * see `lengthOf` in `./times.ts`.
- */
+/** The times of a box, its start alone without length, its length alone without times. */
 export function rowTimesOf(time: string, minutes: number | null): string {
     const start: Date | null = time === "" ? null : new Date(time);
     if (start === null) return minutes === null ? "" : lengthOf(minutes);
@@ -53,10 +40,7 @@ export function rowTimesOf(time: string, minutes: number | null): string {
         : `${timeOf(start)}${rangeDash}` + timeOf(new Date(start.getTime() + minutes * 60 * 1000));
 }
 
-/**
- * Makes the number of a row in its small grey box,
- * a button that opens its box while it has one, else plain, empty without number.
- */
+/** The number of a row, a button that opens its box while it has one. */
 export function numberOf(text: string, open: (() => void) | null, title: string): HTMLElement {
     const number: HTMLElement = elementOf(
         open === null ? "span" : "button",
@@ -72,11 +56,8 @@ export function numberOf(text: string, open: (() => void) | null, title: string)
 }
 
 /**
- * Makes the grey line of a row right of its day, its parts apart by a middle dot,
- * always on one line, its first person cut by `…` where the line has no more room,
- * see `.series-parts` in `series.css`;
- * only then the line as its tooltip, its visible text alone,
- * never what a menu in it holds.
+ * The grey line of a row, always on one line, its first person cut by `…` without room.
+ * Only then the line as its tooltip, its visible text alone, never what a menu in it holds.
  */
 export function metaOf(parts: (string | Node)[][]): HTMLElement {
     const kept: (string | Node)[][] = parts.filter(
@@ -102,11 +83,7 @@ export function metaOf(parts: (string | Node)[][]): HTMLElement {
     return meta;
 }
 
-/**
- * Shows the first of the people of a row, a link to its row in `Persons.md`,
- * see `personLinkOf` in `../persons.ts`, a name of nobody there its text;
- * all of them the box shows.
- */
+/** The first of the people of a row, all of them the box shows. */
 function firstPersonOf(people: Attendee[], persons: Person[]): (string | Node)[] {
     const first: Attendee | undefined = people[0];
     if (first === undefined) return [];
@@ -116,7 +93,6 @@ function firstPersonOf(people: Attendee[], persons: Person[]): (string | Node)[]
     return [shown];
 }
 
-/** Makes the row of a box, see the top of this file. */
 export function listRowOf(parts: RowParts): HTMLElement {
     const row: HTMLElement = elementOf("div", "series-row", "");
     const day: HTMLElement = elementOf(

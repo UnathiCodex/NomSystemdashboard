@@ -1,21 +1,10 @@
 /**
  * ## Points
  *
- * A list of points for the sections of the daily note,
- * my gratitude and my points about the day:
- * a small editor of its own per section,
- * the same as that of my files, see `../editor/editor.ts`,
- * so a point is written here exactly as there.
- * Its text is the Markdown of the section, one `- ` line per point,
- * shown as live preview, see `../editor/preview.ts`,
- * with the keys of `../editor/keys.ts`.
- * A list without points shows one empty point, `- `,
- * so there is always a bullet to write at;
- * a click beside the points goes to the end of the last.
- * The reader writes the text into the note as it is, see `reader/note.ts`.
- *
- * - `../notes/notes.css`, `../editor/editor.css`: Look of the editor,
- *   as the class `editor-text markdown` of a list takes it, see `day.html`.
+ * A list of points for a section of the daily note, one `- ` line per point.
+ * A small editor the same as that of my files, so a point is written here exactly as there.
+ * A list without points shows one empty point, so there is always a bullet to write at.
+ * A click beside the points goes to the end of the last.
  */
 
 import { EditorState } from "@codemirror/state";
@@ -30,13 +19,9 @@ import "../editor/editor.css";
 
 import type { Extension, Transaction } from "@codemirror/state";
 
-/** Text of a list without points: one empty point. */
 const emptyText: string = "- ";
 
-/**
- * Extensions of the editor of a list,
- * those of a Markdown file in `../editor/editor.ts`, without links to follow.
- */
+/** Extensions of a Markdown file, without links to follow. */
 const extensions: Extension[] = [
     markdownSupport,
     markdownKeys,
@@ -49,16 +34,11 @@ const extensions: Extension[] = [
     livePreview({}, ""),
 ];
 
-/** Gives the editor of a list. */
 function viewOf(list: HTMLElement): EditorView {
     return EditorView.findFromDOM(list.firstElementChild as HTMLElement) as EditorView;
 }
 
-/**
- * Shows the text of a section as points, one empty point for none,
- * with an undo history of its own,
- * so undo never brings back the text of the day shown before.
- */
+/** Shows the text of a section with an undo history of its own, so undo never brings back the day before. */
 export function pointsShow(list: HTMLElement, text: string): void {
     viewOf(list).setState(
         EditorState.create({
@@ -68,16 +48,11 @@ export function pointsShow(list: HTMLElement, text: string): void {
     );
 }
 
-/** Reads the points of a list as the text of a section. */
 export function pointsRead(list: HTMLElement): string {
     return viewOf(list).state.sliceDoc();
 }
 
-/**
- * Makes a list a list of points, without points at first, see {@link pointsShow}.
- * `changed` hears each change of the text I make, never a text shown,
- * which takes no transaction, `left` hears that the focus left the list.
- */
+/** Makes a list a list of points, `changed` hears only my changes, since a text shown takes no transaction. */
 export function pointsStart(list: HTMLElement, changed: () => void, left: () => void): void {
     const view: EditorView = new EditorView({
         parent: list,

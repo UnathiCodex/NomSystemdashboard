@@ -1,13 +1,8 @@
 /**
  * ## Evening
  *
- * What I write into the daily note of the shown day, at the top of the note,
- * each a list of points, see `points.ts`:
- * my gratitude into `## Gratitude` and my points about the day into `## About`,
- * both apart, though they go hand in hand.
- * Both are saved a moment after I stop typing,
- * at once by `Ctrl+S` in a list, and when I leave a list or the day;
- * the note below leaves both sections out.
+ * My gratitude and my points about the day, two lists at the top of the daily note.
+ * Both are saved a moment after I stop typing, by `Ctrl+S`, and when I leave a list or the day.
  */
 
 import { noteShow, sectionsLoad, sectionSend } from "./note.ts";
@@ -38,26 +33,22 @@ let saved: Map<SectionTitle, string> = new Map();
 /** Timer of the save waiting for the pause, 0 for none. */
 let waiting: number = 0;
 
-/** Gives the list of points of a box. */
 function listOf(box: Box): HTMLElement {
     return document.getElementById(box.id) as HTMLElement;
 }
 
-/** Reads the text of a box, the Markdown of its points. */
 function textOf(box: Box): string {
     return pointsRead(listOf(box));
 }
 
-/** Shows the hint that the reader did not take a text. */
 function errorShow(error: unknown): void {
     console.error(error);
     document.getElementById("note-boxes-error")?.removeAttribute("hidden");
 }
 
 /**
- * Saves each list whose text changed, one after the other,
- * since both write into the same note,
- * then shows the note again, which the first save of a day may create.
+ * Saves each changed list one after the other, since both write into the same note.
+ * Then shows the note again, which the first save of a day may create.
  *
  * @throws {Error} - When the reader does not take a text
  */
@@ -77,11 +68,8 @@ async function boxesSave(): Promise<void> {
 }
 
 /**
- * Shows my gratitude and my points about a day,
- * after saving what was typed for the day shown before;
- * its texts count as saved as the points show them,
- * so only what I type saves, never a list only shown,
- * like the empty point of a section without points.
+ * Shows the lists of a day after saving the day shown before.
+ * Its texts count as saved as the points show them, so a list only shown never saves.
  *
  * @throws {Error} - When the reader gives no valid answer
  */
@@ -95,11 +83,7 @@ export async function eveningShow(day: string): Promise<void> {
     document.getElementById("note-boxes-error")?.setAttribute("hidden", "");
 }
 
-/**
- * Hides both lists and the note below them, or shows them again,
- * so plan and log take their height;
- * folded at every start, see `.note-fold` in `note.css`.
- */
+/** Folds the lists and the note, so plan and log take their height, folded at every start. */
 function foldToggle(): void {
     const folded: boolean = (document.querySelector(".note-boxes") as HTMLElement).classList.toggle("note-folded");
     document
@@ -107,13 +91,7 @@ function foldToggle(): void {
         .forEach((fold: Element): void => fold.setAttribute("aria-expanded", String(!folded)));
 }
 
-/**
- * Starts the lists after the router has put their HTML into the page,
- * saved a moment after the typing pauses, at once by `Ctrl+S`,
- * which then saves no web page, when the focus leaves the list,
- * and when the page goes out of sight, like when I close it or switch to another app,
- * so nothing typed gets lost; their names fold them, see {@link foldToggle}.
- */
+/** Starts the lists, saved too when the page goes out of sight, so nothing typed gets lost. */
 export function eveningStart(): void {
     document
         .querySelectorAll(".note-fold")

@@ -1,33 +1,19 @@
 /**
  * ## Swipe
  *
- * Changes the shown day on a phone by a swipe sideways, as a calendar app does:
- * a swipe to the left shows the day after, one to the right the day before,
- * and plan, log or note follow the finger meanwhile, see `--swipe` in `day.css`.
- * Only a clearly sideways move is a swipe, so nothing else of the day ever starts one:
- * - a move mostly up or down scrolls the time grid or the plan;
- * - a finger resting longer than {@link restMs} before it moves is a press,
- *   so it selects a range in the time grid after 300 ms,
- *   or drags an entry after a second,
- *   see `selectLongPressDelay` in `day.ts`, and never swipes;
- * - an entry or a box being dragged, which turns the day itself at the edge,
- *   see `turnShow` in `day.ts`, never swipes;
- * - a touch in a dialog or a list over the page never swipes,
- *   since those lie outside the day.
- * A swipe beyond a quarter of the width, or a quick flick, changes the day,
- * a shorter one slides back.
+ * Changes the shown day on a phone by a swipe sideways, plan, log or note following the finger.
+ * Only a clearly sideways move is a swipe, so nothing else of the day ever starts one.
+ * - Up or down: scrolls the time grid or the plan.
+ * - Resting first: a press, which selects a range or drags an entry.
+ * - Dragging: an entry being dragged turns the day itself at the edge.
+ * - Dialog: a touch in a dialog or a list over the page lies outside the day.
+ * A swipe beyond a quarter of the width, or a quick flick, changes the day.
  */
 
-/**
- * Pixels a finger moves before its move counts as sideways or not,
- * so a tap that shakes a little stays a tap.
- */
+/** Pixels a finger moves before its move counts, so a tap that shakes a little stays a tap. */
 const startPx: number = 10;
 
-/**
- * Milliseconds a finger may rest before it moves and still swipe,
- * below the 300 ms press that selects a range in the time grid.
- */
+/** Milliseconds a finger may rest and still swipe, below the 300 ms press that selects a range. */
 const restMs: number = 250;
 
 /** Pixels per millisecond of a flick, which changes the day even when shorter. */
@@ -38,8 +24,7 @@ const slideMs: number = 180;
 
 /**
  * Starts the swipe of the day on a phone.
- * `touchmove` keeps the time grid from scrolling while it swipes,
- * passive no more, so it may.
+ * `touchmove` is not passive, so it may keep the time grid from scrolling while it swipes.
  *
  * @param turn - Shows the day some days from the shown one
  */
