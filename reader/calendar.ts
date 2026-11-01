@@ -462,6 +462,11 @@ function textOf(time: ICAL.Time): string {
     return time.isDate ? time.toString() : time.toJSDate().toISOString();
 }
 
+/** Reads a parameter of the first property of a name, empty for none. */
+function paramOf(component: ICAL.Component, name: string, param: string): string {
+    return String(component.getFirstProperty(name)?.getParameter(param) ?? "");
+}
+
 /**
  * Reads a date or a time in the form of the iCalendar format,
  * as a parameter of my own holds it.
@@ -552,24 +557,17 @@ function plannedOf(component: ICAL.Component): string {
 }
 
 /**
- * Reads the day of one `X-PUSHED`, see {@link pushAdd}:
- * of its start in Berlin time, of its date, or of an older box written as a day.
- */
-function pushedDayOf(value: unknown): string {
-    if (value instanceof ICAL.Time) return value.toString().slice(0, 10);
-    return /^\d{8}$/.test(String(value))
-        ? icsTimeRead(String(value)).toString()
-        : String(value);
-}
-
-/**
- * Reads one `X-PUSHED` of a box into a {@link Push}.
+ * Reads one `X-PUSHED` of a box into a {@link Push}, see {@link pushAdd},
+ * its day that of its start in Berlin time, of its date,
+ * or of an older box written as a day.
  * A push that noted only its day stands at the time of day the box has now,
  * without time for a box without.
  */
 function pushOf(property: ICAL.Property, now: ICAL.Time | null): Push {
     const value: unknown = property.getFirstValue();
-    const day: string = pushedDayOf(value);
+    let day: string = String(value);
+    if (value instanceof ICAL.Time) day = value.toString().slice(0, 10);
+    else if (/^\d{8}$/.test(day)) day = icsTimeRead(day).toString();
     const duration: string = String(property.getParameter("x-estimated-duration") ?? "");
     const time: ICAL.Time | null =
         value instanceof ICAL.Time && !value.isDate ? value : now;
@@ -596,12 +594,6 @@ function estimatedMinutesOf(component: ICAL.Component): number | null {
     return value === null
         ? null
         : ICAL.Duration.fromString(String(value)).toSeconds() / 60;
-}
-
-/** Reads the deadline of a to-do, its `DUE`, in the form of {@link Entry}. */
-function deadlineOf(component: ICAL.Component): string {
-    const due: unknown = component.getFirstPropertyValue("due");
-    return due instanceof ICAL.Time ? textOf(due) : "";
 }
 
 /**
@@ -634,13 +626,9 @@ type Placed = Online & Pick<Entry, "titleLink" | "location" | "locationLink">;
  * Its own `X-ONLINE` wins over both.
  */
 function onlineOf(component: ICAL.Component): Placed {
-    const summaryLink: string = String(
-        component.getFirstProperty("summary")?.getParameter("altrep") ?? "",
-    );
+    const summaryLink: string = paramOf(component, "summary", "altrep");
     const line: string = String(component.getFirstPropertyValue("location") ?? "");
-    const lineLink: string = String(
-        component.getFirstProperty("location")?.getParameter("altrep") ?? "",
-    );
+    const lineLink: string = paramOf(component, "location", "altrep");
     const own: ICAL.Property | null = component.getFirstProperty("x-online");
     const parts: string[] = line.split(",").map((part: string): string => part.trim());
     const placed: boolean =
@@ -650,30 +638,24 @@ function onlineOf(component: ICAL.Component): Placed {
                 (part: string): boolean => part === "Online" || part.endsWith(" Online"),
             ) || parts[0] === "Online";
     const linked: boolean = platformLinkIs(summaryLink);
-    const online: Online =
-        own !== null
-            ? {
-                  online: String(own.getFirstValue() ?? ""),
-                  onlineLink: String(own.getParameter("altrep") ?? ""),
-                  onlineChannel: String(own.getParameter("x-channel") ?? ""),
-                  onlineTitle: String(own.getParameter("x-title") ?? ""),
-              }
-            : placed
-              ? {
-                    online:
-                        parts[0] === "Online" ? (parts[1] ?? "Online") : labelOf(line),
-                    onlineLink: lineLink,
-                    onlineChannel: "",
-                    onlineTitle: "",
-                }
-              : linked
-                ? {
-                      online: platformOfLink(summaryLink)?.name ?? "",
-                      onlineLink: summaryLink,
-                      onlineChannel: "",
-                      onlineTitle: "",
-                  }
-                : { online: "", onlineLink: "", onlineChannel: "", onlineTitle: "" };
+    const online: Online = {
+        online: "",
+        onlineLink: "",
+        onlineChannel: "",
+        onlineTitle: "",
+    };
+    if (own !== null) {
+        online.online = String(own.getFirstValue() ?? "");
+        online.onlineLink = String(own.getParameter("altrep") ?? "");
+        online.onlineChannel = String(own.getParameter("x-channel") ?? "");
+        online.onlineTitle = String(own.getParameter("x-title") ?? "");
+    } else if (placed) {
+        online.online = parts[0] === "Online" ? (parts[1] ?? "Online") : labelOf(line);
+        online.onlineLink = lineLink;
+    } else if (linked) {
+        online.online = platformOfLink(summaryLink)?.name ?? "";
+        online.onlineLink = summaryLink;
+    }
     return {
         ...online,
         titleLink: linked ? "" : summaryLink,
@@ -708,6 +690,7 @@ function entryOf(
     const [module, type]: [string, string] =
         category === skillName ? skillPartsOf(event.summary ?? "") : ["", ""];
     const stamp: unknown = event.component.getFirstPropertyValue("dtstamp");
+    const due: unknown = event.component.getFirstPropertyValue("due");
     let recurrence: string = "";
     if (event.isRecurrenceException()) recurrence = textOf(event.recurrenceId);
     else if (event.isRecurring()) recurrence = textOf(start);
@@ -755,7 +738,7 @@ function entryOf(
         todo: todo,
         status: valueOf("status"),
         minutes: todo ? estimatedMinutesOf(event.component) : null,
-        deadline: todo ? deadlineOf(event.component) : "",
+        deadline: todo && due instanceof ICAL.Time ? textOf(due) : "",
         pushed: event.component
             .getAllProperties("x-pushed")
             .map((property: ICAL.Property): Push =>
@@ -763,11 +746,7 @@ function entryOf(
             ),
         number: valueOf("x-number"),
         group: valueOf("x-group"),
-        pinned:
-            String(
-                event.component.getFirstProperty("x-group")?.getParameter("x-pinned") ??
-                    "",
-            ).toUpperCase() === "TRUE",
+        pinned: paramOf(event.component, "x-group", "x-pinned").toUpperCase() === "TRUE",
         written: stamp instanceof ICAL.Time ? stamp.toJSDate().toISOString() : "",
         version: createHash("sha256").update(event.component.toString()).digest("hex"),
         editable: writeAllowed(file) && (todo || !start.isDate),
@@ -1052,19 +1031,20 @@ function writeCheck(file: string): void {
 function linesRead(file: string): FileLines {
     const text: string = readFileSync(file, "utf8");
     const newline: string = text.includes("\r\n") ? "\r\n" : "\n";
-    return { lines: unfold(text.split(newline)), newline: newline };
+    const lines: string[] = [];
+    text.split(newline).forEach((line: string): void => {
+        if (/^[ \t]/.test(line) && lines.length > 0)
+            lines[lines.length - 1] += line.slice(1);
+        else lines.push(line);
+    });
+    return { lines: lines, newline: newline };
 }
 
-/** Joins each folded line to the line before. */
-function unfold(lines: string[]): string[] {
-    const joined: string[] = [];
-    lines.forEach((line: string): void => {
-        if (/^[ \t]/.test(line) && joined.length > 0)
-            joined[joined.length - 1] += line.slice(1);
-        else joined.push(line);
-    });
-    return joined;
-}
+/** The first lines of an event and of a to-do. */
+const begins: string[] = ["BEGIN:VEVENT", "BEGIN:VTODO"];
+
+/** The last lines of an event and of a to-do. */
+const ends: string[] = ["END:VEVENT", "END:VTODO"];
 
 /** Types of the entries of a module in the order they stand in its file. */
 const typeOrder: string[] = ["VO", "UE", "ZU", "TU", "HU", "FA"];
@@ -1090,12 +1070,7 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
     let block: string[] | null = null;
     let depth: number = 0;
     lines.forEach((line: string): void => {
-        if (
-            block === null &&
-            depth === 1 &&
-            (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO")
-        )
-            block = [];
+        if (block === null && depth === 1 && begins.includes(line)) block = [];
         if (line.startsWith("BEGIN:")) depth++;
         if (block !== null) block.push(line);
         else (blocks.length === 0 ? head : rest).push(line);
@@ -1210,16 +1185,11 @@ function summariesOf(lines: string[]): Summed[] {
     let depth: number = 0;
     lines.forEach((line: string, at: number): void => {
         if (line.startsWith("BEGIN:")) depth++;
-        if (depth === 2 && (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO"))
-            [category, index] = ["", -1];
+        if (depth === 2 && begins.includes(line)) [category, index] = ["", -1];
         else if (depth === 2 && line.startsWith("CATEGORIES:"))
             category = line.slice("CATEGORIES:".length);
         else if (depth === 2 && /^SUMMARY[;:]/.test(line)) index = at;
-        else if (
-            depth === 2 &&
-            (line === "END:VEVENT" || line === "END:VTODO") &&
-            index >= 0
-        ) {
+        else if (depth === 2 && ends.includes(line) && index >= 0) {
             const property: ICAL.Property = ICAL.Property.fromString(lines[index]);
             found.push({
                 index: index,
@@ -1347,19 +1317,14 @@ function kindsOf(lines: string[]): [string, string][] {
     let type: string = "";
     let semester: string = "";
     lines.forEach((line: string): void => {
-        if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO")
-            [type, semester] = ["", ""];
+        if (begins.includes(line)) [type, semester] = ["", ""];
         else if (line.startsWith("SUMMARY"))
             type = skillPartsOf(
                 String(ICAL.Property.fromString(line).getFirstValue() ?? ""),
             )[1];
         else if (line.startsWith("X-SEMESTER:"))
             semester = line.slice("X-SEMESTER:".length).trim();
-        else if (
-            (line === "END:VEVENT" || line === "END:VTODO") &&
-            type !== "" &&
-            semester !== ""
-        )
+        else if (ends.includes(line) && type !== "" && semester !== "")
             kinds.push([type, semester]);
     });
     return kinds;
@@ -1381,41 +1346,30 @@ function newLinesOf(): string[] {
 }
 
 /**
- * Gives the place of a line of an event or a to-do in {@link lineOrder},
- * every other line after them.
- */
-function lineRankOf(line: string): number {
-    const name: string = line.split(/[;:]/)[0].toUpperCase();
-    const place: number = lineOrder.indexOf(name);
-    return place === -1 ? lineOrder.length : place;
-}
-
-/**
- * Puts the lines of an event or a to-do into the fixed order, see {@link lineOrder}:
- * each property with the lines that continue it,
+ * Puts the lines of an event or a to-do into the fixed order, see {@link lineOrder},
+ * every other line after them,
  * lines of the same rank in the order they had,
  * and the components inside it, like an alarm, at its end as they are.
  */
 function linesOrdered(component: string[]): string[] {
-    const properties: [number, string[]][] = [];
+    const properties: [number, string][] = [];
     const inner: string[] = [];
     let depth: number = 0;
     component.slice(1, -1).forEach((line: string): void => {
+        const rank: number = lineOrder.indexOf(line.split(/[;:]/)[0].toUpperCase());
         if (line.startsWith("BEGIN:")) depth++;
         if (depth > 0) inner.push(line);
-        else if (/^[ \t]/.test(line) && properties.length > 0)
-            properties[properties.length - 1][1].push(line);
-        else properties.push([lineRankOf(line), [line]]);
+        else properties.push([rank === -1 ? lineOrder.length : rank, line]);
         if (line.startsWith("END:")) depth--;
     });
     return [
         component[0],
         ...properties
             .sort(
-                (first: [number, string[]], second: [number, string[]]): number =>
+                (first: [number, string], second: [number, string]): number =>
                     first[0] - second[0],
             )
-            .flatMap(([, lines]: [number, string[]]): string[] => lines),
+            .map(([, line]: [number, string]): string => line),
         ...inner,
         component[component.length - 1],
     ];
@@ -1444,21 +1398,17 @@ function componentInsert(file: string, event: string[]): void {
  * Finds the first property of a name among the lines of an event or a to-do,
  * leaving out the components inside it, like an alarm.
  *
- * @returns Index of its first line and of the line after its last, `null` for none
+ * @returns Index of its line, -1 for none
  */
-function propertyFind(event: string[], name: string): [number, number] | null {
+function propertyFind(event: string[], name: string): number {
     const head: RegExp = new RegExp(`^${name}[;:]`, "i");
     let depth: number = 0;
     for (let index: number = 1; index < event.length - 1; index++) {
         if (event[index].startsWith("BEGIN:")) depth++;
         else if (event[index].startsWith("END:")) depth--;
-        else if (depth === 0 && head.test(event[index])) {
-            let next: number = index + 1;
-            while (/^[ \t]/.test(event[next])) next++;
-            return [index, next];
-        }
+        else if (depth === 0 && head.test(event[index])) return index;
     }
-    return null;
+    return -1;
 }
 
 /**
@@ -1472,13 +1422,8 @@ export function entryIdOf(entry: Entry): string {
 
 /** Gives a property of an event or a to-do as one line, unfolded, empty for none. */
 function unfoldedOf(event: string[], name: string): string {
-    const place: [number, number] | null = propertyFind(event, name);
-    return place === null
-        ? ""
-        : event
-              .slice(...place)
-              .map((part: string): string => part.replace(/^[ \t]/, ""))
-              .join("");
+    const place: number = propertyFind(event, name);
+    return place === -1 ? "" : event[place];
 }
 
 /**
@@ -1513,8 +1458,8 @@ function placesOf(
     const found: [number, number][] = [];
     let begin: number = -1;
     lines.forEach((line: string, index: number): void => {
-        if (line === "BEGIN:VEVENT" || line === "BEGIN:VTODO") begin = index;
-        else if ((line === "END:VEVENT" || line === "END:VTODO") && begin !== -1) {
+        if (begins.includes(line)) begin = index;
+        else if (ends.includes(line) && begin !== -1) {
             if (uid === undefined || uidOf(lines.slice(begin, index + 1)) === uid)
                 found.push([begin, index + 1]);
             if (closed) begin = -1;
@@ -1560,9 +1505,7 @@ function componentFind(lines: string[], id: string): [number, number] {
  */
 function seriesTimeOf(series: ICAL.Event, name: string, time: ICAL.Time): ICAL.Property {
     const property: ICAL.Property = new ICAL.Property(name);
-    const zoneId: string = String(
-        series.component.getFirstProperty("dtstart")?.getParameter("tzid") ?? "",
-    );
+    const zoneId: string = paramOf(series.component, "dtstart", "tzid");
     property.setValue(time);
     if (zoneId !== "" && !time.isDate) property.setParameter("tzid", zoneId);
     return property;
@@ -1626,7 +1569,7 @@ function occurrenceLinesOf(
     propertyPut(own, "rdate", []);
     propertyPut(own, "exdate", []);
     propertyPut(own, "dtstart", [seriesTimeOf(series, "dtstart", start)]);
-    if (propertyFind(own, "dtend") !== null) {
+    if (propertyFind(own, "dtend") !== -1) {
         const end: ICAL.Time = start.clone();
         end.addDuration(series.duration);
         propertyPut(own, "dtend", [seriesTimeOf(series, "dtend", end)]);
@@ -1660,7 +1603,7 @@ export function occurrencesTidy(file: string, uid: string): void {
     const lines: string[] = text.lines.slice(...master);
     const plain: (lines: string[]) => string = (lines: string[]): string =>
         JSON.stringify(
-            unfold(lines).filter(
+            lines.filter(
                 (line: string): boolean =>
                     !/^DTSTAMP[:;]/i.test(line) && !/^STATUS:NEEDS-ACTION$/i.test(line),
             ),
@@ -1787,18 +1730,22 @@ function berlinAt(
     );
 }
 
+/** A value of a property to write, see {@link propertyOf}. */
+type Value = string | ICAL.Time | ICAL.Recur | Date | Link;
+
 /**
- * Builds a property; a time in Berlin time gets the parameter `TZID`,
+ * Builds a property; a moment goes in Berlin time, see {@link writtenOf},
+ * a time in Berlin time gets the parameter `TZID`,
  * a link its path as value and the fingerprint of a file as `X-SHA256`, see {@link Link}.
  */
-function propertyOf(name: string, value: string | ICAL.Time | Link): ICAL.Property {
+function propertyOf(name: string, value: Value): ICAL.Property {
+    if (value instanceof Date) return propertyOf(name, writtenOf(value));
     const property: ICAL.Property = new ICAL.Property(name);
-    if (typeof value === "string" || value instanceof ICAL.Time) property.setValue(value);
-    else {
+    if (typeof value === "object" && "path" in value) {
         property.setValue(value.path);
         if (value.fingerprint !== "")
             property.setParameter("x-sha256", value.fingerprint);
-    }
+    } else property.setValue(value);
     if (value instanceof ICAL.Time && value.zone === zone)
         property.setParameter("tzid", zoneName);
     return property;
@@ -1870,21 +1817,11 @@ function relatedOf(box: string): ICAL.Property {
  * since `ical.js` writes a rule given as text letter by letter.
  */
 function ownPropertyOf(name: string, value: string | Link | Date): ICAL.Property {
-    if (value instanceof Date) return propertyOf(name, writtenOf(value));
-    if (
-        name === "exdate" &&
-        typeof value === "string" &&
-        /^\d{4}-\d{2}-\d{2}$/.test(value)
-    )
+    if (typeof value !== "string") return propertyOf(name, value);
+    if (name === "exdate" && /^\d{4}-\d{2}-\d{2}$/.test(value))
         return propertyOf(name, ICAL.Time.fromDateString(value));
-    if (name === "rrule" && typeof value === "string") {
-        const rule: ICAL.Property = new ICAL.Property(name);
-        rule.setValue(ICAL.Recur.fromString(value));
-        return rule;
-    }
-    return name === "related-to" && typeof value === "string"
-        ? relatedOf(value)
-        : propertyOf(name, value);
+    if (name === "rrule") return propertyOf(name, ICAL.Recur.fromString(value));
+    return name === "related-to" ? relatedOf(value) : propertyOf(name, value);
 }
 
 /**
@@ -1898,21 +1835,15 @@ function ownPropertyOf(name: string, value: string | Link | Date): ICAL.Property
 function propertyPut(
     event: string[],
     name: string,
-    values: (string | ICAL.Time | Link | ICAL.Property)[],
+    values: (Value | ICAL.Property)[],
 ): void {
-    let at: number = event.length - 1;
-    for (
-        let old: [number, number] | null = propertyFind(event, name);
-        old !== null;
-        old = propertyFind(event, name)
-    ) {
-        at = Math.min(at, old[0]);
-        event.splice(old[0], old[1] - old[0]);
-    }
+    const first: number = propertyFind(event, name);
+    for (let old: number = first; old !== -1; old = propertyFind(event, name))
+        event.splice(old, 1);
     event.splice(
-        at,
+        first === -1 ? event.length - 1 : first,
         0,
-        ...values.map((value: string | ICAL.Time | Link | ICAL.Property): string =>
+        ...values.map((value: Value | ICAL.Property): string =>
             (value instanceof ICAL.Property
                 ? value
                 : propertyOf(name, value)
@@ -1940,6 +1871,12 @@ function textsOf(fields: EntryTexts): [string, string][] {
 }
 
 /**
+ * A property of an entry beyond its fields, its name with its value,
+ * see {@link ownPropertyOf}, or a property built already, which goes in as it is.
+ */
+type OwnProperty = [string, string | Link | Date | ICAL.Property];
+
+/**
  * Appends an entry to an `.ics` file, creating file and folders when missing.
  * Writes start and end in Berlin time,
  * and only the text fields and the properties beyond them that are not empty.
@@ -1954,7 +1891,7 @@ function textsOf(fields: EntryTexts): [string, string][] {
 export function entryAppend(
     file: string,
     fields: EntryFields,
-    own: [string, string | Link | Date | ICAL.Property][],
+    own: OwnProperty[],
     id: string = `${randomUUID()}@nomsystem`,
 ): string {
     writeCheck(file);
@@ -1967,11 +1904,7 @@ export function entryAppend(
  * the same as {@link entryAppend} writes into a file missing,
  * like the copy of an entry I share, see `shared.ts`.
  */
-export function entryIcsOf(
-    fields: EntryFields,
-    own: [string, string | Link | Date | ICAL.Property][],
-    id: string,
-): string {
+export function entryIcsOf(fields: EntryFields, own: OwnProperty[], id: string): string {
     const lines: string[] = newLinesOf();
     lines.splice(
         lines.lastIndexOf("END:VCALENDAR"),
@@ -1982,11 +1915,7 @@ export function entryIcsOf(
 }
 
 /** Builds the event of an entry, see {@link entryAppend}. */
-function eventOf(
-    fields: EntryFields,
-    own: [string, string | Link | Date | ICAL.Property][],
-    id: string,
-): ICAL.Component {
+function eventOf(fields: EntryFields, own: OwnProperty[], id: string): ICAL.Component {
     const event: ICAL.Component = new ICAL.Component("vevent");
     event.addProperty(propertyOf("dtstart", writtenOf(fields.start)));
     event.addProperty(propertyOf("dtend", writtenOf(fields.end)));
@@ -2003,7 +1932,7 @@ function eventOf(
 function fieldsAdd(
     component: ICAL.Component,
     fields: EntryTexts,
-    own: [string, string | Link | Date | ICAL.Property][],
+    own: OwnProperty[],
 ): void {
     textsOf(fields)
         .filter(([, value]: [string, string]): boolean => value !== "")
@@ -2013,14 +1942,13 @@ function fieldsAdd(
     fields.attendees.forEach((attendee: Attendee): void => {
         component.addProperty(attendeePropertyOf(attendee));
     });
-    own.filter(
-        ([, value]: [string, string | Link | Date | ICAL.Property]): boolean =>
-            value !== "",
-    ).forEach(([name, value]: [string, string | Link | Date | ICAL.Property]): void => {
-        component.addProperty(
-            value instanceof ICAL.Property ? value : ownPropertyOf(name, value),
-        );
-    });
+    own.filter(([, value]: OwnProperty): boolean => value !== "").forEach(
+        ([name, value]: OwnProperty): void => {
+            component.addProperty(
+                value instanceof ICAL.Property ? value : ownPropertyOf(name, value),
+            );
+        },
+    );
 }
 
 /** Gives the `DTSTART` of a to-do: its day when it has no time, else its time. */
@@ -2117,24 +2045,11 @@ function textsPut(component: string[], entry: Entry, fields: EntryTexts): void {
 }
 
 /**
- * Sets the `DTSTAMP` of an event or a to-do anew to now once its `DTSTART` or `DUE`
- * changed, so it tells when it got its day, see `written` of {@link Entry}.
- */
-function stampRenew(old: string[], component: string[]): void {
-    if (
-        ["DTSTART", "DUE"].some(
-            (name: string): boolean =>
-                unfoldedOf(old, name) !== unfoldedOf(component, name),
-        )
-    )
-        propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
-}
-
-/**
  * Writes the changed lines of an event or a to-do back where they stood in their file,
  * or moves them into another file, like the log of another year: writes them there first,
  * so a failure in between leaves them twice instead of losing them.
- * Its `DTSTAMP` turns now once its day changed, see {@link stampRenew}.
+ * Its `DTSTAMP` turns now once its `DTSTART` or its `DUE` changed,
+ * so it tells when it got its day, see `written` of {@link Entry}.
  *
  * @param target - Path of the `.ics` file it belongs into, `file` when it stays
  */
@@ -2146,7 +2061,14 @@ function componentWrite(
     target: string,
 ): void {
     const [begin, end]: [number, number] = place;
-    stampRenew(text.lines.slice(begin, end), component);
+    const old: string[] = text.lines.slice(begin, end);
+    if (
+        ["DTSTART", "DUE"].some(
+            (name: string): boolean =>
+                unfoldedOf(old, name) !== unfoldedOf(component, name),
+        )
+    )
+        propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
     if (target === file)
         text.lines.splice(begin, end - begin, ...linesOrdered(component));
     else {
@@ -2247,8 +2169,7 @@ export function todoChange(
  * while it is the group I pinned, see `pinPut` in `course.ts`.
  */
 export function groupPropertyOf(group: string, pinned: boolean): ICAL.Property {
-    const property: ICAL.Property = new ICAL.Property("x-group");
-    property.setValue(group);
+    const property: ICAL.Property = propertyOf("x-group", group);
     if (pinned) property.setParameter("x-pinned", "TRUE");
     return property;
 }
@@ -2278,8 +2199,7 @@ function roundMarkOf(property: ICAL.Property): RoundMark {
 
 /** Makes an `X-ROUND`, each parameter only when it holds something. */
 export function roundPropertyOf(mark: RoundMark): ICAL.Property {
-    const property: ICAL.Property = new ICAL.Property("x-round");
-    property.setValue(mark.section);
+    const property: ICAL.Property = propertyOf("x-round", mark.section);
     property.setParameter("round", String(mark.round));
     if (mark.step !== "") property.setParameter("step", mark.step);
     if (mark.task !== "") property.setParameter("task", mark.task);
@@ -2307,16 +2227,7 @@ export function propertiesPut(
     componentEdit(file, id, (event: string[]): void =>
         properties.forEach(
             ([name, values]: [string, (string | Date | Link | ICAL.Property)[]]): void =>
-                propertyPut(
-                    event,
-                    name,
-                    values.map(
-                        (
-                            value: string | Date | Link | ICAL.Property,
-                        ): string | ICAL.Time | Link | ICAL.Property =>
-                            value instanceof Date ? writtenOf(value) : value,
-                    ),
-                ),
+                propertyPut(event, name, values),
         ),
     );
 }
@@ -2342,11 +2253,9 @@ export function stampPut(file: string, id: string): void {
  *   or does not hold the to-do or the event once
  */
 export function titlePut(file: string, id: string, fields: EntryTexts): void {
-    componentEdit(file, id, (component: string[]): void =>
-        propertyPut(component, "summary", [
-            textPropertyOf("summary", fields.title, fields),
-        ]),
-    );
+    propertiesPut(file, id, [
+        ["summary", [textPropertyOf("summary", fields.title, fields)]],
+    ]);
 }
 
 /**
@@ -2359,9 +2268,7 @@ export function titlePut(file: string, id: string, fields: EntryTexts): void {
  *   or does not hold the to-do or the event once
  */
 export function statusPut(file: string, id: string, status: string): void {
-    componentEdit(file, id, (component: string[]): void =>
-        propertyPut(component, "status", status === "" ? [] : [status]),
-    );
+    propertiesPut(file, id, [["status", status === "" ? [] : [status]]]);
 }
 
 /**
@@ -2432,9 +2339,7 @@ export function seriesRemove(file: string, uid: string): boolean {
             text.lines.splice(first, after - first);
         });
     linesWrite(file, text);
-    return !text.lines.some(
-        (line: string): boolean => line === "BEGIN:VEVENT" || line === "BEGIN:VTODO",
-    );
+    return !text.lines.some((line: string): boolean => begins.includes(line));
 }
 
 /**
@@ -2473,16 +2378,11 @@ export function seriesDayRemove(file: string, uid: string, recurrence: string): 
                     seriesTimeOf(series, "rdate", date),
                 ),
         );
-    else {
+    else
         propertyPut(component, "exdate", [
-            ...series.component
-                .getAllProperties("exdate")
-                .map((property: ICAL.Property): ICAL.Property =>
-                    ICAL.Property.fromString(property.toICALString()),
-                ),
+            ...series.component.getAllProperties("exdate"),
             seriesTimeOf(series, "exdate", start),
         ]);
-    }
     componentWrite(file, text, place, component, file);
 }
 
@@ -2504,15 +2404,7 @@ export function seriesDayRestore(file: string, uid: string, recurrence: string):
     );
     if (kept.length === excluded.length)
         throw new Error(`No day ${recurrence} left out of the series ${uid}`);
-    componentEdit(file, uid, (component: string[]): void =>
-        propertyPut(
-            component,
-            "exdate",
-            kept.map((property: ICAL.Property): ICAL.Property =>
-                ICAL.Property.fromString(property.toICALString()),
-            ),
-        ),
-    );
+    propertiesPut(file, uid, [["exdate", kept]]);
 }
 
 /**
@@ -2564,9 +2456,6 @@ export function seriesCut(file: string, uid: string, last: string): void {
             .filter(
                 (property: ICAL.Property): boolean =>
                     (property.getFirstValue() as ICAL.Time).compare(end) < 0,
-            )
-            .map((property: ICAL.Property): ICAL.Property =>
-                ICAL.Property.fromString(property.toICALString()),
             ),
     );
     componentWrite(file, text, place, component, file);
@@ -2734,9 +2623,7 @@ export function seriesWrite(
  *   or does not hold the series once
  */
 function seriesPut(file: string, uid: string, property: ICAL.Property): void {
-    componentEdit(file, uid, (series: string[]): void =>
-        propertyPut(series, property.name, [property]),
-    );
+    propertiesPut(file, uid, [[property.name, [property]]]);
 }
 
 /**
@@ -2781,19 +2668,16 @@ export function seriesPartsOf(
     const own: ICAL.Event | undefined = masters.find(
         (series: ICAL.Event): boolean => series.uid === uid,
     );
-    const key: string = String(own?.component.getFirstPropertyValue("x-series") ?? "");
+    const keyOf: (series: ICAL.Event) => string = (series: ICAL.Event): string =>
+        String(series.component.getFirstPropertyValue("x-series") ?? "");
     if (own === undefined) return ["", []];
+    const key: string = keyOf(own);
     return [
         key,
         key === ""
             ? [uid]
             : masters
-                  .filter(
-                      (series: ICAL.Event): boolean =>
-                          String(
-                              series.component.getFirstPropertyValue("x-series") ?? "",
-                          ) === key,
-                  )
+                  .filter((series: ICAL.Event): boolean => keyOf(series) === key)
                   .map((series: ICAL.Event): string => series.uid),
     ];
 }
@@ -2914,7 +2798,7 @@ export function attendeesRename(
     dry: boolean,
 ): number {
     return componentsRewrite(filesOf(sources), dry, (component: string[]): number => {
-        const people: ICAL.Property[] = unfold(component)
+        const people: ICAL.Property[] = component
             .filter((line: string): boolean => /^ATTENDEE[;:]/i.test(line))
             .map((line: string): ICAL.Property => ICAL.Property.fromString(line));
         let renamed: boolean = false;
