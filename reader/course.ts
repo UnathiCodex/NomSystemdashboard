@@ -148,13 +148,10 @@ type Place = Online & Pick<Entry, "location" | "locationLink" | "attendees">;
  * - `times`: Left out as a group is written.
  * - `group`: Of a group its own, of my tutorials my group, see {@link pinnedOf}.
  */
-export type Rule = Online & {
+export type Rule = Place & {
     type: string;
     slots: Slot[];
     extras: Extra[];
-    location: string;
-    locationLink: string;
-    attendees: Attendee[];
     first: string;
     last: string;
     times?: Times;
@@ -420,13 +417,10 @@ type Field = "day" | "time" | "location" | "online" | "attendees" | "group";
  * - `retimed`: Whether I typed its times anew for its day in the form,
  *   which a box a change may not change otherwise takes too, see {@link retimable}.
  */
-type Target = Online & {
+type Target = Place & {
     day: string;
     start: string;
     minutes: number | null;
-    location: string;
-    locationLink: string;
-    attendees: Attendee[];
     group: string;
     before: number;
     fields: Field[];
@@ -439,14 +433,11 @@ type Target = Online & {
  * A box of a type as a change of a series plans it,
  * see {@link draftsOf}, before anything is written, its box `null` for a new one.
  */
-type Draft = Online & {
+type Draft = Place & {
     box: Box | null;
     day: string;
     time: string;
     minutes: number | null;
-    location: string;
-    locationLink: string;
-    attendees: Attendee[];
     group: string;
     number: string;
     removed: boolean;
@@ -558,6 +549,11 @@ function modeOf<T>(values: T[], keyOf: (value: T) => string): T | undefined {
             best === undefined || countOf(value) > countOf(best) ? value : best,
         undefined,
     );
+}
+
+/** Orders boxes, dates and sessions by their starts, of one without time its day. */
+function startOrder(first: Pick<Box, "day" | "time">, second: Pick<Box, "day" | "time">): number {
+    return (first.time || first.day).localeCompare(second.time || second.day);
 }
 
 /**
@@ -695,9 +691,7 @@ function ruleOf(type: string, items: Dated[], all: Dated[], group: string, semes
     const placed: Dated | undefined = modeOf(items, (item: Dated): string => item.location);
     const met: Dated | undefined = modeOf(items, (item: Dated): string => JSON.stringify(onlineOf(item)));
     const people: Dated | undefined = modeOf(items, (item: Dated): string => JSON.stringify(item.attendees));
-    const sorted: Dated[] = [...all].sort((first: Dated, second: Dated): number =>
-        (first.time || first.day).localeCompare(second.time || second.day),
-    );
+    const sorted: Dated[] = [...all].sort(startOrder);
     let onSlots: string[] = sorted
         .map((item: Dated): string => item.day)
         .filter((day: string): boolean => weekdays.includes(weekdayOf(day)));
@@ -893,7 +887,7 @@ function courseBoxesRead(code: string, semester: string): Box[] {
             (box: Box): boolean =>
                 box.module === code && (box.semester === "" ? semesterOf(box.day) : box.semester) === semester,
         )
-        .sort((first: Box, second: Box): number => (first.time || first.day).localeCompare(second.time || second.day));
+        .sort(startOrder);
 }
 
 /**
@@ -929,7 +923,7 @@ function learnedRead(code: string, semester: string): Learned[] {
             ...placeOf(entry),
             note: entry.note,
         }))
-        .sort((first: Learned, second: Learned): number => first.time.localeCompare(second.time));
+        .sort(startOrder);
 }
 
 /**
@@ -1413,9 +1407,33 @@ function numbersOf(drafts: Draft[], weeks: string[]): void {
 export function numbersRenew(module: string, type: string, semester: string): void {
     const folder: string = moduleFolderOf(codeOf(module)) ?? module;
     folderCheck(folder);
-    const drafts: Draft[] = typedBoxesRead(folder, semester, type).map(draftOf);
-    numbersOf(drafts, tutorialWeeksOf(groupsRead(folder, semester), type));
-    draftsWrite(folder, type, semester, drafts);
+    draftsApply(
+        folder,
+        type,
+        semester,
+        groupsRead(folder, semester),
+        typedBoxesRead(folder, semester, type).map(draftOf),
+    );
+}
+
+/**
+ * Numbers the drafts of the boxes of a type anew, see {@link numbersOf},
+ * writes them, see {@link draftsWrite}, and gives them for the preview of the form,
+ * see {@link plannedOf}.
+ *
+ * @param dry - Whether only to give them, writing nothing
+ */
+function draftsApply(
+    module: string,
+    type: string,
+    semester: string,
+    groups: Group[],
+    drafts: Draft[],
+    dry: boolean = false,
+): Planned[] {
+    numbersOf(drafts, tutorialWeeksOf(groups, type));
+    if (!dry) draftsWrite(module, type, semester, drafts);
+    return plannedOf(drafts);
 }
 
 /**
@@ -1466,44 +1484,22 @@ function draftsWrite(module: string, type: string, semester: string, drafts: Dra
     const head: TodoHead = skillTodoOf(module, type, semester);
     drafts.forEach((draft: Draft): void => {
         const box: Box | null = draft.box;
-        if (box === null) {
-            const id: string = todoAppend(file, {
-                ...head,
-                ...placeOf(draft),
-                day: draft.day,
-                time: draft.time === "" ? null : new Date(draft.time),
-                minutes: draft.minutes,
-            });
-            propertiesPut(file, id, [
-                ["x-number", [draft.number]],
-                ["x-group", draft.group === "" ? [] : [draft.group]],
-            ]);
-            return;
-        }
-        if (draft.removed) {
-            boxDelete(box.id);
-            return;
-        }
+        const times: Omit<TodoFields, keyof TodoHead> = {
+            ...placeOf(draft),
+            day: draft.day,
+            time: draft.time === "" ? null : new Date(draft.time),
+            minutes: draft.minutes,
+        };
+        const numbered: [string, string[]][] = [
+            ["x-number", draft.number === "" ? [] : [draft.number]],
+            ["x-group", draft.group === "" ? [] : [draft.group]],
+        ];
+        if (box === null) return propertiesPut(file, todoAppend(file, { ...head, ...times }), numbered);
+        if (draft.removed) return boxDelete(box.id);
         const [boxFile, entry, stands]: [string, Entry, Box] = boxFind(box.id);
         if ((box.state === "dropped") !== (stands.state === "dropped")) boxDrop(box.id, box.state === "dropped");
-        if (draftMoved(draft, box))
-            todoChange(
-                boxFile,
-                entry,
-                {
-                    ...entry,
-                    ...placeOf(draft),
-                    day: draft.day,
-                    time: draft.time === "" ? null : new Date(draft.time),
-                    minutes: draft.minutes,
-                },
-                boxFile,
-            );
-        if (draft.number !== stands.number || draft.group !== stands.group)
-            propertiesPut(boxFile, box.id, [
-                ["x-number", draft.number === "" ? [] : [draft.number]],
-                ["x-group", draft.group === "" ? [] : [draft.group]],
-            ]);
+        if (draftMoved(draft, box)) todoChange(boxFile, entry, { ...entry, ...times }, boxFile);
+        if (draft.number !== stands.number || draft.group !== stands.group) propertiesPut(boxFile, box.id, numbered);
         if (stands.number === "NONE" && draft.number !== "NONE") overKeep(box.id);
     });
 }
@@ -1534,9 +1530,7 @@ function plannedOf(drafts: Draft[]): Planned[] {
                 attendees: draft.attendees,
             };
         })
-        .sort((first: Planned, second: Planned): number =>
-            (first.time || first.day).localeCompare(second.time || second.day),
-        );
+        .sort(startOrder);
 }
 
 /**
@@ -1679,9 +1673,7 @@ export function seriesApply(change: SeriesChange): Planned[] {
         .forEach((draft: Draft): void => {
             draft.number = "NONE";
         });
-    numbersOf(drafts, tutorialWeeksOf(groups, rule.type));
-    if (!change.dry) draftsWrite(change.module, rule.type, rule.semester, drafts);
-    return plannedOf(drafts);
+    return draftsApply(change.module, rule.type, rule.semester, groups, drafts, change.dry);
 }
 
 /**
@@ -1818,17 +1810,15 @@ export function groupMine(change: MineChange): Planned[] {
     const groups: Group[] = groupsRead(change.module, semester);
     const pinned: string = pinnedOf(groups, change.type);
     const typed: Box[] = typedBoxesRead(change.module, semester, change.type);
+    const dry: boolean = change.dry === true;
     if (change.group === "") {
         const kept: Draft[] = typed.map((box: Box): Draft => ({
             ...draftOf(box),
             removed: ahead(box) && changeable(box) && !chosenIs(box, pinned),
         }));
-        numbersOf(kept, tutorialWeeksOf(groups, change.type));
-        if (change.dry !== true) {
-            draftsWrite(change.module, change.type, semester, kept);
-            pinPut(change.module, change.type, semester, "");
-        }
-        return plannedOf(kept);
+        const planned: Planned[] = draftsApply(change.module, change.type, semester, groups, kept, dry);
+        if (!dry) pinPut(change.module, change.type, semester, "");
+        return planned;
     }
     const group: Group | undefined = groups.find(groupMatch(change.type, change.group));
     const now: number = Date.now();
@@ -1877,12 +1867,9 @@ export function groupMine(change: MineChange): Planned[] {
         .forEach((draft: Draft): void => {
             draft.number = "";
         });
-    numbersOf(drafts, tutorialWeeksOf(groups, change.type));
-    if (change.dry !== true) {
-        draftsWrite(change.module, change.type, semester, drafts);
-        pinPut(change.module, change.type, semester, change.group);
-    }
-    return plannedOf(drafts);
+    const planned: Planned[] = draftsApply(change.module, change.type, semester, groups, drafts, dry);
+    if (!dry) pinPut(change.module, change.type, semester, change.group);
+    return planned;
 }
 
 /**
@@ -1927,9 +1914,10 @@ export function weekPick(change: PickChange): void {
     if (change.extra === true) {
         if (typed.some(at))
             throw new Error(`A box of ${change.type} of ${change.module} ` + `is there already at ${change.start}`);
-        const drafts: Draft[] = [...typed.map(draftOf), madeDraftOf(targetOf(group, session))];
-        numbersOf(drafts, tutorialWeeksOf(groups, change.type));
-        draftsWrite(change.module, change.type, semester, drafts);
+        draftsApply(change.module, change.type, semester, groups, [
+            ...typed.map(draftOf),
+            madeDraftOf(targetOf(group, session)),
+        ]);
         return;
     }
     const skipped: Box | undefined = typed.find(
@@ -1968,8 +1956,7 @@ export function weekPick(change: PickChange): void {
         [week, mondayOf(targets[targets.length - 1].day)],
         (): boolean => false,
     );
-    numbersOf(drafts, tutorialWeeksOf(groups, change.type));
-    draftsWrite(change.module, change.type, semester, drafts);
+    draftsApply(change.module, change.type, semester, groups, drafts);
 }
 
 /**
@@ -2149,6 +2136,7 @@ export function groupApply(change: GroupChange): Planned[] {
         throw new Error(`${change.made ? "A group there already" : "No group"}: ${rule.type} ${was}`);
     if (was !== rule.group && groups.some(groupMatch(rule.type, rule.group)))
         throw new Error(`A group there already: ${rule.type} ${rule.group}`);
+    const sessions: Session[] = old?.sessions ?? [];
     const met: Set<string> = new Set(sessionDaysOf(old === undefined ? [] : [old]));
     const skipped: Set<string> = new Set(
         old === undefined
@@ -2171,11 +2159,11 @@ export function groupApply(change: GroupChange): Planned[] {
             one.last,
         ]);
     const sessionOn: (day: string) => Session | undefined = (day: string): Session | undefined =>
-        old?.sessions.find((session: Session): boolean => dayOfStart(session.start) === day);
+        sessions.find((session: Session): boolean => dayOfStart(session.start) === day);
     const opened: (string | undefined)[] = dates
         .filter((date: RuleDate): boolean => !cancelled(date) && skipped.has(date.day))
         .map((date: RuleDate): string | undefined => {
-            const near: Session[] = (old?.sessions ?? []).filter(
+            const near: Session[] = sessions.filter(
                 (session: Session): boolean =>
                     !session.changed && weekdayOf(dayOfStart(session.start)) === weekdayOf(date.day),
             );
@@ -2197,8 +2185,7 @@ export function groupApply(change: GroupChange): Planned[] {
         });
     const whole: boolean =
         old === undefined || shared || whenOf(old.rule) !== whenOf(rule) || opened.includes(undefined);
-    const begun: boolean =
-        whole && (old?.sessions ?? []).some((session: Session): boolean => dayOfStart(session.start) < today);
+    const begun: boolean = whole && sessions.some((session: Session): boolean => dayOfStart(session.start) < today);
     const kept: (day: string) => boolean = (day: string): boolean => begun && day < today;
     const weeks: string[] = tutorialWeeksOf(
         groups,
@@ -2250,7 +2237,7 @@ export function groupApply(change: GroupChange): Planned[] {
                 change: "",
                 attendees: old?.rule.attendees ?? [],
             })),
-        ...(old?.sessions ?? [])
+        ...sessions
             .filter(
                 (session: Session): boolean =>
                     kept(dayOfStart(session.start)) ||
@@ -2270,9 +2257,7 @@ export function groupApply(change: GroupChange): Planned[] {
                 attendees: session.attendees,
                 ...(session.changed ? { location: session.location, locationLink: session.locationLink } : {}),
             })),
-    ].sort((first: Planned, second: Planned): number =>
-        (first.time || first.day).localeCompare(second.time || second.day),
-    );
+    ].sort(startOrder);
     if (change.dry) return planned;
     const days: string[][] = rule.slots.map((_: Slot, index: number): string[] =>
         dates
@@ -2281,7 +2266,7 @@ export function groupApply(change: GroupChange): Planned[] {
     );
     if (
         days.every((one: string[]): boolean => one.length === 0) &&
-        !(old?.sessions ?? []).some((session: Session): boolean => kept(dayOfStart(session.start)))
+        !sessions.some((session: Session): boolean => kept(dayOfStart(session.start)))
     )
         throw new Error(`No session of group ${rule.type} ${rule.group} of ${change.module}`);
     if (was !== rule.group) groupRename(change.module, rule.type, rule.semester, was, rule.group);
@@ -2298,7 +2283,7 @@ export function groupApply(change: GroupChange): Planned[] {
         (old?.ids ?? [])
             .filter((id: string): boolean => !id.includes("#"))
             .forEach((uid: string): void => {
-                const last: Session | undefined = (old?.sessions ?? [])
+                const last: Session | undefined = sessions
                     .filter(
                         (session: Session): boolean =>
                             session.id.startsWith(`${uid}#`) && kept(dayOfStart(session.start)),
@@ -2447,6 +2432,5 @@ export function groupRemove(gone: GroupGone): void {
         ...draftOf(box),
         removed: box.group === gone.group && ahead(box) && changeable(box),
     }));
-    numbersOf(kept, tutorialWeeksOf(groupsRead(gone.module, gone.semester), gone.type));
-    draftsWrite(gone.module, gone.type, gone.semester, kept);
+    draftsApply(gone.module, gone.type, gone.semester, groupsRead(gone.module, gone.semester), kept);
 }
