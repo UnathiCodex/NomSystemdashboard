@@ -147,10 +147,11 @@
     text-overflow: ellipsis;
 }
 
-/* Arrow of a route, `top` lowers it to the middle of the small letters, since a flex line ignores `vertical-align` */
+/* Arrow of a route, `top` lowers it to the middle of the capitals of its places,
+   since a flex line ignores `vertical-align` */
 svg.route-arrow {
     position: relative;
-    top: 0.23em;
+    top: 0.17em;
     width: 1em;
     height: 1em;
     margin-inline: 0.3em;
