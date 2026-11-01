@@ -92,9 +92,12 @@ body:has(> .food) {
     border-top: 1px solid var(--line);
 }
 
-/* The totals of the day filling the bar after the date */
-.food-bar .trackers {
-    flex: 1;
+/* The totals of the day filling the bar after the date, Energy wide enough for `1.492 kcal`,
+   the number of meals narrower */
+#food-totals {
+    grid-template-columns:
+        minmax(max-content, 0.7fr) minmax(max-content, 1.6fr) minmax(max-content, 1fr) minmax(max-content, 1fr)
+        minmax(max-content, 1fr);
 }
 
 /* The date as wide as the date of the day view, so the arrow after it stands at the same place in every view */
