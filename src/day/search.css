@@ -1,4 +1,4 @@
-/* Search of the log, see `search.ts`, none on a phone */
+/* Search of the log, none on a phone */
 /* Always as high, so it never jumps while I type, its results scrolling alone */
 .search-panel[open] {
     display: flex;
@@ -11,8 +11,7 @@
     min-height: 0;
 }
 
-/* Its search field at the top of the dialog without room above it,
-   as far from the frame of the dialog as from its sides */
+/* Its field as far from the top of the dialog as from its sides */
 .search-panel .search-field {
     margin-top: 0;
 }

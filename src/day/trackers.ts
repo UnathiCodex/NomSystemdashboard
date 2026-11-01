@@ -1,30 +1,13 @@
 /**
  * ## Trackers
  *
- * The trackers of the shown day, at the right of the bar of the day,
- * as the reader counts them, see `reader/trackers.ts`, calm and basic:
- * three tiles of equal width side by side, each its name small and grey before its value,
- * without icons and without descriptions under the pointer;
- * none on a phone, see `trackers.css`:
- * - Sleep: how long I slept on the day, every sleep that ended on it,
- * the night and the naps;
- *   its goal, the spread of my bedtime and the average of the week left out for now,
- *   since other things come first.
- * - Water: what I drank on the day in litres, without a goal, see {@link waterOf}.
- * - Food: the kcal of the day's meals, a total without goal;
- *   no link, since the button of the food view is beside it.
- * - Neck: two tiles over the seven days up to the day, see {@link neckOf},
- *   a check from two thirds of my study days on,
- *   since about two thirds of the sessions already gave the large effects (Chen 2018);
- *   a session is an entry `Body` of my neck routine,
- *   and a study day a day with an entry `Skill`;
- *   my neck pain is the outcome the routine is judged by.
- *   Hidden until I start my neck routine, see {@link neckShown}; its code stays.
- * A glass, 0.25 l, is a log entry `Drink` `Water` of five minutes,
- * sent to the one writer of the log, see `entries.ts`;
- * the time grid shows glasses only as small marks, see `day.ts`.
- * The card loads again whenever the log of the day changes.
- * The food view loads the trackers too, for the water of its day.
+ * The trackers of the shown day at the right of the day bar, calm and basic, none on a phone.
+ * Tiles of equal width side by side, each its name small and grey before its value.
+ * - Sleep: every sleep that ended on the day, the night and the naps.
+ * - Water: what I drank in litres, without a goal.
+ * - Food: the kcal of the day's meals, without a goal.
+ * - Neck: hidden until I start my neck routine, its code stays.
+ * A glass, 0.25 l, is a log entry `Drink` `Water` of five minutes.
  */
 
 import { entryAdd, entryDelete } from "./entries.ts";
@@ -40,13 +23,10 @@ import type { Calendar } from "fullcalendar";
 import type { Totals } from "../../reader/food.ts";
 
 /**
- * My goals for the trackers, the size of a glass and the numbers of my learning,
- * as the reader sends them.
+ * My goals for the trackers, the size of a glass and the numbers of my learning.
  *
- * - `bedtimeVaried`: Minutes my bedtime may vary over the week, up or down,
- * for its check.
- * - `neckLongWeek`: Long neck sessions I want in seven days;
- *   a short one, or a long, on every study day.
+ * - `bedtimeVaried`: Minutes my bedtime may vary over the week, up or down.
+ * - `neckLongWeek`: Long neck sessions I want in seven days.
  */
 type TrackerSettings = {
     sleepHours: number;
@@ -58,7 +38,6 @@ type TrackerSettings = {
     sessionMinutes: number;
 };
 
-/** A night of sleep, as the reader sends it. */
 type Night = {
     minutes: number;
     asleep: string;
@@ -66,13 +45,11 @@ type Night = {
 };
 
 /**
- * My sleep on a day, as the reader sends it.
+ * My sleep on a day.
  *
- * - `slept`: Minutes of every sleep that ended on the day,
- *   the night and the naps, 0 when none is logged.
+ * - `slept`: Minutes of every sleep that ended on the day, 0 when none is logged.
  * - `minutes`: Average minutes of the nights of the week, `null` when none is logged.
- * - `varied`: How much my bedtime varied over the week, in minutes,
- *   `null` for fewer than two nights.
+ * - `varied`: Minutes my bedtime varied over the week, `null` for fewer than two nights.
  */
 type SleepDay = {
     night: Night | null;
@@ -82,12 +59,7 @@ type SleepDay = {
     nights: number;
 };
 
-/**
- * A glass of a drink, of water or of another drink, as the reader sends it.
- *
- * - `water`: Whether it is a glass of water, which the counter may take back.
- * - `editable`: Whether its entry can be changed, so it can be taken back.
- */
+/** A glass of water or of another drink, only an editable glass of water can be taken back. */
 type Glass = {
     id: string;
     start: string;
@@ -96,14 +68,11 @@ type Glass = {
 };
 
 /**
- * My neck routine in the seven days up to a day and my neck pain,
- * as the reader sends them.
+ * My neck routine in the seven days up to a day and my neck pain.
  *
- * - `short`: My study days on which I did a neck routine, short or long.
- * - `painFirst`: Mean of my pain in the first four weeks I rated it,
- *   `null` before the first rating.
- * - `painLast`: Mean of my pain in the last four weeks up to the day,
- *   `null` while those still are the first four.
+ * - `short`: My study days with a neck routine, short or long.
+ * - `painFirst`: Mean pain of the first four weeks I rated it, `null` before the first rating.
+ * - `painLast`: Mean pain of the last four weeks, `null` while those still are the first four.
  */
 type NeckWeek = {
     short: number;
@@ -113,12 +82,7 @@ type NeckWeek = {
     painLast: number | null;
 };
 
-/**
- * The trackers of a day, as the reader sends them.
- *
- * - `sleep`: My sleep, which the card leaves out for now.
- * - `food`: What my meals gave, `estimate` when one of them counts grams guessed.
- */
+/** The trackers of a day, `estimate` when a meal counts grams guessed. */
 export type Trackers = {
     settings: TrackerSettings;
     sleep: SleepDay;
@@ -130,23 +94,17 @@ export type Trackers = {
 /** Minutes a glass of water lasts in the log. */
 const glassMinutes: number = 5;
 
-/**
- * Whether the card shows the tiles of my neck, see {@link neckOf}:
- * not until I start my neck routine, then `true`.
- */
+/** Whether the card shows my neck, `true` once I start my neck routine. */
 const neckShown: boolean = false;
 
-/** Makes the check of a goal met, see `tracker-check` in `trackers.css`. */
+/** The check of a goal met. */
 function checkOf(): SVGElement {
     const check: SVGElement = iconOf(Check);
     check.classList.add("tracker-check");
     return check;
 }
 
-/**
- * Makes a tile of a tracker, of the neck: its value over its name, a check after a value
- * in the healthy band or at its goal, a dash for a value not logged.
- */
+/** A tile of the neck, its value over its name, a check at its goal, a dash when not logged. */
 function tileOf(value: string, met: boolean, name: string): HTMLElement {
     const tile: HTMLElement = elementOf("div", "tile", "");
     const amount: HTMLElement = elementOf("span", "tile-value", value === "" ? "–" : value);
@@ -156,8 +114,7 @@ function tileOf(value: string, met: boolean, name: string): HTMLElement {
 }
 
 /**
- * Logs one more glass of water, at now on the shown day, five minutes long,
- * see `nowOn` in `times.ts`.
+ * Logs one more glass of water at now on the shown day.
  *
  * @throws {Error} - When the reader does not take the glass
  */
@@ -179,23 +136,14 @@ async function glassAdd(calendar: Calendar): Promise<void> {
     });
 }
 
-/**
- * Makes the name and the value of a tracker, its name small and grey before its value,
- * see `.tracker-row` in `trackers.css`.
- */
 function linesOf(name: string, value: string): HTMLElement[] {
     return [elementOf("span", "tracker-name", name), elementOf("span", "tracker-value", value)];
 }
 
 /**
- * Builds the water: what I drank in litres, every drink one glass of 0.25 l,
- * its tile one button, which logs one more glass of water,
- * and `−` in its corner, which takes the last glass of water back;
- * the words of `−` only for screen readers, no description under the pointer, no goal;
- * on a day still to come the tile greyed and `−` hidden,
- * since nothing is drunk there yet.
- * The tile takes no clicks while a glass is sent, so a double tap logs one glass;
- * the card loads again once the log changed.
+ * The water, every drink one glass, the tile logs one more glass of water, `−` takes the last back.
+ * On a day still to come the tile is greyed and `−` hidden, since nothing is drunk there yet.
+ * The tile takes no clicks while a glass is sent, so a double tap logs one glass.
  */
 function waterOf(calendar: Calendar, trackers: Trackers, day: string): HTMLElement {
     const row: HTMLElement = elementOf("div", "tracker-row tracker-water", "");
@@ -232,22 +180,14 @@ function waterOf(calendar: Calendar, trackers: Trackers, day: string): HTMLEleme
     return row;
 }
 
-/**
- * Builds the food: the kcal of the day's meals,
- * rounded and so never marked as an estimate, a number never apart from its word.
- */
+/** The kcal of the day's meals, rounded and so never marked as an estimate. */
 function foodOf(trackers: Trackers): HTMLElement {
     const row: HTMLElement = elementOf("div", "tracker-row", "");
     row.append(...linesOf("Food", `${amountOf(trackers.food.kcal, 0)}\u00a0kcal`));
     return row;
 }
 
-/**
- * Builds the sleep: how long I slept on the day, every sleep that ended on it,
- * the night and the naps, so a sleep from 22:00 to 05:00 counts for the day of 05:00;
- * while no sleep is logged `00h 00m`,
- * in the colour of the text like the water's `0.00 l`, so no dash stands there.
- */
+/** Every sleep that ended on the day, `00h 00m` while none is logged. */
 function sleepOf(trackers: Trackers): HTMLElement {
     const row: HTMLElement = elementOf("div", "tracker-row", "");
     row.append(...linesOf("Sleep", lengthOf(trackers.sleep.slept)));
@@ -255,12 +195,9 @@ function sleepOf(trackers: Trackers): HTMLElement {
 }
 
 /**
- * Builds the neck: two tiles over the seven days up to the day,
- * on how many of my study days I did a neck routine, short or long,
- * a check from two thirds on, a dash while the week has no study day,
- * and on how many days a long one against my goal, a check once reached;
- * then my neck pain, the mean of my first four weeks against the last four,
- * or the first mean alone in the first four weeks, a dash before any rating.
+ * The neck over the seven days up to the day, my study days with a routine and the long ones.
+ * The check from two thirds of my study days, since those already gave the large effects (Chen 2018).
+ * My neck pain is the outcome the routine is judged by, the first four weeks against the last four.
  */
 function neckOf(trackers: Trackers): HTMLElement {
     const neck: NeckWeek = trackers.neck;
@@ -286,18 +223,13 @@ function neckOf(trackers: Trackers): HTMLElement {
     return row;
 }
 
-/**
- * Loads the trackers of a day from the reader.
- *
- * @throws {Error} - When the reader cannot answer
- */
+/** @throws {Error} - When the reader cannot answer */
 export async function trackersFetch(day: string): Promise<Trackers> {
     return readerAsk<Trackers>(`/api/day/trackers?date=${day}`);
 }
 
 /**
- * Loads the trackers of the shown day and shows them,
- * unless another day is shown meanwhile; the neck only once {@link neckShown}.
+ * Shows the trackers of the shown day, unless another day is shown meanwhile.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -315,12 +247,7 @@ async function trackersLoad(calendar: Calendar): Promise<void> {
         );
 }
 
-/**
- * Loads the trackers again each time the log of the shown day was read,
- * so they count what its file holds:
- * an entry dragged shows at once, before the reader has written it,
- * and the log is read again once it has.
- */
+/** Loads the trackers again each time the log of the shown day was read, so they count what its file holds. */
 export function trackersSee(calendar: Calendar): void {
     trackersLoad(calendar).catch((error: unknown): void => {
         console.error(error);

@@ -1,20 +1,9 @@
 /**
  * ## Search of the log
  *
- * Finds entries in my whole log, not only the shown day,
- * like every `Talk` to add who was there with `With`:
- * a small button beside `Log +` opens the search,
- * and what I type finds every entry that holds
- * each typed word in its summary, its category, its place, its people or its day,
- * as every search of the page compares, see `../search.ts`, never in its note.
- * The results stand newest first, each what it was,
- * and below it small and grey its day, its time, its place and who I was with.
+ * Finds entries in my whole log by each typed word, never in their note, newest first.
  * A click on a result shows its day and opens its dialog there.
- * Closing that dialog, saved or not, brings the search back with what I typed, read anew,
- * so I go from one result to the next.
- *
- * - `./search.html?raw`: Html of the dialog of the search as text,
- *   packed into the built code by Vite.
+ * Closing that dialog brings the search back with what I typed, so I go from one result to the next.
  */
 
 import searchHtml from "./search.html?raw";
@@ -32,10 +21,7 @@ import { Search } from "lucide";
 import type { Calendar, EventApi } from "fullcalendar";
 import type { Attendee } from "../../reader/calendar.ts";
 
-/**
- * An entry of the log as the reader sends it for the search.
- * - `module`, `type`: Skill and type of a skill entry, empty for any other entry.
- */
+/** An entry of the log, `module` and `type` empty for an entry not of a skill. */
 type LogEntry = {
     id: string;
     category: string;
@@ -56,20 +42,13 @@ let entries: LogEntry[] = [];
 /** Whether the search comes back once the dialog of an entry opened from it closes. */
 let returning: boolean = false;
 
-/**
- * Gives what an entry was as the log shows it, see `shownWhatOf` in `boxes.ts`.
- * Empty when it is its category, like an old `Sleep`.
- */
+/** What an entry was as the log shows it, empty when it is its category, like an old `Sleep`. */
 function whatTextOf(entry: LogEntry): string {
     const shown: string = shownWhatOf(entry.category, entry.title, entry.module, entry.type);
     return shown === entry.category ? "" : shown;
 }
 
-/**
- * Gives the text the search compares with what I type,
- * the day of its start in it so `Talk 10.2026` finds my talks of October,
- * never its note.
- */
+/** The text the search compares, with the day of its start, never its note. */
 function searchedOf(entry: LogEntry): string {
     return [
         entry.category,
@@ -84,11 +63,8 @@ function searchedOf(entry: LogEntry): string {
 }
 
 /**
- * Builds a result: what the entry was in the bold of the log, see `whatOf` in `boxes.ts`,
- * and below it, small and grey, its day, its time, its place as the log shows it,
- * see `whereLinkedOf` in `places.ts`, and who I was with, parted by middle dots.
- * Its platform online stands never as a link, since the result is a button.
- * No place or nobody leaves its part out.
+ * A result, what the entry was and below it its day, time, place and who I was with.
+ * Its platform online never as a link, since the result is a button.
  */
 function resultOf(calendar: Calendar, entry: LogEntry): HTMLLIElement {
     const start: Date = new Date(entry.start);
@@ -141,11 +117,7 @@ function resultsShow(calendar: Calendar): void {
     );
 }
 
-/**
- * Opens the search with what I typed last, its results at the place I left them,
- * and reads the log anew, so an entry changed from it shows as it is now.
- * A hint in the dialog says when the reader cannot answer.
- */
+/** Opens the search where I left it and reads the log anew, so an entry changed from it shows as it is now. */
 async function searchOpen(calendar: Calendar): Promise<void> {
     const dialog: HTMLDialogElement = document.getElementById("search") as HTMLDialogElement;
     const results: HTMLElement = document.getElementById("search-results") as HTMLElement;
@@ -159,11 +131,7 @@ async function searchOpen(calendar: Calendar): Promise<void> {
     results.scrollTop = scrolled;
 }
 
-/**
- * Waits until the calendar shows an entry, as it does once the log of its day is read.
- *
- * @returns The entry, `null` when the calendar shows it not within 5 seconds
- */
+/** Waits until the calendar shows an entry, `null` when not within 5 seconds. */
 function entryAwait(calendar: Calendar, id: string): Promise<EventApi | null> {
     return new Promise((found: (entry: EventApi | null) => void): void => {
         const seen: () => void = (): void => {
@@ -181,11 +149,7 @@ function entryAwait(calendar: Calendar, id: string): Promise<EventApi | null> {
     });
 }
 
-/**
- * Shows the day of a result and opens the dialog of its entry there,
- * after closing the search, which comes back once that dialog closes.
- * An entry the calendar does not show brings the search back at once.
- */
+/** Opens the dialog of a result on its day, an entry the calendar does not show brings the search back at once. */
 async function resultOpen(calendar: Calendar, entry: LogEntry): Promise<void> {
     const day: string = dayOf(new Date(entry.start));
     (document.getElementById("search") as HTMLDialogElement).close();
@@ -199,11 +163,7 @@ async function resultOpen(calendar: Calendar, entry: LogEntry): Promise<void> {
     await entryOpenEdit(event);
 }
 
-/**
- * Starts the search after the router has put the HTML of the day into the page:
- * puts its dialog into the page, its button beside `Log +` opens it,
- * and the dialog of an entry opened from it brings it back when it closes.
- */
+/** Puts the search into the page, its button beside `Log +`. */
 export function searchStart(calendar: Calendar): void {
     document.body.insertAdjacentHTML("beforeend", searchHtml);
     const button: HTMLElement = document.getElementById("log-search") as HTMLElement;

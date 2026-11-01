@@ -1,11 +1,7 @@
-/* Trackers and the timer of a session in the bar of the day:
-   three tiles at its right end, the session running now between them and the date,
-   all filled in the soft grey of a card without a frame; none on a phone */
-/* Timer of a session running now, see `timer.ts`, always there,
-   its name `Session` while none runs,
-   so the bar never jumps: all the room the bar leaves between the date and the trackers,
-   never more, so the bar keeps one line, at least 9rem, so its time always shows;
-   what the session is gives way with an ellipsis where the room is too small */
+/* Trackers and the timer of a session in the day bar, soft grey cards without a frame */
+/* Timer, always there so the bar never jumps, `Session` while none runs.
+   The room between the date and the trackers, so the bar keeps one line.
+   At least 9rem, so its time always shows. */
 .session-timer {
     display: inline-flex;
     flex: 1;
@@ -34,10 +30,7 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Trackers: at the right end of the bar of the day,
-   three tiles of equal width, as wide as the widest needs,
-   so the timer beside them keeps its room and all stand in the line of the date,
-   no name ever goes above its value and none goes over the edge */
+/* Trackers at the right end, tiles as wide as the widest needs, so the timer keeps its room */
 .trackers {
     display: grid;
     flex: none;
@@ -48,9 +41,7 @@
     margin-left: auto;
 }
 
-/* Sleep and neck as tiles side by side, each its value over its name, small and grey;
-   `.trackers .tracker-check` wins over the size of icons in `base.css`,
-   being more exact */
+/* Neck tiles, `.trackers .tracker-check` wins over the size of icons in `base.css` by being more exact */
 .tiles {
     display: flex;
     flex-wrap: wrap;
@@ -82,8 +73,7 @@
     color: var(--text-muted);
 }
 
-/* A tracker as a tile of its own, filled in the soft grey of a card without a frame,
-   so Sleep, Water and Food stand apart at a glance */
+/* A tracker as a tile of its own, so they stand apart at a glance */
 .tracker-row {
     position: relative;
     display: flex;
@@ -111,7 +101,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Value of a tracker below its name */
 .tracker-value {
     font-size: 1.0625rem;
     font-weight: 600;
@@ -119,10 +108,7 @@
     white-space: nowrap;
 }
 
-/* The water's tile one button,
-   which logs a glass, faded and off on a day still to come;
-   the `−` at its right end, see `.icon-button` in `../base.css`,
-   which takes the last glass back, faded while there is none */
+/* Water, the tile logs a glass, the `−` at its right end takes the last back */
 .tracker-water {
     align-content: stretch;
     padding: 0;
@@ -163,8 +149,7 @@
     height: 1.5rem;
 }
 
-/* Phone: no trackers and no timer,
-   since a phone shows only plan and log, see `../main.ts` */
+/* Phone: no trackers and no timer, since a phone shows only plan and log */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .trackers,
     .session-timer {
