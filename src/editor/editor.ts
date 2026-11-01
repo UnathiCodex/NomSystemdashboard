@@ -2,38 +2,15 @@
  * ## Editor
  *
  * Edits a note of my modules or a Markdown file of my new system as its text,
- * its Markdown shown as in Obsidian's live preview away from the cursor,
- * see `./preview.ts`.
- * The scripts view, `/scripts`, is this editor, always writing,
- * with no view beside it to read only.
- * It edits the text of the file itself:
- * saving writes exactly the edited text, nothing reformatted,
- * tabs and soft hyphens,
- * spaces at the ends of lines and the line breaks of the file as they were.
- * A note of my modules is saved right into its file in `NomSkillingmodules`,
- * and the reader keeps each change as a diff, see `reader/edit.ts`.
- * On the left the tree of one root, see `../notes/tree.ts`:
- * `NomSkillingmodules` at `/scripts`, with the outline of the note under it,
- * `NomManageplannings` for a file of my new system and at `/plannings`,
- * saved back into its file without a diff;
- * an `.ics` file opens as its plain text, to read only, see `./ics.ts`.
- * A section, a note with tasks of the semester, shows its round, see `./round.ts`.
- * While no note is open, the page asks to choose one,
- * since the plan of the day says what is due;
- * the address of a module shows its course, see `./course.ts`,
- * that of a chapter its sections, see `./overview.ts`,
- * that of a folder its folders and files, see `./folder.ts`.
- * The address names the note and the heading to scroll to,
- * so a reload and the back button of the browser stay on it,
- * and a file of my new system by its path in the tree,
- * with the row of its table to scroll to, see `rowShow` in `./preview.ts`;
- * a section opens on the block I opened last,
- * which stays out of the address and which the reader keeps until it restarts,
- * so a reload, also on another device, returns there.
- * Saves only with its button or Ctrl+S, never by itself,
- * merged with a change of the file on the disk since it was read,
- * and asks before leaving with changes unsaved, also for another file of the tree;
- * the status line above the text says only `Saved` or `Failed`.
+ * shown as in Obsidian's live preview, see `./preview.ts`.
+ * Saving writes exactly the edited text, tabs, soft hyphens, spaces and line breaks as they were.
+ * A note of my modules keeps each change as a diff in the reader, a file of my new system none.
+ * An `.ics` file opens as its plain text, to read only.
+ * A section shows its round, see `./round.ts`.
+ * The address names the note, the heading or the row, so a reload stays on it.
+ * A section opens on the block I opened last, kept by the reader, also for another device.
+ * Saves only with its button or Ctrl+S, merged with a change of the file on the disk since,
+ * and asks before leaving with changes unsaved.
  */
 
 import { EditorState, Transaction } from "@codemirror/state";
@@ -79,28 +56,22 @@ type LinkedNote = {
     links: Links;
 };
 
-/**
- * A file of my new system, as the reader sends it.
- * - `editable`: Whether I may change it: a Markdown file, not an `.ics` file.
- */
+/** A file of my new system, as the reader sends it, editable when Markdown. */
 type SystemFile = {
     path: string;
     text: string;
     editable: boolean;
 };
 
-/**
- * A file as the reader wrote it, see `Written` in `reader/edit.ts`.
- */
+/** A file as the reader wrote it. */
 type Written = {
     text: string;
     changes: { from: number; to: number; insert: string }[];
 };
 
 /**
- * The file the editor shows,
- * a note of my modules or a file of my new system, see {@link openedRead}.
- * - `links`: None for a file of my new system, whose links stay as they are written.
+ * The file the editor shows.
+ * - `links`: None for a file of my new system, whose links stay as written.
  * - `place`: Its path in `NomWorkspace`, from which its relative links lead.
  */
 type Opened = {
@@ -111,19 +82,13 @@ type Opened = {
     place: string;
 };
 
-/**
- * Path of the file: of a note as the scripts view takes it,
- * of a file of my new system as the tree names it.
- */
+/** Path of the note or the file of my new system. */
 let path: string = "";
 
-/**
- * Address of the reader that writes the file: `/api/edit/note` for a note of my modules,
- * which keeps a diff, `/api/edit/file` for a file of my new system.
- */
+/** Address of the reader that writes the file, the one for a note keeps a diff. */
 let saveAddress: string = "/api/edit/note";
 
-/** Text of the file as it lies on the disk: as read, then as saved last. */
+/** Text of the file as it lies on the disk. */
 let saved: string = "";
 
 let saving: boolean = false;
@@ -133,16 +98,10 @@ let view: EditorView;
 /** The tree of my modules for the outline of a note, `null` for my new system. */
 let outlineTree: HTMLElement | null = null;
 
-/**
- * Waiting rebuild of the outline after a change of the text,
- * so typing builds it anew once, half a second after it rests.
- */
+/** Waiting rebuild of the outline, so typing builds it once half a second after it rests. */
 let outlineWait: number = 0;
 
-/**
- * Shows whether the file has changes not yet saved, by the grey of the save button,
- * and in the status line a notice, `Saved` or `Failed`.
- */
+/** Shows unsaved changes by the grey of the save button, and a notice in the status line. */
 function stateShow(notice: string): void {
     const unsaved: boolean = view.state.sliceDoc() !== saved;
     const save: HTMLElement = document.getElementById("editor-save") as HTMLElement;
@@ -151,17 +110,10 @@ function stateShow(notice: string): void {
 }
 
 /**
- * Saves the file: sends its text to the reader with the text it had
- * when read or saved last;
- * the reader writes it, merged with a change of the file on the disk since,
- * like by a Claude session, mine standing where we both changed the same lines,
- * see `reader/edit.ts`;
- * the editor takes that change in, never into Undo, while I typed nothing meanwhile,
- * else the next save merges it again;
- * a note takes the files its links lead to anew,
- * so a link written since works, see `./preview.ts`.
- * Does nothing while a save is on its way,
- * when nothing changed, or for a file to read only.
+ * Saves the file, merged by the reader with a change on the disk since, mine winning on the same lines.
+ * The editor takes that change in, never into Undo, only while I typed nothing meanwhile.
+ * Else the next save merges it again.
+ * A note takes its links anew, so a link written since works.
  */
 async function noteSave(): Promise<void> {
     const text: string = view.state.sliceDoc();
@@ -196,11 +148,9 @@ async function noteSave(): Promise<void> {
 }
 
 /**
- * Saves on Ctrl+S, Cmd+S on a Mac, also while the cursor is outside the text,
- * instead of the browser saving the page.
- * Ctrl+Z goes back to the block I had open before, see `roundBack` in `./round.ts`,
- * while the focus stands outside the text, like on the tree after a click there,
- * never in a field or a table opened over the file, which undo their own text.
+ * Saves on Ctrl+S or Cmd+S, also with the cursor outside the text, instead of the browser.
+ * Ctrl+Z outside the text goes back to the block I had open before.
+ * Never in a field, which undoes its own text.
  */
 function keyDown(event: KeyboardEvent): void {
     const command: boolean = event.ctrlKey || event.metaKey;
@@ -218,10 +168,7 @@ function keyDown(event: KeyboardEvent): void {
         event.preventDefault();
 }
 
-/**
- * Builds the outline of a note in the tree anew,
- * or for a section its blocks with their places in its round.
- */
+/** Builds the outline of a note in the tree anew, for a section its blocks in its round. */
 function outlineRefresh(): void {
     const blocks: [string, BlockMark][] | null = roundBlocksOf(view);
     if (outlineTree !== null)
@@ -236,17 +183,15 @@ type Box = {
     bottom: number;
 };
 
-/** Gives a row on the screen from its top to its bottom, without a width yet. */
+/** A row on the screen without a width yet. */
 function rowOf(top: number, bottom: number): Box {
     return { left: Infinity, right: -Infinity, top: top, bottom: bottom };
 }
 
 /**
- * Gives the rows a line stands in on the screen, one for each row its text wraps into:
- * two rows parted halfway between their text,
- * and with the little room of the line's own above or below it,
- * so the rows of a selection touch, also from one line to the next,
- * but never with more than a quarter of a line, like the room above a heading.
+ * The rows a line wraps into on the screen, parted halfway between their text.
+ * They take the line's own small room above and below, so the rows of a selection touch.
+ * Never more than a quarter of a line, like the room above a heading.
  */
 function rowsOf(view: EditorView, line: HTMLElement): Box[] {
     const range: Range = document.createRange();
@@ -275,11 +220,9 @@ function rowsOf(view: EditorView, line: HTMLElement): Box[] {
 }
 
 /**
- * Gives the boxes on the screen of what a selection covers of a line:
- * a rendered formula, an image or the type word of a heading whole
- * once it covers some of it, by its own box only, never by what stands inside it,
- * like a formula too wide for its line, which scrolls sideways;
- * never a widget that holds no text, like the arrow that folds a heading.
+ * The boxes of what a selection covers of a line.
+ * A widget it touches counts whole by its own box, since a wide formula scrolls inside it.
+ * Never a widget without text, like the fold arrow.
  */
 function selectedBoxesOf(view: EditorView, line: HTMLElement, from: number, to: number): Box[] {
     const boxes: Box[] = [];
@@ -301,9 +244,7 @@ function selectedBoxesOf(view: EditorView, line: HTMLElement, from: number, to: 
     return boxes.filter((box: Box): boolean => box.right > box.left);
 }
 
-/**
- * Widens each row over the boxes standing in it, a box in the row its middle stands in.
- */
+/** Widens each row over the boxes whose middle stands in it. */
 function markedRowsOf(rows: Box[], boxes: Box[]): Box[] {
     for (const box of boxes) {
         const middle: number = (box.top + box.bottom) / 2;
@@ -315,14 +256,9 @@ function markedRowsOf(rows: Box[], boxes: Box[]): Box[] {
 }
 
 /**
- * Marks each selection line by line, as a browser and Obsidian do,
- * never as CodeMirror's own selection,
- * one block over the lines between its first and its last:
- * each row as far as the selection covers what it shows,
- * and half a letter on where the selection goes on past the end of the line,
- * as a browser marks a line break, so an empty line in it shows a small mark;
- * a rendered block whole once the selection covers some of it.
- * Only the lines and blocks drawn, those on the screen or near it.
+ * Marks each selection line by line as a browser and Obsidian do, not as one CodeMirror block.
+ * Half a letter past the end of a line it goes on over, so an empty line shows a small mark.
+ * A rendered block counts whole once the selection covers some of it.
  */
 function selectionRowsOf(view: EditorView): RectangleMarker[] {
     const ranges: SelectionRange[] = view.state.selection.ranges.filter(
@@ -374,8 +310,7 @@ function selectionRowsOf(view: EditorView): RectangleMarker[] {
 }
 
 /**
- * Selection marked line by line, see {@link selectionRowsOf},
- * in place of CodeMirror's own, which `./editor.css` hides;
+ * Selection marked line by line in place of CodeMirror's own.
  * `drawSelection` still draws the cursor and hides the browser's selection.
  */
 const selectionLines: Extension = layer({
@@ -386,15 +321,9 @@ const selectionLines: Extension = layer({
 });
 
 /**
- * Builds the extensions of the editor for a file.
- * - `lineSeparator`: The line break of the file, `\r\n` or `\n`,
- *   so saving writes the line breaks as they were, also a single other one,
- *   which stays inside its line.
- * - `lineWrapping`: Wraps long lines at the reading width, as the scripts view does,
- *   so I see where a line overflows.
- * - `scrollMargins`: Keeps the cursor below the status line,
- *   which stays on top while the file scrolls,
- *   so moving up never hides the cursor under it.
+ * The extensions of the editor for a file.
+ * - `lineSeparator`: The line break of the file, so saving writes them as they were.
+ * - `scrollMargins`: Keeps the cursor below the status line, which stays on top.
  */
 function extensionsOf(opened: Opened): Extension[] {
     return [
@@ -424,10 +353,7 @@ function extensionsOf(opened: Opened): Extension[] {
     ];
 }
 
-/**
- * Reads the file the address names, a file of my new system, else a note.
- * @returns The file, `null` when the reader cannot read it
- */
+/** Reads the file the address names, `null` when the reader cannot read it. */
 async function openedRead(file: string): Promise<Opened | null> {
     if (file !== "") {
         const response: Response = await fetch(`/api/edit/file?path=${encodeURIComponent(file)}`);
@@ -455,11 +381,7 @@ async function openedRead(file: string): Promise<Opened | null> {
     };
 }
 
-/**
- * Scrolls the note shown to the heading of the address,
- * see `headingShow` in `./preview.ts`,
- * or to the very top of the page.
- */
+/** Scrolls to the heading of the address, or to the top. */
 function addressHeadingShow(): void {
     const heading: string = decodeURIComponent(location.hash.slice(1));
     if (heading === "") (document.querySelector(".editor-file") as HTMLElement).scrollTop = 0;
@@ -467,11 +389,8 @@ function addressHeadingShow(): void {
 }
 
 /**
- * Scrolls to a heading of the note shown on a click on a link to it in the tree,
- * without loading the page again, and keeps it in the history of the browser;
- * a block of a section shows alone in its round, see `roundHeadingShow` in `./round.ts`,
- * and stays out of the address, since the reader keeps it for a reload;
- * links to other notes, and clicks with a key held, act as usual.
+ * Scrolls to a heading of the note shown on a click in the tree, without a reload.
+ * A block of a section stays out of the address, since the reader keeps it.
  */
 function treeClick(event: MouseEvent): void {
     const link: HTMLAnchorElement | null = (event.target as Element).closest("a[href]");
@@ -486,18 +405,10 @@ function treeClick(event: MouseEvent): void {
 }
 
 /**
- * Starts the editor after the router has put its HTML into the page:
- * shows the tree on the left, the page of a module, chapter or folder the address names,
- * of my new system a folder it names opened in the tree,
- * else reads the file the address names and shows it to edit, its solutions folded.
- * A section shows its round, see `./round.ts`,
- * its text hidden until its tasks are loaded,
- * so its blocks fold before they show,
- * scrolled to its current block unless the address names a heading,
- * whose block it shows once, the heading then dropped from the address,
- * or the reader keeps a block I opened last, see `roundOpenedOf` in `./round.ts`.
- * - `beforeunload`: Comes also for another file of the tree,
- *   `preventDefault` makes the browser ask.
+ * Starts the editor, the tree on the left and the module, chapter, folder or file the address names.
+ * A section stays hidden until its tasks are loaded, so its blocks fold before they show.
+ * It opens on the heading of the address once, then the heading leaves the address.
+ * Else it opens on the block I opened last.
  */
 export async function editorStart(): Promise<void> {
     void codeColorsSet();

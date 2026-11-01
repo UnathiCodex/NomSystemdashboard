@@ -1,22 +1,12 @@
 /**
  * ## Calendar files
  *
- * Shows an `.ics` file in the editor easy to read,
- * the file itself staying exactly as it is:
- * each line inside a `BEGIN:` and its `END:` one step further in,
- * and an empty line's room above each entry of the calendar, so the entries stand apart.
- * A folded line, starting with a space, stays in the block of the line it continues.
- * Only the look changes: the steps and the room are drawn by the stylesheet,
- * see `editor.css`, no character is added.
- * The name of each property with its parameters is grey, so the value stands out white,
- * its parameters a step fainter, since they say least.
- * After a value with a meaning, its line shows it readable, faint,
- * in a column of its own at its right, see {@link readableOf},
- * the readable form no part of the text,
- * so copying a line copies it as the file has it.
- * Every block folds to its first line by the arrow after it,
- * as the arrow of a heading of a note does; each comes unfolded.
- * In the status line stands its overview, see {@link overviewKeep}.
+ * Shows an `.ics` file in the editor easy to read, the file itself exactly as it is.
+ * Each block one step further in and room above each entry, drawn by the stylesheet only.
+ * Names of properties grey, so the values stand out, their parameters fainter.
+ * A value with a meaning shows it readable at its right, no part of the text, so copying stays true.
+ * Every block folds by the arrow after its first line.
+ * The status line holds an overview of the entries.
  */
 
 import { StateField } from "@codemirror/state";
@@ -33,42 +23,25 @@ import "../day/boxes.css";
 import type { EditorState, Extension, Line, Range, Transaction } from "@codemirror/state";
 import type { DecorationSet } from "@codemirror/view";
 
-/**
- * Most steps a line of a calendar file is drawn further in, a deeper line stays at it.
- */
+/** Most steps a line is drawn in. */
 const deepest: number = 4;
 
-/**
- * Name of a property with its parameters, up to and with the colon before its value;
- * a colon in the quotes of a parameter belongs to the parameter.
- */
+/** Name of a property with its parameters and colon, a colon in quotes belongs to a parameter. */
 const nameRule: RegExp = /^[A-Z0-9-]+(?:;(?:[^":]|"[^"]*")*)?:/i;
 
-/**
- * Date of a value, and of a date with its time its hours, minutes and seconds,
- * with `Z` in UTC.
- */
+/** A date, maybe with its time, `Z` in UTC. */
 const dateRule: RegExp = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z?))?$/;
 
-/**
- * A length, like `PT2H`: its hours and its minutes.
- */
+/** A length in hours and minutes. */
 const lengthRule: RegExp = /^PT(?:(\d+)H)?(?:(\d+)M)?$/;
 
-/**
- * An offset of a time zone: its sign, hours and minutes.
- */
+/** An offset of a time zone. */
 const offsetRule: RegExp = /^([+-])(\d{2})(\d{2})$/;
 
-/**
- * Names of the times of a time zone, its `TZNAME`, said short, those my calendars use;
- * another, like `GMT+1`, says itself.
- */
+/** Names of the `TZNAME` my calendars use, another says itself. */
 const zoneNames: Record<string, string> = { CET: "standard time", CEST: "summer time" };
 
-/**
- * How often a series repeats, its `FREQ`, after every how many of it, its `INTERVAL`.
- */
+/** Each `FREQ` alone and after an `INTERVAL`. */
 const frequencies: Record<string, [string, string]> = {
     SECONDLY: ["every second", "seconds"],
     MINUTELY: ["every minute", "minutes"],
@@ -79,9 +52,7 @@ const frequencies: Record<string, [string, string]> = {
     YEARLY: ["yearly", "years"],
 };
 
-/**
- * Weekdays of a series, its `BYDAY`, short as the page writes a weekday.
- */
+/** Weekdays of `BYDAY` as the page writes them. */
 const weekdays: Record<string, string> = {
     MO: "Mon",
     TU: "Tue",
@@ -93,28 +64,18 @@ const weekdays: Record<string, string> = {
 };
 
 /**
- * An entry of the calendar, a block right inside `VCALENDAR`, for the overview.
- * - `values`: Its own properties, the first of each, folded lines joined, escapes read.
+ * An entry of the calendar, a block right inside `VCALENDAR`.
+ * - `values`: The first of each own property, folded lines joined, escapes read.
  */
 type Block = { line: number; kind: string; values: Map<string, string> };
 
-/**
- * Grey of the name of a property with its colon, also of `BEGIN:` or `END:`.
- */
 const nameMark: Decoration = Decoration.mark({ class: "ics-name" });
 
-/**
- * Fainter grey of the parameters of a property.
- */
 const parameterMark: Decoration = Decoration.mark({ class: "ics-parameter" });
 
 /**
- * Writes a date readable as the page writes it,
- * see `dayTextOf` in `../skill/attempts.ts`,
- * a time in UTC in Berlin time.
- *
- * @param timed - Whether to write the time of a date with its time, else only its day
- * @returns The date readable, `null` for no date
+ * A date readable as the page writes it, a time in UTC in Berlin time, `null` for no date.
+ * @param timed - Whether to write the time too
  */
 function dateTextOf(value: string, timed: boolean): string | null {
     const date: RegExpExecArray | null = dateRule.exec(value);
@@ -124,13 +85,7 @@ function dateTextOf(value: string, timed: boolean): string | null {
     return timed ? `${dayTextOf(dayOf(moment), true)}, ${timeOf(moment)}` : dayTextOf(dayOf(moment), true);
 }
 
-/**
- * Writes a rule of a series readable and short, its parts in the order they are read,
- * like `yearly in Mar on last Sun` of `FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU`;
- * any other part as written.
- *
- * @returns The rule readable, `null` for one without `FREQ`
- */
+/** A rule of a series readable and short, `null` without `FREQ`, an unknown part as written. */
 function ruleTextOf(value: string): string | null {
     const parts: Map<string, string> = new Map(
         value
@@ -180,12 +135,7 @@ function ruleTextOf(value: string): string | null {
     return text.join(" ");
 }
 
-/**
- * Writes a value readable: a date, a length, a rule of a series,
- * an offset of a time zone or the name of a time of a time zone.
- *
- * @returns The value readable, `null` for a value without a meaning to add
- */
+/** A value readable, `null` for one without a meaning to add. */
 function readableOf(name: string, value: string): string | null {
     if (/^RRULE[;:]/i.test(name)) return ruleTextOf(value);
     if (/^TZNAME[;:]/i.test(name)) return zoneNames[value.toUpperCase()] ?? null;
@@ -196,13 +146,7 @@ function readableOf(name: string, value: string): string | null {
     return dateTextOf(value, true);
 }
 
-/**
- * Tells what the first line of a block folds:
- * from the end of its `BEGIN:` to the end of its `END:`, blocks inside it skipped,
- * so only its first line shows.
- *
- * @returns What it folds, `null` for nothing
- */
+/** What the `BEGIN:` line of a block folds, up to its own `END:`, `null` for nothing. */
 function blockOf(state: EditorState, from: number, to: number): { from: number; to: number } | null {
     if (!/^BEGIN:/i.test(state.sliceDoc(from, to))) return null;
     let depth: number = 0;
@@ -214,11 +158,7 @@ function blockOf(state: EditorState, from: number, to: number): { from: number; 
     return null;
 }
 
-/**
- * Gives a property of a calendar file as one line, its folded lines joined
- * without the space each starts with,
- * so a name with parameters cut inside a link reads whole.
- */
+/** A property as one line, its folded lines joined, so a name cut by a fold reads whole. */
 function propertyOf(state: EditorState, number: number): string {
     let property: string = state.doc.line(number).text;
     for (let next: number = number + 1; next <= state.doc.lines; next++) {
@@ -230,11 +170,8 @@ function propertyOf(state: EditorState, number: number): string {
 }
 
 /**
- * Gives the decorations of the lines of a calendar file:
- * each line with its step, the room above each entry,
- * the grey of names and parameters, the readable value as `data-readable`,
- * and the fold arrow of each block.
- * - `step`: An `END:` at the depth of its `BEGIN:`, a further line one inside.
+ * The decorations of the lines, their steps, greys, readable values and fold arrows.
+ * - `step`: An `END:` at the depth of its `BEGIN:`.
  */
 function decorationsOf(state: EditorState): DecorationSet {
     const decorations: Range<Decoration>[] = [];
@@ -287,11 +224,7 @@ function decorationsOf(state: EditorState): DecorationSet {
     return Decoration.set(decorations);
 }
 
-/**
- * Keeps the room from the right edge of the text to the right edge of the save button
- * as `--ics-overhang`, so the readable forms stand at that edge,
- * measured again whenever the window changes its size.
- */
+/** Keeps the room from the text to the right edge of the save button, where the readable forms stand. */
 const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
     (view: EditorView): { destroy: () => void } => {
         const measure = (): void =>
@@ -311,10 +244,8 @@ const overhangKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
 );
 
 /**
- * The look of a calendar file for the editor, decorated again
- * whenever its text changes or a block folds or unfolds.
- * - {@link codeFolding}: Without the `…` CodeMirror puts in place of what is folded,
- *   since the arrow turned right tells it, as in a note.
+ * The look of a calendar file for the editor.
+ * - {@link codeFolding}: Without the `…` of CodeMirror, since the arrow tells it.
  */
 export function icsLook(): Extension {
     return [
@@ -335,9 +266,6 @@ export function icsLook(): Extension {
     ];
 }
 
-/**
- * Reads the entries of a calendar file, see {@link Block}.
- */
 function blocksOf(state: EditorState): Block[] {
     const blocks: Block[] = [];
     let depth: number = 0;
@@ -368,10 +296,8 @@ function blocksOf(state: EditorState): Block[] {
 }
 
 /**
- * Makes the box of an entry of the overview as a box of the plan shows it,
- * see `boxContentOf` in `../day/boxes.ts`, only its facts, no buttons;
- * of a time zone its `TZID`, of a to-do without times its length,
- * of one without a start its deadline.
+ * The box of an entry as the plan shows it, only its facts.
+ * A time zone shows its `TZID`, a to-do without times its length, without a start its deadline.
  */
 function boxOf(block: Block): HTMLElement {
     const values: Map<string, string> = block.values;
@@ -426,11 +352,9 @@ function boxOf(block: Block): HTMLElement {
 }
 
 /**
- * Keeps the overview of a calendar file in the status line, a dash per entry,
- * named by its name for screen readers;
- * the dash of the entry at the top of the view white, the overview scrolled
- * so that dash stays in its middle, so many entries never crowd it;
- * resting the mouse on a dash shows the box of its entry, a click scrolls to the entry.
+ * Keeps the overview in the status line, a dash per entry.
+ * The dash of the entry at the top is white and stays in the middle, so many entries never crowd it.
+ * The mouse on a dash shows its box, a click scrolls to its entry.
  */
 const overviewKeep: ViewPlugin<{ destroy: () => void }> = ViewPlugin.define(
     (view: EditorView): { destroy: () => void } => {
