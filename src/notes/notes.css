@@ -448,7 +448,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
 }
 
 /* Lists as in Obsidian: each item 3 characters in,
-   1.5em inside an item of the same kind, items a little apart */
+   2.25em inside an item of the same kind, items a little apart */
 .markdown :is(ul, ol) {
     padding-left: 0;
 }
@@ -460,7 +460,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
 }
 
 .markdown :is(ul ul, ol ol) > li {
-    margin-left: 1.5em;
+    margin-left: 2.25em;
 }
 
 /* Numbers of a list in Obsidian's faint grey of list markers */
