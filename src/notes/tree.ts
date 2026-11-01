@@ -1,28 +1,15 @@
 /**
  * ## Tree
  *
- * The tree on the left of the editor, see `../editor/editor.ts`,
- * which is the scripts view too,
- * as Obsidian's file explorer, of one of two roots at a time,
- * each an area of its own in the rail:
- * - `NomSkillingmodules`, the book, every module of mine, one at a time,
- *   since I learn one module at a time:
- *   the module and chapter picked, each a line that opens its menu, see {@link pickerOf},
- *   then the notes of that chapter as a plain list, nothing folding;
- *   while no module is picked, on the start of the scripts,
- *   its search and every module instead, grouped by semester, see {@link choiceListOf};
- * - `NomManageplannings`, the open folder, my new system,
- *   as the reader lists it, see `reader/files.ts`:
- *   a Markdown file opens in the editor to edit,
- *   an `.ics` file as its plain text to read, any other file shows faint and opens not.
- * The name of the root stands on top as a heading that never folds,
- * so nothing lies deeper than it needs.
- * Of my new system a search filters the tree as I type, see {@link searchStart}.
- * Under the note shown stands its outline, see {@link outlineShow};
- * under a section its blocks in the places of its round, see {@link roundListOf}.
- * Each name stands on one line, one too long for it ending in dots,
- * a file of my new system cut in its middle instead, so its ending stays in sight,
- * see {@link fileNodeOf}; each whole as its tooltip.
+ * The tree on the left of the editor and the scripts view, as Obsidian's file explorer, one root at a time:
+ * - `NomSkillingmodules`, one module at a time, since I learn one module at a time.
+ *   The module and chapter picked, each a line that opens its menu, then the notes of that chapter.
+ *   While no module is picked, its search and every module, grouped by semester.
+ * - `NomManageplannings`, my new system, with a search that filters as I type.
+ *   A Markdown or `.ics` file opens in the editor, any other file shows faint.
+ * The name of the root stands on top as a heading that never folds, so nothing lies deeper than it needs.
+ * Under the note shown stands its outline, under a section its blocks in the places of its round.
+ * Each name stands on one line, its whole as its tooltip.
  */
 
 import { matchesAll, wordsOf } from "../search.ts";
@@ -35,10 +22,8 @@ import { readerAsk } from "../reader.ts";
 import { changesFollow } from "../changes.ts";
 
 /**
- * A folder or file of `NomManageplannings`, as the reader sends it.
- *
- * - `opens`: Whether the editor opens it:
- *   a Markdown or `.ics` file of the folders of my new system.
+ * A folder or file of `NomManageplannings`.
+ * - `opens`: Whether it is a Markdown or `.ics` file the editor opens.
  */
 type FileNode = {
     name: string;
@@ -48,25 +33,20 @@ type FileNode = {
     children: FileNode[];
 };
 
-/** A note of a chapter, as the reader sends it, its path from `NomSkillingmodules`. */
+/** A note of a chapter, its path from `NomSkillingmodules`. */
 type NoteEntry = {
     name: string;
     path: string;
 };
 
-/** A chapter with its notes, as the reader sends it. */
 type Chapter = {
     title: string;
     notes: NoteEntry[];
 };
 
 /**
- * A module with its chapters, as the reader sends it,
- * in the order of the list of the modules, see `menuRead` in `reader/notes.ts`.
- *
- * - `semester`: The semester it stands under in the list:
- *   for a module of the semester that of today, else the last I took it in.
- * - `chapters`: Its chapters that hold notes.
+ * A module with its chapters that hold notes.
+ * - `semester`: Today's semester for a module of it, else the last I took it in.
  */
 export type NotesModule = {
     name: string;
@@ -75,10 +55,7 @@ export type NotesModule = {
     chapters: Chapter[];
 };
 
-/**
- * Makes a folder of the tree that folds, its name whole as its tooltip,
- * its entries to go into its last child.
- */
+/** Makes a folder of the tree, its entries to go into its last child. */
 export function folderOf(name: string): HTMLDetailsElement {
     const folder: HTMLDetailsElement = document.createElement("details");
     const summary: HTMLElement = document.createElement("summary");
@@ -98,27 +75,20 @@ export function noteAddressOf(path: string, heading: string): string {
     return `${address}#${encodeURIComponent(heading)}`;
 }
 
-/**
- * Builds the address of the page of a module in the scripts view,
- * see `../editor/overview.ts`, or of one of its chapters.
- */
+/** Builds the address of the overview of a module or one of its chapters. */
 export function overviewAddressOf(module: string, chapter: string): string {
     const address: string = `/scripts?module=${encodeURIComponent(module)}`;
     if (chapter === "") return address;
     return `${address}&chapter=${encodeURIComponent(chapter)}`;
 }
 
-/**
- * Builds the address of a folder of my modules in the scripts view,
- * see `../editor/folder.ts`.
- */
+/** Builds the address of a folder of my modules in the scripts view. */
 export function folderAddressOf(path: string): string {
     return `/scripts?folder=${encodeURIComponent(path)}`;
 }
 
 /**
- * Finds the place in `NomWorkspace` a relative link of a file leads to,
- * as VSCodium follows it, `%20` and the like decoded, as the reader reads a link.
+ * Finds the place in `NomWorkspace` a relative link of a file leads to, as VSCodium follows it, decoded.
  * `null` for a link from `/` or one leading out of `NomWorkspace`.
  */
 export function linkPlaceOf(file: string, link: string): string | null {
@@ -142,11 +112,8 @@ export function linkPlaceOf(file: string, link: string): string | null {
 }
 
 /**
- * Builds the address the dashboard opens a place of `NomWorkspace` at,
- * see {@link linkPlaceOf}: a Markdown or `.ics` file of my new system in the editor,
- * a note of my modules in the scripts view, the folder of a module as its overview;
- * empty for any other place, like a PDF or my old system,
- * which opens only on the computer.
+ * Builds the address the dashboard opens a place of `NomWorkspace` at.
+ * Empty for a place that opens only on the computer, like a PDF or my old system.
  */
 export function placeAddressOf(place: string, heading: string): string {
     const parts: string[] = place.split("/");
@@ -167,12 +134,10 @@ export function placeAddressOf(place: string, heading: string): string {
 }
 
 /**
- * Makes a folder or file of `NomManageplannings`: a folder with its path,
- * so it opens again once the tree is loaded anew, see {@link filesAgain};
- * a file that opens as a link to it in the editor,
- * cut in its middle where it is too long, so its ending stays,
- * see `middleCutPut` in `../day/choices.ts`;
- * any other file faint, opening nothing, its tooltip saying why.
+ * Makes a folder or file of `NomManageplannings`.
+ * A folder keeps its path, so it opens again once the tree is loaded anew.
+ * A file is cut in its middle where it is too long, so its ending stays.
+ * A file that does not open shows faint, its tooltip saying why.
  */
 function fileNodeOf(node: FileNode): HTMLElement {
     if (node.folder) {
@@ -198,15 +163,9 @@ function fileNodeOf(node: FileNode): HTMLElement {
 }
 
 /**
- * Folds the outline of the note shown, or the blocks of a section,
- * away on a click on its entry, as a folder closes,
- * and opens it again on a further click,
- * the note staying open: `tree-folded` hides the outline below it, see `./notes.css`,
- * and stays on it while the outline is built anew, see {@link outlineShow}.
- * A click on another note, on a note without an outline,
- * or with a key held, acts as usual.
- * - {@link Event#stopPropagation}: Keeps the click from the tree,
- *   which would scroll the note to its top, see `treeClick` in `../editor/editor.ts`.
+ * Folds the outline of the note shown away on a click on its entry, as a folder, the note staying open.
+ * A click on another note, on a note without an outline, or with a key held, acts as usual.
+ * The click never reaches the tree, which would scroll the note to its top.
  */
 function outlineFold(event: MouseEvent): void {
     const entry: HTMLElement = event.currentTarget as HTMLElement;
@@ -224,12 +183,9 @@ function outlineFold(event: MouseEvent): void {
 }
 
 /**
- * Makes a module, shown once it is picked, see {@link chapterShow}:
- * its names and its group as data, so it can be picked, see {@link choiceListOf},
- * the group `Other` for one without semester;
- * its chapters in it, their notes a plain list, named without `.md` as in Obsidian;
- * a module without chapter notes, like most of my earlier modules,
- * holds a calm `No notes yet`.
+ * Makes a module with its chapters, shown once it is picked, the group `Other` for one without semester.
+ * Notes are named without `.md` as in Obsidian.
+ * A module without chapter notes holds a calm `No notes yet`.
  */
 function moduleNodeOf(module: NotesModule): HTMLDivElement {
     const element: HTMLDivElement = document.createElement("div");
@@ -268,22 +224,12 @@ function moduleNodeOf(module: NotesModule): HTMLDivElement {
 }
 
 /**
- * Makes a list of choices to pick from:
- * every module on the start of the scripts,
- * or the menu of a picker, see {@link pickerOf};
- * each choice a row, a link to the overview of what it picks,
- * see `../editor/overview.ts`, the one picked in the light text,
- * see `.tree-choice` in `./notes.css`.
- * A list of the modules, too many to see at once,
- * has the one search field of the page on top, see `searchFieldOf` in `../icons.ts`,
- * which compares as every search of the page, see `../search.ts`,
- * and Enter opens the first;
- * each group named small and grey above its first module.
- * - `show`: Shows the choices found from the top of the list,
- *   so the first one, which Enter opens, is in sight.
+ * Makes a list of choices, each a link to the overview of what it picks.
+ * A list of the modules, too many to see at once, has a search on top, and Enter opens the first.
+ * Each group is named small and grey above its first choice.
+ * - `show`: Scrolls to the top, so the first choice, which Enter opens, is in sight.
  *
- * @param groupOf - Gives the group of a choice,
- *   `null` for a list without search and groups, that of the chapters
+ * @param groupOf - `null` for a list without search and groups, that of the chapters
  * @returns The search field, none without groups, and the list
  */
 function choiceListOf(
@@ -325,16 +271,11 @@ function choiceListOf(
 }
 
 /**
- * Makes a picker of the tree of my modules:
- * a row, the name of what is picked, no arrow,
- * since a click on it opens its menu, the browser's own popover;
- * the menu holds its list of choices, made anew each time it opens,
- * see {@link choiceListOf}, the cursor in its search, the one picked scrolled into sight.
+ * Makes a picker of my modules, a row with the name picked that opens its menu as a popover.
+ * The menu makes its list anew each time it opens, the cursor in its search, the one picked in sight.
  *
- * @param kind - What it picks, `module` or `chapter`, which names its anchor,
- *   see `.tree-pick` in `./notes.css`
- * @param groupOf - Gives the group of a choice,
- *   `null` for a menu without search and groups, that of the chapters
+ * @param kind - `module` or `chapter`, which names its anchor
+ * @param groupOf - `null` for a menu without search and groups, that of the chapters
  */
 function pickerOf(
     kind: string,
@@ -365,12 +306,9 @@ function pickerOf(
 }
 
 /**
- * Shows one chapter of one module in the tree of my modules:
- * their names in their pickers, the notes of that chapter below,
- * every other module and chapter hidden;
- * a module without chapters shows its hint `No notes yet` and no picker of chapters.
+ * Shows one chapter of one module, their names in their pickers, every other module and chapter hidden.
  *
- * @param chapter - A chapter of it, `null` for a module without chapters
+ * @param chapter - `null` for a module without chapters, which shows no picker of chapters
  */
 export function chapterShow(tree: HTMLElement, module: HTMLElement, chapter: HTMLElement | null): void {
     tree.querySelectorAll<HTMLElement>(".tree-module").forEach((other: HTMLElement): void => {
@@ -391,13 +329,9 @@ export function chapterShow(tree: HTMLElement, module: HTMLElement, chapter: HTM
 }
 
 /**
- * Marks the file or note shown in the tree, and no other:
- * picks the module and chapter of a note, see {@link chapterShow},
- * opens every folder on the way to a file and scrolls the tree to it.
- * A folder of my new system shown, like one a skill links, opens with the folders on its way,
- * its files unmarked.
- * `null` while it is not in the tree,
- * like a note outside the chapter folders of its module.
+ * Marks the file or note shown, opens every folder on its way and scrolls the tree to it.
+ * A folder shown opens with the folders on its way, its files unmarked.
+ * `null` while it is not in the tree, like a note outside the chapter folders of its module.
  */
 export function treeMark(tree: HTMLElement, shown: string): HTMLElement | null {
     tree.querySelectorAll(".tree-file.shown").forEach((file: Element): void => file.classList.remove("shown"));
@@ -419,16 +353,11 @@ export function treeMark(tree: HTMLElement, shown: string): HTMLElement | null {
 }
 
 /**
- * Starts the search of my new system:
- * as I type, only the files whose path holds each typed word show,
- * every folder on the way to them open;
- * the folders open before the search open again once it is empty.
- * Enter opens the first file shown that opens, as a click on it does;
- * Escape empties the search by the browser itself, which then tells `input`,
- * and so does the tree loaded anew, see {@link filesAgain}.
- * - `opened`: Paths of the folders open before the search, `null` while nothing is typed;
- *   paths, not the folders themselves,
- *   so they still name the folders of the tree loaded anew.
+ * Starts the search of my new system, showing only the files whose path holds each typed word.
+ * The folders open before the search open again once it is empty.
+ * Enter opens the first file shown that opens.
+ * - `opened`: Paths of the folders open before the search, `null` while nothing is typed.
+ *   Paths, not folders, so they still name the folders of the tree loaded anew.
  */
 function searchStart(tree: HTMLElement, search: HTMLInputElement): void {
     let opened: Set<string> | null = null;
@@ -474,12 +403,8 @@ function searchStart(tree: HTMLElement, search: HTMLInputElement): void {
 }
 
 /**
- * Loads the folders and files of my new system anew, as they lie on the disk now,
- * like after Syncthing took away a conflict copy, see `../changes.ts`,
- * and puts them in place of those shown, the tree else as it was:
- * the folders open before open again, the file shown marked,
- * the search filters them for its text, and the tree stays scrolled where it was;
- * the search keeps its place, so typing in it goes on.
+ * Loads the files of my new system anew from the disk, the tree else as it was.
+ * The search keeps its place, so typing in it goes on.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -501,23 +426,13 @@ async function filesAgain(tree: HTMLElement, search: HTMLInputElement, shown: st
     tree.scrollTop = top;
 }
 
-/**
- * Place of a block of a section in its round, see `../editor/round.ts`:
- * done, done with its last result failed, like a Task after Wrong,
- * still to do in the round, the current step among them, or outside the round.
- */
+/** Place of a block of a section in its round, `wrong` for done with its last result failed. */
 export type BlockMark = "done" | "wrong" | "round" | "other";
 
-/**
- * Type word of a block of a section at the start of its heading,
- * with the dot and space after it.
- */
+/** Type word at the start of the heading of a block, with the dot and space after it. */
 export const kindRule: RegExp = /^(Definition|Theorem|Lemma|Algorithm|Example|Task)\.[ \t]+/;
 
-/**
- * Type words as the tree writes them, short, so the names beside them keep their room,
- * like `Def` for `Definition`; the note writes them out.
- */
+/** Type words written short, so the names beside them keep their room. */
 const kindShorts: Map<string, string> = new Map([
     ["Definition", "Def"],
     ["Theorem", "Thm"],
@@ -527,10 +442,7 @@ const kindShorts: Map<string, string> = new Map([
     ["Task", "Task"],
 ]);
 
-/**
- * Builds the name of a block for the list of its section:
- * its type word as a small grey box, then its name, rendered, without an older `(cold)`.
- */
+/** Builds the name of a block, its type word as a small grey box, without an older `(cold)`. */
 function blockNameOf(heading: string): Node[] {
     const kind: RegExpExecArray | null = kindRule.exec(heading);
     const name: HTMLSpanElement = document.createElement("span");
@@ -538,10 +450,7 @@ function blockNameOf(heading: string): Node[] {
     return kind === null ? [name] : [kindBoxOf(kind[1]), name];
 }
 
-/**
- * Builds the small grey box of a type word, short, see {@link kindShorts}
- * and `.block-kind` in `../base.css`.
- */
+/** Builds the small grey box of a type word. */
 function kindBoxOf(kind: string): HTMLSpanElement {
     const box: HTMLSpanElement = document.createElement("span");
     box.className = "block-kind";
@@ -550,26 +459,16 @@ function kindBoxOf(kind: string): HTMLSpanElement {
 }
 
 /**
- * Builds the list of the blocks of a section in their order, each linking to its heading:
- * an Example or a Task done with a check after it,
- * or with a cross, the one its heading line has, once its last result failed;
- * theory, which is never right or wrong, only done, with a check in a ring,
- * the close of a round in the head of the editor;
- * the one shown in the light text of what is shown, where I am,
- * one still to do in the round grey, one outside the round fainter.
- * Every block of the section stands in it, never hidden without a trace:
- * once two or more blocks of one kind are outside the round,
- * like the Examples and Tasks round 0 does not need,
- * they fold into one grey line of their kind after its last block,
- * like `Task` boxed and `7 more`, the line of the Tasks with the day the next one comes,
- * which opens them on a click, as a folder;
- * one alone stays a line of its own, since folding it saves no room.
- * A line I opened stays open while the list is built anew,
- * and the one holding the block shown opens.
+ * Builds the list of the blocks of a section, each linking to its heading.
+ * An Example or Task done gets a check, a cross once its last result failed.
+ * Theory is never right or wrong, so done gets a check in a ring.
+ * The one shown stands light, one still to do grey, one outside the round fainter.
+ * Every block stands in it, never hidden without a trace.
+ * Two or more of one kind outside the round fold into one line `7 more` after the last of the kind.
+ * One alone stays a line of its own, since folding it saves no room.
+ * The line of the Tasks shows the day the next one comes.
  *
- * @param shown - Heading of the block shown, see `roundShownOf` in `../editor/round.ts`
  * @param opened - Type words whose lines were open in the list before
- * @param next - The day the next Task comes, see `roundNextOf` in `../editor/round.ts`
  */
 export function roundListOf(
     path: string,
@@ -641,25 +540,15 @@ export function roundListOf(
 }
 
 /**
- * Puts the outline of the note shown under its entry in the tree, as Obsidian's outline:
- * each heading `##` in order, linking to it,
- * each Example under the block above it that is no task,
- * which then folds its tasks by its arrow and still links to its heading by its name;
- * tasks named without their type word, formulas rendered as in the note.
- * A block without tasks below it stays a plain link,
- * and so does a task without such a block above it;
- * a cold task, a `Task.`, in a note written the older way `Task. … (cold)`,
- * named also without `(cold)`, stands alone, at the end of its section;
- * there a plain `Task.` and a `Completion.` stand as an Example.
- * The outline put before goes; a block I folded in it stays folded.
- * A section shows the blocks of its round instead, see {@link roundListOf}.
- * - `block`: Link of the last block that is no task,
- *   until its first task makes it a folder.
- * - `tasks`: Place of the tasks below that block,
- *   the outline itself before the first block.
+ * Puts the outline of the note shown under its entry, as Obsidian's outline, each heading `##` a link.
+ * Each Example stands under the block above it, which then folds its tasks.
+ * A cold `Task.` stands alone at the end of its section.
+ * In a note of the older way `Task. … (cold)`, a plain `Task.` and a `Completion.` stand as an Example.
+ * A block I folded stays folded.
+ * - `block`: Link of the last block that is no task, until its first task makes it a folder.
+ * - `tasks`: Place of the tasks below that block, the outline itself before the first block.
  *
- * @param round - Headings of the blocks of a section with their places in its round,
- *   `null` for any other note
+ * @param round - The blocks of a section with their places in its round, `null` for any other note
  */
 export function outlineShow(
     tree: HTMLElement,
@@ -732,21 +621,15 @@ export function outlineShow(
     entry.after(outline);
 }
 
-/** A root of the tree, an area of its own in the rail: my modules or my new system. */
+/** A root of the tree, an area of its own in the rail. */
 export type TreeRoot = "NomSkillingmodules" | "NomManageplannings";
 
 /**
- * Loads one root of the tree from the reader and shows it, see the top of this file,
- * those of my new system loaded anew after every change of its files,
- * see {@link filesAgain}, the file or note shown marked, see {@link treeMark}.
- * In the modules, while none is shown, the module asked for is picked,
- * like the module of a skill entry clicked in the day,
- * see `../skill/links.ts`, with its first chapter;
- * else none, the start then showing the search and every module in place of the pickers.
- * - `moduleOf`: Gives the name of the folder of the module picked,
- *   for the address of the overview of a chapter.
+ * Loads one root of the tree and shows it, my new system loaded anew after every change of its files.
+ * While no note is shown, the module asked for is picked with its first chapter.
+ * Without one, the search and every module stand in place of the pickers.
  *
- * @param module - Name of the folder of the module to open while none is shown
+ * @param module - Folder of the module to open while none is shown
  * @throws {Error} - When the reader cannot answer
  */
 export async function treeShow(tree: HTMLElement, root: TreeRoot, shown: string, module: string): Promise<void> {

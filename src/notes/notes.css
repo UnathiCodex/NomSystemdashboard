@@ -1,9 +1,6 @@
-/* Tree: own column with a line beside it, scrolls alone, like Obsidian's file explorer,
-   the anchor of the menus of its pickers, which open beside it.
+/* Tree: own column with a line beside it, scrolls alone, like Obsidian's file explorer.
    It scrolls without a scrollbar, since I know I can scroll it.
-   The search and the rows 0.75rem from the rail and from its line alike,
-   as the rows of the sidebar of the Claude app,
-   since the line already parts the tree from the page */
+   Its rows stand as far from the rail as from its line, since the line already parts it from the page */
 .notes-tree {
     --tree-row-padding: 1rem;
     anchor-name: --tree;
@@ -15,9 +12,7 @@
     line-height: var(--tree-row-height);
 }
 
-/* Name of the root of the tree on top, a heading that never folds,
-   one control high, so it stands level with the first icon of the rail,
-   as the date of the day does */
+/* Name of the root on top, one control high, so it stands level with the first icon of the rail */
 .tree-root {
     margin: 0 0 0.375rem;
     padding: 0 var(--tree-row-padding);
@@ -26,8 +21,7 @@
     line-height: var(--control-height);
 }
 
-/* The name of my modules on top, a link to their start, see `treeShow` in `tree.ts`,
-   looking as the heading it is */
+/* The name of my modules on top, a link to their start looking as the heading it is */
 .tree-root-link {
     color: inherit;
     text-decoration: none;
@@ -37,8 +31,7 @@
     color: var(--text-muted);
 }
 
-/* Search of my new system below its root, and of my modules on their start,
-   the one search field of the page, see `.search-field` in `../base.css` */
+/* Search of the tree below its root */
 .notes-tree .search-field {
     height: calc(var(--tree-row-height) + 0.5rem);
     margin: 0.1875rem 0 0.75rem;
@@ -54,9 +47,7 @@
     display: none;
 }
 
-/* Names in the tree each on one line, one too long ending in dots,
-   a file of my new system cut in its middle instead, see `tree.ts`;
-   rows a little apart, so their greys never touch */
+/* Names each on one line, rows a little apart, so their greys never touch */
 .tree-folder > summary,
 .tree-file,
 .tree-pick,
@@ -71,10 +62,8 @@
     cursor: pointer;
 }
 
-/* Pickers of my modules right below the root, see `pickerOf` in `tree.ts`,
-   as the switcher of a workspace: two lines of plain text, no grey and no frame,
-   the module in bold, its chapter right below it;
-   no arrow, since a click on a line opens its menu */
+/* Pickers of my modules as the switcher of a workspace, the module in bold, its chapter below.
+   No arrow, since a click on a line opens its menu */
 .tree-pick,
 .tree-choice {
     width: 100%;
@@ -99,17 +88,14 @@
     anchor-name: --tree-chapter;
 }
 
-/* A choice, a module or a chapter in a menu or a module on the start of my modules,
-   see `choiceListOf` in `tree.ts` */
+/* A choice, a module or a chapter */
 .tree-choice {
     color: var(--text-muted);
     text-decoration: none;
 }
 
-/* Menu of a picker right beside the tree, over the note,
-   its first row level with the name on the picker,
-   so it opens next to what I clicked and the tree stays in sight;
-   as wide as its longest name, so no name is cut */
+/* Menu of a picker beside the tree, level with the picker, so the tree stays in sight.
+   As wide as its longest name, so no name is cut */
 .tree-menu {
     --tree-row-padding: 0.5rem;
     position: fixed;
@@ -148,9 +134,7 @@
     margin-bottom: 0;
 }
 
-/* Menu of the modules, see `pickerOf` in `tree.ts`: as wide as the tree,
-   so it keeps its width while I type;
-   the search on top staying while the modules scroll */
+/* Menu of the modules as wide as the tree, so it keeps its width while I type */
 .tree-menu-module:popover-open {
     display: flex;
     flex-direction: column;
@@ -167,8 +151,7 @@
     overflow-y: auto;
 }
 
-/* A group of the modules named small and grey above its first module,
-   a thin grey line after its name, see `.picker-group` in `../day/choices.css` */
+/* A group of the modules named small and grey, a thin grey line after its name */
 .tree-group {
     display: flex;
     align-items: center;
@@ -190,8 +173,7 @@
     margin-top: 0;
 }
 
-/* Of my modules only the module and chapter picked, see `chapterShow` in `tree.ts`;
-   the notes in line with the names of the pickers */
+/* Of my modules only the module and chapter picked */
 .tree-module:not(.picked),
 .tree-chapter:not(.picked) {
     display: none;
@@ -201,10 +183,8 @@
     padding-left: var(--tree-row-padding);
 }
 
-/* Folder name with a grey arrow before it, turned down while open;
-   no room below it of its own,
-   since a folder keeps that room inside it even while closed,
-   so a closed folder stands as far from the next row as a note from the next */
+/* Folder name with a grey arrow before it, turned down while open.
+   No room below it, since a folder keeps that room inside it even while closed */
 .tree-folder > summary {
     margin-bottom: 0;
     color: var(--text-muted);
@@ -227,8 +207,7 @@
     rotate: 0deg;
 }
 
-/* Folders of my new system without an arrow, as the rows of my modules,
-   since a click opens or closes one anyway */
+/* Folders of my new system without an arrow, since a click opens or closes one anyway */
 .is-files .tree-folder > summary::before {
     content: none;
 }
@@ -237,32 +216,28 @@
     padding-left: var(--tree-row-padding);
 }
 
-/* Entries of a folder indented,
-   a grey guide line beside them under the folder's arrow, as in Obsidian */
+/* Entries of a folder indented, a grey guide line beside them, as in Obsidian */
 .tree-children {
     margin-left: calc(var(--tree-row-padding) + 0.25rem);
     padding-left: 0.25rem;
     border-left: 2px solid var(--guide);
 }
 
-/* Note name in line with the folder names after their arrow,
-   grey below the light text of the root and the pickers */
+/* Note name in line with the folder names after their arrow, grey */
 .tree-file {
     padding-left: calc(var(--tree-row-padding) + 1em);
     color: var(--text-muted);
     text-decoration: none;
 }
 
-/* A module without chapter notes says so, calm and grey,
-   in line with the names of the menu */
+/* A module without chapter notes says so, calm and grey */
 .tree-none {
     margin: 0.125rem 0;
     padding: 0 var(--tree-row-padding);
     color: var(--text-muted);
 }
 
-/* A block of the outline with its tasks below it:
-   its name links to its heading, while the arrow folds the tasks */
+/* A block of the outline with its tasks, its name a link while the arrow folds the tasks */
 .tree-outline .tree-folder > summary > .tree-file {
     display: inline;
     margin: 0;
@@ -270,9 +245,7 @@
     color: inherit;
 }
 
-/* The blocks of a section in its round, see `roundListOf` in tree.ts;
-   their type boxes close to the left edge of their row,
-   so they have air around them and the names keep room at the right */
+/* The blocks of a section in its round, their boxes close to the left, so the names keep room */
 .tree-round .tree-file {
     padding-left: 0.75rem;
 }
@@ -296,9 +269,8 @@
     color: var(--reading-marker);
 }
 
-/* The line of a kind whose blocks lie outside the round, see `roundListOf` in `tree.ts`,
-   without the arrow of a folder, since its words already say what a click does,
-   so its box stands in line with those of the blocks */
+/* The line of a kind whose blocks lie outside the round.
+   No arrow, since its words already say what a click does */
 .tree-round .tree-kind > summary {
     color: var(--reading-marker);
 }
@@ -324,11 +296,8 @@
     vertical-align: -0.2em;
 }
 
-/* The type word of a block in the tree, see `kindShorts` in `tree.ts`
-   and `.block-kind` in `../base.css`,
-   every box as wide as the widest word, `Task`,
-   so the names after them start in one line;
-   the same under the pointer, since the box itself is nothing to click */
+/* The type word of a block, every box as wide as `Task`, so the names after them start in one line.
+   The same under the pointer, since the box itself is nothing to click */
 .tree-round .block-kind {
     min-width: 3.75em;
     font-size: 0.8em;
@@ -339,8 +308,7 @@
     color: var(--reading-marker);
 }
 
-/* One sign only: the note or file shown, a block shown in its round, the choice picked,
-   and the entry under the pointer in the light text, no grey behind the row */
+/* One sign only, what is shown or picked or under the pointer in the light text */
 .tree-folder > summary:hover,
 .tree-file:hover,
 .tree-file:is(.shown, .tree-current),
@@ -348,21 +316,18 @@
     color: var(--text-main);
 }
 
-/* The outline of the note shown folded away by a click on its entry,
-   see `outlineFold` in `tree.ts` */
+/* The outline of the note shown folded away by a click on its entry */
 .tree-file.tree-folded + .tree-outline {
     display: none;
 }
 
-/* A file of my new system that does not open,
-   faint and not lighter under the pointer, see `tree.ts` */
+/* A file that does not open, faint and not lighter under the pointer */
 .tree-file.tree-closed {
     color: var(--reading-marker);
     cursor: default;
 }
 
-/* Text of a note, lines a bit higher than in my Obsidian;
-   an empty line as high as a line of its text */
+/* Text of a note, lines a bit higher than in my Obsidian */
 .markdown {
     --empty-line: calc(var(--reading-line-height) * 1rem);
     --code-room: 0.25rem;
@@ -374,23 +339,18 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
     overflow-wrap: break-word;
 }
 
-/* Blocks without room of their own above and below them,
-   so two blocks without an empty line between them in the note
-   stand right below each other;
-   `:where` keeps the room of an element of the page set by its class,
-   like the question of a card, see `.card-prompt` */
+/* Blocks without room of their own, so two blocks without an empty line stand right below each other.
+   `:where` keeps the room an element of the page gets by its class */
 .markdown :where(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote) {
     margin: 0;
 }
 
-/* Room above a block for the empty lines above it in the note, each one line high,
-   as in the editor, see `emptyLinesMade` and `htmlOf` in `markdown.ts` */
+/* Room above a block for the empty lines above it, each one line high as in the editor */
 .markdown [style*="--empty-lines"] {
     margin-top: calc(var(--empty-lines) * var(--empty-line));
 }
 
-/* Block under a heading folding by a click on its heading, the one place to click:
-   a solution closed until clicked, so I try the task first */
+/* Block folding by a click on its heading, a solution closed so I try the task first */
 .markdown details.fold > summary {
     list-style: none;
     cursor: pointer;
@@ -412,21 +372,18 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
     rotate: -90deg;
 }
 
-/* A block right below a closed block of its level without the empty lines between them,
-   so closed blocks stand close below each other as a list, as in the editor */
+/* Closed blocks stand close below each other as a list, as in the editor */
 .markdown details.fold:not([open]) + details.fold {
     margin-top: 0;
 }
 
-/* Row of a task under its heading in the text and lines of the page,
-   see `../skill/task.css` */
+/* Row of a task under its heading in the text and lines of the page */
 .markdown .task-row {
     font-size: var(--text-size);
     line-height: 1.5;
 }
 
-/* Headings by size as in my Obsidian, by weight and letter spacing as in Obsidian,
-   without room above them but that of the empty lines above them */
+/* Headings as in my Obsidian, without room above them but that of their empty lines */
 .markdown h1 {
     font-size: 1.5em;
     font-weight: 700;
@@ -457,8 +414,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
     font-weight: 600;
 }
 
-/* Lists as in Obsidian: each item 3 characters in,
-   2.25em inside an item of the same kind, items a little apart */
+/* Lists as in Obsidian, items a little apart */
 .markdown :is(ul, ol) {
     padding-left: 0;
 }
@@ -478,8 +434,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
     color: var(--reading-marker);
 }
 
-/* Bullet as Obsidian draws it:
-   a small dot in the same grey, 0.8em before the text, in the middle of the first line */
+/* Bullet as Obsidian draws it, a small dot in the middle of the first line */
 .markdown ul {
     list-style: none;
 }
@@ -495,9 +450,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
     background: var(--reading-marker);
 }
 
-/* List inside an item with a thin grey line down from the item's bullet,
-   as Obsidian's indentation guides, on down to the item's end,
-   like a spacer line `⠀` that ends a sub-point but stays in the item */
+/* List inside an item with a thin grey guide line down from its bullet to the item's end */
 .markdown li > :is(ul, ol),
 .markdown li > :is(ul, ol) ~ * {
     position: relative;
@@ -513,8 +466,7 @@ d='M14 9 L3 9 3 29 23 29 23 18 M18 4 L28 4 28 14 M28 4 L14 18'/></svg>");
     border-left: 1px solid var(--reading-guide);
 }
 
-/* Callout as in my Obsidian:
-   grey card, Obsidian's pencil before its title, info's circle for an info */
+/* Callout as in my Obsidian, a grey card with Obsidian's icon before its title */
 .markdown .callout {
     --callout-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' \
 viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' \
@@ -534,8 +486,7 @@ stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><
 d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
 }
 
-/* Title of a callout grey and bold in Obsidian's tighter lines,
-   icon and title side by side */
+/* Title of a callout grey and bold in Obsidian's tighter lines */
 .markdown .callout-title {
     display: flex;
     gap: 0.25rem;
@@ -549,8 +500,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     font-weight: 600;
 }
 
-/* Icon before the title and fold arrow after it:
-   Obsidian's icons in the title's grey, one line high */
+/* Icon before the title and fold arrow after it, one line high */
 .markdown .callout-title::before,
 .markdown summary.callout-title::after {
     content: "";
@@ -561,8 +511,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     mask: var(--callout-icon) center / 1.125rem no-repeat;
 }
 
-/* Foldable callout: Obsidian's arrow down at the end of its title,
-   turned right while closed */
+/* Foldable callout, its arrow turned right while closed */
 .markdown summary.callout-title {
     list-style: none;
     cursor: pointer;
@@ -582,22 +531,19 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     margin-bottom: 0;
 }
 
-/* Content of a callout never scrolls,
-   only a formula too wide for it scrolls sideways on its own, see the formula below */
+/* Content of a callout never scrolls, only a formula too wide for it scrolls on its own */
 .markdown .callout-content {
     margin-bottom: 1em;
 }
 
-/* Quote that is no callout and embedded note:
-   a line in my accent's grey beside it, as in Obsidian */
+/* Quote and embedded note with a line in my accent's grey beside it */
 .markdown blockquote,
 .markdown .markdown-embed {
     padding-left: 1.5rem;
     border-left: 2px solid var(--reading-accent);
 }
 
-/* Formula on a line of its own, at the left as in my Obsidian,
-   one wider than the page or its callout scrolls sideways on its own */
+/* Formula on a line of its own at the left, one too wide scrolls sideways on its own */
 .markdown .math-block mjx-container[display="true"] {
     margin-block: 0.4em;
     overflow-x: auto;
@@ -605,16 +551,13 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     text-align: left;
 }
 
-/* Formula within a line with the punctuation right after it on one line,
-   so the punctuation never stands alone at the start of the next line,
-   see `mathInline` in `markdown.ts` and `mathLook` in `../editor/preview.ts` */
+/* Formula with its punctuation on one line, so the punctuation never starts the next line alone */
 .markdown .math-unbroken {
     white-space: nowrap;
 }
 
-/* Tables with grey lines, their text a step smaller than that around them,
-   so more of them shows; every row one line, never a cell broken,
-   so one wider than the page scrolls sideways on its own, see below */
+/* Tables with grey lines, their text a step smaller, so more of them shows.
+   Every row one line, so one wider than the page scrolls sideways on its own */
 .markdown table {
     display: block;
     width: max-content;
@@ -625,10 +568,9 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     line-height: 1.3;
 }
 
-/* Table wider than the page, marked so by `BlockWidget` in `../editor/preview.ts`:
-   as high as all its rows, so the page scrolls down through it, and only sideways inside;
-   framed so its edges show where it cuts its columns;
-   its scrollbar on a track in the grey of a field, so it shows before I scroll */
+/* Table wider than the page, as high as its rows, so the page scrolls down through it.
+   Framed, so its edges show where it cuts its columns.
+   Its scrollbar on a grey track, so it shows before I scroll */
 .markdown table.is-wide {
     outline: 1px solid var(--line);
     outline-offset: -1px;
@@ -643,11 +585,8 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     background: var(--chosen-line);
 }
 
-/* Button that opens a table whole over the file, to edit it, see `../editor/table.ts`:
-   at the top right of the table, left of the scrollbar of a table too wide,
-   on the ground of the page, so no text shows through it;
-   shown while the pointer or the keyboard is on the table,
-   always on a screen without a pointer, like a phone */
+/* Button that opens a table over the file to edit it, on the ground of the page, so no text shows through.
+   Shown while the pointer or the keyboard is on the table, always on a screen without a pointer */
 .table-frame {
     position: relative;
     width: max-content;
@@ -698,9 +637,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     }
 }
 
-/* Table opened over the whole page,
-   as Notion opens a page in full, see `../editor/table.ts`,
-   above everything of the page, the rail and the tree too */
+/* Table opened over the whole page, as Notion opens a page in full */
 .table-viewer {
     position: fixed;
     inset: 0;
@@ -730,12 +667,8 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     margin: var(--top-room) var(--top-room) var(--top-room) var(--control-gap);
 }
 
-/* The spreadsheet, Jspreadsheet's, see `../editor/table.ts`,
-   in my greys by the variables of its themes, scrolling both ways inside;
-   every row one line, which a column made narrower by hand cuts with `…`;
-   the numbers of the rows and the first column staying at the left
-   while the rest scrolls sideways,
-   the first column right of the 50 px Jspreadsheet gives the numbers */
+/* The spreadsheet of Jspreadsheet in my greys, every row one line.
+   The numbers and the first column stay at the left, the first right of the 50 px of the numbers */
 .table-viewer-body {
     grid-column: 1 / -1;
     align-self: stretch;
@@ -835,17 +768,13 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     color: var(--reading-link);
 }
 
-/* In the menu of a row, see `menuShow` in `../editor/table.ts`,
-   an item faint where it cannot act,
-   like moving the first row up */
+/* In the menu of a row an item faint where it cannot act */
 .table-row-menu .menu-item:disabled {
     opacity: 0.4;
     cursor: default;
 }
 
-/* The measure of a column, see `widthOf` in `../editor/table.ts`:
-   a cell as the spreadsheet's, semibold as a head,
-   so a head and a cell both fit, never seen */
+/* The measure of a column, never seen, semibold so a head and a cell both fit */
 .table-viewer-probe {
     position: absolute;
     display: block;
@@ -855,12 +784,8 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     visibility: hidden;
 }
 
-/* A cell or head being edited: its text in a field over it,
-   as wide as its text, at least as the cell
-   and at most to the right edge of the spreadsheet, see `../editor/table.ts`;
-   over the cells beside and below it, a cell of the first column too,
-   which stays in place at the left one step over the other cells:
-   as exact as that rule and after it, so it wins */
+/* A cell being edited, its text in a field over the cells beside and below it.
+   As exact as the rule of the first column and after it, so it wins */
 .table-viewer .jss_worksheet > :is(thead, tbody) > tr > td:has(> .table-cell-input) {
     overflow: visible;
     z-index: 3;
@@ -891,8 +816,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     resize: none;
 }
 
-/* A cell of a table of a note on one line,
-   see `.markdown table` above, cut by `…` past the most a column takes, see below */
+/* A cell of a table on one line, cut by `…` past the most a column takes */
 .markdown :is(th, td) {
     min-width: 6ch;
     padding: 0.25rem 0.5rem;
@@ -904,20 +828,14 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     vertical-align: top;
 }
 
-/* Every column of a table at most 48 zeros of its text wide,
-   in a note as in the spreadsheet, see `widthOf` in `../editor/table.ts`:
-   more than a module name of 40 characters, the most a folder name of mine has,
-   so every name of `Modules.md` shows whole;
-   a longer text on its line cut by `…` and shown whole under the pointer,
-   see `cellTitleShow` there */
+/* Every column at most 48 zeros wide, more than my longest folder name of 40 characters.
+   A longer text is cut by `…` and shown whole under the pointer */
 .markdown :is(th, td),
 .table-viewer-probe {
     max-width: 48ch;
 }
 
-/* In a cell of a table the arrow of a link out of my modules as a box of its own,
-   which the `…` of a cell cut takes away with the text,
-   never left half in the room at the end of the cell */
+/* The arrow of a link out in a cell a box of its own, so the `…` never leaves half of it */
 :is(.markdown :is(th, td), td.markdown) a[href]:not(.internal-link, .task-row a) {
     padding-right: 0;
     background: none;
@@ -937,9 +855,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     font-weight: 600;
 }
 
-/* Code within a line and code blocks on a grey ground,
-   long lines wrapped, as in Obsidian;
-   a code block too wide scrolls sideways, never up and down */
+/* Code on a grey ground, long lines wrapped, a block too wide scrolls only sideways */
 .markdown code {
     padding: 0.15em 0.3em;
     border-radius: 0.25rem;
@@ -959,8 +875,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     white-space: pre-wrap;
 }
 
-/* Two code blocks right below each other keep the room of both,
-   as the lines of two blocks being edited, see `.cm-code-first` in `../editor/editor.css` */
+/* Two code blocks right below each other keep the room of both, as in the editor */
 .markdown pre + pre,
 .code-frame + .code-frame > pre {
     margin-top: calc(2 * var(--code-room));
@@ -971,8 +886,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     background: none;
 }
 
-/* Code in the colors of the theme of my editor, see `code.ts` and `reader/theme.ts`,
-   every other word and every code block without a language in the color of text */
+/* Code in the colors of the theme of my editor, the rest in the color of text */
 :is(.markdown pre code, .cm-code-block) {
     color: var(--code-text);
 }
@@ -1045,8 +959,7 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     color: var(--code-attributeName);
 }
 
-/* Language of a code block in the editor, picked from my list, see `code.ts`,
-   at the top right of the block, like the button of a table, see `.table-open` */
+/* Language of a code block in the editor at the top right of the block */
 .code-frame {
     position: relative;
 }
@@ -1081,9 +994,8 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     max-width: 100%;
 }
 
-/* Links in my accent's lighter grey without a line, as in my Obsidian;
-   a link that leads nowhere faded, and so is one that opens only on the computer,
-   see `../editor/preview.ts` */
+/* Links in my accent's lighter grey without a line.
+   A link that leads nowhere or opens only on the computer faded */
 .markdown a {
     color: var(--reading-link);
     text-decoration: none;
@@ -1105,16 +1017,14 @@ d='M12 16v-4'/><path d='M12 8h.01'/></svg>");
     text-decoration: underline dotted;
 }
 
-/* Link out of my modules with Obsidian's arrow out of a box after it, `--arrow-out`,
-   also in the editor, see `../editor/preview.ts`, not the links of the row of a task */
+/* Link out of my modules with Obsidian's arrow out of a box, not in the row of a task */
 .markdown a[href]:not(.internal-link, .task-row a),
 .markdown .cm-external {
     padding-right: 0.9em;
     background: var(--arrow-out) right 0.25em / 0.825em no-repeat;
 }
 
-/* Rules as Obsidian's thick grey lines, each in the middle of a line of its own,
-   as its `---` stands in the editor */
+/* Rules as Obsidian's thick grey lines, each in the middle of a line of its own */
 .markdown hr {
     height: var(--empty-line);
     margin: 0;
