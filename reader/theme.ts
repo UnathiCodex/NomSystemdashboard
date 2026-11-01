@@ -1,11 +1,8 @@
 /**
  * ## Theme
  *
- * The colors of my code blocks, read from the theme of my editor, IntelliJ Dark,
- * so a color changed there changes in the dashboard too.
- * The theme colors by TextMate scopes, for every language alike.
- * Each kind of `../src/notes/code.ts` takes the color of the scope that stands for it,
- * as VS Code finds it: the rule whose scope is the longest start of it.
+ * The colors of my code blocks, read from the theme of my editor, IntelliJ Dark.
+ * Each kind takes the color of the rule whose TextMate scope is the longest start of its scope, as in VS Code.
  */
 
 import { readFileSync } from "node:fs";
@@ -13,17 +10,13 @@ import { join } from "node:path";
 
 import { vault } from "./sources.ts";
 
-/** A rule of the theme: the scopes it colors, one or several, and its color. */
+/** A rule of the theme, its scopes and its color. */
 type TokenColor = {
     scope?: string | string[];
     settings: { foreground?: string };
 };
 
-/**
- * The kinds of words of my code blocks, as their classes name them,
- * each with the scope of the theme that stands for it.
- * `text`, every other word, takes the color of text of the theme.
- */
+/** The kinds of words of my code blocks, each with its scope, every other word `text`. */
 const scopes: { [kind: string]: string } = {
     keyword: "keyword.control",
     atom: "constant.language",
@@ -46,8 +39,7 @@ const scopes: { [kind: string]: string } = {
 
 /**
  * Reads the colors of my code blocks from the theme, none of a kind without one.
- * A rule for a scope within another, like `meta.function-call string`,
- * counts for no scope alone.
+ * A rule for a scope within another counts for no scope alone.
  */
 export function codeColorsRead(): { [kind: string]: string } {
     const theme: { colors: { [name: string]: string }; tokenColors: TokenColor[] } = JSON.parse(
