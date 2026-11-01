@@ -16,7 +16,7 @@
 
 import { exerciseChangeSend, exerciseDelete, exerciseSend, mineLoad, workoutDelete, workoutSend } from "./mine.ts";
 import { bracketsWatch, buttonOf, elementOf, headingOf, plusOf } from "../food/foods.ts";
-import { editButtonsOf, editFieldOf, inlineFieldOf, listLineOf } from "../food/search.ts";
+import { inlineFieldOf, listLineOf } from "../food/search.ts";
 import { panelClose, panelOf, panelSearchOpen, panelShow } from "../food/panel.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
@@ -129,30 +129,13 @@ export function ruleTextOf(exercise: { sets: string; reps: string; kg: string })
         .join(" · ");
 }
 
-/** Form inside a list as the form of a new food, a click on a name putting the cursor into its field. */
-function formOf(rows: [string, HTMLElement][], cancelled: () => void, saved: () => void): HTMLElement {
-    const form: HTMLElement = elementOf("div", "food-form food-detail", "");
-    const facts: HTMLElement = elementOf("div", "food-facts", "");
-    rows.forEach(([name, field]: [string, HTMLElement]): void => {
-        const label: HTMLElement = elementOf("span", "food-fact", name);
-        label.addEventListener("click", (): void =>
-            (field instanceof HTMLInputElement ? field : field.querySelector("input"))?.focus(),
-        );
-        if (field instanceof HTMLInputElement) {
-            field.className = "food-inline food-inline-new";
-            field.placeholder = "";
-        }
-        facts.append(label, field);
-    });
-    form.append(facts, editButtonsOf(cancelled, saved));
-    return form;
-}
-
 /**
  * Section of my workouts.
+ * The plus of the heading opens the panel of a new workout, its name typed first, then its parts.
  * - `open`: Name of the workout in the panel in small letters, empty for none.
  * - `asked`: Name of the workout asking in small letters, empty for none.
  * - `fresh`: Name of a new workout not yet written, as it has no part yet, dropped when its panel closes.
+ *   Empty while its name is not typed yet, `null` for none.
  * - `send`: Sends a workout, a workout renamed staying open under its name as the reader cleans it.
  */
 function workoutsSectionOf(): HTMLElement {
@@ -161,12 +144,11 @@ function workoutsSectionOf(): HTMLElement {
     const list: HTMLElement = elementOf("div", "dish-list", "");
     let open: string = "";
     let asked: string = "";
-    let fresh: string = "";
-    let naming: boolean = false;
+    let fresh: string | null = null;
     const panel: Panel = panelOf(section, (): void => {
         open = "";
-        if (fresh === "") return;
-        fresh = "";
+        if (fresh === null) return;
+        fresh = null;
         show();
     });
 
@@ -178,27 +160,27 @@ function workoutsSectionOf(): HTMLElement {
     ): void => {
         workoutSend(name ?? workout.name, parts, name === undefined ? undefined : workout.name, short)
             .then((sent: Mine): void => {
-                if (workout.name === fresh) fresh = "";
+                if (workout.name === fresh) fresh = null;
                 if (name !== undefined) open = typedNameOf(name).toLowerCase();
                 mineShow(sent);
             })
             .catch(failed);
     };
     const begin: (name: string) => void = (name: string): void => {
+        if (typedNameOf(name) === "") return;
         fresh = typedNameOf(name);
-        if (fresh === "") return;
-        naming = false;
         open = fresh.toLowerCase();
         search.value = "";
         show();
         panelSearchOpen(panel);
     };
     const show: () => void = (): void => {
-        if (mine.workouts.some((workout: Workout): boolean => workout.name.toLowerCase() === fresh.toLowerCase()))
-            fresh = "";
-        const blank: Workout = { name: fresh, short: "", parts: [] };
+        const name: string = fresh ?? "";
+        if (mine.workouts.some((workout: Workout): boolean => workout.name.toLowerCase() === name.toLowerCase()))
+            fresh = null;
+        const blank: Workout = { name: fresh ?? "", short: "", parts: [] };
         const shown: Workout[] = [
-            ...(fresh === "" ? [] : [blank]),
+            ...(blank.name === "" ? [] : [blank]),
             ...mine.workouts.filter((workout: Workout): boolean =>
                 matchesAll(
                     [workout.name, ...workout.parts.map((part: Part): string => part.name)].join(" "),
@@ -213,9 +195,9 @@ function workoutsSectionOf(): HTMLElement {
             mine.workouts.some((workout: Workout): boolean => workout.name.toLowerCase() === typed.toLowerCase())
                 ? []
                 : [newOf(`New workout “${typed}”`, "New workout, its parts picked next", (): void => begin(typed))];
-        list.replaceChildren(...(naming ? [nameFormOf()] : []), ...rows, ...plus);
-        const opened: Workout | undefined = [blank, ...mine.workouts].find(
-            (workout: Workout): boolean => workout.name !== "" && workout.name.toLowerCase() === open,
+        list.replaceChildren(...rows, ...plus);
+        const opened: Workout | undefined = [...(fresh === null ? [] : [blank]), ...mine.workouts].find(
+            (workout: Workout): boolean => workout.name.toLowerCase() === open,
         );
         if (opened === undefined) panelClose(panel);
         else panelFill(opened);
@@ -224,7 +206,7 @@ function workoutsSectionOf(): HTMLElement {
         const key: string = workout.name.toLowerCase();
         const remove: HTMLButtonElement = removeOf(`Remove ${workout.name}`, asked === key, (): void => {
             if (workout.parts.length === 0) {
-                fresh = "";
+                fresh = null;
                 show();
             } else if (asked !== key) {
                 asked = key;
@@ -274,19 +256,19 @@ function workoutsSectionOf(): HTMLElement {
             [
                 ["Name", rename],
                 ...(workout.parts.length === 0 ? [] : [["Short", short] as PanelRow]),
-                ["Parts", parts, partSearchOf(workout, (part: Part): void => send(workout, [...workout.parts, part]))],
+                ...(workout.name === ""
+                    ? []
+                    : [
+                          [
+                              "Parts",
+                              parts,
+                              partSearchOf(workout, (part: Part): void => send(workout, [...workout.parts, part])),
+                          ] as PanelRow,
+                      ]),
             ],
             [],
         );
-    };
-    const nameFormOf: () => HTMLElement = (): HTMLElement => {
-        const close: () => void = (): void => {
-            naming = false;
-            show();
-        };
-        const name: HTMLInputElement = editFieldOf("", "Name", (): void => begin(name.value), close);
-        queueMicrotask((): void => name.focus());
-        return formOf([["Name", name]], close, (): void => begin(name.value));
+        if (workout.name === "") rename.focus();
     };
 
     search.addEventListener("input", show);
@@ -294,7 +276,8 @@ function workoutsSectionOf(): HTMLElement {
         headingOf(
             "Workouts",
             plusOf("New workout", (): void => {
-                naming = !naming;
+                fresh = "";
+                open = "";
                 show();
             }),
             "",
@@ -366,29 +349,42 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
 
 /**
  * Section of my exercises.
+ * The plus of the heading opens the panel of a new exercise, written once its name is typed.
  * - `asked`: Key of the variant asking, empty for none.
  * - `open`: Key of the variant in the panel, empty for none.
+ * - `fresh`: The new exercise in the panel, its values kept until its name is typed, `null` for none.
+ * - `add`: Writes an exercise with the values it has, then shows it in the panel.
  * - `panelFill`: Shows the rule of the exercise in the panel, each value written at once as it changes.
  */
 function exercisesSectionOf(): HTMLElement {
     const section: HTMLElement = elementOf("section", "food-dishes", "");
     const search: HTMLInputElement = document.createElement("input");
     const list: HTMLElement = elementOf("div", "dish-list sport-exercises", "");
+    const none: Part = { name: "", sets: "", reps: "", kg: "" };
     let asked: string = "";
-    let naming: boolean = false;
     let open: string = "";
+    let fresh: Part | null = null;
     const panel: Panel = panelOf(section, (): void => {
         open = "";
+        fresh = null;
     });
 
-    const add: (name: string) => void = (name: string): void => {
+    const add: (name: string, values: Part) => void = (name: string, values: Part): void => {
         const typed: string = typedNameOf(name);
         if (typed === "") return;
+        const exercise: Part = { ...values, name: typed };
+        // Typed in the panel of a new one, it opens only while that panel is still open, not after its check.
+        const typedInPanel: boolean = fresh !== null;
         exerciseSend(typed)
+            .then((sent: Mine): Promise<Mine> =>
+                variantKeyOf(exercise) === variantKeyOf({ ...none, name: typed })
+                    ? Promise.resolve(sent)
+                    : exerciseChangeSend({ ...none, name: typed }, exercise),
+            )
             .then((sent: Mine): void => {
-                naming = false;
+                if (!typedInPanel || fresh !== null) open = variantKeyOf(exercise);
+                fresh = null;
                 search.value = "";
-                open = variantKeyOf({ name: typed, sets: "", reps: "", kg: "" });
                 mineShow(sent);
             })
             .catch(failed);
@@ -407,7 +403,7 @@ function exercisesSectionOf(): HTMLElement {
                 ? []
                 : [
                       newOf(`New exercise “${typed}”`, "New exercise, empty, beside those of the same name", (): void =>
-                          add(typed),
+                          add(typed, none),
                       ),
                   ];
         const rows: HTMLElement[] = shown.map((exercise: Exercise): HTMLElement => {
@@ -432,29 +428,25 @@ function exercisesSectionOf(): HTMLElement {
             row.querySelector(".food-value")?.replaceChildren(ruleTextOf(exercise));
             return line;
         });
-        list.replaceChildren(...(naming ? [nameFormOf()] : []), ...rows, ...plus);
-        const opened: Exercise | undefined = mine.exercises.find(
-            (exercise: Exercise): boolean => variantKeyOf(exercise) === open,
-        );
+        list.replaceChildren(...rows, ...plus);
+        const opened: Exercise | undefined =
+            fresh ?? mine.exercises.find((exercise: Exercise): boolean => variantKeyOf(exercise) === open);
         if (opened === undefined) panelClose(panel);
         else panelFill(opened);
     };
-    const nameFormOf: () => HTMLElement = (): HTMLElement => {
-        const close: () => void = (): void => {
-            naming = false;
-            show();
-        };
-        const name: HTMLInputElement = editFieldOf("", "Name", (): void => add(name.value), close);
-        queueMicrotask((): void => name.focus());
-        return formOf([["Name", name]], close, (): void => add(name.value));
-    };
     const panelFill: (exercise: Exercise) => void = (exercise: Exercise): void => {
+        const name: HTMLInputElement = inlineFieldOf("", "Name", (): void => add(name.value, exercise));
         const send: (changes: Partial<Exercise>) => void = (changes: Partial<Exercise>): void => {
             const values: { sets: string; reps: string; kg: string } = {
                 sets: changes.sets ?? exercise.sets,
                 reps: changes.reps ?? exercise.reps,
                 kg: changes.kg ?? exercise.kg,
             };
+            if (fresh !== null) {
+                fresh = { ...fresh, ...values };
+                show();
+                return;
+            }
             exerciseChangeSend(exercise, values)
                 .then((sent: Mine): void => {
                     open = variantKeyOf({ name: exercise.name, ...values });
@@ -484,7 +476,7 @@ function exercisesSectionOf(): HTMLElement {
         panelShow(
             panel,
             [
-                ["Exercise", lineNameOf(exercise.name, "")],
+                fresh === null ? ["Exercise", lineNameOf(exercise.name, "")] : ["Name", name],
                 ["Sets", sets],
                 ["Reps", reps],
                 [
@@ -499,8 +491,9 @@ function exercisesSectionOf(): HTMLElement {
             ],
             [],
         );
-        // The name is no field, so its row shows no frame under the pointer.
-        panel.form.firstElementChild?.classList.add("panel-fixed");
+        // The name of an exercise written is no field, so its row shows no frame under the pointer.
+        if (fresh === null) panel.form.firstElementChild?.classList.add("panel-fixed");
+        else if (!panel.form.contains(document.activeElement)) name.focus();
     };
 
     search.addEventListener("input", show);
@@ -508,7 +501,7 @@ function exercisesSectionOf(): HTMLElement {
         headingOf(
             "Exercises",
             plusOf("New exercise", (): void => {
-                naming = !naming;
+                fresh = none;
                 show();
             }),
             "",

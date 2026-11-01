@@ -24,7 +24,7 @@ import {
     portionGramsOf,
     unitOf,
 } from "./foods.ts";
-import { editButtonsOf, editFieldOf, foodSearchOf, inlineFieldOf, listLineOf } from "./search.ts";
+import { foodSearchOf, inlineFieldOf, listLineOf } from "./search.ts";
 import { panelClose, panelOf, panelSearchOpen, panelShow } from "./panel.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Plus } from "lucide";
@@ -192,8 +192,10 @@ function gramsFieldOf(
 
 /**
  * The section of my meals in the food view, a click on a meal opening it in its panel.
+ * The plus of the heading opens the panel of a new meal, its name typed first, then its foods.
  * The first click on the `×` of a meal only asks, `Really remove?`.
  * A new meal stays only once its first food is picked, before that its `×` drops it as closing its panel does.
+ * - `fresh`: Name of the new meal, empty while not typed yet, `null` for none.
  * - `open`: Name of the meal in the panel in small letters.
  * - `asked`: Name of the meal asking in small letters.
  */
@@ -205,12 +207,11 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
     let dishes: Dish[] = [];
     let open: string = "";
     let asked: string = "";
-    let fresh: string = "";
-    let naming: boolean = false;
+    let fresh: string | null = null;
     const panel: Panel = panelOf(section, (): void => {
         open = "";
-        if (fresh === "") return;
-        fresh = "";
+        if (fresh === null) return;
+        fresh = null;
         show();
     });
 
@@ -237,8 +238,8 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
             .catch((error: unknown): void => console.error(error));
     };
     const begin: (name: string) => void = (name: string): void => {
+        if (mealNameOf(name) === "") return;
         fresh = mealNameOf(name);
-        naming = false;
         open = fresh.toLowerCase();
         search.value = "";
         show();
@@ -247,14 +248,22 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
     const taken: (name: string) => boolean = (name: string): boolean =>
         dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === name.toLowerCase());
     const show: () => void = (): void => {
-        if (taken(fresh)) fresh = "";
-        const blank: Dish = { name: fresh, short: "", foods: [], standard: [], kcal: null, portions: [], kinds: [] };
-        const shown: Dish[] = [...(fresh === "" ? [] : [blank]), ...dishesFound(dishes, search.value)];
+        if (fresh !== null && taken(fresh)) fresh = null;
+        const blank: Dish = {
+            name: fresh ?? "",
+            short: "",
+            foods: [],
+            standard: [],
+            kcal: null,
+            portions: [],
+            kinds: [],
+        };
+        const shown: Dish[] = [...(blank.name === "" ? [] : [blank]), ...dishesFound(dishes, search.value)];
         const rows: HTMLElement[] = shown.map((dish: Dish): HTMLElement => {
             const key: string = dish.name.toLowerCase();
             const remove: HTMLButtonElement = removeOf(`Remove ${dish.name}`, (): void => {
                 if (dish.foods.length === 0) {
-                    fresh = "";
+                    fresh = null;
                     show();
                     return;
                 }
@@ -283,15 +292,12 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
         const typed: string = mealNameOf(search.value);
         const plus: HTMLElement[] = typed === "" || taken(typed) ? [] : [newOf(typed)];
         list.replaceChildren(
-            ...(naming ? [nameFormOf()] : []),
             ...rows,
             ...plus,
-            ...(dishes.length === 0 && fresh === "" && plus.length === 0 && !naming
-                ? [elementOf("p", "food-none", "No meals yet")]
-                : []),
+            ...(rows.length === 0 && plus.length === 0 ? [elementOf("p", "food-none", "No meals yet")] : []),
         );
-        const opened: Dish | undefined = [blank, ...dishes].find(
-            (dish: Dish): boolean => dish.name !== "" && dish.name.toLowerCase() === open,
+        const opened: Dish | undefined = [...(fresh === null ? [] : [blank]), ...dishes].find(
+            (dish: Dish): boolean => dish.name.toLowerCase() === open,
         );
         if (opened === undefined) panelClose(panel);
         else panelFill(opened);
@@ -371,10 +377,11 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
             [
                 ["Name", rename],
                 ...(dish.foods.length === 0 ? [] : [["Short", short] as PanelRow]),
-                ["Foods", parts, search],
+                ...(dish.name === "" ? [] : [["Foods", parts, search] as PanelRow]),
             ],
             [error],
         );
+        if (dish.name === "") rename.focus();
     };
     const newOf: (name: string) => HTMLElement = (name: string): HTMLElement => {
         const button: HTMLButtonElement = buttonOf("picker-new", "", (): void => begin(name));
@@ -382,33 +389,13 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
         button.title = "New meal, its foods picked next";
         return button;
     };
-    const nameFormOf: () => HTMLElement = (): HTMLElement => {
-        const form: HTMLElement = elementOf("div", "food-form food-detail", "");
-        const facts: HTMLElement = elementOf("div", "food-facts", "");
-        const close: () => void = (): void => {
-            naming = false;
-            show();
-        };
-        const save: () => void = (): void => {
-            if (mealNameOf(name.value) !== "") begin(name.value);
-        };
-        const name: HTMLInputElement = editFieldOf("", "Name", save, close);
-        const label: HTMLElement = elementOf("span", "food-fact", "Name");
-        name.className = "food-inline food-inline-new";
-        name.placeholder = "";
-        label.addEventListener("click", (): void => name.focus());
-        facts.append(label, name);
-        form.append(facts, editButtonsOf(close, save));
-        queueMicrotask((): void => name.focus());
-        return form;
-    };
-
     search.addEventListener("input", show);
     section.append(
         headingOf(
             "Meals",
             plusOf("New meal", (): void => {
-                naming = !naming;
+                fresh = "";
+                open = "";
                 show();
             }),
             "kcal / meal",

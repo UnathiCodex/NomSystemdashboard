@@ -4,6 +4,7 @@
  * The panel of a thing of my lists, a meal, a food, a workout, an exercise, the card of the entry by category.
  * Every value saves as it changes. The check takes the field I am in and closes, the cross closes,
  * as Esc and a click beside it do.
+ * Only the panel of a new food saves by its check alone, so no food goes in half typed.
  * A row that adds has the plus beside its name, which opens its search as a list, as in the entry by category.
  * It stands in the element of its list, so the list loads anew on a change of my files only while I type outside.
  * Its look in `day.css` and `choices.css` loads with the food view and with the sport view, never here,
@@ -18,11 +19,13 @@ import { buttonOf, elementOf } from "./foods.ts";
 /**
  * A panel of a list, filled anew with every change of what it shows.
  * - `buttons`: The cross, then the check at the bottom right, last in its form as in every panel.
+ * - `save`: What the check does in a panel that saves only by it, `null` where every value saves as it changes.
  */
 export type Panel = {
     dialog: HTMLDialogElement;
     form: HTMLElement;
     buttons: HTMLElement;
+    save: (() => void) | null;
 };
 
 /** A row of a panel by its name and value, where it adds also the search its plus opens. */
@@ -33,8 +36,13 @@ export function panelOf(into: HTMLElement, closed: () => void): Panel {
     const dialog: HTMLDialogElement = document.createElement("dialog");
     const form: HTMLElement = elementOf("div", "panel-form", "");
     const buttons: HTMLElement = elementOf("div", "panel-buttons", "");
+    const panel: Panel = { dialog: dialog, form: form, buttons: buttons, save: null };
     const close: HTMLButtonElement = buttonOf("", "", (): void => dialog.close());
     const done: HTMLButtonElement = buttonOf("panel-main", "", (): void => {
+        if (panel.save !== null) {
+            panel.save();
+            return;
+        }
         (document.activeElement as HTMLElement | null)?.blur();
         dialog.close();
     });
@@ -47,7 +55,7 @@ export function panelOf(into: HTMLElement, closed: () => void): Panel {
     dialog.append(form);
     dialog.addEventListener("close", closed);
     into.append(dialog);
-    return { dialog: dialog, form: form, buttons: buttons };
+    return panel;
 }
 
 /**
@@ -83,11 +91,13 @@ function plusOf(value: HTMLElement, search: HTMLElement, words: string): HTMLBut
  * The cursor stays in the field it stood in, found by its name, since every row is new.
  * It takes clicks again, which a field takes away while it sends.
  * Opened, no field takes the cursor, so a phone opens no keyboard, as in the entry dialog.
+ * `save` is what its check does where only the check saves.
  */
-export function panelShow(panel: Panel, rows: PanelRow[], below: HTMLElement[]): void {
+export function panelShow(panel: Panel, rows: PanelRow[], below: HTMLElement[], save?: () => void): void {
     const typing: string | null = panel.form.contains(document.activeElement)
         ? (document.activeElement?.getAttribute("aria-label") ?? null)
         : null;
+    panel.save = save ?? null;
     panel.form.inert = false;
     panel.form.replaceChildren(
         ...rows.map(([name, value, search]: PanelRow): HTMLElement => {

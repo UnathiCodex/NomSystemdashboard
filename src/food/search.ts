@@ -25,9 +25,9 @@ import {
 } from "./foods.ts";
 import { panelClose, panelOf, panelShow } from "./panel.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
-import { Check, Plus, X } from "lucide";
+import { Plus } from "lucide";
 import "./search.css";
-import type { Panel } from "./panel.ts";
+import type { Panel, PanelRow } from "./panel.ts";
 import type { Food, FoodsFound, Kind, Product } from "../../reader/food.ts";
 
 /**
@@ -136,22 +136,11 @@ export function listLineOf(
     return [line, row];
 }
 
-/** The cross and the check of every change in place, as the dialogs end. */
-export function editButtonsOf(cancelled: () => void, saved: () => void): HTMLElement {
-    const buttons: HTMLElement = elementOf("span", "food-buttons", "");
-    const cancel: HTMLButtonElement = buttonOf("", "", cancelled);
-    const save: HTMLButtonElement = buttonOf("food-save", "", saved);
-    iconPut(cancel, X, "Cancel");
-    iconPut(save, Check, "Save");
-    buttons.append(cancel, save);
-    return buttons;
-}
-
 /** A field of a change in place, its Escape closing no dialog around it. */
-export function editFieldOf(value: string, words: string, saved: () => void, cancelled: () => void): HTMLInputElement {
+function editFieldOf(value: string, words: string, saved: () => void, cancelled: () => void): HTMLInputElement {
     const input: HTMLInputElement = document.createElement("input");
     input.type = "text";
-    input.className = "food-field-text";
+    input.className = "food-inline";
     input.autocomplete = "off";
     input.value = value;
     input.placeholder = words;
@@ -180,7 +169,6 @@ export function inlineFieldOf(value: string, words: string, saved: () => void): 
             input.blur();
         },
     );
-    input.className = "food-inline";
     input.removeAttribute("placeholder");
     input.addEventListener("change", saved);
     return input;
@@ -279,22 +267,32 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
 }
 
 /**
+ * The panel of a search, made the first time.
+ * It stands in the page, not in the search, which may stand in a list that hides it.
+ */
+function panelFor(search: Search): Panel {
+    search.panel ??= panelOf(document.body, (): void => {
+        search.open = "";
+    });
+    return search.panel;
+}
+
+/**
  * Shows the food of mine open in the panel of the search, the last one written while the search no longer finds it.
  * It stays open under its new name after a change.
+ * While no food of mine is open, the panel may hold a new food, which stays.
  */
 function panelFill(search: Search): void {
+    if (search.open === "") return;
     const food: Food | undefined =
         search.found?.foods.find((found: Food): boolean => keyOf(found) === search.open) ??
         (search.opened !== null && keyOf(search.opened) === search.open ? search.opened : undefined);
+    const panel: Panel = panelFor(search);
     if (food === undefined) {
-        if (search.panel !== null) panelClose(search.panel);
+        panelClose(panel);
         return;
     }
     search.opened = food;
-    search.panel ??= panelOf(search.element, (): void => {
-        search.open = "";
-    });
-    const panel: Panel = search.panel;
     const { rows, error }: { rows: [string, HTMLElement][]; error: HTMLElement } = foodFieldsOf(
         food,
         panel.form,
@@ -538,13 +536,13 @@ function unitFieldOf(input: HTMLInputElement, unit: string): HTMLElement {
 }
 
 /**
- * Opens the form of a food by hand at the top of the results, only in the food view.
+ * Opens the panel of a food by hand, the plus of my foods in the food view.
  * The portion empty takes 100, never its pack.
  * It needs its name and kcal.
  * It needs its brand and store too, since I keep them always, also of my own bakery.
  * A nutrient left empty is unknown, never 0.
  * The one nutrient missing the reader works out.
- * When the reader does not take the food, the form stays open and says so.
+ * The panel stays open with a hint when the reader does not take the food.
  */
 export function foodNewShow(element: HTMLElement): void {
     const search: Search | undefined = searches.get(element);
@@ -552,13 +550,15 @@ export function foodNewShow(element: HTMLElement): void {
 }
 
 /**
- * Opens the form of a food by hand with the cursor in its kcal.
+ * Opens the panel of a food by hand with the cursor in its kcal, its check adding it, its cross dropping it.
  * While no name is typed the cursor stands in its name.
  * `product` is `null` for a food of my own, which is `Eat` until I change it once saved.
- * - `add`: Sends the food, the form taking no clicks meanwhile, so a double click adds it once.
+ * Added in the food view, the panel shows it as a food of mine.
+ * Elsewhere the panel closes, the food picked.
+ * - `add`: Sends the food, the panel taking no clicks meanwhile, so a double click adds it once.
  */
 function newFormShow(search: Search, product: Product | null): void {
-    search.results.querySelector(".food-form")?.remove();
+    const panel: Panel = panelFor(search);
     const kind: Kind = product?.kind ?? "Eat";
     const start: Map<string, string> = new Map([
         ["name", product?.name ?? search.input.value.trim()],
@@ -567,17 +567,15 @@ function newFormShow(search: Search, product: Product | null): void {
         ["pack", String(product?.pack ?? "")],
         ["portion", String(product?.portion ?? "")],
     ]);
-    const form: HTMLElement = elementOf("div", "food-form food-detail", "");
-    const facts: HTMLElement = elementOf("div", "food-facts", "");
     const inputs: Map<string, HTMLInputElement> = new Map();
     const error: HTMLElement = elementOf(
         "p",
-        "food-error",
+        "food-error panel-error",
         "Not saved: it needs a name, a brand, a store and its kcal, " +
             "numbers only, and no food of mine of this name, brand and store",
     );
     const text: (key: string) => string = (key: string): string => inputs.get(key)?.value.trim() ?? "";
-    const close: () => void = (): void => form.remove();
+    const close: () => void = (): void => panelClose(panel);
     const add: () => void = (): void => {
         const numbers: (number | null)[] = numbersRead(text);
         const [kcal, protein, carbs, fat, portion, pack]: (number | null)[] = numbers;
@@ -591,7 +589,7 @@ function newFormShow(search: Search, product: Product | null): void {
             error.hidden = false;
             return;
         }
-        form.inert = true;
+        panel.form.inert = true;
         foodSend({
             name: text("name"),
             kcal: kcal,
@@ -606,29 +604,29 @@ function newFormShow(search: Search, product: Product | null): void {
             kind: kind,
         })
             .then((food: Food): void => {
-                form.remove();
                 addedOf(search)(food);
+                if (search.open === "") panelClose(panel);
             })
             .catch((reason: unknown): void => {
                 console.error(reason);
                 error.hidden = false;
-                form.inert = false;
+                panel.form.inert = false;
             });
     };
 
-    fieldsOf(kind).forEach(([name, key, unit]: [string, string, string]): void => {
-        const label: HTMLElement = elementOf("span", "food-fact", name);
-        const input: HTMLInputElement = editFieldOf(start.get(key) ?? "", name, add, close);
-        input.className = "food-inline food-inline-new";
-        input.inputMode = "text";
-        input.placeholder = "";
-        label.addEventListener("click", (): void => input.focus());
-        inputs.set(key, input);
-        facts.append(label, unitFieldOf(input, unit));
-    });
+    search.open = "";
     error.hidden = true;
-    form.append(facts, editButtonsOf(close, add), error);
-    search.results.prepend(form);
+    panelShow(
+        panel,
+        fieldsOf(kind).map(([name, key, unit]: [string, string, string]): PanelRow => {
+            const input: HTMLInputElement = editFieldOf(start.get(key) ?? "", name, add, close);
+            input.placeholder = "";
+            inputs.set(key, input);
+            return [name, unitFieldOf(input, unit)];
+        }),
+        [error],
+        add,
+    );
     inputs.get(text("name") === "" ? "name" : "kcal")?.focus();
 }
 
