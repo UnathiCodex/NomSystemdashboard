@@ -1,62 +1,25 @@
 /**
  * ## Series
  *
- * The one form of a series of my course, the lectures, exercises,
- * tutorials and sheets of a module in a semester, see `reader/course.ts`.
- * It opens from the series icon ⟳ in the dialog of a box, see `./categories.ts`,
- * from the page of its module, see `../editor/course.ts`,
- * and new from nothing by `⟳` beside `+` of the plan, see {@link seriesNew}.
- * The same dialog in all places, {@link seriesOpen}, so a change is one and the same.
- * Opened over the dialog of a box, closing it goes back to that dialog as it was,
- * and saving it closes both.
- * It looks like the dialog of an entry, one row per field, see `./choices.ts`.
- * At the bottom the plan it writes into, small and grey, Cancel and Save.
+ * The one form of a series of my course, the lectures, exercises, tutorials and sheets
+ * of a module in a semester, see `reader/course.ts`.
+ * The same dialog in all places, so a change is one and the same.
+ * Opened over the dialog of a box, closing it goes back to that dialog, saving closes both.
  * Nothing is written before I save.
- * Then the reader changes only open boxes from today on, a box done, skipped,
- * cancelled or pushed staying as it is, but for the times I typed for a box,
- * which every box takes but one pushed, and numbers the series anew,
- * see `seriesApply` in `reader/course.ts`.
- * The exams of a module, single dates the reader reads back as no series,
- * open in the same dialog, see {@link examRuleOf}:
- * only what they are and their boxes, each exam with its kind, see {@link kindMenuOf}.
- * Of a numbered type of a module the row `Semester` has the group beside the semester:
- * the menu of the groups of the type, my group pinned, see {@link groupPickOf},
- * each group opening in this same form, see {@link groupOpen},
- * closing it going back to my series, see {@link groupReturn}.
- * While no group is mine, my series shows the same rows, empty and locked,
- * since its place, days and people come from the group, see {@link groupWaits}.
+ * Then the reader changes only open boxes from today on and numbers the series anew.
+ * The exams of a module, single dates, open in the same dialog, each with its kind.
+ * Of a numbered type the row `Semester` has the menu of the groups beside the semester.
+ * While no group is mine, my series shows its rows empty and locked,
+ * since its place, days and people come from the group.
  * The first group made while none is mine becomes mine as it is saved.
- * So I make the groups of my tutorials by hand as the university lists them,
- * saved as one weekly to-do per weekday, its past kept and a change going on from today,
- * see `groupApply` in `reader/course.ts`.
  * Enter confirms only its field, Ctrl+Enter saves, Escape and a click beside it cancel.
  *
- * The boxes a series makes stay one calm line, see {@link previewShow},
- * as the reader would write them, anew a moment after each change:
- * how many, what a change does, and how many happen and how many not.
- * A tap on it opens them below it as a list by month,
- * each box one row built by the same code as a row of a card on the page of its module,
- * see `./rows.ts`, so both look and work alike.
- * A box there already opens in the dialog of an entry over this one, see {@link boxShow},
- * and has its actions as in the plan, each done at once.
- * A box not written yet has `Cancel`, which marks it cancelled by the university,
- * so a date that does not take place stays, without number,
- * and an extra has `Remove`, both kept in the form until I save.
- * A day the university does not teach has no box,
- * see `lectureFreeOf` in `reader/course.ts`.
- * `+` below the list adds an extra, a single date besides its weeks.
+ * The boxes a series makes stay one calm line, a tap opens them as a list by month.
+ * A box not written yet has `Cancel`, so a date that does not take place stays without number.
  *
- * Every other series is a plain one, one to-do that repeats by its rule,
- * see `reader/rules.ts` and {@link plainOpen}:
- * the same dialog without numbers, types and groups,
- * its weekdays, or `Month` or `Year` on the day of its first day,
- * written per time, or by a switch only how long they last, since a rule has one time,
- * see {@link plainTimeRowsOf}.
- * Saved, the past of a series never changes, see `plainApply` in `reader/rules.ts`:
- * one lying wholly ahead is written whole,
- * one that began before today ends yesterday and goes on with a new one from today,
- * a summary changed alone renames it whole, past days and the series it goes on from too.
- * The dialog of one of its boxes changes that box alone.
+ * Every other series is a plain one, one to-do that repeats by its rule, see `reader/rules.ts`.
+ * Its weekdays, or `Month` or `Year` on the day of its first day.
+ * Saved, the past of a series never changes.
  */
 
 import { breakableOf, choiceOf, choicesOf, fileShow, pairOf, partFieldOf, rowOf, searchOf } from "./choices.ts";
@@ -135,12 +98,9 @@ export type { Course, Group, Learned, Rule, Series, Session };
 /**
  * The days of a series as typed so far.
  *
- * - `before`: For each slot the weekday of the slot of the series as read back
- *   whose boxes it takes, 0 for a slot added,
- *   see `before` of `SeriesChange` in `reader/course.ts`.
+ * - `before`: For each slot the weekday of the slot read back whose boxes it takes, 0 for one added.
  * - `first`, `last`: Empty while not typed as a day.
- * - `times`: The dates of its slots with times of their own, see {@link Times},
- *   of the exams the exams I gave other times.
+ * - `times`: The dates with times of their own.
  */
 export type Days = {
     slots: Slot[];
@@ -151,20 +111,13 @@ export type Days = {
     times: Times;
 };
 
-/**
- * The state I gave a box of a series in its form until I save,
- * by its identifier, a new one by its day.
- */
+/** The state I gave a box in the form until I save, by its identifier, a new one by its day. */
 export type States = { [id: string]: BoxState };
 
-/** The kinds I gave the exams of a module in their form, by their days, until I save. */
+/** The kinds I gave the exams in the form until I save, by their days. */
 type Kinds = { [day: string]: string };
 
-/**
- * The form of a series as typed so far, see {@link seriesOpen},
- * the `before` of its days the weekdays of the slots of `old` whose boxes they take.
- * `old` is the rule as read back when the form opened, `null` for a new series.
- */
+/** The form of a series as typed so far, `old` the rule as read back, `null` for a new series. */
 type Form = Days &
     Online & {
         type: string;
@@ -177,10 +130,8 @@ type Form = Days &
     };
 
 /**
- * A new series of my course, as the rows on top of the dialog of a new series picked it,
- * see {@link seriesNew}.
+ * A new series made from the dialog of a new box.
  *
- * - `box`: Its fields as that dialog adds a box, see `BoxFields` in `./entries.ts`.
  * - `link`: The folder its summary links, empty for none.
  * - `file`: The plan it writes into, empty while its boxes may fill several.
  */
@@ -191,31 +142,19 @@ type Repeated = {
     file: string;
 };
 
-/**
- * Types of a series, which carry their number and which the university may cancel,
- * see `numberedTypes` in `reader/boxes.ts`.
- */
+/** Types of a series that carry their number and that the university may cancel. */
 export const numberedTypes: string[] = ["VO", "UE", "ZU", "TU", "HU"];
 
-/**
- * Type of the exams of a module, single dates whose `X-NUMBER` is their kind,
- * no series the reader reads back, see {@link examRuleOf}.
- */
+/** Type of the exams of a module, single dates whose `X-NUMBER` is their kind. */
 const examType: string = "FA";
 
-/** The kinds of an exam, its `X-NUMBER`, in the order they come in a semester. */
+/** The kinds of an exam in the order they come in a semester. */
 const examKinds: string[] = ["Midterm", "Endterm", "Retake"];
 
-/**
- * The day of a monthly plain series among the weekdays of its form, after Sunday,
- * on the day of the month of its first day.
- */
+/** The day of a monthly plain series among the weekdays, after Sunday. */
 const monthly: number = 8;
 
-/**
- * The day of a yearly plain series among the weekdays of its form, after `Month`,
- * on the day and month of its first day.
- */
+/** The day of a yearly plain series among the weekdays, after `Month`. */
 const yearly: number = 9;
 
 /** Waiting preview, so typing asks the reader once, a moment after it rests. */
@@ -224,132 +163,88 @@ let previewWait: number = 0;
 /** How many previews were asked for, so only the answer to the last one shows. */
 let previewsAsked: number = 0;
 
-/**
- * What the boxes of the form showed last,
- * so the rows built anew show it at once until the reader answers again.
- */
+/** What the boxes showed last, so rows built anew show it until the reader answers. */
 let previewShown: Node[] = [];
 
 /** Whether the boxes of the form show as a list below their line. */
 let listOpened: boolean = false;
 
-/**
- * The boxes of the rows of the list there already, by their identifiers,
- * as loaded with the list last, see {@link boxesLoad}.
- */
+/** The boxes of the list there already, by their identifiers. */
 let boxesKnown: Map<string, Box> = new Map();
 
-/** The extra being typed below the list of the boxes, `null` while none is. */
+/** The extra being typed below the list, `null` while none is. */
 let extraTyped: Extra | null = null;
 
-/**
- * The session of the group of the form being changed alone, see {@link sessionRowOf},
- * `null` while none is.
- */
+/** The session of the group being changed alone, `null` while none is. */
 let sessionTyped: (Pick<Session, "id" | "location"> & Pick<Slot, "start" | "end"> & { day: string }) | null = null;
 
 /** Of the exams, the kind I gave the date being typed, empty while I gave none. */
 let kindTyped: string = "";
 
-/**
- * Of the exams, the day of the date added as the dialog opened,
- * whose menu of the kinds opens once its row shows,
- * so I pick its kind first, as after `+`.
- */
+/** Of the exams, the day added as the dialog opened, whose menu of kinds opens first. */
 let kindAsked: string = "";
 
 /** The course whose series the dialog shows, `null` before it opened. */
 let course: Course | null = null;
 
-/** The form of the series in the dialog, `null` while it is closed. */
+/** The form in the dialog, `null` while it is closed. */
 let typing: Form | null = null;
 
-/**
- * The place of the form as I changed it by its parts, which saving writes everywhere,
- * see {@link placeRename}.
- * `null` while I changed nothing, and once another place is picked.
- */
+/** The place as I changed it by its parts, which saving writes everywhere, `null` while unchanged. */
 let placeEdit: Place | null = null;
 
-/** Whether the place of the form shows its parts below it to change. */
+/** Whether the place shows its parts below it. */
 let placeOpen: boolean = false;
 
-/**
- * Whether what the series does online shows its parts below it,
- * as in the dialog of an entry.
- */
+/** Whether what the series does online shows its parts below it. */
 let onlineOpen: boolean = false;
 
 /**
- * The slots of the form taken back by the toggles of its weekdays since it opened,
- * each its weekday and the weekday of the slot read back whose boxes it had,
- * so the next weekday picked takes those boxes, as a day moved, see {@link slotToggle}.
+ * The slots taken back by the toggles of the weekdays, each its weekday and the weekday read back,
+ * so the next weekday picked takes those boxes, as a day moved.
  */
 let slotsFreed: [number, number][] = [];
 
-/**
- * The people of `With` of the form whose parts show below its names,
- * see `withRowOf` in `./attendance.ts`.
- */
+/** The people of `With` whose parts show below its names. */
 let withOpen: string[] = [];
 
-/**
- * Each person of `With` I changed by its parts, by its name as picked,
- * which saving writes everywhere, see `personsRename` in `../persons.ts`.
- */
+/** Each person of `With` I changed by its parts, by its name as picked, which saving writes everywhere. */
 let personEdits: { [old: string]: PersonEdit & { address: string } } = {};
 
-/** The people of `Persons.md` as kept when the dialog opened, which `With` offers. */
+/** The people of `Persons.md` as kept when the dialog opened. */
 let persons: Person[] = [];
 
 /** The categories with the values of their fields, for the places and the people. */
 let categories: Category[] = [];
 
-/** Whether the dialog started, its buttons and keys, see {@link dialogStart}. */
+/** Whether the buttons and keys of the dialog started. */
 let dialogStarted: boolean = false;
 
-/**
- * The new box of the dialog of an entry the form makes a series of,
- * see {@link seriesRepeat}, `null` for a series of my course.
- */
+/** The new box the form makes a series of, `null` for a series of my course. */
 let repeated: Repeated | null = null;
 
-/**
- * The plain series the form changes or makes, see {@link plainOpen},
- * but what the form holds, `null` for a series of my course.
- */
+/** The plain series the form changes or makes, `null` for a series of my course. */
 let plain: Plain | null = null;
 
-/** Whether the plain series of the form has times, else only how long it lasts. */
+/** Whether the plain series has times, else only how long it lasts. */
 let plainTimed: boolean = true;
 
 /**
- * How long each day of the plain series of the form lasts while it has no times,
- * by its weekday, `null` for none yet.
+ * How long each day of the plain series lasts while it has no times, by its weekday.
  * A weekday picked anew takes the length of the first.
  */
 let plainLengths: Map<number, number | null> = new Map();
 
 /**
- * The group of the tutorials of its type the form makes or changes,
- * see {@link groupPartOf}, `null` while the form is that of my own series.
- * `was` is its name there before, which saving renames everywhere when I typed another,
- * see `groupRename` in `reader/course.ts`.
+ * The group the form makes or changes, `null` for my own series.
+ * `was` is its name before, which saving renames everywhere when I typed another.
  */
 let grouped: { group: string; made: boolean; was: string } | null = null;
 
-/**
- * My series of the type the form of a group was opened from, as typed so far,
- * to which the form goes back once the group closes, is saved or removed,
- * see {@link groupReturn}, `null` for a group opened from elsewhere.
- */
+/** My series the form of a group was opened from, to go back to once the group closes. */
 let groupBack: Form | null = null;
 
-/**
- * A new series made from nothing, by `⟳` beside `+` of the plan, see {@link seriesNew}:
- * the day it starts on and what is picked so far, see {@link freshRowsOf},
- * `null` for any other form.
- */
+/** A new series made from nothing, the day it starts and what is picked so far. */
 let fresh: {
     day: string;
     category: string;
@@ -360,69 +255,53 @@ let fresh: {
 /** Whether the bin of a group asked whether I really remove it. */
 let removeAsked: boolean = false;
 
-/**
- * Comes once the form is saved, like closing the dialog of the box it opened over,
- * see {@link seriesOpen}.
- */
+/** Comes once the form is saved, like closing the dialog of the box it opened over. */
 let done: () => void = (): void => {};
 
-/**
- * The box the dialog of an entry showed below this one before a number of the list
- * opened another box in it, see {@link boxShow},
- * which that dialog shows again once this one closes unsaved, one level back.
- */
+/** The box the dialog of an entry showed before a row of the list opened another, shown again unsaved. */
 let entryBack: Box | null = null;
 
-/** Gives the weekday of a day, 1 for Monday to 7 for Sunday. */
+/** The weekday of a day, 1 for Monday to 7 for Sunday. */
 export function weekdayOf(day: string): number {
     return ((new Date(`${day}T12:00:00`).getDay() + 6) % 7) + 1;
 }
 
-/** Gives the Monday of the week of a day, which names its week. */
+/** The Monday of the week of a day, which names its week. */
 export function mondayOf(day: string): string {
     return dayAdd(day, 1 - weekdayOf(day));
 }
 
-/** Writes the name of a weekday in English, as the dates of the page write it. */
+/** The name of a weekday in English. */
 export function weekdayNameOf(weekday: number, whole: boolean): string {
     return new Date(2026, 9, 18 + weekday).toLocaleDateString("en-GB", {
         weekday: whole ? "long" : "short",
     });
 }
 
-/** Writes the name of a day of the form of a series short, see {@link slotRowsOf}. */
+/** The short name of a day of the form. */
 function dayNameOf(weekday: number): string {
     return weekday === monthly ? "Month" : weekday === yearly ? "Year" : weekdayNameOf(weekday, false);
 }
 
 /**
- * Writes the room of a place short, as the plan, the rule of a series and a box name it:
- * its name, see `labelOf` in `./places.ts`, without what stands in brackets,
- * which only its row in `Places.md` or `Rooms.md` and the dialog show,
+ * The room of a place short, its name without what stands in brackets,
  * so whatever I write in brackets never makes a place too long for its line.
  */
 export function roomOf(line: string): string {
     return labelOf(line).replace(/\s*\(.*$/, "");
 }
 
-/**
- * Tells whether a box of the plan is one of a series of my course,
- * a skill box of a numbered type with its number.
- */
+/** Whether a box is one of a series of my course, a skill box of a numbered type with its number. */
 export function seriesHas(box: Box): boolean {
     return box.category === skillName && numberedTypes.includes(box.type) && box.number !== "";
 }
 
-/** Tells whether a start and an end are both a time, the start before the end. */
+/** Whether a start and an end are both a time, the start before the end. */
 function timesReady(times: Pick<Slot, "start" | "end">): boolean {
     return times.start !== "" && times.end !== "" && times.start < times.end;
 }
 
-/**
- * Tells whether the days of a series are typed enough to make boxes:
- * each a weekday, each once, with a start before its end or by its length a length,
- * each extra a day with a start before its end, and a first day on or before its last.
- */
+/** Whether the days of a series are typed enough to make boxes. */
 function daysReady(days: Days): boolean {
     return (
         days.slots.every(
@@ -437,11 +316,7 @@ function daysReady(days: Days): boolean {
     );
 }
 
-/**
- * Moves the days of a series that fall on the weekday of a slot
- * to its new weekday in their week,
- * so a lecture moved from Monday to Tuesday keeps its weeks.
- */
+/** Moves the days on the weekday of a slot to its new weekday, so a moved lecture keeps its weeks. */
 function daysMove(days: Days, from: number, to: number): void {
     const move: (day: string) => string = (day: string): string =>
         from !== 0 && day !== "" && weekdayOf(day) === from ? dayAdd(day, to - from) : day;
@@ -457,11 +332,7 @@ function daysMove(days: Days, from: number, to: number): void {
     );
 }
 
-/**
- * Makes a field of a time or a day of a series, as the dialog has them, see `./times.ts`,
- * a day written out with its weekday.
- * What I type goes into the series as I type it.
- */
+/** A field of a time or a day, a day written with its weekday, what I type taken as I type it. */
 function fieldOf(
     kind: "time-field" | "date-field",
     value: string,
@@ -485,11 +356,7 @@ function fieldOf(
     return input;
 }
 
-/**
- * Makes the two fields of a range of a series side by side with the range dash between them,
- * the times of a slot, an extra or a box, or the first and the last day,
- * the dash going with the second, so a narrow row breaks before it.
- */
+/** The two fields of a range with the dash going with the second, so a narrow row breaks before it. */
 function rangeOf<Key extends string>(
     kind: "time-field" | "date-field",
     range: { [key in Key]: string },
@@ -515,12 +382,12 @@ function rangeOf<Key extends string>(
     return both;
 }
 
-/** Makes the fields of the times of a slot, an extra or a box side by side. */
+/** The fields of the times of a slot, an extra or a box. */
 function timesRangeOf(times: Pick<Slot, "start" | "end">, changed: () => void): HTMLElement {
     return rangeOf("time-field", times, ["start", "end"], ["Start", "End"], changed);
 }
 
-/** Makes the button `×` that takes a day or an extra of a series back. */
+/** The button `×` that takes a day or an extra back. */
 function removeOf(words: string, click: () => void): HTMLButtonElement {
     const remove: HTMLButtonElement = buttonOf("", "", click);
     crossPut(remove, words);
@@ -528,14 +395,8 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the row `Day` of the days of a series, the one way every series takes its days,
- * a plain one, the series of a type of a module and a group alike:
- * on top its weekdays as seven toggles, below them each day picked one line
- * with its times, a day picked anew taking the times of the first,
- * so a lecture on Monday and Thursday at different times
- * and a group meeting twice a week are typed as my sleep of every night is.
- * A weekday picked after one taken back takes its boxes, as a day moved,
- * see {@link slotToggle}, so a lecture moved from Monday to Tuesday keeps its boxes.
+ * The row `Day`, the one way every series takes its days.
+ * On top the weekdays as toggles, below each day picked one line with its times.
  * A plain series has `Month` and `Year` after Sunday, each a day alone.
  */
 function slotRowsOf(
@@ -577,16 +438,10 @@ function slotRowsOf(
 }
 
 /**
- * Picks a weekday of a series or takes it back, see {@link slotRowsOf}:
- * picked, a slot without weekday yet takes it,
- * else a new slot with the times of the first,
- * which takes the boxes of a slot taken back before,
- * moving the days of the series with it, see {@link daysMove}.
- * Taken back, but the last one, its slot goes,
- * its boxes kept for the next weekday picked.
- * `Month` or `Year` picked stays alone with the times of the first,
- * and another day picked takes its slot as that of a slot without weekday.
- * The slots stay in the order of their weekdays, each with its `before`.
+ * Picks a weekday or takes it back.
+ * A new slot takes the times of the first and the boxes of a slot taken back before, as a day moved.
+ * The last slot is never taken back.
+ * `Month` or `Year` stays alone, another day picked takes its slot.
  */
 function slotToggle(days: Days, weekday: number): void {
     const index: number = days.slots.findIndex((slot: Slot): boolean => slot.weekday === weekday);
@@ -617,18 +472,12 @@ function slotToggle(days: Days, weekday: number): void {
     days.before = pairs.map(([, before]: [Slot, number]): number => before);
 }
 
-/**
- * Makes the row of the first and the last day of a series,
- * each saying grey `dd.mm.yyyy` while empty, as the day of a deadline.
- */
+/** The row of the first and the last day. */
 function datesRowOf(days: Days, changed: () => void): HTMLElement {
     return rowOf("Dates", rangeOf("date-field", days, ["first", "last"], ["First day", "Last day"], changed));
 }
 
-/**
- * Makes the row `Entries` of the boxes a series makes,
- * showing what it showed last until the reader answers again.
- */
+/** The row `Entries` of the boxes, showing what it showed last until the reader answers. */
 function boxesRowOf(): HTMLElement {
     const preview: HTMLElement = elementOf("div", "series-preview", "");
     preview.append(...previewShown);
@@ -637,10 +486,7 @@ function boxesRowOf(): HTMLElement {
     return row;
 }
 
-/**
- * Forgets what the boxes of a form showed, and folds their list,
- * as a form of another series or another new box opens.
- */
+/** Forgets what the boxes showed and folds their list, as another form opens. */
 function previewForget(): void {
     clearTimeout(previewWait);
     previewsAsked += 1;
@@ -651,10 +497,7 @@ function previewForget(): void {
     kindAsked = "";
 }
 
-/**
- * Makes a part of the line of the boxes of a series that counts them by an icon,
- * its words as tooltip and as its name for screen readers.
- */
+/** A count of boxes by an icon, its words as tooltip. */
 export function tallyOf(count: number, icon: IconNode, words: string): HTMLElement {
     const part: HTMLElement = elementOf("span", "series-tally", "");
     part.title = `${count} ${words}`;
@@ -664,10 +507,7 @@ export function tallyOf(count: number, icon: IconNode, words: string): HTMLEleme
 }
 
 /**
- * Makes the line of the boxes of a series, grey, lighter under the pointer:
- * how many entries, what a change does to them while the series had boxes before,
- * and by the icons of their states how many it keeps are done, not, and pushed,
- * each also at none, as the cards of the course count.
+ * The line of the boxes, how many, what a change does, and how many are done, not and pushed.
  * A tap opens and closes the list below it.
  */
 function summaryOf(planned: Planned[], toggle: () => void): HTMLButtonElement {
@@ -709,10 +549,7 @@ function summaryOf(planned: Planned[], toggle: () => void): HTMLButtonElement {
     return line;
 }
 
-/**
- * Makes the icon of the state of a box in its row, as the plan shows it:
- * a button that takes the state back where it can be, else the icon alone.
- */
+/** The icon of the state of a box, a button that takes it back where it can be. */
 function markOf(icon: IconNode, word: string, back: (() => void) | null): HTMLElement {
     const mark: HTMLElement = document.createElement(back === null ? "span" : "button");
     if (mark instanceof HTMLButtonElement && back !== null) {
@@ -724,10 +561,7 @@ function markOf(icon: IconNode, word: string, back: (() => void) | null): HTMLEl
     return mark;
 }
 
-/**
- * Sends a change of a box of the list to the reader, then shows the list anew,
- * also when the reader does not take it, which the console says.
- */
+/** Sends a change of a box of the list, then shows the list anew, also when the reader refuses. */
 function seriesAct(send: () => Promise<unknown>): void {
     send()
         .catch(console.error)
@@ -736,8 +570,7 @@ function seriesAct(send: () => Promise<unknown>): void {
 }
 
 /**
- * Shows the list of the form anew as its files hold it now, after a box of it changed,
- * by its actions or in the dialog of the box, nothing once the dialog closed.
+ * Shows the list anew as the files hold it now, nothing once the dialog closed.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -748,12 +581,9 @@ async function seriesRefresh(): Promise<void> {
 }
 
 /**
- * Opens a box of the list over the dialog of the series, as the plan opens it,
- * see `boxClick` in `./boxes.ts`.
- * The dialog of an entry the series opened from closes first,
- * its box kept to show again once the series closes unsaved, see {@link entryBack},
- * and the box shows on top, marked `data-over`, which `series.css` leaves visible.
- * Once it closes, saved or not, the list shows anew, see {@link dialogStart}.
+ * Opens a box of the list over the dialog of the series.
+ * The dialog of an entry the series opened from closes first, its box kept to show again.
+ * The box shows on top, marked `data-over`.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -770,8 +600,7 @@ async function boxShow(box: Box): Promise<void> {
 }
 
 /**
- * Shows the box again in the dialog of an entry that it showed before,
- * as it stands now, changes of the series included, once the series closes unsaved.
+ * Shows the box of the dialog of an entry again as it stands now, once the series closes unsaved.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -783,10 +612,8 @@ async function entryBackShow(box: Box): Promise<void> {
 }
 
 /**
- * Loads the boxes of the rows of the list: of my course its boxes as loaded with it,
- * of a plain series those of the days of its rows, see `boxesFetch` in `./boxes.ts`,
- * never the greyed copy a box leaves on a day it was pushed from,
- * none of a group, whose rows are its sessions.
+ * Loads the boxes of the rows of the list.
+ * Never the greyed copy a pushed box leaves, none of a group, whose rows are its sessions.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -811,12 +638,9 @@ async function boxesLoad(planned: Planned[]): Promise<void> {
 }
 
 /**
- * Makes a button of the dialog by its icon, its words as tooltip,
- * like one action of a box of the list not written yet,
- * as an action of a box of the plan looks, see `./actions.ts`.
+ * A button by its icon, its words as tooltip.
  *
- * @param still - Whether it takes no focus, so the extra being typed joins as it is clicked,
- *   see {@link formFill}
+ * @param still - Whether it takes no focus, so the extra being typed joins as it is clicked
  */
 function iconButtonOf(
     className: string,
@@ -831,12 +655,7 @@ function iconButtonOf(
     return button;
 }
 
-/**
- * Makes what stands at the right edge of the row of a box there already,
- * as on the page of its module: its actions while open, as in the plan,
- * see `./actions.ts`, each sent at once, else the icon of its state,
- * which takes it back with a click where it can be.
- */
+/** The right edge of the row of a box there already, its actions while open, else its state. */
 function knownEndOf(box: Box): HTMLElement {
     const calendar: DayCalendar | null = dayCalendarOf();
     if (box.state === "open")
@@ -874,18 +693,12 @@ function knownEndOf(box: Box): HTMLElement {
 }
 
 /**
- * Makes what stands at the right edge of the row of a box not written yet,
- * or of one only shown, kept by the form until I save:
- * `Cancel` for one numbered in its series and for a session of a group,
- * which the reader makes cancelled, `Remove` for an extra from today on.
- * Of a session of a group there already, of the days over too,
- * so a tutorial I went to is added afterwards and then logged,
- * `+`, see {@link groupSend},
- * but not where a box of mine stands already, see {@link mineAt},
- * and a pencil, which opens it to change alone, as the university changed it.
- * A state given shows its icon, which takes it back.
- * A day of another series of the chain of a plain series, and one the change removes,
- * show only the icon of its state, or nothing.
+ * The right edge of the row of a box not written yet, kept by the form until I save.
+ * `Cancel` for one numbered and for a session, `Remove` for an extra from today on.
+ * A session of a group has `+`, past days too, so a tutorial I went to is added afterwards,
+ * but not where a box of mine stands already.
+ * Its pencil changes it alone, as the university changed it.
+ * A day of another series of the chain, and one the change removes, show only their state.
  */
 function pendingEndOf(box: Planned, form: Form): HTMLElement {
     const today: string = dayOf(new Date());
@@ -939,9 +752,8 @@ function pendingEndOf(box: Planned, form: Form): HTMLElement {
 }
 
 /**
- * Gives the session of the group there already a row of its list stands for,
- * which its pencil changes alone: none of a new group, of one without times,
- * of one cancelled or removed, and none while the form moved the row from its session.
+ * The session there already a row stands for, none of a new group, without times,
+ * cancelled or removed, and none while the form moved the row from its session.
  */
 function sessionOf(box: Planned): Session | undefined {
     const group: typeof grouped = grouped;
@@ -958,10 +770,8 @@ function sessionOf(box: Planned): Session | undefined {
 }
 
 /**
- * Makes the row of a session of the group of the form being changed alone,
- * as the university changed it that day, see `sessionApply` in `reader/course.ts`:
- * its times and its room, Save, which writes it at once,
- * my box at that session following it, and `×`, which leaves it as it is.
+ * The row of a session being changed alone, its times and room.
+ * Save writes it at once, my box at that session following it.
  */
 function sessionRowOf(session: NonNullable<typeof sessionTyped>, redraw: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "series-row series-session", "");
@@ -1008,13 +818,8 @@ function sessionRowOf(session: NonNullable<typeof sessionTyped>, redraw: () => v
 }
 
 /**
- * Writes a session of the group of the form as saved, not as typed since, at once,
- * then shows the list anew:
- * the session being changed alone, see {@link sessionRowOf},
- * or a session made a box of mine of its own, besides the box of its week,
- * as a second tutorial in one week, see {@link pendingEndOf}.
+ * Writes a session of the group as saved, not as typed since, at once, then shows the list anew.
  * The form stays, so I take one session after another.
- * The hint of the form shows when the reader does not take it.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -1030,11 +835,7 @@ async function groupSend(address: string, body: object, sent: () => void = (): v
     await seriesRefresh();
 }
 
-/**
- * Tells whether a box of mine of the type of the form stands at the start of a session,
- * so the session is mine already and offers no `+`, as the reader tells it,
- * see `weekPick` in `reader/course.ts`.
- */
+/** Whether a box of mine of the type stands at the start of a session, so it offers no `+`. */
 function mineAt(start: string): boolean {
     return (course?.boxes ?? []).some(
         (one: Box): boolean =>
@@ -1043,13 +844,7 @@ function mineAt(start: string): boolean {
     );
 }
 
-/**
- * Makes the kind of an exam in its row where a box of a series has its number:
- * a button that opens the menu of the kinds as the menu `⋯` does,
- * see `menuAnchor` in `../menu.ts`, in the look of the menu of the groups,
- * see `pinnedMenuOf` in `./groups.ts`.
- * A click on a kind gives it to the exam, but for the one checked.
- */
+/** The kind of an exam where a box has its number, a button that opens the menu of the kinds. */
 function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void): HTMLElement {
     const place: HTMLElement = elementOf("span", "series-kind", "");
     const button: HTMLButtonElement = document.createElement("button");
@@ -1085,13 +880,9 @@ function kindMenuOf(kind: string, asked: boolean, pick: (kind: string) => void):
 }
 
 /**
- * Makes the row of a box in the list with the one row of a box of every list,
- * see `listRowOf` in `./rows.ts`, so it stands as on the page of its module.
- * A box not written yet shows the people of the series,
- * which its dialog changes once it is.
- * What the change does says `new` but while every box is new.
- * At its right edge, see {@link knownEndOf} and {@link pendingEndOf}.
- * Greyed while not open, done, skipped, cancelled or removed, as in the plan.
+ * The row of a box in the list, the same row as on the page of its module.
+ * A box not written yet shows the people of the series.
+ * It says `new` only while not every box is new.
  */
 function boxRowOf(box: Planned, had: boolean, form: Form): HTMLElement {
     const kinds: Kinds | undefined = form.type === examType ? form.kinds : undefined;
@@ -1159,11 +950,7 @@ function boxRowOf(box: Planned, had: boolean, form: Form): HTMLElement {
     });
 }
 
-/**
- * Makes the line `+` below the list, which opens the row of an extra to type,
- * with the times of the last day of the series,
- * of the exams with the menu of its kind open, to pick it first.
- */
+/** The line `+` below the list, which opens the row of an extra with the times of the last day. */
 function addRowOf(form: Form, redraw: () => void): HTMLButtonElement {
     const add: HTMLButtonElement = document.createElement("button");
     const plus: HTMLElement = elementOf("span", "series-number", "");
@@ -1188,13 +975,9 @@ function addRowOf(form: Form, redraw: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the row of an extra being typed below the list, as a box stands in it:
- * its day and its times, those of the series at first,
- * of a plain series without time none, since it takes the length of the series.
- * It takes what the series is, its place and who I am with.
- * Typed enough, it joins the series as the focus leaves the row, by Enter too,
- * one taken back by its `×` never,
- * though its field loses the focus as the list shows anew.
+ * The row of an extra being typed, its day and times.
+ * Of a plain series without time no times, since it takes the length of the series.
+ * Typed enough, it joins as the focus leaves the row, one taken back by its `×` never.
  */
 function draftRowOf(extra: Extra, form: Form, redraw: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "series-row series-draft", "");
@@ -1233,11 +1016,7 @@ function draftRowOf(extra: Extra, form: Form, redraw: () => void): HTMLElement {
     return row;
 }
 
-/**
- * Joins the extra being typed to the series once typed enough,
- * as the focus leaves its row or the form saves, see {@link formSave}.
- * Gives whether it joined, so the list shows anew.
- */
+/** Joins the extra being typed once typed enough, and gives whether it joined. */
 function extraJoin(form: Form): boolean {
     const extra: Extra | null = extraTyped;
     if (extra === null || extra.day === "" || ((plain === null || plainTimed) && !timesReady(extra))) return false;
@@ -1248,10 +1027,7 @@ function extraJoin(form: Form): boolean {
     return true;
 }
 
-/**
- * Makes the list of the boxes of a series by month, each month short at the left,
- * the cards of the course on the page of a module the same, see `../editor/course.ts`.
- */
+/** The list of the boxes by month, each month short at the left. */
 export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
     const list: HTMLElement = elementOf("div", "series-list", "");
     let month: string = "";
@@ -1272,13 +1048,8 @@ export function monthListOf(items: [string, HTMLElement][]): HTMLElement {
 }
 
 /**
- * Makes the list of the boxes of a series by their days, by month,
- * below them `+` or the extra being typed, but for a group,
- * whose sessions are the university's.
- * Of a plain series an extra is one of its single dates, its `RDATE`.
- * The sessions of a group numbered by their weeks of the semester
- * as the reader numbers them,
- * as my boxes are, see `groupApply` in `reader/course.ts`.
+ * The list of the boxes, below them `+` or the extra being typed.
+ * A group has no `+`, since its sessions are the university's.
  */
 function boxListOf(planned: Planned[], form: Form, redraw: () => void): HTMLElement {
     const had: boolean = planned.some((box: Planned): boolean => box.id !== "");
@@ -1295,17 +1066,14 @@ function boxListOf(planned: Planned[], form: Form, redraw: () => void): HTMLElem
 }
 
 /**
- * Shows the boxes a series makes in the row of its boxes, as the reader answers:
- * their line, below it their list while opened, or the hint why it makes none.
- * Nothing while the series is not typed enough, `ask` then `null`,
- * or the reader does not take it, and only the answer to the last question.
+ * Shows the boxes a series makes as the reader answers, only the answer to the last question.
+ * Nothing while not typed enough, `ask` then `null`.
  *
  * @throws {Error} - When the reader does not answer
  */
 async function previewShow(form: Form, ask: (() => Promise<Planned[]>) | null): Promise<void> {
     const asked: number = ++previewsAsked;
-    // Puts what the boxes show into the row `Entries` of the form,
-    // the row shown only while it shows something, so it never stands empty.
+    // The row shown only while it shows something, so it never stands empty.
     const put: (shown: Node[]) => void = (shown: Node[]): void => {
         previewShown = shown;
         const place: HTMLElement | null = formElementOf().querySelector(".series-preview");
@@ -1353,12 +1121,12 @@ function failed(error: unknown): void {
     formElementOf().querySelector(".panel-error")?.removeAttribute("hidden");
 }
 
-/** Gives the dialog of a series, its element. */
+/** The dialog of a series. */
 function dialogOf(): HTMLDialogElement {
     return document.getElementById("series") as HTMLDialogElement;
 }
 
-/** Shows the dialog of a series with nothing focused, see {@link seriesOpen}. */
+/** Shows the dialog with nothing focused. */
 function dialogShow(): void {
     if (!dialogOf().open) dialogOf().showModal();
     (document.activeElement as HTMLElement | null)?.blur();
@@ -1374,8 +1142,7 @@ async function courseLoad(module: string, semester: string): Promise<Course> {
 }
 
 /**
- * Loads what the form offers: the categories with the values of their fields as of now,
- * and the people of `Persons.md`.
+ * Loads the categories with the values of their fields as of now, and the people of `Persons.md`.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -1386,11 +1153,7 @@ async function offersLoad(): Promise<[Category[], Person[]]> {
     ]);
 }
 
-/**
- * Forgets which series the form was, as the form of another series opens:
- * no new box repeated, no plain series, no group, the bin not asking,
- * and what saving it does next.
- */
+/** Forgets which series the form was, as another form opens, and takes what saving does next. */
 function formsForget(saved: () => void): void {
     repeated = null;
     plain = null;
@@ -1400,10 +1163,7 @@ function formsForget(saved: () => void): void {
     done = saved;
 }
 
-/**
- * Forgets what the form showed and opened, as the form of another series opens,
- * see {@link previewForget}.
- */
+/** Forgets what the form showed and opened, as another form opens. */
 function formReset(): void {
     previewForget();
     placeEdit = null;
@@ -1413,7 +1173,7 @@ function formReset(): void {
     slotsFreed = [];
 }
 
-/** Gives what something does online, each part empty where it has none. */
+/** What something does online, each part empty where it has none. */
 function onlineOf(source: Partial<Online> | null | undefined): Online {
     return {
         online: source?.online ?? "",
@@ -1423,15 +1183,12 @@ function onlineOf(source: Partial<Online> | null | undefined): Online {
     };
 }
 
-/** Gives the link of a place of mine or a room, empty for none. */
+/** The link of a place of mine or a room, empty for none. */
 function placeLinkOf(line: string): string {
     return skillFieldOf("location")?.places[line]?.link ?? "";
 }
 
-/**
- * Gives the form of a series as its rule reads back, see {@link seriesOpen},
- * of a new one with no rule its type alone and one slot without weekday.
- */
+/** The form of a series as its rule reads back, of a new one its type and one slot without weekday. */
 function formOf(type: string, rule: Rule | null): Form {
     return {
         type: rule?.type ?? type,
@@ -1451,26 +1208,19 @@ function formOf(type: string, rule: Rule | null): Form {
     };
 }
 
-/** Gives the groups of a type of the course of the dialog. */
+/** The groups of a type of the course of the dialog. */
 function groupsOf(type: string): Group[] {
     return (course?.groups ?? []).filter((group: Group): boolean => group.rule.type === type);
 }
 
-/**
- * Gives a field of `Skill` as the reader offers it,
- * `undefined` while the categories are not loaded.
- */
+/** A field of `Skill`, `undefined` while the categories are not loaded. */
 function skillFieldOf(key: string): Field | undefined {
     return categories
         .find((category: Category): boolean => category.name === skillName)
         ?.fields.find((field: Field): boolean => field.key === key);
 }
 
-/**
- * Gives my default place, `★` in `Places.md`, empty for none,
- * which every new series starts with, a new group and my learning too, as a new box does,
- * see `lastPlaceFill` in `./categories.ts`.
- */
+/** My default place, `★` in `Places.md`, which every new series starts with, empty for none. */
 function standardLineOf(): string {
     const standard: Place | undefined = Object.values(skillFieldOf("location")?.places ?? {}).find(
         (place: Place): boolean => place.standard,
@@ -1479,11 +1229,8 @@ function standardLineOf(): string {
 }
 
 /**
- * Gives the plan a plain series lies in or goes into, from `NomWorkspace` on,
- * shown at the left of the buttons of its form, empty while not known:
- * of one there its file, of a new one the plan of its skill,
- * or the plan of its topic in the year of its first day,
- * see `topicFileOf` in `./categories.ts`.
+ * The plan a plain series lies in or goes into, from `NomWorkspace` on, empty while not known.
+ * A new one goes into the plan of its skill, or of its topic in the year of its first day.
  */
 function plainFileOf(series: Plain, form: Form): string {
     if (series.file !== "") return series.file;
@@ -1491,11 +1238,7 @@ function plainFileOf(series: Plain, form: Form): string {
     return series.category === "" || form.first === "" ? "" : topicFileOf(series.category, form.first, "_Plan.ics");
 }
 
-/**
- * Tells whether the form asks who I am with: for a series of my course,
- * and for a new box repeated or a plain series whose category has `With`,
- * as the dialog of the box asks it, so not for `Sport`, which I do alone.
- */
+/** Whether the form asks who I am with, for my course and a category with `With`, so not for `Sport`. */
 function withAsked(): boolean {
     const category: Category | undefined = categories.find(
         (one: Category): boolean => one.name === (plain?.category ?? repeated?.box.category),
@@ -1506,10 +1249,7 @@ function withAsked(): boolean {
     );
 }
 
-/**
- * Tells whether the name of the group of the form, new or renamed,
- * is taken by another group of its type.
- */
+/** Whether the name of the group, new or renamed, is taken by another group of its type. */
 function groupTaken(form: Form): boolean {
     return (
         grouped !== null &&
@@ -1518,12 +1258,7 @@ function groupTaken(form: Form): boolean {
     );
 }
 
-/**
- * Tells whether the form of a series is typed enough to make boxes:
- * of a plain series as {@link plainReady} says, else its type picked,
- * but for a new box repeated, and its days,
- * a group named, see {@link groupPartOf}, not as one there already.
- */
+/** Whether the form is typed enough to make boxes, a group named and not as one there already. */
 function formReady(form: Form): boolean {
     if (fresh !== null && (fresh.category === "" || (fresh.category === skillName && fresh.picked.module === "")))
         return false;
@@ -1533,10 +1268,8 @@ function formReady(form: Form): boolean {
 }
 
 /**
- * Gives the exams of the course of the dialog as the rule of a series:
- * no weekdays, its first and last day those of its exams, no extras,
- * so its form lists the exams with the kinds and the times I give them and holds
- * as extras only the dates I add, see {@link examSend}.
+ * The exams of the course as the rule of a series, no weekdays and no extras,
+ * so its extras are only the dates I add.
  */
 function examRuleOf(loaded: Course): Rule {
     const days: string[] = loaded.boxes
@@ -1559,12 +1292,8 @@ function examRuleOf(loaded: Course): Rule {
 }
 
 /**
- * Lists the exams of the form, each with the kind and the times I gave it,
- * and the dates I added as new, the earliest first.
- * Or writes them: each exam I gave another kind or other times,
- * see `examSet` in `reader/course.ts`,
- * then each date added as an exam of the module alone,
- * as the dialog of an entry adds a box, see `boxAdd` in `./entries.ts`.
+ * Lists the exams with the kinds and times I gave them and the dates I added, the earliest first.
+ * Without `dry` it writes each exam changed, then each date added as an exam alone.
  *
  * @throws {Error} - When the reader does not take an exam or a date
  */
@@ -1652,10 +1381,7 @@ async function examSend(form: Form, dry: boolean): Promise<Planned[]> {
 }
 
 /**
- * Sends the form of a series to the reader, or with `dry` only tells what it would make:
- * a plain series, a group, see `groupApply` in `reader/course.ts`, the exams,
- * a group made mine, see `groupMine` there, a new box repeated,
- * else the series by its rule and the states I gave its boxes, see `seriesApply` there.
+ * Sends the form to the reader, or with `dry` only tells what it would make.
  *
  * @throws {Error} - When the reader does not take it
  */
@@ -1704,12 +1430,9 @@ async function formSend(form: Form, dry: boolean): Promise<Planned[]> {
 }
 
 /**
- * Sends a new box repeated once per date of the days of the form,
- * see `boxRepeat` in `./entries.ts`,
- * with the states I gave its boxes, of a lecture a date cancelled by its day.
+ * Sends a new box repeated once per date of the form, with the states I gave its boxes.
  *
- * @throws {Error} - When the reader does not take it,
- *   also since the series of its type is there already
+ * @throws {Error} - When the reader does not take it, also since the series of its type is there already
  */
 async function repeatedSend(box: BoxFields, form: Form, dry: boolean): Promise<Planned[]> {
     const planned: Planned[] | null = await boxRepeat(
@@ -1727,16 +1450,12 @@ async function repeatedSend(box: BoxFields, form: Form, dry: boolean): Promise<P
     return planned;
 }
 
-/** Gives the form of the dialog, its element. */
+/** The form of the dialog. */
 function formElementOf(): HTMLFormElement {
     return document.getElementById("series-form") as HTMLFormElement;
 }
 
-/**
- * Locks rows of my series of a type with groups:
- * its place, what it does online, its days, its dates and who I am with
- * come from the group I pin, so they show as the group has them but take no input.
- */
+/** Locks rows of my series of a type with groups, since they come from the group I pin. */
 function lockedOf(locked: boolean, rows: HTMLElement[]): HTMLElement[] {
     rows.forEach((row: HTMLElement): void => {
         row.inert = locked;
@@ -1745,10 +1464,8 @@ function lockedOf(locked: boolean, rows: HTMLElement[]): HTMLElement[] {
 }
 
 /**
- * Fills my series that waits for my group, see {@link groupWaits}:
- * what comes from a group empty, even where a group of before left them,
- * its dates as far as they are known, from the groups of its type and my boxes there.
- * Nothing is saved, since such a form saves nothing.
+ * Fills my series that waits for my group, what comes from a group empty,
+ * its dates as far as the groups of its type and my boxes know them.
  */
 function waitingFill(form: Form): void {
     Object.assign(form, {
@@ -1773,17 +1490,12 @@ function waitingFill(form: Form): void {
     form.last = lasts[lasts.length - 1] ?? "";
 }
 
-/**
- * Gives my boxes of the type of my series that waits for my group:
- * those of the days over and those I took from a group by hand, of days to come too,
- * see `chosenIs` in `reader/course.ts`, which stay whatever group is pinned,
- * so its list shows them while no group is mine, none to change there.
- */
+/** My boxes of the type of my series that waits for my group, which stay whatever group is pinned. */
 function keptOf(form: Form): Planned[] {
     return (course?.boxes ?? []).filter((box: Box): boolean => box.type === form.type).map(plannedOf);
 }
 
-/** Gives a box there already as a row of the list shows it, to be changed nowhere. */
+/** A box there already as a row of the list shows it, to be changed nowhere. */
 function plannedOf(box: Box): Planned {
     return {
         id: box.id,
@@ -1800,12 +1512,7 @@ function plannedOf(box: Box): Planned {
     };
 }
 
-/**
- * Takes a change of the form of a series:
- * allows saving while it is ready and shows anew the boxes it makes,
- * of my series waiting for my group my boxes there, see {@link keptOf},
- * a moment after the typing rests, so typing asks the reader once, see {@link previewShow}.
- */
+/** Takes a change of the form, allows saving while ready and shows the boxes anew once typing rests. */
 function formChanged(): void {
     const save: HTMLButtonElement | null = formElementOf().querySelector(".panel-main");
     if (typing === null || save === null) return;
@@ -1823,11 +1530,7 @@ function formChanged(): void {
     }, 150);
 }
 
-/**
- * Shows the address of the place of the form below it, small and grey,
- * as the dialog does, a link to the link of the place while it has one,
- * never the link itself as text, so nothing for no place or a place without address.
- */
+/** The address of the place below it, linked while it has a link, never the link as text. */
 function addressShow(address: HTMLAnchorElement, form: Form): void {
     const link: string = placeEdit?.link ?? form.locationLink;
     address.textContent = placeEdit !== null ? placeAddressOf(placeEdit) : addressOf(form.location);
@@ -1836,25 +1539,15 @@ function addressShow(address: HTMLAnchorElement, form: Form): void {
     address.hidden = address.textContent === "";
 }
 
-/**
- * Gives the place of the form as it is, before I change it by its parts,
- * see `placeOf` in `./places.ts`.
- */
+/** The place of the form before I change it by its parts. */
 function placeOriginOf(form: Form): Place {
     return placeOf(form.location, form.locationLink, skillFieldOf("location")?.places ?? {});
 }
 
 /**
- * Makes the row `Summary`, what the series is,
- * as the dialog of one of its boxes names it,
- * see `summaryPartsOf` in `./categories.ts`, never changed here,
- * since it follows from elsewhere.
- * A new one has only its type to pick, its list open as the dialog opens.
- * Below it, small and grey, the folder of the material of its type in the semester,
- * see `folderLinkShow` in `../skill/links.ts`, one not there yet no link,
- * until its first box makes it.
- * No frame under the pointer, as every row written by itself,
- * see `.panel-fixed` in `./day.css`.
+ * The row `Summary`, never changed here, since it follows from elsewhere.
+ * A new one has only its type to pick.
+ * Below it the folder of the material of its type, no link until its first box makes it.
  */
 function seriesRowOf(form: Form): HTMLElement {
     const module: string = course?.module ?? "";
@@ -1904,9 +1597,8 @@ function seriesRowOf(form: Form): HTMLElement {
 }
 
 /**
- * Gives the search of a place of the form and of a session changed alone:
- * while nothing is typed my places and the place there already, my default place first,
- * as I type the rooms of the university too, see `placeChoiceOf` in `./places.ts`.
+ * The search of a place, while nothing is typed my places and the place there already,
+ * my default place first, as I type the rooms of the university too.
  */
 function placeSearchOf(current: string, nameShown: (line: string) => string): (text: string) => Promise<Choice[]> {
     const field: Field | undefined = skillFieldOf("location");
@@ -1925,12 +1617,8 @@ function placeSearchOf(current: string, nameShown: (line: string) => string): (t
 }
 
 /**
- * Makes the row of the place of the form, picked as in the dialog,
- * see `placeSearchOf` in `./categories.ts`, below it its address, a link.
- * A place picked takes the link of my place or room.
- * Its pencil shows and hides its parts below it, see `placeEditOf` in `./places.ts`.
- * The row is built anew once I leave a part, the part I went on to keeping the cursor,
- * and saving writes the place everywhere, see {@link placeRename}.
+ * The row of the place, below it its address and its parts behind the pencil.
+ * The row is built anew once I leave a part, the part I went on to keeping the cursor.
  */
 function placeRowOf(form: Form): HTMLElement {
     const field: Field | undefined = skillFieldOf("location");
@@ -1985,11 +1673,7 @@ function placeRowOf(form: Form): HTMLElement {
     return row;
 }
 
-/**
- * Makes the row of what the series does online in the form,
- * the row `Online` of the dialog of an entry, see `onlineRowOf` in `./attendance.ts`,
- * none while the categories are not loaded.
- */
+/** The row `Online`, none while the categories are not loaded. */
 function onlineRowsOf(form: Form): HTMLElement[] {
     const field: Field | undefined = skillFieldOf("online");
     return field === undefined
@@ -2011,10 +1695,7 @@ function onlineRowsOf(form: Form): HTMLElement[] {
           ];
 }
 
-/**
- * Makes the row of who I am with in the form, the row `With` of the dialog of an entry,
- * see `withRowOf` in `./attendance.ts`, none while the categories are not loaded.
- */
+/** The row `With`, none while the categories are not loaded. */
 function peopleRowsOf(form: Form): HTMLElement[] {
     const field: Field | undefined = skillFieldOf("with");
     return field === undefined
@@ -2038,21 +1719,16 @@ function peopleRowsOf(form: Form): HTMLElement[] {
 }
 
 /**
- * Gives the group typed in the row `Group` as a group is named:
- * digits filled up to two, any other name as typed, of letters, digits, `_` and `-`.
- * A space anywhere, also at an end, makes no name, never trimmed away in silence.
- * Gives empty for nothing typed, `null` for a text a group may not be named.
+ * The group typed as a group is named, digits filled up to two.
+ * A space anywhere makes no name, never trimmed away in silence.
+ * Empty for nothing typed, `null` for a text a group may not be named.
  */
 function groupTypedOf(text: string): string | null {
     const name: string = /^\d+$/.test(text) ? text.padStart(2, "0") : text;
     return name === "" || /^[\w-]+$/.test(name) ? name : null;
 }
 
-/**
- * Makes the group of the form of a group of the tutorials, beside its semester:
- * a field I type its name into, saving renaming it everywhere,
- * with a grey hint beside it while the name is taken or holds what a name may not.
- */
+/** The name field of a group beside its semester, a hint beside it while the name is taken or invalid. */
 function groupPartOf(): HTMLElement {
     const input: HTMLInputElement = partFieldOf("text", grouped?.group ?? "", "Group");
     const hint: HTMLElement = elementOf("span", "entry-none", "");
@@ -2074,12 +1750,7 @@ function groupPartOf(): HTMLElement {
     return value;
 }
 
-/**
- * Makes the group of my series of a numbered type of a module beside its semester,
- * as the summary has its type beside its skill: the menu of the groups of the type,
- * see `pinnedMenuOf` in `./groups.ts`, a pick making the group mine,
- * my boxes to come going to it, and right after it the plus of a new group.
- */
+/** The menu of the groups of my series beside its semester, a pick making the group mine, then `+`. */
 function groupPickOf(form: Form): HTMLElement {
     const loaded: Course | null = course;
     const plus: HTMLButtonElement = plusOf("Add a group", (): void => groupFrom(form, ""));
@@ -2101,11 +1772,7 @@ function groupPickOf(form: Form): HTMLElement {
     return part;
 }
 
-/**
- * Tells whether the form of my series of a type with groups waits for my group:
- * while none is mine, its rows from the group show empty and locked,
- * since my boxes to come follow my group.
- */
+/** Whether my series of a type with groups waits for my group, since my boxes to come follow it. */
 function groupWaits(form: Form): boolean {
     return (
         course !== null &&
@@ -2117,15 +1784,9 @@ function groupWaits(form: Form): boolean {
 }
 
 /**
- * Opens a group in the form from my series,
- * my series kept as I left it to go back to, see {@link groupBack},
- * and a still copy of it left below, dimmed with the page,
- * so the form of the group reads as a dialog of its own over my series.
- * The form of the group a little lower and further right,
- * my series behind it a little higher and further left,
- * see `#series-under` in `series.css`,
- * so it shows above and left of it, however long either is,
- * the two together in the middle.
+ * Opens a group from my series, my series kept to go back to.
+ * A still copy of it stays below, so the group reads as a dialog of its own over my series.
+ * The group a little lower right, my series a little higher left, however long either is.
  */
 function groupFrom(form: Form, group: string): void {
     const series: HTMLDialogElement = dialogOf();
@@ -2145,10 +1806,7 @@ function groupFrom(form: Form, group: string): void {
     under.style.translate = `-1.5rem ${lift}px`;
 }
 
-/**
- * Takes away the still copy of my series below the form of a group,
- * once that form goes back to my series or the dialog closes.
- */
+/** Takes away the still copy of my series below the form of a group. */
 function underClose(): void {
     const under: HTMLDialogElement = document.getElementById("series-under") as HTMLDialogElement;
     under.close();
@@ -2158,12 +1816,9 @@ function underClose(): void {
 }
 
 /**
- * Turns the form into that of a group of the tutorials of a type:
- * of a group there as the reader reads it back, see `groupsRead` in `reader/course.ts`,
- * of a new one its days, place and tutors empty,
- * its weeks those of the series of its type, else of any series of the course,
- * so a group of the semester needs only its day, its times and its room.
- * The form it came from is left as it was, unsaved.
+ * Turns the form into that of a group of a type.
+ * A new one takes the weeks of the series of its type, else of any series of the course,
+ * so it needs only its day, its times and its room.
  */
 function groupStart(type: string, group: string): void {
     const found: Group | undefined = groupsOf(type).find((one: Group): boolean => one.rule.group === group);
@@ -2195,10 +1850,7 @@ function groupStart(type: string, group: string): void {
     formFill();
 }
 
-/**
- * Tells whether the form has the bin: a group, a plain series,
- * or my series of a type of a module there already, the exams too, never a new one.
- */
+/** Whether the form has the bin, for a series or group there already, never a new one. */
 function binShows(form: Form): boolean {
     if (grouped !== null) return !grouped.made;
     if (plain !== null) return plain.id !== "";
@@ -2206,12 +1858,8 @@ function binShows(form: Form): boolean {
 }
 
 /**
- * Makes the bin of a series there already, at the left of Cancel,
- * as the dialog of an entry has it: the first click only asks,
- * the second removes it and closes the dialog,
- * my series of a module but its boxes done, whose log entries point to them,
- * see `courseSeriesRemove` in `reader/course.ts`.
- * When the reader does not take it, the hint above the buttons says so.
+ * The bin of a series there already, the first click only asks, the second removes it.
+ * My series of a module keeps its boxes done, since log entries point to them.
  */
 function seriesBinOf(form: Form): HTMLButtonElement {
     const ask: string = grouped === null && plain === null ? "Really remove? Its boxes done stay" : "Really remove?";
@@ -2248,15 +1896,10 @@ function seriesBinOf(form: Form): HTMLButtonElement {
 }
 
 /**
- * Builds the rows of the form of a series anew from what it holds.
- * The dialog stays where it is scrolled to, read before the rows are built,
- * since building them takes the boxes shown out of the rows standing,
- * which would scroll a dialog scrolled to its end up.
- * Save takes no focus, so the extra being typed joins as it saves,
- * not as the focus leaves it, which would build the rows anew under the pointer
- * and lose the click, see {@link formSave}.
- * While my series waits for my group its rows are the same as with a group,
- * in the same places, so pinning one never makes rows appear.
+ * Builds the rows of the form anew from what it holds.
+ * The scroll is read before, since building takes the boxes out and would scroll the dialog up.
+ * Save takes no focus, else the rows built anew under the pointer would lose the click.
+ * While my series waits for my group its rows stand as with a group, so pinning makes none appear.
  */
 function formFill(): void {
     if (typing === null) return;
@@ -2320,11 +1963,9 @@ function formFill(): void {
 }
 
 /**
- * Writes the place of the form everywhere while I changed it by its parts,
- * see `renameSend` in `./places.ts`.
- * Before the series is saved only checked, so nothing is written while the reader
- * would refuse it, and after it written, so its boxes, saved with the place as it was,
- * take it with every other entry.
+ * Writes the place everywhere while I changed it by its parts.
+ * Checked before the series is saved, so nothing is written the reader would refuse,
+ * written after, so its boxes take it with every other entry.
  *
  * @throws {Error} - When the reader does not take the place, like one with an empty name
  */
@@ -2334,14 +1975,9 @@ async function placeRename(form: Form, dry: boolean): Promise<void> {
 }
 
 /**
- * Saves the form of a series, the extra being typed joined first,
- * so one click on Save takes it,
- * a place and the people renamed checked before and renamed after,
- * and closes the dialog, with the dialog of the box it opened over.
- * When the reader does not take it, the hint above the buttons says so,
- * and the dialog stays.
- * A group saved, new or not, never becomes mine by itself,
- * since pinning is a choice of mine in the menu of the groups.
+ * Saves the form, the extra being typed joined first, so one click on Save takes it.
+ * A place and people renamed are checked before and renamed after.
+ * A group saved never becomes mine by itself, since pinning is my choice.
  */
 async function formSave(): Promise<void> {
     if (typing === null) return;
@@ -2362,8 +1998,7 @@ async function formSave(): Promise<void> {
 }
 
 /**
- * Closes the form once it is saved or removed, with the dialog of the box it opened over,
- * but the form of a group opened from my series goes back to it, see {@link groupReturn}.
+ * Closes the form once saved or removed, a group opened from my series going back to it.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2375,10 +2010,8 @@ async function formDone(): Promise<void> {
 }
 
 /**
- * Goes back from the form of a group to my series it was opened from, as I left it,
- * the course loaded anew once the group was saved or removed,
- * so the menu of its groups shows them as they are now.
- * Gives false for a form opened otherwise, which closes as usual.
+ * Goes back from a group to my series as I left it, the course reloaded once the group changed.
+ * Gives false for a form opened otherwise.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2396,11 +2029,8 @@ async function groupReturn(reload: boolean): Promise<boolean> {
 }
 
 /**
- * Starts the dialog once for the page: Save or Ctrl+Enter saves,
- * Enter confirms only its field, Cancel, Escape or a click beside it forgets the form,
- * but the form of a group opened from my series goes back to it instead.
- * That back is done by hand, since the copy of my series below
- * stands in the way of the browser's own Escape.
+ * Starts the buttons and keys of the dialog once for the page.
+ * Escape from a group goes back to my series by hand, since the copy below blocks the browser's own.
  */
 function dialogStart(): void {
     if (dialogStarted) return;
@@ -2447,10 +2077,7 @@ function dialogStart(): void {
 }
 
 /**
- * Opens the dialog of a series of a type of a module in a semester,
- * as its rule reads back, a type without series yet new with that type,
- * or without type a new series of the module,
- * over the dialog of a box when that opens it.
+ * Opens the dialog of a series of a type of a module in a semester, new for a type without one.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2477,8 +2104,7 @@ export async function seriesOpen(
 }
 
 /**
- * Opens a group of the tutorials of a module in the form of a series,
- * from the menu of the groups, see `./groups.ts`, its group fixed.
+ * Opens a group of the tutorials of a module in the form.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2494,11 +2120,8 @@ export async function groupOpen(module: string, type: string, semester: string, 
 }
 
 /**
- * Shows in the dialog my new series of a skill of a numbered type
- * of a module picked in its rows on top, see {@link seriesNew},
- * so making a series and changing one are one dialog:
- * the one there already as {@link seriesOpen} opens it,
- * else a new one, which saves as a box repeated, see {@link repeatedSend}.
+ * Shows my new series of a numbered type, the one there already if there is one,
+ * so making a series and changing one are one dialog.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2531,11 +2154,7 @@ async function seriesRepeat(from: Repeated, days: Days, saved: () => void): Prom
     dialogShow();
 }
 
-/**
- * Tells whether the form of a plain series is typed enough to make boxes:
- * its days, each a weekday, each once, with a start before its end or a length,
- * and its first day on or before its last, or no last day.
- */
+/** Whether a plain series is typed enough to make boxes, its last day optional. */
 function plainReady(series: Plain, form: Form): boolean {
     const days: boolean =
         form.slots.length > 0 &&
@@ -2549,18 +2168,13 @@ function plainReady(series: Plain, form: Form): boolean {
 }
 
 /**
- * Gives the parts a plain series is written as, one per time,
- * since a rule has one time for all its weekdays, see `reader/rules.ts`,
+ * The parts a plain series is written as, one per time, since a rule has one time,
  * and the `UID`s of the parts that go.
- * A part of the series as it was keeps its `UID` where its time stays,
- * so its days of that time stay as they are.
- * A time new takes a part whose time went, the series being changed first,
- * so a series whose one time changes stays that series.
- * A part left over goes, see `plainGone` in `reader/rules.ts`.
- * The parts of a series of several times share its `X-SERIES`, the one it had,
- * else one made from the series or anew; a series of one time has none.
- * Its extras go with the part of the series being changed, else with the first part.
- * Each part keeps the earliest first day of the series as it was while the form keeps it.
+ * A part keeps its `UID` where its time stays, so its days stay as they are.
+ * A new time takes a part whose time went, so a series whose one time changes stays that series.
+ * The parts of several times share one `X-SERIES`, a series of one time has none.
+ * Its extras go with the part being changed, else with the first part.
+ * Each part keeps its own first day while the form keeps the earliest.
  */
 function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
     const texts: Plain = {
@@ -2642,11 +2256,8 @@ function plainPartsOf(series: Plain, form: Form): [Plain[], string[]] {
 }
 
 /**
- * Sends a plain series to the reader, see `plainApply` in `reader/rules.ts`,
- * each of its parts one after another, then each part that goes.
- * Of a series that has begun, whose past never changes,
- * every further one from today on at the earliest,
- * pointing back to the series being changed as its sibling.
+ * Sends a plain series part by part, then each part that goes.
+ * Of a series begun, a new part starts today at the earliest, its sibling the series changed.
  * A day one part takes from another counts once, as what really happens to it.
  *
  * @throws {Error} - When the reader does not take a part
@@ -2702,11 +2313,8 @@ async function plainSend(series: Plain, form: Form, dry: boolean): Promise<Plann
 }
 
 /**
- * Makes the row `Day` of a series of my course or of a group, see {@link slotRowsOf},
- * with the switch between times and a length, see `lengthSwapOf` in `./times.ts`,
- * as a plain series has it, by its length its boxes days without time.
- * From times to a length each day takes the length of its times,
- * from a length to times its times stay to type.
+ * The row `Day` of my course or a group with the switch between times and a length.
+ * From times to a length each day takes the length of its times.
  */
 function courseTimeRowsOf(form: Form): HTMLElement[] {
     const timed: boolean = form.slots.every((slot: Slot): boolean => slot.minutes === undefined);
@@ -2733,11 +2341,7 @@ function courseTimeRowsOf(form: Form): HTMLElement[] {
     return slotRowsOf(form, [swap], timed ? null : lengthOf);
 }
 
-/**
- * Makes the row `Day` of a plain series, see {@link slotRowsOf},
- * with the switch between times and a length, see `lengthSwapOf` in `./times.ts`,
- * either way keeping its weekdays.
- */
+/** The row `Day` of a plain series with the switch between times and a length. */
 function plainTimeRowsOf(form: Form): HTMLElement[] {
     const swap: HTMLButtonElement = lengthSwapOf(plainTimed, (): void => {
         if (plainTimed)
@@ -2773,10 +2377,7 @@ function plainTimeRowsOf(form: Form): HTMLElement[] {
     return slotRowsOf(form, [swap], plainTimed ? null : lengthOf, true);
 }
 
-/**
- * Makes the rows of the form of a plain series,
- * no row of its category, which stays that of the box it opened from.
- */
+/** The rows of a plain series, no category, which stays that of the box it opened from. */
 function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
     return [
         rowOf("Summary", plainSummaryOf(series)),
@@ -2790,11 +2391,7 @@ function plainRowsOf(series: Plain, form: Form): HTMLElement[] {
     ];
 }
 
-/**
- * Makes the summary of a plain series, which every box of it takes,
- * picked as the dialog of a box picks it, see `fieldRowsOf` in `./categories.ts`,
- * of a skill its text to type, since what a skill box is follows from its skill.
- */
+/** The summary of a plain series, of a skill a text, since what a skill box is follows from its skill. */
 function plainSummaryOf(series: Plain): HTMLElement {
     const field: Field | undefined =
         series.category === skillName
@@ -2840,10 +2437,7 @@ function plainSummaryOf(series: Plain): HTMLElement {
 }
 
 /**
- * Opens the dialog for a plain series, over the dialog of a box when that opens it,
- * its form filled from the series and its parts going on,
- * see `plainRead` in `reader/rules.ts`,
- * with times while it has them, else with its length.
+ * Opens the dialog for a plain series, filled from the series and its parts.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2892,9 +2486,7 @@ async function plainStart(series: Plain, saved: () => void): Promise<void> {
 }
 
 /**
- * Opens the dialog of a plain series by its `UID`,
- * from the series icon ⟳ after the times of one of its boxes,
- * see `seriesShow` in `./categories.ts`.
+ * Opens the dialog of a plain series by its `UID`.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2903,10 +2495,7 @@ export async function plainOpen(id: string, saved: () => void): Promise<void> {
     await plainStart(await readerAsk<Plain>(`/api/day/plain?id=${encodeURIComponent(id)}`), saved);
 }
 
-/**
- * Gives a new plain series starting on a day, on its weekday, without times,
- * at my default place, see {@link standardLineOf}.
- */
+/** A new plain series from a day on its weekday, without times, at my default place. */
 function plainNewOf(category: string, module: string, type: string, semester: string, day: string): Plain {
     return {
         id: "",
@@ -2934,10 +2523,7 @@ function plainNewOf(category: string, module: string, type: string, semester: st
 }
 
 /**
- * Opens the dialog of my own learning of a module as a series,
- * from the card `Learning` on the page of the module, see `../editor/course.ts`:
- * the plain series its planned boxes belong to,
- * else a new one of the skill without type in the semester from today.
+ * Opens my own learning of a module as a plain series, else a new one without type from today.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -2951,11 +2537,7 @@ export async function learningOpen(module: string, semester: string, id: string)
     await plainStart(plainNewOf(skillName, module, "", semester, today), (): void => {});
 }
 
-/**
- * Makes the rows on top of the dialog of a new series: its category,
- * and of a skill its skill and type, see `skillPairOf` in `./skill.ts`,
- * in place of the summary its form shows below them.
- */
+/** The rows on top of a new series, its category and of a skill its skill and type. */
 function freshRowsOf(): HTMLElement[] {
     if (fresh === null) return [];
     const category: HTMLElement = rowOf(
@@ -2989,21 +2571,16 @@ function freshRowsOf(): HTMLElement[] {
     return [category, rowOf("Summary", holder)];
 }
 
-/**
- * Gives the semester of the form of a series of my course, empty for none:
- * that of its course, else of the box it repeats, else the one picked for a new series.
- */
+/** The semester of a series of my course, of its course, the box it repeats or as picked. */
 function courseSemesterOf(): string {
     return course?.semester ?? repeated?.box.semester ?? fresh?.semester ?? "";
 }
 
 /**
- * Makes the row `Semester` of a skill series,
- * picked from those of its skill, never typed.
- * Picking another shows the form of that semester, see {@link semesterSwitch},
+ * The row `Semester`, picked from those of its skill, never typed.
+ * Picking another shows the form of that semester,
  * since a series of my course is one of a module, a type and a semester.
- * Of a numbered type of a module the group stands beside it,
- * as the type beside the skill in the summary.
+ * Of a numbered type the group stands beside it.
  */
 function semesterRowOf(semester: string): HTMLElement {
     const module: string =
@@ -3030,8 +2607,7 @@ function semesterRowOf(semester: string): HTMLElement {
 }
 
 /**
- * Shows the form in another semester, as its row `Semester` picks it:
- * the same series, group or new series in that semester, new while it has none.
+ * Shows the same series, group or new series in another semester, new while it has none.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -3053,11 +2629,8 @@ async function semesterSwitch(semester: string): Promise<void> {
 }
 
 /**
- * Shows the form the rows on top of the dialog of a new series picked:
- * while nothing is picked those rows alone, of the exams the exams of its module,
- * of a skill of a numbered type my series of that type, see {@link seriesRepeat},
- * of any other a new plain series, see {@link plainStart}.
- * The rows on top stay above every new one.
+ * Shows the form the rows on top of a new series picked, the exams, my series of a type,
+ * else a new plain series, the rows on top staying above every new one.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -3128,8 +2701,7 @@ async function freshFollow(): Promise<void> {
 }
 
 /**
- * Opens the dialog of a new series from nothing, by `⟳` beside `+` of the plan,
- * see `boxesStart` in `./boxes.ts`, its first day the day shown.
+ * Opens a new series from nothing, its first day the day shown.
  *
  * @throws {Error} - When the reader cannot answer
  */
