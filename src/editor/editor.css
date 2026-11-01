@@ -11,8 +11,7 @@
    the same room at its left and at its right on every page, `--edge-room`,
    so the check and the cross at the right end
    of a heading keep air to the edge of the screen;
-   the room of the scrollbar kept on both sides, also for a file too short to scroll,
-   so the page stands in the middle at the same place in every file */
+   it scrolls without a scrollbar, so the page stands in the very middle in every file */
 .editor-file {
     --edge-room: 2rem;
     display: grid;
@@ -20,7 +19,7 @@
         minmax(var(--edge-room), 1fr) minmax(0, var(--reading-width))
         minmax(var(--edge-room), 1fr);
     overflow-y: auto;
-    scrollbar-gutter: stable both-edges;
+    scrollbar-width: none;
 }
 
 /* Page of every file exactly my reading width, in the middle, where the screen has room,
