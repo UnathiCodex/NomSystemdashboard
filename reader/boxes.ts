@@ -58,11 +58,11 @@
  *   since the standard has nothing for it, see `pushAdd` in `calendar.ts`.
  * - when it got its day in `DTSTAMP`, set anew with each change of its day
  *   and as one of a day over is taken back to open, never by another change,
- *   see `componentWrite` in `calendar.ts`.
+ *   see `componentEdit` in `calendar.ts`.
  * - its other fields as an entry of the log has them, a skill box also
  *   `X-SEMESTER`, `X-CHAPTER`s and `ATTACH`es, which a log entry from it gets too.
  * The log entry written from a box points to it with `RELATED-TO:<UID of the box>`,
- * an older one with `X-PLANNED`, see `relatedOf` in `calendar.ts`.
+ * see `relatedOf` in `calendar.ts`.
  * An occurrence of a series is a box of its own,
  * its identifier the `UID` and its start after `#`, see `entryIdOf` in `calendar.ts`.
  * The first time it is dropped, pushed or changed alone,

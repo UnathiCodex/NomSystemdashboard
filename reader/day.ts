@@ -24,8 +24,7 @@
  * so the box shows as done and offers no second log.
  * Removing the log entry opens the box again, and so does a click on its check,
  * see {@link boxUndo}.
- * An older log entry points to its box with `X-PLANNED:<UID of the box>`,
- * which is still read. A tutorial logged moves no other week.
+ * A tutorial logged moves no other week.
  *
  * A meal lists its foods as lines `X-FOOD`, replaced as a whole when the entry changes,
  * see `food.ts`.
