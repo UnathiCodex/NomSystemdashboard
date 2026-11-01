@@ -52,7 +52,7 @@
  * that of `Skill` by default the folder of its skill, which the reader writes.
  * Places are only my places of `Places.md`, see `places.ts`;
  * the pencil of a place shows its parts below it, see {@link partsOf},
- * which change the place everywhere once the dialog saves, see {@link placesRename};
+ * which change the place everywhere once the dialog saves, see {@link renamesSend};
  * a new place goes into `Places.md` by its typed name when picked,
  * its parts showing below it at once, so I type them next, see {@link placeAdd}.
  * A place is only where I physically am;
@@ -320,11 +320,7 @@ let opened: EntryOpening = openingOf("log", new Date(), new Date());
  * the link written as the `ALTREP` of its `X-ONLINE`, see {@link onlineRowOf};
  * empty once another platform is picked; the platform itself is in {@link values}.
  */
-let onlineParts: Omit<Online, "online"> = {
-    onlineLink: "",
-    onlineChannel: "",
-    onlineTitle: "",
-};
+let onlineParts: Omit<Online, "online"> = { onlineLink: "", onlineChannel: "", onlineTitle: "" };
 
 /**
  * Whether `Online` shows its parts below it to type, see {@link onlineRowOf},
@@ -340,16 +336,10 @@ let partsOpen: FieldKey | null = null;
 
 /**
  * The place picked in each field of a place as I changed it by its parts,
- * which the dialog writes everywhere once it saves, see {@link placesRename};
+ * which the dialog writes everywhere once it saves, see {@link renamesSend};
  * `null` while I changed nothing, and once another place is picked.
  */
-let edits: { [key in FieldKey]: Place | null } = {
-    title: null,
-    from: null,
-    location: null,
-    online: null,
-    with: null,
-};
+let edits: { [key in FieldKey]: Place | null } = { title: null, from: null, location: null, online: null, with: null };
 
 /** Line of the place just added, see {@link placeAdd}, so picking it shows its parts. */
 let addedLine: string = "";
@@ -897,10 +887,14 @@ function placePartsOf(field: Field): [HTMLButtonElement, HTMLAnchorElement] {
 
 /**
  * Shows the rows of where it is anew, below what it is,
- * see {@link placeRowsOf}, the other rows staying as they are.
+ * in the order of the fields of the category picked:
+ * a way where it starts, then its place, then what it did online,
+ * the other rows staying as they are.
  */
 function placesShow(): void {
-    document.getElementById("entry-place")?.replaceChildren(...placeRowsOf());
+    document
+        .getElementById("entry-place")
+        ?.replaceChildren(...rowsOf((field: Field): boolean => placeIs(field) || field.key === "online"));
 }
 
 /**
@@ -929,7 +923,7 @@ function partsShow(field: Field): void {
  * the dialog takes the place as I type, see {@link edits},
  * its line and its address show it once I leave a part,
  * the rows built anew, see {@link placesShow}, the part I went on to keeping the cursor,
- * and once the dialog saves, the reader writes it everywhere, see {@link placesRename}.
+ * and once the dialog saves, the reader writes it everywhere, see {@link renamesSend}.
  * They carry the key of their field,
  * so the dialog finds them apart from those of another place
  * and from the link of the summary.
@@ -1454,14 +1448,6 @@ function peopleRead(): Attendee[] {
 }
 
 /**
- * Builds the rows of where it is, in the order of the fields of the category picked:
- * a way where it starts, then its place, then what it did online.
- */
-function placeRowsOf(): HTMLElement[] {
-    return rowsOf((field: Field): boolean => placeIs(field) || field.key === "online");
-}
-
-/**
  * Builds the rows of the fields of the category picked below its times,
  * those neither its summary nor where it is, which is who I was with.
  */
@@ -1856,24 +1842,6 @@ function errorShow(error: unknown): void {
 }
 
 /**
- * Writes each place picked that I changed by its parts everywhere,
- * see `renameSend` in `places.ts`;
- * nothing for a place I left as it is, nor for a field the category picked does not have.
- * Before the entry or the box is saved only checked,
- * so the dialog saves nothing the reader would refuse, and after it written,
- * so the entry or the box, saved with the place as it was, takes it with every other.
- *
- * @throws {Error} - When the reader does not take a place, like one with an empty name
- */
-async function placesRename(dry: boolean): Promise<void> {
-    for (const field of (chosen?.fields ?? []).filter(placeIs)) {
-        const edit: Place | null = edits[field.key];
-        if (values[field.key] !== "" && edit !== null && JSON.stringify(edit) !== JSON.stringify(placeOriginOf(field)))
-            await renameSend(labelOf(values[field.key]), edit, dry);
-    }
-}
-
-/**
  * Writes each param I changed by the part `Param` of a pencil in every entry and box
  * of the category picked that gives it to its value, see {@link paramEdits}
  * and `paramRename` in `reader/calendar.ts`:
@@ -1906,15 +1874,25 @@ async function paramsRename(dry: boolean): Promise<void> {
 }
 
 /**
- * Writes what I changed by its parts everywhere: the places, see {@link placesRename},
- * the people, see `personsRename` in `../persons.ts`, the names picked in `With`
- * so a person `Persons.md` does not hold yet gets its row there,
- * and the params, see {@link paramsRename}.
+ * Writes what I changed by its parts everywhere,
+ * before the entry or the box is saved only checked,
+ * so the dialog saves nothing the reader would refuse, and after it written,
+ * so the entry or the box, saved as it was, takes it with every other:
+ * - each place picked that I changed, see `renameSend` in `places.ts`,
+ *   nothing for a field the category picked does not have,
+ * - the people, see `personsRename` in `../persons.ts`, the names picked in `With`
+ *   so a person `Persons.md` does not hold yet gets its row there,
+ * - the params, see {@link paramsRename}.
  *
  * @param dry - Whether they are only checked, before the entry or the box is saved
+ * @throws {Error} - When the reader does not take one, like a place with an empty name
  */
 async function renamesSend(dry: boolean): Promise<void> {
-    await placesRename(dry);
+    for (const field of (chosen?.fields ?? []).filter(placeIs)) {
+        const edit: Place | null = edits[field.key];
+        if (values[field.key] !== "" && edit !== null && JSON.stringify(edit) !== JSON.stringify(placeOriginOf(field)))
+            await renameSend(labelOf(values[field.key]), edit, dry);
+    }
     await personsRename(
         personEdits,
         persons,
@@ -1936,10 +1914,7 @@ async function renamesSend(dry: boolean): Promise<void> {
  * like Eier renamed on the phone while the dialog on the laptop showed Eier,
  * nothing is saved and the dialog stays open, saying so, see {@link hintShow};
  * opened again, it shows the entry as the file holds it, to change and save once more.
- * A place, the people and a param I changed by their parts
- * are checked before anything is saved,
- * and written everywhere once the entry or the box is,
- * see {@link placesRename}, `personsRename` in `../persons.ts` and {@link paramsRename}.
+ * What I changed by its parts is checked before and written after, see {@link renamesSend}.
  *
  * @throws {Error} - When the reader does not take the entry
  *   or a place or person I changed
@@ -2122,13 +2097,15 @@ function lengthShow(): void {
  * since the pencil always changes one property and ⟳ always means the series,
  * as far from the times as the pencil from a summary;
  * for a box of a series of my course, see `seriesHas` in `series.ts`,
- * after it its group, see `boxGroupOf` in `groups.ts`, a pick closing the dialog,
- * see {@link groupPick}, ⟳ opening that series over this dialog,
- * see `seriesOpen` in `series.ts`;
+ * after it its group, see `boxGroupOf` in `groups.ts`,
+ * ⟳ opening that series over this dialog, see `seriesOpen` in `series.ts`;
  * for a box of a plain series ⟳ opening that series whole,
  * see `plainOpen` in `series.ts`;
  * saving the series closes this dialog too;
  * nothing for a new box, a box alone or an entry of the log.
+ * A group picked closes the dialog without saving, since the box moves to the session
+ * of that group, and sends the pick, see `PickShow` in `groups.ts`,
+ * the plan and the page of the module loading anew as their files change.
  * - `pencil`: The series icon ⟳, which takes no focus,
  *   so a field of the times I leave by it,
  *   like a day written out with its weekday then,
@@ -2139,31 +2116,35 @@ function lengthShow(): void {
 async function seriesShow(): Promise<void> {
     const of: HTMLElement = document.getElementById("entry-of-series") as HTMLElement;
     const box: Box | null = opened.target === "box" ? opened.box : null;
-    const pencil: HTMLButtonElement = pencilOf(Repeat, "Change the series", true);
     of.replaceChildren();
     of.hidden = box === null || (!box.series && !seriesHas(box));
-    if (box !== null && seriesHas(box)) {
-        const semester: string = box.semester || semesterOf(box.day);
-        pencil.addEventListener("click", (): void => {
-            seriesOpen(box.module, box.type, semester, entryClose).catch(console.error);
-        });
-        const course: Course | null =
-            box.group === "" || !pickable(box)
-                ? null
-                : await readerAsk<Course>(
-                      `/api/course/module?module=${encodeURIComponent(box.module)}` + `&semester=${semester}`,
-                  ).catch((error: unknown): null => {
-                      console.error(error);
-                      return null;
-                  });
-        const group: HTMLElement | null = box.group === "" ? null : boxGroupOf(course, box, groupPick);
-        of.append(pencil, ...(group === null ? [] : [group]));
-    } else if (box !== null && box.series) {
-        pencil.addEventListener("click", (): void => {
-            plainOpen(box.id.split("#")[0], entryClose).catch(console.error);
-        });
-        of.append(pencil);
-    }
+    if (box === null || of.hidden) return;
+    const course: boolean = seriesHas(box);
+    const semester: string = box.semester || semesterOf(box.day);
+    const pencil: HTMLButtonElement = pencilOf(Repeat, "Change the series", true);
+    pencil.addEventListener("click", (): void => {
+        (course
+            ? seriesOpen(box.module, box.type, semester, entryClose)
+            : plainOpen(box.id.split("#")[0], entryClose)
+        ).catch(console.error);
+    });
+    const loaded: Course | null =
+        !course || box.group === "" || !pickable(box)
+            ? null
+            : await readerAsk<Course>(
+                  `/api/course/module?module=${encodeURIComponent(box.module)}` + `&semester=${semester}`,
+              ).catch((error: unknown): null => {
+                  console.error(error);
+                  return null;
+              });
+    const group: HTMLElement | null =
+        !course || box.group === ""
+            ? null
+            : boxGroupOf(loaded, box, (_: () => void, send: () => Promise<unknown>): void => {
+                  entryClose();
+                  send().catch(console.error);
+              });
+    of.append(pencil, ...(group === null ? [] : [group]));
 }
 
 /**
@@ -2177,20 +2158,6 @@ function entryClose(): void {
 /** Gives the dialog of an entry or a box. */
 function dialogOf(): HTMLDialogElement {
     return document.getElementById("entry") as HTMLDialogElement;
-}
-
-/**
- * Picks a group for the box of the dialog, from the menu of the groups after its times:
- * closes the dialog without saving, since the box moves to the session of that group,
- * and sends the pick, see `PickShow` in `groups.ts`;
- * the plan and the page of the module load anew as their files change.
- *
- * @param change - Changes the box as the pick does,
- *   which the dialog leaves to the page loading anew
- */
-function groupPick(change: () => void, send: () => Promise<unknown>): void {
-    entryClose();
-    send().catch(console.error);
 }
 
 /**
