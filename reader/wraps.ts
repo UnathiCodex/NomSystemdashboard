@@ -3,7 +3,7 @@
  *
  * Prints every line of a Markdown file that does not fit on one line of my editor,
  * for the writers of my documents and their checks, see
- * `.claude/skills/learn/document-style.md` in `NomWorkspace`:
+ * `.claude/skills/learn/styles/document-style.md` in `NomWorkspace`:
  * `node ~/NomWorkspace/NomSystemdashboard/reader/wraps.ts <file.md> …`,
  * while the reader runs, see `reader.ts`.
  * Chromium without a window draws the file in the editor of the page,

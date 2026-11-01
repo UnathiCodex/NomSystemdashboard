@@ -190,7 +190,7 @@ export type EditorSources = {
 /** {@link EditorSources} as they lie in the vault. */
 export const editor: EditorSources = {
     modules: notes.modules,
-    corrections: join(vault, ".claude", "skills", "learn", "corrections.diff"),
+    corrections: join(vault, ".claude", "skills", "learn", "styles", "corrections.diff"),
 };
 
 /**
