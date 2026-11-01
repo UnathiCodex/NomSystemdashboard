@@ -2,15 +2,11 @@ import type { SportDay, Video, VideoFound } from "../../reader/sport.ts";
 /**
  * ## Mine
  *
- * Loads the sessions of a day and my workouts, exercises and videos through the reader,
- * sends new and changed ones, removes them, sends my weight of a day,
- * and asks YouTube through the reader for the title and channel of a link,
- * see `reader/sport.ts`.
+ * My sessions, workouts, exercises, videos and weight through the reader, loaded, sent and removed.
  */
 
 /**
  * A session of a day, as the reader sends it.
- *
  * - `kcal`: kcal it burned above rest.
  * - `workout`: The workouts it did, parted by `, `, empty for none.
  */
@@ -39,11 +35,9 @@ export type Session = {
 };
 
 /**
- * A part of a workout: an exercise or a video.
- *
+ * A part of a workout, an exercise or a video.
  * - `link`: Link of a video, empty for an exercise and for a video added by hand.
- * - `sets`, `reps`, `kg`: The values of the variant of mine an exercise was picked as;
- *   left out or empty for a video.
+ * - `sets`, `reps`, `kg`: The values of the variant an exercise was picked as, empty for a video.
  */
 export type Part = {
     kind: "Exercise" | "Video";
@@ -56,7 +50,6 @@ export type Part = {
 
 /**
  * A workout of mine with its parts.
- *
  * - `kcal`: What its videos burn, when all its parts are videos with minutes.
  */
 export type Workout = {
@@ -67,7 +60,6 @@ export type Workout = {
 
 /**
  * An exercise of mine with what I do of it as a rule, which an entry brings every time.
- *
  * - `reps`: Its repetitions per set, or its seconds like `60s`.
  */
 export type Exercise = {
@@ -80,11 +72,7 @@ export type Exercise = {
 
 /**
  * Everything of mine the sport area lists.
- *
- * - `last`: What I did of each exercise the last time, its line `X-EXERCISE`,
- *   by its name in small letters,
- *   which the dialog brings again for one without values,
- *   see `exerciseLastOf` in `../day/sport.ts`.
+ * - `last`: Line `X-EXERCISE` of each exercise the last time, by its name in small letters.
  */
 export type Mine = {
     workouts: Workout[];
@@ -96,7 +84,6 @@ export type Mine = {
 
 /**
  * Reads the answer of the reader.
- *
  * @throws {Error} - When the reader did not take the request
  */
 async function answerOf<Sent>(response: Response): Promise<Sent> {
@@ -104,17 +91,15 @@ async function answerOf<Sent>(response: Response): Promise<Sent> {
     return (await response.json()) as Sent;
 }
 
-/** Loads the sessions of a day with what they took from the reader. */
+/** Loads the sessions of a day. */
 export async function sportDayLoad(day: string): Promise<SportDay> {
     return await answerOf<SportDay>(await fetch(`/api/sport/day?date=${day}`));
 }
 
 /**
- * Sends my weight of a day to the reader,
- * which writes it into `Weights.md` in place of the one of that day.
- *
+ * Sends my weight of a day into `Weights.md`, in place of the one of that day.
  * @returns The sessions of the day, counted with the new weight
- * @throws {Error} - When the reader does not take it, like kilograms that are no number
+ * @throws {Error} - When the reader does not take it
  */
 export async function weightSend(day: string, kg: string): Promise<SportDay> {
     return await answerOf<SportDay>(
@@ -125,18 +110,15 @@ export async function weightSend(day: string, kg: string): Promise<SportDay> {
     );
 }
 
-/** Loads my workouts, exercises and videos from the reader. */
+/** Loads my workouts, exercises and videos. */
 export async function mineLoad(): Promise<Mine> {
     return await answerOf<Mine>(await fetch("/api/sport/mine"));
 }
 
 /**
- * Sends a workout to the reader, new or changed, which writes it into `Workouts.md`.
- *
+ * Sends a workout, new or changed, into `Workouts.md`, gives all of mine after.
  * @param old - Name it had, for a workout renamed
- * @returns All of mine after
- * @throws {Error} - When the reader does not take it,
- *   like one without parts or with the name of another
+ * @throws {Error} - When the reader does not take it
  */
 export async function workoutSend(name: string, parts: Part[], old?: string): Promise<Mine> {
     return await answerOf<Mine>(
@@ -147,7 +129,7 @@ export async function workoutSend(name: string, parts: Part[], old?: string): Pr
     );
 }
 
-/** Removes a workout through the reader from `Workouts.md`, gives all of mine after. */
+/** Removes a workout from `Workouts.md`, gives all of mine after. */
 export async function workoutDelete(name: string): Promise<Mine> {
     return await answerOf<Mine>(
         await fetch(`/api/sport/workouts?name=${encodeURIComponent(name)}`, {
@@ -158,7 +140,6 @@ export async function workoutDelete(name: string): Promise<Mine> {
 
 /**
  * Asks YouTube through the reader for the title and the channel of a video.
- *
  * @throws {Error} - When the text is no link to a video or YouTube does not answer
  */
 export async function videoLookup(link: string): Promise<VideoFound> {
@@ -166,11 +147,9 @@ export async function videoLookup(link: string): Promise<VideoFound> {
 }
 
 /**
- * Sends a video to the reader, new or changed, which writes it into `Videos.md`.
- *
- * @param before - Its title and link before a change; left out for a new one
- * @returns All of mine after
- * @throws {Error} - When the reader does not take it, like one without title
+ * Sends a video, new or changed, into `Videos.md`, gives all of mine after.
+ * @param before - Its title and link before a change, left out for a new one
+ * @throws {Error} - When the reader does not take it
  */
 export async function videoSend(video: Omit<Video, "kcal">, before?: { title: string; link: string }): Promise<Mine> {
     return await answerOf<Mine>(
@@ -185,11 +164,7 @@ export async function videoSend(video: Omit<Video, "kcal">, before?: { title: st
     );
 }
 
-/**
- * Sends a new exercise to the reader,
- * which adds it to `Exercises.md` as a variant of its own,
- * empty, beside those of the same name. Gives all of mine after.
- */
+/** Adds a new exercise to `Exercises.md` as an empty variant of its own, gives all of mine after. */
 export async function exerciseSend(name: string): Promise<Mine> {
     return await answerOf<Mine>(
         await fetch("/api/sport/exercises", {
@@ -200,11 +175,9 @@ export async function exerciseSend(name: string): Promise<Mine> {
 }
 
 /**
- * Sends what I do of a variant of an exercise as a rule to the reader,
- * which writes it into `Exercises.md` in place of the variant as it was,
- * and into the workouts that hold it. Gives all of mine after.
- *
- * @throws {Error} - When the reader does not take it, like sets that are no whole number
+ * Sends the rule of a variant of an exercise into `Exercises.md` and the workouts that hold it.
+ * Gives all of mine after.
+ * @throws {Error} - When the reader does not take it
  */
 export async function exerciseChangeSend(
     old: { name: string; sets: string; reps: string; kg: string },
@@ -221,10 +194,7 @@ export async function exerciseChangeSend(
     );
 }
 
-/**
- * Removes a variant of an exercise through the reader from `Exercises.md`
- * and from every workout that holds it. Gives all of mine after.
- */
+/** Removes a variant of an exercise from `Exercises.md` and every workout, gives all of mine after. */
 export async function exerciseDelete(exercise: {
     name: string;
     sets: string;

@@ -1,23 +1,13 @@
 /**
  * ## Sport
  *
- * Shows my sessions of sport on a day,
- * and my workouts and exercises, see `lists.ts`, in the scheme of the food view,
- * whose look it takes, see `../food/food.css`.
- * The bar of the day, as the day has it, between the arrows to the day before and after,
- * at its right end the number of the sessions of the day,
- * their time together and the kcal they burned above rest,
- * an estimate, see `reader/sport.ts`, written whole without `~`,
- * since every kcal of the page is rounded anyway, without goals, so the log stays a log.
- * The day: each session of the log with what I did.
- * Last among the totals my weight on the day, the last one I wrote on or before it,
- * 80 kg before the first, see {@link weightEdit}; I change it every month or two,
- * so it needs no place of its own.
- * It opens on today's calendar date and moves on with it, see `../today.ts`.
- * The day loads anew the moment a file of my new system changes, whoever changed it,
- * see `../changes.ts`, so it always shows the sessions as they lie in the log;
- * not while I type my weight, which the field would lose,
- * and which shows the day anew itself once written or taken back.
+ * Shows my sessions of sport on a day and my workouts and exercises, in the look of the food view.
+ * The bar holds the number of sessions, their time and the kcal burned above rest, without goals,
+ * so the log stays a log.
+ * The kcal are an estimate written without `~`, since every kcal of the page is rounded anyway.
+ * Last among the totals my weight, the last one written on or before the day, 80 kg before the first.
+ * I change it every month or two, so it needs no place of its own.
+ * The day loads anew on every change of the files, not while I type my weight, which the field would lose.
  */
 
 import { sportDayLoad, weightSend } from "./mine.ts";
@@ -41,11 +31,7 @@ import type { SportDay } from "../../reader/sport.ts";
 /** Day shown. */
 let shown: string = "";
 
-/**
- * Shows the totals of a day in the bar, see `totalOf` in `../food/foods.ts`:
- * the number of its sessions, their time and kcal, 0 on a day without sessions,
- * so the bar always looks the same, and my weight, last, see {@link weightOf}.
- */
+/** Shows the totals of a day in the bar, 0 on a day without sessions, so the bar always looks the same. */
 function totalsShow(day: SportDay): void {
     document
         .getElementById("sport-totals")
@@ -57,9 +43,7 @@ function totalsShow(day: SportDay): void {
         );
 }
 
-/**
- * Makes the total of my weight on the shown day, the small grey pencil after it.
- */
+/** Total of my weight on the shown day, the small grey pencil after it. */
 function weightOf(kg: number): HTMLElement {
     const amount: HTMLButtonElement = buttonOf("sport-weight-amount", `${amountOf(kg, 1)} kg`, (): void =>
         weightEdit(tile, kg),
@@ -71,13 +55,11 @@ function weightOf(kg: number): HTMLElement {
 }
 
 /**
- * Turns the total of my weight into a field in its place:
- * Enter or leaving it writes the weight of the shown day, see `weightSend` in `mine.ts`,
- * and shows the day with it and my lists anew, whose kcal count with it;
- * the same weight or an empty field writes nothing; Escape takes it back;
- * kilograms the reader does not take keep the field open and say what it takes.
- * - `done`: Whether the field was written or taken back,
- *   so leaving it after Enter writes nothing twice.
+ * Turns the total of my weight into a field in its place.
+ * Enter or leaving it writes the weight and shows the day and my lists anew, whose kcal count with it.
+ * The same weight or an empty field writes nothing, Escape takes it back.
+ * Kilograms the reader does not take keep the field open and say what it takes.
+ * - `done`: Whether the field was written or taken back, so leaving it after Enter writes nothing twice.
  */
 function weightEdit(tile: HTMLElement, kg: number): void {
     const field: HTMLInputElement = document.createElement("input");
@@ -127,10 +109,7 @@ function weightEdit(tile: HTMLElement, kg: number): void {
     field.setSelectionRange(field.value.length, field.value.length);
 }
 
-/**
- * Builds the line of a part of a session, indented under its summary,
- * see `.food-line` in `../food/food.css`.
- */
+/** Line of a part of a session, indented under its summary. */
 function partLineOf(name: string, grey: string, value: string): HTMLElement {
     const line: HTMLElement = elementOf("div", "food-line", "");
     const what: HTMLElement = elementOf("span", "food-what", name);
@@ -140,9 +119,8 @@ function partLineOf(name: string, grey: string, value: string): HTMLElement {
 }
 
 /**
- * Builds the lines of a session: its start in grey linking to its day in the day view,
- * its kcal at the right; then its summary and workout with its time,
- * then each exercise and each video.
+ * Lines of a session, its start linking to its day and its kcal,
+ * then its summary and workout with its time, then each exercise and video.
  */
 function sessionLinesOf(session: Session): HTMLElement[] {
     const entry: HTMLElement = elementOf("div", "food-entry", "");
@@ -176,9 +154,7 @@ function sessionLinesOf(session: Session): HTMLElement[] {
 }
 
 /**
- * Shows a day: writes its date in the bar, then loads its sessions and draws them,
- * unless another day was asked for meanwhile.
- *
+ * Shows a day, its sessions drawn unless another day was asked for meanwhile.
  * @throws {Error} - When the reader cannot answer
  */
 async function dayShow(date: string): Promise<void> {
@@ -214,11 +190,7 @@ function dayOpen(day: string): void {
     });
 }
 
-/**
- * Starts the sport view after the router has put its HTML into the page.
- * It loads anew after every change of the files,
- * unless the field of my weight is open, see {@link weightEdit}.
- */
+/** Starts the sport view after the router has put its HTML into the page. */
 export function sportStart(): void {
     const before: HTMLElement = document.getElementById("sport-before") as HTMLElement;
     const after: HTMLElement = document.getElementById("sport-after") as HTMLElement;

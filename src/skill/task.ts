@@ -1,19 +1,13 @@
 /**
  * ## Task
  *
- * What the views show of one task: when it is due,
- * and its history folded behind a small button that opens all its attempts.
- * In the scripts view and in a card its row has one button `⋯` for the next attempt,
- * in a section, the Task of a round, a check and a cross instead, see {@link judgeOf}.
- * Only a cold Task has a result; an Example has none, `Next` checks it off in its round,
- * see `../editor/round.ts`.
- * Right writes at once, Wrong opens one short field for my comment on what went wrong,
- * only in a session of its module, see `../editor/session.ts`.
- * Right and Wrong work only once the solution of the task is open,
- * so I judge against it, not by feeling, since self-grading runs generous (León 2023);
- * a task without a solution takes them always. A broken task I tell my tutor in the chat.
- * A card keeps the row quiet, as quiet as a box of the day:
- * only the `⋯`, after it grey the result of today once there is one.
+ * What the views show of one task, when it is due and its history of attempts.
+ * Its row has one button `⋯` for the next attempt, in a section a check and a cross instead.
+ * Only a cold Task has a result, an Example has none.
+ * Right writes at once, Wrong opens one short field for my comment, only in a session of its module.
+ * Right and Wrong work only once the solution is open, since self-grading runs generous (León 2023).
+ * A task without a solution takes them always.
+ * A card keeps the row quiet, only the `⋯` and the result of today.
  */
 
 import { attemptSend, dayTextOf } from "./attempts.ts";
@@ -28,37 +22,28 @@ import type { SkillTask } from "./attempts.ts";
 import type { IconNode } from "lucide";
 import type { Attempt } from "../../reader/skill.ts";
 
-/**
- * Tells when a task is due, as a line of its own,
- * where no group of due tasks names it, see `reader/skill.ts`.
- * `Due today` also for a task due earlier.
- */
+/** When a task is due, `Due today` also for a task due earlier. */
 export function stateTextOf(task: SkillTask, today: string): string {
     if (task.due !== "") return task.due <= today ? "Due today" : `Due ${dayTextOf(task.due, true)}`;
     if (task.ready) return "Ready";
     return task.done ? "Done" : "New";
 }
 
-/**
- * Builds the grey label of a cold task in place of its `(cold)` in the scripts view:
- * that it is cold, how often I tried it and how often I got it right.
- */
+/** Grey label of a cold task in place of its `(cold)`, how often I tried it and got it right. */
 export function coldLabelOf(task: SkillTask): HTMLElement {
     const done: number = task.attempts.length;
     const right: number = task.attempts.filter((attempt: Attempt): boolean => attempt.result === "right").length;
     return elementOf("span", "task-cold", `cold · ${done} done · ${right} right`);
 }
 
-/** Writes the result of an attempt, with my comment on what went wrong. */
+/** Result of an attempt, with my comment on what went wrong. */
 export function resultTextOf(attempt: Attempt): string {
     return attempt.error === "" ? attempt.result : `wrong: ${attempt.error}`;
 }
 
 /**
- * Keeps a field of my comment on what went wrong plain text in one line,
- * since it goes into the line `X-ROUND` as its `NOTE`, see `reader/skill.ts`:
- * a `"`, a line break or another control sign I type or paste never stands in it;
- * the reader replaces them once more as it writes.
+ * Keeps a field of my comment plain text in one line, without `"` or control signs,
+ * since it goes into the line `X-ROUND` as its `NOTE`.
  */
 export function plainKeep(input: HTMLInputElement): void {
     input.addEventListener("input", (): void => {
@@ -72,10 +57,7 @@ export function plainKeep(input: HTMLInputElement): void {
     });
 }
 
-/**
- * Builds the history of a task, closed at first, the latest attempt first,
- * each day linking to the day view. None for a task never tried.
- */
+/** History of a task, closed, the latest attempt first, none for a task never tried. */
 export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
     if (task.attempts.length === 0) return [];
 
@@ -104,11 +86,8 @@ export function historyOf(task: SkillTask, counted: boolean): HTMLElement[] {
 }
 
 /**
- * Writes an attempt at a task into the skill entry of the moment,
- * then shows the task again,
- * once a session of its module runs, see `sessionEnsure` in `../editor/session.ts`;
- * without one nothing is written and the buttons stay as they are.
- * The buttons of the task take no clicks meanwhile, so a double click writes one attempt.
+ * Writes an attempt into the skill entry of the moment once a session of its module runs.
+ * The buttons take no clicks meanwhile, so a double click writes one attempt.
  */
 function attemptWrite(
     place: HTMLElement,
@@ -141,7 +120,7 @@ function failShow(row: HTMLElement, error: unknown): void {
 }
 
 /**
- * Opens the field for my comment on what went wrong below a task, focused:
+ * Opens the field for my comment below a task.
  * Enter writes the attempt as wrong, also with no comment, Escape closes without writing.
  */
 function wrongShow(row: HTMLElement, task: SkillTask, written: () => Promise<void>): void {
@@ -164,13 +143,9 @@ function wrongShow(row: HTMLElement, task: SkillTask, written: () => Promise<voi
 }
 
 /**
- * Builds the row of a task under its heading in the scripts view.
- * The button hides, keeping its place, until the solution is open,
- * with a grey hint after the state saying so, see `task.css`.
+ * Row of a task under its heading, its button hidden until the solution is open.
  * - `done`: The last attempt of today, whose result a card shows.
- *
- * @param solution - Fold of the task's solution, `null` when it has none,
- *   or as the editor draws the row anew on each fold, see `../editor/tasks.ts`
+ * @param solution - Fold of the solution, `null` when it has none or the editor draws the row anew on each fold
  */
 export function taskRowOf(
     task: SkillTask,
@@ -210,10 +185,7 @@ export function taskRowOf(
     return row;
 }
 
-/**
- * Makes a button of the check and the cross of a task, see {@link judgeOf}:
- * one chip high and as wide, its icon in place of its word, which is its tooltip.
- */
+/** Button of the check or the cross, its word as its tooltip. */
 function judgeButtonOf(icon: IconNode, words: string): HTMLButtonElement {
     const button: HTMLButtonElement = document.createElement("button");
     button.type = "button";
@@ -223,14 +195,9 @@ function judgeButtonOf(icon: IconNode, words: string): HTMLButtonElement {
 }
 
 /**
- * Builds the check and the cross of a task in a section,
- * to stand at the right end of the line of its heading, see `../editor/tasks.ts`.
- * The check writes Right at once and then goes on, as `Next` does;
- * the cross opens below it the field of my comment in the place and look of a menu,
- * see `menuAnchor` in `../menu.ts`.
- * Both stay faint and off until the solution is open, so I judge against it;
- * the result of today stands pressed, the cross with my comment as its tooltip.
- *
+ * Check and cross of a task in a section, at the end of the line of its heading.
+ * The check writes Right and goes on, as `Next` does, the cross opens the field of my comment as a menu.
+ * Both stay off until the solution is open, the result of today pressed.
  * @param open - Whether its solution is open, also for a task without one
  */
 export function judgeOf(
