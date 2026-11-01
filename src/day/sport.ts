@@ -253,6 +253,7 @@ function exerciseNew(name: string, workout: string): void {
 
 /**
  * Small field of a number, a change saves it, a text not taken marks it.
+ * Empty, a grey 0 shows where to type.
  * @param saved - Takes the text typed, gives whether it was taken
  */
 function inputOf(value: string, words: string, wrong: string, saved: (text: string) => boolean): HTMLInputElement {
@@ -261,6 +262,7 @@ function inputOf(value: string, words: string, wrong: string, saved: (text: stri
     input.inputMode = "decimal";
     input.autocomplete = "off";
     input.value = value;
+    input.placeholder = "0";
     input.setAttribute("aria-label", words);
     input.addEventListener("input", (): void => input.setCustomValidity(""));
     input.addEventListener("change", (): void => {

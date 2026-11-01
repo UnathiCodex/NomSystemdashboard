@@ -261,6 +261,7 @@ function gramsFieldOf(
     };
     input.type = "text";
     input.inputMode = "decimal";
+    input.placeholder = "0";
     input.autocomplete = "off";
     input.value = value;
     input.addEventListener("focus", (): void => input.select());

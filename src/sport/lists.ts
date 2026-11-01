@@ -92,6 +92,7 @@ export function lineNameOf(text: string, brackets: string): HTMLElement {
 
 /**
  * Number changed in place, its unit after it, saved on Enter or leaving it.
+ * Empty, a grey 0 keeps its room, so I see where to type.
  * A text that is no number of 0 or more shows the number again.
  * - `text`: The text typed, a decimal comma as a point.
  */
@@ -111,6 +112,7 @@ function numberFieldOf(
         saved(text === "" ? null : Number(text));
     });
     input.inputMode = "decimal";
+    input.placeholder = "0";
     input.classList.add("food-inline-grams");
     value.append(input, unit);
     value.addEventListener("click", (): void => input.focus());
@@ -128,6 +130,7 @@ function wholeFieldOf(value: string, words: string, saved: (typed: string) => vo
         saved(typed);
     });
     input.inputMode = "numeric";
+    input.placeholder = "0";
     input.classList.add("food-inline-grams", "sport-whole");
     return input;
 }
@@ -547,6 +550,7 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
             );
         };
         minutes.inputMode = "decimal";
+        minutes.placeholder = "0";
         kindShow();
         const form: HTMLElement = formOf(
             [

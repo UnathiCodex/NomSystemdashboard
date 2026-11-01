@@ -183,6 +183,7 @@ function gramsFieldOf(
         saved(typed);
     });
     input.inputMode = "decimal";
+    input.placeholder = "0";
     input.classList.add("food-inline-grams");
     return input;
 }

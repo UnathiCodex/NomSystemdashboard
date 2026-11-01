@@ -339,16 +339,17 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
     vertical-align: middle;
 }
 
-/* The one search field, no focus line, since a list opens with the cursor in it, which would frame it every time.
+/* The one search field, one chip high everywhere,
+   no focus line, since a list opens with the cursor in it, which would frame it every time.
    Without the browser's own clear cross, which is no Lucide icon. */
 .search-field {
     display: flex;
     flex: none;
     align-items: center;
     gap: 0.625rem;
-    height: var(--control-height);
-    margin: 0.75rem 0;
-    padding: 0 var(--control-padding);
+    height: var(--chip-height);
+    margin: 0.375rem 0;
+    padding: 0 0.75rem;
     border-radius: var(--radius);
     background: var(--fill);
     color: var(--text-muted);
@@ -360,6 +361,7 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
     min-width: 0;
     height: 100%;
     padding: 0;
+    font-size: var(--text-size);
     border: 0;
     outline: none;
     background: none;

@@ -489,11 +489,15 @@ function numbersRead(text: (key: string) => string): (number | null)[] {
     );
 }
 
-/** A field of a form of a food, a number with its unit after it, a click beside it putting the cursor in. */
+/**
+ * A field of a form of a food, a number with its unit after it, a click beside it putting the cursor in.
+ * Empty, a grey 0 shows where to type.
+ */
 function unitFieldOf(input: HTMLInputElement, unit: string): HTMLElement {
     if (unit === "") return input;
     const amount: HTMLElement = elementOf("span", "food-grams", "");
     input.inputMode = "decimal";
+    input.placeholder = "0";
     input.classList.add("food-inline-grams");
     amount.append(input, unit);
     amount.addEventListener("click", (): void => input.focus());

@@ -106,14 +106,6 @@
     flex: 0 1 auto;
 }
 
-/* Search field of a list and the food search of a meal, only one chip high,
-   with its magnifier as far in as the values */
-.picker-box .search-field {
-    height: var(--chip-height);
-    margin: 0.375rem 0;
-    padding: 0 0.75rem;
-}
-
 /* Values of a list, one whole name per row, a little higher than a chip for my 4K monitor */
 .picker-list {
     --picker-row: 2.125rem;
