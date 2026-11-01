@@ -1,6 +1,4 @@
-/* A meal of the entry by category: its summary with its kcal,
-   its meals and foods below it,
-   and the food search of their list, see `meal.ts` */
+/* A meal of the entry, its summary with its kcal, its meals and foods below it */
 /* No room taken while nothing is picked */
 .meal-summary {
     overflow-wrap: anywhere;
@@ -26,10 +24,7 @@
     display: none;
 }
 
-/* Row of a meal or a food: its name, the grams of a food, its kcal and its `×`.
-   Grams, kcal and × stay on the line of the name,
-   also while its brand and store stand on a line below it,
-   see `bracketsWatch` in `../food/foods.ts`.
+/* Row of a meal or a food, its name, grams, kcal and `×`, all on the line of the name.
    The ×, which has no text of its own, its icon level with the small letters */
 .meal-row {
     display: grid;
@@ -61,7 +56,7 @@
     color: var(--text-muted);
 }
 
-/* Grams of a food, white as the kcal, like every fact, which I type */
+/* Grams of a food, white like every fact I type */
 .meal-grams {
     display: flex;
     align-items: center;
@@ -84,8 +79,7 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Food search in the list, its field one chip high as the search of every list,
-   see `.picker-box .search-field` in `choices.css` */
+/* Food search in the list, its field one chip high as the search of every list */
 .meal-box .food-search {
     display: flex;
     flex-direction: column;
@@ -93,10 +87,8 @@
 }
 
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    /* Phone: a meal or a food on one line, its grams first, as a recipe writes them,
-       so grams and kcal stand apart, at both ends of the name.
-       The kcal only as wide as their own text, since before the × they line up anyway,
-       so the name keeps all the rest and a word like `Kidneybohnen` stays whole */
+    /* Phone: its grams first, as a recipe writes them, so grams and kcal stand at both ends of the name.
+       The kcal only as wide as their text, so the name keeps the rest and a long word stays whole */
     .meal-row {
         grid-template-columns: auto minmax(0, 1fr) auto auto;
         gap: 0.375rem;

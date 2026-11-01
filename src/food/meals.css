@@ -1,15 +1,12 @@
-/* Meals: the section of my meals in the food view,
-   built as the list of my foods, see `search.css` */
+/* The section of my meals in the food view, built as the list of my foods */
 
 /* Section of my meals above my foods */
 .food-dishes {
     margin-bottom: calc(1.5 * var(--gap));
 }
 
-/* Name of a meal with its short title grey in brackets, see `dishNameOf` in `meals.ts`:
-   always one line, never going below,
-   whatever the brackets of the foods in the same list do,
-   see `bracketsWatch` in `foods.ts` */
+/* Name of a meal with its short title grey in brackets, always one line,
+   whatever the brackets of the foods in the same list do */
 .dish-name {
     display: flex;
 }
@@ -36,8 +33,7 @@
     vertical-align: top;
 }
 
-/* A meal opened in the look of a food of mine opened,
-   see `.food-facts` in `search.css` */
+/* A meal opened in the look of a food of mine opened */
 .dish-list .food-facts {
     grid-template-columns: max-content minmax(0, 1fr);
 }
@@ -49,9 +45,8 @@
     min-width: 0;
 }
 
-/* The name of a food of a meal opened, a link to the food among my foods:
-   as plain as every name, a grey line below it under the pointer,
-   so it shows that it leads somewhere */
+/* Name of a food of a meal opened, a link to the food among my foods.
+   As plain as every name, a grey line below it under the pointer, so it shows that it leads somewhere */
 .food-link {
     min-width: 0;
     padding: 0;

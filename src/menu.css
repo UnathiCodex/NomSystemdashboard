@@ -1,12 +1,11 @@
-/* One plain button `⋯` and its menu, see `menu.ts`, on the computer as on a phone */
+/* One plain button `⋯` and its menu */
 /* The button `⋯`: an icon button, so it lies on what it belongs to */
 .menu-more {
     width: 2.125rem;
     height: 2rem;
 }
 
-/* An item of its menu under the pointer on the faint grey of a row of the tree,
-   never the grey of what is picked */
+/* An item under the pointer on the faint grey of a row of the tree, never the grey of what is picked */
 .menu-item:hover {
     background: var(--row-over);
 }
@@ -16,8 +15,7 @@
     height: 0.875rem;
 }
 
-/* The menu, placed by `menuAnchor` in `menu.ts`,
-   with the background, line and soft shadow of every menu of a list, see `.picker-box` */
+/* The menu with the background, line and soft shadow of every menu of a list */
 .menu {
     position: fixed;
     inset: auto;
@@ -54,15 +52,12 @@
     cursor: pointer;
 }
 
-/* An item of a list without mark, its own icon kept invisible,
-   so its words start where those of the marked one do,
-   see `groupMenuOf` in `day/groups.ts` */
+/* An item without mark, its icon invisible, so its words start where those of the marked one do */
 .menu-item-blank > svg.lucide {
     visibility: hidden;
 }
 
-/* Phone: the button `⋯` a finger's width to hit,
-   the items, a finger high already, only themselves, so no tap reaches beside them */
+/* Phone: the button `⋯` a finger's width to hit, the items only themselves, so no tap reaches beside them */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .menu-more {
         position: relative;

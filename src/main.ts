@@ -1,17 +1,11 @@
 /**
  * ## Router
  *
- * Opens one area of the life system by the address:
- * the scripts at `/scripts`, my new system at `/plannings`, food at `/food`,
- * sport at `/sport`, the editor of my new system at `/edit`, the day everywhere else.
+ * Opens one area of the life system by the address, the day everywhere else.
  * Older addresses of the scripts, `/notes` and `/edit?path=…`, become `/scripts`.
- * Loads the code of the shown area only, with `import()`,
- * so the day loads no MathJax and the scripts no calendar,
- * and puts the area's HTML into the page only once its code and its look are loaded,
- * so it never shows unstyled.
- * A phone opens the day everywhere, its plan and its log alone, see `phone.ts`.
- *
- * - `./day/day.html?raw` and the other `?raw`: HTML as text, packed in by Vite.
+ * Loads the code of the shown area only, so the day loads no MathJax and the scripts no calendar.
+ * Puts the area's HTML in only once its code and its look are loaded, so it never shows unstyled.
+ * A phone opens the day everywhere.
  */
 
 /// <reference types="vite/client" />
@@ -22,11 +16,8 @@ import editorHtml from "./editor/editor.html?raw";
 import { phone } from "./phone.ts";
 
 /**
- * Tells the reader what this device shows of the page,
- * so the dashboard can be shaped for each of my devices, see `reader/devices.ts`.
- * Nothing while a size is 0, like for a page the browser loads unseen,
- * which the reader would refuse with an error,
- * so the next load or change of its size reports it.
+ * Tells the reader what this device shows of the page, so the dashboard can be shaped for each device.
+ * Nothing while a size is 0, for a page loaded unseen, since the reader would refuse it.
  */
 function deviceReport(): void {
     if ([innerWidth, innerHeight, screen.width, screen.height].includes(0)) return;
@@ -43,10 +34,7 @@ function deviceReport(): void {
     );
 }
 
-/**
- * Waiting report of the size of the page after the window changed its size,
- * so a window being dragged reports once, a second after it rests.
- */
+/** Waiting report after a resize, so a window being dragged reports once, a second after it rests. */
 let deviceWait: number = 0;
 
 const address: URLSearchParams = new URLSearchParams(location.search);

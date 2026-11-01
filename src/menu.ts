@@ -1,12 +1,8 @@
 /**
  * ## Menu
  *
- * One plain button `⋯` that holds what a thing can do,
- * on the computer as on a phone, so both show the same:
- * a click opens its items as a small menu below it,
- * so the line beside it keeps its room.
- * Other popups open in the same place and look through {@link menuAnchor},
- * like the field of my comment after Wrong, see `skill/task.ts`.
+ * One plain button `⋯` that holds what a thing can do, alike on the computer and on a phone.
+ * A click opens its items as a small menu below it, so the line beside it keeps its room.
  */
 
 import { iconPut, iconWordsOf } from "./icons.ts";
@@ -15,9 +11,7 @@ import "./menu.css";
 
 import type { IconNode } from "lucide";
 
-/**
- * Makes one item of a menu, its icon and then its words.
- */
+/** One item of a menu, its icon and then its words. */
 export function menuItemOf(icon: IconNode, words: string, click: (event: MouseEvent) => void): HTMLButtonElement {
     const item: HTMLButtonElement = document.createElement("button");
     item.type = "button";
@@ -28,13 +22,9 @@ export function menuItemOf(icon: IconNode, words: string, click: (event: MouseEv
 }
 
 /**
- * Makes a menu open from its button as a popover,
- * which closes by itself on a click beside it or Escape.
- * It opens below the button, and whenever its size changes while open,
- * moves left as far as it must to stay inside its dialog, else the window,
- * and above the button when it would reach below the window but fits above it.
- * A menu that fits neither stays on the side with more room, scrolling inside,
- * so it never covers its button or starts at the top of the window.
+ * Makes a menu open below its button as a popover, which closes on a click beside it or Escape.
+ * It moves left to stay inside its dialog, else the window, and above when only there it fits.
+ * A menu that fits neither stays on the side with more room, scrolling inside, so it never covers its button.
  * The {@link ResizeObserver} also tells when it opens, since closed it has no size.
  */
 export function menuAnchor(menu: HTMLElement, button: HTMLButtonElement): void {
@@ -73,9 +63,7 @@ export function menuAnchor(menu: HTMLElement, button: HTMLButtonElement): void {
     }).observe(menu);
 }
 
-/**
- * Puts items behind one button `⋯`, a click on an item closes the menu.
- */
+/** Puts items behind one button `⋯`, a click on an item closes the menu. */
 export function menuOf(items: HTMLElement[]): HTMLElement {
     const place: HTMLElement = document.createElement("div");
     const more: HTMLButtonElement = document.createElement("button");
