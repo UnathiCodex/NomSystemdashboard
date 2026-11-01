@@ -218,7 +218,7 @@ body {
 
 /* The date in the size of the calendar's title, so the timer beside it keeps its room on the laptop */
 .day-bar .day-title {
-    font-size: 1.25rem;
+    font-size: var(--control-text);
     font-weight: 600;
     line-height: 1.1;
 }

@@ -94,6 +94,11 @@ body:has(> .food) {
 
 /* The totals of the day filling the bar after the date, Energy wide enough for `1.492 kcal`,
    the number of meals narrower */
+.food-bar .trackers {
+    flex: 1;
+    grid-auto-columns: minmax(max-content, 1fr);
+}
+
 #food-totals {
     grid-template-columns:
         minmax(max-content, 0.7fr) minmax(max-content, 1.6fr) minmax(max-content, 1fr) minmax(max-content, 1fr)

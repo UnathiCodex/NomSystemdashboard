@@ -1,10 +1,10 @@
 /* Trackers and the timer of a session in the day bar, soft grey cards without a frame */
 /* Timer, always there so the bar never jumps, `Session` while none runs.
-   A quarter of the room after the date, the trackers the rest, so the bar keeps one line.
+   All the room between the date and the trackers, since a session matters most.
    At least 9rem, so its time always shows. */
 .session-timer {
     display: inline-flex;
-    flex: 1 1 0;
+    flex: 1;
     justify-content: space-between;
     align-items: center;
     gap: var(--gap);
@@ -30,14 +30,16 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Trackers after the timer, each tile as wide as the timer, never narrower than its text */
+/* Trackers at the right end in tiles of one width, at least 10.5rem, the widest text decides beyond it.
+   So the timer keeps the most room */
 .trackers {
     display: grid;
-    flex: 3 1 0;
-    grid-auto-columns: minmax(max-content, 1fr);
+    flex: none;
+    grid-auto-columns: minmax(10.5rem, 1fr);
+    width: max-content;
     grid-auto-flow: column;
     gap: var(--control-gap);
-    min-width: max-content;
+    margin-left: auto;
 }
 
 /* Neck tiles, `.trackers .tracker-check` wins over the size of icons in `base.css` by being more exact */
@@ -72,13 +74,14 @@
     color: var(--text-muted);
 }
 
-/* A tracker as a tile of its own, so they stand apart at a glance */
+/* A tracker as a tile of its own, so they stand apart at a glance,
+   its small name and its value centered in its height */
 .tracker-row {
     position: relative;
     display: flex;
     flex-wrap: wrap;
     align-content: center;
-    align-items: baseline;
+    align-items: center;
     gap: 0 0.625rem;
     min-width: 0;
     height: var(--control-height);
@@ -118,7 +121,7 @@
     flex: 1;
     flex-wrap: wrap;
     align-content: center;
-    align-items: baseline;
+    align-items: center;
     align-self: stretch;
     gap: inherit;
     min-width: 0;
