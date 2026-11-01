@@ -449,11 +449,6 @@ const olderCold: RegExp = /^## Task\.[ \t]+.+[ \t]+\(cold\)[ \t]*$/;
 /** Source line of a task, its mode word left out. */
 const sourceLine: RegExp = /^>[ \t]*(?:(?:Original|Generated):[ \t]*)?(.*?)[ \t]*$/;
 
-/** Gives the name of a section, the name of its note without `.md`. */
-function sectionTitleOf(note: string): string {
-    return (note.split("/").at(-1) ?? note).replace(/\.md$/, "");
-}
-
 /**
  * Reads the numbers of the parts of a cold task, each once,
  * from below its heading to the next heading,
@@ -509,13 +504,14 @@ function algorithmOf(note: string): string {
 }
 
 /**
- * Reads the tasks of a note in their order.
+ * Reads the tasks of a note in their order,
+ * the name of their section the name of the note without `.md`.
  *
  * @throws {Error} - When the note cannot be read
  */
 function noteTasksRead(code: string, chapter: string, note: string): Task[] {
     const lines: string[] = fileRead(note).content.toString("utf8").split(/\r?\n/);
-    const section: string = sectionTitleOf(note);
+    const section: string = (note.split("/").at(-1) ?? note).replace(/\.md$/, "");
     const older: boolean = lines.some((line: string): boolean => olderCold.test(line));
     return lines.flatMap((line: string, index: number): Task[] => {
         const heading: RegExpExecArray | null = taskHeading.exec(line);
@@ -1320,11 +1316,18 @@ function markSectionOf(mark: RoundMark, module: string): string {
     return mark.section.includes("/") ? mark.section : `${module}/${mark.section}`;
 }
 
-/** Gives the first task of the section of a line `X-ROUND`, see {@link markSectionOf}. */
-function markTaskOf(mark: RoundMark, module: string, tasks: Task[]): Task | undefined {
-    return tasks.find(
-        (task: Task): boolean => sectionKeyOf(task) === markSectionOf(mark, module),
-    );
+/**
+ * Gives one task of the section of each line `X-ROUND`, its first,
+ * see {@link markSectionOf}, so the skill entry links the note of the section,
+ * see {@link linksWith}, and names its chapter, see {@link chaptersWith}.
+ */
+function markTasksOf(marks: RoundMark[], module: string, tasks: Task[]): Task[] {
+    return marks.flatMap((mark: RoundMark): Task[] => {
+        const task: Task | undefined = tasks.find(
+            (one: Task): boolean => sectionKeyOf(one) === markSectionOf(mark, module),
+        );
+        return task === undefined ? [] : [task];
+    });
 }
 
 /** Gives the task of an identity, the first that has it. */
@@ -1356,12 +1359,7 @@ function linksWith(
     tasks: Task[],
 ): Link[] {
     const notes: string[] = [
-        ...new Set(
-            marks.flatMap((mark: RoundMark): string[] => {
-                const task: Task | undefined = markTaskOf(mark, module, tasks);
-                return task === undefined ? [] : [notePathOf(task)];
-            }),
-        ),
+        ...new Set(markTasksOf(marks, module, tasks).map(notePathOf)),
     ];
     return [
         ...links,
@@ -1375,33 +1373,6 @@ function linksWith(
 }
 
 /**
- * Gives one task of the section of each line `X-ROUND`,
- * so the skill entry names the chapter of the section, see {@link chaptersWith}.
- */
-function markTasksOf(marks: RoundMark[], module: string, tasks: Task[]): string[] {
-    return marks.flatMap((mark: RoundMark): string[] => {
-        const task: Task | undefined = markTaskOf(mark, module, tasks);
-        return task === undefined ? [] : [task.id];
-    });
-}
-
-/**
- * Checks a round I pick by hand in the dialog.
- *
- * @throws {Error} - When no task of the module names its section,
- *   or its round is no number from 0
- */
-function pickCheck(pick: RoundPick, module: string, tasks: Task[]): void {
-    if (
-        !pick.section.startsWith(`${module}/`) ||
-        !tasks.some((task: Task): boolean => sectionKeyOf(task) === pick.section)
-    )
-        throw new Error(`No section ${pick.section}`);
-    if (!Number.isInteger(pick.round) || pick.round < 0)
-        throw new Error(`No round ${pick.round}`);
-}
-
-/**
  * Gives the lines `X-ROUND` of a skill entry from the dialog, and its links with them:
  * none for an entry of a type, like a lecture or a tutorial, whose sheet or slides
  * it links and whose tasks are no attempts, since no task stands outside a round.
@@ -1410,7 +1381,8 @@ function pickCheck(pick: RoundPick, module: string, tasks: Task[]): void {
  * A line the entry has of a note it no longer links goes
  * while it holds nothing I did, else it stays and links its note again.
  *
- * @throws {Error} - When a pick, an attempt or a step is not right,
+ * @throws {Error} - When a pick names a section no task of the module names
+ *   or a round no number from 0, an attempt or a step is not right,
  *   an attempt is at a task of another module,
  *   or an entry of a type comes with picks or attempts
  */
@@ -1425,7 +1397,15 @@ function marksOfEntry(
             throw new Error(`A ${entry.type} has no rounds, only my own learning`);
         return [old.marks, links];
     }
-    entry.rounds.forEach((pick: RoundPick): void => pickCheck(pick, entry.module, tasks));
+    entry.rounds.forEach((pick: RoundPick): void => {
+        if (
+            !pick.section.startsWith(`${entry.module}/`) ||
+            !tasks.some((task: Task): boolean => sectionKeyOf(task) === pick.section)
+        )
+            throw new Error(`No section ${pick.section}`);
+        if (!Number.isInteger(pick.round) || pick.round < 0)
+            throw new Error(`No round ${pick.round}`);
+    });
     if (
         entry.attempts.some(
             (attempt: AttemptNew): boolean => attempt.task.split("/")[0] !== entry.module,
@@ -1620,7 +1600,7 @@ export function skillEntryAdd(entry: SkillEntryNew): string {
     );
     const chapters: string[] = chaptersWith(
         entry.chapters,
-        markTasksOf(marks, entry.module, tasks),
+        markTasksOf(marks, entry.module, tasks).map((task: Task): string => task.id),
         tasks,
     );
     const plan: Box | null =
@@ -1682,9 +1662,9 @@ export function skillEntryEdit(change: SkillEntryChange): boolean {
     );
     skillEntryCheck(change, chaptersOf(old), old.type);
 
-    const worked: string[] = markTasksOf(marks, change.module, tasks).filter(
-        (task: string): boolean => task.split("/")[0] === change.module,
-    );
+    const worked: string[] = markTasksOf(marks, change.module, tasks)
+        .map((task: Task): string => task.id)
+        .filter((task: string): boolean => task.split("/")[0] === change.module);
     const chapters: string[] = chaptersWith(change.chapters, worked, tasks);
     const fields: EntryFields = skillFieldsOf(change, old, old);
     propertiesPut(file, old.id, [
@@ -1753,7 +1733,7 @@ function momentWrite(
     );
     const chapters: string[] = chaptersWith(
         open === undefined ? [] : chaptersOf(open),
-        markTasksOf(marks, module, tasks),
+        markTasksOf(marks, module, tasks).map((task: Task): string => task.id),
         tasks,
     );
     if (open === undefined) {
