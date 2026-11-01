@@ -2,7 +2,7 @@
 
 /* Section of my meals above my foods */
 .food-dishes {
-    margin-bottom: calc(1.5 * var(--gap));
+    margin-bottom: var(--gap);
 }
 
 /* Name of a meal with its short title grey in brackets, always one line,

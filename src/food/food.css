@@ -63,6 +63,12 @@ body:has(> .food) {
     }
 }
 
+/* A thin grey line between two lists, as between the sections of a search */
+.food-foods > * + * {
+    padding-top: var(--gap);
+    border-top: 1px solid var(--line);
+}
+
 /* The totals of the day filling the bar after the date */
 .food-bar .trackers {
     flex: 1;
