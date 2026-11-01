@@ -5,7 +5,7 @@
  * Each line has the small grey `×` at its end, whose first click only asks.
  * Every change sends back all of mine, so an exercise added to a workout stands among my exercises.
  * - Workouts: Each with its parts grey in brackets, opening below as a meal.
- *   The plus after its name opens the search of my exercises and videos, the one place a video comes in.
+ *   The plus after its name opens the search of my exercises.
  *   A new workout is kept in `Workouts.md` with its first part.
  * - Exercises: Each with the workouts that hold it and its rule, which an entry brings every time.
  *   One name may stand several times, each a variant with values of its own.
@@ -13,41 +13,25 @@
  * Both load anew on every change of the files, not while the cursor stands in them, so nothing typed is lost.
  */
 
-import {
-    exerciseChangeSend,
-    exerciseDelete,
-    exerciseSend,
-    mineLoad,
-    videoLookup,
-    videoSend,
-    workoutDelete,
-    workoutSend,
-} from "./mine.ts";
+import { exerciseChangeSend, exerciseDelete, exerciseSend, mineLoad, workoutDelete, workoutSend } from "./mine.ts";
 import { bracketsWatch, buttonOf, elementOf, headingOf, plusOf } from "../food/foods.ts";
 import { editButtonsOf, editFieldOf, inlineFieldOf, listLineOf } from "../food/search.ts";
-import { lengthOf } from "../day/times.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { changesFollow } from "../changes.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Pencil, Plus } from "lucide";
 
 import type { Exercise, Mine, Part, Workout } from "./mine.ts";
-import type { Video, VideoFound } from "../../reader/sport.ts";
 
 /** Everything of mine as the reader last sent it. */
 let mine: Mine = {
     workouts: [],
     exercises: [],
-    videos: [],
-    kinds: [],
     last: {},
 };
 
 /** Shows of the sections, each showing its list anew from {@link mine}. */
 const shows: (() => void)[] = [];
-
-/** Milliseconds after the last key before asking YouTube, so a link typed by hand asks once. */
-const pause: number = 300;
 
 /** Takes everything of mine and shows every section anew. */
 function mineShow(sent: Mine): void {
@@ -68,17 +52,9 @@ function removeOf(words: string, asking: boolean, click: () => void): HTMLButton
     return button;
 }
 
-/**
- * Cleans a name typed for a workout or an exercise as the reader cleans it.
- * A link is no name, so a video's link pasted into the search never becomes a workout.
- */
+/** Cleans a name typed for a workout or an exercise as the reader cleans it, a link no name. */
 export function typedNameOf(typed: string): string {
-    return linkTyped(typed) ? "" : typed.replace(/[|;,]/g, " ").replace(/\s+/g, " ").trim();
-}
-
-/** Whether a text typed starts like a web address. */
-function linkTyped(typed: string): boolean {
-    return /^\s*https?:\/\//i.test(typed);
+    return /^\s*https?:\/\//i.test(typed) ? "" : typed.replace(/[|;,]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 /** Name of a line with grey brackets after it, both whole as its tooltip. */
@@ -136,47 +112,18 @@ function wholeFieldOf(value: string, words: string, saved: (typed: string) => vo
 }
 
 /** Key of a variant of an exercise, its name in small letters and its values, as the reader keys it. */
-function variantKeyOf(exercise: { name: string; sets?: string; reps?: string; kg?: string }): string {
-    return [exercise.name.toLowerCase(), exercise.sets ?? "", exercise.reps ?? "", exercise.kg ?? ""].join(";");
+function variantKeyOf(exercise: Part): string {
+    return [exercise.name.toLowerCase(), exercise.sets, exercise.reps, exercise.kg].join(";");
 }
 
 /** The rule of an exercise as its line shows it, empty while nothing is set. */
-export function ruleTextOf(exercise: { sets?: string; reps?: string; kg?: string }): string {
-    const reps: string = (exercise.reps ?? "").replace(/^(\d+)s$/, "$1 s");
-    const given: string = exercise.sets ?? "";
-    const sets: string = given === "" ? reps : reps === "" ? `${given} ×` : `${given} × ${reps}`;
-    return [sets, (exercise.kg ?? "") === "" ? "" : `${exercise.kg} kg`]
+export function ruleTextOf(exercise: { sets: string; reps: string; kg: string }): string {
+    const reps: string = exercise.reps.replace(/^(\d+)s$/, "$1 s");
+    const sets: string =
+        exercise.sets === "" ? reps : reps === "" ? `${exercise.sets} ×` : `${exercise.sets} × ${reps}`;
+    return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
         .filter((part: string): boolean => part !== "")
         .join(" · ");
-}
-
-/** Pick of the kind of a video as plain words side by side, since there are only a few. */
-function kindsOf(picked: string, pick: (kind: string) => void): HTMLElement {
-    const kinds: HTMLElement = elementOf("span", "sport-kinds", "");
-    kinds.append(
-        ...mine.kinds.map((kind: string): HTMLButtonElement => {
-            const button: HTMLButtonElement = buttonOf("sport-kind", kind, (): void => pick(kind));
-            button.setAttribute("aria-pressed", String(kind === picked));
-            return button;
-        }),
-    );
-    return kinds;
-}
-
-/** Guesses the kind of a video from its title, else `Cardio`, the kind of moderate effort. */
-function kindGuessOf(title: string): string {
-    const words: [string, RegExp][] = [
-        ["HIIT", /hiit|tabata|interval/i],
-        ["Dance", /dance|zumba/i],
-        ["Pilates", /pilates/i],
-        ["Yoga", /yoga/i],
-        ["Stretching", /stretch|mobility/i],
-        ["Strength", /strength|dumbbell|weights|muscle|toning/i],
-    ];
-    return (
-        words.find(([kind, told]: [string, RegExp]): boolean => mine.kinds.includes(kind) && told.test(title))?.[0] ??
-        "Cardio"
-    );
 }
 
 /** Form inside a list as a food opened, a click on a name putting the cursor into its field. */
@@ -198,17 +145,11 @@ function formOf(rows: [string, HTMLElement][], cancelled: () => void, saved: () 
     return form;
 }
 
-/** A value that does not change, as plain as the fields beside it. */
-function valueOf(text: string): HTMLElement {
-    return elementOf("span", "", text);
-}
-
 /**
  * Section of my workouts.
  * - `open`, `adding`, `asked`: Names in small letters, empty for none.
  * - `fresh`: Name of a new workout not yet written, as it has no part yet.
  * - `focusing`: Whether the part search takes the cursor when it shows next, never when another list shows anew.
- * - `editing`: Link of the video opened, or its title in small letters for one without link.
  * - `send`: Sends a workout, a workout renamed staying open under its name as the reader cleans it.
  */
 function workoutsSectionOf(): HTMLElement {
@@ -221,7 +162,6 @@ function workoutsSectionOf(): HTMLElement {
     let fresh: string = "";
     let naming: boolean = false;
     let focusing: boolean = false;
-    let editing: string = "";
 
     const send: (workout: Workout, parts: Part[], name?: string) => void = (
         workout: Workout,
@@ -234,14 +174,6 @@ function workoutsSectionOf(): HTMLElement {
                 if (name !== undefined) open = typedNameOf(name).toLowerCase();
                 mineShow(sent);
             })
-            .catch(failed);
-    };
-    const videoChange: (video: Video, changes: Partial<Video>) => void = (
-        video: Video,
-        changes: Partial<Video>,
-    ): void => {
-        videoSend({ ...video, ...changes }, { title: video.title, link: video.link })
-            .then(mineShow)
             .catch(failed);
     };
     const begin: (name: string) => void = (name: string): void => {
@@ -263,7 +195,7 @@ function workoutsSectionOf(): HTMLElement {
         if (mine.workouts.some((workout: Workout): boolean => workout.name.toLowerCase() === fresh.toLowerCase()))
             fresh = "";
         const shown: Workout[] = [
-            ...(fresh === "" ? [] : [{ name: fresh, parts: [], kcal: null }]),
+            ...(fresh === "" ? [] : [{ name: fresh, parts: [] }]),
             ...mine.workouts.filter((workout: Workout): boolean =>
                 matchesAll(
                     [workout.name, ...workout.parts.map((part: Part): string => part.name)].join(" "),
@@ -278,20 +210,7 @@ function workoutsSectionOf(): HTMLElement {
             mine.workouts.some((workout: Workout): boolean => workout.name.toLowerCase() === typed.toLowerCase())
                 ? []
                 : [newOf(`New workout “${typed}”`, "New workout, its parts picked next", (): void => begin(typed))];
-        list.replaceChildren(
-            ...(naming ? [nameFormOf()] : []),
-            ...(linkTyped(search.value)
-                ? [
-                      elementOf(
-                          "p",
-                          "food-none",
-                          "A video goes into a workout: " + "open it and paste the link into its search",
-                      ),
-                  ]
-                : []),
-            ...rows,
-            ...plus,
-        );
+        list.replaceChildren(...(naming ? [nameFormOf()] : []), ...rows, ...plus);
     };
     const workoutLinesOf: (workout: Workout) => HTMLElement[] = (workout: Workout): HTMLElement[] => {
         const key: string = workout.name.toLowerCase();
@@ -313,7 +232,7 @@ function workoutsSectionOf(): HTMLElement {
         });
         const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
             name,
-            workout.kcal,
+            null,
             open === key ? null : (): void => toggle(key),
             remove,
         );
@@ -328,7 +247,7 @@ function workoutsSectionOf(): HTMLElement {
         name.replaceChildren(
             elementOf("span", "", workout.name),
             pencil,
-            plusOf(`Add an exercise or a video to ${workout.name}`, (): void => {
+            plusOf(`Add an exercise to ${workout.name}`, (): void => {
                 adding = adding === key ? "" : key;
                 focusing = true;
                 show();
@@ -347,40 +266,9 @@ function workoutsSectionOf(): HTMLElement {
         facts.append(elementOf("span", "food-fact", "Name"), rename, elementOf("span", "food-fact", "Parts"), parts);
         detail.append(facts);
         parts.append(
-            ...workout.parts.flatMap((part: Part, index: number): HTMLElement[] => {
-                const video: Video | undefined =
-                    part.kind === "Video"
-                        ? mine.videos.find((other: Video): boolean =>
-                              part.link !== ""
-                                  ? other.link === part.link
-                                  : other.title.toLowerCase() === part.name.toLowerCase(),
-                          )
-                        : undefined;
-                const videoKey: string =
-                    video === undefined ? "" : video.link !== "" ? video.link : video.title.toLowerCase();
+            ...workout.parts.map((part: Part, index: number): HTMLElement => {
                 const line: HTMLElement = elementOf("div", "food-part", "");
-                const name: HTMLElement = lineNameOf(part.name, video?.channel ?? "");
-                if (video === undefined) line.append(name);
-                else {
-                    const opening: HTMLButtonElement = buttonOf("food-link", "", (): void => {
-                        editing = editing === videoKey ? "" : videoKey;
-                        show();
-                    });
-                    name.title += `\nMinutes and kind of ${video.title}`;
-                    opening.append(name);
-                    line.append(opening);
-                }
-                line.append(
-                    elementOf(
-                        "span",
-                        "food-value sport-grey",
-                        part.kind === "Exercise"
-                            ? ruleTextOf(part)
-                            : video?.minutes === null || video === undefined
-                              ? ""
-                              : lengthOf(Math.round(video.minutes)),
-                    ),
-                );
+                line.append(lineNameOf(part.name, ""), elementOf("span", "food-value sport-grey", ruleTextOf(part)));
                 if (workout.parts.length > 1)
                     line.append(
                         removeOf(`Remove ${part.name}`, false, (): void =>
@@ -390,17 +278,7 @@ function workoutsSectionOf(): HTMLElement {
                             ),
                         ),
                     );
-                if (video === undefined || editing !== videoKey) return [line];
-                const facts: HTMLElement = elementOf("div", "food-facts sport-video-facts", "");
-                facts.append(
-                    elementOf("span", "food-fact", "Minutes"),
-                    numberFieldOf(video.minutes, "min", "Minutes", (minutes: number | null): void =>
-                        videoChange(video, { minutes: minutes }),
-                    ),
-                    elementOf("span", "food-fact", "Kind"),
-                    kindsOf(video.kind, (kind: string): void => videoChange(video, { kind: kind })),
-                );
-                return [line, facts];
+                return line;
             }),
         );
         if (adding === key) {
@@ -432,7 +310,7 @@ function workoutsSectionOf(): HTMLElement {
                 naming = !naming;
                 show();
             }),
-            "kcal",
+            "",
         ),
         searchFieldOf(search, "Search workouts"),
         list,
@@ -451,177 +329,49 @@ export function newOf(text: string, words: string, click: () => void): HTMLEleme
 }
 
 /**
- * Search of my exercises and videos below a workout opened, without those it holds.
+ * Search of my exercises below a workout opened, without those it holds.
  * Last `+ New exercise` for a name no exercise has, a click or Enter on the first adds one.
- * A YouTube link pasted asks YouTube for its title and channel.
- * A video of mine shows as the one line to add, a new one as a form whose check adds it to both.
- * - `wait`: Waiting question to YouTube after the last key.
  */
 function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement {
     const search: HTMLElement = elementOf("div", "food-search", "");
     const input: HTMLInputElement = document.createElement("input");
     const results: HTMLElement = elementOf("div", "food-results", "");
-    let wait: number = 0;
     const held: (part: Part) => boolean = (part: Part): boolean =>
-        workout.parts.some(
-            (other: Part): boolean =>
-                other.kind === part.kind &&
-                (part.kind === "Video"
-                    ? other.name.toLowerCase() === part.name.toLowerCase() && other.link === part.link
-                    : variantKeyOf(other) === variantKeyOf(part)),
-        );
-    const found: () => Part[] = (): Part[] =>
-        [
-            ...mine.exercises.map((exercise: Exercise): Part => ({
-                kind: "Exercise",
-                name: exercise.name,
-                link: "",
-                sets: exercise.sets,
-                reps: exercise.reps,
-                kg: exercise.kg,
-            })),
-            ...mine.videos.map((video: Video): Part => ({
-                kind: "Video",
-                name: video.title,
-                link: video.link,
-            })),
-        ].filter((part: Part): boolean => !held(part) && matchesAll(part.name, wordsOf(input.value)));
-    const lineOf: (part: Part) => HTMLElement = (part: Part): HTMLElement => {
-        const video: Video | undefined = mine.videos.find(
-            (other: Video): boolean => part.kind === "Video" && other.link === part.link && other.title === part.name,
-        );
-        return listLineOf(
-            lineNameOf(part.name, part.kind === "Video" ? (video?.channel ?? "") : ruleTextOf(part)),
-            video?.kcal ?? null,
-            (): void => pick(part),
+        workout.parts.some((other: Part): boolean => variantKeyOf(other) === variantKeyOf(part));
+    const lineOf: (exercise: Exercise) => HTMLElement = (exercise: Exercise): HTMLElement =>
+        listLineOf(
+            lineNameOf(exercise.name, ruleTextOf(exercise)),
+            null,
+            (): void => pick({ name: exercise.name, sets: exercise.sets, reps: exercise.reps, kg: exercise.kg }),
             null,
         )[0];
-    };
-    const formOfVideo: (video: VideoFound) => HTMLElement = (video: VideoFound): HTMLElement => {
-        let kind: string = kindGuessOf(video.title);
-        const close: () => void = (): void => {
-            input.value = "";
-            show();
-        };
-        const error: HTMLElement = elementOf(
-            "p",
-            "food-error",
-            "Not added: it needs a title, and the minutes a number",
-        );
-        const save: () => void = (): void => {
-            const typed: string = minutes.value.trim().replace(",", ".");
-            if (title.value.trim() === "" || (typed !== "" && !(Number(typed) >= 0))) {
-                error.hidden = false;
-                return;
-            }
-            videoSend({
-                title: title.value,
-                channel: channel.value,
-                minutes: typed === "" ? null : Number(typed),
-                kind: kind,
-                link: video.link,
-            })
-                .then((sent: Mine): void => {
-                    mine = sent;
-                    const added: Video | undefined = sent.videos.find(
-                        (other: Video): boolean => other.link === video.link,
-                    );
-                    pick({
-                        kind: "Video",
-                        name: added?.title ?? title.value.trim(),
-                        link: video.link,
-                    });
-                })
-                .catch((reason: unknown): void => {
-                    console.error(reason);
-                    error.hidden = false;
-                });
-        };
-        const title: HTMLInputElement = editFieldOf(video.title, "Title", save, close);
-        const channel: HTMLInputElement = editFieldOf(video.channel, "Channel", save, close);
-        const minutes: HTMLInputElement = editFieldOf("", "Minutes", save, close);
-        const kinds: HTMLElement = elementOf("span", "", "");
-        const kindShow: () => void = (): void => {
-            kinds.replaceChildren(
-                kindsOf(kind, (picked: string): void => {
-                    kind = picked;
-                    kindShow();
-                }),
-            );
-        };
-        minutes.inputMode = "decimal";
-        minutes.placeholder = "0";
-        kindShow();
-        const form: HTMLElement = formOf(
-            [
-                ["Title", title],
-                ["Channel", channel],
-                ["Minutes", minutes],
-                ["Kind", kinds],
-                ["Link", valueOf(video.link)],
-            ],
-            close,
-            save,
-        );
-        error.hidden = true;
-        form.append(error);
-        queueMicrotask((): void => minutes.focus());
-        return form;
-    };
-    const look: (typed: string) => void = (typed: string): void => {
-        videoLookup(typed)
-            .then((video: VideoFound): void => {
-                if (input.value.trim() !== typed) return;
-                const known: Video | undefined = mine.videos.find((other: Video): boolean => other.link === video.link);
-                const part: Part | null =
-                    known === undefined ? null : { kind: "Video", name: known.title, link: known.link };
-                results.replaceChildren(
-                    part === null
-                        ? formOfVideo(video)
-                        : held(part)
-                          ? elementOf("p", "food-none", "This workout has this video already")
-                          : lineOf(part),
-                );
-            })
-            .catch((error: unknown): void => {
-                console.error(error);
-                if (input.value.trim() === typed)
-                    results.replaceChildren(elementOf("p", "food-none", "No YouTube video found for this link"));
-            });
-    };
     const show: () => void = (): void => {
-        clearTimeout(wait);
         const typed: string = typedNameOf(input.value);
-        if (/^\s*https?:\/\//i.test(input.value)) {
-            results.replaceChildren();
-            wait = window.setTimeout((): void => look(input.value.trim()), pause);
-            return;
-        }
-        const lines: HTMLElement[] = found().map(lineOf);
+        const lines: HTMLElement[] = mine.exercises
+            .filter((exercise: Exercise): boolean => !held(exercise) && matchesAll(exercise.name, wordsOf(input.value)))
+            .map(lineOf);
         const plus: HTMLElement[] =
             typed === "" ||
             mine.exercises.some((exercise: Exercise): boolean => exercise.name.toLowerCase() === typed.toLowerCase())
                 ? []
                 : [
                       newOf(`New exercise “${typed}”`, "New exercise of this workout", (): void =>
-                          pick({ kind: "Exercise", name: typed, link: "" }),
+                          pick({ name: typed, sets: "", reps: "", kg: "" }),
                       ),
                   ];
         results.replaceChildren(
             ...lines,
             ...plus,
-            ...(lines.length === 0 && plus.length === 0
-                ? [elementOf("p", "food-none", "Type an exercise, or paste a YouTube link")]
-                : []),
+            ...(lines.length === 0 && plus.length === 0 ? [elementOf("p", "food-none", "Type an exercise")] : []),
         );
     };
     input.addEventListener("input", show);
     input.addEventListener("keydown", (event: KeyboardEvent): void => {
-        if (event.key !== "Enter" || results.querySelector(".food-form") !== null) return;
+        if (event.key !== "Enter") return;
         event.preventDefault();
         (results.querySelector("button") as HTMLButtonElement | null)?.click();
     });
-    search.append(searchFieldOf(input, "Search exercises and videos, or paste a YouTube link"), results);
+    search.append(searchFieldOf(input, "Search exercises"), results);
     show();
     return search;
 }

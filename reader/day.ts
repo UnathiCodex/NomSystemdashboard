@@ -11,7 +11,6 @@
  * The log entry of a box points to it with `RELATED-TO:<UID of the box>`, so the box shows as done.
  * A meal lists its foods as lines `X-FOOD`, a cooking `Cook` its pot the same way.
  * A meal drawn from a cooking holds `X-COOKED:<UID of the Cook entry>`.
- * The `X-WORKOUT` of a session written before goes once the entry changes.
  */
 
 import { boxDone, boxFind, boxOpenFind, boxRename, boxReopen } from "./boxes.ts";
@@ -65,9 +64,7 @@ export type EntryNew = Partial<Online> & {
     planned: string;
     pain?: string;
     cooked?: string;
-    workout?: string;
     exercises?: string[];
-    videos?: string[];
     start: string;
     end: string;
 };
@@ -218,9 +215,9 @@ export function logAllRead(): Entry[] {
  *
  * @throws {Error} - When the entry is no session of sport or a line is not well formed
  */
-function sportCheck(category: string, workout: string, exercises: string[], videos: string[]): void {
-    if (!sportPartsAllow(category, workout, exercises, videos))
-        throw new Error(`No session ${JSON.stringify({ workout, exercises, videos })} ` + `for ${category}`);
+function sportCheck(category: string, exercises: string[]): void {
+    if (!sportPartsAllow(category, exercises))
+        throw new Error(`No session ${JSON.stringify(exercises)} for ${category}`);
 }
 
 /** Checks my neck pain, a whole number from 0 to 10 or empty. */
@@ -333,10 +330,8 @@ export function entryAdd(entry: EntryNew, id?: string): string {
     painCheck(pain);
     const cooked: string = entry.cooked ?? "";
     cookedCheck(fields.category, fields.start, cooked);
-    const workout: string = (entry.workout ?? "").trim();
     const exercises: string[] = entry.exercises ?? [];
-    const videos: string[] = entry.videos ?? [];
-    sportCheck(fields.category, workout, exercises, videos);
+    sportCheck(fields.category, exercises);
     const own: [string, string | Link][] = foodsRanked(entry.foods).map((food: string): [string, string] => [
         "x-food",
         food,
@@ -345,11 +340,7 @@ export function entryAdd(entry: EntryNew, id?: string): string {
     if ((plan?.group ?? "") !== "") own.push(["x-group", plan?.group ?? ""]);
     if (pain !== "") own.push(["x-pain", pain]);
     if (cooked !== "") own.push(["x-cooked", cooked]);
-    if (workout !== "") own.push(["x-workout", workout]);
-    own.push(
-        ...exercises.map((line: string): [string, string] => ["x-exercise", sportIcsOf(line, false)]),
-        ...videos.map((line: string): [string, string] => ["x-video", sportIcsOf(line, true)]),
-    );
+    own.push(...exercises.map((line: string): [string, string] => ["x-exercise", sportIcsOf(line)]));
     const added: string = entryAppend(logFileOf(fields), fields, own, id);
     if (entry.planned !== "") boxDone(entry.planned);
     cookedShare(cooked);
@@ -441,24 +432,16 @@ function entryWrite(file: string, entry: Entry, change: EntryNew): void {
     fieldsCheck(fields, change.foods, entry);
     painCheck(change.pain ?? "");
     cookedCheck(fields.category, fields.start, change.cooked ?? entry.cooked, entry.cooked);
-    const workout: string = (change.workout ?? entry.workout ?? "").trim();
     const exercises: string[] = change.exercises ?? entry.exercises ?? [];
-    const videos: string[] = change.videos ?? entry.videos ?? [];
-    sportCheck(fields.category, workout, exercises, videos);
+    sportCheck(fields.category, exercises);
     const foods: string[] = foodsRanked(change.foods);
     if (foods.join("\n") !== entry.foods.join("\n")) propertiesPut(file, entry.id, [["x-food", foods]]);
     if (change.pain !== undefined && change.pain !== entry.pain)
         propertiesPut(file, entry.id, [["x-pain", change.pain === "" ? [] : [change.pain]]]);
     if (change.cooked !== undefined && change.cooked !== entry.cooked)
         propertiesPut(file, entry.id, [["x-cooked", change.cooked === "" ? [] : [change.cooked]]]);
-    if (workout !== (entry.workout ?? ""))
-        propertiesPut(file, entry.id, [["x-workout", workout === "" ? [] : [workout]]]);
     if (exercises.join("\n") !== (entry.exercises ?? []).join("\n"))
-        propertiesPut(file, entry.id, [
-            ["x-exercise", exercises.map((line: string): string => sportIcsOf(line, false))],
-        ]);
-    if (videos.join("\n") !== (entry.videos ?? []).join("\n"))
-        propertiesPut(file, entry.id, [["x-video", videos.map((line: string): string => sportIcsOf(line, true))]]);
+        propertiesPut(file, entry.id, [["x-exercise", exercises.map(sportIcsOf)]]);
     entryChange(file, entry, fields, logFileOf(fields));
     if (entry.planned !== "" && foods.length === 0 && fields.title !== entry.title)
         boxRename(entry.planned, fields.title);

@@ -1,8 +1,9 @@
-import type { SportDay, Video, VideoFound } from "../../reader/sport.ts";
+import type { SportDay } from "../../reader/sport.ts";
 /**
  * ## Mine
  *
- * My sessions, workouts, exercises, videos and weight through the reader, loaded, sent and removed.
+ * My sessions, workouts, exercises, weight through the reader.
+ * Each loaded, sent, removed.
  */
 
 /**
@@ -18,55 +19,29 @@ export type Session = {
     minutes: number;
     kcal: number;
     workout: string;
-    exercises: {
-        name: string;
-        sets: string;
-        reps: string;
-        kg: string;
-        workout: string;
-    }[];
-    videos: {
-        title: string;
-        channel: string;
-        minutes: number | null;
-        link: string;
-        workout: string;
-    }[];
+    exercises: (Part & { workout: string })[];
 };
 
 /**
- * A part of a workout, an exercise or a video.
- * - `link`: Link of a video, empty for an exercise and for a video added by hand.
- * - `sets`, `reps`, `kg`: The values of the variant an exercise was picked as, empty for a video.
+ * An exercise with the values of its variant.
+ * What I do of it as a rule or in a workout.
+ * - `reps`: Its repetitions per set or its seconds like `60s`.
  */
 export type Part = {
-    kind: "Exercise" | "Video";
-    name: string;
-    link: string;
-    sets?: string;
-    reps?: string;
-    kg?: string;
-};
-
-/**
- * A workout of mine with its parts.
- * - `kcal`: What its videos burn, when all its parts are videos with minutes.
- */
-export type Workout = {
-    name: string;
-    parts: Part[];
-    kcal: number | null;
-};
-
-/**
- * An exercise of mine with what I do of it as a rule, which an entry brings every time.
- * - `reps`: Its repetitions per set, or its seconds like `60s`.
- */
-export type Exercise = {
     name: string;
     sets: string;
     reps: string;
     kg: string;
+};
+
+/** A workout of mine with its exercises in their order. */
+export type Workout = {
+    name: string;
+    parts: Part[];
+};
+
+/** An exercise of mine with the workouts that hold it, its values an entry brings every time. */
+export type Exercise = Part & {
     workouts: string[];
 };
 
@@ -77,8 +52,6 @@ export type Exercise = {
 export type Mine = {
     workouts: Workout[];
     exercises: Exercise[];
-    videos: Video[];
-    kinds: string[];
     last: { [name: string]: string };
 };
 
@@ -110,7 +83,7 @@ export async function weightSend(day: string, kg: string): Promise<SportDay> {
     );
 }
 
-/** Loads my workouts, exercises and videos. */
+/** Loads my workouts and exercises. */
 export async function mineLoad(): Promise<Mine> {
     return await answerOf<Mine>(await fetch("/api/sport/mine"));
 }
@@ -134,32 +107,6 @@ export async function workoutDelete(name: string): Promise<Mine> {
     return await answerOf<Mine>(
         await fetch(`/api/sport/workouts?name=${encodeURIComponent(name)}`, {
             method: "DELETE",
-        }),
-    );
-}
-
-/**
- * Asks YouTube through the reader for the title and the channel of a video.
- * @throws {Error} - When the text is no link to a video or YouTube does not answer
- */
-export async function videoLookup(link: string): Promise<VideoFound> {
-    return await answerOf<VideoFound>(await fetch(`/api/sport/video?link=${encodeURIComponent(link)}`));
-}
-
-/**
- * Sends a video, new or changed, into `Videos.md`, gives all of mine after.
- * @param before - Its title and link before a change, left out for a new one
- * @throws {Error} - When the reader does not take it
- */
-export async function videoSend(video: Omit<Video, "kcal">, before?: { title: string; link: string }): Promise<Mine> {
-    return await answerOf<Mine>(
-        await fetch("/api/sport/videos", {
-            method: "POST",
-            body: JSON.stringify({
-                ...video,
-                oldTitle: before?.title,
-                oldLink: before?.link,
-            }),
         }),
     );
 }

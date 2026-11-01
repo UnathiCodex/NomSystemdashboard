@@ -42,8 +42,7 @@ import type { CalendarSource } from "./sources.ts";
  *   an older one by its name alone.
  * - `cooked`: For a meal drawn from a cooking the identifier of that entry, its `X-COOKED`.
  * - `pain`: My neck pain from 0 to 10 after a long neck session, its `X-PAIN`.
- * - `workout`: Its `X-WORKOUT`.
- * - `exercises`, `videos`: Its `X-EXERCISE`s and `X-VIDEO`s.
+ * - `exercises`: Its `X-EXERCISE`s.
  * - `planned`: Identifier of the box a log entry was logged from.
  * - `note`: Its `DESCRIPTION`.
  * - `todo`: Whether it is a `VTODO`, a box of the plan, else a `VEVENT`.
@@ -87,9 +86,7 @@ export type Entry = {
     foods: string[];
     cooked: string;
     pain: string;
-    workout: string;
     exercises: string[];
-    videos: string[];
     planned: string;
     note: string;
     todo: boolean;
@@ -307,9 +304,7 @@ const lineOrder: string[] = [
     "X-GROUP",
     "X-FOOD",
     "X-COOKED",
-    "X-WORKOUT",
     "X-EXERCISE",
-    "X-VIDEO",
     "X-PAIN",
     "X-SEMESTER",
     "X-CHAPTER",
@@ -417,32 +412,23 @@ export function icsTextOf(text: string): string {
 }
 
 /**
- * Writes an `X-EXERCISE` or `X-VIDEO` with its time as an iCalendar duration,
- * the seconds of an exercise on time and the minutes of a video.
+ * Writes an `X-EXERCISE` with the seconds of an exercise on time as an iCalendar duration.
  * Repetitions and a part left empty stay as they are.
  */
-export function sportIcsOf(line: string, video: boolean): string {
+export function sportIcsOf(line: string): string {
     const parts: string[] = line.split(";");
     const time: string = (parts[2] ?? "").trim();
-    const seconds: number | null = video
-        ? /^\d+(?:[.,]\d+)?$/.test(time)
-            ? Math.round(Number(time.replace(",", ".")) * 60)
-            : null
-        : /^\d+\s*s$/.test(time)
-          ? parseInt(time, 10)
-          : null;
-    if (seconds === null) return line;
-    parts[2] = ICAL.Duration.fromSeconds(seconds).toString();
+    if (!/^\d+\s*s$/.test(time)) return line;
+    parts[2] = ICAL.Duration.fromSeconds(parseInt(time, 10)).toString();
     return parts.join(";");
 }
 
 /** Reads back what {@link sportIcsOf} writes, a time no duration can be read of as it is. */
-function sportLineOf(line: string, video: boolean): string {
+function sportLineOf(line: string): string {
     const parts: string[] = line.split(";");
     if (!/^P/i.test((parts[2] ?? "").trim())) return line;
     try {
-        const seconds: number = ICAL.Duration.fromString(parts[2].trim()).toSeconds();
-        parts[2] = video ? String(seconds / 60) : `${seconds}s`;
+        parts[2] = `${ICAL.Duration.fromString(parts[2].trim()).toSeconds()}s`;
     } catch {
         return line;
     }
@@ -568,9 +554,7 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
         foods: valuesOf("x-food"),
         cooked: valueOf("x-cooked"),
         pain: valueOf("x-pain"),
-        workout: valueOf("x-workout"),
-        exercises: valuesOf("x-exercise").map((line: string): string => sportLineOf(line, false)),
-        videos: valuesOf("x-video").map((line: string): string => sportLineOf(line, true)),
+        exercises: valuesOf("x-exercise").map(sportLineOf),
         planned: plannedOf(event.component),
         note: event.description ?? "",
         todo: todo,

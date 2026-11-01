@@ -30,19 +30,13 @@
     vertical-align: top;
 }
 
-/* A length or a channel grey beside the white facts */
+/* The rule of a part grey beside the white facts */
 .sport-grey {
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
 
-/* The kinds of a video side by side as plain words */
-.sport-kinds {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.875rem;
-}
-
+/* The unit of the repetitions of an exercise opened, a plain word that switches */
 .sport-kind {
     padding: 0;
     border: 0;

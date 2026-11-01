@@ -1124,7 +1124,7 @@ function titleRowsShow(): void {
         .getElementById("entry-fields")
         ?.replaceChildren(
             ...rowsOf((field: Field): boolean => field.key === "title"),
-            ...(sportShown() ? sportRowsOf(saveAllow, endFit) : []),
+            ...(sportShown() ? sportRowsOf(saveAllow) : []),
         );
 }
 
@@ -1342,7 +1342,7 @@ function fieldsRead(): EntryFields {
         cooked: chosen?.name === foodName ? mealCooked() : "",
         planned: opened.entry === null ? (opened.plan?.id ?? "") : "",
         pain: neckLongPicked() ? pain : "",
-        ...(sportShown() ? sportRead() : { workout: "", exercises: [], videos: [] }),
+        ...(sportShown() ? sportRead() : { exercises: [] }),
         start: start,
         end: end,
     };

@@ -109,18 +109,16 @@ function weightEdit(tile: HTMLElement, kg: number): void {
     field.setSelectionRange(field.value.length, field.value.length);
 }
 
-/** Line of a part of a session, indented under its summary. */
-function partLineOf(name: string, grey: string, value: string): HTMLElement {
+/** Line of an exercise of a session, indented under its summary. */
+function partLineOf(name: string, value: string): HTMLElement {
     const line: HTMLElement = elementOf("div", "food-line", "");
-    const what: HTMLElement = elementOf("span", "food-what", name);
-    if (grey !== "") what.append(elementOf("span", "food-place", ` · ${grey}`));
-    line.append(what, elementOf("span", "food-value", value));
+    line.append(elementOf("span", "food-what", name), elementOf("span", "food-value", value));
     return line;
 }
 
 /**
  * Lines of a session, its start linking to its day and its kcal,
- * then its summary and workout with its time, then each exercise and video.
+ * then its summary and workout with its time, then each exercise.
  */
 function sessionLinesOf(session: Session): HTMLElement[] {
     const entry: HTMLElement = elementOf("div", "food-entry", "");
@@ -145,10 +143,7 @@ function sessionLinesOf(session: Session): HTMLElement[] {
         entry,
         summary,
         ...(session.exercises ?? []).map((exercise: Session["exercises"][number]): HTMLElement =>
-            partLineOf(exercise.name, "", ruleTextOf(exercise)),
-        ),
-        ...(session.videos ?? []).map((video: Session["videos"][number]): HTMLElement =>
-            partLineOf(video.title, video.channel, video.minutes === null ? "" : lengthOf(Math.round(video.minutes))),
+            partLineOf(exercise.name, ruleTextOf(exercise)),
         ),
     ];
 }

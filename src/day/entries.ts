@@ -26,7 +26,7 @@ import type { Planned } from "../../reader/course.ts";
  * - `planned`: The box a new log entry is logged from, `RELATED-TO`.
  * - `pain`: My neck pain from 0 to 10 after `Neck long`.
  * - `cooked`: For a meal drawn from a cooking, the identifier of that entry `Cook`.
- * - `workout`, `exercises`, `videos`: What a session of sport did.
+ * - `exercises`: What a session of sport did.
  */
 export type EntryFields = Partial<Online> & {
     category: string;
@@ -43,9 +43,7 @@ export type EntryFields = Partial<Online> & {
     planned: string;
     pain?: string;
     cooked?: string;
-    workout?: string;
     exercises?: string[];
-    videos?: string[];
     start: Date;
     end: Date;
 };

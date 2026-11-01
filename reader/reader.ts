@@ -85,9 +85,6 @@ import {
     exerciseRemove,
     mineRead,
     sportDayRead,
-    videoFind,
-    videoRemove,
-    videoSave,
     weightSave,
     workoutRemove,
     workoutSave,
@@ -544,33 +541,6 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         );
     } else if (request.method === "DELETE" && url.pathname === "/api/sport/workouts") {
         responseSend(response, 200, workoutRemove(url.searchParams.get("name") ?? ""));
-    } else if (request.method === "GET" && url.pathname === "/api/sport/video") {
-        responseSend(response, 200, await videoFind(url.searchParams.get("link") ?? ""));
-    } else if (request.method === "POST" && url.pathname === "/api/sport/videos") {
-        responseSend(
-            response,
-            200,
-            videoSave(
-                (await json(request)) as {
-                    title?: string;
-                    channel?: string;
-                    minutes?: unknown;
-                    kind?: string;
-                    link?: string;
-                    oldLink?: string;
-                    oldTitle?: string;
-                },
-            ),
-        );
-    } else if (request.method === "DELETE" && url.pathname === "/api/sport/videos") {
-        responseSend(
-            response,
-            200,
-            videoRemove({
-                link: url.searchParams.get("link") ?? "",
-                title: url.searchParams.get("title") ?? "",
-            }),
-        );
     } else if (request.method === "POST" && url.pathname === "/api/sport/exercises") {
         responseSend(
             response,

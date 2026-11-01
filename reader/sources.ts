@@ -225,25 +225,20 @@ export const food: FoodSources = {
 /**
  * Sources of the sport area.
  * - `weights`: My weight, one row per day I weighed myself, each person's own.
- * - `video`: YouTube oEmbed, title and channel by the link after the address.
  */
 export type SportSources = {
     workouts: string;
     exercises: string;
-    videos: string;
     weights: string;
     log: CalendarSource[];
-    video: string;
 };
 
-/** {@link SportSources} as they lie in the vault and on the web. */
+/** {@link SportSources} as they lie in the vault. */
 export const sport: SportSources = {
     workouts: join(dataRoot, "Workouts.md"),
     exercises: join(dataRoot, "Exercises.md"),
-    videos: join(dataRoot, "Videos.md"),
     weights: join(dataRoot, "Weights.md"),
     log: [{ folder: calendarRoot, ending: logEnding }],
-    video: "https://www.youtube.com/oembed",
 };
 
 /** Topic folder of each category but `Skill`, any other in `Living/`. */

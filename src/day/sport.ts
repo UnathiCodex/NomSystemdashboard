@@ -8,59 +8,33 @@
  *   A workout picked brings its block with its parts, an exercise alone stands below the blocks.
  * - Row: An exercise with its sets, repetitions or seconds, kilograms and `×`.
  *   The `×` between the fields and the units always show, so an empty row says what to type.
- *   A video comes only with a workout.
- * - Time: While the session holds only videos, its end follows them, so a slot drawn too long does not stay.
- *   With an exercise it stays as I typed it, since only I know how long the exercises took.
- * Each part is written as `X-EXERCISE` or `X-VIDEO` with its workout,
+ * Each exercise is written as `X-EXERCISE` with its workout,
  * so the log keeps what I did that day, whatever I change in my workouts later.
- * An older session held its one workout as `X-WORKOUT`, which its parts without a workout belong to.
  */
 
 import { listOf, rowOf } from "./choices.ts";
 import { exerciseSend, mineLoad, workoutDelete, workoutSend } from "../sport/mine.ts";
 import { lineNameOf, newOf, ruleTextOf, typedNameOf } from "../sport/lists.ts";
-import { buttonOf, elementOf, kcalTextOf } from "../food/foods.ts";
+import { buttonOf, elementOf } from "../food/foods.ts";
 import { listHeadOf, listLineOf } from "../food/search.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { crossPut, plusPut, searchFieldOf } from "../icons.ts";
 import "./sport.css";
 
 import type { Exercise, Mine, Part, Workout } from "../sport/mine.ts";
-import type { Video } from "../../reader/sport.ts";
 
 /**
  * An exercise of the session as its row holds it, an empty value for none.
  * - `reps`: Its repetitions per set, or its seconds, like `60s`.
  * - `workout`: The workout it belongs to, empty for one picked alone.
  */
-type ExerciseDone = {
-    name: string;
-    sets: string;
-    reps: string;
-    kg: string;
+type ExerciseDone = Part & {
     workout: string;
 };
 
-/**
- * A video of the session as its row holds it, an empty value for none.
- * - `link`: Its link, empty for a video added by hand.
- */
-type VideoDone = {
-    title: string;
-    channel: string;
-    minutes: string;
-    link: string;
-    workout: string;
-};
-
-/**
- * What a session of the log holds.
- * - `workout`: Its older `X-WORKOUT`, empty or missing for none.
- */
+/** What a session of the log holds. */
 export type SessionLines = {
-    workout?: string;
     exercises?: string[];
-    videos?: string[];
 };
 
 /** Category of a session, `CATEGORIES:Sport`. */
@@ -75,17 +49,14 @@ let blocks: string[] = [];
 /** Exercises of the session in their order, those of its blocks and those alone. */
 let exercises: ExerciseDone[] = [];
 
-/** Videos of the session in their order, each of a block. */
-let videos: VideoDone[] = [];
-
 /** Place of the rows in the dialog, filled anew on every change. */
 const place: HTMLElement = elementOf("div", "sport-rows", "");
 
-/** Lets the dialog know of a change, so it allows saving and shows what is picked. */
+/**
+ * Lets the dialog know of a change.
+ * So it allows saving and shows what is picked.
+ */
 let changed: () => void = (): void => undefined;
-
-/** Puts the end of a session minutes after its start. */
-let fit: (minutes: number) => void = (): void => undefined;
 
 /** Workouts named new in this session. */
 let fresh: Set<string> = new Set();
@@ -93,29 +64,15 @@ let fresh: Set<string> = new Set();
 /** The plus of each block, so a new workout opens its list at once. */
 let blockPluses: Map<string, HTMLButtonElement> = new Map();
 
-/** Reads a line `X-EXERCISE` into its row, its workout that of the line, else the older `X-WORKOUT`. */
-function exerciseOf(line: string, before: string): ExerciseDone {
+/** Reads a line `X-EXERCISE` into its row. */
+function exerciseOf(line: string): ExerciseDone {
     const [name, sets, reps, kg, workout]: string[] = line.split(";").map((part: string): string => part.trim());
     return {
         name: name ?? "",
         sets: sets ?? "",
         reps: reps ?? "",
         kg: kg ?? "",
-        workout: workout ?? before,
-    };
-}
-
-/** Reads a line `X-VIDEO` into its row, its workout as for an exercise. */
-function videoOf(line: string, before: string): VideoDone {
-    const [title, channel, minutes, link, workout]: string[] = line
-        .split(";")
-        .map((part: string): string => part.trim());
-    return {
-        title: title ?? "",
-        channel: channel ?? "",
-        minutes: minutes ?? "",
-        link: link ?? "",
-        workout: workout ?? before,
+        workout: workout ?? "",
     };
 }
 
@@ -137,35 +94,7 @@ function exerciseLastOf(
     const last: string | undefined = mine?.last[name.toLowerCase()];
     return last === undefined
         ? { name: name, sets: "", reps: "", kg: "", workout: workout }
-        : { ...exerciseOf(last, ""), name: name, workout: workout };
-}
-
-/** The video of mine a video of the session names, by its link, else its title. */
-function videoFind(link: string, title: string): Video | undefined {
-    return mine?.videos.find((video: Video): boolean =>
-        link !== "" ? video.link === link : video.link === "" && video.title.toLowerCase() === title.toLowerCase(),
-    );
-}
-
-/**
- * The kcal a video of the session burns in its minutes at my weight of today.
- * 0 while the video is no longer mine or has no minutes or kind.
- */
-function videoKcalOf(video: VideoDone): number {
-    const own: Video | undefined = videoFind(video.link, video.title);
-    const minutes: number = Number(video.minutes.replace(",", ".")) || 0;
-    return own?.kcal === null || own === undefined || own.minutes === null || own.minutes === 0
-        ? 0
-        : (own.kcal / own.minutes) * minutes;
-}
-
-/** Fits the end of the session to its videos, nothing while it holds an exercise. */
-function videosFit(): void {
-    const minutes: number = videos.reduce(
-        (sum: number, video: VideoDone): number => sum + (Number(video.minutes.replace(",", ".")) || 0),
-        0,
-    );
-    if (exercises.length === 0 && minutes > 0) fit(Math.round(minutes));
+        : { ...exerciseOf(last), name: name, workout: workout };
 }
 
 /** Picks a workout, its block with its parts last, one the session holds already stays as it is. */
@@ -175,27 +104,9 @@ function workoutPick(name: string): void {
     blocks = [...blocks, name];
     exercises = [
         ...exercises,
-        ...picked.parts
-            .filter((part: Part): boolean => part.kind === "Exercise")
-            .map((part: Part): ExerciseDone => exerciseLastOf(part.name, name, part)),
-    ];
-    videos = [
-        ...videos,
-        ...picked.parts
-            .filter((part: Part): boolean => part.kind === "Video")
-            .map((part: Part): VideoDone => {
-                const video: Video | undefined = videoFind(part.link, part.name);
-                return {
-                    title: video?.title ?? part.name,
-                    channel: video?.channel ?? "",
-                    minutes: video?.minutes === null || video === undefined ? "" : String(video.minutes),
-                    link: part.link,
-                    workout: name,
-                };
-            }),
+        ...picked.parts.map((part: Part): ExerciseDone => exerciseLastOf(part.name, name, part)),
     ];
     rowsShow();
-    videosFit();
 }
 
 /** Puts an empty block of a new workout into the session and opens its list at once. */
@@ -215,7 +126,7 @@ function freshSend(workout: string): void {
     if (!fresh.has(workout)) return;
     const parts: Part[] = exercises
         .filter((exercise: ExerciseDone): boolean => exercise.workout === workout)
-        .map((exercise: ExerciseDone): Part => ({ ...exercise, kind: "Exercise", link: "" }));
+        .map(({ name, sets, reps, kg }: ExerciseDone): Part => ({ name: name, sets: sets, reps: reps, kg: kg }));
     (parts.length === 0 ? workoutDelete(workout) : workoutSend(workout, parts))
         .then((sent: Mine): void => {
             mine = sent;
@@ -384,7 +295,7 @@ function plusOfList(picker: HTMLElement, words: string, workout: string): HTMLBu
                           const parts: string = one.parts.map((part: Part): string => part.name).join(", ");
                           return listLineOf(
                               lineNameOf(one.name, parts),
-                              one.kcal,
+                              null,
                               taken((): void => workoutPick(one.name)),
                               null,
                           )[0];
@@ -460,7 +371,6 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
         removeOf(`Remove ${exercise.name}`, (): void => {
             exercises = exercises.filter((other: ExerciseDone): boolean => other !== exercise);
             rowsShow();
-            videosFit();
             freshSend(exercise.workout);
         }),
     );
@@ -468,71 +378,30 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
 }
 
 /**
- * Row of a video, its kcal shown anew as its minutes change.
- * @param shown - Shows the kcal of its block anew
- */
-function videoRowOf(video: VideoDone, shown: () => void): HTMLElement {
-    const row: HTMLElement = elementOf("div", "meal-row", "");
-    const name: HTMLElement = elementOf("span", "meal-name", video.title);
-    const kcal: HTMLElement = elementOf("span", "meal-kcal", kcalTextOf(videoKcalOf(video)));
-    if (video.channel !== "") name.append(elementOf("span", "meal-unknown", ` (${video.channel})`));
-    row.append(
-        name,
-        fieldOf("meal-grams", video.minutes, "min", `Minutes of ${video.title}`, (text: string): boolean => {
-            const typed: string = text.trim().replace(",", ".");
-            if (typed !== "" && !(Number(typed) >= 0)) return false;
-            video.minutes = typed;
-            kcal.textContent = kcalTextOf(videoKcalOf(video));
-            shown();
-            videosFit();
-            return true;
-        }),
-        kcal,
-        removeOf(`Remove ${video.title}`, (): void => {
-            videos = videos.filter((other: VideoDone): boolean => other !== video);
-            rowsShow();
-            videosFit();
-        }),
-    );
-    return row;
-}
-
-/**
- * Block of a workout as a meal, its row with the plus, the kcal of its videos and its `×`.
+ * Block of a workout as a meal, its row the name with the plus, then the `×`.
+ * Two empty columns stand between them, where an exercise has its values.
  * Its parts indented below it, then the list of its plus.
  */
 function blockOf(workout: string): HTMLElement[] {
     const row: HTMLElement = elementOf("div", "meal-row", "");
     const name: HTMLElement = elementOf("span", "meal-name", workout);
-    const kcal: HTMLElement = elementOf("span", "meal-kcal", "");
     const parts: HTMLElement = elementOf("div", "meal-parts", "");
-    const own: VideoDone[] = videos.filter((video: VideoDone): boolean => video.workout === workout);
-    const total: () => void = (): void => {
-        kcal.textContent =
-            own.length === 0
-                ? ""
-                : kcalTextOf(own.reduce((sum: number, video: VideoDone): number => sum + videoKcalOf(video), 0));
-    };
     const plus: HTMLButtonElement = plusOfList(parts, `Add an exercise to ${workout}`, workout);
     blockPluses.set(workout, plus);
     name.append(plus);
     row.append(
         name,
         elementOf("span", "", ""),
-        kcal,
+        elementOf("span", "", ""),
         removeOf(`Remove ${workout}`, (): void => {
             blocks = blocks.filter((other: string): boolean => other !== workout);
             exercises = exercises.filter((exercise: ExerciseDone): boolean => exercise.workout !== workout);
-            videos = videos.filter((video: VideoDone): boolean => video.workout !== workout);
             rowsShow();
-            videosFit();
         }),
     );
     parts.prepend(
         ...exercises.filter((exercise: ExerciseDone): boolean => exercise.workout === workout).map(exerciseRowOf),
-        ...own.map((video: VideoDone): HTMLElement => videoRowOf(video, total)),
     );
-    total();
     return [row, parts];
 }
 
@@ -565,15 +434,12 @@ function rowsShow(): void {
 export async function sportOpen(lines: SessionLines | null): Promise<void> {
     mine = await mineLoad();
     fresh = new Set();
-    const before: string = lines?.workout ?? "";
-    exercises = (lines?.exercises ?? []).map((line: string): ExerciseDone => exerciseOf(line, before));
-    videos = (lines?.videos ?? []).map((line: string): VideoDone => videoOf(line, before));
+    exercises = (lines?.exercises ?? []).map(exerciseOf);
     blocks = [
         ...new Set(
-            [
-                ...exercises.map((exercise: ExerciseDone): string => exercise.workout),
-                ...videos.map((video: VideoDone): string => video.workout),
-            ].filter((workout: string): boolean => workout !== ""),
+            exercises
+                .map((exercise: ExerciseDone): string => exercise.workout)
+                .filter((workout: string): boolean => workout !== ""),
         ),
     ];
 }
@@ -582,22 +448,17 @@ export async function sportOpen(lines: SessionLines | null): Promise<void> {
  * Rows of the session for the dialog.
  * @returns One element whose rows count as rows of the dialog, see `sport.css`
  */
-export function sportRowsOf(change: () => void, end: (minutes: number) => void): HTMLElement[] {
+export function sportRowsOf(change: () => void): HTMLElement[] {
     changed = change;
-    fit = end;
     rowsShow();
     return [place];
 }
 
-/** What the session holds, no `X-WORKOUT` since each part names its workout. */
-export function sportRead(): { workout: string; exercises: string[]; videos: string[] } {
+/** What the session holds, each exercise with its workout. */
+export function sportRead(): { exercises: string[] } {
     return {
-        workout: "",
         exercises: exercises.map((exercise: ExerciseDone): string =>
             [exercise.name, exercise.sets, exercise.reps, exercise.kg, exercise.workout].join(";"),
-        ),
-        videos: videos.map((video: VideoDone): string =>
-            [video.title, video.channel, video.minutes, video.link, video.workout].join(";"),
         ),
     };
 }
