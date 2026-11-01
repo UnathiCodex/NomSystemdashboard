@@ -1,25 +1,13 @@
 /**
  * ## Meals
  *
- * My meals of `Meals.md`, each only its composition,
- * one or more of my foods without grams,
- * servings or variants, since I prepare it a little differently every time.
- * A meal goes into `Meals.md` from an entry, see `../day/meal.ts`,
- * or from the section of the food view, built as that of my foods,
- * see {@link mealsSectionOf}.
- * - The line of a meal is that of every list of meals or foods,
- *   see `listLineOf` in `search.ts`,
- *   with what it gave the last time I ate it,
- *   for a meal never eaten what its foods give at the grams I logged each with last,
- *   see `dishesRead` in `reader/food.ts`.
- * - A meal opened shows its name, which renames it wherever it stands,
- *   its short title and its foods with their standard grams,
- *   ordered by their grams, the most first, see `rankOf` in `reader/food.ts`.
- *   Its plus opens the search of my foods below them, a food picked saved at once,
- *   the search staying open and empty for the next, since I mostly add many.
- * - My meals load anew the moment a file of my new system changes, see `../changes.ts`,
- *   but not while the cursor stands in their list, so nothing typed there is lost.
- *   So the section never shows, nor writes back, a meal as `Meals.md` held it before.
+ * My meals of `Meals.md`, each only its foods, without grams, servings or variants,
+ * since I prepare it a little differently every time.
+ * - Line: What a meal gave the last time I ate it, else what its foods give at their last grams.
+ * - Opened: Its name, which renames it wherever it stands, its short title and its foods with standard grams.
+ *   Its plus opens the search of my foods, staying open and empty for the next, since I mostly add many.
+ * - Changes: My meals load anew on a change of my files, but not while the cursor stands in their list,
+ *   so nothing typed there is lost.
  */
 
 import {
@@ -47,9 +35,8 @@ import type { Dish } from "./foods.ts";
 import type { Food } from "../../reader/food.ts";
 
 /**
- * Writes the name of a meal as the reader does, see `foodTextOf` in `reader/food.ts`:
- * a comma between two digits a point, every other comma gone,
- * since the comma parts names.
+ * Writes the name of a meal as the reader does.
+ * A comma between two digits becomes a point, every other comma goes, since the comma parts names.
  */
 export function mealNameOf(typed: string): string {
     return typed
@@ -60,18 +47,12 @@ export function mealNameOf(typed: string): string {
         .trim();
 }
 
-/**
- * Writes a text cut after a number of letters, with `…` right after the last,
- * a comma or space before the cut left out.
- */
+/** Cuts a text after a number of letters with `…`, a comma or space before the cut left out. */
 function cutOf(text: string, letters: number): string {
     return `${text.slice(0, letters).replace(/[\s,]+$/, "")}…`;
 }
 
-/**
- * Writes a text cut after the most letters that fit, by halving, and leaves it so.
- * Gives the most letters that fit, 0 where not one does.
- */
+/** Cuts a text after the most letters that fit, found by halving, and gives their number. */
 function lettersFit(text: string, put: (cut: string) => void, fits: () => boolean): number {
     let low: number = 0;
     let high: number = text.length - 1;
@@ -86,11 +67,8 @@ function lettersFit(text: string, put: (cut: string) => void, fits: () => boolea
 }
 
 /**
- * Fits the name of a meal and its short title into the one line of its name:
- * both whole where they fit,
- * else the short title cut, like `Chilli con Carne (Tomaten, Hac…)`.
- * Where not one letter fits beside the name, like a long name on a phone, no brackets,
- * and the name cut the same way where even it alone has no room.
+ * Fits the name of a meal and its short title into one line, else the short title cut.
+ * Where not one letter of it fits, no brackets, and the name cut where even it alone has no room.
  */
 function dishFit(name: HTMLElement, brackets: HTMLElement, dish: Dish): void {
     const fits: () => boolean = (): boolean => name.scrollWidth <= name.clientWidth;
@@ -122,11 +100,8 @@ function dishFit(name: HTMLElement, brackets: HTMLElement, dish: Dish): void {
 }
 
 /**
- * Makes the name of a meal as every list of meals shows it, always on one line,
- * its short title grey in brackets, as a food has its brand and store,
- * both whole as its tooltip.
- * Fitted again whenever the line gets narrower or wider,
- * and once the font of the page has loaded, which changes the room it takes.
+ * The name of a meal on one line, its short title grey in brackets, both whole as its tooltip.
+ * Fitted again when the line changes its width, and once the font has loaded, which changes the room it takes.
  * - `width`: Width when last fitted, so a change of its height alone fits nothing.
  */
 export function dishNameOf(dish: Dish): HTMLElement {
@@ -148,10 +123,7 @@ export function dishNameOf(dish: Dish): HTMLElement {
     return line;
 }
 
-/**
- * Finds the meals whose name or foods hold every word typed, see `../search.ts`,
- * all of them for nothing typed.
- */
+/** Finds the meals whose name or foods hold every word typed. */
 export function dishesFound(dishes: Dish[], typed: string): Dish[] {
     return dishes.filter((dish: Dish): boolean =>
         matchesAll(
@@ -161,10 +133,6 @@ export function dishesFound(dishes: Dish[], typed: string): Dish[] {
     );
 }
 
-/**
- * Makes the one `×` of every list that takes a value back,
- * see `crossPut` in `../icons.ts`.
- */
 function removeOf(words: string, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf("", "", click);
     crossPut(button, words);
@@ -172,9 +140,8 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * Makes the line of a food of a meal opened: its name a link
- * that opens the food among my foods, its standard grams and its `×`,
- * `null` while it is the only food of the meal.
+ * The line of a food of a meal opened, its name a link to the food among my foods.
+ * Its `×` `null` while it is the only food of the meal.
  */
 function partOf(
     food: string,
@@ -196,8 +163,7 @@ function partOf(
 }
 
 /**
- * Makes the field of the standard grams of a food of a meal opened,
- * which saves on Enter or leaving it, empty for none set, 0 for a food I rarely put in.
+ * The field of the standard grams of a food of a meal, empty for none, 0 for a food I rarely put in.
  * Portions typed, like `2x`, count by the portion of the food.
  * A text that is no number of 0 or more takes nothing and shows the grams again.
  */
@@ -222,16 +188,11 @@ function gramsFieldOf(
 }
 
 /**
- * Builds the section of my meals in the food view, see the top of this file.
- * The search shows only the meals whose name or foods hold what is typed.
- * The first click on the `×` of a meal only asks, `Really remove?`,
- * as the entry dialog does.
- * The plus beside `Meals` or a name typed that no meal has opens a new meal,
- * its first food keeps it in `Meals.md`, its `×` drops it before.
- * - `open`, `adding`, `asked`: Name of the meal opened, showing its search of my foods,
- *   or asking `Really remove?`, in small letters, empty for none.
- * - `show`: The row of the meal opened is no button but a row that a click closes again,
- *   since its plus stands inside it.
+ * The section of my meals in the food view.
+ * The first click on the `×` of a meal only asks, `Really remove?`.
+ * A new meal stays only once its first food is picked, its `×` drops it before.
+ * - `open`, `adding`, `asked`: Name of the meal opened, showing its search, or asking, in small letters.
+ * - `show`: The row of the meal opened is no button but a row a click closes, since its plus stands inside it.
  */
 export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; store: string }) => void): HTMLElement {
     const section: HTMLElement = elementOf("section", "food-dishes", "");

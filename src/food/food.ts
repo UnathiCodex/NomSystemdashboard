@@ -1,18 +1,10 @@
 /**
  * ## Food
  *
- * Shows what I ate on a day, and my foods, in the scheme of the day view,
- * my water I count in the trackers of the day.
- * The bar: the number of meals of the day and its totals, all alike, without goals,
- * so the log stays a log, not calorie control, as tiles where the day view has its trackers.
- * Then each meal of the log, a click opening the day view's dialog of its entry,
- * to change, copy or remove it there, see {@link mealBlockOf}.
+ * Shows what I ate on a day, and my foods, in the scheme of the day view.
+ * The bar holds the totals of the day without goals, so the log stays a log, not calorie control.
  * Every amount is rounded and an estimate anyway, so none is marked as one.
- * What counts nothing, a food not in `Foods.md`, without grams or a nutrient unknown,
- * a line below the totals names, see {@link totalsShow}.
- * My meals, see `meals.ts`, above my foods and the food search, see `search.ts`.
- * It opens on today, see `../today.ts`,
- * and loads anew the moment a file of my new system changes, see `../changes.ts`.
+ * What counts nothing a line below the totals names.
  */
 
 import { amountOf, elementOf, foodDayLoad, headingOf, plusOf, summaryOf, totalOf, unitOf } from "./foods.ts";
@@ -29,22 +21,14 @@ import "../day/trackers.css";
 import "./food.css";
 import type { Eaten, FoodDay, Meal } from "../../reader/food.ts";
 
-/**
- * Day shown.
- */
 let shown: string = "";
 
-/**
- * Writes an amount with its unit, whole.
- */
+/** Writes an amount with its unit, whole. */
 function amountTextOf(value: number, unit: string): string {
     return `${amountOf(value, 0)} ${unit}`;
 }
 
-/**
- * Names the nutrients of protein, carbs and fat a food lacks in `Foods.md`,
- * as a line below the totals writes them, like `protein and carbs`, empty for nothing.
- */
+/** Names the nutrients a food lacks in `Foods.md`, as a line below the totals writes them. */
 function lacksOf(eaten: Eaten): string {
     const lacks: string[] = [
         eaten.protein === null ? "protein" : "",
@@ -55,11 +39,8 @@ function lacksOf(eaten: Eaten): string {
 }
 
 /**
- * Shows the totals of a day in the bar, each the sum of what is known, 0 on a day without meals,
- * so the bar always looks the same,
- * and in the day a line for each kind of food or meal they leave out,
- * like `Not counted, fat unknown: Gouda`.
- * - `weightless`: My foods logged without grams, which give nothing.
+ * Shows the totals of a day, each the sum of what is known, 0 without meals, so the bar always looks the same.
+ * Below them a line for each kind of food or meal they leave out.
  */
 function totalsShow(day: FoodDay): void {
     document
@@ -101,19 +82,15 @@ function totalsShow(day: FoodDay): void {
         );
 }
 
-/**
- * Adds up the kcal of foods that count, those of my foods with grams,
- * `null` when none counts, so its line shows none, never 0.
- */
+/** Adds up the kcal of my foods with grams, `null` when none counts, so its line shows none, never 0. */
 function kcalOf(foods: Eaten[]): number | null {
     const counted: Eaten[] = foods.filter((eaten: Eaten): boolean => eaten.known && eaten.grams > 0);
     return counted.length === 0 ? null : counted.reduce((sum: number, eaten: Eaten): number => sum + eaten.kcal, 0);
 }
 
 /**
- * Builds a line of what an entry holds, its name and what it gives,
- * `eaten` `null` for a meal, which has no grams.
- * A food without its brand and store, which only tell which one it is when I pick it.
+ * A line of what an entry holds, `eaten` `null` for a meal, which has no grams.
+ * Without brand and store, which only tell which one it is when I pick it.
  * `item` tells it stands at the top of its entry, not as a food of a meal below it.
  */
 function whatLineOf(name: string, kcal: number | null, eaten: Eaten | null, item: boolean): HTMLElement {
@@ -131,13 +108,9 @@ function whatLineOf(name: string, kcal: number | null, eaten: Eaten | null, item
 }
 
 /**
- * Builds the lines of an entry: its start in grey above it,
- * linking to its day in the day view, so no column of times takes room beside the names,
- * and its kcal in bold, then each meal of mine with its foods below it,
- * then each food eaten by itself,
- * so a food never stands under a meal it does not belong to.
- * An older entry whose summary names more than its foods, like `Bortzeit`,
- * stands as one meal of that name.
+ * The lines of an entry, its start above it, so no column of times takes room beside the names.
+ * Each meal with its foods comes before the foods eaten alone, so a food never stands under a wrong meal.
+ * An older entry whose summary names more than its foods stands as one meal of that name.
  */
 function mealLinesOf(meal: Meal): HTMLElement[] {
     const entry: HTMLElement = elementOf("div", "food-entry", "");
@@ -178,11 +151,7 @@ function mealLinesOf(meal: Meal): HTMLElement[] {
     ];
 }
 
-/**
- * Builds an entry as one block of its lines,
- * which a click opens in the day view's dialog of the entry, as in the log,
- * a click on its start shows its day instead.
- */
+/** An entry as one block, a click opens its dialog, a click on its start its day. */
 function mealBlockOf(meal: Meal): HTMLElement {
     const block: HTMLElement = elementOf("div", "food-eaten", "");
     block.append(...mealLinesOf(meal));
@@ -194,8 +163,7 @@ function mealBlockOf(meal: Meal): HTMLElement {
 }
 
 /**
- * Shows a day in the bar, then loads its meals and shows them with their totals,
- * unless another day was asked for meanwhile.
+ * Shows a day with its meals and totals, unless another day was asked for meanwhile.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -216,9 +184,7 @@ async function dayShow(day: string): Promise<void> {
         );
 }
 
-/**
- * Shows a day, or a hint when the reader cannot read its meals.
- */
+/** Shows a day, or a hint when the reader cannot read its meals. */
 function dayOpen(day: string): void {
     dayShow(day).catch((error: unknown): void => {
         console.error(error);
@@ -228,9 +194,7 @@ function dayOpen(day: string): void {
     });
 }
 
-/**
- * Starts the food view after the router has put its HTML into the page.
- */
+/** Starts the food view after the router has put its HTML into the page. */
 export function foodStart(): void {
     const before: HTMLElement = document.getElementById("food-before") as HTMLElement;
     const after: HTMLElement = document.getElementById("food-after") as HTMLElement;
