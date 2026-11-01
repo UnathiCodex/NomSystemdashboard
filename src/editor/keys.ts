@@ -1918,8 +1918,8 @@ const blanksLeft: Extension = Prec.high(
 /**
  * Undo or Redo only within the block of the cursor, a definition, an example or a task:
  * from its heading `##` to the line before the next one, the whole note without one,
- * so it never changes another part of the note, which a round hides;
- * in the round of a section it is the block shown, see `selectionKeep` in `./round.ts`.
+ * so it never changes another part of the note, which a round hides.
+ * In the round of a section it is the block shown, see `selectionKeep` in `./round.ts`.
  * Else the key goes on to the next command,
  * like going back to the block I had open before, see `roundBack` in `./round.ts`,
  * and never to the browser's own Undo.
