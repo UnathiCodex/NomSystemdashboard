@@ -15,7 +15,7 @@ import { lengthOf, nowOn } from "./times.ts";
 import { amountOf, elementOf } from "../food/foods.ts";
 import { dayOf } from "../skill/attempts.ts";
 import { calendarTodayOf } from "../today.ts";
-import { iconOf } from "../icons.ts";
+import { iconOf, tileNameOf } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { Check, Minus } from "lucide";
 
@@ -137,7 +137,7 @@ async function glassAdd(calendar: Calendar): Promise<void> {
 }
 
 function linesOf(name: string, value: string): HTMLElement[] {
-    return [elementOf("span", "tracker-name", name), elementOf("span", "tracker-value", value)];
+    return [tileNameOf(name), elementOf("span", "tracker-value", value)];
 }
 
 /**
@@ -219,7 +219,7 @@ function neckOf(trackers: Trackers): HTMLElement {
         tileOf(`${neck.long} / ${goal}`, neck.long >= goal, "long · 7 days"),
         tileOf(pain, false, "pain"),
     );
-    row.append(elementOf("span", "tracker-name", "Neck"), tiles);
+    row.append(tileNameOf("Neck"), tiles);
     return row;
 }
 

@@ -6,7 +6,7 @@
  */
 
 import { readerAsk } from "../reader.ts";
-import { plusPut } from "../icons.ts";
+import { plusPut, tileNameOf } from "../icons.ts";
 import type { Food, FoodDay, FoodsFound, Kind } from "../../reader/food.ts";
 
 /**
@@ -227,7 +227,7 @@ export function totalOf(name: string, value: string | HTMLElement): HTMLElement 
     const tile: HTMLElement = elementOf("div", "tracker-row", "");
     const shown: HTMLElement = elementOf("span", "tracker-value", "");
     shown.append(value);
-    tile.append(elementOf("span", "tracker-name", name), shown);
+    tile.append(tileNameOf(name), shown);
     return tile;
 }
 

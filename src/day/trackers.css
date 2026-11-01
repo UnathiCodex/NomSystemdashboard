@@ -1,4 +1,9 @@
 /* Trackers and the timer of a session in the day bar, soft grey cards without a frame */
+/* Height of every tile of a bar, a little under a control, as its text is small */
+.day-bar {
+    --tile-height: calc(var(--control-height) - 0.25rem);
+}
+
 /* Timer, always there so the bar never jumps, `Session` while none runs.
    All the room between the date and the trackers, since a session matters most.
    At least 9rem, so its time always shows. */
@@ -10,7 +15,7 @@
     gap: var(--gap);
     min-width: 9rem;
     overflow: hidden;
-    min-height: var(--control-height);
+    min-height: var(--tile-height);
     padding: 0.25rem 0.875rem;
     border: 0;
     border-radius: var(--radius);
@@ -84,7 +89,7 @@
     align-items: center;
     gap: 0 0.625rem;
     min-width: 0;
-    height: var(--control-height);
+    height: var(--tile-height);
     padding: 0 0.875rem;
     border: 0;
     border-radius: var(--radius);
@@ -93,8 +98,15 @@
 }
 
 .tracker-name {
+    display: inline-flex;
     font-size: 0.75rem;
     color: var(--text-muted);
+}
+
+/* The icon of a name of a tile, as high as its value */
+.tracker-name > svg.lucide {
+    width: 1.0625rem;
+    height: 1.0625rem;
 }
 
 .tracker-meta {

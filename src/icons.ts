@@ -7,7 +7,23 @@
  * The plus, the `×` and the search field are made only here, so they look and act the same everywhere.
  */
 
-import { createElement, Plus, Search, X } from "lucide";
+import {
+    Beef,
+    Clock,
+    createElement,
+    Droplet,
+    Dumbbell,
+    Flame,
+    GlassWater,
+    Moon,
+    Plus,
+    Search,
+    Utensils,
+    UtensilsCrossed,
+    Weight,
+    Wheat,
+    X,
+} from "lucide";
 
 import type { IconNode } from "lucide";
 
@@ -34,6 +50,36 @@ export function iconPut(button: HTMLElement, icon: IconNode, words: string): voi
     button.title = words;
     button.setAttribute("aria-label", words);
     if (button instanceof HTMLButtonElement) button.classList.add("icon-button");
+}
+
+/** The icon of each name of a tile of a bar. */
+const tileIcons: { [name: string]: IconNode } = {
+    Sleep: Moon,
+    Water: GlassWater,
+    Food: Utensils,
+    Meals: UtensilsCrossed,
+    Energy: Flame,
+    Protein: Beef,
+    Carbs: Wheat,
+    Fat: Droplet,
+    Sessions: Dumbbell,
+    Time: Clock,
+    Weight: Weight,
+};
+
+/** The name of a tile of a bar as its icon, the name its tooltip, the word itself where no icon is clear. */
+export function tileNameOf(name: string): HTMLElement {
+    const label: HTMLElement = document.createElement("span");
+    label.className = "tracker-name";
+    const icon: IconNode | undefined = tileIcons[name];
+    if (icon === undefined) {
+        label.textContent = name;
+        return label;
+    }
+    label.append(iconOf(icon));
+    label.title = name;
+    label.setAttribute("aria-label", name);
+    return label;
 }
 
 export function iconWordsOf(icon: IconNode, words: string): Node[] {
