@@ -1,9 +1,6 @@
-/* Sport: what the sport view adds to the look of the food view, which it takes,
-   see `../food/food.css`, `../food/search.css` and `../food/meals.css` */
+/* Sport: what the sport view adds to the look of the food view */
 
-/* Name of a workout, an exercise or a video in a list
-   with what stands grey in brackets after it, see `nameOf` in `lists.ts`:
-   always one line, the name whole, the brackets cut with … where they have no room */
+/* Name in a list, one line, the grey brackets cut first */
 .sport-name {
     display: flex;
     min-width: 0;
@@ -24,8 +21,7 @@
     text-overflow: ellipsis;
 }
 
-/* The plus right after the name of a workout opened, as after the name of a meal opened,
-   see `.dish-list .food-name .plus-quiet` in `meals.css` */
+/* The plus after the name of a workout opened, as at a meal */
 .dish-list .sport-name .plus-quiet {
     height: calc(1lh + 0.5rem);
     margin: -0.25rem 0 -0.25rem 0.5rem;
@@ -34,14 +30,13 @@
     vertical-align: top;
 }
 
-/* A length or a channel grey beside the white facts, like the minutes of a video */
+/* A length or a channel grey beside the white facts */
 .sport-grey {
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
 
-/* The kinds of a video opened or new side by side as plain words,
-   see `kindsOf` in `lists.ts` */
+/* The kinds of a video side by side as plain words */
 .sport-kinds {
     display: flex;
     flex-wrap: wrap;
@@ -62,10 +57,7 @@
     color: var(--text-main);
 }
 
-/* My weight among the totals, see `weightOf` in `sport.ts`:
-   a button without frame in the font of the value of a tile,
-   the small grey pencil after it as far as every pencil,
-   see `.entry-pencil` in `../day/day.css`,
+/* My weight among the totals, a plain button with a grey pencil,
    as a field the same size, as wide as what is typed */
 .sport-weight-amount {
     display: inline-flex;
@@ -111,14 +103,13 @@ button.sport-weight-amount:hover svg.lucide {
     outline: none;
 }
 
-/* The sessions of the day in one column of values with the room of their longest,
-   where the food view keeps two, grams and kcal */
+/* The sessions of the day in one column of values, food keeps two */
 .sport-sessions .food-line,
 .sport-sessions .food-entry {
     grid-template-columns: minmax(0, 1fr) 8.5rem;
 }
 
-/* My exercises each with what I do of it as a rule at the right, as wide as its text */
+/* My exercises with their rule at the right */
 .sport-exercises .food-row {
     grid-template-columns: minmax(0, 1fr) auto;
 }

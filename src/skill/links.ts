@@ -1,39 +1,27 @@
 /**
  * ## Links
  *
- * Names a link of a skill entry by the last part of its path, see `../day/boxes.ts`,
- * names the folder of my modules, see `../day/skill.ts`,
- * and shows a link into my vault, like that of a skill, as the link below a summary,
- * see {@link folderLinkShow}.
+ * Names of links of skill entries and links into my vault below a summary.
  */
 
 import { middleCutPut } from "../day/choices.ts";
 import type { Link } from "../../reader/calendar.ts";
 
-/**
- * Folder of my modules in `NomWorkspace`, the first part of the folder of a module.
- */
+/** Folder of my modules in `NomWorkspace`. */
 export const modulesFolder: string = "NomSkillingmodules";
 
-/**
- * Folder of my new system in `NomWorkspace`, which the editor shows, see `../editor/editor.ts`.
- */
+/** Folder of my new system in `NomWorkspace`, which the editor shows. */
 const planningsFolder: string = "NomManageplannings";
 
-/**
- * Gives the name of a link, the last part of its path.
- */
+/** Name of a link, the last part of its path. */
 export function linkNameOf(link: Link): string {
     return link.path.split("/").at(-1) ?? link.path;
 }
 
 /**
- * Gives the address in the dashboard of a path into my vault, from `NomWorkspace`:
- * a folder of my modules in the scripts view, see `../editor/folder.ts`,
- * of my new system a Markdown or `.ics` file in the editor and any other path its folder
- * opened in the tree, see `treeMark` in `../notes/tree.ts`;
- * empty for any other path, which the dashboard does not show, like the folder of a project
- * outside my new system.
+ * Address in the dashboard of a path from `NomWorkspace`.
+ * A module folder in the scripts view, a Markdown or `.ics` file in the editor, another path in the tree.
+ * Empty for a path outside these, which the dashboard does not show.
  */
 function vaultAddressOf(path: string): string {
     if (path.startsWith(`${modulesFolder}/`))
@@ -45,13 +33,10 @@ function vaultAddressOf(path: string): string {
 }
 
 /**
- * Shows a link into my vault, like the link of a skill, below its summary, small and grey,
- * as a place has its address below it, see `summaryPartsOf` in `../day/categories.ts`:
- * a link that opens it in the dashboard in this window, see {@link vaultAddressOf},
- * its path alone where the dashboard does not show it.
- * Cut in its middle where it is wider than its row, so its last folder stays.
- * - `shown`: A new element each time,
- *   so the cut of a folder shown before never writes into the link again.
+ * Shows a link into my vault below its summary, small and grey, opening in this window.
+ * Its path alone where the dashboard does not show it.
+ * Cut in its middle where it is too wide, so its last folder stays.
+ * - `shown`: A new element each time, so an old cut never writes into the link again.
  */
 export function folderLinkShow(link: HTMLAnchorElement, path: string): void {
     const shown: HTMLElement = document.createElement("span");

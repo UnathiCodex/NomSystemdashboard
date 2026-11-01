@@ -1,6 +1,5 @@
-/* Row of a task under its heading in the scripts view, everything from the left:
-   when it is due, its button `⋯` after it, see `../menu.css`;
-   its history and the field of my comment below, each across the row */
+/* Row of a task in the scripts view, when it is due and its button `⋯`,
+   its history and my comment below, each across the row */
 .task-row {
     display: flex;
     flex-wrap: wrap;
@@ -14,8 +13,7 @@
     flex-basis: 100%;
 }
 
-/* A quiet row, on a card, as a box of the day: its button `⋯` at the right,
-   so its menu opens below it toward the page */
+/* A quiet row on a card, its button `⋯` at the right so its menu opens toward the page */
 .task-quiet {
     justify-content: flex-end;
     gap: 0.75rem;
@@ -30,13 +28,11 @@
     order: 2;
 }
 
-/* When the task is due, grey */
 .task-state {
     color: var(--text-muted);
 }
 
-/* Label of a cold task beside its heading,
-   small and grey in the text's weight, before the fold arrow */
+/* Label of a cold task beside its heading, before the fold arrow */
 .task-cold {
     margin-left: 0.75em;
     font-size: 0.6em;
@@ -45,10 +41,8 @@
     vertical-align: middle;
 }
 
-/* Next step and Show all of a solution one chip high,
-   filled in the soft grey of a card without a frame, their words grey,
-   light under the pointer, as of every button with words, never a lighter box;
-   the button of the history the same */
+/* Next step, Show all and the history one chip high in soft grey without a frame,
+   their words light under the pointer, never a lighter box */
 .steps-buttons button,
 .task-history > summary {
     min-height: var(--chip-height);
@@ -76,8 +70,7 @@
     margin: 0;
 }
 
-/* Short text field one chip high,
-   as wide as a few words, filled in the soft grey of a card without a frame */
+/* Short text field one chip high, as wide as a few words */
 .task-form input {
     width: min(22.5rem, 100%);
     height: var(--chip-height);
@@ -87,8 +80,7 @@
     background: var(--fill);
 }
 
-/* History of a task: a small grey button with its icon and the number of attempts,
-   opening the attempts below it across the whole width */
+/* History of a task, a small button with the number of attempts, opening them below */
 .task-history > summary {
     display: inline-flex;
     align-items: center;
@@ -120,15 +112,13 @@ details.task-history a {
     color: inherit;
 }
 
-/* The button `⋯` of a task while its solution is still closed:
-   hidden, keeping its place, so nothing moves when it shows,
-   and I judge against the solution, not by feeling */
+/* The button `⋯` hidden in its place while the solution is closed,
+   so I judge against the solution, not by feeling */
 .task-unjudged .menu-place {
     visibility: hidden;
 }
 
-/* Below the solution Next step and Show all,
-   like the buttons of a task, at the right, as every button of a block of a section */
+/* Next step and Show all below the solution, at the right */
 .steps-buttons {
     display: flex;
     justify-content: flex-end;
@@ -136,11 +126,8 @@ details.task-history a {
     padding: 0.75rem 0 0.5rem;
 }
 
-/* Check and cross of a task of a section at the right end of the line of its heading,
-   see `judgeOf` in `task.ts`: centred on its line, its last line where it wraps,
-   the room for them kept free beside the text,
-   see `.task-heading` in `../editor/editor.css`;
-   the result of today pressed told apart only by its icon light instead of grey */
+/* Check and cross at the right end of the last line of a task heading.
+   The result of today pressed only by its icon light */
 .task-judge {
     position: absolute;
     right: 0;
@@ -155,8 +142,7 @@ details.task-history a {
     color: var(--text-main);
 }
 
-/* Field of my comment after Wrong in the menu below the cross, see `../menu.css`,
-   the hint that saving failed above it */
+/* Field of my comment after Wrong, the hint that saving failed above it */
 .task-reason input {
     width: min(18rem, 80vw);
     height: var(--control-height);
@@ -172,8 +158,7 @@ details.task-history a {
     color: var(--text-muted);
 }
 
-/* Hint after the state while Right and Wrong hide, grey and small;
-   gone once the solution is open */
+/* Hint after the state while Right and Wrong hide, gone once the solution is open */
 .task-hint {
     display: none;
     font-size: 0.8em;

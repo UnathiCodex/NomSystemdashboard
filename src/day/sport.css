@@ -1,12 +1,9 @@
-/* Session of sport in the entry by category, see `sport.ts`:
-   its rows stand in one place, which counts as no box of its own,
-   so they stand as every row of the dialog, each part as a food, see `meal.css` */
+/* Session of sport in the entry, its rows stand as every row of the dialog */
 .sport-rows {
     display: contents;
 }
 
-/* Kilograms of an exercise where a food has its kcal, as the grams of a food are,
-   but staying where it stands on a phone, so the kilograms come after the name */
+/* Kilograms of an exercise where a food has its kcal, after the name on a phone too */
 .sport-kg {
     display: flex;
     align-items: center;
@@ -33,16 +30,13 @@
     }
 }
 
-/* The list of the plus of a workout, only its menu,
-   whose plus went up after the name of the workout,
-   so it takes no room between the parts and the next row */
+/* The list of the plus of a workout only its menu, its plus sits after the name */
 .sport-rows .meal-parts > .picker {
     display: contents;
 }
 
-/* Sets and repetitions of an exercise, see `setsOf` in `sport.ts`.
-   The unit a switch as plain as the units beside it,
-   a thin line below it under the pointer, so I see that a click changes it */
+/* Sets and repetitions of an exercise.
+   The unit a plain switch, a thin line under the pointer shows a click changes it */
 .sport-sets {
     justify-content: flex-end;
     white-space: nowrap;
@@ -69,7 +63,7 @@
     border-bottom-color: var(--line);
 }
 
-/* The rows of a session in the columns of a meal, with the room of `3 × 10 reps` */
+/* The rows of a session in the columns of a meal */
 .sport-rows .meal-row {
     grid-template-columns: minmax(0, 1fr) 10rem 6rem auto;
 }
