@@ -1,11 +1,7 @@
-/* Boxes of the plan, see `boxes.ts`: each its lines and at their right its actions
-   or its state, on a card filled in soft grey */
-/* Boxes of the plan one below the other, scrolling alone when they are many;
-   their scrollbar in the middle of the gap to the log, not against them,
-   its room always kept, so they keep the whole width of the plan,
-   as wide as my gratitude below them, with the bar or without;
-   one space `--plan-space` between its boxes, between the lines of a box
-   and around the line of a section, so those never differ */
+/* Boxes of the plan, each its lines and at their right its actions or its state on a soft grey card */
+/* Boxes one below the other, scrolling alone, the scrollbar in the middle of the gap to the log.
+   Its room is always kept, so the boxes keep the width of my gratitude below them.
+   One space `--plan-space` everywhere between boxes, lines and sections, so those never differ */
 .plan-boxes {
     --plan-space: 0.5rem;
     display: flex;
@@ -25,8 +21,8 @@
     color: var(--text-muted);
 }
 
-/* Birthday or holiday, looking like a box, so it reads as an appointment;
-   one without an idea shows the gift after its name under the pointer */
+/* Birthday or holiday, looking like a box, so it reads as an appointment.
+   One without an idea shows the gift after its name under the pointer */
 .occasion {
     cursor: pointer;
 }
@@ -52,10 +48,8 @@
     transition: opacity var(--hover-in);
 }
 
-/* A box in one grid, on the computer as on a phone:
-   its actions or its state in a column of their own beside its lines,
-   so the buttons take no row of their own, every line ending before that column;
-   all its lines in one size, as large as an entry of the log */
+/* A box in one grid, its actions or its state in a column of their own,
+   so the buttons take no row of their own */
 .box {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 7rem;
@@ -73,8 +67,7 @@
     cursor: grab;
 }
 
-/* Under a pointer that hovers, a box turns one grey lighter, as an entry of the log,
-   so the plan answers the pointer as the log does */
+/* Under the pointer a box turns one grey lighter, as an entry of the log */
 @media (hover: hover) {
     .box {
         transition: background-color var(--hover-out);
@@ -86,21 +79,15 @@
     }
 }
 
-/* Lines of a box stand in the grid themselves,
-   a click anywhere on the box but its actions or its state changing it */
+/* Lines of a box stand in the grid themselves */
 .box-body {
     display: contents;
     cursor: pointer;
 }
 
-/* Every line of a box only as high
-   as from the top of its capitals to its baseline, `text-box`,
-   so the air above its first line,
-   between its lines and below its last is exactly the padding and gap of `.box`,
-   and its lines stand in its middle, whatever its first and last line are;
-   cut off only at its right,
-   so letters reaching above its capitals or below its baseline,
-   like `Ü` and `g`, stay whole */
+/* Every line of a box only as high as its capitals, `text-box`,
+   so the air around its lines is exactly the padding and gap of `.box`.
+   Cut off only at its right, so letters reaching above or below stay whole */
 .box-what,
 .box-part,
 .box-topics li {
@@ -119,8 +106,7 @@
     grid-column: 1 / -2;
 }
 
-/* Grey line of a box, its time and after it its place:
-   the place giving way first, the time only where it alone is too long */
+/* Grey line of a box, its time and its place, the place giving way first */
 .box-meta {
     display: flex;
     color: var(--text-muted);
@@ -153,8 +139,7 @@
     margin-top: 0.625rem;
 }
 
-/* State of a box no longer open, see `stateOf` in `boxes.ts`,
-   where the last action stands, without frame or ground, so it lies on its box */
+/* State of a box no longer open, where the last action stands, without frame or ground */
 .box-state {
     display: inline-flex;
     flex: none;
@@ -170,24 +155,21 @@
     height: 1.0625rem;
 }
 
-/* Done box, and an open one whose day is over, which keeps its actions:
-   its what grey too */
+/* Done box and an open one whose day is over, its what grey too */
 .box-done .box-what,
 .box-over .box-what {
     color: var(--text-muted);
 }
 
-/* Cancelled box and a box on a day it was pushed from:
-   only faded, never struck through, all alike; its icon says which */
+/* Cancelled box and a box on a day it was pushed from, only faded, its icon says which */
 .box-dropped,
 .box-university,
 .box-pushed {
     opacity: 0.55;
 }
 
-/* Name of a section of the plan above its boxes, with a thin grey line after it,
-   twice as far from what stands above it as from its boxes below it,
-   so it clearly heads those below */
+/* Name of a section of the plan with a thin grey line after it,
+   twice as far from what stands above as from its boxes, so it clearly heads those */
 .plan-section {
     display: flex;
     align-items: center;
@@ -205,11 +187,9 @@
     border-top: 1px solid var(--line);
 }
 
-/* Actions of an open box, see `actions.ts`, packed together at the right;
-   the last column of every box as wide as four of them,
-   so its lines are cut at one place in every box and every row of a list;
-   each icon as large as that of its state and as wide,
-   so the last one stands where the state stands, the same on the page of a module */
+/* Actions of an open box packed together at the right.
+   The last column of every box is as wide as four of them, so its lines are cut at one place in every box.
+   Each icon is as wide as that of its state, so the last one stands where the state stands */
 .box-actions {
     display: flex;
     justify-content: flex-end;
@@ -226,12 +206,9 @@
     height: 1.0625rem;
 }
 
-/* The actions and the state of a box beside all its lines, `--box-lines`,
-   their middle on the middle of the box, also of one with three lines or more,
-   reaching into the air above and below them,
-   so its lines keep the height of their capitals;
-   so far out that the last icon stands about as far from the right edge of the box
-   as its lines from its left edge */
+/* The actions and the state beside all lines of a box, `--box-lines`, on its middle.
+   They reach into the air above and below, so the lines keep the height of their capitals.
+   The last icon stands about as far from the right edge as the lines from the left edge */
 .box-actions,
 .box-state {
     grid-row: 1 / span var(--box-lines, 1);
@@ -246,8 +223,7 @@
     margin-block: -1rem;
 }
 
-/* Phone: a box as on the computer, but its actions behind one button `⋯`,
-   see `actions.ts`, it and its state a finger's width to hit */
+/* Phone: the actions of a box behind one button `⋯`, it and the state a finger's width to hit */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     /* No room for a scrollbar on a phone, which lies over the boxes */
     .plan-boxes {
@@ -256,8 +232,7 @@
         scrollbar-gutter: auto;
     }
 
-    /* Its last column on a phone only as wide as `⋯` or its state,
-       since its actions stand in a menu there */
+    /* The last column only as wide as `⋯` or the state, since the actions stand in a menu */
     .box {
         grid-template-columns: minmax(0, 1fr) auto;
     }
@@ -266,7 +241,7 @@
         display: flex;
     }
 
-    /* The state of a box on a phone a finger's width to hit, as `⋯`, see `menu.css` */
+    /* The state a finger's width to hit, as `⋯` */
     .box-state {
         border-radius: var(--chip-radius);
     }
@@ -281,8 +256,7 @@
         inset: -0.5rem 0;
     }
 
-    /* A chapter that does not fit goes whole onto the next line, never cut,
-       the only part of a grey line that opens one, every other ends in `…` */
+    /* A chapter that does not fit goes whole onto the next line, every other part ends in `…` */
     .box-chapters {
         flex-wrap: wrap;
         row-gap: 0.25rem;

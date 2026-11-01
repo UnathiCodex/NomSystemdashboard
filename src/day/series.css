@@ -1,9 +1,6 @@
-/* Rows of a weekly series in its dialog, the same from the day,
-   from the page of a module and for a new box repeated, see `series.ts` */
-/* The days of a series in the row `Day`, see `slotRowsOf` in `series.ts`:
-   its weekdays on top to pick, below them each day picked one line of plain text,
-   its weekday as wide as the widest,
-   so the times of several days stand one below the other */
+/* Rows of a weekly series in its dialog */
+/* The days of a series, its weekdays on top to pick, below them each day picked one line.
+   Its weekday as wide as the widest, so the times of several days stand one below the other */
 .series-slots {
     display: flex;
     flex-direction: column;
@@ -25,8 +22,7 @@
     min-width: 2.25em;
 }
 
-/* The weekdays of a series: seven quiet toggles on one line, each as wide as the widest,
-   so the bar stands as even as a row of chips */
+/* The weekdays, seven quiet toggles on one line, each as wide as the widest, so the bar stands even */
 .series-weekdays {
     display: inline-flex;
     flex-wrap: wrap;
@@ -61,8 +57,7 @@
     color: var(--text-main);
 }
 
-/* The boxes a series makes, one calm line, see `previewSoon` in `series.ts`,
-   without a fold arrow, since a tap on it opens */
+/* The boxes a series makes, one calm line without a fold arrow, since a tap on it opens */
 .series-summary {
     display: inline-flex;
     flex-wrap: wrap;
@@ -77,18 +72,14 @@
     cursor: pointer;
 }
 
-/* The dialog of a series without the browser's scroll anchoring:
-   its rows are built anew on every change,
-   so the browser would pick another row to hold still each time
-   and move the dialog by a few pixels */
+/* No scroll anchoring, since the rows are built anew on every change
+   and the browser would move the dialog by a few pixels each time */
 #series {
     overflow-anchor: none;
 }
 
-/* The dialog of a box hidden while a series opened from it stands over it,
-   so one dialog shows at a time, see `seriesShow` in `categories.ts`.
-   A box opened over the list, marked `data-over`, shows on top,
-   see `boxShow` in `series.ts` */
+/* The dialog of a box hidden while a series opened from it stands over it, so one dialog shows at a time.
+   A box opened over the list, marked `data-over`, shows on top */
 #entry:not([data-over]):has(~ #series[open]),
 #entry:not([data-over]):has(~ #series[open])::backdrop {
     visibility: hidden;
@@ -120,8 +111,7 @@
     grid-column: -2;
 }
 
-/* Below the list as much room as below a row, so the frame of `Entries`
-   closes as far below its last line as the rows stand apart */
+/* Below the list as much room as below a row, so the frame of `Entries` closes evenly */
 #series .series-list {
     margin-bottom: 0.5rem;
 }
@@ -131,9 +121,7 @@
     flex-direction: column;
 }
 
-/* A row of a box, see `rows.ts`, the same in the list of a series
-   and in a card of the course, see `../editor/course.css`.
-   Every row of every list on the same columns, whatever its rows hold */
+/* A row of a box, every row of every list on the same columns, whatever its rows hold */
 .series-row {
     --series-number: 2.75rem;
     display: grid;
@@ -144,13 +132,12 @@
     line-height: 1.5;
 }
 
-/* The exams, whose kinds stand where the numbers stand:
-   that column as wide as `Endterm` */
+/* The exams, whose kinds stand where the numbers stand, that column as wide as `Endterm` */
 :is(.series-exams, .series-kinds) .series-row {
     --series-number: 4rem;
 }
 
-/* The date being typed, see `draftRowOf` in `series.ts`, on the columns of a row */
+/* The date being typed, on the columns of a row */
 .series-draft > .series-word {
     display: none;
 }
@@ -165,7 +152,7 @@
     margin-top: 1.25rem;
 }
 
-/* `+` below the list, see `addRowOf` in `series.ts`, as the plus of a list */
+/* `+` below the list, as the plus of a list */
 .series-add {
     padding: 0;
     border: 0;
@@ -186,17 +173,14 @@
     vertical-align: -0.125em;
 }
 
-/* The extra being typed, see `draftRowOf` in `series.ts`,
-   its `×` where the state stands */
+/* The extra being typed, its `×` where the state stands */
 .series-draft > .cross-quiet {
     align-self: center;
     justify-self: center;
 }
 
-/* The number of a box in a small grey box, as `.block-kind` in `../base.css`,
-   as wide as its column, so the columns behind it never shift.
-   In the middle of its row, not on the baseline,
-   whose box would stand lower than its row and make it higher than one without number */
+/* The number of a box in a small grey box as wide as its column, so the columns behind it never shift.
+   In the middle of its row, since on the baseline it would make the row higher than one without number */
 .series-number {
     align-self: center;
     justify-self: stretch;
@@ -212,8 +196,7 @@
     background: none;
 }
 
-/* The kind of an exam, see `kindMenuOf` in `series.ts`, a button with a chevron,
-   as the menu of the groups, see `.group-name` in `groups.css` */
+/* The kind of an exam, a button with a chevron as the menu of the groups */
 .series-kind {
     align-self: center;
     justify-self: start;
@@ -259,8 +242,7 @@
     color: var(--text-muted);
 }
 
-/* The day of a box without number, the button that opens its box,
-   see `listRowOf` in `rows.ts` */
+/* The day of a box without number, the button that opens its box */
 .series-day-open {
     padding: 0;
     border: 0;
@@ -277,7 +259,7 @@
     transition: color var(--hover-in);
 }
 
-/* The number of a row that opens its box, see `numberOf` in `rows.ts` */
+/* The number of a row that opens its box */
 .series-open {
     border: 0;
     cursor: pointer;
@@ -294,8 +276,7 @@
         color var(--hover-in);
 }
 
-/* The grey line of a row, see `metaOf` and `listRowOf` in `rows.ts`, ending in `…`,
-   a person a link never underlined, see `.place-link` in `log.css` */
+/* The grey line of a row ending in `…`, a person a link never underlined */
 .series-meta {
     overflow: hidden;
     min-width: 0;
@@ -305,11 +286,9 @@
     text-overflow: ellipsis;
 }
 
-/* The grey line of a row always one line:
-   its first person, the part that gives way, ends in `…` where it has no more.
-   Every part has its middle dot before it, as `.entry-parted` draws it,
-   and the parts begin one dot left of the line,
-   so the dot of the first lies there, hidden by the line */
+/* The grey line of a row always one line, its first person giving way.
+   Every part has its middle dot before it, and the parts begin one dot left of the line,
+   so the dot of the first lies hidden there */
 .series-meta {
     display: block;
 }
@@ -337,7 +316,7 @@
     text-align: center;
 }
 
-/* The dot after the menu of a group as far from its chevron drawn as from the times,
+/* The dot after the menu of a group as far from its chevron as from the times,
    the white right of the chevron in its icon taken back */
 .series-part:has(button.group-name) + .series-part {
     margin-left: -0.26em;
@@ -354,7 +333,7 @@
     transition: color var(--hover-in);
 }
 
-/* The times of the date being typed, see `draftRowOf` in `series.ts` */
+/* The times of the date being typed */
 .series-times {
     display: flex;
     flex-wrap: nowrap;
@@ -369,9 +348,8 @@
     color: inherit;
 }
 
-/* The actions or state of a box at the right edge of a row, beside both its lines,
-   as in the plan, see `.box-actions` in `boxes.css`,
-   reaching above and below its lines without making the row higher */
+/* The actions or state of a box at the right edge of a row beside both its lines, as in the plan,
+   reaching above and below without making the row higher */
 .series-row > :is(.box-actions, .box-state, .series-end) {
     grid-row: 1 / span 2;
     grid-column: -2;
@@ -385,10 +363,8 @@
     align-items: center;
 }
 
-/* Phone: its times, place and first person a line below its day,
-   since its whole day leaves them no room beside it.
-   The grey box of its number one grey lighter,
-   so it never melts into the grey of its row */
+/* Phone: the grey line below the day, since the whole day leaves it no room beside it.
+   The grey box of the number one grey lighter, so it never melts into the grey of its row */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     /* On a phone its actions on a line of their own below the row */
     .series-row {
@@ -451,15 +427,12 @@
     }
 }
 
-/* The group of my series beside its semester, see `groupPickOf` in `series.ts`:
-   its menu and the plus that makes a new one side by side */
+/* The group of my series beside its semester, its menu and the plus side by side */
 .series-group-pick {
     display: contents;
 }
 
-/* The semester and the group beside it, see `semesterRowOf` in `series.ts`,
-   a middle dot between them, see `.entry-parted` in `day.css`,
-   no dot before the plus alone of a type without groups */
+/* The semester and the group with a middle dot between them, none before the plus alone */
 .panel-pair.series-semester > .picker:first-child .picker-head {
     min-width: 0;
 }
@@ -486,10 +459,8 @@
     font: inherit;
 }
 
-/* My series as a still copy below the form of one of its groups, see `groupFrom`:
-   dimmed only lightly, so it reads as a window behind,
-   and dimming the page around it by its shadow,
-   so the page stays as dark as behind any dialog */
+/* My series as a still copy below the form of one of its groups, dimmed lightly as a window behind.
+   Its shadow dims the page, so the page stays as dark as behind any dialog */
 #series-under {
     position: fixed;
     inset: 0;
@@ -503,8 +474,7 @@
     background: rgb(0 0 0 / 0.15);
 }
 
-/* The heading of the form of a group, see `formFill` in `series.ts`,
-   `Series: Group`, so it reads as a group of my series, not as my series below it */
+/* The heading `Series: Group`, so it reads as a group of my series, not as my series below it */
 .series-heading {
     margin: 0.5rem 0;
     padding-inline: var(--row-padding);
