@@ -180,7 +180,7 @@ function videoFind(link: string, title: string): Video | undefined {
 /**
  * Gives the kcal a video of the session burns in its minutes,
  * as my video burns in its own at my weight of today, see `Video` in `reader/sport.ts`.
- * 0 while I have no weight or the video is no longer mine.
+ * 0 while the video is no longer mine or has no minutes or kind.
  */
 function videoKcalOf(video: VideoDone): number {
     const own: Video | undefined = videoFind(video.link, video.title);

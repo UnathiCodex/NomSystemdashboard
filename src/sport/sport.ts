@@ -10,10 +10,8 @@
  * an estimate, see `reader/sport.ts`, written whole without `~`,
  * since every kcal of the page is rounded anyway, without goals, so the log stays a log;
  * then each session of the log with what I did.
- * A session counts 0 kcal while I have no weight,
- * and so do the totals, never an empty place.
  * Last among the totals my weight on the day, the last one I wrote on or before it,
- * see {@link weightEdit}; I change it every month or two,
+ * 80 kg before the first, see {@link weightEdit}; I change it every month or two,
  * so it needs no place of its own.
  * It opens on today's calendar date and moves on with it, see `../today.ts`.
  * The day loads anew the moment a file of my new system changes, whoever changed it,
@@ -66,17 +64,13 @@ function totalsShow(day: SportDay): void {
 }
 
 /**
- * Makes the total of my weight on the shown day, the small grey pencil after it,
- * while I have none a grey `– kg` before it, so the pencil always follows a value.
+ * Makes the total of my weight on the shown day, the small grey pencil after it.
  */
-function weightOf(kg: number | null): HTMLElement {
+function weightOf(kg: number): HTMLElement {
     const tile: HTMLElement = elementOf("div", "food-total sport-weight", "");
-    const amount: HTMLButtonElement = buttonOf(
-        "food-amount sport-weight-amount",
-        kg === null ? "– kg" : `${amountOf(kg, 1)} kg`,
-        (): void => weightEdit(tile, kg),
+    const amount: HTMLButtonElement = buttonOf("food-amount sport-weight-amount", `${amountOf(kg, 1)} kg`, (): void =>
+        weightEdit(tile, kg),
     );
-    amount.classList.toggle("sport-weight-none", kg === null);
     amount.append(iconOf(Pencil));
     amount.title = "Change my weight";
     tile.append(elementOf("span", "food-label", "Weight"), amount);
@@ -92,7 +86,7 @@ function weightOf(kg: number | null): HTMLElement {
  * - `done`: Whether the field was written or taken back,
  *   so leaving it after Enter writes nothing twice.
  */
-function weightEdit(tile: HTMLElement, kg: number | null): void {
+function weightEdit(tile: HTMLElement, kg: number): void {
     const field: HTMLInputElement = document.createElement("input");
     const amount: HTMLElement = elementOf("span", "food-amount sport-weight-amount", "");
     let done: boolean = false;
@@ -120,7 +114,7 @@ function weightEdit(tile: HTMLElement, kg: number | null): void {
     field.inputMode = "decimal";
     field.autocomplete = "off";
     field.className = "sport-weight-field";
-    field.value = kg === null ? "" : String(kg);
+    field.value = String(kg);
     field.setAttribute("aria-label", "My weight in kilograms");
     field.addEventListener("input", (): void => field.setCustomValidity(""));
     field.addEventListener("keydown", (event: KeyboardEvent): void => {

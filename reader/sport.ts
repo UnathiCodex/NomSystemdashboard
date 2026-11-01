@@ -42,7 +42,8 @@
  * and its link, by which it stays the same video whatever its title, see {@link linkOf}.
  * A video added by hand has no link and is known by its title.
  * `Weights.md` holds my weight, which I change in the totals of the sport view,
- * see {@link weightSave}, one row per day I weighed myself, see {@link weightOn}.
+ * see {@link weightSave}, one row per day I weighed myself, see {@link weightOn},
+ * 80 kg assumed before the first.
  * Every person writes their own, so it is never in the code.
  * YouTube is asked anonymously for the title and the channel of a link,
  * by its oEmbed, which needs no key:
@@ -76,7 +77,7 @@ export type SportKind = {
 /**
  * A session of a day, as the page shows it.
  *
- * - `kcal`: kcal it burned above rest, see {@link kcalOf}, `null` while no weight is known.
+ * - `kcal`: kcal it burned above rest, see {@link kcalOf}.
  * - `workout`: The workouts it did, parted by `, `, empty for none.
  */
 export type Session = {
@@ -85,7 +86,7 @@ export type Session = {
     end: string;
     summary: string;
     minutes: number;
-    kcal: number | null;
+    kcal: number;
     workout: string;
     exercises: SessionExercise[];
     videos: SessionVideo[];
@@ -115,13 +116,13 @@ export type SessionVideo = {
 };
 
 /**
- * The sessions of a day with what they took together, `kcal` `null` while no weight is known.
+ * The sessions of a day with what they took together, at my weight of the day.
  */
 export type SportDay = {
     sessions: Session[];
     minutes: number;
-    kcal: number | null;
-    kg: number | null;
+    kcal: number;
+    kg: number;
 };
 
 /**
@@ -364,6 +365,11 @@ const agent: string = "NomSystemDashboard/0.1";
 const answerTime: number = 5000;
 
 /**
+ * Kilograms a day counts with before I ever weighed myself.
+ */
+const assumedKg: number = 80;
+
+/**
  * Milliseconds of a day.
  */
 const dayLength: number = 24 * 60 * 60 * 1000;
@@ -478,18 +484,19 @@ function weightsRead(): Weight[] {
 
 /**
  * Gives my weight on a day: the last weight on or before it, else the first one after it,
- * so a session before my first weighing still counts.
+ * so a session before my first weighing still counts,
+ * else {@link assumedKg}, so a session always counts.
  */
-function weightOn(weights: Weight[], day: string): number | null {
-    return (weights.find((weight: Weight): boolean => weight.day <= day) ?? weights.at(-1))?.kg ?? null;
+function weightOn(weights: Weight[], day: string): number {
+    return (weights.find((weight: Weight): boolean => weight.day <= day) ?? weights.at(-1))?.kg ?? assumedKg;
 }
 
 /**
  * Gives what a kind burns above rest in some minutes at a weight: (MET − 1) × kg × hours,
  * since 1 MET is what I burn at rest anyway.
  */
-function kcalOf(met: number, minutes: number, kg: number | null): number | null {
-    return kg === null ? null : (Math.max(0, met - 1) * kg * minutes) / 60;
+function kcalOf(met: number, minutes: number, kg: number): number {
+    return (Math.max(0, met - 1) * kg * minutes) / 60;
 }
 
 /** Adds numbers, from the first. */
@@ -507,7 +514,7 @@ function videoKindOf(name: string): SportKind | undefined {
  * A kind none of {@link videoKinds} counts nothing.
  */
 function videosRead(weights: Weight[]): Video[] {
-    const kg: number | null = weightOn(weights, berlinDateOf(new Date()));
+    const kg: number = weightOn(weights, berlinDateOf(new Date()));
     return rowsRead(sport.videos)
         .filter((cells: Row): boolean => (cells.Video ?? "") !== "")
         .map((cells: Row): Video => {
@@ -823,7 +830,7 @@ export function sportDayRead(date: string): SportDay {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`No date ${date}`);
 
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
-    const kg: number | null = weightOn(weightsRead(), date);
+    const kg: number = weightOn(weightsRead(), date);
     const mine: Video[] = videosRead([]);
     const sessions: Session[] = entriesRead(
         sport.log,
@@ -866,13 +873,8 @@ export function sportDayRead(date: string): SportDay {
                 summary: summaryBaseOf(entry.title),
                 minutes: minutes,
                 kcal:
-                    kg === null
-                        ? null
-                        : sumOf(
-                              videos.map(
-                                  (video: SessionVideo): number => kcalOf(metOf(video), video.minutes ?? 0, kg) ?? 0,
-                              ),
-                          ) + (kcalOf(exercisesKind.met, Math.max(0, minutes - watched), kg) ?? 0),
+                    sumOf(videos.map((video: SessionVideo): number => kcalOf(metOf(video), video.minutes ?? 0, kg))) +
+                    kcalOf(exercisesKind.met, Math.max(0, minutes - watched), kg),
                 workout: workouts.length > 0 ? workouts.join(", ") : before,
                 exercises: exercises,
                 videos: videos,
@@ -881,7 +883,7 @@ export function sportDayRead(date: string): SportDay {
     return {
         sessions: sessions,
         minutes: sumOf(sessions.map((session: Session): number => session.minutes)),
-        kcal: kg === null ? null : sumOf(sessions.map((session: Session): number => session.kcal ?? 0)),
+        kcal: sumOf(sessions.map((session: Session): number => session.kcal)),
         kg: kg,
     };
 }
