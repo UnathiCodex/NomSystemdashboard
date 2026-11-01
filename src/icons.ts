@@ -8,14 +8,14 @@
  */
 
 import {
-    Beef,
+    Amphora,
     Clock,
     createElement,
     Dumbbell,
+    Egg,
     Flame,
     GlassWater,
     Moon,
-    Nut,
     Plus,
     Search,
     Soup,
@@ -52,16 +52,16 @@ export function iconPut(button: HTMLElement, icon: IconNode, words: string): voi
     if (button instanceof HTMLButtonElement) button.classList.add("icon-button");
 }
 
-/** The icon of each name of a tile of a bar. */
+/** The icon of each name of a tile of a bar, a nutrient by a food made mostly of it, fat by a jug of oil. */
 const tileIcons: { [name: string]: IconNode } = {
     Sleep: Moon,
     Water: GlassWater,
     Food: Utensils,
     Meals: Soup,
     Energy: Flame,
-    Protein: Beef,
+    Protein: Egg,
     Carbs: Wheat,
-    Fat: Nut,
+    Fat: Amphora,
     Sessions: Dumbbell,
     Time: Clock,
     Weight: Weight,
