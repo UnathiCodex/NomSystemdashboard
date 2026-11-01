@@ -103,6 +103,21 @@ export function emptyIs(state: EditorState, line: Line): boolean {
     return /^[ \t]*$/.test(line.text) || quoteMarkIs(state, line);
 }
 
+/**
+ * Finds the farthest of the empty lines in a row right above a line, `step` -1,
+ * or right below it, `step` 1, see {@link emptyIs}, the line itself for none.
+ */
+export function emptyEndOf(state: EditorState, line: Line, step: number): Line {
+    let end: Line = line;
+    for (
+        let next: number = line.number + step;
+        next >= 1 && next <= state.doc.lines && emptyIs(state, state.doc.line(next));
+        next += step
+    )
+        end = state.doc.line(next);
+    return end;
+}
+
 /** Finds the innermost node right after a place whose name `name` takes, or around it. */
 function nodeAround(state: EditorState, pos: number, name: RegExp): SyntaxNode | null {
     for (
@@ -241,18 +256,18 @@ export function columnsOf(text: string): number {
 }
 
 /**
- * Counts the points of the numbered lists a change touched
- * in order again, as Obsidian does:
+ * Sends a change of a list to the editor with the points of the numbered lists it touched
+ * counted in order again, as Obsidian does, both in one step of Undo,
+ * the cursor where the change put it:
  * a sub-list from `1.`, a list at the left edge
  * on from the number its first place had before,
  * each point one more than the one before it, its `.` or `)` kept.
  * Lists the change did not touch keep their numbers.
  * - `to`: On to the end of the line below, whose list the change
  *   may have made a sub-list.
- *
- * @returns Changes of the numbers, none when every list touched counts in order
  */
-function numbersFixed(change: Transaction): ChangeSpec[] {
+function listChange(view: EditorView, spec: TransactionSpec): void {
+    const change: Transaction = view.state.update(spec);
     const doc: Text = change.newDoc;
     let from: number = doc.length;
     let to: number = 0;
@@ -292,18 +307,7 @@ function numbersFixed(change: Transaction): ChangeSpec[] {
             }
         },
     });
-    return changes;
-}
-
-/**
- * Sends a change of a list to the editor with its numbered points counted in order again,
- * see {@link numbersFixed}, both in one step of Undo, the cursor where the change put it.
- */
-function listChange(view: EditorView, spec: TransactionSpec): void {
-    view.dispatch(spec, {
-        changes: numbersFixed(view.state.update(spec)),
-        sequential: true,
-    });
+    view.dispatch(spec, { changes: changes, sequential: true });
 }
 
 /**
@@ -434,8 +438,7 @@ function subPointOf(
         !/^[ \t]*$/.test(state.sliceDoc(head, state.doc.lineAt(head).to))
     )
         return null;
-    let next: number = state.doc.lineAt(head).number + 1;
-    while (next < state.doc.lines && emptyIs(state, state.doc.line(next))) next++;
+    const next: number = emptyEndOf(state, state.doc.lineAt(head), 1).number + 1;
     return state.doc.lineAt(list.from).number === next ? list.firstChild : null;
 }
 
@@ -1104,6 +1107,7 @@ const markupForward: Command = (view: EditorView): boolean => {
     const next: Line = view.state.doc.line(line.number + 1);
     const markup: string =
         /^[ \t]*(?:>[ \t]?)*(?:(?:[-*+]|\d+[.)])[ \t]+)?/.exec(next.text)?.[0] ?? "";
+    const end: number = next.from + markup.length;
     const changed: (changes: ChangeSpec) => void = (changes: ChangeSpec): void =>
         listChange(view, {
             changes: changes,
@@ -1113,23 +1117,18 @@ const markupForward: Command = (view: EditorView): boolean => {
         });
     if (markup.length === 0) return false;
     if (/^[ \t]+$/.test(markup)) {
-        changed({ from: line.to, to: next.from + markup.length });
+        changed({ from: line.to, to: end });
         return true;
     }
-    const taken: ChangeSpec | null = markerTaken(
-        view.state,
-        next,
-        next.from + markup.length,
-    );
+    const taken: ChangeSpec | null = markerTaken(view.state, next, end);
     if (taken !== null) changed(taken);
     else if (
         !deleteMarkupBackward({
-            state: view.state.update({ selection: { anchor: next.from + markup.length } })
-                .state,
+            state: view.state.update({ selection: { anchor: end } }).state,
             dispatch: (transaction: Transaction): void => changed(transaction.changes),
         })
     )
-        changed({ from: next.from + markup.length - 1, to: next.from + markup.length });
+        changed({ from: end - 1, to: end });
     return true;
 };
 
@@ -1166,18 +1165,12 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
                 ? ""
                 : (textIndentationOf(view.state.doc.lineAt(point.from).text) ?? "");
 
-        let below: number = 0;
-        let next: Line | null = null;
-        for (
-            let number: number = line.number + 1;
-            number <= view.state.doc.lines;
-            number++
-        ) {
-            next = view.state.doc.line(number);
-            if (!emptyIs(view.state, next)) break;
-            below++;
-            next = null;
-        }
+        const last: Line = emptyEndOf(view.state, line, 1);
+        const below: number = last.number - line.number;
+        const next: Line | null =
+            last.number < view.state.doc.lines
+                ? view.state.doc.line(last.number + 1)
+                : null;
         const wanted: number =
             next === null ? 0 : /^#{1,6}(?:[ \t]|$)/.test(next.text) ? 2 : 1;
         if (below >= wanted && indentation === "") return false;
@@ -1196,6 +1189,14 @@ const paragraphTyping: Extension = EditorView.inputHandler.of(
         return true;
     },
 );
+
+/** Gives a transaction and a change right after it, as a filter of transactions does. */
+function withChange(
+    transaction: Transaction,
+    changes: ChangeSpec,
+): readonly TransactionSpec[] {
+    return [transaction, { changes: changes, sequential: true }];
+}
 
 /**
  * Keeps the air a key writes at the air of a line, two empty lines, the most there is:
@@ -1219,17 +1220,12 @@ const airMost: Extension = EditorState.transactionFilter.of(
         if (!broken || !transaction.isUserEvent("input")) return transaction;
         const state: EditorState = transaction.state;
         const line: Line = state.doc.lineAt(state.selection.main.head);
-        let top: Line = line;
-        while (top.number > 1 && emptyIs(state, state.doc.line(top.number - 1)))
-            top = state.doc.line(top.number - 1);
+        const top: Line = emptyEndOf(state, line, -1);
         if (line.number - top.number <= 2) return transaction;
-        return [
-            transaction,
-            {
-                changes: { from: top.from, to: state.doc.line(line.number - 2).from },
-                sequential: true,
-            },
-        ];
+        return withChange(transaction, {
+            from: top.from,
+            to: state.doc.line(line.number - 2).from,
+        });
     },
 );
 
@@ -1265,10 +1261,7 @@ const paragraphUntyped: Extension = EditorState.transactionFilter.of(
             next = null;
         }
         if (next === null || next.number === now.number + 1) return transaction;
-        return [
-            transaction,
-            { changes: { from: now.to, to: next.from - 1 }, sequential: true },
-        ];
+        return withChange(transaction, { from: now.to, to: next.from - 1 });
     },
 );
 
@@ -1421,15 +1414,9 @@ function itemShift(
         if (blanks === body || point === null) continue;
         const moved: boolean = own !== null && point.parent?.from === item.parent?.from;
         if (state.doc.lineAt(point.from).number === number || codeIs(state, line)) {
+            const cut: number = blanks.startsWith("\t") ? 1 : Math.min(4, blanks.length);
             changes.push(
-                inward
-                    ? { from: from, insert: "\t" }
-                    : {
-                          from: from,
-                          to:
-                              from +
-                              (blanks.startsWith("\t") ? 1 : Math.min(4, blanks.length)),
-                      },
+                inward ? { from: from, insert: "\t" } : { from: from, to: from + cut },
             );
             const mark: SyntaxNode | null = point.getChild("ListMark");
             if (moved && mark !== null && state.doc.lineAt(mark.from).number === number)
@@ -1646,8 +1633,7 @@ function linesMove(down: boolean): Command {
         const doc: Text = view.state.doc;
         if (view.state.readOnly) return false;
 
-        const text: (number: number) => string = (number: number): string =>
-            doc.line(number).text;
+        const text = (number: number): string => doc.line(number).text;
         const { first, last }: { first: number; last: number } = linesOf(view.state);
         const point: boolean = pointIs(view.state, first);
         const level: number | null = depthOf(text(first));
@@ -1762,56 +1748,41 @@ function markupToggle(mark: string): Command {
     return (view: EditorView): boolean => {
         if (view.state.readOnly) return false;
 
-        view.dispatch(
-            view.state.changeByRange(
-                (
-                    range: SelectionRange,
-                ): { range: SelectionRange; changes: ChangeSpec } => {
-                    const word: SelectionRange | null = range.empty
-                        ? view.state.wordAt(range.head)
-                        : range;
-                    if (word === null)
-                        return {
-                            range: EditorSelection.cursor(range.head + mark.length),
-                            changes: { from: range.head, insert: mark + mark },
-                        };
+        const state: EditorState = view.state;
+        const toggled = (
+            range: SelectionRange,
+        ): { range: SelectionRange; changes: ChangeSpec } => {
+            const word: SelectionRange | null = range.empty
+                ? state.wordAt(range.head)
+                : range;
+            if (word === null)
+                return {
+                    range: EditorSelection.cursor(range.head + mark.length),
+                    changes: { from: range.head, insert: mark + mark },
+                };
 
-                    const before: number = marksCount(
-                        view.state,
-                        word.from,
-                        false,
-                        mark[0],
-                    );
-                    const after: number = marksCount(view.state, word.to, true, mark[0]);
-                    const marked: boolean =
-                        mark.length === 2
-                            ? Math.min(before, after) >= 2
-                            : Math.min(before, after) % 2 === 1;
-                    if (marked)
-                        return {
-                            range: EditorSelection.range(
-                                range.anchor - mark.length,
-                                range.head - mark.length,
-                            ),
-                            changes: [
-                                { from: word.from - mark.length, to: word.from },
-                                { from: word.to, to: word.to + mark.length },
-                            ],
-                        };
-                    return {
-                        range: EditorSelection.range(
-                            range.anchor + mark.length,
-                            range.head + mark.length,
-                        ),
-                        changes: [
-                            { from: word.from, insert: mark },
-                            { from: word.to, insert: mark },
-                        ],
-                    };
-                },
-            ),
-            { scrollIntoView: true, userEvent: "input" },
-        );
+            const before: number = marksCount(state, word.from, false, mark[0]);
+            const after: number = marksCount(state, word.to, true, mark[0]);
+            const marks: number = Math.min(before, after);
+            const marked: boolean = mark.length === 2 ? marks >= 2 : marks % 2 === 1;
+            const shift: number = marked ? -mark.length : mark.length;
+            return {
+                range: EditorSelection.range(range.anchor + shift, range.head + shift),
+                changes: marked
+                    ? [
+                          { from: word.from - mark.length, to: word.from },
+                          { from: word.to, to: word.to + mark.length },
+                      ]
+                    : [
+                          { from: word.from, insert: mark },
+                          { from: word.to, insert: mark },
+                      ],
+            };
+        };
+        view.dispatch(state.changeByRange(toggled), {
+            scrollIntoView: true,
+            userEvent: "input",
+        });
         return true;
     };
 }
@@ -1822,12 +1793,12 @@ function markupToggle(mark: string): Command {
  */
 const sourcePieces: string[] = ["WikiLink", "Link", "InlineMath"];
 
-/** Finds the link or formula around a place, also at its ends. */
-function sourcePieceOf(state: EditorState, pos: number): SyntaxNode | null {
+/** Finds the link or formula around the cursor, also at its ends. */
+function sourcePieceOf(state: EditorState): SyntaxNode | null {
     let piece: SyntaxNode | null = null;
     syntaxTree(state).iterate({
-        from: pos,
-        to: pos,
+        from: state.selection.main.head,
+        to: state.selection.main.head,
         enter: (node: SyntaxNodeRef): void => {
             if (sourcePieces.includes(node.name)) piece = node.node;
         },
@@ -1847,10 +1818,7 @@ function sourcePieceOf(state: EditorState, pos: number): SyntaxNode | null {
 function lineMove(command: Command): Command {
     const move: Command = (view: EditorView): boolean => {
         const line: Line = view.state.doc.lineAt(view.state.selection.main.head);
-        const piece: SyntaxNode | null = sourcePieceOf(
-            view.state,
-            view.state.selection.main.head,
-        );
+        const piece: SyntaxNode | null = sourcePieceOf(view.state);
         if (!command(view)) return false;
         const head: number = view.state.selection.main.head;
         let held: boolean =
@@ -1881,14 +1849,11 @@ function lineMove(command: Command): Command {
  */
 function lineEnd(command: Command): Command {
     return (view: EditorView): boolean => {
-        const before: SyntaxNode | null = sourcePieceOf(
-            view.state,
-            view.state.selection.main.head,
-        );
+        const before: SyntaxNode | null = sourcePieceOf(view.state);
         if (!command(view)) return false;
         const range: SelectionRange = view.state.selection.main;
         const line: Line = view.state.doc.lineAt(range.head);
-        const piece: SyntaxNode | null = sourcePieceOf(view.state, range.head);
+        const piece: SyntaxNode | null = sourcePieceOf(view.state);
         if (
             piece !== null &&
             piece.to === line.to &&
@@ -1961,82 +1926,58 @@ const blanksLeft: Extension = Prec.high(
                     line.number
             )
                 return transaction;
-            let top: Line = line;
-            while (top.number > 1 && emptyIs(state, state.doc.line(top.number - 1)))
-                top = state.doc.line(top.number - 1);
-            let bottom: Line = line;
-            while (
-                bottom.number < state.doc.lines &&
-                emptyIs(state, state.doc.line(bottom.number + 1))
-            )
-                bottom = state.doc.line(bottom.number + 1);
+            const top: Line = emptyEndOf(state, line, -1);
+            const bottom: Line = emptyEndOf(state, line, 1);
             const excess: number = bottom.number - top.number - 1;
             if (excess > 0) {
                 const down: number = Math.min(excess, bottom.number - line.number + 1);
                 const first: Line = state.doc.line(line.number - (excess - down));
                 const last: Line = state.doc.line(line.number + down - 1);
-                return [
+                return withChange(
                     transaction,
-                    {
-                        changes:
-                            last.number < state.doc.lines
-                                ? { from: first.from, to: last.to + 1 }
-                                : { from: first.from - 1, to: last.to },
-                        sequential: true,
-                    },
-                ];
+                    last.number < state.doc.lines
+                        ? { from: first.from, to: last.to + 1 }
+                        : { from: first.from - 1, to: last.to },
+                );
             }
             if (line.text === line.text.trimEnd()) return transaction;
-            return [
-                transaction,
-                {
-                    changes: {
-                        from: line.from + line.text.trimEnd().length,
-                        to: line.to,
-                    },
-                    sequential: true,
-                },
-            ];
+            return withChange(transaction, {
+                from: line.from + line.text.trimEnd().length,
+                to: line.to,
+            });
         },
     ),
 );
 
 /**
- * Gives the block the cursor stands in, a definition, an example or a task:
- * from its heading `##` to the line before the next one, the whole note without one.
- * In the round of a section it is the block shown, see `selectionKeep` in `./round.ts`.
- */
-function blockOf(state: EditorState): { from: number; to: number } {
-    const line: number = state.doc.lineAt(state.selection.main.head).number;
-    const heading: (number: number) => boolean = (number: number): boolean =>
-        /^##[ \t]/.test(state.doc.line(number).text);
-    let first: number = line;
-    while (first > 1 && !heading(first)) first--;
-    let last: number = line;
-    while (last < state.doc.lines && !heading(last + 1)) last++;
-    return { from: state.doc.line(first).from, to: state.doc.line(last).to };
-}
-
-/**
- * Undo or Redo only within the block of the cursor, see {@link blockOf},
- * so it never changes another part of the note, which a round hides.
+ * Undo or Redo only within the block of the cursor, a definition, an example or a task:
+ * from its heading `##` to the line before the next one, the whole note without one,
+ * so it never changes another part of the note, which a round hides;
+ * in the round of a section it is the block shown, see `selectionKeep` in `./round.ts`.
  * Else the key goes on to the next command,
  * like going back to the block I had open before, see `roundBack` in `./round.ts`,
  * and never to the browser's own Undo.
  */
 function historyIn(command: StateCommand): Command {
     return (view: EditorView): boolean => {
-        const block: { from: number; to: number } = blockOf(view.state);
+        const state: EditorState = view.state;
+        const heading = (number: number): boolean =>
+            /^##[ \t]/.test(state.doc.line(number).text);
+        let first: number = state.doc.lineAt(state.selection.main.head).number;
+        let last: number = first;
+        while (first > 1 && !heading(first)) first--;
+        while (last < state.doc.lines && !heading(last + 1)) last++;
         const steps: Transaction[] = [];
         command({
-            state: view.state,
+            state: state,
             dispatch: (transaction: Transaction): void => {
                 steps.push(transaction);
             },
         });
         let inside: boolean = steps.length > 0;
         steps[0]?.changes.iterChangedRanges((from: number, to: number): void => {
-            inside &&= from >= block.from && to <= block.to;
+            inside &&=
+                from >= state.doc.line(first).from && to <= state.doc.line(last).to;
         });
         if (inside) view.dispatch(steps[0]);
         return inside;
