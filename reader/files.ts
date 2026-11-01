@@ -1,15 +1,11 @@
 /**
  * ## Files
  *
- * Lists the files of my new system for the tree of the editor,
- * reads one and writes one back as I saved it.
- * The tree is `NomManageplannings` with every folder in it, also one I add later,
- * but never my old system, `NomSystemprevious`,
- * at any depth, nor a hidden file or folder, nor a symbolic link.
- * A Markdown file is written exactly as sent, without a diff,
- * since only the notes of my modules keep diffs, see `edit.ts`.
- * An `.ics` file is only read.
- * Paths are written from `NomManageplannings` with `/`.
+ * The tree of the editor over my new system, reading one file and writing one back as I saved it.
+ * The tree is `NomManageplannings` with every folder in it,
+ * never `NomSystemprevious` at any depth, a hidden part or a symbolic link.
+ * Markdown is written exactly as sent, without a diff, an `.ics` file only read.
+ * Paths are from `NomManageplannings` with `/`.
  */
 
 import { readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
@@ -20,10 +16,7 @@ import { changesOf, textMerged } from "./edit.ts";
 import type { Dirent } from "node:fs";
 import type { NoteChange, Written } from "./edit.ts";
 
-/**
- * A folder or file of the tree, as the editor shows it.
- * - `children`: What a folder holds, its folders first, each part by name.
- */
+/** A folder or file of the tree, `children` its folders first, each part by name. */
 export type FileNode = {
     name: string;
     path: string;
@@ -32,35 +25,29 @@ export type FileNode = {
     children: FileNode[];
 };
 
-/** A file of my new system, as the editor shows it, editable when Markdown. */
+/** A file of my new system, editable when Markdown. */
 export type SystemFile = {
     path: string;
     text: string;
     editable: boolean;
 };
 
-/** Endings of the files I edit. */
 const editEndings: string[] = [".md"];
 
-/** Endings of the files the editor opens: Markdown to edit, `.ics` to read only. */
+/** Markdown to edit, `.ics` to read only. */
 const openEndings: string[] = [...editEndings, ".ics"];
 
-/**
- * Tells whether a part of a path is left out of the tree and never read: my old system,
- * or a hidden one, like `.obsidian` or `..`.
- */
+/** Tells whether a part of a path is never read, my old system or a hidden one like `..`. */
 function leftOut(part: string): boolean {
     return part === systemFiles.previous || part.startsWith(".");
 }
 
-/** Tells whether the editor opens a file of the tree. */
 function opensOf(path: string): boolean {
     return openEndings.includes(extname(path).toLowerCase());
 }
 
 /**
- * Lists a folder of the tree, its folders first,
- * then its files the editor opens, each part by name.
+ * Lists a folder of the tree, its folders first, then the files the editor opens.
  * A symbolic link is neither a folder nor a file here, so it is left out too.
  */
 function nodesOf(folder: string, path: string): FileNode[] {
@@ -84,7 +71,7 @@ function nodesOf(folder: string, path: string): FileNode[] {
         .filter((node: FileNode): boolean => node.folder || node.opens);
 }
 
-/** Reads the tree of the editor, none while `NomManageplannings` is missing. */
+/** None while `NomManageplannings` is missing. */
 export function treeRead(): FileNode[] {
     try {
         return nodesOf(systemFiles.tree, "");
@@ -95,15 +82,10 @@ export function treeRead(): FileNode[] {
 }
 
 /**
- * Turns the path of a file of my new system into its file on the disk,
- * only for a file with one of the endings that lies in the tree and exists.
- * {@link realpathSync} follows symbolic links,
- * so no link leads outside the tree or into a part left out of it.
+ * The file on the disk of an existing file of the tree with one of the endings.
+ * {@link realpathSync} follows symbolic links, so no link leads outside the tree or into a part left out.
  *
- * @throws {Error} - When the path has a part left out,
- *   like `NomSystemprevious`, `.obsidian` or `..`,
- *   or a `\`, has none of the endings,
- *   lies outside the tree, or nothing lies there
+ * @throws {Error} - When the path has a part left out or a `\`, the wrong ending, lies outside or is missing
  */
 function systemFileOf(path: string, endings: string[]): string {
     const parts: string[] = path.split("/");
@@ -128,11 +110,7 @@ function systemFileOf(path: string, endings: string[]): string {
     return file;
 }
 
-/**
- * Reads a file of my new system for the editor.
- *
- * @throws {Error} - When it is no such file, see {@link systemFileOf}
- */
+/** @throws {Error} - When it is no file of the tree, see {@link systemFileOf} */
 export function systemFileRead(path: string): SystemFile {
     const file: string = systemFileOf(path, openEndings);
     return {
@@ -143,13 +121,9 @@ export function systemFileRead(path: string): SystemFile {
 }
 
 /**
- * Writes a Markdown file of my new system as I saved it,
- * merged with a change on the disk, see `textMerged` in `./edit.ts`.
- * A text without change writes nothing.
+ * Writes a Markdown file as I saved it, merged with a change on the disk, nothing when the text did not change.
  *
- * @throws {Error} - When it is no Markdown file of the folders of the new system,
- *   see {@link systemFileOf}, or its file is no UTF-8 text,
- *   which could not be written back exactly
+ * @throws {Error} - When it is no Markdown file of the tree or no UTF-8 text, which could not be written back exactly
  */
 export function systemFileWrite(change: NoteChange): Written {
     const file: string = systemFileOf(String(change.path ?? ""), editEndings);

@@ -1,14 +1,10 @@
 /**
  * ## Edit
  *
- * Writes a note of my modules as I saved it in the editor,
- * exactly the text sent, nothing reformatted,
- * and first adds its change as a unified diff to the end of the file of my corrections,
- * which the learn skill turns into rules of my style, see `editor` in `./sources.ts`.
- * When its file changed on the disk since the editor read it, like by a Claude session,
- * the text sent and that change are merged, see {@link textMerged},
- * so nothing I typed is lost.
- * Paths are those of the scripts view, from `NomSkillingmodules`.
+ * Writes a note of my modules exactly as I saved it in the editor,
+ * its change first added as a unified diff to the file of my corrections.
+ * A change on the disk since the editor read it is merged in, so nothing I typed is lost.
+ * Paths are from `NomSkillingmodules`.
  */
 
 import { appendFileSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
@@ -19,8 +15,7 @@ import { editor } from "./sources.ts";
 
 /**
  * A note as I saved it in the editor.
- * - `base`: Text of the note when the editor read it or saved it last,
- *   to tell whether the file changed since.
+ * - `base`: Its text when the editor read or saved it last.
  */
 export type NoteChange = {
     path: string;
@@ -28,29 +23,20 @@ export type NoteChange = {
     text: string;
 };
 
-/**
- * A change of a text, as the editor takes it:
- * the text from `from` to `to` replaced by `insert`, both places in the text before.
- */
+/** The text from `from` to `to` replaced by `insert`, both places in the text before. */
 export type TextChange = {
     from: number;
     to: number;
     insert: string;
 };
 
-/**
- * A file as written, as the editor gets it back after saving.
- * - `changes`: What the merge changed in the text sent.
- */
+/** A file as written, `changes` what the merge changed in the text sent. */
 export type Written = {
     text: string;
     changes: TextChange[];
 };
 
-/**
- * Lines of a text changed in another text: the lines from `from` up to `to` of the first,
- * by their numbers from 0, replaced by `lines`.
- */
+/** The lines from `from` up to `to` of a text, counted from 0, replaced by `lines`. */
 type Hunk = {
     from: number;
     to: number;
@@ -62,11 +48,7 @@ function linesOf(text: string): string[] {
     return text === "" ? [] : text.split(/(?<=\n)/);
 }
 
-/**
- * Gives what another text changed in the lines of a text,
- * each run of changed lines one hunk.
- * - `last`: The hunk before, which a change right at its end goes on.
- */
+/** What another text changed in the lines of a text, each run of changed lines one hunk. */
 function hunksOf(base: string[], other: string[]): Hunk[] {
     const hunks: Hunk[] = [];
     let at: number = 0;
@@ -87,11 +69,9 @@ function hunksOf(base: string[], other: string[]): Hunk[] {
 }
 
 /**
- * Merges what I typed with what changed on the disk meanwhile,
- * both against the text the editor read: each change on the disk goes
- * in where I left its lines and those beside them as they were,
- * mine stands where we both changed the same lines or lines right beside each other,
- * so nothing I typed is ever lost. Lines are compared whole, with their line breaks.
+ * Merges what I typed with what changed on the disk meanwhile, both against the text the editor read.
+ * A change on the disk goes in only where I left its lines and those beside them as they were.
+ * Lines are compared whole, with their line breaks.
  */
 export function textMerged(base: string, text: string, disk: string): string {
     const original: string[] = linesOf(base);
@@ -108,11 +88,7 @@ export function textMerged(base: string, text: string, disk: string): string {
     return [...merged, ...original.slice(at)].join("");
 }
 
-/**
- * Gives the changes that turn one text into another, line by line, for the editor,
- * places in the first text.
- * - `last`: The change before, which a change right at its end goes on.
- */
+/** The changes that turn one text into another, line by line, places in the first text. */
 export function changesOf(before: string, after: string): TextChange[] {
     const changes: TextChange[] = [];
     let at: number = 0;
@@ -134,12 +110,10 @@ export function changesOf(before: string, after: string): TextChange[] {
 }
 
 /**
- * Turns the path of a note into its file on the disk,
- * only for a note `.md` of my modules that exists.
+ * The file of an existing note `.md` of my modules.
  * {@link realpathSync} follows symbolic links, so no link leads outside.
  *
- * @throws {Error} - When the path lies outside `NomSkillingmodules`,
- *   has a hidden part like `.obsidian` or `..`, is no note `.md`, or nothing lies there
+ * @throws {Error} - When it lies outside `NomSkillingmodules`, has a hidden part or is no existing note
  */
 function noteFileOf(path: string): string {
     const root: string = realpathSync(editor.modules);
@@ -155,19 +129,15 @@ function noteFileOf(path: string): string {
     return file;
 }
 
-/** Gives the time now in Berlin, like `2026-10-17 14:40:19`, for the head of a diff. */
+/** The time now in Berlin to the second, for the head of a diff. */
 function stampOf(): string {
     return Temporal.Now.plainDateTimeISO("Europe/Berlin").toString({ smallestUnit: "second" }).replace("T", " ");
 }
 
 /**
- * Writes a note of my modules as I saved it, merged with a change of its file on disk:
- * first its change as `diff -u` writes it at the end of the file of my corrections,
- * its head naming the note from `NomSkillingmodules` and the time, then the text.
- * A text without change writes nothing.
+ * Writes a note as I saved it, merged, its diff first, nothing when the text did not change.
  *
- * @throws {Error} - When it is no note of my modules, see {@link noteFileOf},
- *   or its file is no UTF-8 text, which could not be written back exactly
+ * @throws {Error} - When it is no note of my modules or no UTF-8 text, which could not be written back exactly
  */
 export function noteWrite(change: NoteChange): Written {
     const file: string = noteFileOf(change.path);

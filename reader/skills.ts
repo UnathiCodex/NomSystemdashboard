@@ -1,17 +1,11 @@
 /**
  * ## Skills
  *
- * Reads and writes my skills in `Skills.md`, see `skillsFile` in `./sources.ts`:
- * one Markdown table with one row per skill, its name and its link, sorted by name.
- * They are my skills of the semester beside the modules `Modules.md` names,
- * see `activeModulesRead` in `./notes.ts`, like my projects.
- * A skill named like a module, see `moduleName` in `./sources.ts`,
- * has its plan and its log in `Modules/`, every other one in `Skilling/`.
- * A text typed in the Skill list of the day that names no skill is a new row
- * with an empty link, see {@link skillAdd}, the first one making the file.
- * Nothing makes a folder or finds a link by itself:
- * I enter the link by hand as the link of the summary of one of its entries or boxes,
- * which every entry and box of the skill and its row then share, see {@link skillLinkSet}.
+ * My skills of the semester beside my modules, like my projects,
+ * in `Skills.md` as one table of name and link, sorted by name.
+ * A skill named like a module has its plan and log in `Modules/`, every other one in `Skilling/`.
+ * Nothing makes a folder or finds a link by itself.
+ * I enter the link on one of its entries or boxes, and all of them and its row share it.
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -20,36 +14,26 @@ import { cellsOf } from "./markdown.ts";
 import { activeModulesRead, codeOf, moduleFolderOf } from "./notes.ts";
 import { moduleName, skillsFile, writeAllowed } from "./sources.ts";
 
-/**
- * A skill, one row of `Skills.md`.
- * - `link`: A path from `NomWorkspace` or a web address, empty while I entered none.
- */
+/** A row of `Skills.md`, `link` a path from `NomWorkspace` or a web address, empty while I entered none. */
 export type SkillRow = {
     name: string;
     link: string;
 };
 
-/** Lines a new `Skills.md` starts with: the head of its table. */
 const fileHead: string[] = ["| Skill | Link |", "|---|---|"];
 
-/** Lines of the table before its rows: the header and the line below it. */
+/** Lines of the table before its rows. */
 const tableHead: number = 2;
 
-/** Compares names as a German dictionary orders them, ignoring case. */
+/** As a German dictionary orders names, ignoring case. */
 const nameOrder: Intl.Collator = new Intl.Collator("de");
 
-/**
- * Gives the code of a skill by its name, as the dialog of the day picks it:
- * a module its code, the part of its name before `_`, any other its name.
- */
+/** A module its code, the part of its name before `_`, any other skill its name. */
 export function skillCodeOf(name: string): string {
     return moduleName.test(name) ? codeOf(name) : name;
 }
 
-/**
- * Reads the rows of `Skills.md`, in their order, none while the file does not exist.
- * A row without a name stays out.
- */
+/** In their order, none while the file does not exist, a row without a name left out. */
 export function skillRowsRead(): SkillRow[] {
     if (!existsSync(skillsFile)) return [];
     return readFileSync(skillsFile, "utf8")
@@ -63,21 +47,12 @@ export function skillRowsRead(): SkillRow[] {
         .filter((row: SkillRow): boolean => row.name !== "");
 }
 
-/**
- * Finds the row of a skill by its code, `undefined` for a skill without one,
- * like a module of `Modules.md`.
- */
+/** `undefined` for a skill without a row, like a module. */
 export function skillRowOf(code: string): SkillRow | undefined {
     return skillRowsRead().find((row: SkillRow): boolean => skillCodeOf(row.name) === code);
 }
 
-/**
- * Reads the skills of the semester by their codes, each once:
- * the modules of the semester first, see `activeModulesRead` in `./notes.ts`,
- * then the rows of `Skills.md`.
- * The Skill list offers them first.
- * The menu of the scripts view shows only modules, since only they have chapters and tasks.
- */
+/** The codes of the skills of the semester, each once, the modules first. */
 export function activeSkillsRead(): string[] {
     return [
         ...new Set([
@@ -88,9 +63,7 @@ export function activeSkillsRead(): string[] {
 }
 
 /**
- * Writes the rows as the table of `Skills.md`, sorted by name,
- * every other line of the file staying as it is,
- * the head of a new table when the file does not exist yet.
+ * Writes the rows sorted by name, every other line of the file as it is.
  *
  * @throws {Error} - When the file lies outside the new system or holds no table
  */
@@ -111,13 +84,9 @@ function rowsWrite(rows: SkillRow[]): void {
 }
 
 /**
- * Adds a skill typed in the Skill list of the day as a new row with an empty link,
- * by the name the page gives it, see `skillNewNameOf` in `src/day/skill.ts`.
- * Makes no folder.
+ * Adds a skill typed in the Skill list of the day as a row with an empty link, giving its code.
  *
- * @returns Its code, which the list picks
- * @throws {Error} - When the name is empty, holds `|`, `/` or `\`, starts with `.`,
- *   or a skill of the semester or a module folder has its code already, ignoring case
+ * @throws {Error} - When the name is empty, starts with `.`, holds `|`, `/` or `\`, or its code is taken
  */
 export function skillAdd(name: string): string {
     const clean: string = String(name ?? "")
@@ -135,10 +104,8 @@ export function skillAdd(name: string): string {
 }
 
 /**
- * Gives the row of a skill the link a summary of it was written with anew,
- * so the link I enter for one of its entries or boxes is the link of the skill,
- * see `linesWrite` in `./calendar.ts`, a `|` in it written as `%7C`.
- * Nothing for a skill without row, like a module of `Modules.md`.
+ * Gives the row of a skill the link I entered on one of its entries or boxes, a `|` written as `%7C`.
+ * Nothing for a skill without a row.
  */
 function skillLinkSet(category: string, summary: string, link: string): void {
     const rows: SkillRow[] = skillRowsRead();
