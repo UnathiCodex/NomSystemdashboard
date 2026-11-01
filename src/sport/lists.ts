@@ -321,7 +321,8 @@ export function newOf(text: string, words: string, click: () => void): HTMLEleme
 
 /**
  * Search of my exercises in the panel of a workout, without those it holds.
- * Last `+ New exercise` for a name no exercise has, a click or Enter on the first adds one.
+ * Last `+ New exercise` for a name no exercise has.
+ * Enter takes the first exercise found, never a new one, as the food search does.
  */
 function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement {
     const search: HTMLElement = elementOf("div", "food-search", "");
@@ -360,7 +361,7 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
     input.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (event.key !== "Enter") return;
         event.preventDefault();
-        (results.querySelector("button") as HTMLButtonElement | null)?.click();
+        results.querySelector<HTMLButtonElement>(".food-item > button.food-row")?.click();
     });
     search.append(searchFieldOf(input, "Search exercises"), results);
     show();
