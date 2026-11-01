@@ -129,6 +129,7 @@ import {
 } from "../persons.ts";
 import {
     columnsOf,
+    emptyEndOf,
     emptyIs,
     quotePrefixOf,
     textIndentationOf,
@@ -457,13 +458,41 @@ const highlighter: Highlighter = tagHighlighter([
 ]);
 
 /**
+ * Widget drawn by its fields alone:
+ * another of its kind with the same fields looks the same, so the drawn one stays.
+ * Its events stay its own, as CodeMirror keeps those of a widget from the editor,
+ * which would put the cursor at its start or end on a click,
+ * see {@link PassingWidget} for a widget a click goes through.
+ */
+abstract class FieldsWidget extends WidgetType {
+    /** Tells whether another widget of its kind has the same fields. */
+    override eq(other: WidgetType): boolean {
+        return Object.entries(this).every(
+            ([field, value]: [string, unknown]): boolean =>
+                (other as unknown as { [field: string]: unknown })[field] === value,
+        );
+    }
+}
+
+/**
+ * Widget a click goes through to the editor, which puts the cursor at it,
+ * as on the text beside it, so a formula shows as TeX,
+ * and a double click, which selects the TeX of a formula, see {@link formulaClicked}.
+ */
+abstract class PassingWidget extends FieldsWidget {
+    override ignoreEvent(): boolean {
+        return false;
+    }
+}
+
+/**
  * Fold arrow of a heading or a list item, see the top of this file,
  * and of the time zone of a calendar file, see `./ics.ts`:
  * down while open, turned right while folded;
  * a click on it folds or unfolds, see {@link foldToggle},
  * and leaves the cursor where it is.
  */
-export class FoldWidget extends WidgetType {
+export class FoldWidget extends FieldsWidget {
     constructor(
         /** Whether it belongs to a list item, else to a heading or a time zone. */
         readonly item: boolean,
@@ -471,11 +500,6 @@ export class FoldWidget extends WidgetType {
         readonly folded: boolean,
     ) {
         super();
-    }
-
-    /** Tells whether another arrow looks the same, so the drawn one stays. */
-    override eq(other: FoldWidget): boolean {
-        return other.item === this.item && other.folded === this.folded;
     }
 
     /**
@@ -495,18 +519,13 @@ export class FoldWidget extends WidgetType {
         });
         return arrow;
     }
-
-    /** Keeps a click on the arrow from the editor, which would put the cursor there. */
-    override ignoreEvent(): boolean {
-        return true;
-    }
 }
 
 /**
  * Formula rendered by MathJax, as the scripts view renders it:
  * `$…$` within the line, `$$…$$` on its own.
  */
-class MathWidget extends WidgetType {
+class MathWidget extends PassingWidget {
     constructor(
         /** TeX of the formula, without its `$`. */
         readonly tex: string,
@@ -516,15 +535,6 @@ class MathWidget extends WidgetType {
         readonly preview: boolean,
     ) {
         super();
-    }
-
-    /** Tells whether another formula looks the same, so the rendered one stays. */
-    override eq(other: MathWidget): boolean {
-        return (
-            other.tex === this.tex &&
-            other.display === this.display &&
-            other.preview === this.preview
-        );
     }
 
     /** Renders the formula as the scripts view does. */
@@ -540,29 +550,15 @@ class MathWidget extends WidgetType {
         mathRender(box);
         return box;
     }
-
-    /**
-     * Lets a click reach the editor,
-     * which puts the cursor at the formula, so it shows as TeX,
-     * and a double click, which selects its TeX, see {@link formulaClicked}.
-     */
-    override ignoreEvent(): boolean {
-        return false;
-    }
 }
 
 /** Image, as the scripts view shows it, at its own size. */
-class ImageWidget extends WidgetType {
+class ImageWidget extends PassingWidget {
     constructor(
         /** Address of the image at the reader. */
         readonly address: string,
     ) {
         super();
-    }
-
-    /** Tells whether another image looks the same, so the shown one stays. */
-    override eq(other: ImageWidget): boolean {
-        return other.address === this.address;
     }
 
     /** Shows the image; once loaded, the editor measures its lines again. */
@@ -573,11 +569,6 @@ class ImageWidget extends WidgetType {
         image.addEventListener("load", (): void => view.requestMeasure());
         return image;
     }
-
-    /** Lets a click reach the editor, which puts the cursor at the image. */
-    override ignoreEvent(): boolean {
-        return false;
-    }
 }
 
 /**
@@ -585,17 +576,12 @@ class ImageWidget extends WidgetType {
  * as in Obsidian: `[ ]` becomes `[x]` and back, the cursor staying where it is;
  * in a file to read only it cannot be ticked.
  */
-class TaskBoxWidget extends WidgetType {
+class TaskBoxWidget extends FieldsWidget {
     constructor(
         /** Whether it is ticked, `[x]`. */
         readonly done: boolean,
     ) {
         super();
-    }
-
-    /** Tells whether another box looks the same, so the shown one stays. */
-    override eq(other: TaskBoxWidget): boolean {
-        return other.done === this.done;
     }
 
     /**
@@ -618,11 +604,6 @@ class TaskBoxWidget extends WidgetType {
         });
         return box;
     }
-
-    /** Keeps a click on the box from the editor: the box ticks itself. */
-    override ignoreEvent(): boolean {
-        return true;
-    }
 }
 
 /**
@@ -631,7 +612,7 @@ class TaskBoxWidget extends WidgetType {
  * `<br>` breaks the line, and a `<wbr>` after it at the end
  * of a line holds the empty line below it.
  */
-class BreakWidget extends WidgetType {
+class BreakWidget extends PassingWidget {
     constructor(
         /** Element drawn, `br` or `wbr`. */
         readonly tagName: string,
@@ -639,21 +620,11 @@ class BreakWidget extends WidgetType {
         super();
     }
 
-    /** Tells whether another break is the same element, so the drawn one stays. */
-    override eq(other: BreakWidget): boolean {
-        return other.tagName === this.tagName;
-    }
-
     /** Draws the element. */
     toDOM(): HTMLElement {
         const box: HTMLSpanElement = document.createElement("span");
         box.append(document.createElement(this.tagName));
         return box;
-    }
-
-    /** Lets a click reach the editor, which puts the cursor at the break. */
-    override ignoreEvent(): boolean {
-        return false;
     }
 }
 
@@ -664,7 +635,7 @@ class BreakWidget extends WidgetType {
  * or of the bullet or number of a point, taking no room, so I see what I select,
  * see {@link invisiblesLook}.
  */
-class InvisiblesWidget extends WidgetType {
+class InvisiblesWidget extends PassingWidget {
     constructor(
         /** The marks, a blank for each other character hidden with them. */
         readonly marks: string,
@@ -678,22 +649,12 @@ class InvisiblesWidget extends WidgetType {
         super();
     }
 
-    /** Tells whether other marks are the same, so the drawn ones stay. */
-    override eq(other: InvisiblesWidget): boolean {
-        return other.marks === this.marks && other.before === this.before;
-    }
-
     /** Draws the marks, see `./editor.css`. */
     toDOM(): HTMLElement {
         const box: HTMLSpanElement = document.createElement("span");
         box.className = `cm-invisibles cm-invisibles-${this.before}`;
         box.dataset.marks = this.marks;
         return box;
-    }
-
-    /** Lets a click reach the editor, as on the text beside it. */
-    override ignoreEvent(): boolean {
-        return false;
     }
 }
 
@@ -703,7 +664,7 @@ class InvisiblesWidget extends WidgetType {
  * a link that leads nowhere faded, without space of their own above and below them,
  * which only the empty lines around them give, as around any block, see `./editor.css`.
  */
-class BlockWidget extends WidgetType {
+class BlockWidget extends FieldsWidget {
     constructor(
         /** Markdown of the blocks, their whole lines. */
         readonly markdown: string,
@@ -713,15 +674,6 @@ class BlockWidget extends WidgetType {
         readonly length: number,
     ) {
         super();
-    }
-
-    /** Tells whether other blocks look the same, so the rendered ones stay. */
-    override eq(other: BlockWidget): boolean {
-        return (
-            other.markdown === this.markdown &&
-            other.length === this.length &&
-            other.links === this.links
-        );
     }
 
     /**
@@ -777,72 +729,61 @@ class BlockWidget extends WidgetType {
                     : `${link.dataset.link}#${link.dataset.heading ?? ""}`,
             );
         };
-        block
-            .querySelectorAll<HTMLTableElement>("table")
-            .forEach((table: HTMLTableElement, index: number): void => {
-                const frame: HTMLDivElement = document.createElement("div");
-                const open: HTMLButtonElement = document.createElement("button");
-                frame.className = "table-frame";
-                open.className = "table-open";
-                open.type = "button";
-                iconPut(open, Maximize2, "Open table");
-                open.addEventListener("click", (): void => {
-                    const from: number = view.posAtDOM(block);
-                    const runs: number[] = tableRunsOf(view, from, from + this.length);
-                    if (runs[index] !== undefined)
-                        tableOpen(
-                            view,
-                            view.state.doc.line(runs[index]).from,
-                            (markdown: string): HTMLElement =>
-                                blockRender(view, markdown, this.links),
-                            follow,
-                        );
-                });
-                table.replaceWith(frame);
-                frame.append(table, open);
-                new ResizeObserver((): void => {
-                    table.classList.toggle(
-                        "is-wide",
-                        table.scrollWidth > table.clientWidth,
+        for (const [index, table] of block.querySelectorAll("table").entries()) {
+            const frame: HTMLDivElement = document.createElement("div");
+            const open: HTMLButtonElement = document.createElement("button");
+            frame.className = "table-frame";
+            open.className = "table-open";
+            open.type = "button";
+            iconPut(open, Maximize2, "Open table");
+            open.addEventListener("click", (): void => {
+                const from: number = view.posAtDOM(block);
+                const runs: number[] = tableRunsOf(view, from, from + this.length);
+                if (runs[index] !== undefined)
+                    tableOpen(
+                        view,
+                        view.state.doc.line(runs[index]).from,
+                        (markdown: string): HTMLElement =>
+                            blockRender(view, markdown, this.links),
+                        follow,
                     );
-                    view.requestMeasure();
-                }).observe(table);
             });
+            table.replaceWith(frame);
+            frame.append(table, open);
+            new ResizeObserver((): void => {
+                table.classList.toggle("is-wide", table.scrollWidth > table.clientWidth);
+                view.requestMeasure();
+            }).observe(table);
+        }
         const fences: Fence[] = fencesOf(this.markdown);
-        block
-            .querySelectorAll<HTMLPreElement>("pre")
-            .forEach((pre: HTMLPreElement, index: number): void => {
-                const fence: Fence | undefined = fences[index];
-                if (fence === undefined) return;
-                const frame: HTMLDivElement = document.createElement("div");
-                const pick: HTMLSelectElement = document.createElement("select");
-                frame.className = "code-frame";
-                pick.className = "code-language";
-                pick.title = "Language";
-                for (const name of new Set([
-                    "",
-                    ...Object.keys(codeLanguages),
-                    fence.info,
-                ])) {
-                    const option: HTMLOptionElement = document.createElement("option");
-                    option.value = name;
-                    option.textContent = name === "" ? "–" : name;
-                    pick.append(option);
-                }
-                pick.value = fence.info;
-                pick.addEventListener("change", (): void => {
-                    const from: number = view.posAtDOM(block);
-                    view.dispatch({
-                        changes: {
-                            from: from + fence.from,
-                            to: from + fence.to,
-                            insert: pick.value,
-                        },
-                    });
+        for (const [index, pre] of block.querySelectorAll("pre").entries()) {
+            const fence: Fence | undefined = fences[index];
+            if (fence === undefined) continue;
+            const frame: HTMLDivElement = document.createElement("div");
+            const pick: HTMLSelectElement = document.createElement("select");
+            frame.className = "code-frame";
+            pick.className = "code-language";
+            pick.title = "Language";
+            for (const name of new Set(["", ...Object.keys(codeLanguages), fence.info])) {
+                const option: HTMLOptionElement = document.createElement("option");
+                option.value = name;
+                option.textContent = name === "" ? "–" : name;
+                pick.append(option);
+            }
+            pick.value = fence.info;
+            pick.addEventListener("change", (): void => {
+                const from: number = view.posAtDOM(block);
+                view.dispatch({
+                    changes: {
+                        from: from + fence.from,
+                        to: from + fence.to,
+                        insert: pick.value,
+                    },
                 });
-                pre.replaceWith(frame);
-                frame.append(pre, pick);
             });
+            pre.replaceWith(frame);
+            frame.append(pre, pick);
+        }
         const place: (event: MouseEvent) => void = (event: MouseEvent): void => {
             const from: number = view.posAtDOM(block);
             view.focus();
@@ -871,15 +812,6 @@ class BlockWidget extends WidgetType {
         block.addEventListener("toggle", (): void => view.requestMeasure(), true);
         block.addEventListener("click", follow);
         return block;
-    }
-
-    /**
-     * Keeps clicks in the blocks from the editor,
-     * which would put the cursor at their start or end:
-     * the blocks place the cursor themselves, in a table on a double click.
-     */
-    override ignoreEvent(): boolean {
-        return true;
     }
 }
 
@@ -937,24 +869,20 @@ function fileAddressOf(path: string): string {
 function blockRender(view: EditorView, markdown: string, links: Links): HTMLDivElement {
     const block: HTMLDivElement = document.createElement("div");
     block.innerHTML = htmlOf(markdown);
-    block
-        .querySelectorAll<HTMLImageElement>("img[data-link]")
-        .forEach((image: HTMLImageElement): void => {
-            const path: string | null = links[image.dataset.link ?? ""] ?? null;
-            if (path !== null) image.src = fileAddressOf(path);
-            image.addEventListener("load", (): void => view.requestMeasure());
-        });
-    block
-        .querySelectorAll<HTMLAnchorElement>("a[data-link]")
-        .forEach((link: HTMLAnchorElement): void => {
-            const target: string = link.dataset.link ?? "";
-            const address: string | null = linkAddressOf(view.state, target, "");
-            if (address === null) link.classList.add("is-unresolved");
-            if (address === "") {
-                link.classList.add("is-computer-only");
-                link.title = "Opens only on the computer";
-            }
-        });
+    for (const image of block.querySelectorAll<HTMLImageElement>("img[data-link]")) {
+        const path: string | null = links[image.dataset.link ?? ""] ?? null;
+        if (path !== null) image.src = fileAddressOf(path);
+        image.addEventListener("load", (): void => view.requestMeasure());
+    }
+    for (const link of block.querySelectorAll<HTMLAnchorElement>("a[data-link]")) {
+        const target: string = link.dataset.link ?? "";
+        const address: string | null = linkAddressOf(view.state, target, "");
+        if (address === null) link.classList.add("is-unresolved");
+        if (address === "") {
+            link.classList.add("is-computer-only");
+            link.title = "Opens only on the computer";
+        }
+    }
     peopleLink(block);
     mathRender(block);
     return block;
@@ -1485,15 +1413,11 @@ function listOnIs(look: Look, node: SyntaxNode, end: number): boolean {
     let root: SyntaxNode = node;
     for (let up: SyntaxNode | null = node.parent; up !== null; up = up.parent)
         if (up.name === "BulletList" || up.name === "OrderedList") root = up;
-    for (
-        let number: number = look.state.doc.lineAt(end).number + 1;
-        number <= look.state.doc.lines;
-        number++
-    ) {
-        const line: Line = look.state.doc.line(number);
-        if (!emptyIs(look.state, line)) return line.from < root.to;
-    }
-    return false;
+    const last: Line = emptyEndOf(look.state, look.state.doc.lineAt(end), 1);
+    return (
+        last.number < look.state.doc.lines &&
+        look.state.doc.line(last.number + 1).from < root.to
+    );
 }
 
 /**
@@ -2564,10 +2488,7 @@ function marginSelect(event: MouseEvent, view: EditorView): void {
         (up: MouseEvent): void => {
             setTimeout((): void => {
                 const range: SelectionRange = view.state.selection.main;
-                const reach: (pos: number, x: number) => number = (
-                    pos: number,
-                    x: number,
-                ): number => {
+                const reach = (pos: number, x: number): number => {
                     const line: Line = view.state.doc.lineAt(pos);
                     const start: number = line.from + hiddenStartOf(view.state, line);
                     const coords: { left: number } | null = view.coordsAtPos(start);
