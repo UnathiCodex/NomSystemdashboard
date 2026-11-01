@@ -8,7 +8,7 @@
  * while the reader runs, see `reader.ts`.
  * Chromium without a window draws the file in the editor of the page,
  * see `src/editor/preview.ts`, as my laptop shows it:
- * a page 1600 px wide, the text column `--reading-width` 1000 px of it,
+ * a page 1600 px wide, the text column `--reading-width` 900 px of it,
  * see `src/variants.css`.
  * A wider page grows as a whole, so its lines break at the same words.
  * Every line shows rendered as while I do not edit it,
