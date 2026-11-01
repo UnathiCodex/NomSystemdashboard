@@ -1481,15 +1481,21 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
  * of a line of a paragraph its indentation;
  * of the line of a list item the indentation before its `-` or number;
  * all of a line of blanks within a list, see {@link listBlankIs};
- * nothing of any other line of blanks, a code block,
- * a table or a quote, whose blanks show.
+ * of a line of a code block, HTML block, table or quote as many columns as its first line,
+ * see {@link blockLook} and {@link quoteMarkLook}, so the line's own indentation shows;
+ * nothing of any other line of blanks or an indented code block, whose blanks show.
  */
 function hiddenStartOf(state: EditorState, line: Line): number {
     const blanks: number = /^[ \t]*/.exec(line.text)?.[0].length ?? 0;
     if (blanks === line.length) return listBlankIs(state, line) ? blanks : 0;
     for (const node of upwardOf(syntaxTree(state).resolveInner(line.from + blanks, 1))) {
         if (["Paragraph", "Task", "ListItem"].includes(node.name)) return blanks;
-        if (["FencedCode", "CodeBlock", "HTMLBlock", "Table", "Blockquote"].includes(node.name)) return 0;
+        if (node.name === "CodeBlock") return 0;
+        if (![...renderedWhole, "Blockquote"].includes(node.name)) continue;
+        const columns: number = columnsOf(state.doc.lineAt(node.from).text);
+        let hidden: number = 0;
+        while (hidden < blanks && columnsOf(line.text.slice(0, hidden)) < columns) hidden++;
+        return hidden;
     }
     return 0;
 }
@@ -1667,10 +1673,14 @@ function htmlTagLook(look: Look, node: SyntaxNode): boolean {
 
 /**
  * Marker `>` of a quote, hidden,
- * on the line of the cursor or a selection shown left of the text, which keeps its place.
+ * on the line of the cursor or a selection shown left of the text, which keeps its place;
+ * the indentation before it hidden, in a list item putting the quote under the item's text,
+ * of a further line of a paragraph see {@link paragraphLook}.
  */
 function quoteMarkLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
+    if (node.parent?.name === "Blockquote" && /^[ \t]*$/.test(look.state.sliceDoc(line.from, node.from)))
+        hide(look, line.from, node.from);
     if (touched(look, line.from, look.state.doc.lineAt(node.to).to))
         look.decorations.push(hanging.range(node.from, markEndOf(look, node)));
     else hide(look, node.from, markEndOf(look, node));
@@ -1682,7 +1692,10 @@ function quoteMarkLook(look: Look, node: SyntaxNode): boolean {
  * their whole lines rendered as one while the cursor is on none of them,
  * so the space between them is that of the scripts view;
  * above and below them only the empty lines around them, as around any block,
- * see {@link spaceLook}.
+ * see {@link spaceLook};
+ * else as their text, its indentation hidden, see {@link hiddenStartOf},
+ * so in a list item it stands under the item's text, where the block rendered stands,
+ * a callout by {@link quoteMarkLook}.
  */
 function blockLook(look: Look, node: SyntaxNode): boolean {
     if (look.rendered.includes(node.from)) return false;
@@ -1696,7 +1709,14 @@ function blockLook(look: Look, node: SyntaxNode): boolean {
         last = last.nextSibling;
     const from: number = look.state.doc.lineAt(node.from).from;
     const to: number = look.state.doc.lineAt(last.to).to;
-    if (touched(look, from, to)) return true;
+    if (touched(look, from, to)) {
+        const end: number = look.state.doc.lineAt(node.to).number;
+        for (let number: number = look.state.doc.lineAt(from).number; number <= end; number++) {
+            const line: Line = look.state.doc.line(number);
+            if (node.name !== "Blockquote") hide(look, line.from, line.from + hiddenStartOf(look.state, line));
+        }
+        return true;
+    }
 
     for (let block: SyntaxNode | null = node; block !== null && block.from <= last.from; block = block.nextSibling)
         look.rendered.push(block.from);
