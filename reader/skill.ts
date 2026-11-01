@@ -51,6 +51,14 @@
  * Without one, a new entry starts, covering the quarter hour of the attempt,
  * so the rounds do the skill box of the module, see `skillBoxOf` in `boxes.ts`.
  *
+ * A session of `/learn` reads all this by `GET http://127.0.0.1:3000/api/skill/tasks`, which writes nothing,
+ * only its module's part, an open round first, then what is due today, then what is `new`.
+ * It records each heading, without `## `, at last `done`, by `POST /api/skill/round`:
+ * `{"section":"IN2028/02_03_GoodnessOfFit","round":0,"step":"Task. Campus June Days"}`.
+ * It records each Example and each try of a Task by `POST /api/skill/attempt`:
+ * `{"task":"IN2028/Campus June Days","result":"right","comment":""}`.
+ * A round ends only after a `right`.
+ *
  * Due by my protocol, per section, a note,
  * as `~/NomWorkspace/.claude/skills/learn/SKILL.md` says it,
  * see `## session`:
