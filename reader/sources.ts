@@ -39,17 +39,35 @@ export const metaRoot: string = join(calendarRoot, "Meta");
 /** Folder `NomFrequencediary` of my daily notes. */
 export const diaryRoot: string = join(manageRoot, "NomFrequencediary");
 
-/** Folder `NomMetainformations` of my tables. */
+/** Folder `NomMetainformations` of my tables, in the topic folders of {@link calendarRoot}. */
 export const dataRoot: string = join(manageRoot, "NomMetainformations");
 
+/** Folder `Health/` of my tables, my workouts, exercises, weights. */
+export const healthData: string = join(dataRoot, "Health");
+
+/** Folder `Living/` of my tables, my foods, meals, people, places, platforms. */
+export const livingData: string = join(dataRoot, "Living");
+
+/** Folder `Modules/` of my tables, my modules, studies, schools, rooms. */
+export const modulesData: string = join(dataRoot, "Modules");
+
+/** Folder `Skilling/` of my tables, my skills. */
+export const skillingData: string = join(dataRoot, "Skilling");
+
+/** Folder `Meta/` of my tables, my devices. */
+export const metaData: string = join(dataRoot, "Meta");
+
+/** The topic folders of my tables, each holding its tables without subfolders. */
+export const dataFolders: string[] = [healthData, livingData, modulesData, skillingData, metaData];
+
 /** `Devices.md`, one row per device of my tailnet, what it shows of the page. */
-export const devicesFile: string = join(dataRoot, "Devices.md");
+export const devicesFile: string = join(metaData, "Devices.md");
 
 /** `Persons.md`, the people I name. */
-export const personsFile: string = join(dataRoot, "Persons.md");
+export const personsFile: string = join(livingData, "Persons.md");
 
 /** `Skills.md`, my skills beside the modules, one row per skill, each person's own. */
-export const skillsFile: string = join(dataRoot, "Skills.md");
+export const skillsFile: string = join(skillingData, "Skills.md");
 
 /** Folder `NomModulesuniversity`, one file per module of mine, named like its folder. */
 export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
@@ -112,7 +130,7 @@ export type NotesSources = {
 /** {@link NotesSources} as they lie in the vault. */
 export const notes: NotesSources = {
     modules: join(vault, modulesFolder),
-    table: join(dataRoot, "Modules.md"),
+    table: join(modulesData, "Modules.md"),
 };
 
 /**
@@ -183,9 +201,9 @@ export const day: DaySources = {
         { folder: metaRoot, ending: "Holidays.ics" },
         { folder: metaRoot, ending: "University.ics" },
     ],
-    places: join(dataRoot, "Places.md"),
-    rooms: join(dataRoot, "Rooms.md"),
-    online: join(dataRoot, "Online.md"),
+    places: join(livingData, "Places.md"),
+    rooms: join(modulesData, "Rooms.md"),
+    online: join(livingData, "Online.md"),
 };
 
 /** Calendars of the days a series of my course skips, holidays and days the university does not teach. */
@@ -215,8 +233,8 @@ export type FoodSources = {
 
 /** {@link FoodSources} as they lie in the vault and on the web. */
 export const food: FoodSources = {
-    foods: join(dataRoot, "Foods.md"),
-    meals: join(dataRoot, "Meals.md"),
+    foods: join(livingData, "Foods.md"),
+    meals: join(livingData, "Meals.md"),
     log: [{ folder: calendarRoot, ending: logEnding }],
     search: "https://search.openfoodfacts.org/search",
     product: "https://world.openfoodfacts.org/api/v2/product/",
@@ -235,9 +253,9 @@ export type SportSources = {
 
 /** {@link SportSources} as they lie in the vault. */
 export const sport: SportSources = {
-    workouts: join(dataRoot, "Workouts.md"),
-    exercises: join(dataRoot, "Exercises.md"),
-    weights: join(dataRoot, "Weights.md"),
+    workouts: join(healthData, "Workouts.md"),
+    exercises: join(healthData, "Exercises.md"),
+    weights: join(healthData, "Weights.md"),
     log: [{ folder: calendarRoot, ending: logEnding }],
 };
 

@@ -18,7 +18,7 @@ export type PersonEdit = {
     link: string;
 };
 
-const personsPath: string = "NomMetainformations/Persons.md";
+const personsPath: string = "NomMetainformations/Living/Persons.md";
 
 /** Heads of the columns of a table that name people, one name per line. */
 const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];

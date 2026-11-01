@@ -9,7 +9,7 @@
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { dataRoot, personsFile, universityRoot, writeAllowed } from "./sources.ts";
+import { dataFolders, personsFile, universityRoot, writeAllowed } from "./sources.ts";
 
 /** A row of `Persons.md`, `title` its title or what I typed. */
 export type Person = {
@@ -226,7 +226,7 @@ export function personRename(sent: PersonRenamed, attendees: AttendeesRename): v
     if (cleaned.old === "" || name === "" || name.includes(";")) throw new Error(`No name of a person: ${name}`);
     if (link !== "" && !linkForm.test(link)) throw new Error(`No link of ${name}: ${link}`);
     const persons: [string, Person] = personsTextOf(cleaned);
-    const tables: [string, string][] = [universityRoot, dataRoot]
+    const tables: [string, string][] = [universityRoot, ...dataFolders]
         .flatMap((folder: string): string[] =>
             existsSync(folder)
                 ? readdirSync(folder)
