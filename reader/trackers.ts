@@ -1,26 +1,17 @@
 /**
  * ## Trackers
  *
- * Reads the trackers of a day from the log:
- * my sleep, my glasses of water and my neck sessions against my goals,
- * and what my meals gave, see `./food.ts`.
- * My goals stand here, in one place, see {@link settings}.
- * The night of a day is the longest sleep of at least 3 hours
- * that ends on it in Berlin time,
- * the sleep I wake up from that morning, so a nap never becomes the night,
- * and a sleep `Day` never, whatever its length. Any other what counts like a `Night`.
- * What I slept on a day is every sleep that ends on it, the night and the naps,
- * never for the day it began on.
- * The week holds the nights of the day and the six days before it.
- * Glasses, meals and neck sessions count for the calendar day
- * of their start in Berlin time.
- * Every other drink, like `Kaffee`, counts as one glass as well,
- * since the reference of 2.5 litres a day counts the water of all drinks (EFSA 2010).
+ * The trackers of a day from the log, sleep, water and neck sessions against my goals,
+ * and what my meals gave.
+ * The night of a day is the longest sleep of at least 3 hours that ends on it in Berlin time,
+ * so a nap never becomes the night, and a sleep `Day` never, whatever its length.
+ * What I slept on a day is every sleep that ends on it, the night and the naps.
+ * The week holds the day and the six days before it.
+ * Glasses, meals and neck sessions count for the day of their start in Berlin time.
+ * Every other drink counts as one glass too, since the 2.5 litres count the water of all drinks (EFSA 2010).
  * The counter takes back only glasses of water.
  * A neck session counts on my study days, short or long, since long holds short.
- * A long session carries my neck pain from 0 to 10, its `X-PAIN`,
- * the outcome the routine is judged by:
- * the mean of my first four weeks of pain against that of the last four, up to the day.
+ * A long session carries my neck pain from 0 to 10, its `X-PAIN`, the outcome the routine is judged by.
  * A study day is a day with an entry `Skill` in the log.
  */
 
@@ -35,12 +26,8 @@ import type { FoodDay, Totals } from "./food.ts";
 /**
  * My goals for the trackers, the size of a glass, and the numbers of my learning.
  * - `bedtimeVaried`: Minutes my bedtime may vary over the week, up or down.
- * - `taskMinutes`: Minutes of one Task,
- *   which every section due today brings to the box of its chapter in the plan
- *   of today, see `./suggestions.ts`.
- * - `theoryMinutes`: Minutes of the Definitions,
- *   the Algorithm and the Example of a section on round 0,
- *   which it brings to that box besides its Task.
+ * - `taskMinutes`: Minutes of one Task, which every section due today brings to the box of its chapter.
+ * - `theoryMinutes`: Minutes of the Definitions, Algorithm and Example of a section on round 0.
  */
 export type TrackerSettings = {
     sleepHours: number;
@@ -65,8 +52,7 @@ export type Night = {
  * My sleep on a day.
  * - `slept`: Minutes of every sleep that ended on the day, the naps too.
  * - `minutes`: Average minutes of the nights of the week.
- * - `varied`: Standard deviation of my bedtime over the week in minutes,
- *   `null` for fewer than two nights.
+ * - `varied`: Standard deviation of my bedtime over the week in minutes, `null` for fewer than two nights.
  */
 export type SleepDay = {
     night: Night | null;
@@ -76,10 +62,7 @@ export type SleepDay = {
     nights: number;
 };
 
-/**
- * A glass of a drink, of water or of another drink.
- * - `water`: Whether it is a glass of water, which the counter wrote and may take back.
- */
+/** A glass of a drink, `water` the ones the counter wrote and may take back. */
 export type Glass = {
     id: string;
     start: string;
@@ -88,10 +71,9 @@ export type Glass = {
 };
 
 /**
- * My neck routine in the seven days up to a day, the day included, and my neck pain.
- * - `short`: My study days on which I did a neck routine, short or long.
- * - `painLast`: Mean of my pain in the last four weeks up to the day,
- *   `null` while those still are the first four.
+ * My neck routine in the week up to a day, and my neck pain.
+ * - `short`: My study days with a neck routine, short or long.
+ * - `painLast`: Mean pain of the last four weeks, `null` while those are still the first four.
  */
 export type NeckWeek = {
     short: number;
@@ -101,7 +83,7 @@ export type NeckWeek = {
     painLast: number | null;
 };
 
-/** The trackers of a day, food as totals without goals, see `./food.ts`. */
+/** The trackers of a day, food as totals without goals. */
 export type Trackers = {
     settings: TrackerSettings;
     sleep: SleepDay;
@@ -111,20 +93,16 @@ export type Trackers = {
 };
 
 /**
- * {@link TrackerSettings} as I set them, the one place to change them:
- * 8 hours of sleep a night, within the healthy band of 7 to 9 hours for adults,
- * and 2.5 litres of water a day, 10 glasses of 250 ml.
- * There is no goal for when to fall asleep:
- * the trackers show how much my bedtime varies,
- * with a check within 30 minutes up or down,
- * since regular sleep over weeks goes with better grades (Phillips 2017, Okano 2019)
- * and the regularity of sleep with lower mortality, more than its length (Windred 2024).
- * A short neck session, or a long one, on every study day, and 3 long ones in seven days,
- * since regular strengthening eased neck pain after 10 to 20 weeks (Gross 2015) and about
- * once a week did nothing (Jones 2024).
- * My learning: study sessions of 60 minutes,
- * 30 for a Task and 30 more for the theory of a new section, my choice,
- * not a finding (`.claude/studies/science.md`, point 9).
+ * {@link TrackerSettings} as I set them, the one place to change them.
+ * 8 hours of sleep within the healthy band of 7 to 9 for adults, 2.5 litres of water in glasses of 250 ml.
+ * No goal for when to fall asleep, only my bedtime within 30 minutes up or down,
+ * since regular sleep goes with better grades (Phillips 2017, Okano 2019)
+ * and with lower mortality, more than its length (Windred 2024).
+ * A neck session on every study day and 3 long ones a week,
+ * since regular strengthening eased neck pain after 10 to 20 weeks (Gross 2015)
+ * and about once a week did nothing (Jones 2024).
+ * Study sessions of 60 minutes, 30 for a Task and 30 for new theory,
+ * my choice and not a finding (`.claude/studies/science.md`, point 9).
  */
 export const settings: TrackerSettings = {
     sleepHours: 8,
@@ -138,48 +116,41 @@ export const settings: TrackerSettings = {
     theoryMinutes: 30,
 };
 
-/** Category of sleeps. */
 const sleepName: string = "Sleep";
 
-/** Fewest minutes of a sleep that counts as a night. A shorter sleep is a nap. */
+/** Fewest minutes of a night, a shorter sleep is a nap. */
 const nightMinutes: number = 3 * 60;
 
-/** What of a nap, which never counts as a night, see `./categories.ts`. */
+/** What of a nap, never a night. */
 const napName: string = "Day";
 
-/** Category of a glass of water. */
 const drinkName: string = "Drink";
 
-/** What of a glass of water. */
 const waterName: string = "Water";
 
 /** Category of a neck session. */
 const bodyName: string = "Body";
 
-/** What of a long neck session, one of the {@link neckRoutines}. */
 const neckLongName: string = "Neck long";
 
-/** Days a week holds, the day and the six before it. */
 const weekDays: number = 7;
 
-/** Days of the first and of the last stretch of my neck pain compared. */
+/** Days of the first and the last stretch of neck pain compared. */
 const painDays: number = 28;
 
 /** Start of the log of the new system, the first day my neck pain can be rated. */
 const newSystemStart: string = "2026-08-01T00:00:00+02:00";
 
-/** Minutes of a day. */
 const dayMinutes: number = 24 * 60;
 
 /** Milliseconds of a day. */
 const dayLength: number = dayMinutes * 60 * 1000;
 
-/** Gives how long an entry lasts in milliseconds. */
+/** How long an entry lasts in milliseconds. */
 function lengthOf(entry: Entry): number {
     return Date.parse(entry.end) - Date.parse(entry.start);
 }
 
-/** Turns a sleep into a {@link Night}. */
 function nightOf(sleep: Entry): Night {
     return {
         minutes: Math.round(lengthOf(sleep) / 60000),
@@ -188,10 +159,7 @@ function nightOf(sleep: Entry): Night {
     };
 }
 
-/**
- * Tells how much my bedtime varied over nights, as a standard deviation,
- * each counted in minutes from noon, so 23:30 and 00:30 lie an hour apart.
- */
+/** Standard deviation of my bedtime, in minutes from noon so 23:30 and 00:30 lie an hour apart. */
 function variedOf(nights: Night[]): number | null {
     if (nights.length < 2) return null;
     const bedtimes: number[] = nights.map(
@@ -205,12 +173,7 @@ function variedOf(nights: Night[]): number | null {
     );
 }
 
-/**
- * Reads my sleep on a day, see the top of this file:
- * the sleeps of the log from noon eight days before to noon the day after,
- * which hold every night of the week.
- * - `longs`: Those that are no `Day`, at least {@link nightMinutes} long.
- */
+/** Reads my sleep on a day from noon eight days before to noon the day after, every night of the week. */
 function sleepRead(date: string): SleepDay {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
     const sleeps: Entry[] = entriesRead(
@@ -253,11 +216,7 @@ export function glassIs(entry: Entry): boolean {
     return entry.category === drinkName && entry.title.trim().toLowerCase() === waterName.toLowerCase();
 }
 
-/**
- * Reads my glasses on a day in the order I drank them, of water and of every other drink,
- * read from noon the day before to noon the day after,
- * which holds the whole day and its night.
- */
+/** Reads my glasses on a day in order, from noon the day before to noon after, the day and its night. */
 function glassesRead(date: string): Glass[] {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
     return entriesRead(trackerLog, new Date(noon - dayLength).toISOString(), new Date(noon + dayLength).toISOString())
@@ -274,10 +233,7 @@ function glassesRead(date: string): Glass[] {
         }));
 }
 
-/**
- * Reads my neck routine in the seven days up to a day,
- * read from noon eight days before to noon the day after, which holds all seven days.
- */
+/** Reads my neck routine in the week up to a day, from noon eight days before to noon the day after. */
 function neckRead(date: string): NeckWeek {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
     const first: string = new Date(noon - (weekDays - 1) * dayLength).toISOString().slice(0, 10);
@@ -304,7 +260,7 @@ function neckRead(date: string): NeckWeek {
     };
 }
 
-/** Gives the mean of numbers to one decimal, `null` for none. */
+/** Mean to one decimal, `null` for none. */
 function meanOf(numbers: number[]): number | null {
     return numbers.length === 0
         ? null
@@ -312,10 +268,7 @@ function meanOf(numbers: number[]): number | null {
               10;
 }
 
-/**
- * Reads my neck pain up to a day: the mean of the first four weeks from my first rating,
- * and of the last four weeks up to the day, once the day lies beyond the first four.
- */
+/** Mean neck pain of the first four weeks from my first rating, and of the last four once beyond them. */
 function painRead(date: string): [number | null, number | null] {
     const noon: number = new Date(`${date}T12:00:00Z`).getTime();
     const rated: [string, number][] = entriesRead(trackerLog, newSystemStart, new Date(noon + dayLength).toISOString())
@@ -340,11 +293,7 @@ function painRead(date: string): [number | null, number | null] {
     return [meanOf(painsOf(first, firstEnd)), date < firstEnd ? null : meanOf(painsOf(lastStart, "9999-12-31"))];
 }
 
-/**
- * Reads the trackers of a day.
- *
- * @throws {Error} - When the date is not written like `2026-10-10`
- */
+/** @throws {Error} - When the date is not written like `2026-10-10` */
 export function trackersRead(date: string): Trackers {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`No date ${date}`);
 

@@ -1,50 +1,33 @@
 /**
  * ## Shared
  *
- * Shares with Vu, whose dashboard runs on a server of its own, skriptum,
- * what we agreed on and nothing else: an entry of my log with Vu in `With`,
- * and every food, meal and place either of us adds,
- * changes or removes, so we both have them.
- * Who I share with names `partners` in `./sources.ts`.
- * All we share lies only on my server, `sophabohne`, see `holder` in `./sources.ts`,
- * in `NomKommunikation`. Vu's server never has that folder, nor anything in its place.
+ * Shares with Vu, whose dashboard runs on skriptum, only what we agreed on,
+ * an entry of my log with Vu in `With` and every food, meal and place either of us changes.
+ * All we share lies only in `NomKommunikation` on my server `sophabohne`, never on Vu's.
  *
  * My reader never reaches Vu's server.
- * What goes to Vu waits as a file in Vu's box on my server,
- * `NomKommunikation/to_vu/dashboard/`, named by the moment, me and what it is.
- * Vu's reader reaches mine by SSH, where its key may run nothing but the gate,
- * see `./gate.ts`: as it starts and every {@link pollSeconds} it takes
- * what waits in its box, the earliest first, each into my trash once taken.
+ * What goes to Vu waits as a file in `NomKommunikation/to_vu/dashboard/`, named by the moment, me and what it is.
+ * Vu's reader reaches mine by SSH, its key running nothing but the gate,
+ * and every {@link pollSeconds} takes what waits, the earliest first, each into my trash once taken.
  * There is no archive.
- * What Vu's reader shares it sends at once into my box,
- * where my reader sees it at once and takes it in.
- * While my server cannot be reached, it waits in the memory of Vu's reader,
- * and a restart of Vu's reader loses it, see {@link outbox}.
+ * What Vu's reader shares goes at once into my box, where my reader takes it in at once.
+ * While my server cannot be reached it waits in the memory of Vu's reader, lost by a restart.
  *
- * An entry: each of us in its `With` gets a copy as I add it or log a box,
- * and one who comes into its `With` as I change it, see {@link entryShare},
- * with me in `With` in place of the person, the others staying.
- * Not my note, my rounds, my chapters, the links to my files, my pain,
- * what a session of sport did, nor the box it was logged from, which are mine alone.
- * After that each copy is its owner's: a change goes to nobody,
- * and a copy that comes for an entry the log of the other has already, by its `UID`,
- * goes to their trash untaken,
- * so nothing remembers who had what, neither a file nor a line of the entry.
- * An entry I took in goes to nobody while its `With` stays,
- * since its sender sent it to everyone in it.
- * A food, a meal or a place: the call of `./food.ts` or `./places.ts` that changed it,
- * see {@link ListChange}, which the reader of Vu makes on its own lists.
+ * An entry goes as a copy to each of us in its `With` as I add it or log a box,
+ * and to one who comes into its `With` as I change it, with me in place of the person.
+ * Not my note, rounds, chapters, links to my files, pain, what a sport session did, nor its box.
+ * After that each copy is its owner's, a change goes to nobody,
+ * and a copy for an entry the other has already by its `UID` goes untaken to the trash,
+ * so nothing remembers who had what.
+ * An entry I took in goes to nobody while its `With` stays, since its sender sent it to all in it.
+ * A food, meal or place goes as the call that changed it, made again on the other's lists.
  * One Vu has already stays as Vu has it.
- * The first time my reader shares with someone, as it makes their box,
- * it sends all my foods, meals, places and rooms, so our lists come together.
- * Vu's reader, which makes no box, sent all of Vu's long ago.
+ * As my reader makes the box of someone, it sends all my lists, so our lists come together.
  * What I change in the editor by hand goes to nobody.
  *
- * What comes is taken the earliest first,
- * so a meal finds its foods and the cooking it draws from.
- * An entry goes into my log with the `UID` it brought, so it comes in only once.
- * An entry a log cannot take, like one of a category its reader does
- * not know, stays in its box, and the reader says so once.
+ * What comes is taken the earliest first, so a meal finds its foods and its cooking.
+ * An entry keeps the `UID` it brought, so it comes in only once.
+ * An entry a log cannot take stays in its box, told once.
  */
 
 import { spawn } from "node:child_process";
@@ -83,10 +66,7 @@ import type { EntryNew } from "./day.ts";
 import type { Composition, Food, FoodChanged } from "./food.ts";
 import type { Place, PlaceChanged, Platform, PlatformChanged } from "./places.ts";
 
-/**
- * A change of a list, as one call of `./food.ts` or `./places.ts` that changed it,
- * with what it was called with, see {@link listApply}.
- */
+/** A change of a list, as the call that changed it and what it was called with. */
 export type ListChange =
     | { call: "foodAdd"; with: Food }
     | { call: "foodChange"; with: FoodChanged }
@@ -107,41 +87,29 @@ export type ListChange =
     | { call: "platformAdd"; with: Platform }
     | { call: "platformChange"; with: PlatformChanged };
 
-/** A name of a person, as the boxes are named and the gate takes it, see `./gate.ts`. */
+/** A name of a person, as the boxes are named and the gate takes it. */
 const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
 
-/**
- * Milliseconds without a change of my box before the reader takes what lies in it,
- * so a file and its rename are one.
- */
+/** Milliseconds of a quiet box before the reader takes from it, so a file and its rename are one. */
 const quiet: number = 300;
 
-/** Seconds `ssh` waits to reach my server before it gives up, and the thing waits. */
+/** Seconds `ssh` tries to reach my server, then the thing waits. */
 const reachSeconds: number = 10;
 
-/** Seconds between two takings of Vu's reader from its box on my server. */
+/** Seconds between two takings of Vu's reader. */
 const pollSeconds: number = 60;
 
-/**
- * Milliseconds of the moment the last shared thing was named after,
- * so each name comes later than the one before,
- * and the other takes them in their order.
- */
+/** Milliseconds of the last name, so each name comes later and the other takes them in order. */
 let lastStamp: number = 0;
 
-/**
- * What Vu's reader shares and my server has not taken yet, the earliest first,
- * only in memory, since Vu's server holds nothing of our boxes, so a restart loses it.
- */
+/** What Vu's reader shares and my server has not taken yet, only in memory, the earliest first. */
 const outbox: [string, string][] = [];
 
-/** Whether Vu's reader sends now. */
 let sending: boolean = false;
 
 /** Whether Vu's reader sends again after it is through, since something came. */
 let again: boolean = false;
 
-/** Whether Vu's reader takes from its box now. */
 let taking: boolean = false;
 
 /** Whether Vu's reader could not reach my server, told once until it reaches it again. */
@@ -150,20 +118,17 @@ let unreached: boolean = false;
 /** Names of shared files a log could not take, each told once. */
 const failed: Set<string> = new Set();
 
-/** Tells whether the reader shares: I have a name and someone to share with. */
+/** Tells whether I have a name and someone to share with. */
 function sharingIs(): boolean {
     return nameForm.test(myName) && partnersOf().length > 0;
 }
 
-/** Tells whether this reader runs on my server, the one that holds our boxes. */
+/** Tells whether this reader runs on my server, which holds our boxes. */
 function holderIs(): boolean {
     return myName.toLowerCase() === holder.toLowerCase();
 }
 
-/**
- * Gives the people I share with whose names have the form of {@link nameForm},
- * on every server but mine all but me, since Vu's reader shares only with mine.
- */
+/** The people I share with in {@link nameForm}, on Vu's server only me, since Vu's reader shares only with mine. */
 function partnersOf(): string[] {
     return partners.filter(
         (partner: string): boolean =>
@@ -171,22 +136,18 @@ function partnersOf(): string[] {
     );
 }
 
-/** Gives the moment a shared thing is named after, later than the one before. */
+/** The moment a shared thing is named after, later than the one before. */
 function stampOf(): string {
     lastStamp = Math.max(Date.now(), lastStamp + 1);
     return new Date(lastStamp).toISOString().replace(/[-:.]/g, "");
 }
 
-/** Gives the key of an entry in the name of a shared file, from its `UID`. */
+/** Key of an entry in the name of a shared file, from its `UID`. */
 function keyOf(id: string): string {
     return id.replace(/[^\w.@-]/g, "_");
 }
 
-/**
- * Tells whether two names of `With` name the same person,
- * each as `Persons.md` names its person, see `personNameOf` in `./persons.ts`,
- * so `Family, Sopha` names the person I share with as `Sopha`.
- */
+/** Tells whether two names of `With` name the same person, each as `Persons.md` names it. */
 function sameName(first: string, second: string): boolean {
     return personNameOf(first).toLowerCase() === personNameOf(second).toLowerCase();
 }
@@ -199,11 +160,7 @@ function boxFilesOf(box: string): string[] {
         .sort();
 }
 
-/**
- * Gives my address in an entry I send, the standard address the dialog gives a name,
- * see `standardAddressOf` in `src/day/categories.ts`,
- * ending in `@invalid`, the ending reserved for addresses that never work.
- */
+/** My address in an entry I send, the standard one of a name, `@invalid` the ending for addresses that never work. */
 function addressOf(name: string): string {
     const local: string = name
         .toLowerCase()
@@ -219,8 +176,7 @@ function addressOf(name: string): string {
 }
 
 /**
- * Runs `ssh` from Vu's reader to my server,
- * never asking for a password and giving up after {@link reachSeconds}.
+ * Runs `ssh` from Vu's reader to my server, never asking for a password.
  * Tells once that my server cannot be reached, and once that it can again.
  * Gives what the gate gave, `undefined` when it did not do it.
  */
@@ -255,9 +211,8 @@ function sshRun(words: string[], input: string = ""): Promise<string | undefined
 }
 
 /**
- * Sends what Vu's reader shares to my server, the earliest first, see {@link outbox}.
- * Stops at the first my server does not take, which waits with every one after it.
- * Runs once at a time: called while it runs, it runs again after.
+ * Sends {@link outbox} to my server, stopping at the first it does not take.
+ * Runs once at a time, called while it runs it runs again after.
  */
 function outboxSend(): void {
     if (sending) {
@@ -284,10 +239,7 @@ function outboxSend(): void {
         });
 }
 
-/**
- * Shares a file with a person: on my server into their box,
- * on Vu's into {@link outbox}, sent at once.
- */
+/** Shares a file with a person, on my server into their box, on Vu's into {@link outbox}. */
 function outboxWrite(partner: string, name: string, content: string): void {
     if (!holderIs()) {
         outbox.push([name, content]);
@@ -300,10 +252,7 @@ function outboxWrite(partner: string, name: string, content: string): void {
     writeFileSync(file, content);
 }
 
-/**
- * Shares the copy of an entry of my log with one of us, see the top of this file,
- * with me in `With` in place of the person.
- */
+/** Shares the copy of an entry with one of us, with me in `With` in place of the person. */
 function copyWrite(entry: Entry, partner: string): void {
     const fields: EntryFields = {
         category: entry.category,
@@ -334,20 +283,13 @@ function copyWrite(entry: Entry, partner: string): void {
     outboxWrite(partner, `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`, entryIcsOf(fields, own, entry.id));
 }
 
-/**
- * Gives who an entry of my log is with as it is now,
- * so a change can tell who comes into its `With`.
- */
+/** Who an entry is with now, so a change can tell who comes into its `With`. */
 export function attendeesRead(id: string): Attendee[] {
     return entryLookup(day.log, id)?.[1].attendees ?? [];
 }
 
 /**
- * Sends an entry of my log to each of us in its `With` who was not in it before:
- * to all of them after it is added or logged from a box,
- * to those who came in after it is changed,
- * never after a drag, which leaves `With` as it is.
- * Sends nothing while the reader shares nothing, nor for a whole day.
+ * Sends an entry to each of us in its `With` who was not in it before, never for a whole day.
  * A copy that fails is told, never failing what I saved.
  */
 export function entryShare(id: string, before: Attendee[] = []): void {
@@ -372,10 +314,7 @@ export function entryShare(id: string, before: Attendee[] = []): void {
     }
 }
 
-/**
- * Sends a change of a list to everyone I share with, or to one.
- * One that fails is told, never failing what I saved.
- */
+/** Sends a change of a list to everyone I share with, or to one, a failure told, never failing what I saved. */
 export function listShare(change: ListChange, only?: string): void {
     if (!sharingIs()) return;
     try {
@@ -387,11 +326,7 @@ export function listShare(change: ListChange, only?: string): void {
     }
 }
 
-/**
- * Sends all my foods, meals, places, rooms and platforms to a person,
- * the first time my reader shares with them,
- * the foods first, then the meals, which name them, then the places, then the platforms.
- */
+/** Sends all my lists to a person, the foods before the meals, which name them. */
 function listsShareAll(partner: string): void {
     foodsRead().forEach((food: Food): void => listShare({ call: "foodAdd", with: food }, partner));
     compositionsRead().forEach((meal: Composition): void =>
@@ -415,11 +350,9 @@ function listsShareAll(partner: string): void {
 }
 
 /**
- * Makes a change of a list that came on my own lists,
- * with the same call as the one who made it.
+ * Makes a change of a list that came on my own lists, with the same call.
  *
- * @throws {Error} - When the call is none of a {@link ListChange}, or refuses it,
- *   like a food I have already
+ * @throws {Error} - When the call is unknown or refuses it, like a food I have already
  */
 function listApply(change: ListChange): void {
     if (change.call === "foodAdd") foodAdd(change.with);
@@ -436,12 +369,8 @@ function listApply(change: ListChange): void {
 }
 
 /**
- * Turns an entry that came into a new entry of my log, as the dialog sends one,
- * a skill entry its link anew, to the folder of its skill in my modules,
- * see `titleOf` in `./documents.ts`,
- * and the cooking a meal draws from only when it is an entry `Cook`
- * of my log before the meal,
- * as I have it once it came with us both in its `With`.
+ * Turns an entry that came into a new entry of my log, a skill entry linking anew to its folder.
+ * It keeps the cooking a meal draws from only when that is an entry `Cook` of my log before the meal.
  */
 function entryNewOf(entry: Entry): EntryNew {
     const cooking: Entry | undefined = entry.cooked === "" ? undefined : entryLookup(day.log, entry.cooked)?.[1];
@@ -471,11 +400,9 @@ function entryNewOf(entry: Entry): EntryNew {
 }
 
 /**
- * Takes one shared thing that came:
- * an entry the log has already, by its `UID`, goes untaken,
- * a change of a list the lists refuse, like a food I have, is told and goes too.
+ * Takes one shared thing that came, giving whether it is done with and goes into my trash.
+ * An entry the log has by its `UID` goes untaken, a change the lists refuse is told and goes too.
  * An entry the log cannot take stays, told once.
- * Gives whether it is done with, so it goes into my trash.
  */
 function thingTake(name: string, text: string): boolean {
     try {
@@ -504,10 +431,8 @@ function thingTake(name: string, text: string): boolean {
 }
 
 /**
- * Takes what waits for this reader, the earliest first, each into my trash after:
- * on my server what lies in my box,
- * on Vu's what lies in Vu's box on my server, by SSH, once at a time,
- * then sends what waits in {@link outbox}, since my server is there.
+ * Takes what waits for this reader, the earliest first, each into my trash after.
+ * On Vu's server by SSH once at a time, then sends {@link outbox}, since my server is there.
  */
 export function inboxTake(): void {
     if (!sharingIs()) return;
@@ -541,12 +466,9 @@ export function inboxTake(): void {
 }
 
 /**
- * Starts sharing as the reader starts, while it shares:
- * on my server creates my box, and for each person I share with their box,
- * sending all my lists the first time, see {@link listsShareAll}.
- * Takes what lies in my box and watches it as long as the reader runs,
- * taking what comes after every change once it is quiet for {@link quiet}.
- * On Vu's server takes what waits for it on mine, and again every {@link pollSeconds}.
+ * Starts sharing as the reader starts.
+ * On my server makes the boxes, sending all my lists into a new one, and watches my box.
+ * On Vu's server takes what waits on mine, again every {@link pollSeconds}.
  */
 export function sharedStart(): void {
     if (!sharingIs()) {

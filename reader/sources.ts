@@ -1,21 +1,12 @@
 /**
  * ## Sources
  *
- * Names every folder and file the reader reads,
- * and every address on the web it asks, grouped by area.
- * My new system is every folder in `NomManageplannings`, also one I add later,
- * but my old system, `NomSystemprevious`, which lies beside them and is never read.
- * The reader reads only the new system, my modules, see {@link notes},
- * and the files the skill entries link, see `./documents.ts`, and nothing that is not listed here.
- * Every file at its own place, none from a copy elsewhere, like a draft in `.claude`.
- * It writes only into the new system
- * and, on the server that holds it, into what the dashboards share in `NomKommunikation`,
- * see {@link writeAllowed}, the editor into the notes of my modules
- * and the file of my corrections, see {@link editor},
- * and a click on a folder of a module not there yet makes it,
- * see `folderMake` in `./notes.ts`.
- * A file or folder of the new system that is missing, like the log of a year
- * without entries, counts as empty.
+ * Every folder, file and web address the reader reads, grouped by area.
+ * It reads only my new system, every folder in `NomManageplannings` but `NomSystemprevious`,
+ * my modules and the files the skill entries link, nothing not listed here.
+ * Every file at its own place, never from a copy elsewhere.
+ * It writes only where {@link writeAllowed} and {@link editor} say.
+ * A missing file or folder of the new system counts as empty.
  */
 
 import { homedir } from "node:os";
@@ -27,148 +18,91 @@ export type CalendarSource = {
     ending: string;
 };
 
-/**
- * Folder `NomWorkspace` with all zones.
- * Environment variable `NOM_VAULT` when set, like for a sample vault.
- */
+/** Folder `NomWorkspace`, or `NOM_VAULT` when set. */
 export const vault: string = process.env.NOM_VAULT ?? join(homedir(), "NomWorkspace");
 
-/** Folder `NomManageplannings`, the folders of my new system and my old system beside. */
+/** Folder `NomManageplannings`, my new system and my old system beside. */
 export const manageRoot: string = join(vault, "NomManageplannings");
 
-/**
- * Folder of plan and log of my new system, `NomManagecalendar`:
- * folders of the same depth, no month folders.
- * Every view reads all their plans and logs,
- * the Food view its meals from the logs as the Day view its entries.
- */
+/** Folder `NomManagecalendar` of plan and log, folders of one depth, no month folders. */
 export const calendarRoot: string = join(manageRoot, "NomManagecalendar");
 
-/**
- * Folder `Skilling/` in {@link calendarRoot}:
- * per project a plan and a log, named like the folder of the project.
- * A skill box or entry always has its skill.
- */
+/** Folder `Skilling/`, per project a plan and a log named like its folder. */
 export const skillingRoot: string = join(calendarRoot, "Skilling");
 
-/**
- * Folder `Modules/` in {@link calendarRoot}: per module a plan and a log,
- * named like the folder of the module.
- * The plan also holds the lectures imported from TUMonline
- * and the groups of its tutorials, see `./course.ts`.
- */
+/** Folder `Modules/`, per module a plan and a log named like its folder. */
 export const modulesRoot: string = join(calendarRoot, "Modules");
 
-/** Folder `Meta/` in {@link calendarRoot}: birthdays, holidays and semester dates. */
+/** Folder `Meta/`, birthdays, holidays and semester dates. */
 export const metaRoot: string = join(calendarRoot, "Meta");
 
-/** Folder of my daily notes, `NomFrequencediary`, see `./note.ts`. */
+/** Folder `NomFrequencediary` of my daily notes. */
 export const diaryRoot: string = join(manageRoot, "NomFrequencediary");
 
-/** Folder of my data, `NomMetainformations`, its tables. */
+/** Folder `NomMetainformations` of my tables. */
 export const dataRoot: string = join(manageRoot, "NomMetainformations");
 
-/**
- * My devices, `Devices.md`, one row per device of my tailnet, what it shows of the page,
- * which the reader writes as each of my devices reports it, see `./devices.ts`.
- */
+/** `Devices.md`, one row per device of my tailnet, what it shows of the page. */
 export const devicesFile: string = join(dataRoot, "Devices.md");
 
-/** The people I name, `Persons.md`, see `./persons.ts`. */
+/** `Persons.md`, the people I name. */
 export const personsFile: string = join(dataRoot, "Persons.md");
 
-/**
- * My skills beside the modules of `Modules.md`, `Skills.md`, one row per skill with its link,
- * each person's own, never in the code, see `./skills.ts`.
- */
+/** `Skills.md`, my skills beside the modules, one row per skill, each person's own. */
 export const skillsFile: string = join(dataRoot, "Skills.md");
 
-/**
- * Folder of my modules of the university, `NomModulesuniversity`:
- * one file per module of mine, named like its folder in `NomSkillingmodules`.
- * The overview of all of them is `Modules.md` in {@link dataRoot}.
- */
+/** Folder `NomModulesuniversity`, one file per module of mine, named like its folder. */
 export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
 
-/**
- * The four folders of my new system the reader uses.
- * A change of a file in them tells every open page, see `./changes.ts`.
- */
+/** The four folders of my new system whose changes tell every open page. */
 export const systemRoots: string[] = [calendarRoot, diaryRoot, dataRoot, universityRoot];
 
 /**
- * Folder `NomKommunikation` in `NomWorkspace`, the mailbox between Vu and me,
- * see its `README.md`.
- * Only the server of {@link holder} has it, with our messages,
- * and in the box of each of us `dashboard/`, what the dashboards share,
- * see `./shared.ts`. No other server ever makes or writes it.
+ * Folder `NomKommunikation`, the mailbox between Vu and me.
+ * Only the server of {@link holder} has it, no other server ever makes or writes it.
  */
 export const kommunikationRoot: string = join(vault, "NomKommunikation");
 
-/**
- * The one of us whose server holds {@link kommunikationRoot}, as written in `With`.
- * The reader of every other reaches it by SSH, see `./shared.ts`.
- */
+/** The one of us whose server holds {@link kommunikationRoot}, as written in `With`. */
 export const holder: string = "Sopha";
 
-/**
- * My name as the people I share with write me in `With`, which names my box:
- * environment variable `NOM_NAME` of the reader, set in its service.
- * Empty when unset, then the reader shares nothing.
- */
+/** My name as written in `With`, `NOM_NAME`, empty when unset and then the reader shares nothing. */
 export const myName: string = process.env.NOM_NAME?.trim() ?? "";
 
 /**
- * The people I share with, as I write them in `With`:
- * environment variable `NOM_PARTNERS` of the reader, names parted by commas.
- * None when unset, and never me.
- * The reader of one who is not {@link holder} reaches the server of the holder by SSH
- * under `nom-` and the name in small letters,
- * a host `~/.ssh/config` of its server names with its address, its user and its key.
+ * The people I share with, `NOM_PARTNERS` parted by commas, never me.
+ * One who is not {@link holder} reaches the holder by the SSH host `nom-` and the name in small letters.
  */
 export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
     .split(",")
     .map((name: string): string => name.trim())
     .filter((name: string): boolean => name !== "" && name.toLowerCase() !== myName.toLowerCase());
 
-/**
- * Gives the folder of what the dashboards share in the box of a person
- * in {@link kommunikationRoot}, see `./shared.ts`.
- */
+/** Folder of what the dashboards share in the box of a person. */
 export function dashboardBoxOf(name: string): string {
     return join(kommunikationRoot, `to_${name.toLowerCase()}`, "dashboard");
 }
 
-/**
- * Name of the folder of my old system beside them in `NomManageplannings`,
- * which the reader never reads, not even to list it.
- */
+/** Folder of my old system, never read, not even listed. */
 export const previousName: string = "NomSystemprevious";
 
-/** End of the names of the files of the log: what happened, as events. */
+/** End of the names of the logs, what happened as events. */
 export const logEnding: string = "_Log.ics";
 
 /**
- * End of the names of the files of the plan: the boxes of the plan, as to-dos,
- * see `./boxes.ts`, beside the lectures imported from TUMonline, as events,
- * and in the plan of a module the groups of its tutorials,
- * as to-dos with `X-GROUP` and without `X-NUMBER`, which are no boxes, see `./course.ts`.
+ * End of the names of the plans, the boxes as to-dos and the lectures as events.
+ * The groups of tutorials are to-dos with `X-GROUP` and without `X-NUMBER`, no boxes.
  */
 export const planEnding: string = "_Plan.ics";
 
-/** Folder of my modules in `NomWorkspace`, one folder per module. */
+/** Folder of my modules, one folder per module. */
 export const modulesFolder: string = "NomSkillingmodules";
 
 /**
- * Sources of the notes area, read for it, each module a vault of its own, as in Obsidian.
- * Only the editor writes, see {@link editor},
- * and a click makes a folder of a module not there yet.
- * - `table`: The overview of my modules, `Modules.md`,
- *   its column `Attempt` naming every semester I seriously took it in, graded or not,
- *   by whose newest the menu of the scripts view orders my modules
- *   and the reader finds the modules of the semester,
- *   see `menuRead` and `activeModulesRead` in `./notes.ts`.
- *   Its column `Registered (not attempt)` the reader does not read.
+ * Sources of the notes area, each module a vault of its own, as in Obsidian.
+ * - `table`: `Modules.md`, its column `Attempt` every semester I seriously took a module,
+ *   whose newest orders the menu and finds the modules of the semester.
+ *   Its column `Registered (not attempt)` is not read.
  */
 export type NotesSources = {
     modules: string;
@@ -182,10 +116,9 @@ export const notes: NotesSources = {
 };
 
 /**
- * Places the editor writes, the only ones besides the files of the new system,
- * see {@link systemFiles}.
- * - `corrections`: Each save of a note of my modules as a unified diff at its end,
- *   out of Git, for the learn skill to turn into rules of my style.
+ * Places the editor writes besides the new system.
+ * - `corrections`: Each save of a note as a unified diff at its end, out of Git,
+ *   for the learn skill to turn into rules of my style.
  */
 export type EditorSources = {
     modules: string;
@@ -199,10 +132,9 @@ export const editor: EditorSources = {
 };
 
 /**
- * Files of my new system the editor shows, see `./files.ts`.
- * - `tree`: Folder whose tree the editor shows on the left,
- *   without `previous` and without hidden files and folders.
- * - `previous`: Left out of the tree at any depth and never read.
+ * Files of my new system the editor shows.
+ * - `tree`: Folder of the tree on the left, without `previous` and hidden files and folders.
+ * - `previous`: Left out at any depth and never read.
  */
 export type SystemFilesSources = {
     tree: string;
@@ -220,26 +152,18 @@ export function moduleIs(path: string): boolean {
     return path.startsWith(`${modulesFolder}/`);
 }
 
-/**
- * Name of a module, of its folder and of its plan and its log:
- * its code, capitals and then digits, and `_` first.
- */
+/** Name of a module, its code of capitals and digits, then `_`. */
 export const moduleName: RegExp = /^[A-Z]+\d+_/;
 
 /**
- * Sources of the day area, all in the new system.
- * - `plan`: Calendar of what I intend, read as the boxes of each day,
- *   but for the groups of my tutorials, see `./boxes.ts`.
- * - `log`: Calendar of what really happened, my one calendar.
- * - `system`: Calendars of birthdays, holidays and semester dates,
- *   shown above the boxes of their day, each a whole day.
- *   `Birthdays.ics` I write by hand, a birthday a yearly series.
- *   `University.ics` holds the official semester dates of TUM, its breaks too,
- *   a lecture-free period on each of its days,
- *   a semester and a lecture period only on their first and their last day.
- *   My gift idea for a birthday is its `DESCRIPTION`, see `./gifts.ts`.
- * - `places`, `rooms`, `online`: My places, the rooms of the university
- *   and my platforms online, see `./places.ts`.
+ * Sources of the day area.
+ * - `plan`: What I intend, read as the boxes of each day but the groups of tutorials.
+ * - `log`: What really happened, my one calendar.
+ * - `system`: Birthdays, holidays and semester dates, each a whole day above the boxes.
+ *   A birthday is a yearly series, its `DESCRIPTION` my gift idea.
+ *   `University.ics` holds a lecture-free period on each of its days,
+ *   a semester and a lecture period only on their first and last day.
+ * - `places`, `rooms`, `online`: My places, the rooms of the university and my platforms.
  */
 export type DaySources = {
     plan: CalendarSource[];
@@ -264,31 +188,22 @@ export const day: DaySources = {
     online: join(dataRoot, "Online.md"),
 };
 
-/**
- * Calendars of the days a series of my course skips:
- * the holidays where they are the university's,
- * and the dates of the semester the university does not teach on,
- * see `lectureFreeOf` in `./course.ts`.
- */
+/** Calendars of the days a series of my course skips, holidays and days the university does not teach. */
 export const holidays: CalendarSource[] = [
     { folder: metaRoot, ending: "Holidays.ics" },
     { folder: metaRoot, ending: "University.ics" },
 ];
 
-/**
- * Skill log: each block of learning is an entry `Skill` in the log of its skill,
- * holding the attempts made in it.
- */
+/** Each block of learning an entry `Skill` in the log of its skill, holding its attempts. */
 export const skillLog: CalendarSource[] = [{ folder: calendarRoot, ending: logEnding }];
 
-/** Log of the trackers of the day, sleep and water, see `./trackers.ts`. */
+/** Log of the trackers of the day, sleep and water. */
 export const trackerLog: CalendarSource[] = [{ folder: calendarRoot, ending: logEnding }];
 
 /**
- * Sources of the food area, see `./food.ts`.
- * - `search`: Search of Open Food Facts, which finds products by their names.
- * - `product`: Products of Open Food Facts,
- *   which gives a product by its barcode put after the address.
+ * Sources of the food area.
+ * - `search`: Open Food Facts search by name.
+ * - `product`: Open Food Facts product by the barcode after the address.
  */
 export type FoodSources = {
     foods: string;
@@ -308,11 +223,9 @@ export const food: FoodSources = {
 };
 
 /**
- * Sources of the sport area, see `./sport.ts`.
- * - `weights`: My weight, one row per day I weighed myself,
- *   each person's own, never in the code.
- * - `video`: oEmbed of YouTube,
- *   which gives the title and the channel of a video by its link put after the address.
+ * Sources of the sport area.
+ * - `weights`: My weight, one row per day I weighed myself, each person's own.
+ * - `video`: YouTube oEmbed, title and channel by the link after the address.
  */
 export type SportSources = {
     workouts: string;
@@ -333,10 +246,7 @@ export const sport: SportSources = {
     video: "https://www.youtube.com/oembed",
 };
 
-/**
- * Folders and topics of the files of every category but `Skill` in {@link calendarRoot},
- * any other category in those of the topic `Living` in `Living/`.
- */
+/** Topic folder of each category but `Skill`, any other in `Living/`. */
 export const topics: { [category: string]: string } = {
     Sleep: "Health/Sleep",
     Food: "Living/Food",
@@ -345,31 +255,22 @@ export const topics: { [category: string]: string } = {
 };
 
 /**
- * Builds the path of a file of a topic and a year in {@link calendarRoot}:
- * the log or the plan of the topic of a category in the year of a day,
+ * Path of the log or plan of the topic of a category in a year,
  * an entry by the year of its start in Berlin time, a box by the year of its day.
  */
 export function topicFileOf(category: string, date: string, ending: string): string {
     return join(calendarRoot, `${topics[category] ?? "Living/Living"}_${date.slice(0, 4)}${ending}`);
 }
 
-/**
- * Builds the path of a file of a skill, its log or its plan:
- * a module's, see {@link moduleName}, in {@link modulesRoot},
- * any other in {@link skillingRoot}.
- */
+/** Path of the log or plan of a skill, a module's in {@link modulesRoot}, any other in {@link skillingRoot}. */
 export function skillFileOf(name: string, ending: string): string {
     return join(moduleName.test(name) ? modulesRoot : skillingRoot, `${name}${ending}`);
 }
 
 /**
- * Tells whether the reader may write a file:
- * only inside my new system, `NomManageplannings` but my old system,
- * and a hidden file or folder right in it, like `.obsidian`,
- * or, on the server of {@link holder} only,
- * inside what the dashboards share in a box of `NomKommunikation`,
- * never beside our messages.
- * The editor leaves both out at any depth, see {@link systemFiles}.
+ * Tells whether the reader may write a file.
+ * Inside `NomManageplannings` but my old system and the hidden files and folders right in it.
+ * On the server of {@link holder} also inside `dashboard/` of a box, never beside our messages.
  * {@link resolve} takes out `..`, so no path leaves the folders.
  */
 export function writeAllowed(file: string): boolean {
@@ -386,10 +287,7 @@ export function writeAllowed(file: string): boolean {
     );
 }
 
-/**
- * Gives the path of a file from {@link vault} on, with `/` on every system,
- * as a dialog of the page shows the file of its entry.
- */
+/** Path of a file from {@link vault} on, with `/` on every system. */
 export function vaultPathOf(file: string): string {
     return relative(vault, file).split(sep).join("/");
 }
