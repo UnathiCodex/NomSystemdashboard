@@ -92,7 +92,7 @@ body:has(> .food) {
     border-top: 1px solid var(--line);
 }
 
-/* The totals of the day filling the bar after the date, Energy wide enough for `1.492 kcal`,
+/* The totals of the day filling the bar after the date, the kcal wide enough for `1.492 kcal`,
    the number of meals narrower */
 .food-bar .trackers {
     flex: 1;

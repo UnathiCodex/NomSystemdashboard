@@ -47,7 +47,7 @@ function totalsShow(day: FoodDay): void {
         .getElementById("food-totals")
         ?.replaceChildren(
             totalOf("Meals", String(day.meals.length)),
-            totalOf("Energy", amountTextOf(day.kcal, "kcal")),
+            totalOf("Food", amountTextOf(day.kcal, "kcal")),
             totalOf("Protein", amountTextOf(day.protein, "g")),
             totalOf("Carbs", amountTextOf(day.carbs, "g")),
             totalOf("Fat", amountTextOf(day.fat, "g")),

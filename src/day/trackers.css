@@ -103,7 +103,7 @@
     color: var(--text-muted);
 }
 
-/* The icon of a name of a tile, as high as its value */
+/* The icon of a name of a tile, a little bigger than its value, so it tells at a glance what it counts */
 .tracker-name > svg.lucide {
     width: 1.0625rem;
     height: 1.0625rem;
@@ -115,8 +115,9 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* Value of a tile in the size of text, never above the date of its bar */
 .tracker-value {
-    font-size: 1.0625rem;
+    font-size: var(--text-size);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
