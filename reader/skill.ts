@@ -52,8 +52,8 @@
  * so the rounds do the skill box of the module, see `skillBoxOf` in `boxes.ts`.
  *
  * Due by my protocol, per section, a note,
- * as `~/NomWorkspace/.claude/skills/learn/3-session-learn/session-learn.md` says it,
- * see `## Rounds`:
+ * as `~/NomWorkspace/.claude/skills/learn/SKILL.md` says it,
+ * see `## session`:
  * round 0 is its whole theory, its first Example and its first Task,
  * gone over until the Task is right, since the first can only succeed.
  * Every later round its theory from my head and the next Task not solved yet.
@@ -664,7 +664,7 @@ function roundsOf(lines: RoundLine[]): Round[] {
 }
 
 /**
- * Tells whether the Task of a round decided it, see `session-learn.md`:
+ * Tells whether the Task of a round decided it, see `SKILL.md`:
  * right, also right after a wrong one and its Example,
  * in a later round wrong for good, wrong twice or wrong once I closed it.
  * Round 0 ends only right, since its first Task can only succeed.
@@ -704,7 +704,7 @@ function dueAfter(level: number, day: string, exam: ExamDate): string {
  * a right one counts as a run once decided on or after the day it was due,
  * one before counts as none, so the runs stay spaced.
  * One wrong for good starts the spacing over,
- * since all other rounds planned for the section fall away (`session-learn.md`).
+ * since all other rounds planned for the section fall away (`SKILL.md`).
  */
 function levelsOf(rounds: Round[], before: string): Levels {
     let level: number = 0;
@@ -738,7 +738,7 @@ function dueOf(earlier: Round[], result: Result, day: string, exam: ExamDate): s
 }
 
 /**
- * Gives the cold Task of a round of a section, see `session-learn.md`:
+ * Gives the cold Task of a round of a section, see `SKILL.md`:
  * the one its lines name, else the first variant not solved right yet,
  * so round 0 takes the first. Once every variant is solved, they take turns.
  */

@@ -29,7 +29,7 @@
  * The Task decides the round,
  * and the reader writes the day of the next one with its result,
  * see `reader/skill.ts`
- * and `~/NomWorkspace/.claude/skills/learn/3-session-learn/session-learn.md`.
+ * and `~/NomWorkspace/.claude/skills/learn/SKILL.md`.
  * Where I am lives in the log alone, never in the browser or the note:
  * `Next` writes the step it goes on to, its heading,
  * where I stand, into the one line `X-ROUND` of the section
