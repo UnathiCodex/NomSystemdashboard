@@ -1,12 +1,9 @@
 /**
  * ## Trash
  *
- * Puts a file or a folder into the trash of the user the reader runs as,
- * never removing anything for good,
- * by the Trash specification of freedesktop.org,
+ * Puts a file or a folder into my trash by the freedesktop.org specification, never removing for good,
  * so `gio trash --restore` and a file manager can bring it back.
  * A name the trash holds already gets a number before its ending.
- * What Vu and I share and our messages go there once done, see `shared.ts` and `gate.ts`.
  */
 
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -30,13 +27,10 @@ function dateOf(moment: Date): string {
 }
 
 /**
- * Puts a file or a folder into the trash:
- * first its information under a name no other thing of the trash has,
- * written only if that name is free, then the thing itself under that name.
+ * Writes its information under a free name first, then moves the thing there.
  * The information goes again when the thing cannot move.
  *
- * @throws {Error} - When the trash holds every name tried,
- *   or the thing cannot move, like one on another disk
+ * @throws {Error} - When every name tried is taken, or the thing cannot move, like one on another disk
  */
 export function trashPut(thing: string): void {
     const path: string = resolve(thing);

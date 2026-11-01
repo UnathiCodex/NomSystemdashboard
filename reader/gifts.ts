@@ -1,11 +1,9 @@
 /**
  * ## Gifts
  *
- * Writes my gift idea for a birthday or holiday
- * as its `DESCRIPTION` in its file, `Birthdays.ics` or `Holidays.ics`,
- * so it shows below it every year, see `boxes.ts`.
- * Every other line of the file stays as it is, byte for byte.
- * I write one only when I have one, and an empty one takes the line out again.
+ * My gift idea for a birthday or holiday, its `DESCRIPTION` in `Birthdays.ics` or `Holidays.ics`.
+ * Every other line of the file stays byte for byte.
+ * An empty idea takes the line out.
  */
 
 import { fileOfId, propertiesPut } from "./calendar.ts";
@@ -18,11 +16,9 @@ export type Gift = {
 };
 
 /**
- * Writes my gift idea as its `DESCRIPTION` on one line, spaces in a row one,
- * none at the ends.
+ * Writes my gift idea on one line, spaces in a row one.
  *
- * @throws {Error} - When no birthday or holiday has the identifier,
- *   or its file does not hold it once, like a series with a changed occurrence
+ * @throws {Error} - When no birthday or holiday has the id, or its file holds it more than once
  */
 export function giftWrite(sent: Gift): void {
     const id: string = String(sent.id ?? "");
