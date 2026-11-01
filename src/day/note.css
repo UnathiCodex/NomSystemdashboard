@@ -1,4 +1,4 @@
-/* Daily note below plan and log, see `note.ts`, none on a phone */
+/* Daily note below plan and log, none on a phone */
 /* Rest of the daily note, scrolling alone when longer than a fifth of the screen */
 .day-note {
     grid-column: 1 / -1;
@@ -10,8 +10,7 @@
     display: none;
 }
 
-/* My gratitude below the plan and my points about the day below the log,
-   as wide as them, all of it but the names hidden while folded, see `.note-fold` */
+/* My gratitude below the plan and my points about the day below the log, only the names while folded */
 .note-boxes {
     display: grid;
     grid-column: 1 / -1;
@@ -23,11 +22,8 @@
     grid-column: 1 / -1;
 }
 
-/* Name of a list as a button looking like the names of plan and log,
-   the grey fold arrow of a chapter of a skill before it.
-   The arrow turns light under the pointer, since the name is light already.
-   A click on either name folds both lists and the note,
-   see `foldToggle` in `evening.ts` */
+/* Name of a list as a button with the grey fold arrow of a chapter before it.
+   The arrow turns light under the pointer, since the name is light already. */
 .note-fold {
     display: inline-flex;
     align-items: center;
@@ -67,9 +63,8 @@
     display: none;
 }
 
-/* A list of points of the note in the editor of my files, see `points.ts`,
-   in the lines of the page, not the higher ones of a note.
-   Both lists equally high, scrolling alone when longer than a third of the screen */
+/* A list of points in the lines of the page, not the higher ones of a note.
+   Both lists equally high, scrolling alone when longer than a third of the screen. */
 .note-points {
     flex: 1;
     max-height: 33dvh;
@@ -138,7 +133,7 @@
     color: var(--text-muted);
 }
 
-/* Phone: no note, since a phone shows only plan and log, see `../main.ts` */
+/* Phone: no note, since a phone shows only plan and log */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .note-boxes {
         display: none;

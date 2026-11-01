@@ -1,41 +1,21 @@
-/* Grey page, plan and log told apart by their grey, no colour;
-   text in two tones only, white for what a thing is and its facts, one grey for the rest,
-   a fact in the same tone wherever it stands,
-   that grey a little stronger than Obsidian's, so it reads easily;
-   every grey line light enough to show on my PC monitor and still calm,
-   the guide at the left of indented parts a little lighter, `--guide`, so it shows;
-   notes in the greys of my Obsidian's dark theme with my accent #969696,
-   a page of one width on every computer, `--reading-width`,
-   as wide as my laptop holds beside the tree,
-   so I write on the same page on the laptop and on the 4K monitor;
-   controls sized for my 4K monitor, a small square button a little less round,
-   `--chip-radius`, so it looks as round as a big one;
-   the tree of the scripts and of my new system 0.9rem, `--tree-text`,
-   two steps bigger than Obsidian's 13 px file explorer,
-   so it reads easily while learning,
-   and as wide as my widest folder name needs in bold,
-   `IN2028_BusinessAnalyticsMachineLearning`, so every note fits on its line;
-   what is picked a calm lighter grey with a soft line, never glaring white,
-   the greys those of the dark Claude app;
-   a card one grey lighter under the pointer, `--fill-over`,
-   halfway to the grey of what is picked, so it lights up without looking picked;
-   `--icon-over` the light of the text seen through 8 %,
-   so it is as faint a step lighter on the page as on a card;
-   a row of the tree under the pointer a grey below a card, `--row-over`,
-   so it never looks like the note shown, which has the grey of a card;
-   hover fades in over 150 ms after 100 ms, so passing over a list stays calm;
-   everything of an area one step from the rail, `--side-room`,
-   as far as from the right edge, so a control and its content start in one line;
-   plan and log in `--day-text`, so the one line of a short entry fills a quarter hour,
-   and every quarter hour more one line more, on a phone as on the computer.
-   Every size is in rem, so one size scales the whole page, also the time grid,
-   only the lines of 1 or 2 px stay thin on purpose:
-   the page is drawn for my laptop, 1600 px wide, with a root of 20 px,
-   and a wider page grows as a whole, as if zoomed,
-   so my desktop's 1920 px get 24 px and show exactly what the laptop shows;
-   `max` keeps the root from going below 20 px in a narrow window;
-   `geometricPrecision` keeps the exact width of each letter, not rounded to whole pixels,
-   so a line breaks at the same word on both */
+/* Grey page, plan and log told apart by their grey, no colour.
+   - Text: white for what a thing is and its facts, one grey a little stronger than Obsidian's for the rest.
+   - Lines: light enough to show on my PC monitor and still calm, `--guide` a little lighter, so it shows.
+   - Notes: the greys of my Obsidian's dark theme with my accent #969696.
+   - Width: `--reading-width` as my laptop holds beside the tree, so I write on one page everywhere.
+   - Chips: a small square button a little less round, so it looks as round as a big one.
+   - Tree: 0.9rem, two steps bigger than Obsidian's, as wide as `IN2028_BusinessAnalyticsMachineLearning` in bold.
+   - Picked: a calm lighter grey with a soft line, never glaring white, the greys of the dark Claude app.
+   - Hover: `--fill-over` halfway to picked, so a card lights up without looking picked.
+   - Icon: `--icon-over` the text seen through 8 %, so it is as faint a step on the page as on a card.
+   - Row: `--row-over` a grey below a card, so it never looks like the note shown.
+   - Fade: hover fades in over 150 ms after 100 ms, so passing over a list stays calm.
+   - Side: `--side-room` from the rail as from the right edge, so a control and its content start in one line.
+   - Day: `--day-text`, so a short entry's one line fills a quarter hour, every quarter hour one line more.
+   - Sizes: in rem, so one size scales the whole page, only lines of 1 or 2 px stay thin on purpose.
+   - Root: 20 px at my laptop's 1600 px, a wider page grows as if zoomed, so 1920 px show the same.
+   - Narrow: `max` keeps the root from going below 20 px.
+   - Letters: `geometricPrecision` keeps their exact width, so a line breaks at the same word on both. */
 :root {
     font-size: max(20px, 1.25vw);
     text-rendering: geometricPrecision;
@@ -83,11 +63,9 @@
     color-scheme: dark;
 }
 
-/* Phone: every size a tenth smaller than on a computer, so a line holds more of a name,
-   while the text stays 17 px, as big as the text of an app on Android,
-   and a button or a field 52 px, a finger high;
-   every button one shape, a rectangle with the round corners of `--chip-radius`,
-   never a pill or a circle, as most buttons of the computer are */
+/* Phone: every size a tenth smaller, so a line holds more of a name.
+   The text stays 17 px as in an Android app, a button or a field 52 px, a finger high.
+   Every button a rectangle with `--chip-radius`, never a pill or a circle. */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     :root {
         font-size: 112.5%;
@@ -96,8 +74,7 @@
     }
 }
 
-/* A screen without a pointer, like a phone, shows what lights up at once,
-   since a tap leaves its hover behind */
+/* A screen without a pointer lights up at once, since a tap leaves its hover behind */
 @media (hover: none) {
     :root {
         --hover-in: 0s;

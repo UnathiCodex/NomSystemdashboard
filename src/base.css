@@ -1,12 +1,10 @@
-/* Sizes include padding and border;
-   a tap on a phone draws no box of the browser's blue over what it hits */
+/* Sizes include padding and border, a tap draws no box of the browser's blue */
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Scrollbars thin and calm, so they hardly show, on no track of their own;
-   Firefox, which has none of these, takes its thin bar in the same greys */
+/* Scrollbars thin and calm on no track of their own, Firefox's thin bar in the same greys */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -33,9 +31,7 @@
     }
 }
 
-/* Noto Sans, the font of the page, see `assets/sources.md`:
-   every weight in one variable file, in three parts by the letters it holds,
-   which the browser loads only once a text needs them */
+/* Noto Sans, every weight in one variable file, in three parts the browser loads only once a text needs them */
 @font-face {
     font-family: "Noto Sans Variable";
     font-style: normal;
@@ -103,9 +99,8 @@
     display: none !important;
 }
 
-/* Whole page: one screen high, so an area's own padding, `--side-room`,
-   is all the room between the rail and its content;
-   the line under a link clear of letters like g and y */
+/* Whole page one screen high, so `--side-room` is all the room between the rail and its content.
+   The line under a link clear of letters like g and y. */
 body {
     display: flex;
     flex-direction: column;
@@ -120,8 +115,7 @@ body {
     color: var(--text-main);
 }
 
-/* Areas at the left edge of the screen, the rail, as VS Code's bar of activities,
-   the shown one marked only by its light icon */
+/* The rail of areas at the left, as VS Code's bar of activities, the shown one by its light icon */
 .areas {
     position: fixed;
     inset: 0 auto 0 0;
@@ -140,7 +134,7 @@ body {
     height: calc(var(--control-height) - 0.5rem);
 }
 
-/* Icons of the areas, written in `index.html`, drawn as Lucide draws its icons */
+/* Icons of the areas, drawn as Lucide draws its icons */
 .areas svg {
     fill: none;
     stroke: currentColor;
@@ -153,11 +147,9 @@ body {
     color: var(--text-main);
 }
 
-/* Icon button, see `iconPut` in `icons.ts`: a loose icon in the grey of quiet text,
-   under a pointer on a faint round circle, never a box, as Material draws it,
-   so the button keeps its size, not on a phone, where a tap would leave a circle lit.
-   Its place sets only its size and where it needs it its own grey,
-   so the main button of a place reads at a glance */
+/* Icon button, a loose grey icon, under the pointer on a faint circle as Material draws it.
+   Not on a phone, where a tap would leave a circle lit.
+   Its place sets only its size and its own grey, so the main button of a place reads at a glance. */
 .icon-button {
     position: relative;
     isolation: isolate;
@@ -205,9 +197,8 @@ body {
     }
 }
 
-/* The bar of a day, in the day and in the food view alike,
-   going on below where it has no room, never over the edge;
-   the icon back to today off on today, so the bar looks the same on every day */
+/* The bar of a day, going on below without room, never over the edge.
+   The icon back to today only off on today, so the bar looks the same on every day. */
 .day-bar {
     display: flex;
     flex-wrap: wrap;
@@ -225,8 +216,7 @@ body {
     font-weight: 400;
 }
 
-/* The date of the bar on the computer in the size of the calendar's title,
-   so the timer of a session beside it keeps its room, also on the laptop */
+/* The date in the size of the calendar's title, so the timer beside it keeps its room on the laptop */
 .day-bar .day-title {
     font-size: 1.25rem;
     font-weight: 600;
@@ -266,18 +256,15 @@ textarea {
     color: inherit;
 }
 
-/* Fold arrow of every folding thing, Lucide's chevron as Obsidian draws it,
-   for a mask in the grey of its place */
+/* Fold arrow, Lucide's chevron as Obsidian draws it, a mask in the grey of its place */
 :root {
     --fold-icon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' \
 viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' \
 stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
 }
 
-/* Hover is soft everywhere, with the one timing of `variants.css`:
-   what lights up fades in after a moment and back as soon as the pointer leaves;
-   anything else that lights up takes the same two in the rule of its own;
-   `:where` keeps this below every rule of its own, like that of the entries */
+/* Hover fades in after a moment and back as soon as the pointer leaves, with the one timing.
+   `:where` keeps this below every rule of its own, like that of the entries. */
 :where(a, button, summary) {
     transition:
         color var(--hover-out),
@@ -292,9 +279,7 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
         border-color var(--hover-in);
 }
 
-/* The one plus and the one cross, see `plusPut` and `crossPut` in `icons.ts`,
-   their icons a little smaller than those of buttons,
-   so they stay quiet beside their text */
+/* The one plus and the one cross, smaller than icons of buttons, so they stay quiet beside their text */
 .plus-quiet {
     align-self: flex-start;
     padding: 0.25rem 0;
@@ -310,9 +295,7 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
     height: 0.9375rem;
 }
 
-/* The plus with the text typed at the end of a list with a search,
-   see `plusTypedPut` in `icons.ts`, shown nowhere while nothing is typed:
-   a row of the list, grey, a grey lighter under the pointer */
+/* The plus with the text typed at the end of a list with a search, hidden while nothing is typed */
 .picker-new {
     display: flex;
     flex: none;
@@ -342,8 +325,7 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
     height: 0.9375rem;
 }
 
-/* Type word of a block of a section, a small grey box before its name,
-   and the number of a box of a series, see `day/series.ts`, so both look alike */
+/* Type word of a block before its name and the number of a box of a series, alike in a small grey box */
 .block-kind {
     display: inline-block;
     margin-right: 0.75em;
@@ -357,10 +339,8 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
     vertical-align: middle;
 }
 
-/* The one search field of the page, see `searchFieldOf` in `icons.ts`,
-   without a line of the focus,
-   since a list opens with the cursor in its search, which would frame it every time;
-   without the browser's own clear cross, which is no Lucide icon */
+/* The one search field, no focus line, since a list opens with the cursor in it, which would frame it every time.
+   Without the browser's own clear cross, which is no Lucide icon. */
 .search-field {
     display: flex;
     flex: none;
@@ -405,16 +385,12 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
     outline-offset: 2px;
 }
 
-/* The line around a button or a link without corners of its own slightly rounded,
-   as every frame of the page;
-   `:where` around all of it lets a button with corners of its own keep them */
+/* The focus line slightly rounded as every frame, `:where` lets a button with corners of its own keep them */
 :where(button:focus-visible, a:focus-visible, summary:focus-visible) {
     border-radius: 0.25rem;
 }
 
-/* Text selected anywhere in the calm grey of what is picked, as in the editor,
-   and a ticked box of a list in a note in the grey of what is picked,
-   never the browser's blue */
+/* Text selected and a ticked box in the grey of what is picked, never the browser's blue */
 ::selection {
     background: var(--chosen);
 }
@@ -423,8 +399,7 @@ stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
     accent-color: var(--chosen-line);
 }
 
-/* Icons of buttons one icon size big, never squeezed;
-   `icons.ts` gives each its class `lucide` */
+/* Icons of buttons one icon size big, never squeezed */
 svg.lucide {
     flex: none;
     width: var(--icon-size);
@@ -439,8 +414,7 @@ h3 {
     font-weight: 600;
 }
 
-/* The round of a section, a small grey box after its note in the dialog,
-   as the box of the round in the status line of the editor */
+/* The round of a section, a small grey box after its note */
 .round-tag {
     box-sizing: border-box;
     width: 7.25em;
@@ -459,8 +433,7 @@ button.round-tag:hover {
     color: var(--text-main);
 }
 
-/* Phone: only plan and log of the day, see `main.ts`,
-   so no areas at the left and the whole screen stays free */
+/* Phone: only plan and log, so no rail and the whole screen stays free */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     body {
         padding-left: 0;
@@ -470,10 +443,8 @@ button.round-tag:hover {
         display: none;
     }
 
-    /* The bar of a day on a phone: the date at the left,
-       a step bigger than on the computer, since no timer stands beside it,
-       and the icon back to today at the right end, so a thumb hits it;
-       no arrows, since a swipe sideways changes the day, see `day/swipe.ts` */
+    /* The date a step bigger, since no timer stands beside it, the icon back to today at the right for the thumb.
+       No arrows, since a swipe sideways changes the day. */
     .day-bar {
         flex-wrap: nowrap;
     }
@@ -493,9 +464,7 @@ button.round-tag:hover {
         margin-left: auto;
     }
 
-    /* A small control on a phone as small as it looks, but a finger's width to hit:
-       a tap `--tap` around it, which takes no room of its line,
-       every stylesheet gives its own small controls their tap the same way, at its end */
+    /* A small control a finger's width to hit, a tap `--tap` around it, which takes no room of its line */
     .plus-quiet,
     .cross-quiet {
         --tap: -0.5rem;
@@ -509,15 +478,12 @@ button.round-tag:hover {
         inset: var(--tap);
     }
 
-    /* The plus with the text typed on a phone a rectangle
-       with the round corners of every button there */
+    /* The plus with the text typed with the round corners of every button on a phone */
     .picker-new {
         border-radius: var(--chip-radius);
     }
 
-    /* A swipe down at the top of the log never pulls the page to load it again,
-       as Chrome does, which would lose what I am typing,
-       since the page itself never scrolls on a phone */
+    /* A swipe down never reloads the page as Chrome does, which would lose what I am typing */
     html {
         overscroll-behavior-y: none;
     }

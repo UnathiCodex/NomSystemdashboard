@@ -1,5 +1,4 @@
-/* Log of the day: the time grid, its entries in grey and the line of now,
-   inside an entry its lines, which a box of the plan shares in part */
+/* Log of the day, the time grid, its entries and the line of now, their lines shared in part with the plan */
 /* Hour labels of the time grid, their margin sets the height of every slot */
 .slot-label {
     margin: var(--slot-margin) 0.5rem;
@@ -7,9 +6,8 @@
     line-height: 1rem;
 }
 
-/* Entries never as light as what is picked,
-   so a range being selected stands out over them, see `.entry-selection`.
-   4px apart, so two entries one right after the other stand apart at a glance */
+/* Entries never as light as what is picked, so a range being selected stands out over them.
+   4px apart, so two entries one right after the other stand apart at a glance. */
 .entry {
     margin-bottom: 4px;
     background-color: var(--fill-over);
@@ -20,9 +18,8 @@
     margin-bottom: 1px;
 }
 
-/* An entry turns only a little lighter under the pointer,
-   so passing over entries stays calm.
-   `.entry:hover` wins over the theme's rule, being as exact and coming after it */
+/* An entry only a little lighter under the pointer, so passing over entries stays calm.
+   `.entry:hover` wins over the theme's rule, being as exact and coming after it. */
 @media (hover: hover) {
     .entry {
         transition: background-color var(--hover-out);
@@ -34,26 +31,22 @@
     }
 }
 
-/* The range being selected, drawn as an entry, see `selectMirror` in `day.ts`,
-   so it stands out over an entry it lies on,
-   also under the pointer, being as exact as `.entry:hover` and coming after it */
+/* The range being selected drawn as an entry, standing out over one it lies on.
+   Also under the pointer, being as exact as `.entry:hover` and coming after it. */
 .entry.entry-selection {
     background-color: var(--chosen);
 }
 
-/* Entries end 1rem before the right edge of the column, as in Google Calendar,
-   so beside each one a free strip stays to select a new entry.
-   The theme puts that margin on the layers of the entries, of an entry being dragged
-   and of a range being selected, each the parent of the parent of an entry.
-   The glass marks lie beside these layers and keep the edge */
+/* Entries end 1rem before the right edge, so a free strip stays to select a new entry.
+   The theme puts that margin on the layers, each the parent of the parent of an entry.
+   The glass marks lie beside these layers and keep the edge. */
 .day-calendar [role="gridcell"] > :has(> * > .entry) {
     margin-inline-end: 1rem;
 }
 
 /* Line of now behind the entries, so it never runs through their text.
-   The dot moves left by half its width more,
-   into the gap before the column, where no entry covers it.
-   `.day-calendar .now-line` wins over the theme's grey and margin, being more exact */
+   The dot moves left into the gap before the column, where no entry covers it.
+   `.day-calendar .now-line` wins over the theme's grey and margin, being more exact. */
 .day-calendar :has(> .now-line) {
     z-index: 0;
 }
@@ -67,14 +60,10 @@
     margin-inline-start: -12px;
 }
 
-/* Inside of an entry: all its lines in one size, as in Google Calendar.
-   Its lines cut at the edge by `clip`, which scrolls nothing,
-   so its lines can stay in sight, see `.entry-lines`.
-   A taller entry keeps 0.42rem above its first line and as much below its last,
-   so the one line of half an hour sits in its middle,
-   and 45 minutes hold two lines, see `lineMinutes` in `day.ts`.
-   A short one keeps no space above and below its one line,
-   so a quarter hour, 1.025rem high less the 1px below it, holds it */
+/* Inside of an entry, all its lines in one size.
+   Cut at the edge by `clip`, which scrolls nothing, so its lines can stay in sight.
+   0.42rem above and below, so half an hour's one line sits in its middle and 45 minutes hold two.
+   A short one keeps no space, so a quarter hour, 1.025rem less the 1px below it, holds its line. */
 .entry-inner {
     overflow: clip;
     padding-block: 0.42rem;
@@ -88,21 +77,17 @@
     line-height: 1.2;
 }
 
-/* All lines of an entry, as high as the lines it has room for, set by `day.ts`,
-   so a line it has no room for hides as a whole, never cut in half.
-   An entry scrolled partly out of sight at the top keeps its lines in sight,
-   so a night scrolled to 06:00 still says `Sleep: Night`, see `linesFit` in `day.ts`.
-   A line that an entry on top of it covers ends before that entry */
+/* All lines of an entry, as high as the lines it has room for, so a line hides whole, never cut in half.
+   An entry scrolled partly out of sight keeps its lines in sight, so a night at 06:00 still says `Sleep: Night`.
+   A line that an entry on top of it covers ends before that entry. */
 .entry-lines {
     position: sticky;
     top: 0.42rem;
     overflow: hidden;
 }
 
-/* One line in parts: what, then the time, then the place, parted by a middle dot.
-   Only the place gives way, cut with an ellipsis.
-   Where what and the time are wider than the entry, the time moves onto a next line,
-   which `.entry-lines` hides, so what stays whole */
+/* One line of what, time and place, only the place cut with an ellipsis.
+   Where what and the time are wider than the entry, the time moves onto a hidden line, so what stays whole. */
 .entry-line {
     display: flex;
     flex-wrap: wrap;
@@ -123,8 +108,7 @@
     white-space: nowrap;
 }
 
-/* Note of a taller entry below its line, grey like the time,
-   which `day.ts` sets as its line clamp */
+/* Note of a taller entry below its line, its line clamp set by `day.ts` */
 .entry-note {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -138,8 +122,7 @@
     font-weight: 700;
 }
 
-/* Time in normal weight and the one grey of the page, never cut.
-   Only a line narrower than the time alone ends it with an ellipsis */
+/* Time never cut, but on a line narrower than the time alone */
 .entry-time {
     flex: none;
     max-width: 100%;
@@ -149,17 +132,14 @@
     color: var(--text-muted);
 }
 
-/* Place of an entry with room for three lines on the third,
-   going on over the lines below, never cut there */
+/* Place of an entry with room for three lines on the third, never cut there */
 .entry-place {
     overflow-wrap: anywhere;
     color: var(--text-muted);
 }
 
-/* Place beside the time in an entry with room for one or two lines:
-   it takes only the room left, so a short entry cuts the place, never what or the time.
-   With less room than for about four letters it moves onto the next line,
-   which `.entry-lines` hides, so no dot stands alone at the end */
+/* Place beside the time, only the room left, so a short entry cuts the place, never what or the time.
+   With room for less than about four letters it moves onto a hidden line, so no dot stands alone. */
 .entry-beside {
     flex: 1 1 0;
     min-width: min(5em, 100%);
@@ -167,9 +147,7 @@
     text-overflow: ellipsis;
 }
 
-/* Arrow of a route, see `routeArrowOf` in `places.ts`.
-   Every line puts the icon on the foot of the letters, a flex line too, which ignores
-   `vertical-align`, so `top` lowers it to the middle of the small letters */
+/* Arrow of a route, `top` lowers it to the middle of the small letters, since a flex line ignores `vertical-align` */
 svg.route-arrow {
     position: relative;
     top: 0.23em;
@@ -178,9 +156,7 @@ svg.route-arrow {
     margin-inline: 0.3em;
 }
 
-/* Place with a link, its `ALTREP`, and the chapter of a box:
-   never underlined, lighter under a pointer, so it shows that a click opens its link,
-   see `whereLinkedOf` in `places.ts` and `chaptersOf` in `boxes.ts` */
+/* Place with its `ALTREP` and the chapter of a box, lighter under the pointer, so it shows a click opens it */
 .place-link,
 .chapter-link {
     color: inherit;
@@ -192,16 +168,14 @@ svg.route-arrow {
     color: var(--text-main);
 }
 
-/* Phone: the lines of an entry closer to its edges,
-   so a narrow entry keeps more of its width for its words */
+/* Phone: the lines closer to the edges, so a narrow entry keeps more width for its words */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     .entry-inner {
         padding-inline: 0.5rem 0.375rem;
     }
 }
 
-/* A route beside the time: where it starts gives way first,
-   its arrow and its goal always whole, see `linesFit` in `day.ts` */
+/* A route beside the time, where it starts gives way first, its arrow and its goal always whole */
 .entry-beside:has(> .route-start) {
     display: inline-flex;
     align-items: baseline;
