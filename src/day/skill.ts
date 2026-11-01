@@ -177,30 +177,14 @@ const skillingKept: () => Promise<Skilling> = changesKept(skillingLoad);
 /**
  * What is picked so far.
  */
-let picks: SkillPicks = {
-    module: "",
-    type: "",
-    semester: "",
-    chapters: [],
-    documents: [],
-    attempts: [],
-    rounds: new Map(),
-};
+let picks: SkillPicks = picksOf({ module: "", type: "", semester: "", chapters: [] });
 
-/**
- * Name of the folder of the material of each type in a module, as the reader names it,
- * see `materialFolders` in `reader/notes.ts`,
- * whose files the list `Attach` offers for an entry of that type.
- */
-const materialFolders: { [type: string]: string } = {
-    VO: "VO_UniversityLectureLessons",
-    UE: "UE_UniversityModuleExercises",
-    ZU: "ZU_UniversityCentralExercises",
-    TU: "TU_UniversityTutorExercises",
-    HU: "HU_UniversityHomeExercises",
-    FA: "FA_UniversityModuleExaminations",
-    PR: "PR_UniversityPracticalExercises",
-};
+/** Gives what is picked, with no documents, attempts and rounds picked yet. */
+function picksOf(
+    picked: Omit<SkillPicks, "documents" | "attempts" | "rounds">,
+): SkillPicks {
+    return { ...picked, documents: [], attempts: [], rounds: new Map() };
+}
 
 /**
  * Path of a note of a chapter from the module folder, its chapter folder caught.
@@ -358,9 +342,7 @@ function hintOf(text: string): HTMLParagraphElement {
  * Modules stand apart from projects, each under its small grey head,
  * as the sections of the food search, see `.picker-group` in `choices.css`.
  */
-function moduleSearchOf(
-    current: string = picks.module,
-): (text: string) => Promise<Choice[]> {
+function moduleSearchOf(current: string): (text: string) => Promise<Choice[]> {
     const module: (name: string) => boolean = (name: string): boolean =>
         moduleCode.test(name);
     const named: string[] = [...skilling.skills, ...skilling.otherModules];
@@ -520,11 +502,12 @@ function chapterOfDocument(path: string): string {
 /**
  * Gives the documents a list `Attach` offers, in the order of their paths:
  * for my own learning the notes of a chapter,
- * for a type the files of the folder of its material, see {@link materialFolders},
+ * for a type the files of the folder of its material, named by the type and `_`,
+ * see `materialFolders` in `reader/notes.ts`,
  * in the folder of the semester of the entry.
  */
 function documentsOfferedOf(chapter: string): string[] {
-    const folder: string = picks.type in materialFolders ? `${picks.type}_` : "";
+    const folder: string = skilling.types.includes(picks.type) ? `${picks.type}_` : "";
     const semester: string = skillSemesterOf(semesterDay);
     return contents.documents
         .filter((path: string): boolean =>
@@ -1097,14 +1080,7 @@ function picksShow(shown: SkillShown): void {
         shown.summary.slice(1),
         moduleIs(picks.module) ? [] : shown.summary.slice(0, 1),
         (values: string[]): void => {
-            picks = {
-                ...picks,
-                module: values[0] ?? "",
-                chapters: [],
-                documents: [],
-                attempts: [],
-                rounds: new Map(),
-            };
+            picks = picksOf({ ...picks, module: values[0] ?? "", chapters: [] });
             contentsLoad().then(again).catch(console.error);
         },
     );
@@ -1238,15 +1214,12 @@ export async function skillFieldsShow(
     inPlan = plan;
     semesterDay = day;
     loggedRounds = plan ? [] : values.rounds;
-    picks = {
+    picks = picksOf({
         module: values.module,
         type: values.type,
         semester: values.semester,
         chapters: values.chapters,
-        documents: [],
-        attempts: [],
-        rounds: new Map(),
-    };
+    });
     await contentsLoad();
     picks.documents = documentPathsOf(values.links);
     picksShow({
