@@ -114,7 +114,7 @@ import { mathRender } from "../notes/math.ts";
 import { htmlOf, punctuationRule } from "../notes/markdown.ts";
 import { kindRule, linkPlaceOf, noteAddressOf, placeAddressOf } from "../notes/tree.ts";
 import { peopleLink, peopleRoles, personOf, personRowAddressOf, personsKept } from "../persons.ts";
-import { columnsOf, emptyEndOf, emptyIs, quotePrefixOf, textIndentationOf, typingLine } from "./keys.ts";
+import { blanksOf, columnsOf, emptyEndOf, emptyIs, quotePrefixOf, textIndentationOf, typingLine } from "./keys.ts";
 import { roundHeadingShow } from "./round.ts";
 import { foldedAt } from "./steps.ts";
 import { cellTitleShow, tableOpen } from "./table.ts";
@@ -147,6 +147,8 @@ type Look = {
     links: Links;
     focused: boolean;
     cursors: number[];
+    /** Start of the empty line a key just put the cursor on, see `typingLine` in `./keys.ts`. */
+    typing: number | null;
     decorations: Range<Decoration>[];
     wrappers: Range<BlockWrapper>[];
     rendered: number[];
@@ -238,10 +240,7 @@ const tabMark: string = "→";
  * Tab within a selection where it takes its room, its mark drawn faintly over it,
  * taking no room of its own, see `./editor.css`.
  */
-const tabShown: Decoration = Decoration.mark({
-    class: "cm-invisible",
-    attributes: { "data-mark": tabMark },
-});
+const tabShown: Decoration = Decoration.mark({ class: "cm-invisible", attributes: { "data-mark": tabMark } });
 
 /** Text of a rendered link, which a click follows, see {@link linkClicked}. */
 const followable: Decoration = Decoration.mark({ class: "cm-follow" });
@@ -255,8 +254,7 @@ const external: Decoration = Decoration.mark({ class: "cm-follow cm-external" })
 
 /**
  * Name of a person under `## Modulverantwortliche` of a module file
- * or after its role in a list, which a click follows to its row in `Persons.md`,
- * which a click follows to its row in `Persons.md`,
+ * or after its role in a list, which a click follows to its row in `Persons.md`.
  */
 const personMark: Decoration = Decoration.mark({ class: "cm-follow cm-person" });
 
@@ -285,10 +283,7 @@ const stop: Decoration = Decoration.line({ class: "cm-gap cm-stop" });
  * inclusive at its start, so it opens before the drawn formula and holds it,
  * not only the punctuation.
  */
-const unbroken: Decoration = Decoration.mark({
-    class: "math-unbroken",
-    inclusiveStart: true,
-});
+const unbroken: Decoration = Decoration.mark({ class: "math-unbroken", inclusiveStart: true });
 
 /** Line of a code block being edited. */
 const codeLine: Decoration = Decoration.line({ class: "cm-code-block" });
@@ -519,9 +514,7 @@ class MathWidget extends PassingWidget {
     toDOM(): HTMLElement {
         const box: HTMLSpanElement = document.createElement("span");
         const math: HTMLSpanElement = document.createElement("span");
-        box.className = "cm-math";
-        if (this.preview) box.className = "cm-math cm-math-preview";
-        else if (this.display) box.className = "cm-math cm-math-display";
+        box.className = this.preview ? "cm-math cm-math-preview" : this.display ? "cm-math cm-math-display" : "cm-math";
         math.className = `math math-${this.display ? "block" : "inline"}`;
         math.textContent = this.tex;
         box.append(math);
@@ -530,22 +523,26 @@ class MathWidget extends PassingWidget {
     }
 }
 
-/** Image, as the scripts view shows it, at its own size. */
-class ImageWidget extends PassingWidget {
+/**
+ * Element drawn by its HTML, a click going through it:
+ * an image, see {@link imageLook}, a line break or break opportunity,
+ * see {@link htmlTagLook}, or the marks of tabs hidden, see {@link invisiblesLook}.
+ */
+class ElementWidget extends PassingWidget {
     constructor(
-        /** Address of the image at the reader. */
-        readonly address: string,
+        /** HTML of the element. */
+        readonly html: string,
     ) {
         super();
     }
 
-    /** Shows the image; once loaded, the editor measures its lines again. */
+    /** Draws the element; once an image is loaded, the editor measures its lines again. */
     toDOM(view: EditorView): HTMLElement {
-        const image: HTMLImageElement = document.createElement("img");
-        image.className = "internal-embed";
-        image.src = this.address;
-        image.addEventListener("load", (): void => view.requestMeasure());
-        return image;
+        const box: HTMLDivElement = document.createElement("div");
+        box.innerHTML = this.html;
+        const element: HTMLElement = box.firstElementChild as HTMLElement;
+        if (element instanceof HTMLImageElement) element.addEventListener("load", (): void => view.requestMeasure());
+        return element;
     }
 }
 
@@ -580,58 +577,6 @@ class TaskBoxWidget extends FieldsWidget {
                 userEvent: "input",
             });
         });
-        return box;
-    }
-}
-
-/**
- * Line break `<br>` or break opportunity `<wbr>`,
- * drawn as the element itself, as in the scripts view:
- * `<br>` breaks the line, and a `<wbr>` after it at the end
- * of a line holds the empty line below it.
- */
-class BreakWidget extends PassingWidget {
-    constructor(
-        /** Element drawn, `br` or `wbr`. */
-        readonly tagName: string,
-    ) {
-        super();
-    }
-
-    /** Draws the element. */
-    toDOM(): HTMLElement {
-        const box: HTMLSpanElement = document.createElement("span");
-        box.append(document.createElement(this.tagName));
-        return box;
-    }
-}
-
-/**
- * Tabs the look hides, like the indentation of a line of a list,
- * as far as a selection covers them:
- * their marks, see {@link tabMark}, faint left of where the text begins,
- * or of the bullet or number of a point, taking no room, so I see what I select,
- * see {@link invisiblesLook}.
- */
-class InvisiblesWidget extends PassingWidget {
-    constructor(
-        /** The marks, a blank for each other character hidden with them. */
-        readonly marks: string,
-        /**
-         * What the hidden stretch stands before:
-         * `bullet` or `number` for the indentation of a point,
-         * whose marks go left of its bullet or number, else `text`.
-         */
-        readonly before: string,
-    ) {
-        super();
-    }
-
-    /** Draws the marks, see `./editor.css`. */
-    toDOM(): HTMLElement {
-        const box: HTMLSpanElement = document.createElement("span");
-        box.className = `cm-invisibles cm-invisibles-${this.before}`;
-        box.dataset.marks = this.marks;
         return box;
     }
 }
@@ -716,14 +661,9 @@ class BlockWidget extends FieldsWidget {
             iconPut(open, Maximize2, "Open table");
             open.addEventListener("click", (): void => {
                 const from: number = view.posAtDOM(block);
-                const runs: number[] = tableRunsOf(view, from, from + this.length);
-                if (runs[index] !== undefined)
-                    tableOpen(
-                        view,
-                        view.state.doc.line(runs[index]).from,
-                        (markdown: string): HTMLElement => blockRender(view, markdown, this.links),
-                        follow,
-                    );
+                const run: number | undefined = tableRunsOf(view, from, from + this.length)[index];
+                const render = (markdown: string): HTMLElement => blockRender(view, markdown, this.links);
+                if (run !== undefined) tableOpen(view, view.state.doc.line(run).from, render, follow);
             });
             table.replaceWith(frame);
             frame.append(table, open);
@@ -750,13 +690,7 @@ class BlockWidget extends FieldsWidget {
             pick.value = fence.info;
             pick.addEventListener("change", (): void => {
                 const from: number = view.posAtDOM(block);
-                view.dispatch({
-                    changes: {
-                        from: from + fence.from,
-                        to: from + fence.to,
-                        insert: pick.value,
-                    },
-                });
+                view.dispatch({ changes: { from: from + fence.from, to: from + fence.to, insert: pick.value } });
             });
             pre.replaceWith(frame);
             frame.append(pre, pick);
@@ -764,11 +698,7 @@ class BlockWidget extends FieldsWidget {
         const place: (event: MouseEvent) => void = (event: MouseEvent): void => {
             const from: number = view.posAtDOM(block);
             view.focus();
-            view.dispatch({
-                selection: {
-                    anchor: blockPlaceOf(view, from, from + this.length, event),
-                },
-            });
+            view.dispatch({ selection: { anchor: blockPlaceOf(view, from, from + this.length, event) } });
         };
         block.addEventListener("mousedown", (event: MouseEvent): void => {
             if (event.button !== 0 || targetIn(event, "select")) return;
@@ -804,11 +734,7 @@ function fencesOf(markdown: string): Fence[] {
         const fence: RegExpExecArray | null = /^((?:[ \t]*>[ \t]?)*[ \t]*)(`{3,}|~{3,})(.*)$/.exec(line);
         if (fence !== null && open === null) {
             open = fence[2];
-            fences.push({
-                from: at + fence[1].length + fence[2].length,
-                to: at + line.length,
-                info: fence[3].trim(),
-            });
+            fences.push({ from: at + fence[1].length + fence[2].length, to: at + line.length, info: fence[3].trim() });
         } else if (
             fence !== null &&
             open !== null &&
@@ -1048,16 +974,9 @@ function wrap(
     to: number = node.to,
     from: number = node.from,
 ): void {
-    const depth: number = upwardOf(node.parent).filter((parent: SyntaxNode): boolean =>
-        wrapped.includes(parent.name),
-    ).length;
-    look.wrappers.push(
-        BlockWrapper.create({
-            tagName: tagName,
-            attributes: attributes,
-            rank: 100 - depth,
-        }).range(look.state.doc.lineAt(from).from, to),
-    );
+    const depth: number = upwardOf(node.parent).filter((up: SyntaxNode): boolean => wrapped.includes(up.name)).length;
+    const wrapper: BlockWrapper = BlockWrapper.create({ tagName: tagName, attributes: attributes, rank: 100 - depth });
+    look.wrappers.push(wrapper.range(look.state.doc.lineAt(from).from, to));
 }
 
 /**
@@ -1069,12 +988,8 @@ function wrap(
 function foldLook(look: Look, line: Line, item: boolean): void {
     if (foldable(look.state, line.from, line.to) === null) return;
 
-    look.decorations.push(
-        Decoration.widget({
-            widget: new FoldWidget(item, foldedAt(look.state, line.to)),
-            side: item ? -1 : 1,
-        }).range(item ? line.from : line.to),
-    );
+    const arrow: FoldWidget = new FoldWidget(item, foldedAt(look.state, line.to));
+    look.decorations.push(Decoration.widget({ widget: arrow, side: item ? -1 : 1 }).range(item ? line.from : line.to));
 }
 
 /**
@@ -1130,15 +1045,27 @@ function linkLook(look: Look, node: SyntaxNode): boolean {
     const url: SyntaxNode | null = node.getChild("URL");
     if (url === null || marks.length < 2 || touched(look, node.from, node.to)) return true;
 
-    const address: string = look.state.sliceDoc(url.from, url.to).replace(/^<|>$/g, "");
-    const target: string = address.split("#")[0].trim();
-    hide(look, node.from, marks[0].to);
-    hide(look, marks[1].from, node.to);
-    if (marks[0].to < marks[1].from)
-        look.decorations.push(
-            (externalRule.test(address) ? external : linkMarkOf(look.state, target)).range(marks[0].to, marks[1].from),
-        );
+    const address: string = addressOf(look.state, url);
+    const mark: Decoration = externalRule.test(address)
+        ? external
+        : linkMarkOf(look.state, address.split("#")[0].trim());
+    linkTextLook(look, node, marks[0].to, marks[1].from, mark);
     return true;
+}
+
+/** Gives the address of a Markdown link or image as written, without its `<` and `>`. */
+function addressOf(state: EditorState, url: SyntaxNode): string {
+    return state.sliceDoc(url.from, url.to).replace(/^<|>$/g, "");
+}
+
+/**
+ * Shows only the text of a link, from `from` to `to`, in the look of its link,
+ * the markup around it hidden, see {@link linkLook} and {@link wikiLinkLook}.
+ */
+function linkTextLook(look: Look, node: SyntaxNode, from: number, to: number, mark: Decoration): void {
+    hide(look, node.from, from);
+    hide(look, to, node.to);
+    if (from < to) look.decorations.push(mark.range(from, to));
 }
 
 /**
@@ -1156,18 +1083,18 @@ function urlLook(look: Look, node: SyntaxNode): boolean {
 
 /**
  * Markdown image while the cursor does not touch it,
- * shown at its own size when the reader found its file, else left as its text.
+ * shown as the scripts view shows it, at its own size, when the reader found its file,
+ * else left as its text.
  * Its target is the link before `#`, as the reader lists it.
  */
 function imageLook(look: Look, node: SyntaxNode): boolean {
     const url: SyntaxNode | null = node.getChild("URL");
     if (url === null || touched(look, node.from, node.to)) return false;
 
-    const address: string = look.state.sliceDoc(url.from, url.to).replace(/^<|>$/g, "");
-    const target: string = address.split("#")[0].trim();
+    const target: string = addressOf(look.state, url).split("#")[0].trim();
     const path: string | null | undefined = look.links[target];
-    if (imageRule.test(target) && typeof path === "string")
-        widgetPut(look, new ImageWidget(fileAddressOf(path)), node.from, node.to);
+    if (!imageRule.test(target) || typeof path !== "string") return false;
+    widgetPut(look, new ElementWidget(`<img class="internal-embed" src="${fileAddressOf(path)}">`), node.from, node.to);
     return false;
 }
 
@@ -1184,13 +1111,9 @@ function wikiLinkLook(look: Look, node: SyntaxNode): boolean {
     const text: string = look.state.sliceDoc(node.from, node.to);
     const open: number = node.name === "WikiEmbed" ? 3 : 2;
     const bar: RegExpExecArray | null = /\\?\|/.exec(text);
-    const shownFrom: number = node.from + (bar === null ? open : bar.index + bar[0].length);
-    const shownTo: number = node.to - 2;
     const target: string = /^!?\[\[([^\]#|\\]*)/.exec(text)?.[1].trim() ?? "";
-
-    hide(look, node.from, shownFrom);
-    hide(look, shownTo, node.to);
-    if (shownFrom < shownTo) look.decorations.push(linkMarkOf(look.state, target).range(shownFrom, shownTo));
+    const from: number = node.from + (bar === null ? open : bar.index + bar[0].length);
+    linkTextLook(look, node, from, node.to - 2, linkMarkOf(look.state, target));
     return false;
 }
 
@@ -1240,10 +1163,7 @@ function linkAddressOf(state: EditorState, target: string, heading: string): str
 function linkMarkOf(state: EditorState, target: string): Decoration {
     const address: string | null = linkAddressOf(state, target, "");
     if (address !== null) return address === "" ? computerOnly : followable;
-    return Decoration.mark({
-        class: "is-unresolved",
-        attributes: { title: `Leads nowhere: ${target}` },
-    });
+    return Decoration.mark({ class: "is-unresolved", attributes: { title: `Leads nowhere: ${target}` } });
 }
 
 /**
@@ -1266,12 +1186,8 @@ function mathLook(look: Look, node: SyntaxNode): boolean {
         widgetPut(look, new MathWidget(tex, display, false), node.from, node.to);
         if (punctuation > 0) look.decorations.push(unbroken.range(node.from, node.to + punctuation));
     } else if (display) {
-        look.decorations.push(
-            Decoration.widget({
-                widget: new MathWidget(tex, true, true),
-                side: -1,
-            }).range(look.state.doc.lineAt(node.from).from),
-        );
+        const shown: Decoration = Decoration.widget({ widget: new MathWidget(tex, true, true), side: -1 });
+        look.decorations.push(shown.range(look.state.doc.lineAt(node.from).from));
     }
     return false;
 }
@@ -1303,14 +1219,9 @@ function listLook(look: Look, node: SyntaxNode): boolean {
             : 0;
     const attributes: { [name: string]: string } = { style: `--air-below: ${air}` };
     const cut: Line | null = typingCutOf(look, node, end);
-    if (cut === null) {
-        wrap(look, node, tagName, attributes, end);
-        return true;
-    }
-    wrap(look, node, tagName, attributes, cut.from - 1);
-    const after: SyntaxNode | undefined = node
-        .getChildren("ListItem")
-        .find((item: SyntaxNode): boolean => item.from > cut.to);
+    wrap(look, node, tagName, attributes, cut === null ? end : cut.from - 1);
+    const after: SyntaxNode | undefined =
+        cut === null ? undefined : node.getChildren("ListItem").find((item: SyntaxNode): boolean => item.from > cut.to);
     if (after !== undefined) wrap(look, node, tagName, attributes, end, after.from);
     return true;
 }
@@ -1338,10 +1249,10 @@ function listOnIs(look: Look, node: SyntaxNode, end: number): boolean {
  * @returns Number of those empty lines, none where the note ends below them
  */
 function airBelowOf(look: Look, end: number): number {
-    const typing: number | null = look.state.field(typingLine, false) ?? null;
-    for (let number: number = look.state.doc.lineAt(end).number + 1; number <= look.state.doc.lines; number++) {
+    const last: number = look.state.doc.lineAt(end).number;
+    for (let number: number = last + 1; number <= look.state.doc.lines; number++) {
         const line: Line = look.state.doc.line(number);
-        if (line.from === typing || !emptyIs(look.state, line)) return number - look.state.doc.lineAt(end).number - 1;
+        if (line.from === look.typing || !emptyIs(look.state, line)) return number - last - 1;
     }
     return 0;
 }
@@ -1355,7 +1266,7 @@ function airBelowOf(look: Look, end: number): number {
  * see {@link itemDrawEndOf} and {@link listLook}.
  */
 function typingCutOf(look: Look, node: SyntaxNode, end: number): Line | null {
-    const typing: number | null = look.state.field(typingLine, false) ?? null;
+    const typing: number | null = look.typing;
     const item: SyntaxNode | null = node.name === "ListItem" ? node : node.firstChild;
     const text: string = item === null ? "" : look.state.doc.lineAt(item.from).text;
     const indentation: string | null = item === null ? null : textIndentationOf(text.slice(quotePrefixOf(text).length));
@@ -1411,7 +1322,7 @@ function listBlankIs(state: EditorState, line: Line): boolean {
     if (!/^[ \t]+$/.test(line.text) || !emptyIs(state, line)) return false;
     let above: Line = line;
     while (above.number > 1 && /^[ \t]*$/.test(above.text)) above = state.doc.line(above.number - 1);
-    return upwardOf(syntaxTree(state).resolveInner(above.from + (/^[ \t]*/.exec(above.text)?.[0].length ?? 0), 1)).some(
+    return upwardOf(syntaxTree(state).resolveInner(above.from + blanksOf(above.text), 1)).some(
         (node: SyntaxNode): boolean => node.name === "ListItem",
     );
 }
@@ -1453,8 +1364,8 @@ function itemLook(look: Look, node: SyntaxNode): boolean {
  */
 function listMarkLook(look: Look, node: SyntaxNode): boolean {
     const line: Line = look.state.doc.lineAt(node.from);
-    const textFrom: number = node.to + (/^[ \t]*/.exec(look.state.sliceDoc(node.to, line.to))?.[0].length ?? 0);
-    if (/^[ \t]*$/.test(look.state.sliceDoc(line.from, node.from))) hide(look, line.from, node.from);
+    const textFrom: number = node.to + blanksOf(look.state.sliceDoc(node.to, line.to));
+    indentationHide(look, node);
     if (!touched(look, line.from, line.to)) {
         hide(look, node.from, textFrom);
     } else if (node.parent?.parent?.name === "BulletList") {
@@ -1471,14 +1382,19 @@ function listMarkLook(look: Look, node: SyntaxNode): boolean {
  * as the scripts view leaves it out, in a list item putting them under the item's text.
  */
 function paragraphLook(look: Look, node: SyntaxNode): boolean {
-    const first: Line = look.state.doc.lineAt(node.from);
-    if (/^[ \t]*$/.test(look.state.sliceDoc(first.from, node.from))) hide(look, first.from, node.from);
+    indentationHide(look, node);
     const last: number = look.state.doc.lineAt(node.to).number;
-    for (let number: number = first.number + 1; number <= last; number++) {
+    for (let number: number = look.state.doc.lineAt(node.from).number + 1; number <= last; number++) {
         const line: Line = look.state.doc.line(number);
-        hide(look, line.from, line.from + (/^[ \t]*/.exec(line.text)?.[0].length ?? 0));
+        hide(look, line.from, line.from + blanksOf(line.text));
     }
     return true;
+}
+
+/** Hides the blanks before a piece of syntax that only blanks stand before on its line. */
+function indentationHide(look: Look, node: SyntaxNode): void {
+    const line: Line = look.state.doc.lineAt(node.from);
+    if (/^[ \t]*$/.test(look.state.sliceDoc(line.from, node.from))) hide(look, line.from, node.from);
 }
 
 /**
@@ -1492,7 +1408,7 @@ function paragraphLook(look: Look, node: SyntaxNode): boolean {
  * nothing of any other line of blanks or an indented code block, whose blanks show.
  */
 function hiddenStartOf(state: EditorState, line: Line): number {
-    const blanks: number = /^[ \t]*/.exec(line.text)?.[0].length ?? 0;
+    const blanks: number = blanksOf(line.text);
     if (blanks === line.length) return listBlankIs(state, line) ? blanks : 0;
     for (const node of upwardOf(syntaxTree(state).resolveInner(line.from + blanks, 1))) {
         if (["Paragraph", "Task", "ListItem"].includes(node.name)) return blanks;
@@ -1543,10 +1459,7 @@ function pointMarkOf(text: string, box: boolean): number {
  * on a line of code that looks like a point, like YAML, before the `-` too.
  */
 function textStartOf(state: EditorState, line: Line): number {
-    const mark: SyntaxNode = syntaxTree(state).resolveInner(
-        line.from + (/^[ \t]*/.exec(line.text)?.[0].length ?? 0),
-        1,
-    );
+    const mark: SyntaxNode = syntaxTree(state).resolveInner(line.from + blanksOf(line.text), 1);
     return (
         line.from + Math.max(hiddenStartOf(state, line), mark.name === "ListMark" ? pointMarkOf(line.text, false) : 0)
     );
@@ -1604,16 +1517,11 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
             place = line.from;
             break;
         }
-        if (!range.empty)
-            return place === head
+        const moved = (anchor: number): TransactionSpec | readonly TransactionSpec[] =>
+            place === head
                 ? transaction
-                : [
-                      transaction,
-                      {
-                          selection: { anchor: range.anchor, head: place },
-                          sequential: true,
-                      },
-                  ];
+                : [transaction, { selection: { anchor: anchor, head: place }, sequential: true }];
+        if (!range.empty) return moved(range.anchor);
         for (let line: Line = state.doc.lineAt(place); ; line = state.doc.lineAt(place)) {
             const start: number = textStartOf(state, line);
             const text: number = line.from + pointMarkOf(line.text, true);
@@ -1627,7 +1535,7 @@ const caretPlace: Extension = EditorState.transactionFilter.of(
             else break;
             if (state.doc.lineAt(place).number === line.number) break;
         }
-        return place === head ? transaction : [transaction, { selection: { anchor: place }, sequential: true }];
+        return moved(place);
     },
 );
 
@@ -1655,9 +1563,8 @@ function taskBoxLook(look: Look, node: SyntaxNode): boolean {
 function quoteLook(look: Look, node: SyntaxNode): boolean {
     const callout: boolean = calloutRule.test(look.state.sliceDoc(node.from, look.state.doc.lineAt(node.from).to));
     if (callout && !blockLook(look, node)) return false;
-    const typing: number | null = look.state.field(typingLine, false) ?? null;
     let last: Line = look.state.doc.lineAt(node.to);
-    while (last.from > node.from && last.from !== typing && emptyIs(look.state, last))
+    while (last.from > node.from && last.from !== look.typing && emptyIs(look.state, last))
         last = look.state.doc.line(last.number - 1);
     wrap(look, node, "blockquote", {}, last.to);
     return true;
@@ -1665,7 +1572,9 @@ function quoteLook(look: Look, node: SyntaxNode): boolean {
 
 /**
  * Inline HTML: a line break `<br>` or break opportunity `<wbr>` drawn
- * as in the scripts view while the cursor does not touch it, see {@link BreakWidget};
+ * as the element itself, as in the scripts view, while the cursor does not touch it:
+ * `<br>` breaks the line, and a `<wbr>` after it at the end
+ * of a line holds the empty line below it, see {@link ElementWidget};
  * any other tag stays as written, and so does every tag of a table shown as its text,
  * whose rows a break would split.
  */
@@ -1673,7 +1582,7 @@ function htmlTagLook(look: Look, node: SyntaxNode): boolean {
     const tagName: string | undefined = breakRule.exec(look.state.sliceDoc(node.from, node.to))?.[1].toLowerCase();
     const table: boolean = upwardOf(node.parent).some((parent: SyntaxNode): boolean => parent.name === "Table");
     if (tagName !== undefined && !table && !touched(look, node.from, node.to))
-        widgetPut(look, new BreakWidget(tagName), node.from, node.to);
+        widgetPut(look, new ElementWidget(`<span><${tagName}></span>`), node.from, node.to);
     return false;
 }
 
@@ -1684,10 +1593,8 @@ function htmlTagLook(look: Look, node: SyntaxNode): boolean {
  * of a further line of a paragraph see {@link paragraphLook}.
  */
 function quoteMarkLook(look: Look, node: SyntaxNode): boolean {
-    const line: Line = look.state.doc.lineAt(node.from);
-    if (node.parent?.name === "Blockquote" && /^[ \t]*$/.test(look.state.sliceDoc(line.from, node.from)))
-        hide(look, line.from, node.from);
-    if (touched(look, line.from, look.state.doc.lineAt(node.to).to))
+    if (node.parent?.name === "Blockquote") indentationHide(look, node);
+    if (touched(look, look.state.doc.lineAt(node.from).from, look.state.doc.lineAt(node.to).to))
         look.decorations.push(hanging.range(node.from, markEndOf(look, node)));
     else hide(look, node.from, markEndOf(look, node));
     return true;
@@ -1758,12 +1665,9 @@ function codeLook(look: Look, node: SyntaxNode): boolean {
  * each tells whether to look into the piece, at the pieces inside it.
  */
 const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
-    ATXHeading1: headingLook,
-    ATXHeading2: headingLook,
-    ATXHeading3: headingLook,
-    ATXHeading4: headingLook,
-    ATXHeading5: headingLook,
-    ATXHeading6: headingLook,
+    ...Object.fromEntries(
+        [1, 2, 3, 4, 5, 6].map((level: number): [string, typeof headingLook] => [`ATXHeading${level}`, headingLook]),
+    ),
     Emphasis: markupLook,
     StrongEmphasis: markupLook,
     Strikethrough: markupLook,
@@ -1801,11 +1705,10 @@ const looks: { [name: string]: (look: Look, node: SyntaxNode) => boolean } = {
  * the blanks of a line within a list hidden, see {@link listBlankIs}.
  */
 function spaceLook(look: Look): void {
-    const typing: number | null = look.state.field(typingLine, false) ?? null;
     for (let number: number = 1; number <= look.state.doc.lines; number++) {
         const line: Line = look.state.doc.line(number);
         if (listBlankIs(look.state, line)) hide(look, line.from, line.to);
-        if (line.from !== typing && emptyIs(look.state, line))
+        if (line.from !== look.typing && emptyIs(look.state, line))
             look.decorations.push((gapIs(look.state, line, true) ? stop : gap).range(line.from));
     }
 }
@@ -1842,7 +1745,9 @@ function invisibleCharsLook(look: Look): void {
  * where the look hides them,
  * like the indentation of a line of a list,
  * the marks of what the selection covers in place of the hidden stretch,
- * left of where the text begins, see {@link InvisiblesWidget}.
+ * a blank for each other character hidden with them, see {@link ElementWidget},
+ * faint left of where the text begins, or of the bullet or number of a point,
+ * see `./editor.css`.
  * Nothing outside a selection, and nothing takes room, so no text moves.
  */
 function invisiblesLook(look: Look): void {
@@ -1869,10 +1774,11 @@ function invisiblesLook(look: Look): void {
             : /^\d+[.)]/.test(look.state.sliceDoc(decoration.to, decoration.to + 10))
               ? "number"
               : "text";
+        const widget: ElementWidget = new ElementWidget(
+            `<span class="cm-invisibles cm-invisibles-${before}" data-marks="${marks}"></span>`,
+        );
         if (/\S/.test(marks))
-            look.decorations[index] = Decoration.replace({
-                widget: new InvisiblesWidget(marks, before),
-            }).range(decoration.from, decoration.to);
+            look.decorations[index] = Decoration.replace({ widget: widget }).range(decoration.from, decoration.to);
     });
     for (const range of ranges)
         for (const match of look.state.sliceDoc(range.from, range.to).matchAll(/\t/g))
@@ -1935,6 +1841,7 @@ function drawingOf(state: EditorState): Drawing {
         links: state.field(linkTargets),
         focused: state.field(focused),
         cursors: cursorsOf(state),
+        typing: state.field(typingLine, false) ?? null,
         decorations: [],
         wrappers: [],
         rendered: [],
@@ -1946,10 +1853,7 @@ function drawingOf(state: EditorState): Drawing {
     spaceLook(look);
     invisibleCharsLook(look);
     invisiblesLook(look);
-    return {
-        decorations: Decoration.set(look.decorations, true),
-        wrappers: BlockWrapper.set(look.wrappers, true),
-    };
+    return { decorations: Decoration.set(look.decorations, true), wrappers: BlockWrapper.set(look.wrappers, true) };
 }
 
 /**
@@ -1963,10 +1867,7 @@ function foldToggle(view: EditorView, pos: number): void {
         if (from === line.to) folded = { from: from, to: to };
     });
     const range: Span | null = folded ?? foldable(view.state, line.from, line.to);
-    if (range !== null)
-        view.dispatch({
-            effects: (folded === null ? foldEffect : unfoldEffect).of(range),
-        });
+    if (range !== null) view.dispatch({ effects: (folded === null ? foldEffect : unfoldEffect).of(range) });
 }
 
 /**
@@ -1982,9 +1883,7 @@ export function solutionsFold(view: EditorView): void {
         const range: Span | null = solutionRule.test(line.text) ? foldable(view.state, line.from, line.to) : null;
         if (range !== null) ranges.push(range);
     }
-    view.dispatch({
-        effects: ranges.map((range: Span): StateEffect<Span> => foldEffect.of(range)),
-    });
+    view.dispatch({ effects: ranges.map((range: Span): StateEffect<Span> => foldEffect.of(range)) });
 }
 
 /**
@@ -2000,9 +1899,7 @@ export function headingShow(view: EditorView, heading: string): void {
     foldedRanges(view.state).between(line?.from ?? 0, line?.from ?? 0, (from: number, to: number): void => {
         unfolds.push(unfoldEffect.of({ from: from, to: to }));
     });
-    view.dispatch({
-        effects: [...unfolds, EditorView.scrollIntoView(line?.from ?? 0, { y: "start" })],
-    });
+    view.dispatch({ effects: [...unfolds, EditorView.scrollIntoView(line?.from ?? 0, { y: "start" })] });
 }
 
 /**
@@ -2070,7 +1967,7 @@ function linkFollow(view: EditorView, node: SyntaxNode): void {
             ? (/^\[\[([^\]|\\]*)/.exec(view.state.sliceDoc(node.from, node.to))?.[1] ?? "")
             : url === null
               ? ""
-              : view.state.sliceDoc(url.from, url.to).replace(/^<|>$/g, ""),
+              : addressOf(view.state, url),
     );
 }
 
@@ -2187,10 +2084,7 @@ function formulaClicked(event: MouseEvent, view: EditorView): boolean {
     formulaPressed = event.button === 0 && event.detail === 1 && box !== null ? texOf(view, box) : null;
     if (event.button !== 0 || event.detail !== 2 || tex === null) return false;
     event.preventDefault();
-    view.dispatch({
-        selection: { anchor: tex.from, head: tex.to },
-        userEvent: "select.pointer",
-    });
+    view.dispatch({ selection: { anchor: tex.from, head: tex.to }, userEvent: "select.pointer" });
     return true;
 }
 
@@ -2252,9 +2146,7 @@ function personClicked(event: MouseEvent, view: EditorView): boolean {
  */
 function pressHold(event: MouseEvent, view: EditorView): void {
     if (event.button !== 0) return;
-    view.dispatch({
-        effects: pressChange.of(view.state.field(focused) ? cursorsOf(view.state) : []),
-    });
+    view.dispatch({ effects: pressChange.of(view.state.field(focused) ? cursorsOf(view.state) : []) });
     document.addEventListener("mouseup", (): void => view.dispatch({ effects: pressChange.of(null) }), { once: true });
 }
 
@@ -2288,10 +2180,7 @@ function marginSelect(event: MouseEvent, view: EditorView): void {
                 const anchor: number = reach(range.anchor, down);
                 const head: number = reach(range.head, up.clientX);
                 if (anchor !== range.anchor || head !== range.head)
-                    view.dispatch({
-                        selection: { anchor: anchor, head: head },
-                        userEvent: "select.pointer",
-                    });
+                    view.dispatch({ selection: { anchor: anchor, head: head }, userEvent: "select.pointer" });
             });
         },
         { once: true },
@@ -2364,9 +2253,7 @@ export function livePreview(links: Links, place: string): Extension {
         personsLoaded,
         personsLoad,
         notePlace.of(place),
-        codeFolding({
-            placeholderDOM: (): HTMLElement => document.createElement("span"),
-        }),
+        codeFolding({ placeholderDOM: (): HTMLElement => document.createElement("span") }),
         keymap.of(foldKeymap),
         look,
         caretPlace,
