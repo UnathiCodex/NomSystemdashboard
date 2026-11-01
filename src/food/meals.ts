@@ -46,7 +46,7 @@ import type { Dish } from "./foods.ts";
 import type { Food } from "../../reader/food.ts";
 
 /**
- * Writes the name of a meal as the reader does, see `mealNameOf` in `reader/food.ts`:
+ * Writes the name of a meal as the reader does, see `foodTextOf` in `reader/food.ts`:
  * a comma between two digits a point, every other comma gone,
  * since the comma parts names.
  */
@@ -279,25 +279,12 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
         search.value = "";
         show();
     };
+    const taken: (name: string) => boolean = (name: string): boolean =>
+        dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === name.toLowerCase());
     const show: () => void = (): void => {
-        const taken: boolean = dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === fresh.toLowerCase());
-        if (taken) fresh = "";
-        const shown: Dish[] = [
-            ...(fresh === ""
-                ? []
-                : [
-                      {
-                          name: fresh,
-                          short: "",
-                          foods: [],
-                          standard: [],
-                          kcal: null,
-                          portions: [],
-                          kinds: [],
-                      },
-                  ]),
-            ...dishesFound(dishes, search.value),
-        ];
+        if (taken(fresh)) fresh = "";
+        const blank: Dish = { name: fresh, short: "", foods: [], standard: [], kcal: null, portions: [], kinds: [] };
+        const shown: Dish[] = [...(fresh === "" ? [] : [blank]), ...dishesFound(dishes, search.value)];
         const rows: HTMLElement[] = shown.flatMap((dish: Dish): HTMLElement[] => {
             const key: string = dish.name.toLowerCase();
             const name: HTMLElement = dishNameOf(dish);
@@ -375,9 +362,10 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
             detail.append(facts, error);
             parts.append(
                 ...dish.foods.map((food: string, index: number): HTMLElement => {
+                    const [name, brand, store]: string[] = food.split(";");
                     const grams: HTMLInputElement = gramsFieldOf(
                         dish.standard[index] ?? null,
-                        food.split(";")[0],
+                        name,
                         dish.portions[index] ?? null,
                         (typed: number | null): void =>
                             send(
@@ -389,8 +377,7 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
                                 ),
                             ),
                     );
-                    const [name, brand, store]: string[] = food.split(";");
-                    const part: HTMLElement = partOf(
+                    return partOf(
                         food,
                         grams,
                         unitOf(dish.kinds[index] ?? "Eat"),
@@ -402,14 +389,8 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
                                   ),
                               )
                             : null,
-                        (): void =>
-                            foodOpen({
-                                name: name,
-                                brand: brand ?? "",
-                                store: store ?? "",
-                            }),
+                        (): void => foodOpen({ name: name, brand: brand ?? "", store: store ?? "" }),
                     );
-                    return part;
                 }),
             );
             if (adding === key) {
@@ -431,10 +412,7 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
             return [line, detail];
         });
         const typed: string = mealNameOf(search.value);
-        const plus: HTMLElement[] =
-            typed === "" || dishes.some((dish: Dish): boolean => dish.name.toLowerCase() === typed.toLowerCase())
-                ? []
-                : [newOf(typed)];
+        const plus: HTMLElement[] = typed === "" || taken(typed) ? [] : [newOf(typed)];
         list.replaceChildren(
             ...(naming ? [nameFormOf()] : []),
             ...(shown.length > 0 || plus.length > 0 ? [listHeadOf("Meals", "kcal / meal"), ...rows, ...plus] : []),
@@ -456,25 +434,16 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
             naming = false;
             show();
         };
-        const name: HTMLInputElement = editFieldOf(
-            "",
-            "Name",
-            (): void => {
-                if (mealNameOf(name.value) !== "") begin(name.value);
-            },
-            close,
-        );
+        const save: () => void = (): void => {
+            if (mealNameOf(name.value) !== "") begin(name.value);
+        };
+        const name: HTMLInputElement = editFieldOf("", "Name", save, close);
         const label: HTMLElement = elementOf("span", "food-fact", "Name");
         name.className = "food-inline food-inline-new";
         name.placeholder = "";
         label.addEventListener("click", (): void => name.focus());
         facts.append(label, name);
-        form.append(
-            facts,
-            editButtonsOf(close, (): void => {
-                if (mealNameOf(name.value) !== "") begin(name.value);
-            }),
-        );
+        form.append(facts, editButtonsOf(close, save));
         queueMicrotask((): void => name.focus());
         return form;
     };
