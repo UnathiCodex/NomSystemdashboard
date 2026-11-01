@@ -1,28 +1,17 @@
 /**
  * ## Persons
  *
- * Reads the people I name from `Persons.md`:
- * one Markdown table, `| Person | Title | Mail | … |`, one row per person,
- * its name as `Nachname, Vorname` or a single name,
- * linked to its page in TUMonline when it has one,
- * its title and its mail both kept, never shown.
- * A name is the key of its person, as the name of a food of `Foods.md` is in `Meals.md`:
- * the columns `Lecturers`, `Tutor` and `Head` of my modules and lists,
- * the lines of `Schools.md` that name a person by its role,
- * and `With` of an entry name a person by its name alone, never with a link,
- * and the page finds the person by it, see `src/persons.ts`.
- * The pencil beside the people of `With` changes a person everywhere
- * once its dialog saves, see {@link personRename}.
+ * The people I name, in `Persons.md` as one table `| Person | Title | Mail | … |`.
+ * A name is `Nachname, Vorname` or a single name, linked to its page in TUMonline when it has one.
+ * Its title and mail are kept, never shown.
+ * The name is the key of its person, so every other file names a person by its name alone, never with a link.
  */
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { dataRoot, personsFile, universityRoot, writeAllowed } from "./sources.ts";
 
-/**
- * A person, one row of `Persons.md`.
- * - `title`: Its title, or what I typed, like `Speaker`.
- */
+/** A row of `Persons.md`, `title` its title or what I typed. */
 export type Person = {
     name: string;
     link: string;
@@ -31,10 +20,10 @@ export type Person = {
 };
 
 /**
- * A person changed by the pencil beside the people of `With`, as the page sends it.
+ * A person changed by the pencil beside the people of `With`.
  * - `old`: Its name as the entries named it.
  * - `title`: Left out, it keeps its title.
- * - `dry`: Whether only to check the change, writing nothing.
+ * - `dry`: Only checks, writing nothing.
  */
 export type PersonRenamed = {
     old: string;
@@ -45,44 +34,28 @@ export type PersonRenamed = {
     dry?: boolean;
 };
 
-/**
- * Writes the people a person goes by in my calendars anew,
- * see `attendeesRename` in `./calendar.ts`, handed in,
- * since `./calendar.ts` reads this file for the mails, see {@link mailOf}.
- */
+/** Renames a person in my calendars, handed in, since `./calendar.ts` imports this file for the mails. */
 export type AttendeesRename = (old: string, name: string, mail: string, dry: boolean) => number;
 
-/**
- * Names of the columns of a table that name people, one per line, parted by `<br>`,
- * see `peopleHeads` in `src/persons.ts`.
- */
+/** Columns of a table that name people, one per line, parted by `<br>`. */
 const peopleHeads: string[] = ["Lecturers", "Tutor", "Head"];
 
-/**
- * What follows the name of a head of a chair who leads it for now, kommissarisch,
- * in `Schools.md`. Renaming the person keeps it.
- */
+/** Follows the name of a head who leads a chair for now in `Schools.md`, kept on a rename. */
 const actingMark: string = " (komm.)";
 
-/**
- * Roles a line of a list names a person by, like `- Dean: Bungartz, Hans-Joachim`,
- * see `peopleRoles` in `src/persons.ts`.
- */
+/** Roles a line of a list names a person by, like `- Dean: <name>`. */
 const peopleRoles: string[] = ["Dean", "Vice Dean", "Rector", "Prorector", "Head", "Vice Head"];
 
-/** A link typed for a person, a web address without spaces. */
+/** A web address without spaces. */
 const linkForm: RegExp = /^https?:\/\/\S+$/;
 
-/** Lines of the table of `Persons.md` before its rows: the header and the line below. */
+/** Lines of the table before its rows. */
 const tableHead: number = 2;
 
-/** A name with its link, as a cell of `Persons.md` writes it. */
+/** A name with its link, as a cell writes it. */
 const linkedForm: RegExp = /^\[([^\]]*)\]\(([^)]*)\)$/;
 
-/**
- * Reads the people of `Persons.md` in the order of the table,
- * none while it does not exist. A row without a name stays out.
- */
+/** In the order of the table, none while it does not exist, a row without a name left out. */
 export function personsRead(): Person[] {
     if (!existsSync(personsFile)) return [];
 
@@ -109,9 +82,8 @@ export function personsRead(): Person[] {
 }
 
 /**
- * Gives the mail of the person a name names in `Persons.md`, empty for none,
- * by its name or by that name spoken, `Vorname Nachname`, as an older entry may name
- * the person, as the page finds a person, see `personOf` in `src/persons.ts`.
+ * The mail of a person, empty for none.
+ * Found by its name or by `Vorname Nachname`, as an older entry may name the person.
  */
 export function mailOf(name: string): string {
     return (
@@ -123,9 +95,7 @@ export function mailOf(name: string): string {
 }
 
 /**
- * Gives a name as `Persons.md` names its person,
- * for a single first name the one person of that `Vorname`,
- * the name a person I share with has in my reader, see `partners` in `./sources.ts`.
+ * A name as `Persons.md` names its person, for a single first name the one person of that `Vorname`.
  * The name itself for none or for several.
  */
 export function personNameOf(name: string): string {
@@ -137,28 +107,20 @@ export function personNameOf(name: string): string {
     return named.length === 1 ? named[0].name : name;
 }
 
-/** Writes the first cell of a person's row: its name, linked to its page if any. */
 function nameCellOf(name: string, link: string): string {
     return link === "" ? name : `[${name}](${link})`;
 }
 
-/** Gives the name of a person's row, from the link of its first cell or the cell. */
 function rowNameOf(line: string): string {
     const cell: string = (line.split("|")[1] ?? "").trim();
     return linkedForm.exec(cell)?.[1].trim() ?? cell;
 }
 
 /**
- * Works out `Persons.md` with a person changed, see {@link personRename}:
- * while no other row has the new name, small and capital letters alike,
- * the row of the old name takes the new name, its link and its mail as typed,
- * every other cell of it kept, like its title, and a person without row gets one;
- * while another row has it, the person moves to that row, which stays as it is,
- * and the row of the old name goes,
- * as a place moves to the row of the name it is renamed to.
- * The rows ordered anew by name, small and capital letters alike,
- * as the table came, every other line staying as it is.
- * Gives the text and the person as its row then holds it.
+ * Gives `Persons.md` with a person changed, and the person as its row then holds it.
+ * While another row has the new name, ignoring case, the person moves there and its old row goes.
+ * Else its row takes the new name, link and mail, its other cells kept, and a person without a row gets one.
+ * The rows are sorted by name anew, ignoring case, every other line as it is.
  */
 function personsTextOf(sent: PersonRenamed): [string, Person] {
     const lines: string[] = readFileSync(personsFile, "utf8").split("\n");
@@ -204,12 +166,9 @@ function personsTextOf(sent: PersonRenamed): [string, Person] {
 }
 
 /**
- * Works out a Markdown file with a person renamed in its columns that name people
- * and in the lines of a list that name a person by its role:
- * a cell holding several names parted by `<br>`, a name it then holds twice once,
- * a name followed by ` (komm.)` keeping it, every other cell and line staying as it is.
- * - `named`: Indexes of the columns that name people in the table being read,
- *   none outside a table.
+ * Gives a Markdown file with a person renamed in its columns of people and its lines of roles.
+ * A name a cell then holds twice stays once.
+ * - `named`: The columns of people of the table being read, none outside a table.
  */
 function peopleTextOf(file: string, old: string, name: string): string {
     const lines: string[] = readFileSync(file, "utf8").split("\n");
@@ -243,17 +202,10 @@ function peopleTextOf(file: string, old: string, name: string): string {
 }
 
 /**
- * Changes a person everywhere,
- * as the pencil beside the people of `With` asks once its dialog saves,
- * see `withRowOf` in `src/day/categories.ts`: its row in `Persons.md`,
- * its name in the files of my modules and my lists,
- * and every person of that name in my calendars with its mail.
- * Works out every file first and writes only then,
- * so nothing is written while one cannot be. With `dry` only checks.
+ * Changes a person everywhere, its row, its name in my modules and lists, and in my calendars with its mail.
+ * Works out every file first and writes only then, so nothing is written while one cannot be.
  *
- * @throws {Error} - When the old or the new name is empty, the new name holds `;`,
- *   which parts the names of `With`, the link is no web address,
- *   or a file lies outside the new system
+ * @throws {Error} - When a name is empty, the new one holds the `;` of `With`, the link is bad or a file lies outside
  */
 export function personRename(sent: PersonRenamed, attendees: AttendeesRename): void {
     const clean: (text: unknown) => string = (text: unknown): string =>

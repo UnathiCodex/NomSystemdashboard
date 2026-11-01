@@ -3,17 +3,11 @@
  *
  * Start with `npm start`.
  *
- * Reads the vault named in `./sources.ts`
- * and waits at `127.0.0.1:3000`, IPv4 by its address,
- * not `localhost`, which some servers turn into `::1` first
- * while `tailscale serve` hands requests to `127.0.0.1:3000`,
- * to answer the browser page with data, and with the page itself.
- *
- * - Node may read from disk but browser cannot.
- * - Node cannot draw a window, only the browser draws.
- *
+ * Reads the vault and answers the browser page with data and with the page itself.
+ * It waits at `127.0.0.1:3000`, since `tailscale serve` hands requests there
+ * and some servers turn `localhost` into `::1` first.
+ * Node reads the disk, only the browser draws.
  * Each module of `reader/` does the work of its area, this file only routes to it.
- * `./page.ts` gives out the files of the page through Vite.
  */
 
 import { createServer } from "node:http";
@@ -133,9 +127,7 @@ import type { AttemptNew, RoundNew, SkillEntryChange, SkillEntryNew } from "./sk
 import type { Dish, Food, FoodChanged } from "./food.ts";
 
 /**
- * Sends an answer as JSON text, packed as `gzip` when the browser takes it,
- * as every browser does,
- * which makes the categories with the values of their fields 31 KB instead of 506 KB.
+ * Sends an answer as JSON, packed as `gzip` when the browser takes it, the categories 31 KB instead of 506 KB.
  * `no-store`, because the files may change any time.
  */
 function responseSend(response: ServerResponse, status: number, body: unknown): void {
@@ -150,11 +142,9 @@ function responseSend(response: ServerResponse, status: number, body: unknown): 
 
 /**
  * Sends a file of my modules, or one a skill entry links, as it lies on the disk.
- * - `Content-Disposition`: `inline` shows the file, in its own viewer for a PDF,
- *   and its name for the tab and for saving it.
+ * - `Content-Disposition`: `inline` shows it, a PDF in its own viewer, with its name for the tab and saving.
  * - `Cache-Control`: `no-store`, because it may change any time.
- * - `Content-Security-Policy`: `script-src 'none'` runs no script of the file,
- *   like one inside an `.svg` opened on its own.
+ * - `Content-Security-Policy`: Runs no script of the file, like one inside an `.svg`.
  */
 function fileSend(response: ServerResponse, file: NotesFile, name: string): void {
     response.setHeader("Content-Type", file.type);
@@ -165,10 +155,8 @@ function fileSend(response: ServerResponse, file: NotesFile, name: string): void
 }
 
 /**
- * Streams a file of my modules with the headers of {@link fileSend},
- * piece by piece as it is read, so a large file,
- * like a book as PDF, never lies in the reader's memory whole.
- * The browser going away, like from a tab closed before its PDF loaded, is no error.
+ * Streams a file with the headers of {@link fileSend}, so a large book never lies in memory whole.
+ * The browser going away, like a tab closed before its PDF loaded, is no error.
  *
  * @throws {Error} - When the file cannot be read to its end
  */
@@ -185,51 +173,36 @@ async function fileStream(response: ServerResponse, file: NotesStream, name: str
 }
 
 /**
- * Heading of the block I opened last in each section, by the path of its note,
- * empty for its current step, as the editor tells it, see `src/editor/round.ts`.
+ * The heading of the block I opened last in each section by the path of its note, empty for its current step.
  * Kept in memory only, so a reload shows the block again until the reader restarts.
  */
 const openedBlocks: Map<string, string> = new Map<string, string>();
 
 /**
- * Handles a request by its method and its address,
- * each area under its own path: `/api/day`, `/api/course`, `/api/notes`, `/api/edit`,
- * `/api/skill`, `/api/food`, `/api/sport`, `/api/persons`.
- * The range of the log comes as FullCalendar sends it, `start` and `end` with offset,
- * the range of the plan as days.
- * - `GET /api/day/boxes`, `GET /api/day/carried`:
- *   First write the chapters due today into the plan of today, see `./suggestions.ts`.
+ * Handles a request by its method and address, each area under its own path `/api/<area>`.
+ * The range of the log comes as FullCalendar sends it, with offset, the range of the plan as days.
+ * - `GET /api/day/boxes`, `GET /api/day/carried`: First write the chapters due today into the plan of today.
  * - `GET /api/day/plain?id=…`: The plain series of the `UID` of one of its parts.
  * - `GET /api/day/real`: The minutes the last entries like a box really lasted.
- * - `POST /api/day/log`: Sends the entry to Vu when Vu is in its `With`,
- *   see `entryShare` in `./shared.ts`, as do the other routes that add an entry,
- *   and those that change one when Vu comes into its `With`.
- *   The routes that change my foods, meals, places and platforms
- *   send each change to Vu, see `listShare` there.
- * - `PATCH /api/day/log`, `PATCH /api/skill/entry`:
- *   Refused with 409 when its file changed it since the dialog opened it.
+ * - `POST /api/day/log`: Sends the entry to Vu when Vu is in its `With`, as every route that adds one does.
+ *   A route that changes an entry sends it once Vu comes into its `With`.
+ *   The routes that change my foods, meals, places and platforms send each change to Vu.
+ * - `PATCH /api/day/log`, `PATCH /api/skill/entry`: Refused with 409 when its file changed since the dialog opened.
  * - `POST /api/day/moved`: Every other field as its file holds it.
  * - `DELETE /api/day/boxes`: Of one day of a series that day alone.
- * - `POST /api/day/boxes`: Numbers the boxes of its type anew,
- *   a tutorial by its week, see `numbersRenew` in `./course.ts`.
- * - `POST /api/day/repeat`: Refused with 409 for a series of a type
- *   that has a box in its semester already.
- * - `dry: true` in a body: Only checks or sends what it would make, writing nothing,
- *   for the preview of the dialog.
- * - `POST /api/day/undone`: Removes the log entry of the box
- *   unless it holds what I added since.
- * - `PATCH /api/day/places`: Changes the row and nothing else,
- *   while `POST /api/day/renamed` changes the place everywhere.
+ * - `POST /api/day/boxes`: Numbers the boxes of its type anew, a tutorial by its week.
+ * - `POST /api/day/repeat`: Refused with 409 for a type that has a box in its semester already.
+ * - `dry: true` in a body: Only checks, writing nothing, for the preview of the dialog.
+ * - `POST /api/day/undone`: Removes the log entry of the box unless it holds what I added since.
+ * - `PATCH /api/day/places`: Changes the row alone, `POST /api/day/renamed` the place everywhere.
  * - `GET /api/course/module`: The semester of today while none is named.
  * - `DELETE /api/course/series`: Keeps the boxes done.
- * - `PUT /api/edit/note`: Its change kept as a diff, see `./edit.ts`.
- * - `PUT /api/edit/file`: Without a diff, see `./files.ts`.
- * - `POST /api/devices`: The device named by Tailscale
- *   from the address `tailscale serve` adds to the request.
- * - `GET /api/changes`: Keeps the answer open, see `./changes.ts`.
- * - Any other address: Hands request to the page.
+ * - `PUT /api/edit/note`: Its change kept as a diff, `PUT /api/edit/file` without.
+ * - `POST /api/devices`: The device Tailscale names by the address `tailscale serve` adds.
+ * - `GET /api/changes`: Keeps the answer open.
+ * - Any other address: Hands the request to the page.
  *
- * @throws {unknown} - Error of the chosen answer thrown again
+ * @throws {unknown} - The error of the chosen answer thrown again
  */
 async function requestHandle(page: ViteDevServer, request: IncomingMessage, response: ServerResponse): Promise<void> {
     const url: URL = new URL(request.url ?? "/", "http://localhost");
@@ -649,10 +622,7 @@ server.on("request", (request: IncomingMessage, response: ServerResponse): void 
         else responseSend(response, 500, { error: "The reader failed" });
     });
 });
-/**
- * Port of the reader: environment variable `NOM_PORT` when set,
- * like for a reader on a sample vault, else `3000`.
- */
+/** `NOM_PORT` when set, like for a reader on a sample vault, else `3000`. */
 const port: number = Number(process.env.NOM_PORT ?? 3000);
 server.listen(port, "127.0.0.1", (): void => console.log(`http://127.0.0.1:${port}`));
 linksCheckStart();

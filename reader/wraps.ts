@@ -2,26 +2,17 @@
  * ## Wraps
  *
  * Prints every line of a Markdown file that does not fit on one line of my editor,
- * for the writers of my documents and their checks, see
- * `.claude/skills/learn/styles/document-style.md` in `NomWorkspace`:
- * `node ~/NomWorkspace/NomSystemdashboard/reader/wraps.ts <file.md> …`,
- * while the reader runs, see `reader.ts`.
- * Chromium without a window draws the file in the editor of the page,
- * see `src/editor/preview.ts`, as my laptop shows it:
- * a page 1600 px wide, the text column `--reading-width` 900 px of it,
- * see `src/variants.css`.
+ * by `node reader/wraps.ts <file.md> …` while the reader runs.
+ * Chromium without a window draws it in the editor of the page as my laptop shows it,
+ * 1600 px wide with a text column of 900 px.
  * A wider page grows as a whole, so its lines break at the same words.
- * Every line shows rendered as while I do not edit it,
- * the solutions and hidden blocks too.
- * The heading of an Example or a Task keeps the room of its check and cross free,
- * see `.task-heading` in `src/editor/editor.css`.
- * A line counts once its text goes on below, or once it is wider than the column.
+ * Every line is rendered as while I do not edit it, the solutions and hidden blocks too.
+ * The heading of an Example or a Task keeps the room of its check and cross free.
+ * A line counts once its text goes on below or it is wider than the column.
  * A table is left out, since its rows may be wider.
- * The characters are guessed at half the size of the text each.
- * The command ends with 1 while a line does not fit,
- * with 2 when the reader does not answer with its editor.
- * The page asks the reader for nothing but itself: every request to its API is refused,
- * so nothing is written.
+ * A character is guessed at half the size of the text.
+ * Ends with 1 while a line does not fit, 2 when the reader does not answer with its editor.
+ * Every request to the API is refused, so nothing is written.
  */
 
 import { readFileSync } from "node:fs";
@@ -31,10 +22,7 @@ import { vault } from "./sources.ts";
 
 import type { Browser, Page, Route } from "playwright";
 
-/**
- * A line of a file that does not fit on one line of the editor.
- * `over` is 0 where not known, like for a line of a code block.
- */
+/** A line that does not fit, `over` 0 where not known, like in a code block. */
 type Misfit = {
     line: number;
     rows: number;
@@ -42,31 +30,20 @@ type Misfit = {
     characters: number;
 };
 
-/**
- * A file to draw, `place` from which its relative links lead.
- */
+/** A file to draw, `place` from which its relative links lead. */
 type Drawn = {
     text: string;
     place: string;
 };
 
-/**
- * The editor of the page, which the reader serves.
- */
 const address: string = "http://127.0.0.1:3000/scripts";
 
 /**
- * Draws a file in the editor of the page and finds its lines that do not fit,
- * in the browser.
- * Takes CodeMirror and the look of the editor
- * at the very addresses the editor imports them,
- * so they are its own.
- * Reads the whole file as Markdown at once,
- * which CodeMirror otherwise does bit by bit,
- * showing the lines not read yet as plain text.
+ * Draws a file in the editor of the page and finds its lines that do not fit, in the browser.
+ * Imports CodeMirror and the look at the very addresses the editor imports them, so they are its own.
+ * Parses the whole file at once, since CodeMirror shows lines not parsed yet as plain text.
  * Scrolls through the file, since the editor draws only what is in sight.
- * Measures a line of text as it stands and again kept on one line,
- * a line of a code block by the lines of the page its text stands on.
+ * Measures a line as it stands and again kept on one line, a line of code by the rows its text stands on.
  * A line measured again while scrolling counts as last measured.
  */
 async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
@@ -196,18 +173,13 @@ async function misfitsDraw(file: Drawn): Promise<Misfit[]> {
     return [...found.values()].sort((first: Misfit, second: Misfit): number => first.line - second.line);
 }
 
-/**
- * Writes what of a line does not fit.
- */
+/** What of a line does not fit. */
 function whatOf(misfit: Misfit): string {
     if (misfit.rows === 1) return `${misfit.over} px too wide`;
     if (misfit.over <= 0) return `${misfit.rows} lines`;
     return `${misfit.rows} lines, ${misfit.characters} ` + `character${misfit.characters === 1 ? "" : "s"} too long`;
 }
 
-/**
- * Prints the lines of each file named after the command that do not fit.
- */
 async function wrapsPrint(): Promise<void> {
     const files: string[] = process.argv.slice(2);
     if (files.length === 0) {
