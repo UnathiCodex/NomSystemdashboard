@@ -31,6 +31,7 @@ import {
     dishSend,
     elementOf,
     foodNameOf,
+    headingOf,
     plusOf,
     portionGramsOf,
     unitOf,
@@ -450,14 +451,18 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
     };
 
     search.addEventListener("input", show);
-    const heading: HTMLElement = elementOf("h2", "food-heading", "Meals");
-    heading.append(
-        plusOf("New meal", (): void => {
-            naming = !naming;
-            show();
-        }),
+    section.append(
+        headingOf(
+            "Meals",
+            plusOf("New meal", (): void => {
+                naming = !naming;
+                show();
+            }),
+            "kcal / meal",
+        ),
+        searchFieldOf(search, "Search meals"),
+        list,
     );
-    section.append(heading, searchFieldOf(search, "Search meals"), list);
     load();
     changesFollow((): void => {
         if (!list.contains(document.activeElement)) load();

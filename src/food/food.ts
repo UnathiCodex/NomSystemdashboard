@@ -15,7 +15,7 @@
  * and loads anew the moment a file of my new system changes, see `../changes.ts`.
  */
 
-import { amountOf, buttonOf, elementOf, foodDayLoad, summaryOf, totalOf, unitOf } from "./foods.ts";
+import { amountOf, elementOf, foodDayLoad, headingOf, plusOf, summaryOf, totalOf, unitOf } from "./foods.ts";
 import { foodNewShow, foodSearchOf, foodShow } from "./search.ts";
 import { mealsSectionOf } from "./meals.ts";
 import { labelOf } from "../day/places.ts";
@@ -23,7 +23,7 @@ import { dayAdd, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { logEntryOpen } from "../editor/dialog.ts";
-import { iconPut, plusPut } from "../icons.ts";
+import { iconPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
 import "../day/trackers.css";
 import "./food.css";
@@ -252,10 +252,14 @@ export function foodStart(): void {
         ?.append(
             mealsSectionOf((food: { name: string; brand: string; store: string }): void => foodShow(search, food)),
         );
-    const plus: HTMLButtonElement = buttonOf("", "", (): void => foodNewShow(search));
-    plusPut(plus, "New food");
-    document.getElementById("food-foods-heading")?.append(plus);
-    document.getElementById("food-search")?.append(search);
+    document.getElementById("food-search")?.append(
+        headingOf(
+            "Foods",
+            plusOf("New food", (): void => foodNewShow(search)),
+            "kcal / 100 g",
+        ),
+        search,
+    );
     dayOpen(askedDayOf() ?? calendarTodayOf());
     todayFollow((): string => shown, dayOpen);
     changesFollow((): void => dayOpen(shown));

@@ -65,17 +65,16 @@ body:has(> .food) {
     }
 }
 
-/* The totals of the day at the right end of the bar as the trackers of the day view,
-   each only as wide as it needs, since they are more */
+/* The totals of the day as the trackers of the day view, filling the bar after the date */
 .food-bar .trackers {
-    grid-auto-columns: max-content;
+    flex: 1;
 }
 
 /* The date exactly where and as wide as the date of the day, see `day/day.css`,
    so the arrow after it stands at the same place in every view, from day to day */
 .food-day-title {
     white-space: nowrap;
-    padding: 0.25rem 0.5rem 0.25rem 1.5rem;
+    padding: 0.25rem;
     font-variant-numeric: tabular-nums;
     text-align: left;
 }
@@ -98,6 +97,14 @@ body:has(> .food) {
     padding: 0.25rem 0;
     font: inherit;
     vertical-align: top;
+}
+
+/* The unit of the numbers of a list after its plus, small and grey, see `headingOf` in `foods.ts` */
+.food-unit {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-muted);
 }
 
 /* What the totals leave out, small and grey above the meals of the day */

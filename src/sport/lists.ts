@@ -41,7 +41,7 @@ import {
     workoutDelete,
     workoutSend,
 } from "./mine.ts";
-import { bracketsWatch, buttonOf, elementOf, plusOf } from "../food/foods.ts";
+import { bracketsWatch, buttonOf, elementOf, headingOf, plusOf } from "../food/foods.ts";
 import { editButtonsOf, editFieldOf, inlineFieldOf, listLineOf } from "../food/search.ts";
 import { lengthOf } from "../day/times.ts";
 import { matchesAll, wordsOf } from "../search.ts";
@@ -105,13 +105,6 @@ export function typedNameOf(typed: string): string {
 /** Tells whether a text typed starts like a web address. */
 function linkTyped(typed: string): boolean {
     return /^\s*https?:\/\//i.test(typed);
-}
-
-/** Makes the heading of a section, and the plus after it where given. */
-function headingOf(name: string, plus: HTMLButtonElement | null): HTMLElement {
-    const heading: HTMLElement = elementOf("h2", "food-heading", name);
-    if (plus !== null) heading.append(plus);
-    return heading;
 }
 
 /**
@@ -491,6 +484,7 @@ function workoutsSectionOf(): HTMLElement {
                 naming = !naming;
                 show();
             }),
+            "kcal",
         ),
         searchFieldOf(search, "Search workouts"),
         list,
@@ -828,6 +822,7 @@ function exercisesSectionOf(): HTMLElement {
                 naming = !naming;
                 show();
             }),
+            "",
         ),
         searchFieldOf(search, "Search exercises"),
         list,

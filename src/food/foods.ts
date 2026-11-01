@@ -244,6 +244,18 @@ export function elementOf(tag: string, className: string, text: string): HTMLEle
 }
 
 /**
+ * Makes the heading of a list of the food and the sport view: its name, the plus after it,
+ * then small and grey in brackets the unit of its numbers, none for an empty one,
+ * so no head inside the list repeats it.
+ */
+export function headingOf(name: string, plus: HTMLButtonElement, unit: string): HTMLElement {
+    const heading: HTMLElement = elementOf("h2", "food-heading", name);
+    heading.append(plus);
+    if (unit !== "") heading.append(elementOf("span", "food-unit", `(${unit})`));
+    return heading;
+}
+
+/**
  * Makes a total of a day in the bar of the food and the sport view
  * as a tile of the trackers of the day view, its name small and grey above its value,
  * see `.tracker-row` in `../day/trackers.css`.

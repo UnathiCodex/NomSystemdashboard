@@ -425,12 +425,6 @@ function productLineOf(search: Search, product: Product): HTMLElement {
 }
 
 /**
- * Foods of mine the food view lists while nothing is typed, the most eaten first,
- * so the list stays short, the others it finds as I type.
- */
-const shownFoods: number = 10;
-
-/**
  * Shows what the search found in its sections, a thin grey line between them,
  * those that found nothing left out:
  * my meals, while nothing is typed the foods I just added, the last first,
@@ -453,11 +447,7 @@ function resultsShow(search: Search): void {
             : search.added.flatMap((key: string): Food[] =>
                   found.foods.filter((food: Food): boolean => keyOf(food) === key),
               );
-    const rest: Food[] = found.foods.filter((food: Food): boolean => !fresh.includes(food));
-    const listed: Food[] =
-        query !== ""
-            ? rest
-            : rest.filter((food: Food, index: number): boolean => index < shownFoods || keyOf(food) === search.open);
+    const listed: Food[] = found.foods.filter((food: Food): boolean => !fresh.includes(food));
     const sections: HTMLElement[][] = [];
 
     if (meals.length > 0) sections.push([listHeadOf("Meals", ""), ...meals]);
@@ -469,7 +459,7 @@ function resultsShow(search: Search): void {
         ]);
     if (listed.length > 0 || plus.length > 0)
         sections.push([
-            listHeadOf("Foods", "kcal / 100 g"),
+            ...(sections.length > 0 ? [listHeadOf("Foods", "kcal / 100 g")] : []),
             ...listed.flatMap((food: Food): HTMLElement[] => mineLinesOf(search, food)),
             ...plus,
         ]);
