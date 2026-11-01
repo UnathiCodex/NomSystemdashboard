@@ -1,35 +1,15 @@
 /**
  * ## Choices
  *
- * The dashboard's own picker, in place of the browser's drop-downs,
- * for every field of a dialog that picks.
- * A field is one row of its dialog: its name at the left,
- * then one line showing its value, empty without one, no dash and no placeholder;
- * a click anywhere on the row opens its list as a menu of its own over the dialog,
- * right under the line, never covering it, the rows of the dialog staying where they are,
- * see {@link listOf}; only one list is open at a time,
- * and Esc or a click beside it closes it.
- * A list of one value to pick closes as I pick;
- * one of several stays open, its picks lighter rows, never checkboxes,
- * until I close it. A field of several values may also add
- * each value as a row of its own, see {@link addedRowsOf}.
- * A search field at its top filters the values as I type, ignoring case and accents:
- * a value matches when each typed word stands somewhere in its name;
- * Enter picks the first match,
- * the arrow keys move through the list, see {@link listStep}.
- * Where a list takes new values, the small grey plus with the typed text
- * stands at its end while no value has that text;
- * with nothing typed it shows nowhere, so a plus inside a list always names what it adds;
- * a fixed list, like the categories, has none.
- * Values keep their order, like the most used first.
- * The values come from a search function,
- * so a list can later come from the reader, like the foods.
- * A short list that takes no new values needs no search field and has none.
- * A value wider than its row goes on below, never cut,
- * a long name broken where its parts meet, see {@link breakableOf}.
- *
- * - `../search.ts`: Compares a typed text with the values,
- *   as every search of the page does.
+ * The dashboard's own picker for every field of a dialog that picks, in place of the browser's drop-downs.
+ * A field is one row, its name at the left, then one line with its value, no dash and no placeholder.
+ * A click on the row opens its list as a menu right under the line, the dialog staying as it is.
+ * Only one list is open at a time, Esc or a click beside it closes it.
+ * A list of one value closes as I pick, one of several stays open, its picks lighter rows.
+ * A search field filters as I type, ignoring case and accents, each typed word somewhere in the name.
+ * The grey plus with the typed text stands at the end while no value has that text, never with nothing typed.
+ * Values keep their order, a short fixed list has no search field.
+ * A value wider than its row goes on below, never cut.
  */
 
 import { Star } from "lucide";
@@ -38,42 +18,27 @@ import { matchesAll, searchTextOf, wordsOf } from "../search.ts";
 import { dottedOf, valueDot } from "../persons.ts";
 
 /**
- * Marks where a long name may go on over a next line, where it is wider than its room,
- * as on a phone, in the line of a field:
- * after each `_` and between a small and a capital letter, so
- * `IN0004_EinfuehrungRechnerarchitektur (VO)` breaks into `IN0004_Einfuehrung`
- * and `Rechnerarchitektur (VO)` instead of right after `Skill:` and within a word;
- * the mark is a space of no width, U+200B, which shows nothing.
+ * Marks where a long name may break, after each `_` and between a small and a capital letter.
+ * Else it breaks right after the name of its field or within a word.
+ * The mark is a space of no width, U+200B.
  */
 export function breakableOf(text: string): string {
     return text.replace(/_/g, "_\u200b").replace(/([a-zäöüß])([A-ZÄÖÜ])/g, "$1\u200b$2");
 }
 
-/**
- * Marks where a path may go on over a next line, after each `/` too,
- * see {@link breakableOf}.
- */
+/** Marks where a path may break, after each `/` too. */
 export function pathBreakableOf(path: string): string {
     return breakableOf(path).replaceAll("/", "/\u200b");
 }
 
 /**
- * Writes the name of a file into its line, whole where it fits,
- * else cut in its middle and not at its end,
- * so its ending stays in sight, the `…` right before it,
- * like `IN2028_BusinessAnalyticsMach…_Plan.ics`
- * beside `IN2028_BusinessAnalyticsMach…_Log.ics`;
- * the name whole as its tooltip.
- * Its ending is its last part from its last `_` on, with its extension,
- * where that is the shorter part of the name, else its extension alone,
- * so the code of the module at its start stays in sight too;
- * a name with neither ends in `…`;
- * a path keeps its last name from its last `/` on instead.
- * Its start keeps as many letters as fit,
- * measured in the font of the line, see {@link measurer},
- * once the line shows and again whenever its width changes, like when its folder opens,
- * and once the font of the page has loaded, which changes the room the name takes;
- * while the line does not show, like in a closed folder, it stays as it is.
+ * Writes the name of a file into its line, whole where it fits, else cut in its middle.
+ * So its ending stays in sight, the name whole as its tooltip.
+ * The ending is from the last `_` on where that is the shorter part, else the extension.
+ * So the code of the module at the start stays in sight too.
+ * A path keeps its last name from its last `/` on.
+ * Measured again when the width changes and once the font has loaded, which changes its room.
+ * A line that does not show has no width and stays as it is.
  *
  * @param line - Line of the name, as wide as its room whatever it holds
  */
@@ -109,10 +74,9 @@ export function middleCutPut(line: HTMLElement, name: string): void {
 /**
  * A value to pick.
  *
- * - `group`: Name of its group, which stands above its first value, empty for none.
- * - `detail`: Grey detail beside the text in the list, like the address of a place.
- * - `starred`: Whether a small filled star follows its text in the list,
- *   like my default place.
+ * - `group`: Name above its first value, empty for none.
+ * - `detail`: Grey beside the text in the list.
+ * - `starred`: Whether a small filled star follows its text, like my default place.
  */
 export type Choice = {
     value: string;
@@ -125,34 +89,23 @@ export type Choice = {
 /**
  * How a picker is built.
  *
- * - `search`: Gives the values for a typed text, all of them for an empty one.
- * - `adding`: Whether the plus with the typed text at the end
- *   of the list adds it as a new value.
- * - `add`: Takes the typed text as a new value before it is picked, like a new place,
- *   which the reader writes, and gives the value to pick, `null` to pick none;
- *   left out, the plus picks the typed text itself.
- * - `newTextOf`: Gives what the plus shows for the typed text,
- *   `null` to offer no plus for it; left out, the typed text in quotes.
- * - `pick`: Takes the values picked after each change;
- *   for a list of one value once it is closed.
- * - `order`: Puts the values picked of a list of several in the order the line shows;
- *   the order they were picked when left out.
+ * - `search`: Values for a typed text, all of them for an empty one.
+ * - `adding`: Whether the plus at the end of the list adds the typed text as a new value.
+ * - `add`: Takes the typed text as a new value, gives the value to pick, `null` for none.
+ *   Left out, the plus picks the typed text itself.
+ * - `newTextOf`: What the plus shows, `null` for no plus, left out the typed text in quotes.
+ * - `pick`: Takes the values after each change, for a list of one value once it is closed.
+ * - `order`: Order of the values picked in the line, left out the order they were picked.
  * - `empty`: What the line shows, grey, while nothing is picked.
  * - `noun`: What a value is, for the search field and the tooltip of the plus.
- * - `locked`: Whether the value stays as picked, its line opening no list,
- *   like the category of an entry of the log logged from a box of the plan.
- * - `plus`: Whether the line shows the one plus in place of `empty` while nothing
- *   is picked, `empty` then its tooltip.
- * - `besideName`: Whether the line, while it shows the plus,
- *   stands beside the name of its row, so no plus stands on a line of its own
- *   and the value keeps the whole width, as {@link lineMove} does for a list.
- * - `textOf`: Text of a value picked before its list ever opened,
- *   like the name and day of a cooking of its identifier.
- * - `linkOf`: Address a value picked opens from the line, see {@link lineValueOf}.
- * - `afterOf`: An element right after a value picked in the line,
- *   like the pencil of a person of `With`, whose click opens no list.
- * - `parting`: What parts the values picked in the line,
- *   a middle dot when left out, see `dottedOf` in `../persons.ts`.
+ * - `locked`: Whether the line opens no list, like the category of a log entry from a plan box.
+ * - `plus`: Whether the line shows the plus while nothing is picked, `empty` its tooltip.
+ * - `besideName`: Whether the line with the plus stands beside the name of its row.
+ *   So the value keeps the whole width.
+ * - `textOf`: Text of a value picked before its list ever opened.
+ * - `linkOf`: Address a value picked opens from the line.
+ * - `afterOf`: An element after a value in the line, whose click opens no list.
+ * - `parting`: What parts the values in the line, a middle dot when left out.
  */
 export type ChoicesSetup = {
     search: (text: string) => Promise<Choice[]>;
@@ -177,17 +130,13 @@ export type ChoicesSetup = {
 };
 
 /**
- * How the rows of a field of several values are built, see {@link addedRowsOf}.
+ * How the rows of a field of several values are built.
  *
- * - `picked`: Values picked, also those the list does not offer,
- *   like a chapter whose folder has another name now.
+ * - `picked`: Values picked, also those the list no longer offers.
  * - `grouped`: Whether the search looks at the group of a value too.
- * - `hint`: Shown in place of the line while there are no values to offer at all;
- *   left out, the field then has no row of its own,
- *   only the rows of the values picked, the first named by it.
- * - `nested`: Whether the rows stand inside the value above them,
- *   like the documents of a chapter, see {@link addedRowsOf}.
- * - `tagOf`: Grey box after the text of a value picked, like `Round 0` of a section.
+ * - `hint`: In place of the line while there is nothing to offer, left out no row.
+ * - `nested`: Whether the rows stand inside the value above them.
+ * - `tagOf`: Grey box after the text of a value picked.
  */
 export type AddedSetup = {
     choices: Choice[];
@@ -201,60 +150,35 @@ export type AddedSetup = {
     nested?: boolean;
 };
 
-/**
- * Most characters the texts of a list may have together to show
- * without a search field; a list with more gets one above it.
- */
+/** Most characters of all texts of a list without a search field. */
 const searchedLength: number = 60;
 
-/**
- * Measures how wide a text is in the font of a line without showing it:
- * the drawing of a canvas never put into the page,
- * which measures a text exactly as the page writes it.
- */
+/** Measures a text in the font of a line, a canvas never put into the page. */
 const measurer: CanvasRenderingContext2D = document
     .createElement("canvas")
     .getContext("2d") as CanvasRenderingContext2D;
 
-/**
- * The picker whose list is open, `null` while none is,
- * so only one list is open at a time.
- */
+/** The picker whose list is open, so only one list is open at a time. */
 let openPicker: HTMLElement | null = null;
 
-/**
- * Line of the list that is open, `null` while none is;
- * it may stand outside its picker, like a plus moved beside the name of its field,
- * and a click on it still counts as one on the picker.
- */
+/** Line of the open list, which may stand outside its picker and still counts as it. */
 let openLine: HTMLElement | null = null;
 
-/**
- * The list that is open, the menu, `null` while none is.
- */
+/** The open list. */
 let openBox: HTMLElement | null = null;
 
-/**
- * Closes the list that is open, `null` while none is.
- */
+/** Closes the open list. */
 let openClose: (() => void) | null = null;
 
-/**
- * Whether the lists started for the page, so the router can start the day again.
- */
+/** Whether the lists started, since the day may start again. */
 let listsStarted: boolean = false;
 
-/**
- * Makes a choice that shows its value, without group.
- */
+/** A choice that shows its value, without group. */
 export function choiceOf(value: string): Choice {
     return { value: value, text: value, group: "" };
 }
 
-/**
- * Builds the search of a list of my own:
- * the choices whose text holds each word of the typed text, in their order.
- */
+/** Search of a list of my own, the choices whose text holds each typed word. */
 export function searchOf(choices: Choice[]): (text: string) => Promise<Choice[]> {
     return async (text: string): Promise<Choice[]> => {
         const words: string[] = wordsOf(text);
@@ -262,11 +186,7 @@ export function searchOf(choices: Choice[]): (text: string) => Promise<Choice[]>
     };
 }
 
-/**
- * Builds the search of a list whose values stand under their groups,
- * like documents under their folders:
- * the choices whose group and text together hold each word of the typed text.
- */
+/** Search of a list under groups, the choices whose group and text hold each typed word. */
 export function groupedSearchOf(choices: Choice[]): (text: string) => Promise<Choice[]> {
     return async (text: string): Promise<Choice[]> => {
         const words: string[] = wordsOf(text);
@@ -274,9 +194,6 @@ export function groupedSearchOf(choices: Choice[]): (text: string) => Promise<Ch
     };
 }
 
-/**
- * Makes a button of a picker.
- */
 function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = document.createElement("button");
     button.type = "button";
@@ -286,10 +203,7 @@ function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonE
     return button;
 }
 
-/**
- * Makes the button of a value in a list: its text, its star while it is starred,
- * and its detail grey beside it.
- */
+/** Button of a value in a list, its text, its star and its grey detail. */
 function valueButtonOf(choice: Choice, chosen: boolean, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf(choice.text, chosen, click);
     button.dataset.value = choice.value;
@@ -309,12 +223,8 @@ function valueButtonOf(choice: Choice, chosen: boolean, click: () => void): HTML
 }
 
 /**
- * Makes a value picked in the line of its picker:
- * one that opens what it names, like a person its row in `Persons.md`,
- * a link of its own in the line,
- * which a click follows in this window instead of opening the list;
- * a span, since the line is a button, which holds no real link.
- * Any other value its plain text.
+ * A value picked in the line, a link in this window where it has an address, else plain text.
+ * A span, since the line is a button, which holds no real link.
  *
  * @param address - Address it opens, empty for none
  */
@@ -331,23 +241,15 @@ function lineValueOf(text: string, address: string): string | HTMLSpanElement {
 }
 
 /**
- * Makes a list that the line of a field opens and closes
- * as a menu of its own over the dialog, the same for every list of the dialogs:
- * a popover of the browser, `manual`, so this file alone decides when it closes,
- * which the anchors of CSS place right under the line that opened it,
- * as wide as the values of the row the line stands in,
- * see `.picker-box` in `choices.css`;
- * the line and its row are those anchors while the list is open.
- * It closes on another click on the line, on Esc, see {@link listsStart},
- * and on a click beside its picker and its line.
- * - `field`: The row of the dialog the line stands in,
- *   also when moved beside the name of a field;
- *   the picker itself while the line stands in no row.
- * - `close`: Also takes back what an open list whose picker left the page meanwhile
- *   still holds, so the next list opens alone.
+ * A list the line of a field opens and closes as a menu over the dialog.
+ * A `manual` popover, so this file alone decides when it closes.
+ * CSS anchors place it under the line, as wide as the values of its row.
+ * It closes on another click on the line, on Esc and on a click beside it.
+ * - `field`: The row the line stands in, the picker while it stands in none.
+ * - `close`: Also clears a list whose picker left the page meanwhile, so the next opens alone.
  *
  * @param opened - Comes once the list is open, like to focus its search field
- * @returns Closes the list, like after a pick
+ * @returns Closes the list
  */
 export function listOf(
     picker: HTMLElement,
@@ -391,28 +293,18 @@ export function listOf(
     return close;
 }
 
-/**
- * Tells whether a list is open.
- */
 export function listOpen(box: HTMLElement): boolean {
     return box.matches(":popover-open");
 }
 
 /**
- * Builds a picker: the line of the field, showing the texts of the values picked,
- * with what stands beside and below it, and its list.
- * Values picked but not found, like a place an entry kept,
- * come first while nothing is typed.
- * - `long`: Whether the list is long enough for a search field, fixed at the start.
- * - `show`: Shows the values found for the text of the search field,
- *   unless a newer text came meanwhile.
- * - `typedPick`: Picks the value Enter or the plus gives,
- *   empties the search and shows all values again, the value picked scrolled into sight,
- *   like a new dish at the end of a long list;
- *   a value picked already, like the place an entry kept,
- *   now added to my places, stays picked, and the dialog is told again.
- * - `typedAdd`: Takes the typed text as a new value, by the plus or by Enter
- *   when nothing matches; nothing when `add` gives `null`, the text staying typed.
+ * A picker, the line with the values picked, what stands beside and below it, and its list.
+ * Values picked but not found come first while nothing is typed.
+ * - `long`: Whether the list gets a search field, fixed at the start.
+ * - `show`: Shows the values for the search text, unless a newer text came meanwhile.
+ * - `typedPick`: Picks the value of Enter or the plus, empties the search, the value scrolled into sight.
+ *   A value picked already stays picked, and the dialog is told again.
+ * - `typedAdd`: Takes the typed text as a new value, the text staying typed when `add` gives `null`.
  */
 export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
     const picker: HTMLDivElement = document.createElement("div");
@@ -602,12 +494,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
     return picker;
 }
 
-/**
- * Puts two pickers side by side in one row, the first wider,
- * the second below it where the row has no room for both, as on a phone;
- * the list of either opens below both, as wide as the row,
- * see `.panel-pair` in `day.css`.
- */
+/** Two pickers side by side in one row, the first wider, the second below where there is no room. */
 export function pairOf(first: HTMLElement, second: HTMLElement): HTMLDivElement {
     const pair: HTMLDivElement = document.createElement("div");
     pair.className = "panel-pair";
@@ -616,15 +503,11 @@ export function pairOf(first: HTMLElement, second: HTMLElement): HTMLDivElement 
 }
 
 /**
- * Makes the row of a value picked of a field of several values:
- * its name, mostly none, its text, a link when it has one,
- * which opens what it names in this window, never a second one,
- * and a small × that takes it back.
- * - `opening`: The text as a link, inside the element of the text,
- *   so a plus moved after the text stays outside the link, see {@link lineMove}.
+ * Row of a value picked of a field of several values, its text, a link where it has one, and a small ×.
+ * - `opening`: The link inside the element of the text, so a plus moved after the text stays outside it.
  *
- * @param link - Address the text opens, empty for none
- * @param tag - Grey box after the text, see {@link roundTagOf}, empty for none
+ * @param link - Address the text opens in this window, empty for none
+ * @param tag - Grey box after the text, empty for none
  */
 export function addedRowOf(
     name: string,
@@ -651,10 +534,7 @@ export function addedRowOf(
     return rowOf(name, value);
 }
 
-/**
- * Makes the grey box of a round, as the dialog of a box shows it after a note:
- * the box of the round in the status line of the editor, see `.round-tag` in `base.css`.
- */
+/** Grey box of a round after a note, as the status line of the editor shows it. */
 export function roundTagOf(text: string): HTMLSpanElement {
     const tag: HTMLSpanElement = document.createElement("span");
     tag.className = "block-kind round-tag";
@@ -663,18 +543,11 @@ export function roundTagOf(text: string): HTMLSpanElement {
 }
 
 /**
- * Builds the rows of a field of several values, like the documents of a skill entry:
- * a row per value picked, the first named by the field,
- * then the row of the list, whose plus stands beside the name of the field;
- * a pick closes the list and adds the value as a row of its own,
- * opening the list again adds the next one.
- * The list offers the values not picked yet, and has no row while every value is picked;
- * while there are none at all, a hint stands in its place,
- * or without hint the field has no row of its own.
- * Nested inside the value above, the rows stand indented under a thin grey line,
- * and the plus of the list waits for the one who builds
- * that value to move it right after it, see {@link lineMove},
- * so a chapter and its documents read as one.
+ * Rows of a field of several values, a row per value picked, the first named by the field.
+ * Then the row of the list, its plus beside the name, which offers the values not picked yet.
+ * A pick adds the value as a row of its own.
+ * Nested, the rows stand indented, and the one who builds the value above moves the plus after it.
+ * So a chapter and its documents read as one.
  */
 export function addedRowsOf(name: string, setup: AddedSetup): HTMLDivElement[] {
     const offered: Choice[] = setup.choices.filter((choice: Choice): boolean => !setup.picked.includes(choice.value));
@@ -714,10 +587,8 @@ export function addedRowsOf(name: string, setup: AddedSetup): HTMLDivElement[] {
 }
 
 /**
- * Builds the row of the list that adds the next value of a field of several values,
- * its plus beside the name of the field, see {@link lineMove}:
- * on the row of the first value picked, the row of the list keeping only the list then,
- * or on the row of the list itself while none is picked.
+ * Row of the list that adds the next value, its plus beside the name of the field.
+ * The name stands on the row of the first value picked, else on this row.
  *
  * @param first - Row of the first value picked, `undefined` while none is
  */
@@ -729,10 +600,8 @@ export function addRowOf(name: string, first: HTMLElement | undefined, picker: H
 }
 
 /**
- * Moves the line of the picker of a row, its plus, right after what it adds to,
- * so no plus stands on a line of its own;
- * moved out of its row, the row keeps only the list, which takes no room of the dialog,
- * see `.panel-list` in `choices.css`, and opens as a menu right under the plus.
+ * Moves the plus of a row right after what it adds to, so no plus stands on a line of its own.
+ * Moved out, the row keeps only the list, which takes no room of the dialog.
  *
  * @param row - Row with its picker, built with a plus as its line
  */
@@ -744,11 +613,8 @@ export function lineMove(row: HTMLElement, place: HTMLElement): void {
 }
 
 /**
- * Makes the field of a part of a field, like the address of a place:
- * a plain field without placeholder, empty until I type or paste into it;
- * a link a field of text like every other part,
- * so every browser shows it as plain as they, never in a colour of its own,
- * only the keyboard of a phone the one of a web address.
+ * Plain field of a part of a field, without placeholder.
+ * A link is a text field too, so no browser shows it in a colour of its own.
  *
  * @param keyboard - Keyboard of a phone for the field, `url` for a link, else `text`
  * @param name - What it holds, for screen readers
@@ -762,10 +628,7 @@ export function partFieldOf(keyboard: string, value: string, name: string): HTML
     return input;
 }
 
-/**
- * Makes a part of a field: its name small and grey, then its field;
- * a click on the name puts the focus into the field.
- */
+/** Part of a field, its name small and grey, then its field. */
 export function partOf(name: string, input: HTMLInputElement): HTMLLabelElement {
     const part: HTMLLabelElement = document.createElement("label");
     const label: HTMLSpanElement = document.createElement("span");
@@ -777,12 +640,9 @@ export function partOf(name: string, input: HTMLInputElement): HTMLLabelElement 
 }
 
 /**
- * Makes a row of a dialog: the name of a field before its picker.
- * A click anywhere on the row but on something to click itself,
- * or on a label of a part, which puts the focus into its own field,
- * opens the list of its first picker, or puts the focus into its first field.
- * No `<label>` around the row,
- * which would pass a click on the name to the first button of the picker.
+ * Row of a dialog, the name of a field before its picker.
+ * A click on the row opens its first list or focuses its first field, unless it hits something to click.
+ * No `<label>` around the row, which would pass a click on the name to the first button.
  */
 export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
     const row: HTMLDivElement = document.createElement("div");
@@ -802,13 +662,9 @@ export function rowOf(name: string, picker: HTMLElement): HTMLDivElement {
 }
 
 /**
- * Shows the file of the entry of a dialog at the left of its buttons, small and grey:
- * only its folder and its name after `…/`, since it is no whole path,
- * so it stays on one line beside the buttons, its whole path as its title;
- * a link that opens it in the editor of my new system,
- * whose paths start inside `NomManageplannings`;
- * hidden while the file is not known,
- * like that of a new entry before its category is picked.
+ * File of the entry of a dialog beside its buttons, a link into the editor.
+ * Only its folder and name after `…/`, so it stays on one line, its whole path as its title.
+ * The paths of the editor start inside `NomManageplannings`.
  *
  * @param file - Path of the file from `NomWorkspace` on, empty while not known
  */
@@ -820,11 +676,8 @@ export function fileShow(link: HTMLAnchorElement, file: string): void {
 }
 
 /**
- * Moves through the open list by the arrow keys, wherever the focus stood when it opened:
- * from its search field over its values to the plus at its end and back,
- * stopping at both ends, so Enter takes the row it stands on as a click does.
- * A field outside these rows, like the name of a new food,
- * keeps its arrows for its own text.
+ * Moves through the open list by the arrow keys, from its search field to the plus, stopping at both ends.
+ * A field outside these rows keeps its arrows for its own text.
  */
 function listStep(event: KeyboardEvent): void {
     if (openBox === null || !listOpen(openBox)) return;
@@ -837,15 +690,10 @@ function listStep(event: KeyboardEvent): void {
 }
 
 /**
- * Starts the lists of the pickers once for the page, however often the day starts:
- * Esc closes the open list and not the dialog around it,
- * the arrow keys move through it,
- * and a click beside the picker of the open list closes it.
- * - `keydown`: Comes before the dialog sees Esc, since it listens first;
- *   a list whose picker left the page meanwhile,
- *   like rows shown anew, lets Esc go on to the dialog.
- * - `click`: Comes before the element clicked sees it,
- *   so the list is closed before another one opens.
+ * Starts the lists once for the page, Esc closing the open list and not its dialog.
+ * - `keydown`: Listens first, so it sees Esc before the dialog.
+ *   A list whose picker left the page meanwhile lets Esc go on to the dialog.
+ * - `click`: Listens first, so the list is closed before another one opens.
  */
 export function listsStart(): void {
     if (listsStarted) return;

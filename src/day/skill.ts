@@ -1,54 +1,21 @@
 /**
  * ## Skill in the entry by category
  *
- * A skill entry in the dialog, for a box of the plan and the log alike,
- * one row per field, each one line showing its value, see `choices.ts`.
- * Below the category its summary, its skill and its type side by side on one line,
- * no type for my own learning or a skill without module folder, like a project,
- * which a click opens to pick another.
- * The reader gives the name and the link of the skill, see `reader/documents.ts`.
- * Its title follows skill and type, see {@link skillTitleOf}.
- * Place, times and the link of the summary come as every category has them,
- * see `categories.ts`.
- * Below them who I was with, then its semester,
- * and its chapters one after another, each with its documents.
- * Its semester says from which semester the lecture or the material is,
- * not when I did it:
- * the semester of the day of the dialog, which follows that day as I type it,
- * until I pick another from its list, never typed.
- * The Skill list shows the skills of the semester in the groups `Master`, `Projects` and `Modules`,
- * and its search every module folder too, since I sometimes attend another module,
- * see {@link moduleSearchOf}.
- * A text typed that names no skill adds a new one, see {@link skillAdd},
- * a row of `Skills.md` without link and without folder, see `reader/skills.ts`,
- * whose link I enter by hand as the link of its summary.
- * Chapters come one after another once a skill is picked, see {@link chapterRowsOf}.
+ * A skill entry in the dialog, for a box of the plan and the log alike.
+ * Below the category skill and type side by side, no type for a skill without module folder.
+ * Its semester says from which semester the lecture or the material is, not when I did it.
+ * It follows the day of the dialog until I pick another, never typed.
+ * The Skill list searches every module folder too, since I sometimes attend another module.
+ * A text typed that names no skill adds a row of `Skills.md` without link and folder.
  * An entry keeps the name a chapter had, also once its folder has another name.
- * The list `Attach` holds the real documents the entry used,
- * see {@link documentsOfferedOf},
- * the reader writes just its path as its `ATTACH`, see `reader/documents.ts`.
- * Picks a list does not offer, like an older entry's,
- * stay as rows until I take them back.
- * The note is only my free note.
- * In the log a note of my own learning holds its tasks right below it,
- * see {@link taskRowsOf},
- * so a task always comes from the Markdown of its note, never typed.
+ * Picks a list does not offer stay as rows until I take them back.
+ * A task always comes from the Markdown of its note, never typed.
  * A Task left without result is no attempt and is not written.
  * An Example has no result, so it is no pick here, `Next` checks it off in its round.
- * Every note of a section the entry attaches gets its line `X-ROUND`,
- * so the reader writes the round I stand in, also with no Task picked,
- * and the learning view goes on from there, see `marksOfEntry` in `reader/skill.ts`.
- * A note shows its round, which I can pick myself, see {@link roundRowsOf},
- * so I can go on with a round on purpose, like round 0 after I closed it.
+ * Every note of a section attached gets its `X-ROUND`, also with no Task picked.
  * An entry of a type, whose documents are its material, picks no tasks.
  * Every field may stay empty, the skill too.
- * Another skill or type a click on it picks for this entry alone,
- * also of a box of a series.
- * A skill entry of the log already logged shows its rounds, which stay.
- * New attempts go into the line of their section.
- * Saving sends a skill entry of the log to the reader's one writer of skill entries.
- * A skill box of the plan has the same fields but tasks and rounds,
- * which only happen in the log, and the dialog writes it itself.
+ * A box of the plan has the same fields but tasks and rounds, which only happen in the log.
  */
 
 import {
@@ -95,9 +62,7 @@ import type { Link } from "../../reader/calendar.ts";
 import type { ModuleContents } from "../../reader/notes.ts";
 import type { RoundPick } from "../../reader/skill.ts";
 
-/**
- * A task picked for the entry, with its result as picked so far.
- */
+/** A task picked for the entry, with its result. */
 type AttemptPick = {
     task: string;
     result: "right" | "wrong" | "";
@@ -107,10 +72,8 @@ type AttemptPick = {
 /**
  * What is picked for the skill entry so far.
  *
- * - `semester`: Empty while it is the semester of the day of the dialog,
- *   see {@link semesterDay}.
- * - `rounds`: Rounds I picked by hand,
- *   by the paths of their notes from the module folder.
+ * - `semester`: Empty while it is the semester of the day of the dialog.
+ * - `rounds`: Rounds I picked by hand, by the paths of their notes from the module folder.
  */
 type SkillPicks = {
     module: string;
@@ -122,9 +85,7 @@ type SkillPicks = {
     rounds: Map<string, number>;
 };
 
-/**
- * Skill and type of a skill entry, which boxes and the log both have.
- */
+/** Skill and type of a skill entry. */
 export type ModuleType = {
     module: string;
     type: string;
@@ -134,8 +95,7 @@ export type ModuleType = {
  * A skill entry as the dialog opens it, empty values for a new one.
  *
  * - `semester`: Its `X-SEMESTER`, empty for a new one and an older one without.
- * - `titleLink`: The `ALTREP` of its `SUMMARY`, in the log the folder of its skill,
- *   or a web address an older entry kept.
+ * - `titleLink`: The `ALTREP` of its `SUMMARY`, the folder of its skill or a web address.
  */
 export type SkillValues = {
     module: string;
@@ -148,17 +108,12 @@ export type SkillValues = {
     rounds: RoundMark[];
 };
 
-/**
- * Results to pick for each task.
- */
 const resultChoices: Choice[] = [
     { value: "right", text: "Right", group: "" },
     { value: "wrong", text: "Wrong", group: "" },
 ];
 
-/**
- * Modules with their tasks and the lists to pick from, as kept when `Skill` was picked.
- */
+/** Modules with their tasks and the lists to pick from. */
 let skilling: Skilling = {
     modules: [],
     skills: [],
@@ -170,49 +125,31 @@ let skilling: Skilling = {
 };
 
 /**
- * Gives the modules with their tasks and the lists to pick from as the reader last sent
- * them, loaded anew after every change of a file, see `changesKept` in `../changes.ts`,
- * so picking `Skill` waits for no reckoning of the reader,
- * which takes it a fifth of a second.
+ * The skilling as the reader last sent it, loaded anew after every change of a file,
+ * so picking `Skill` waits not for the reader's fifth of a second.
  */
 const skillingKept: () => Promise<Skilling> = changesKept(skillingLoad);
 
-/**
- * What is picked so far.
- */
 let picks: SkillPicks = picksOf({ module: "", type: "", semester: "", chapters: [] });
 
-/** Gives what is picked, with no documents, attempts and rounds picked yet. */
+/** What is picked, with no documents, attempts and rounds yet. */
 function picksOf(picked: Omit<SkillPicks, "documents" | "attempts" | "rounds">): SkillPicks {
     return { ...picked, documents: [], attempts: [], rounds: new Map() };
 }
 
-/**
- * Path of a note of a chapter from the module folder, its chapter folder caught.
- */
+/** Path of a note of a chapter from the module folder, its chapter folder caught. */
 const chapterNote: RegExp = /^(\d{2}_[^/]*)\/[^/]+$/;
 
-/**
- * Code of a module of the university, two to four capitals and then three to six digits.
- */
+/** Code of a module of the university. */
 const moduleCode: RegExp = /^[A-Z]{2,4}\d{3,6}$/;
 
-/**
- * Name of a module, of its folder and of its plan and its log:
- * its code, capitals and then digits, and `_` first,
- * as the reader names it, see `moduleName` in `reader/sources.ts`.
- */
+/** Name of a module, its folder, plan and log, as the reader names it. */
 const moduleName: RegExp = /^[A-Z]+\d+_/;
 
-/**
- * Groups of the Skill list in their order, each under its head,
- * which name the first sections of the plan too, see `sections` in `boxes.ts`.
- */
+/** Groups of the Skill list in their order. */
 export const skillGroups: string[] = ["Master", "Projects", "Modules"];
 
-/**
- * Umlauts and `ß` as the names of my module folders write them out.
- */
+/** Umlauts and `ß` as the names of my module folders write them out. */
 const umlauts: { [letter: string]: string } = {
     ä: "ae",
     ö: "oe",
@@ -223,20 +160,15 @@ const umlauts: { [letter: string]: string } = {
     ß: "ss",
 };
 
-/**
- * Day of the dialog, whose semester the entry has while I pick none,
- * see {@link skillDaySet}.
- */
+/** Day of the dialog, whose semester the entry has while I pick none. */
 let semesterDay: string = "";
 
 /**
  * Where the fields of `Skill` show and the call that tells the dialog of a change.
  *
- * - `people`: The row of who I was with, which `categories.ts` builds.
- * - `summary`: Pencil, link and parts of the summary,
- *   see `summaryPartsOf` in `categories.ts`.
- * - `changed`: Tells the dialog, so it shows the link of the summary anew
- *   and allows saving or not.
+ * - `people`: The row of who I was with.
+ * - `summary`: Pencil, link and parts of the summary.
+ * - `changed`: Shows the link of the summary anew and allows saving or not.
  */
 type SkillShown = {
     head: HTMLElement;
@@ -246,44 +178,28 @@ type SkillShown = {
     changed: () => void;
 };
 
-/**
- * Where the fields of `Skill` last showed, so a changed day shows its semester,
- * `null` before they show.
- */
+/** Where the fields of `Skill` last showed, so a changed day shows its semester. */
 let shownIn: SkillShown | null = null;
 
-/**
- * Chapters and documents of the skill picked,
- * none before one is picked and for a skill without module folder, like a project.
- */
+/** Chapters and documents of the skill picked, none for a skill without module folder. */
 let contents: ModuleContents = contentsNone();
 
-/** Gives the contents of no skill. */
 function contentsNone(): ModuleContents {
     return { folder: "", chapters: [], documents: [], materials: {}, inner: [] };
 }
 
-/**
- * `X-ROUND`s of the skill entry of the log being changed, none for any other.
- */
+/** `X-ROUND`s of the skill entry of the log being changed. */
 let loggedRounds: RoundMark[] = [];
 
-/**
- * Whether the dialog writes a box of the plan, which has no tasks and attempts.
- */
+/** Whether the dialog writes a box of the plan, which has no tasks and attempts. */
 let inPlan: boolean = false;
 
-/**
- * First choice of the list of types, which takes the type back.
- */
+/** First choice of the list of types, which takes the type back. */
 const noType: string = "None";
 
 /**
- * Gives the paths of the documents of a skill entry or a box from its links,
- * as the list `Attach` offers them, from the folder of its module:
- * a file with its fingerprint, or one in a folder of material,
- * like the slides a lecture of my plan links without fingerprint,
- * never the folder of a chapter, which lies right in the module.
+ * Paths of the documents from the module folder, as the list `Attach` offers them.
+ * A file with its fingerprint or one in a folder of material, never a chapter folder.
  */
 function documentPathsOf(links: Link[]): string[] {
     return links.flatMap((link: Link): string[] => {
@@ -295,50 +211,34 @@ function documentPathsOf(links: Link[]): string[] {
     });
 }
 
-/**
- * Gives the link of the skill picked, one for all its entries and boxes, whatever their
- * type, as the reader gives it, see `skillLinkOf` in `reader/documents.ts`.
- */
+/** Link of the skill picked, one for all its entries and boxes, whatever their type. */
 export function skillPathOf(): string {
     return skilling.links[picks.module] ?? "";
 }
 
-/**
- * Tells whether a skill has its folder in `NomSkillingmodules`,
- * the only skills with types, so the summary of any other, like a project, offers no type.
- */
+/** Whether a skill has its folder in `NomSkillingmodules`, the only skills with types. */
 function moduleIs(code: string): boolean {
     return (skilling.paths[code] ?? "").startsWith(`${modulesFolder}/`);
 }
 
-/**
- * Gives the name of the skill picked, which names its entries and the files of its plan
- * and its log, as the reader names it, see `skillNameOf` in `reader/documents.ts`.
- */
+/** Name of the skill, which names its entries and the files of its plan and log. */
 export function skillNameOf(module: string = picks.module): string {
     return skilling.names[module] ?? module;
 }
 
-/**
- * Gives the title of the skill and type picked while I type none,
- * as the reader writes it, see `skillTitleOf` in `reader/documents.ts`.
- */
+/** Title of the skill and type picked while I type none, as the reader writes it. */
 export function skillTitleOf(): string {
     const name: string = skillNameOf();
     if (picks.type === "") return name;
     return name === "" ? `(${picks.type})` : `${name} (${picks.type})`;
 }
 
-/**
- * Shows the folder of the skill picked as the link below the summary, hidden for none.
- */
+/** The folder of the skill as the link below the summary, hidden for none. */
 export function skillPathShow(link: HTMLAnchorElement): void {
     folderLinkShow(link, skillPathOf());
 }
 
-/**
- * Makes a calm grey hint in place of a picker.
- */
+/** A calm grey hint in place of a picker. */
 function hintOf(text: string): HTMLParagraphElement {
     const hint: HTMLParagraphElement = document.createElement("p");
     hint.className = "entry-none";
@@ -346,23 +246,16 @@ function hintOf(text: string): HTMLParagraphElement {
     return hint;
 }
 
-/**
- * Gives the group of a skill in the Skill list, see {@link skillGroups}:
- * `Master` for my skill of planning alone, see `masterName` in `../skill/attempts.ts`,
- * `Modules` for a skill named as a module, see {@link moduleName},
- * whose plan and log lie in `Modules/`, `Projects` for every other one.
- */
+/** Group of a skill in the Skill list, `Master` for my skill of planning alone. */
 function skillGroupOf(module: string): string {
     if (module === masterName) return "Master";
     return moduleName.test(skillNameOf(module)) ? "Modules" : "Projects";
 }
 
 /**
- * Builds the search of the Skill list:
- * while nothing is typed the skills of the semester and the skill picked,
+ * Search of the Skill list, in its groups.
+ * While nothing is typed the skills of the semester and the skill picked,
  * while I type every skill and module folder that holds the words.
- * Each stands in its group, see {@link skillGroupOf},
- * under the head of the group, as a section of the plan, see `.picker-group` in `choices.css`.
  */
 function moduleSearchOf(current: string): (text: string) => Promise<Choice[]> {
     const named: string[] = [...skilling.skills, ...skilling.otherModules];
@@ -383,16 +276,12 @@ function moduleSearchOf(current: string): (text: string) => Promise<Choice[]> {
 }
 
 /**
- * Gives the name of a new skill for the text typed in the Skill list, as its row holds it:
- * the code of a module first and a name after it named as my module folders are,
- * so its plan and its log lie in `Modules/`:
- * the code in capitals, `_`, and the name in CamelCase without spaces,
- * umlauts written out, other accents gone, a word all in capitals as one;
- * any other text as typed, its plan and its log in `Skilling/`.
+ * Name of a new skill for the text typed in the Skill list.
+ * A module code and a name become `CODE_CamelCase` as my module folders are named,
+ * umlauts written out, other accents gone, a word all in capitals as one.
+ * Any other text stays as typed.
  *
- * @returns `null` for a text that makes no new skill: empty, holding `|`, `/` or `\`,
- *   which no name of a file holds, starting with `.`, a code without a name after it,
- *   or the code of a module the list has already
+ * @returns `null` for empty, `|`, `/` or `\`, a leading `.`, a code alone or a code the list has
  */
 function skillNewNameOf(text: string): string | null {
     const typed: string = text.trim().replace(/\s+/g, " ");
@@ -415,12 +304,11 @@ function skillNewNameOf(text: string): string | null {
 }
 
 /**
- * Adds a new skill typed in the Skill list as a row of `Skills.md` without link,
- * see `skillAdd` in `reader/skills.ts`, and to the skills of the list,
- * so it is picked at once. Makes no folder.
+ * Adds a new skill as a row of `Skills.md` without link and to the list, so it is picked at once.
+ * Makes no folder.
  *
  * @returns Code of the new skill, `null` for a text that makes none
- * @throws {Error} - When the reader does not add it, like for a name a skill has already
+ * @throws {Error} - When the reader does not add it
  */
 async function skillAdd(text: string): Promise<string | null> {
     const name: string | null = skillNewNameOf(text);
@@ -438,18 +326,14 @@ async function skillAdd(text: string): Promise<string | null> {
     return code;
 }
 
-/**
- * Gives the semester of the entry: the one picked, else the semester of a day.
- */
+/** Semester of the entry, the one picked, else the semester of a day. */
 export function skillSemesterOf(day: string): string {
     return picks.semester !== "" ? picks.semester : semesterOf(day);
 }
 
 /**
- * Builds the choices of the semester, never typed: that of a day first,
- * like the day of the dialog,
- * then every semester the documents of a module are of, newest first,
- * and the one picked when it is none of them, like that of an older entry.
+ * Choices of the semester, that of the day first, then those of the documents newest first.
+ * The one picked comes along when it is none of them.
  */
 function semesterListOf(day: string, documents: string[], picked: string): Choice[] {
     const current: string = semesterOf(day);
@@ -459,12 +343,7 @@ function semesterListOf(day: string, documents: string[], picked: string): Choic
     return [current, ...others].map(choiceOf);
 }
 
-/**
- * Gives the choices of the semester of a skill for the dialog of a series,
- * see `series.ts`, the same as the dialog of an entry offers.
- * A skill without module, like a project,
- * has only the semester of the day and the one picked.
- */
+/** Choices of the semester of a skill for the dialog of a series, as an entry offers them. */
 export async function semestersOf(module: string, day: string, picked: string): Promise<Choice[]> {
     const documents: string[] =
         module === ""
@@ -475,17 +354,12 @@ export async function semestersOf(module: string, day: string, picked: string): 
     return semesterListOf(day, documents, picked);
 }
 
-/**
- * Ranks a semester by its year and season, a winter after the summer of its year,
- * so the newer ranks higher.
- */
+/** Rank of a semester, a winter after the summer of its year. */
 function semesterRankOf(semester: string): number {
     return Number(semester.slice(0, 4)) * 2 + (semester.endsWith("W") ? 1 : 0);
 }
 
-/**
- * Gives the semester of the folder a document lies in, empty for none.
- */
+/** Semester of the folder a document lies in, empty for none. */
 function documentSemesterOf(path: string): string {
     const semester: RegExpMatchArray | null = path
         .split("/")
@@ -495,20 +369,14 @@ function documentSemesterOf(path: string): string {
     return semester === null ? "" : semester[0];
 }
 
-/**
- * Gives the chapter a document belongs to, empty for a document of no chapter,
- * like the slides of a lecture.
- */
+/** Chapter a document belongs to, empty for none. */
 function chapterOfDocument(path: string): string {
     return path.match(chapterNote)?.[1] ?? "";
 }
 
 /**
- * Gives the documents a list `Attach` offers, in the order of their paths:
- * for my own learning the notes of a chapter,
- * for a type the files of the folder of its material, named by the type and `_`,
- * see `materialFolders` in `reader/notes.ts`,
- * in the folder of the semester of the entry.
+ * Documents a list `Attach` offers, for my own learning the notes of a chapter,
+ * for a type the files of its material folder `<type>_` in the semester of the entry.
  */
 function documentsOfferedOf(chapter: string): string[] {
     const folder: string = skilling.types.includes(picks.type) ? `${picks.type}_` : "";
@@ -522,11 +390,7 @@ function documentsOfferedOf(chapter: string): string[] {
         .sort((first: string, second: string): number => first.localeCompare(second));
 }
 
-/**
- * Builds the choices of a list `Attach`, the name of its file as text,
- * and as group for a file of material
- * the folders between the folder of its material and it.
- */
+/** Choices of a list `Attach`, a file of material grouped by the folders between. */
 function documentChoicesOf(chapter: string): Choice[] {
     return documentsOfferedOf(chapter).map((path: string): Choice => ({
         value: path,
@@ -535,16 +399,12 @@ function documentChoicesOf(chapter: string): Choice[] {
     }));
 }
 
-/**
- * Gives the name of the file of a document, which says what it is.
- */
 function fileNameOf(path: string): string {
     return path.split("/").at(-1) ?? path;
 }
 
 /**
- * Builds the choices of the Tasks of the chapters picked,
- * in groups by when they are due, the due ones first, a later Task with its day.
+ * Choices of the Tasks, grouped by when they are due, a later Task with its day.
  * An Example has no result, so it is no choice.
  */
 function taskChoicesOf(tasks: SkillTask[]): Choice[] {
@@ -561,9 +421,8 @@ function taskChoicesOf(tasks: SkillTask[]): Choice[] {
 }
 
 /**
- * Builds the row of a task picked, below its note, see {@link taskRowsOf}:
- * its name, the line of its result, grey `Right or Wrong` until I pick one, and its ×.
- * For Wrong a field below for my comment, the cursor in it once I pick Wrong.
+ * Row of a task picked, its name, its result and its ×.
+ * For Wrong a field below for my comment, the cursor in it.
  */
 function taskRowOf(pick: AttemptPick, name: string, again: () => void, changed: () => void): HTMLDivElement {
     const task: HTMLDivElement = document.createElement("div");
@@ -623,9 +482,7 @@ function taskRowOf(pick: AttemptPick, name: string, again: () => void, changed: 
     return rowOf("", task);
 }
 
-/**
- * Builds the rounds of the entry being changed, which stay, one line per line `X-ROUND`.
- */
+/** Rounds of the entry being changed, which stay, one line per `X-ROUND`. */
 function loggedOf(): HTMLElement[] {
     if (loggedRounds.length === 0) return [];
 
@@ -651,8 +508,8 @@ function loggedOf(): HTMLElement[] {
 }
 
 /**
- * Loads the chapters and documents of the skill picked, none for a project
- * and none for a module without folder, so its entry still opens.
+ * Loads the chapters and documents of the skill picked, none for a module without folder,
+ * so its entry still opens.
  * What comes for a skill picked before another one is dropped.
  */
 async function contentsLoad(): Promise<void> {
@@ -667,10 +524,7 @@ async function contentsLoad(): Promise<void> {
     if (module === picks.module) contents = loaded;
 }
 
-/**
- * Gives the tasks a document offers in the log: those of a note of my own learning,
- * none for any other document nor in the plan.
- */
+/** Tasks a document offers in the log, only those of a note of my own learning. */
 function tasksOfDocument(path: string): SkillTask[] {
     const note: string = noteOf(path);
     if (inPlan || picks.type !== "") return [];
@@ -682,10 +536,8 @@ function tasksOfDocument(path: string): SkillTask[] {
 }
 
 /**
- * Builds the tasks of a note picked below its row:
- * each task picked a row of its own, indented under a second thin grey line,
- * see `.panel-nested-twice` in `choices.css`, then the list of its tasks not picked yet,
- * whose plus stands right after the name of the note, see `lineMove` in `choices.ts`.
+ * Tasks of a note picked below its row, each picked one indented twice.
+ * The plus of the tasks not picked stands right after the name of the note.
  */
 function taskRowsOf(path: string, row: HTMLElement, again: () => void, changed: () => void): HTMLElement[] {
     const tasks: SkillTask[] = tasksOfDocument(path);
@@ -732,20 +584,12 @@ function taskRowsOf(path: string, row: HTMLElement, again: () => void, changed: 
 }
 
 /**
- * Builds the rows of the chapters of the entry and their documents,
- * once a skill is picked:
- * each chapter picked its row, its name a link to it in the scripts view,
- * see {@link chapterLinkOf}, for my own learning its notes right below it,
- * see {@link documentRowsOf},
- * for a type the documents of its material below all chapters,
- * then the list that adds a chapter while the module has some left.
+ * Rows of the chapters and their documents, once a skill is picked.
+ * For my own learning the notes below their chapter, for a type its material below all chapters.
  * Every plus stands right after what it adds to, none on a line of its own.
- * A module without any chapter folder keeps the row `Chapter +` with its list empty,
- * so the row never just disappears, a project has no chapters and no row.
- * Taking back a chapter of my own learning takes back its notes too,
- * a note its tasks and the round I picked for it.
- * Documents of my own learning that belong to no chapter picked stay below,
- * to be taken back.
+ * A module without chapter folders keeps the row `Chapter +` empty, so the row never just disappears.
+ * Taking back a chapter takes back its notes, a note its tasks and its round.
+ * Notes of no chapter picked stay below, to be taken back.
  */
 function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
     picks.attempts = picks.attempts.filter((pick: AttemptPick): boolean =>
@@ -824,11 +668,7 @@ function chapterRowsOf(again: () => void, changed: () => void): HTMLElement[] {
     return rows;
 }
 
-/**
- * Gives the link of a chapter picked, which opens its first note in the scripts view,
- * without the module, which the summary names,
- * empty for a chapter without notes, like one whose folder has another name now.
- */
+/** Link of a chapter to its first note in the scripts view, empty for a chapter without notes. */
 function chapterLinkOf(chapter: string): string {
     const note: string | undefined = contents.documents.find(
         (path: string): boolean => chapterOfDocument(path) === chapter,
@@ -837,18 +677,12 @@ function chapterLinkOf(chapter: string): string {
     return `/scripts?path=${encodeURIComponent(noteOf(note))}`;
 }
 
-/**
- * Gives the path of a document from `NomSkillingmodules`, as the scripts view takes it
- * and its section and its tasks name their note.
- */
+/** Path of a document from `NomSkillingmodules`, as the scripts view and tasks name it. */
 function noteOf(path: string): string {
     return `${contents.folder.slice(modulesFolder.length + 1)}/${path}`;
 }
 
-/**
- * Gives the section of a note of a chapter, with its round,
- * `undefined` for any other document or a module not of the semester.
- */
+/** Section of a note of a chapter, `undefined` for any other or a module not of the semester. */
 function sectionOfDocument(path: string): SkillSection | undefined {
     const note: string = noteOf(path);
     return skilling.modules
@@ -856,25 +690,18 @@ function sectionOfDocument(path: string): SkillSection | undefined {
         .find((section: SkillSection): boolean => section.note === note);
 }
 
-/**
- * Gives the round of a note of a chapter in the plan, its section's,
- * as the scripts view shows it, empty for any other document.
- */
+/** Round of a note in the plan, its section's, empty for any other document. */
 function roundOfDocument(path: string): string {
     const section: SkillSection | undefined = sectionOfDocument(path);
     return section === undefined ? "" : `Round ${section.round}`;
 }
 
 /**
- * Builds the round of a note picked in the log: a list whose line is the grey box
- * of the round right after the name of the note, moved there as the plus of its tasks.
- * It shows the round I picked, else the one its line `X-ROUND` in the entry names,
- * else its section's round now, and offers the rounds from 0 to the higher of those.
- * A pick, also of the round shown, is mine,
- * and the reader writes it as the line `X-ROUND`,
- * see `marksOfEntry` in `reader/skill.ts`. Without a pick nothing is written.
- * The box is no line of a picker any more,
- * so a click on the row of the note still opens its tasks, see `rowOf` in `choices.ts`.
+ * Round of a note picked in the log, a grey box right after the name of the note.
+ * It shows the round I picked, else its `X-ROUND` in the entry, else its section's round now.
+ * It offers the rounds from 0 to the higher of those.
+ * Only a pick is written, also of the round shown.
+ * The box is no line of a picker any more, so a click on the row of the note still opens its tasks.
  */
 function roundRowsOf(path: string, row: HTMLElement, again: () => void): HTMLElement[] {
     const section: SkillSection | undefined = sectionOfDocument(path);
@@ -913,11 +740,8 @@ function roundRowsOf(path: string, row: HTMLElement, again: () => void): HTMLEle
 }
 
 /**
- * Builds the rows of documents, see `addedRowsOf` in `choices.ts`:
- * the list `Attach` and a row per document picked of it, the name of its file,
- * no list while it offers nothing, and a hint when a document picked is in the module
- * no more, which the reader could not find by its fingerprint either.
- * Each note with its round and, inside a chapter, its tasks below it.
+ * Rows of documents, the list `Attach` and a row per document picked, each note with its round and tasks.
+ * A hint when a document picked is in the module no more, not even by its fingerprint.
  *
  * @param shown - Documents picked that these rows show, a part of all documents picked
  */
@@ -960,10 +784,7 @@ function documentRowsOf(
     return rows;
 }
 
-/**
- * Makes the Skill list of a skill entry or a series, see {@link moduleSearchOf},
- * which adds a new skill typed, by Enter or by the plus, see {@link skillAdd}.
- */
+/** Skill list of a skill entry or a series, which adds a new skill typed. */
 function skillPickerOf(
     module: string,
     below: HTMLElement[],
@@ -987,10 +808,7 @@ function skillPickerOf(
     });
 }
 
-/**
- * Makes the list of the type beside the skill, a plus while none is picked,
- * its first choice taking the type back, see {@link noType}.
- */
+/** List of the type beside the skill, a plus while none is picked. */
 function typePickerOf(type: string, aside: HTMLElement[] | undefined, pick: (type: string) => void): HTMLElement {
     return choicesOf({
         search: searchOf([noType, ...skilling.types].map(choiceOf)),
@@ -1006,10 +824,7 @@ function typePickerOf(type: string, aside: HTMLElement[] | undefined, pick: (typ
 }
 
 /**
- * Shows the fields of `Skill` as picked so far:
- * skill and type in the row of its summary, the type only for a module,
- * the semester below,
- * who I was with, the chapters with their documents and the rounds the entry has.
+ * Shows the fields of `Skill` as picked so far.
  * Picking a skill loads its chapters and documents, with nothing below it picked.
  */
 function picksShow(shown: SkillShown): void {
@@ -1061,10 +876,7 @@ function picksShow(shown: SkillShown): void {
 }
 
 /**
- * Makes skill and type side by side for the dialog of a new series,
- * see `seriesNew` in `series.ts`, the same lists as {@link picksShow},
- * with the folder they link below the skill,
- * so the plus of the type stands as high as there.
+ * Skill and type side by side for the dialog of a new series, the folder link below the skill.
  * What is picked goes to that form, never to the dialog of an entry.
  *
  * @throws {Error} - When the reader cannot answer
@@ -1100,12 +912,7 @@ export async function skillPairOf(picked: ModuleType, pick: (picked: ModuleType)
     return pair;
 }
 
-/**
- * Gives what a skill and a type are as the reader writes them,
- * see `skillTitleOf` and `skillLinkOf` in `reader/documents.ts`:
- * the title, the link of the skill, whatever the type, and the plan their boxes go into,
- * each empty while no skill is picked.
- */
+/** Title, link and plan file of a skill and type as the reader writes them, empty for no skill. */
 export function skillNamesOf(picked: ModuleType): {
     title: string;
     link: string;
@@ -1123,10 +930,8 @@ export function skillNamesOf(picked: ModuleType): {
 }
 
 /**
- * Shows the fields of `Skill` for a box of the plan or an entry of the log,
- * see {@link picksShow}.
+ * Shows the fields of `Skill` for a box of the plan or an entry of the log.
  *
- * @param day - Day of the dialog, whose semester the entry has while it has none
  * @throws {Error} - When the reader cannot answer
  */
 export async function skillFieldsShow(
@@ -1160,27 +965,17 @@ export async function skillFieldsShow(
     });
 }
 
-/**
- * Links of a skill entry or box as picked, which the reader writes,
- * see `linksOf` in `reader/documents.ts`: its `X-CHAPTER`s and its `ATTACH`es.
- */
+/** `X-CHAPTER`s and `ATTACH`es of a skill entry or box as picked. */
 export type SkillLinks = {
     chapters: string[];
     documents: string[];
 };
 
-/**
- * Reads the chapters and documents picked, of a box of the plan or an entry of the log.
- */
 export function skillLinksRead(): SkillLinks {
     return { chapters: picks.chapters, documents: picks.documents };
 }
 
-/**
- * Takes a new day of the dialog, as I type it:
- * while I picked no semester the entry has the semester of that day,
- * so the fields show again when that semester is another.
- */
+/** Takes a new day of the dialog, the fields show again when its semester is another. */
 export function skillDaySet(day: string): void {
     const before: string = semesterOf(semesterDay);
     semesterDay = day;
@@ -1190,18 +985,13 @@ export function skillDaySet(day: string): void {
     }
 }
 
-/**
- * Reads the skill and the type picked, each empty while not picked.
- */
 export function skillModuleType(): ModuleType {
     return { module: picks.module, type: picks.type };
 }
 
 /**
- * Sends the skill entry of the log as picked with the fields of the dialog,
- * then loads the log of the shown day again.
- * A change only while the file holds the entry as the dialog opened it,
- * see `skillEntrySend` in `../skill/attempts.ts`, else nothing.
+ * Sends the skill entry of the log, then loads the log again.
+ * A change only while the file holds the entry as the dialog opened it.
  * A task without result is left out.
  *
  * @param version - Fingerprint of the entry as the dialog opened it, empty for a new one
