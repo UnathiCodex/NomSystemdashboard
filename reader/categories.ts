@@ -31,10 +31,7 @@
  * see `./trackers.ts`.
  * `Way` takes only my means of transport, see {@link transports}.
  * `Sport` is a session of sport, not the moving of every day,
- * which ways on foot or by bike are:
- * it takes only its kinds, see `sportKinds` in `./sport.ts`,
- * so the sport area knows what each burns,
- * but no `With`, since I do sport alone.
+ * which ways on foot or by bike are, its fields those of every category, see `./sport.ts`.
  * A box of the plan may have it, since a session is something I intend.
  * `Skill` has only the fields `Place` and `With`:
  * a skill, a module by its code or a project by its name, and a type or none,
@@ -49,12 +46,11 @@
 import { entriesRead, skillName, summaryBaseOf } from "./calendar.ts";
 import { personNameOf } from "./persons.ts";
 import { labelOf, lineOf, placesRead, platformsRead, roomsRead } from "./places.ts";
-import { sportKinds, sportName } from "./sport.ts";
+import { sportName } from "./sport.ts";
 import { day, partners } from "./sources.ts";
 
 import type { Attendee, Entry, EntryTexts, Online } from "./calendar.ts";
 import type { Place, Platform } from "./places.ts";
-import type { SportKind } from "./sport.ts";
 
 /** Field of an entry a field of a category writes into. */
 export type FieldKey = "title" | "from" | "location" | "online" | "with";
@@ -264,20 +260,7 @@ const categories: Category[] = [
             withField,
         ],
     },
-    {
-        name: sportName,
-        fields: [
-            {
-                name: "Summary",
-                key: "title",
-                values: sportKinds.map((kind: SportKind): string => kind.name),
-                steps: {},
-                fixed: true,
-            },
-            { name: "Place", key: "location", values: [], steps: {}, fixed: false },
-            onlineField,
-        ],
-    },
+    categoryOf(sportName),
     categoryOf("Meditate"),
     {
         name: "Manage",

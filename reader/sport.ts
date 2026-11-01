@@ -4,8 +4,7 @@
  * Reads the sessions of a day from the log with the time they took
  * and the kcal they burned,
  * and keeps my workouts, my exercises and my videos.
- * A session is a log entry of the category `Sport`,
- * its `SUMMARY` its kind, one of {@link sportKinds}.
+ * A session is a log entry of the category `Sport`, its `SUMMARY` mine as in every category.
  * What I did it holds as a meal its foods:
  * each exercise as a line `X-EXERCISE`, like `Bench press;3;10;40;Push`,
  * and each video as a line `X-VIDEO`, its title, channel, minutes, link and workout,
@@ -15,9 +14,9 @@
  * whatever I change in my workouts and videos later.
  * A session written before named its one workout as `X-WORKOUT`,
  * which its lines without a workout belong to.
- * It burned what its kind burns above rest in its minutes at my weight of its day,
+ * It burned what its videos and its minutes beyond them burn above rest at my weight of its day,
  * see {@link kcalOf}:
- * (MET − 1) × kg × hours, the MET of its kind from the 2024 Adult Compendium of Physical
+ * (MET − 1) × kg × hours, the MET of a kind from the 2024 Adult Compendium of Physical
  * Activities (Herrmann 2024, pacompendium.com), less the 1 MET I burn at rest anyway,
  * so a session counts only what the sport added and nothing twice.
  * An estimate, which the page writes with `~`,
@@ -36,7 +35,7 @@
  * The basic exercises of a gym, see {@link basicExercises}, are no list of mine:
  * the page finds them as I search, as the food search finds products of Open Food Facts,
  * and one picked becomes mine.
- * An exercise burns no kcal of its own: a session at the gym counts by its time,
+ * An exercise burns no kcal of its own: a session counts by its time,
  * since what a single exercise burns hangs on how long
  * and how hard I do it, which nobody writes down.
  * `Videos.md` holds my videos, each with its kind, which tells what a minute of it burns,
@@ -64,7 +63,7 @@ import { sport, writeAllowed } from "./sources.ts";
 import type { Entry } from "./calendar.ts";
 
 /**
- * A kind of a session or of a video with what a minute of it burns:
+ * A kind of sport with what a minute of it burns:
  * the MET of the activity of the 2024 Adult Compendium
  * of Physical Activities closest to it, its `code` there, so the value can be looked up.
  */
@@ -77,16 +76,14 @@ export type SportKind = {
 /**
  * A session of a day, as the page shows it.
  *
- * - `kcal`: kcal it burned above rest, see {@link kcalOf}.
- *   `null` while no weight is known or for a kind that is none of {@link sportKinds},
- *   like one typed before the kinds were fixed.
+ * - `kcal`: kcal it burned above rest, see {@link kcalOf}, `null` while no weight is known.
  * - `workout`: The workouts it did, parted by `, `, empty for none.
  */
 export type Session = {
     id: string;
     start: string;
     end: string;
-    kind: string;
+    summary: string;
     minutes: number;
     kcal: number | null;
     workout: string;
@@ -118,8 +115,7 @@ export type SessionVideo = {
 };
 
 /**
- * The sessions of a day with what they took together.
- * `kcal` is the sum of those known, `null` while none is known.
+ * The sessions of a day with what they took together, `kcal` `null` while no weight is known.
  */
 export type SportDay = {
     sessions: Session[];
@@ -228,17 +224,11 @@ export type VideoFound = {
 export const sportName: string = "Sport";
 
 /**
- * Kinds of a session, the only whats of `Sport`, see `categories.ts`,
- * each with the MET of the activity of the 2024 Adult Compendium closest to it:
- * `Gym` resistance (weight) training, multiple exercises,
- * 8-15 reps at varied resistance.
- * `Home workout` home exercise, general.
- * No run or hike, which I hardly ever do.
+ * Kind of the minutes of a session beyond its videos, my exercises,
+ * with the MET of the 2024 Adult Compendium:
+ * resistance (weight) training, multiple exercises, 8-15 reps at varied resistance.
  */
-export const sportKinds: SportKind[] = [
-    { name: "Gym", met: 3.5, code: "02054" },
-    { name: "Home workout", met: 3.8, code: "02064" },
-];
+const exercisesKind: SportKind = { name: "Exercises", met: 3.5, code: "02054" };
 
 /**
  * Kinds of a video, each with the MET of the activity
@@ -822,11 +812,10 @@ export function mineRead(): Mine {
  * the log entries of `Sport` that start on the day in Berlin time,
  * read from noon the day before to noon the day after, which holds the whole day.
  * Each burned at my weight of the day, see {@link kcalOf}:
- * a home workout with videos what each video burns by its kind in `Videos.md`,
- * a video I no longer have by the kind of the session,
- * and its minutes beyond its videos by its kind,
- * like the exercises I did around them.
- * None should it be shorter than its videos. Else the whole session by its kind.
+ * what each video burns by its kind in `Videos.md`,
+ * a video I no longer have as exercises,
+ * and its minutes beyond its videos as exercises, see {@link exercisesKind},
+ * none should it be shorter than its videos.
  *
  * @throws {Error} - When the date is not written like `2026-10-17`
  */
@@ -849,9 +838,6 @@ export function sportDayRead(date: string): SportDay {
         .map((entry: Entry): Session => {
             const minutes: number =
                 Math.max(0, Math.round((Date.parse(entry.end) - Date.parse(entry.start)) / 60000)) || 0;
-            const kind: SportKind | undefined = sportKinds.find(
-                (known: SportKind): boolean => known.name === summaryBaseOf(entry.title),
-            );
             const before: string = entry.workout ?? "";
             const exercises: SessionExercise[] = (entry.exercises ?? []).map((line: string): SessionExercise =>
                 sessionExerciseOf(line, before),
@@ -871,38 +857,31 @@ export function sportDayRead(date: string): SportDay {
                     mine.find((other: Video): boolean =>
                         isVideo({ kind: "Video", name: video.title, link: video.link }, other),
                     )?.kind ?? "",
-                )?.met ??
-                kind?.met ??
-                0;
+                )?.met ?? exercisesKind.met;
             const watched: number = sumOf(videos.map((video: SessionVideo): number => video.minutes ?? 0));
             return {
                 id: entry.id,
                 start: entry.start,
                 end: entry.end,
-                kind: summaryBaseOf(entry.title),
+                summary: summaryBaseOf(entry.title),
                 minutes: minutes,
                 kcal:
-                    kind === undefined
+                    kg === null
                         ? null
-                        : kind.name === "Home workout" && videos.length > 0 && kg !== null
-                          ? sumOf(
-                                videos.map(
-                                    (video: SessionVideo): number => kcalOf(metOf(video), video.minutes ?? 0, kg) ?? 0,
-                                ),
-                            ) + (kcalOf(kind.met, Math.max(0, minutes - watched), kg) ?? 0)
-                          : kcalOf(kind.met, minutes, kg),
+                        : sumOf(
+                              videos.map(
+                                  (video: SessionVideo): number => kcalOf(metOf(video), video.minutes ?? 0, kg) ?? 0,
+                              ),
+                          ) + (kcalOf(exercisesKind.met, Math.max(0, minutes - watched), kg) ?? 0),
                 workout: workouts.length > 0 ? workouts.join(", ") : before,
                 exercises: exercises,
                 videos: videos,
             };
         });
-    const known: number[] = sessions.flatMap((session: Session): number[] =>
-        session.kcal === null ? [] : [session.kcal],
-    );
     return {
         sessions: sessions,
         minutes: sumOf(sessions.map((session: Session): number => session.minutes)),
-        kcal: known.length === 0 ? null : sumOf(known),
+        kcal: kg === null ? null : sumOf(sessions.map((session: Session): number => session.kcal ?? 0)),
         kg: kg,
     };
 }

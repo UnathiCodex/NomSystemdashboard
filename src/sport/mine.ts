@@ -11,15 +11,14 @@ import type { SportDay, Video, VideoFound } from "../../reader/sport.ts";
 /**
  * A session of a day, as the reader sends it.
  *
- * - `kcal`: kcal it burned above rest,
- *   `null` while no weight is known or for a kind the reader does not know.
+ * - `kcal`: kcal it burned above rest, `null` while no weight is known.
  * - `workout`: The workouts it did, parted by `, `, empty for none.
  */
 export type Session = {
     id: string;
     start: string;
     end: string;
-    kind: string;
+    summary: string;
     minutes: number;
     kcal: number | null;
     workout: string;

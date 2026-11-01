@@ -153,7 +153,7 @@ function doneTextOf(exercise: Session["exercises"][number]): string {
 }
 
 /**
- * Builds the line of a part of a session, indented under its kind,
+ * Builds the line of a part of a session, indented under its summary,
  * see `.food-line` in `../food/food.css`.
  */
 function partLineOf(name: string, grey: string, value: string): HTMLElement {
@@ -166,7 +166,7 @@ function partLineOf(name: string, grey: string, value: string): HTMLElement {
 
 /**
  * Builds the lines of a session: its start in grey linking to its day in the day view,
- * its kcal at the right; then its kind and workout with its time,
+ * its kcal at the right; then its summary and workout with its time,
  * then each exercise and each video.
  */
 function sessionLinesOf(session: Session): HTMLElement[] {
@@ -179,14 +179,18 @@ function sessionLinesOf(session: Session): HTMLElement[] {
         minute: "2-digit",
     });
     entry.append(start, elementOf("span", "food-value", kcalTextOf(session.kcal)));
-    const kind: HTMLElement = elementOf("div", "food-line food-meal", "");
-    kind.append(
-        elementOf("span", "food-what", session.workout === "" ? session.kind : `${session.kind} · ${session.workout}`),
+    const summary: HTMLElement = elementOf("div", "food-line food-meal", "");
+    summary.append(
+        elementOf(
+            "span",
+            "food-what",
+            session.workout === "" ? session.summary : `${session.summary} · ${session.workout}`,
+        ),
         elementOf("span", "food-value", lengthOf(session.minutes)),
     );
     return [
         entry,
-        kind,
+        summary,
         ...(session.exercises ?? []).map((exercise: Session["exercises"][number]): HTMLElement =>
             partLineOf(exercise.name, "", doneTextOf(exercise)),
         ),

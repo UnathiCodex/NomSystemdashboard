@@ -23,7 +23,7 @@
  *   so a slot drawn too long in the log does not stay.
  *   With an exercise beside them it stays as I typed it,
  *   since only I know how long the exercises took.
- * No `With`, since I do sport alone, and no note, see `categories.ts`.
+ * Its summary, place and `With` as in every category, but no note, see `categories.ts`.
  * The dialog writes each exercise as a line `X-EXERCISE` and each video as `X-VIDEO`,
  * each with the workout it belongs to,
  * so the log keeps what I did that day, whatever I change in my workouts later,
