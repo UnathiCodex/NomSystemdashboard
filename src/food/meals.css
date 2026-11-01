@@ -23,21 +23,7 @@
     white-space: pre;
 }
 
-/* The plus right after the name of the meal opened,
-   one line high and at the top of its line, so it stands exactly in the middle */
-.dish-list .food-name .plus-quiet {
-    height: calc(1lh + 0.5rem);
-    margin: -0.25rem 0 -0.25rem 0.5rem;
-    padding: 0.25rem 0;
-    font: inherit;
-    vertical-align: top;
-}
-
-/* A meal opened in the look of a food of mine opened */
-.dish-list .food-facts {
-    grid-template-columns: max-content minmax(0, 1fr);
-}
-
+/* The foods of a meal in its panel, the search of my foods below them */
 .dish-foods {
     display: flex;
     flex-direction: column;
@@ -45,7 +31,7 @@
     min-width: 0;
 }
 
-/* Name of a food of a meal opened, a link to the food among my foods.
+/* Name of a food in the panel of a meal, a link to the food among my foods.
    As plain as every name, a grey line below it under the pointer, so it shows that it leads somewhere */
 .food-link {
     min-width: 0;

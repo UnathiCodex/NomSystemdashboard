@@ -69,9 +69,13 @@ export type Part = {
     kg: string;
 };
 
-/** A workout of mine, its exercises in their order. */
+/**
+ * A workout of mine, its exercises in their order.
+ * - `short`: What its brackets show, empty for none.
+ */
 export type Workout = {
     name: string;
+    short: string;
     parts: Part[];
 };
 
@@ -112,9 +116,10 @@ const workoutsHead: string[] = [
     "My workouts, each a name of mine and its parts in their order, " +
         "each an exercise with the sets, repetitions and",
     "kilograms it brings.",
+    "Its short title stands in its first row, its brackets show it.",
     "",
-    "| Workout | Part | Sets | Reps | Kg |",
-    "| --- | --- | ---: | ---: | ---: |",
+    "| Workout | Short | Part | Sets | Reps | Kg |",
+    "| --- | --- | --- | ---: | ---: | ---: |",
 ];
 
 /** Text a new `Weights.md` starts with. */
@@ -235,15 +240,20 @@ function sumOf(numbers: number[]): number {
     return numbers.reduce((sum: number, number: number): number => sum + number, 0);
 }
 
-/** Reads my workouts, the rows its parts in order. */
+/** Reads my workouts, the rows its parts in order, its short title the first one written in its rows. */
 function workoutsRead(): Workout[] {
     const workouts: Map<string, Workout> = new Map();
     rowsRead(sport.workouts)
         .filter((cells: Row): boolean => (cells.Workout ?? "") !== "" && (cells.Part ?? "") !== "")
         .forEach((cells: Row): void => {
-            const workout: Workout = workouts.get(cells.Workout.toLowerCase()) ?? { name: cells.Workout, parts: [] };
+            const workout: Workout = workouts.get(cells.Workout.toLowerCase()) ?? {
+                name: cells.Workout,
+                short: "",
+                parts: [],
+            };
             const part: Part = { name: cells.Part, sets: cells.Sets ?? "", reps: cells.Reps ?? "", kg: cells.Kg ?? "" };
             if (!workout.parts.some((other: Part): boolean => sameExercise(other, part))) workout.parts.push(part);
+            if (workout.short === "") workout.short = cells.Short ?? "";
             workouts.set(cells.Workout.toLowerCase(), workout);
         });
     return [...workouts.values()];
@@ -255,7 +265,14 @@ function workoutsWrite(workouts: Workout[]): void {
         sport.workouts,
         workoutsHead,
         workouts.flatMap((workout: Workout): string[][] =>
-            workout.parts.map((part: Part): string[] => [workout.name, part.name, part.sets, part.reps, part.kg]),
+            workout.parts.map((part: Part, index: number): string[] => [
+                workout.name,
+                index === 0 ? workout.short : "",
+                part.name,
+                part.sets,
+                part.reps,
+                part.kg,
+            ]),
         ),
     );
 }
@@ -484,10 +501,11 @@ function sameExercise(first: Part, second: Part): boolean {
  * Writes a workout new or changed at its place, a new one last, renamed when the page sends its old name.
  * A variant of an exercise `Exercises.md` lacks goes in there too.
  * The name stays as my workout already writes it, unless renamed.
+ * Its short title as sent, else as the workout had it.
  *
  * @throws {Error} - When the name is empty, another workout has it, or it holds no part
  */
-export function workoutSave(sent: { old?: string; name?: string; parts?: unknown[] }): Mine {
+export function workoutSave(sent: { old?: string; name?: string; short?: string; parts?: unknown[] }): Mine {
     const workouts: Workout[] = workoutsRead();
     const typed: string = ownNameOf(String(sent.name ?? ""));
     const renamed: boolean = sent.old !== undefined;
@@ -511,7 +529,11 @@ export function workoutSave(sent: { old?: string; name?: string; parts?: unknown
         throw new Error(`Another workout is called ${name}`);
     if (parts.length === 0) throw new Error(`No parts of a workout: ${JSON.stringify(sent.parts)}`);
 
-    const workout: Workout = { name: name, parts: parts };
+    const workout: Workout = {
+        name: name,
+        short: sent.short === undefined ? (workouts[at]?.short ?? "") : nameOf(String(sent.short)),
+        parts: parts,
+    };
     workoutsWrite(
         at === -1
             ? [...workouts, workout]

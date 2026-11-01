@@ -34,9 +34,13 @@ export type Part = {
     kg: string;
 };
 
-/** A workout of mine with its exercises in their order. */
+/**
+ * A workout of mine with its exercises in their order.
+ * - `short`: What its brackets show, empty for none.
+ */
 export type Workout = {
     name: string;
+    short: string;
     parts: Part[];
 };
 
@@ -91,13 +95,14 @@ export async function mineLoad(): Promise<Mine> {
 /**
  * Sends a workout, new or changed, into `Workouts.md`, gives all of mine after.
  * @param old - Name it had, for a workout renamed
+ * @param short - Its short title, the one it had when not sent
  * @throws {Error} - When the reader does not take it
  */
-export async function workoutSend(name: string, parts: Part[], old?: string): Promise<Mine> {
+export async function workoutSend(name: string, parts: Part[], old?: string, short?: string): Promise<Mine> {
     return await answerOf<Mine>(
         await fetch("/api/sport/workouts", {
             method: "POST",
-            body: JSON.stringify({ old: old, name: name, parts: parts }),
+            body: JSON.stringify({ old: old, name: name, short: short, parts: parts }),
         }),
     );
 }

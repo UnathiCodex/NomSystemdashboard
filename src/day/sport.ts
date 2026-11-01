@@ -291,15 +291,15 @@ function plusOfList(picker: HTMLElement, words: string, workout: string): HTMLBu
                 ? []
                 : sectionOf(
                       "Workouts",
-                      workouts.map((one: Workout): HTMLElement => {
-                          const parts: string = one.parts.map((part: Part): string => part.name).join(", ");
-                          return listLineOf(
-                              lineNameOf(one.name, parts),
-                              null,
-                              taken((): void => workoutPick(one.name)),
-                              null,
-                          )[0];
-                      }),
+                      workouts.map(
+                          (one: Workout): HTMLElement =>
+                              listLineOf(
+                                  lineNameOf(one.name, one.short),
+                                  null,
+                                  taken((): void => workoutPick(one.name)),
+                                  null,
+                              )[0],
+                      ),
                       [...(mine?.workouts ?? []).map((one: Workout): string => one.name), ...blocks],
                       newOf(
                           `New workout “${typed}”`,

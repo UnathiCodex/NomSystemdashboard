@@ -74,7 +74,7 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* A meal or a food opened below its line, in line with its name */
+/* A food opened below its row in the entry of the day, in line with its name, in its look the form of a new one */
 .food-detail {
     display: flex;
     flex-direction: column;
@@ -85,7 +85,7 @@ button.food-row {
     font-size: 0.875rem;
 }
 
-/* A food of a meal opened: its name, its grams, and the room of its `×` */
+/* A food in the panel of a meal: its name, its grams, the room of its `×` */
 .food-part {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto 1.5rem;
@@ -93,7 +93,7 @@ button.food-row {
     align-items: baseline;
 }
 
-/* The `×` of a food of a meal opened, its icon level with the small letters, as an icon beside a word stands */
+/* The `×` of a food in the panel of a meal, its icon level with the letters, as an icon beside a word stands */
 .food-part > .cross-quiet {
     display: block;
     line-height: inherit;
@@ -262,14 +262,16 @@ button.food-row:hover {
 }
 
 /* A click on the unit of a number puts the cursor into it too, so an empty one takes a click */
-.food-facts > .food-grams > .food-inline-grams {
+.food-facts > .food-grams > .food-inline-grams,
+.panel-field > .food-grams > .food-inline-grams {
     width: auto;
     min-width: 1ch;
     field-sizing: content;
     text-align: left;
 }
 
-.food-facts > .food-grams {
+.food-facts > .food-grams,
+.panel-field > .food-grams {
     cursor: text;
 }
 

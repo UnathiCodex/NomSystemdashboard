@@ -21,22 +21,13 @@
     text-overflow: ellipsis;
 }
 
-/* The plus after the name of a workout opened, as at a meal */
-.dish-list .sport-name .plus-quiet {
-    height: calc(1lh + 0.5rem);
-    margin: -0.25rem 0 -0.25rem 0.5rem;
-    padding: 0.25rem 0;
-    font: inherit;
-    vertical-align: top;
-}
-
 /* The rule of a part grey beside the white facts */
 .sport-grey {
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
 
-/* The unit of the repetitions of an exercise opened, a plain word that switches */
+/* The unit of the repetitions of an exercise in its panel, a plain word that switches */
 .sport-kind {
     padding: 0;
     border: 0;

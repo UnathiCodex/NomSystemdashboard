@@ -23,9 +23,11 @@ import {
     keyOf,
     unitOf,
 } from "./foods.ts";
+import { panelClose, panelOf, panelShow } from "./panel.ts";
 import { crossPut, iconOf, iconPut, QuestionMark, searchFieldOf } from "../icons.ts";
 import { Check, Plus, X } from "lucide";
 import "./search.css";
+import type { Panel } from "./panel.ts";
 import type { Food, FoodsFound, Kind, Product } from "../../reader/food.ts";
 
 /**
@@ -48,13 +50,16 @@ export type SearchSetup = {
  * - `tail`: Where the products stand, shown anew by themselves as they come, so nothing above them moves.
  * - `found`: My foods for the text shown and the products of every page shown, `null` before its first answer.
  * - `asked`: Number of the last search asked, so a late answer never covers a newer one.
+ * - `open`: Key of the food of mine in the panel, empty for none.
+ * - `opened`: The food last shown in the panel.
+ * - `panel`: The panel of the food view, `null` until a food opens first.
  * - `enter`: Whether Enter waits for the results of the text typed.
- * - `reveal`: Whether the food open goes into sight once shown.
  * - `linked`: Whether a click on a food of a meal put the text in, so it finds only my foods until I type.
  * - `added`: Keys of the foods I added since the page opened, the last first, on top,
  *   so I mend what came wrong right away.
  */
 type Search = {
+    element: HTMLElement;
     input: HTMLInputElement;
     results: HTMLElement;
     tail: HTMLElement;
@@ -65,10 +70,11 @@ type Search = {
     loading: boolean;
     waiting: number;
     open: string;
+    opened: Food | null;
+    panel: Panel | null;
     shown: string;
     enter: boolean;
     asking: string;
-    reveal: boolean;
     linked: boolean;
     added: string[];
 };
@@ -191,15 +197,18 @@ function kindFieldOf(kind: Kind, saved: () => void): HTMLButtonElement {
 }
 
 /**
- * A food of mine opened below its line, in two columns as the parts of a dialog.
+ * The values of a food of mine by their names with the hint when the reader does not take a change.
  * Every value changes in place, since not everything from Open Food Facts or my typing is right.
  * A nutrient unknown stands empty, never 0.
  * When the reader does not take a change, the food stays open and says so.
- * - `save`: Sends the values, the food taking no clicks meanwhile, a number that is none takes nothing.
+ * - `save`: Sends the values, `box` taking no clicks meanwhile, a number that is none takes nothing.
  */
-export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLElement {
-    const detail: HTMLElement = elementOf("div", "food-detail", "");
-    const facts: HTMLElement = elementOf("div", "food-facts", "");
+function foodFieldsOf(
+    food: Food,
+    box: HTMLElement,
+    saved: (written: Food) => void,
+): { rows: [string, HTMLElement][]; error: HTMLElement } {
+    const rows: [string, HTMLElement][] = [];
     const fields: Map<string, HTMLInputElement> = new Map();
     const text: (key: string) => string = (key: string): string => fields.get(key)?.value.trim() ?? "";
     const error: HTMLElement = elementOf(
@@ -215,7 +224,7 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
             error.hidden = false;
             return;
         }
-        detail.inert = true;
+        box.inert = true;
         foodChange(food, {
             name: text("name"),
             brand: text("brand"),
@@ -233,7 +242,7 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
             .catch((reason: unknown): void => {
                 console.error(reason);
                 error.hidden = false;
-                detail.inert = false;
+                box.inert = false;
             });
     };
     const kind: HTMLButtonElement = kindFieldOf(food.kind, save);
@@ -245,27 +254,67 @@ export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLEl
     ): void => {
         const input: HTMLInputElement = inlineFieldOf(value, name, save);
         fields.set(key, input);
-        facts.append(elementOf("span", "food-fact", name), unitFieldOf(input, unit));
+        rows.push([name, unitFieldOf(input, unit)]);
     };
 
     fieldsOf(food.kind).forEach(([name, key, unit]: [string, string, string]): void =>
         fieldAdd(name, key, String(food[key as keyof Food] ?? ""), unit),
     );
-    facts.append(elementOf("span", "food-fact", "Kind"), kind);
+    rows.push(["Kind", kind]);
     fieldAdd("Barcode", "barcode", food.barcode, "");
     error.hidden = true;
+    return { rows: rows, error: error };
+}
+
+/** A food of mine opened below its row in the entry of the day, in two columns as the parts of a dialog. */
+export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLElement {
+    const detail: HTMLElement = elementOf("div", "food-detail", "");
+    const facts: HTMLElement = elementOf("div", "food-facts", "");
+    const { rows, error }: { rows: [string, HTMLElement][]; error: HTMLElement } = foodFieldsOf(food, detail, saved);
+    rows.forEach(([name, field]: [string, HTMLElement]): void =>
+        facts.append(elementOf("span", "food-fact", name), field),
+    );
     detail.append(facts, error);
     return detail;
 }
 
 /**
- * The line of a food of mine, a click picks it where foods are picked, else opens or closes it.
+ * Shows the food of mine open in the panel of the search, the last one written while the search no longer finds it.
  * It stays open under its new name after a change.
+ */
+function panelFill(search: Search): void {
+    const food: Food | undefined =
+        search.found?.foods.find((found: Food): boolean => keyOf(found) === search.open) ??
+        (search.opened !== null && keyOf(search.opened) === search.open ? search.opened : undefined);
+    if (food === undefined) {
+        if (search.panel !== null) panelClose(search.panel);
+        return;
+    }
+    search.opened = food;
+    search.panel ??= panelOf(search.element, (): void => {
+        search.open = "";
+    });
+    const panel: Panel = search.panel;
+    const { rows, error }: { rows: [string, HTMLElement][]; error: HTMLElement } = foodFieldsOf(
+        food,
+        panel.form,
+        (written: Food): void => {
+            search.added = search.added.map((key: string): string => (key === keyOf(food) ? keyOf(written) : key));
+            search.open = keyOf(written);
+            search.opened = written;
+            resultsLoad(search, 0);
+        },
+    );
+    error.classList.add("panel-error");
+    panelShow(panel, rows, [error]);
+}
+
+/**
+ * The line of a food of mine, a click picks it where foods are picked, else opens it in its panel.
  * In the food view its `×` removes it from `Foods.md`, its first click only asking.
  */
-function mineLinesOf(search: Search, food: Food): HTMLElement[] {
+function mineLineOf(search: Search, food: Food): HTMLElement {
     const key: string = keyOf(food);
-    const open: boolean = search.setup.pick === null && search.open === key;
     const remove: HTMLButtonElement | null =
         search.setup.pick !== null
             ? null
@@ -282,7 +331,7 @@ function mineLinesOf(search: Search, food: Food): HTMLElement[] {
               });
     if (remove !== null) crossPut(remove, `Remove ${food.name}`);
     if (remove !== null && search.asking === key) iconPut(remove, QuestionMark, "Really remove?");
-    const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
+    return listLineOf(
         foodNameOf("food-name", food.name, food.brand, food.store),
         food.kcal,
         (): void => {
@@ -290,24 +339,11 @@ function mineLinesOf(search: Search, food: Food): HTMLElement[] {
                 search.setup.pick(food);
                 return;
             }
-            search.open = open ? "" : key;
-            resultsShow(search);
+            search.open = key;
+            panelFill(search);
         },
         remove,
-    );
-    if (search.setup.pick === null) row.setAttribute("aria-expanded", String(open));
-    return open
-        ? [
-              line,
-              foodDetailOf(food, (written: Food): void => {
-                  search.added = search.added.map((key: string): string =>
-                      key === keyOf(food) ? keyOf(written) : key,
-                  );
-                  search.open = keyOf(written);
-                  resultsLoad(search, 0);
-              }),
-          ]
-        : [line];
+    )[0];
 }
 
 /** The name of a product with its pack below it, which tells products apart. */
@@ -379,12 +415,12 @@ function resultsShow(search: Search): void {
     if (fresh.length > 0)
         sections.push([
             listHeadOf("Just added", "kcal / 100 g"),
-            ...fresh.flatMap((food: Food): HTMLElement[] => mineLinesOf(search, food)),
+            ...fresh.map((food: Food): HTMLElement => mineLineOf(search, food)),
         ]);
     if (listed.length > 0 || plus.length > 0)
         sections.push([
             ...(sections.length > 0 ? [listHeadOf("Foods", "kcal / 100 g")] : []),
-            ...listed.flatMap((food: Food): HTMLElement[] => mineLinesOf(search, food)),
+            ...listed.map((food: Food): HTMLElement => mineLineOf(search, food)),
             ...plus,
         ]);
     search.results.replaceChildren(
@@ -395,10 +431,7 @@ function resultsShow(search: Search): void {
     );
     productsShow(search);
     search.shown = query;
-    if (search.reveal) {
-        search.reveal = false;
-        search.results.querySelector(".food-detail")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
+    panelFill(search);
     if (search.enter) {
         search.enter = false;
         firstPick(search);
@@ -703,6 +736,7 @@ function productsLoad(search: Search, page: number): void {
 export function foodSearchOf(setup: SearchSetup): HTMLElement {
     const element: HTMLElement = elementOf("div", "food-search", "");
     const search: Search = {
+        element: element,
         input: document.createElement("input"),
         results: elementOf("div", "food-results", ""),
         tail: elementOf("div", "", ""),
@@ -713,10 +747,11 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
         loading: false,
         waiting: 0,
         open: "",
+        opened: null,
+        panel: null,
         shown: "",
         enter: false,
         asking: "",
-        reveal: false,
         linked: false,
         added: [],
     };
@@ -751,8 +786,8 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
 }
 
 /**
- * Shows one of my foods opened, as a click on a food of a meal asks, its name put into the field.
- * The page moves only as far as it needs to show it.
+ * Opens one of my foods in its panel, as a click on a food of a meal asks, its name put into the field.
+ * Its panel stands over the panel of the meal, so closing it goes back to the meal.
  */
 export function foodShow(element: HTMLElement, food: { name: string; brand: string; store: string }): void {
     const search: Search | undefined = searches.get(element);
@@ -760,7 +795,6 @@ export function foodShow(element: HTMLElement, food: { name: string; brand: stri
     search.input.value = food.name;
     search.open = keyOf(food);
     search.linked = true;
-    search.reveal = true;
     resultsLoad(search, 0);
 }
 

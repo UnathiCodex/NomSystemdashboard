@@ -17,6 +17,7 @@ import { changesFollow } from "../changes.ts";
 import { logEntryOpen } from "../editor/dialog.ts";
 import { iconPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
+import "../day/day.css";
 import "../day/trackers.css";
 import "./food.css";
 import type { Eaten, FoodDay, Meal } from "../../reader/food.ts";

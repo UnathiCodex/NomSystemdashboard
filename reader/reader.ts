@@ -535,6 +535,7 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
                 (await json(request)) as {
                     old?: string;
                     name?: string;
+                    short?: string;
                     parts?: unknown[];
                 },
             ),

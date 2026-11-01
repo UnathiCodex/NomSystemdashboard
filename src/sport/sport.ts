@@ -19,6 +19,7 @@ import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { iconOf, iconPut } from "../icons.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight, Pencil } from "lucide";
+import "../day/day.css";
 import "../day/trackers.css";
 import "../food/food.css";
 import "../food/search.css";
