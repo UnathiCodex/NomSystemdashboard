@@ -1,34 +1,17 @@
 /**
  * ## Rules
  *
- * Reads and writes a plain series of the plan:
- * one to-do that repeats by its rule, its `RRULE`, like my sleep of every night,
- * unlike a series of my course, whose boxes stand one by one with their numbers,
- * see `course.ts`.
- * Every series I make from a box by its dialog is a plain one,
- * but that of a skill box of a numbered type, see `numberedTypes` in `boxes.ts`.
- * A plain series has its weekdays, each with its time,
- * or no time, only how long it lasts, see {@link Plain}.
+ * Reads and writes a plain series of the plan, one to-do that repeats by its `RRULE`,
+ * unlike a series of my course, whose boxes stand one by one with their numbers.
+ * A plain series has its weekdays, each with its time, or no time, only how long it lasts.
  * Since a rule has one time for all its days, each time is a part of its own, one to-do,
- * the parts of a series of several times sharing one `X-SERIES`,
- * see `seriesPartsOf` in `calendar.ts`,
- * like my sleep of 8 hours from Sunday to Thursday and of 9 hours on Friday and Saturday.
- * The dialog reads and writes them together, see {@link plainRead},
- * and a part whose time goes ends as a series does, see {@link plainGone}.
- * Its `DTSTART` is its first occurrence, see {@link firstOf}.
- * Its past never changes, see {@link plainApply}:
- * its dialog writes one lying wholly ahead whole,
- * which every day of it changed alone takes too, see `seriesWrite` in `calendar.ts`.
- * One that has begun goes on from today: it ends yesterday,
- * and a new one with the change goes on from today, pointing back to it as its sibling,
- * see `seriesEnd` and `seriesSiblingPut` there,
- * every day of it from today on changed alone going with it, so no day shows twice,
- * but a day done, see {@link aheadOwnOf}.
- * Only a summary changed renames the whole chain, past
- * days too, see `seriesTitlePut` there.
- * The dialog of one of its boxes changes that box alone, see `boxEdit` in `boxes.ts`.
- * Its bin removes it whole, see {@link plainRemove}.
- * The bin of one of its boxes that day alone, see `boxDelete` there.
+ * the parts of one series sharing one `X-SERIES`.
+ * Its `DTSTART` is its first occurrence.
+ * Its past never changes.
+ * One lying wholly ahead is written whole, with every day of it changed alone.
+ * One that has begun ends yesterday, and a new one with the change goes on from today as its sibling,
+ * its days changed alone from today on going with it, so no day shows twice, but a day done.
+ * Only a changed summary renames the whole chain, past days too.
  */
 
 import { boxAdd, boxesRead, boxFind, numberedTypes } from "./boxes.ts";
@@ -73,25 +56,19 @@ import type { Extra, Planned } from "./course.ts";
  * A plain series, as the reader sends it and the dialog of a series sends it back.
  *
  * - `id`: Its `UID`, empty for a new one.
- * - `semester`: Of a skill series its `X-SEMESTER`,
- *   that of its first occurrence when none is picked.
+ * - `semester`: Of a skill series its `X-SEMESTER`, that of its first occurrence when none is picked.
  * - `weekdays`: From 1 for Monday to 7 for Sunday, none for a monthly or yearly one.
- * - `monthDay`: Of a monthly or yearly series its day of the month,
- *   a month without that day left out. 0 for one by weekdays.
- * - `month`: Of a yearly series its month, 0 for any other.
- * - `start`, `end`: Its times in Berlin time, both empty for a series without time.
- * - `minutes`: How long it lasts without time, `null` for no length.
- *   With times what they span.
+ * - `monthDay`: Of a monthly or yearly series, a month without that day left out, 0 for one by weekdays.
+ * - `month`: Of a yearly series, 0 for any other.
+ * - `start`, `end`: In Berlin time, both empty for a series without time.
+ * - `minutes`: How long it lasts, `null` for no length.
  * - `last`: Empty for a series without end.
- * - `extras`: Its single dates besides its weekdays, its `RDATE`s,
- *   its length that of the series.
- *   One of another length than the series is one of its days changed alone,
- *   its own `ESTIMATED-DURATION` with the start as `RECURRENCE-ID`,
- *   since `ical.js` gives no occurrence of an `RDATE` of a period, `VALUE=PERIOD`.
+ * - `extras`: Its single dates, its `RDATE`s, with the length of the series.
+ *   One of another length is a day changed alone with its own `ESTIMATED-DURATION`,
+ *   since `ical.js` gives no occurrence of an `RDATE` with `VALUE=PERIOD`.
  * - `file`: Its plan from `NomWorkspace` on.
  * - `series`: The `X-SERIES` its parts share, empty for a series of one time.
- * - `parts`: Its parts going on, itself among them, without parts of their own.
- *   Of a part over only itself.
+ * - `parts`: Its parts going on, itself among them, of a part over only itself.
  */
 export type Plain = Online & {
     id: string;
@@ -117,14 +94,11 @@ export type Plain = Online & {
 };
 
 /**
- * A plain series to write, as the dialog sends it, see {@link plainApply}.
+ * A plain series to write.
  *
- * - `dry`: Whether only to tell what it would make, for the preview of the dialog.
- * - `sibling`: Of a new series, the `UID` of the series it goes on from,
- *   like another time of one changed after it began,
- *   see `plainPartsOf` in `src/day/series.ts`.
- * - `gone`: Whether the part goes, its time no longer one of the series,
- *   see {@link plainGone}.
+ * - `dry`: Only tell what it would make, for the preview.
+ * - `sibling`: Of a new series, the `UID` of the series it goes on from.
+ * - `gone`: The part goes, its time no longer one of the series.
  */
 export type PlainChange = Plain & {
     dry: boolean;
@@ -132,37 +106,23 @@ export type PlainChange = Plain & {
     gone?: boolean;
 };
 
-/**
- * The weekdays as a rule names them, from Monday to Sunday.
- */
+/** The weekdays as a rule names them. */
 const weekdayCodes: string[] = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 
-/**
- * Days the preview of a series shows behind and ahead of today,
- * or of its first day: six weeks.
- */
+/** Days the preview shows behind and ahead of today or of the first day. */
 const previewDays: number = 42;
 
-/**
- * Most minutes a series may last without time: a day.
- */
+/** Most minutes a series may last without time. */
 const dayMinutes: number = 24 * 60;
 
-/**
- * Tells whether a series happens on a day by its rule:
- * on its day of the month for a monthly one, of its month for a yearly one,
- * else on one of its weekdays.
- */
+/** Whether a series happens on a day by its rule. */
 function onDay(plain: Pick<Plain, "weekdays" | "monthDay" | "month">, date: string): boolean {
     return plain.monthDay > 0
         ? Number(date.slice(8)) === plain.monthDay && (plain.month === 0 || Number(date.slice(5, 7)) === plain.month)
         : plain.weekdays.includes(weekdayOf(date));
 }
 
-/**
- * Gives the first occurrence of a series:
- * its first day by its rule from its first day on.
- */
+/** The first day by its rule from its first day on. */
 function firstOf(plain: Plain): string {
     let found: string = plain.first;
     while (!onDay(plain, found)) found = dayAdd(found, 1);
@@ -170,9 +130,8 @@ function firstOf(plain: Plain): string {
 }
 
 /**
- * Writes the rule of a series, its `RRULE`.
- * Its last day as `UNTIL` is a day for a series without time,
- * else the end of that day in Berlin time as an instant in UTC,
+ * The `RRULE` of a series.
+ * Its `UNTIL` is a day without time, else the end of that day in Berlin as UTC,
  * as the standard wants it beside a `DTSTART` with a time.
  */
 function ruleOf(plain: Plain): string {
@@ -199,11 +158,7 @@ function ruleOf(plain: Plain): string {
     return until === "" ? days : `${days};UNTIL=${until}`;
 }
 
-/**
- * Gives the last day of a series that ends after a count of occurrences, its `COUNT`:
- * the day of its last occurrence,
- * counted over its days by its rule from its first day on.
- */
+/** The day of the last occurrence of a series that ends after its `COUNT`. */
 function countLastOf(plain: Pick<Plain, "weekdays" | "monthDay" | "month" | "first">, count: number): string {
     let found: string = plain.first;
     let counted: number = onDay(plain, found) ? 1 : 0;
@@ -214,11 +169,7 @@ function countLastOf(plain: Pick<Plain, "weekdays" | "monthDay" | "month" | "fir
     return found;
 }
 
-/**
- * Lists the days a series happens on within a range, the earliest first:
- * each of its days by its rule from its first occurrence to its last day,
- * and each of its extras.
- */
+/** The days of a series and its extras within a range, the earliest first. */
 function daysOf(plain: Plain, from: string, to: string): string[] {
     const days: string[] = [];
     const first: string = firstOf(plain);
@@ -235,24 +186,14 @@ function daysOf(plain: Plain, from: string, to: string): string[] {
 }
 
 /**
- * Reads a part of a plain series of the plan by its `UID`, see {@link Plain}:
- * its weekdays from its rule, else the weekday of its start.
- * Of `FREQ=MONTHLY` no weekdays but its day of the month,
- * its one `BYMONTHDAY` or that of its start,
- * of `FREQ=YEARLY` also its month, its one `BYMONTH` or that of its start.
- * Its times and its length from its first occurrence,
- * see `seriesLookup` in `calendar.ts`.
- * Of a series that ends after a count of occurrences
- * its last day is the day of its last one,
- * see {@link countLastOf}, which saving writes as `UNTIL`.
- * Its extras from its `RDATE`s, see `seriesDatesOf` there,
- * each with the length of the series, or of its day changed alone.
+ * Reads a part of a plain series by its `UID`, without parts of its own.
+ * Its weekdays from its rule, else the weekday of its start.
+ * A monthly one has its `BYMONTHDAY` or the day of its start, a yearly one also its month.
+ * Its times and length from its first occurrence.
+ * A `COUNT` becomes the day of its last occurrence, which saving writes as `UNTIL`.
  *
  * @param key - The `X-SERIES` of its series, empty for none
- * @returns The part, without parts of its own
- * @throws {Error} - When the plan holds no series of the `UID`,
- *   or one whose rule is no plain one,
- *   like every second week or every second Tuesday of a month
+ * @throws {Error} - Without such series, or with a rule no plain one, like every second week
  */
 function partRead(id: string, key: string): Plain {
     const found: [string, Entry, ICAL.Recur] | undefined = seriesLookup(day.plan, id);
@@ -339,13 +280,10 @@ function partRead(id: string, key: string): Plain {
 }
 
 /**
- * Reads a plain series of the plan by the `UID` of one of its parts:
- * that part with every part of its series still going on,
- * its last day today or later or none, see `seriesPartsOf` in `calendar.ts`,
- * so the dialog shows every weekday with its time. Of a part over only itself, as it was.
+ * A part with every part of its series still going on, so the dialog shows every weekday with its time.
+ * Of a part over only itself.
  *
- * @throws {Error} - When the plan holds no series of the `UID`,
- *   or one whose rule is no plain one
+ * @throws {Error} - Without such series, or with a rule no plain one
  */
 export function plainRead(id: string): Plain {
     const [key, uids]: [string, string[]] = seriesPartsOf(day.plan, id);
@@ -361,14 +299,11 @@ export function plainRead(id: string): Plain {
 }
 
 /**
- * Checks a plain series as the dialog sends it: its weekdays, or of a monthly one
- * its day of the month, of a yearly one also its month.
- * Both times or none, the start before the end.
- * Without times a whole number of minutes up to a day, or none.
+ * Checks a plain series as the dialog sends it.
+ * Both times or none, the start before the end, without times whole minutes up to a day, or none.
  * Its last day on or after its first, or none.
- * Its extras each a day once, with a start before its end, of a series without time none.
- * What it is fits its category, see `categoryAllows` in `categories.ts`,
- * and is no skill box of a numbered type, whose series is one of my course.
+ * Its extras each a day once, with a start before its end, without times none.
+ * It fits its category and is no skill box of a numbered type, whose series is one of my course.
  *
  * @throws {Error} - When one of them is not right
  */
@@ -431,10 +366,7 @@ function plainCheck(plain: Plain): void {
 }
 
 /**
- * Gives the fields of the to-do of a series: what it is as the reader writes it,
- * see `titleOf` in `documents.ts`, its place and what it does online,
- * see `places.ts`, its first occurrence as its day,
- * and its length: what its times span, else its minutes.
+ * The fields of the to-do of a series, its first occurrence as its day.
  *
  * @param old - Its first occurrence as written, `null` for a new one
  */
@@ -464,11 +396,8 @@ function fieldsOf(plain: Plain, old: Entry | null): TodoFields {
 }
 
 /**
- * Gives the boxes of the series of a chain on the days of a range,
- * as the plan shows them, see `boxesRead` in `boxes.ts`,
- * each by the `UID` of its series and the day its rule gives it,
- * a day pushed elsewhere too.
- * Never the greyed copy a box leaves on a day it was pushed from.
+ * The boxes of the series of a chain in a range, by `UID` and the day its rule gives it, pushed ones too.
+ * Never the greyed copy a box leaves on the day it was pushed from.
  */
 function chainBoxesOf(uids: string[], from: string, to: string): Map<string, Box> {
     const kept: Map<string, Box> = new Map();
@@ -494,12 +423,9 @@ function chainBoxesOf(uids: string[], from: string, to: string): Map<string, Box
 }
 
 /**
- * Gives the time and the length of a series on a day: its times,
- * or of one of its extras those of the extra.
- * Without times none, its length that of the series.
+ * The time and length of a series on a day, of an extra those of the extra.
  *
- * @returns Its start as ISO instant, empty for none,
- *   and its length in minutes, `null` for none
+ * @returns Its start as ISO instant, empty for none, and its minutes, `null` for none
  */
 function timesOf(plain: Plain, date: string): [string, number | null] {
     const extra: Extra | undefined = plain.extras.find((one: Extra): boolean => one.day === date);
@@ -513,19 +439,11 @@ function timesOf(plain: Plain, date: string): [string, number | null] {
 }
 
 /**
- * Lists the boxes a series makes, for the preview of its dialog:
- * its days from six weeks ago on, or from its first day while that lies later,
- * to six weeks ahead of today or of its first day, each with its time and its length,
- * the past ones as they stand, done, skipped, pushed or open.
- * Of a series being changed also its days as it stood from today on,
- * each marked by what the change does to it:
- * `new`, `removed`, `changed` for other times or another length, else nothing.
- * A day of it there is no box of, as one removed alone, not at all.
- * Each row of a box carries its identifier, its state and whether it was pushed,
- * so the dialog opens it and acts on it as the plan does.
- * The days of the series of its chain, see `seriesChainOf` in `calendar.ts`,
- * like those of the series it went on from before a change,
- * stand among them by their days, marked `chained`, only shown.
+ * The boxes a series makes, for the preview, six weeks behind and ahead, the past ones as they stand.
+ * Of a series being changed also its days as it stood, marked `new`, `removed` or `changed`.
+ * A day without a box, like one removed alone, is left out.
+ * Each row carries the identifier and state of its box, so the dialog acts on it as the plan does.
+ * The days of the other series of its chain stand among them, marked `chained`, only shown.
  *
  * @param old - The series as it stood, `null` for a new one
  */
@@ -633,12 +551,9 @@ function plannedOf(plain: Plain, old: Plain | null): Planned[] {
 }
 
 /**
- * Gives the days of a series changed alone that take place from a day on,
- * where they stand now, and are not done,
- * which go once the series ends the day before, see {@link plainApply},
- * so its new rule takes their days and none shows twice,
- * like Mon 09.11. moved to Thu 12.11. as the series changes on 11.11.
- * A day earlier, or one done, logged, stays, since its log entry points to it.
+ * The days changed alone that stand from a day on and are not done,
+ * which go once the series ends the day before, so none shows twice.
+ * A day earlier, or one done, stays, since its log entry points to it.
  * An extra goes along with the series instead.
  */
 function aheadOwnOf(id: string, from: string): string[] {
@@ -657,20 +572,14 @@ function aheadOwnOf(id: string, from: string): string[] {
         .filter((own: string): boolean => boxFind(own)[2].state !== "done");
 }
 
-/**
- * Gives the start of an extra of a series as its `RDATE` holds it:
- * its day for a series without time, else its time as ISO instant.
- */
+/** The start of an extra as its `RDATE` holds it, a day without time, else an ISO instant. */
 function extraStartOf(plain: Plain, extra: Extra): string {
     return plain.start === ""
         ? extra.day
         : berlinInstantOf(extra.day, ...(extra.start.split(":").map(Number) as [number, number])).toISOString();
 }
 
-/**
- * Writes minutes as a duration of the iCalendar format,
- * the value of an `ESTIMATED-DURATION`.
- */
+/** Minutes as an iCalendar duration, for an `ESTIMATED-DURATION`. */
 function durationOf(minutes: number): string {
     const hours: number = Math.floor(minutes / 60);
     const rest: number = minutes % 60;
@@ -678,12 +587,9 @@ function durationOf(minutes: number): string {
 }
 
 /**
- * Writes the extras of a series: each its `RDATE`, see `seriesDatesPut` in `calendar.ts`.
- * One of another length than the series
- * as its day changed alone with its own `ESTIMATED-DURATION`,
- * see `occurrenceOwn` there, one of its length again with the length of the series.
- * An extra taken out takes its day changed alone with it, but one done,
- * whose log entry points to it.
+ * Writes the extras of a series, each its `RDATE`.
+ * One of another length becomes its day changed alone with its own `ESTIMATED-DURATION`.
+ * An extra taken out takes its day changed alone with it, but one done, whose log entry points to it.
  *
  * @param old - The series as it stood, `null` for a new one
  */
@@ -720,9 +626,7 @@ function extrasWrite(file: string, id: string, plain: Plain, old: Plain | null):
 }
 
 /**
- * Writes a new plain series as a box of its first occurrence,
- * see `boxAdd` in `boxes.ts`, into the plan of its topic and year, its rule added,
- * the series it goes on from as its sibling, and its extras.
+ * Writes a new plain series as a box of its first occurrence, with its rule, sibling and extras.
  *
  * @param sibling - The `UID` of the series it goes on from, empty for none
  */
@@ -757,35 +661,21 @@ function plainAdd(plain: Plain, sibling: string): string {
 }
 
 /**
- * Writes a plain series, or only tells what it would make,
- * for the preview of its dialog, see {@link plannedOf}.
- * One there already never changes its past:
- * one lying wholly ahead is written whole,
- * every day of it changed alone taking its texts.
- * One that has begun, while when or where it is changes,
- * ends yesterday with every day of it so far, done, pushed or dropped,
- * see `seriesEnd` in `calendar.ts`,
- * its days from today on changed alone going with it but one done,
- * and a new series of the change goes on from today, pointing back to it as its sibling.
- * That one takes its extras from today on, each with its day changed alone,
- * moved to it, see `occurrenceMove` in `calendar.ts`, but one done,
- * which stays as its extras before today. One over is only renamed.
- * Its extras are single dates:
- * added or taken out from today on, they change no rule, so the series goes on whole.
- * A summary changed is a new name, never a change of when:
- * it renames every series of the chain, past days too,
- * see `seriesChainOf` and `seriesTitlePut` in `calendar.ts`.
- * The part written takes the `X-SERIES` of its series, see {@link seriesKeyPut}.
- * A part whose time goes ends, see {@link plainGone}.
+ * Writes a plain series, or only tells what it would make, for the preview.
+ * One lying wholly ahead is written whole, every day of it changed alone taking its texts.
+ * One that has begun, while when or where it is changes, ends yesterday with every day so far,
+ * and a new series of the change goes on from today as its sibling.
+ * That one takes the extras from today on, each with its day changed alone, but one done.
+ * One over is only renamed.
+ * Extras change no rule, so added or taken out from today on the series goes on whole.
+ * A changed summary is a new name, never a change of when, so it renames the whole chain.
  * Checked before anything is written.
- * - `moved`: Whether when or where it is changes.
  * - `kept`: Its extras before today, and those done, which stay with it.
  * - `whole`: The series as one that has begun but goes on whole writes it.
  * - `part`: The `UID` of the part written, which takes the `X-SERIES`.
  *
  * @returns The boxes it makes
- * @throws {Error} - When the series is not right, a series to change is none,
- *   or one over would change when or where it was
+ * @throws {Error} - On a wrong series, a missing one to change, or one over that would move
  */
 export function plainApply(change: PlainChange): Planned[] {
     if (change.gone === true) return plainGone(change.id, change.dry);
@@ -892,8 +782,7 @@ export function plainApply(change: PlainChange): Planned[] {
 }
 
 /**
- * Puts the `X-SERIES` of its series into a part,
- * or takes it out for a series of one time, written only where it changes.
+ * Puts the `X-SERIES` into a part, or takes it out for a series of one time, written only where it changes.
  *
  * @throws {Error} - When its file lies outside the new system
  */
@@ -903,17 +792,13 @@ function seriesKeyPut(uid: string, key: string): void {
 }
 
 /**
- * Ends a part of a plain series whose time is no longer one of its series,
- * or only tells what that would make, for the preview of the dialog.
+ * Ends a part whose time is no longer one of its series, or only tells what that would make.
  * Its past never changes, so one that has begun ends yesterday,
- * as a series ends once it changes from today, see {@link plainApply},
- * its extras and its days changed alone from today on going with it but those done.
- * One lying wholly ahead goes whole, see `seriesRemove` in `calendar.ts`.
- * One over stays as it was.
+ * its extras and days changed alone from today on going with it but those done.
+ * One lying wholly ahead goes whole, one over stays as it was.
  *
  * @returns Its boxes, the earliest first
- * @throws {Error} - When the plan holds no such series,
- *   or its file lies outside the new system
+ * @throws {Error} - Without such series, or with its file outside the new system
  */
 function plainGone(id: string, dry: boolean): Planned[] {
     const old: Plain = partRead(id, "");
@@ -941,13 +826,11 @@ function plainGone(id: string, dry: boolean): Planned[] {
 }
 
 /**
- * Removes a plain series whole, as the bin of its dialog asks: every part of it,
- * each with every component of its `UID`, see `seriesRemove` in `calendar.ts`.
- * A plan it leaves without any event or to-do goes into my trash, see `trash.ts`.
- * A log entry I logged from one of its days stays as it is, since it holds what happened.
+ * Removes a plain series whole, every part with every component of its `UID`.
+ * A plan left without any event or to-do goes into my trash.
+ * A log entry of one of its days stays, since it holds what happened.
  *
- * @throws {Error} - When the plan holds no such series,
- *   or its file lies outside the new system
+ * @throws {Error} - Without such series, or with its file outside the new system
  */
 export function plainRemove(id: string): void {
     const [, uids]: [string, string[]] = seriesPartsOf(day.plan, id);

@@ -1,19 +1,12 @@
 /**
  * ## Daily notes
  *
- * Reads the daily notes of the new system, one per day in `NomFrequencediary`,
- * and writes into them what I write in the dashboard,
- * each a plain Markdown section of points, one `- ` line each:
- * my gratitude under `## Gratitude`,
- * and my points about the day overall under `## About`.
+ * Reads and writes the daily notes in `NomFrequencediary`, one per day,
+ * my gratitude under `## Gratitude` and my points about the day under `## About`, one `- ` line each.
  * A section holds every line below its heading up to the next heading.
- * A further line of a point stands under its text, two spaces in, then the spacer `⠀`,
- * as the editor writes it with Shift+Enter, see `src/editor/keys.ts`.
- * Every day has its note, made at its start with both headings empty,
- * whether I write into it or not.
- * A section keeps its heading when I empty it,
- * and every other line of a note stays as it is.
- * Its empty lines are those of my Markdown, see `markdownFormOf` in `./markdown.ts`.
+ * A further line of a point stands two spaces in, then the spacer `⠀`, as Shift+Enter writes it.
+ * Every day gets its note at its start with both headings empty.
+ * An emptied section keeps its heading, every other line of a note stays as it is.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -22,10 +15,9 @@ import { diaryRoot, writeAllowed } from "./sources.ts";
 import { berlinDateOf, berlinInstantOf, dayAdd } from "./calendar.ts";
 import { markdownFormOf } from "./markdown.ts";
 
-/** Titles of the sections of a daily note, the only ones the reader writes. */
+/** The only sections the reader writes. */
 export type SectionTitle = "Gratitude" | "About";
 
-/** A section text, as my gratitude and my points about the day send it. */
 export type SectionNew = {
     date: string;
     title: SectionTitle;
@@ -35,35 +27,24 @@ export type SectionNew = {
 /** The sections of a daily note, in their order. */
 const titles: SectionTitle[] = ["Gratitude", "About"];
 
-/** Start of a point line in a section. */
 const pointStart: string = "- ";
 
 /** A point, of any level, by its `-` or number. */
 const pointForm: RegExp = /^[ \t]*(?:[-*+]|\d+[.)]) /;
 
-/**
- * A further line of a point as the editor writes it with Shift+Enter: indented,
- * then the spacer `⠀` (U+2800), so Markdown keeps the line in its point.
- */
+/** A further line of a point, indented, then the spacer `⠀` (U+2800), so Markdown keeps it in its point. */
 const furtherForm: RegExp = /^[ \t]+⠀/;
 
-/**
- * A line without text: empty, or only indentation,
- * spacers and the `-` or number of an empty point.
- */
+/** A line without text: empty, or only indentation, spacers and the mark of an empty point. */
 const emptyForm: RegExp = /^[ \t⠀]*(?:(?:[-*+]|\d+[.)])[ \t⠀]*)?$/;
 
-/** A heading of a Markdown section, of any level, which ends the section before it. */
+/** A heading of any level, which ends the section before it. */
 const headingForm: RegExp = /^#{1,6} /;
 
 /** A daily note as each day starts: both headings, empty. */
 const emptyNote: string = markdownFormOf(titles.map((title: SectionTitle): string => `## ${title}`).join("\n"));
 
-/**
- * Builds the path of the daily note of a date in the new system.
- *
- * @throws {Error} - When the date is not written like `2026-10-12`
- */
+/** @throws {Error} - When the date is not written like `2026-10-12` */
 function noteFileOf(date: string): string {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`No date ${date}`);
 
@@ -71,10 +52,7 @@ function noteFileOf(date: string): string {
     return join(diaryRoot, year, `${year}_${month}`, `${year}_${month}_${dayOfMonth}.md`);
 }
 
-/**
- * Finds a section in the lines of a note: index of its heading
- * and of the first line after it, `null` when the note has no such section.
- */
+/** Index of the heading of a section and of the first line after it, `null` without the section. */
 function sectionFind(lines: string[], title: SectionTitle): [number, number] | null {
     const heading: number = lines.findIndex((line: string): boolean => line.trim() === `## ${title}`);
     if (heading === -1) return null;
@@ -85,7 +63,7 @@ function sectionFind(lines: string[], title: SectionTitle): [number, number] | n
 }
 
 /**
- * Reads the daily note of a date, `null` when the day has no note.
+ * The daily note of a date, `null` when the day has none.
  *
  * @throws {Error} - When the date is not written like `2026-07-03`
  */
@@ -94,10 +72,7 @@ export function noteRead(date: string): string | null {
     return existsSync(file) ? readFileSync(file, "utf8") : null;
 }
 
-/**
- * Reads a section of the daily note of a date as text to edit, its lines kept points,
- * empty for a day without note or a note without the section.
- */
+/** A section as text to edit, its lines kept points, empty without note or section. */
 function sectionTextRead(date: string, title: SectionTitle): string {
     const lines: string[] = (noteRead(date) ?? "").split("\n");
     const found: [number, number] | null = sectionFind(lines, title);
@@ -105,7 +80,6 @@ function sectionTextRead(date: string, title: SectionTitle): string {
     return pointLinesOf(lines.slice(found[0] + 1, found[1]).join("\n")).join("\n");
 }
 
-/** Reads my gratitude and my points about the day of the daily note of a date. */
 export function sectionsRead(date: string): { [title in SectionTitle]: string } {
     return {
         Gratitude: sectionTextRead(date, "Gratitude"),
@@ -114,12 +88,9 @@ export function sectionsRead(date: string): { [title in SectionTitle]: string } 
 }
 
 /**
- * Keeps the lines of my gratitude or my points about the day points,
- * as the editor writes them:
- * a point and a further line as written, an indented line without the spacer,
- * as further lines were written before it, given the spacer,
- * any other line a point of its own, like one whose `- ` I took away;
- * lines without text left out, like the empty point of a section without points.
+ * Keeps the lines of a section points, as the editor writes them.
+ * An indented line without the spacer, as further lines were written before, gets the spacer.
+ * Any other line becomes a point of its own, lines without text are left out.
  */
 function pointLinesOf(text: string): string[] {
     return text
@@ -136,12 +107,8 @@ function pointLinesOf(text: string): string[] {
 }
 
 /**
- * Puts the new points of a section into the lines of a note, without empty lines,
- * which the note gets as it is written, see {@link sectionWrite}:
- * in place of its old lines, without points only its heading.
- * While the note has no such section, the section is added,
- * my gratitude before my points about the day when the note has them already,
- * else at the end of the note.
+ * Puts the points of a section in place of its old lines, without empty lines, which the writing adds.
+ * A missing section is added, my gratitude before my points about the day, else at the end.
  */
 function sectionPut(lines: string[], title: SectionTitle, points: string[]): void {
     const found: [number, number] | null = sectionFind(lines, title);
@@ -156,11 +123,9 @@ function sectionPut(lines: string[], title: SectionTitle, points: string[]): voi
 }
 
 /**
- * Writes the text of a section into the daily note of its date.
- * A day without note, like one before {@link notesStart}, gets one, with both headings.
+ * Writes a section into the daily note of its date, a day without note gets one with both headings.
  *
- * @throws {Error} - When the date is not written like `2026-07-03`,
- *   the title is none of {@link titles}, or the note would lie outside the new system
+ * @throws {Error} - On a wrong date or title, or a note outside the new system
  */
 export function sectionWrite(section: SectionNew): void {
     const { date, title, text }: SectionNew = section;
@@ -175,9 +140,8 @@ export function sectionWrite(section: SectionNew): void {
 }
 
 /**
- * Makes the daily note of today now and again at the start of every day in Berlin time,
- * as long as the reader runs.
- * A note that exists stays as it is, and a failed one is printed and waits for the next.
+ * Makes the daily note of today now and at the start of every day in Berlin time.
+ * A note that exists stays as it is, a failed one is printed and waits for the next day.
  */
 export function notesStart(): void {
     const start: () => void = (): void => {
