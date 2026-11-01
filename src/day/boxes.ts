@@ -33,11 +33,11 @@
  * and a click on it takes that back, so everything undoes with one click.
  * An open box is as bright on a day that is over as on today,
  * so a day before looks like today.
- * A move to any other day by its dialog counts as a push too,
- * so a move by mistake is set right by moving it again.
+ * A move to any other day by its dialog counts as a push too.
  * A pushed box stays greyed on each day it left, once per push,
  * see `leftBoxesOf` in `reader/boxes.ts`;
- * a click on it leads to the day it stands on now.
+ * a click on it leads to the day it stands on now,
+ * a click on its arrow sets it back on that day, see `boxBack` there.
  * A box neither done nor cancelled is carried along once its day is over,
  * as if I pushed it to the next day at the end of each day,
  * see `carriedOf` in `reader/boxes.ts`;
@@ -62,7 +62,7 @@
  */
 
 import { Draggable } from "fullcalendar/interaction";
-import { boxDrop, boxLog, boxPush, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
+import { boxBack, boxDrop, boxLog, boxPush, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
 import { boxOpenEdit, boxOpenNew, entryOpenFromBox } from "./categories.ts";
 import { giftOpen } from "./gifts.ts";
 import { middleCutPut } from "./choices.ts";
@@ -451,8 +451,7 @@ async function boxClick(calendar: Calendar, box: Box): Promise<void> {
 /**
  * Makes the state of a box no longer open, one small grey icon,
  * the one of the action that made it; a click on it takes that back.
- * A moved box has its arrow alone, since a move is set right by moving the box again,
- * and so does a box that cannot be changed, unless it is done.
+ * A box that cannot be changed has its icon alone, unless it is done.
  */
 function stateOf(calendar: Calendar, box: Box): HTMLElement {
     if (box.state === "done")
@@ -473,7 +472,12 @@ function stateOf(calendar: Calendar, box: Box): HTMLElement {
             "Cancelled",
             box.editable ? (): Promise<void> => boxUniversity(box.id, false) : null,
         );
-    return stateMarkOf(calendar, (box.moved?.went ?? "") < box.day ? ArrowLeft : ArrowRight, "Moved", null);
+    return stateMarkOf(
+        calendar,
+        (box.moved?.went ?? "") < box.day ? ArrowLeft : ArrowRight,
+        "Moved",
+        box.editable ? (): Promise<void> => boxBack(box.id, box.day) : null,
+    );
 }
 
 /**

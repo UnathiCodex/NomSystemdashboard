@@ -34,6 +34,7 @@ import {
 } from "./day.ts";
 import {
     boxAdd,
+    boxBack,
     boxDelete,
     boxDrop,
     boxEdit,
@@ -318,6 +319,10 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/pushed") {
         boxPush(((await json(request)) as { box: string }).box);
+        responseSend(response, 200, null);
+    } else if (request.method === "POST" && url.pathname === "/api/day/back") {
+        const back: { box: string; day: string } = (await json(request)) as { box: string; day: string };
+        boxBack(back.box, back.day);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/dropped") {
         const dropped: { box: string; dropped: boolean } = (await json(request)) as {

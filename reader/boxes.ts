@@ -11,8 +11,9 @@
  * A box I decide against is cancelled and stays in its file as `STATUS:CANCELLED`,
  * so it can be counted. `STATUS:CANCELLED` is always my own decision, lectures included.
  * Any change of its day is a push, see {@link boxPush} and {@link boxEdit},
- * so every move is counted and a move by mistake is set right by moving it again.
- * A pushed box stays greyed on each day it left, see {@link leftBoxesOf}.
+ * so every move is counted, until I take it back.
+ * A pushed box stays greyed on each day it left, see {@link leftBoxesOf},
+ * and its arrow there sets it back on that day, see {@link boxBack}.
  * A box without deadline neither done nor cancelled
  * is carried along once its day is over:
  * it counts as pushed to the next day at the end of each day, see {@link carriedOf}.
@@ -20,6 +21,8 @@
  * like my diary of yesterday, and it counts as done on that day, never as pushed.
  * These pushes are not written while it is carried, only once I change it,
  * see {@link carryWrite}.
+ * A box I drop goes back to the first day it left, on whichever day I drop it,
+ * as if it was never pushed or carried, see {@link boxDrop}.
  * Only a box that got its day on that day or before, its `DTSTAMP`, is carried along,
  * so one I add for a day that is over or move to one stays there, missed,
  * until its day changes again; so does one of a day over I take back to open,
@@ -92,6 +95,7 @@ import {
     occurrencesTidy,
     propertiesPut,
     pushAdd,
+    pushesKeep,
     seriesDayRemove,
     stampPut,
     statusPut,
@@ -1009,12 +1013,71 @@ export function boxPush(id: string): void {
 }
 
 /**
+ * Sets a box back on one of the days it left, its start and its length as they stood there,
+ * and takes away that push and all after it, as if they never happened,
+ * a box carried along with the pushes it stands for, see {@link carryWrite}.
+ *
+ * @param at - Which of its pushes, see `pushed` of {@link Box}
+ * @returns The box as it stands then
+ * @throws {Error} - When the file lies outside the new system
+ */
+function boxReturn(found: [string, Entry, Box], at: number): [string, Entry, Box] {
+    const [file, entry, box]: [string, Entry, Box] = carryWrite(found);
+    const push: Push = box.pushed[at];
+    const minutes: number | null = push.minutes ?? box.minutes;
+    const target: string = planFileAfter(file, entry, entry, push.day);
+    boxOwn(file, entry);
+    pushesKeep(file, box.id, at);
+    if (entry.todo)
+        todoChange(
+            file,
+            entry,
+            {
+                ...entry,
+                day: push.day,
+                time: push.time === "" ? null : new Date(push.time),
+                minutes: minutes,
+                deadline: "",
+            },
+            target,
+        );
+    else
+        entryChange(
+            file,
+            entry,
+            {
+                ...entry,
+                start: new Date(push.time),
+                end: new Date(Date.parse(push.time) + (minutes ?? 0) * minuteLength),
+            },
+            target,
+        );
+    return boxFind(box.id);
+}
+
+/**
+ * Sets a box of the new system back on a day it left, by its arrow there, see {@link boxReturn},
+ * in the state it has, so a box dropped later stands dropped on that day.
+ * One of a day over stays on that day, see {@link overKeep}.
+ *
+ * @throws {Error} - When there is no such box in the new system, or it never left that day
+ */
+export function boxBack(id: string, date: string): void {
+    const found: [string, Entry, Box] = boxFind(id);
+    const at: number = found[2].pushed.findIndex((push: Push): boolean => push.day === date);
+    if (!found[1].editable || at === -1) throw new Error(`${found[1].title} did not leave ${date}`);
+    const [file, entry]: [string, Entry, Box] = boxReturn(found, at);
+    boxTidy(file, entry);
+    overKeep(id);
+}
+
+/**
  * Drops a box of the new system that is not done, with one tap, or takes it back:
  * a dropped box stays in its file as `STATUS:CANCELLED`, so it can be counted;
  * taken back, a to-do is `NEEDS-ACTION` again,
  * an event without status, as it was imported.
- * A box carried along has the pushes it stands for written first, see {@link carryWrite},
- * so it is dropped where it stands, like a box pushed by hand;
+ * A box that left a day is dropped on the first day it left, see {@link boxReturn},
+ * every push and all its carrying gone, so no day shows it moved;
  * taken back, one of a day over stays on its day, see {@link overKeep}.
  *
  * @throws {Error} - When there is no such box in the new system, or it is done
@@ -1022,7 +1085,7 @@ export function boxPush(id: string): void {
 export function boxDrop(id: string, dropped: boolean): void {
     const found: [string, Entry, Box] = boxFind(id);
     if (!found[1].editable || found[2].state === "done") throw new Error(`${found[1].title} cannot be dropped`);
-    const [file, entry]: [string, Entry, Box] = carryWrite(found);
+    const [file, entry]: [string, Entry, Box] = dropped && found[2].pushed.length > 0 ? boxReturn(found, 0) : found;
     let status: string = "";
     if (dropped) status = "CANCELLED";
     else if (entry.todo) status = "NEEDS-ACTION";

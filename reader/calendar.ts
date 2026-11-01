@@ -2100,6 +2100,22 @@ export function pushAdd(file: string, id: string, entry: Entry): void {
 }
 
 /**
+ * Keeps the first pushes of a box and takes away the later ones,
+ * as if they never happened, see `boxReturn` in `boxes.ts`.
+ *
+ * @throws {Error} - When the file lies outside the new system
+ *   or does not hold the to-do or the event once
+ */
+export function pushesKeep(file: string, id: string, kept: number): void {
+    componentEdit(file, id, (component: string[]): void => {
+        const before: ICAL.Property[] = new ICAL.Component(ICAL.parse(component.join("\r\n"))).getAllProperties(
+            "x-pushed",
+        );
+        propertyPut(component, "x-pushed", before.slice(0, kept));
+    });
+}
+
+/**
  * Removes the event or to-do with an identifier from an `.ics` file.
  *
  * @throws {Error} - When the file lies outside the new system

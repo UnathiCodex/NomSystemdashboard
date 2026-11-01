@@ -307,6 +307,15 @@ export async function boxPush(id: string): Promise<void> {
 }
 
 /**
+ * Sets a box back on a day it left, as if it never went on from there.
+ *
+ * @throws {Error} - When the reader does not take it
+ */
+export async function boxBack(id: string, day: string): Promise<void> {
+    await requestSend("POST", "/api/day/back", { box: id, day: day });
+}
+
+/**
  * Marks a box cancelled by the university, or takes that back;
  * the reader renumbers the later boxes of its series.
  *
