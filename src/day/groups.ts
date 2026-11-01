@@ -1,32 +1,13 @@
 /**
  * ## Groups
  *
- * The menu of the groups of my tutorials,
- * see `reader/course.ts`, one and the same wherever it shows:
- * at the right of the heading of the card of the tutorials on the page of a module,
- * see `../editor/course.ts`, and in the dialog of a tutorial, see `./categories.ts`,
- * and in a row of the page of a module, both of which pick the group of their box;
- * a box of the plan, see `./boxes.ts`, names its group only,
- * grey, see {@link groupNameOf}.
- * Its button names a group small and grey with a small chevron;
- * a click on it opens the menu below it as the menu `⋯` does,
- * see `menuAnchor` in `../menu.ts`, see {@link groupMenuOf}.
- * A row is one click: anywhere on it closes the menu and picks the group,
- * but for the one checked, and nothing in the menu opens the box of its row or a person.
- * The menu of the heading, see {@link pinnedMenuOf}, pins a group, see {@link pinPick},
- * and its pin takes it back, see {@link unpinPick}.
- * The dialog of a box and its row name its group, see {@link boxGroupOf},
- * a pick moving only that week's box, see {@link weekPick}.
- * At the right end of every group the series icon opens that group in the form of a
- * series,
- * see `groupOpen` in `./series.ts`, which makes and changes the groups themselves,
- * see {@link seriesIconOf};
- * a group is pinned only in the heading of the card, never from a box.
- * A pick shows at once, as the page of the menu shows it, see {@link PickShow},
- * and the reader confirms it.
- *
- * - `../editor/dialog.ts`: Puts the dialog of a series into the page of a module
- *   before a group opens there, loaded only then.
+ * The menu of the groups of my tutorials, one and the same wherever it shows.
+ * Its button names a group small and grey with a small chevron and opens the menu below it.
+ * A click anywhere on a row picks the group, and nothing in the menu opens a box or a person.
+ * The menu in the heading of the card pins a group, a group is never pinned from a box.
+ * The menu of a box moves only that week's box.
+ * The series icon of every group opens that group in the form of a series.
+ * A pick shows at once and the reader confirms it.
  */
 
 import { courseSend, groupOpen, mondayOf, roomOf, weekdayNameOf } from "./series.ts";
@@ -46,18 +27,15 @@ import type { Attendee } from "../../reader/calendar.ts";
 import type { Planned, Slot } from "../../reader/course.ts";
 
 /**
- * Shows a pick of a group at once and sends it, as the page of the menu does:
- * changes what the page shows by `change`, shows it anew,
- * then sends the pick to the reader by `send` and loads anew once the reader answers,
- * also when it does not take it, so a pick shown at once goes back.
+ * Shows a pick of a group at once by `change`, then sends it by `send`.
+ * The page loads anew once the reader answers, also when it refuses, so a pick shown at once goes back.
  */
 export type PickShow = (change: () => void, send: () => Promise<unknown>) => void;
 
 /**
- * A group in the menu of the groups, see {@link groupMenuOf}.
+ * A group in the menu of the groups.
  *
- * - `day`: The day it stands below, the weekday of the group
- *   or the day of its session, empty for none.
+ * - `day`: The day it stands below, the weekday of the group or the day of its session, empty for none.
  */
 type Item = {
     group: Group;
@@ -68,10 +46,8 @@ type Item = {
 };
 
 /**
- * Tells whether a box may go to another group by a pick:
- * an open to-do of the new system from today on,
- * no date of a series of a file, never pushed,
- * as a change of the reader may move it, see `changeable` in `reader/course.ts`.
+ * Whether a box may go to another group by a pick, as the reader may move it.
+ * That is an open to-do of the new system from today on, never pushed, no date of a series of a file.
  */
 export function pickable(box: Box): boolean {
     return (
@@ -84,27 +60,23 @@ export function pickable(box: Box): boolean {
     );
 }
 
-/**
- * Tells whether a session of a group has no times, only its day and its length,
- * see `Session` in `reader/course.ts`.
- */
+/** Whether a session of a group has no times, only its day and its length. */
 function dayIs(session: Session): boolean {
     return /^\d{4}-\d{2}-\d{2}$/.test(session.start);
 }
 
-/** Writes the times of a session of a group, of one without times its length. */
+/** The times of a session of a group, of one without times its length. */
 function sessionTimesOf(session: Session): string {
     if (dayIs(session)) return lengthOf(session.minutes);
     const start: Date = new Date(session.start);
     return `${timeOf(start)}${rangeDash}` + timeOf(new Date(start.getTime() + session.minutes * 60 * 1000));
 }
 
-/** Tells whether a session of a group is over. */
 function overOf(session: Session): boolean {
     return Date.parse(session.start) + session.minutes * 60 * 1000 <= Date.now();
 }
 
-/** Gives the sessions of groups in a week, each with its group, the earliest first. */
+/** The sessions of groups in a week, each with its group, the earliest first. */
 function meetingsOf(groups: Group[], week: string): [Group, Session][] {
     return groups
         .flatMap((group: Group): [Group, Session][] =>
@@ -117,15 +89,12 @@ function meetingsOf(groups: Group[], week: string): [Group, Session][] {
         );
 }
 
-/** Gives the group pinned of a type: the group of its series, empty for none. */
+/** The group pinned of a type, the group of its series, empty for none. */
 function pinnedOf(course: Course, type: string): string {
     return course.series.find((series: Series): boolean => series.rule.type === type)?.rule.group ?? "";
 }
 
-/**
- * Moves a box shown to the session of a group, as the reader moves it,
- * see `targetOf` in `reader/course.ts`.
- */
+/** Moves a box shown to the session of a group, as the reader moves it. */
 function boxMove(box: Box, group: Group, session: Session): void {
     Object.assign<Box, Partial<Box>>(box, {
         day: dayOf(new Date(session.start)),
@@ -143,14 +112,9 @@ function boxMove(box: Box, group: Group, session: Session): void {
 }
 
 /**
- * Pins a group:
- * at once the series of its type goes to the group, a new one while it has none,
- * and every open box of its type to come of the group pinned before,
- * or without group, goes to the session of the group in its week,
- * where it meets one not over yet, a box of another group staying as my own choice;
- * then the reader, see `groupMine` in `reader/course.ts`,
- * moves every such box it may change from the group's next session on,
- * and with no series yet makes its sessions to come my series.
+ * Pins a group, the series of its type going to the group, a new series while it has none.
+ * Every open box of the group pinned before or without group goes to the group's session in its week.
+ * A box of another group stays as my own choice.
  */
 function pinPick(course: Course, group: Group, show: PickShow): void {
     show(
@@ -184,12 +148,8 @@ function pinPick(course: Course, group: Group, show: PickShow): void {
 }
 
 /**
- * Takes the group pinned back:
- * at once the series of its type has no group
- * and its open boxes of the group from today on go;
- * then the reader, see `groupMine` in `reader/course.ts`,
- * removes them, every box done, skipped,
- * pushed, of a day over or of another group, my own choice, staying.
+ * Takes the group pinned back, the series of its type without group, its open boxes from today on gone.
+ * A box done or skipped or pushed stays, as one of a day over or of another group.
  */
 function unpinPick(course: Course, type: string, show: PickShow): void {
     show(
@@ -218,10 +178,7 @@ function unpinPick(course: Course, type: string, show: PickShow): void {
     );
 }
 
-/**
- * Moves one week's box to the session of a group, that week alone:
- * at once, then by the reader, see `weekPick` in `reader/course.ts`.
- */
+/** Moves one week's box to the session of a group, that week alone. */
 function weekPick(course: Course, box: Box, group: Group, session: Session, show: PickShow): void {
     show(
         (): void => boxMove(box, group, session),
@@ -235,11 +192,7 @@ function weekPick(course: Course, box: Box, group: Group, session: Session, show
     );
 }
 
-/**
- * Makes the tutors of a group in the menu of the groups, apart by a middle dot,
- * see `dottedOf` in `../persons.ts`, plain text,
- * so a click on them picks the group as anywhere on its row.
- */
+/** The tutors of a group apart by a middle dot, plain text, so a click on them picks the group. */
 function tutorsOf(group: Group): HTMLElement | null {
     const names: string[] = group.rule.attendees.map((attendee: Attendee): string => attendee.name);
     const tutors: HTMLElement = elementOf("span", "group-tutors", "");
@@ -249,12 +202,8 @@ function tutorsOf(group: Group): HTMLElement | null {
 }
 
 /**
- * Gives the parts of a group in the menu of the groups, each on a column of its own,
- * all on one line: its group, then its times and where it is:
- * its platform online whenever it has one, as every skill entry shows it,
- * see `whereOf` in `./places.ts`, else its place short,
- * see `roomOf` in `./series.ts`, as a row of the page of a module writes them;
- * and its tutors while known, see {@link tutorsOf}.
+ * The parts of a group in the menu, each on a column of its own, all on one line.
+ * Where it is is its platform online whenever it has one, else its place short.
  */
 function groupPartsOf(group: Group, times: string): [string, HTMLElement, HTMLElement | null] {
     const where: HTMLElement = elementOf("span", "group-detail", "");
@@ -269,15 +218,10 @@ function groupPartsOf(group: Group, times: string): [string, HTMLElement, HTMLEl
 }
 
 /**
- * Makes the menu of the groups:
- * its button, which opens its items as the menu `⋯` does,
- * above the groups of each day that day, each group by its parts,
- * see {@link groupPartsOf}, the parts of all on the same columns,
- * the checked one by a check, the one pinned by a small pin
- * in a column of its own, so the groups stand one below the other;
- * a click on a group closes the menu and picks it, but for the one checked;
- * at the right end of each group its series icon, see {@link seriesIconOf};
- * while it has a way to take the group pinned back, a click on that pin does so.
+ * The menu of the groups, its button opening its items as the menu `⋯` does.
+ * The groups of each day stand below that day, their parts on the same columns.
+ * The pin has a column of its own, so the groups stand one below the other.
+ * With `unpin` a click on the pin takes the group pinned back.
  */
 function groupMenuOf(
     words: (string | Node)[],
@@ -341,14 +285,9 @@ function groupMenuOf(
 }
 
 /**
- * Makes the menu of the group pinned in the heading of the card of a type with groups:
- * the group pinned with the pin before it, `No group yet` while none is,
- * its items every group of the type by the weekday and times of its first slot,
- * the one pinned marked by its pin alone, no check,
- * since a series is no one week, a pick of another pinning it, see {@link pinPick},
- * and while one is pinned its pin takes it back, see {@link unpinPick};
- * each with its series icon, which opens it to change it, see {@link groupOpenOf},
- * or as the form of a series asks, see `groupPickOf` in `./series.ts`.
+ * The menu of the group pinned in the heading of the card of a type with groups.
+ * Its items are the groups of the type by the weekday and times of their first slot.
+ * The one pinned is marked by its pin alone, no check, since a series is no one week.
  */
 export function pinnedMenuOf(
     course: Course,
@@ -390,11 +329,8 @@ export function pinnedMenuOf(
 }
 
 /**
- * Gives what opens a group of the menu of the groups in the form of a series,
- * see `groupOpen` in `./series.ts`: on the page of a module,
- * which holds no dialog of a series before one opened,
- * the day view's dialogs put into the page first,
- * see `dialogOf` in `../editor/dialog.ts`, loaded only then.
+ * What opens a group in the form of a series.
+ * The page of a module holds no dialog of a series before, so the dialogs are loaded first.
  */
 function groupOpenOf(course: Course, type: string): (group: string) => void {
     return (group: string): void => {
@@ -412,12 +348,8 @@ function groupOpenOf(course: Course, type: string): (group: string) => void {
 }
 
 /**
- * Makes the series icon ⟳ at the right end of a group of the menu,
- * the same as after the times of a box of a series,
- * which opens the group in the form of a series: inside the row of the group,
- * which a click on it never picks,
- * so it is no button of its own but answers a click
- * and the keys Enter and Space as one.
+ * The series icon ⟳ of a group of the menu, which opens the group in the form of a series.
+ * It stands inside the row button, so it is no button but answers a click and Enter and Space as one.
  */
 function seriesIconOf(group: string, open: () => void): HTMLElement {
     const icon: HTMLElement = elementOf("span", "group-series", "");
@@ -438,23 +370,14 @@ function seriesIconOf(group: string, open: () => void): HTMLElement {
     return icon;
 }
 
-/**
- * Makes the group of a box as plain text, small and grey, without menu,
- * as a box of the plan names it,
- * where only its dialog and its row on the page of its module pick it.
- */
+/** The group of a box as plain text, small and grey, without menu. */
 export function groupNameOf(box: Box): HTMLElement | null {
     return box.group === "" ? null : elementOf("span", "group-name", box.group);
 }
 
 /**
- * Makes the group of a box of a type with groups in its dialog
- * and in its row on the page of its module:
- * of a box that may go to another group, see {@link pickable},
- * while groups meet in its week, the menu of the groups
- * of the session of each group in its week not over yet,
- * the group of the box checked, a pick moving only this box, see {@link weekPick};
- * of any other box its group grey, see {@link groupNameOf}.
+ * The group of a box of a type with groups, a menu of the sessions of its week not over yet.
+ * A box that may not go to another group shows its group grey.
  */
 export function boxGroupOf(
     course: Course | null,

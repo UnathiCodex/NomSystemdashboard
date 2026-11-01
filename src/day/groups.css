@@ -1,8 +1,5 @@
-/* The menu of the groups, see `groups.ts`,
-   the same in the heading of a card of the page of a module and in the dialog of a box,
-   and the group of a box shown alone */
-/* The group of a box, and the button of the menu of the groups:
-   the icons in the middle of the text and the text giving the line its baseline,
+/* The menu of the groups and the group of a box shown alone */
+/* The group of a box and the button of the menu, its text giving the baseline,
    so the group stands on the line of the text beside it */
 .group-name {
     font-size: 0.8125rem;
@@ -35,11 +32,8 @@ button.group-name:is(:hover, :has(+ .menu:popover-open)) {
     height: 0.875rem;
 }
 
-/* The menu of the groups: the menu `⋯`,
-   see `../menu.css`, in the small text of the day wherever it opens,
-   never wider than the window;
-   each group on one line, on the same columns as the others,
-   its tutors plain text, so the row is one click;
+/* The menu of the groups, the menu `⋯` in the small text of the day,
+   each group on one line on the same columns as the others,
    times and tutors wrapping where the window is narrower */
 .group-menu {
     width: max-content;
@@ -84,8 +78,7 @@ button.group-name:is(:hover, :has(+ .menu:popover-open)) {
     color: var(--text-muted);
 }
 
-/* The pin of the group pinned, which takes it back, see `groupMenuOf` in `groups.ts`:
-   softly lighter under the pointer, see `--hover-in` in `../variants.css` */
+/* The pin of the group pinned, which takes it back */
 .group-unpin {
     cursor: pointer;
 }
@@ -119,9 +112,7 @@ button.group-name:is(:hover, :has(+ .menu:popover-open)) {
     white-space: normal;
 }
 
-/* The series icon at the right end of a group,
-   see `seriesIconOf` in `groups.ts`, a margin before it,
-   so it stands apart from the tutors */
+/* The series icon at the right end of a group, apart from the tutors */
 .group-series {
     display: inline-flex;
     justify-self: end;
