@@ -1,14 +1,9 @@
 /**
  * ## Code
  *
- * The languages of my code blocks, a fixed list, see {@link codeLanguages},
- * the words of a block of one of them in the colors of my IntelliJ theme,
- * see `reader/theme.ts`, every other block in the color of text, white.
- * Used in the scripts view, see {@link codeHtmlOf}, and in the editor,
- * see `../editor/syntax.ts`.
+ * The languages of my code blocks, a fixed list, their words in the colors of my IntelliJ theme.
+ * Every other block is in the color of text.
  * Make has no language of its own there, its lines take that of Bash.
- * Built-in functions take a color of their own only in Python,
- * as my theme gives it for Python alone, see {@link plain}.
  */
 
 import { StreamLanguage } from "@codemirror/language";
@@ -25,9 +20,8 @@ import type { StreamParser, StringStream } from "@codemirror/language";
 import type { Highlighter } from "@lezer/highlight";
 
 /**
- * A language whose built-in words read as any other word,
- * as my theme colors built-in functions of Python alone,
- * and its simple types written small as keywords, as IntelliJ colors them.
+ * A language whose built-in words read as any other word, as my theme colors them in Python alone.
+ * Its simple types written small read as keywords, as IntelliJ colors them.
  */
 function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
     return StreamLanguage.define({
@@ -40,10 +34,7 @@ function plain(mode: StreamParser<unknown>): StreamLanguage<unknown> {
     });
 }
 
-/**
- * The languages of my code blocks, as written after the ```,
- * in the order of the list to pick.
- */
+/** The languages of my code blocks as written after the ```, in the order of the list to pick. */
 export const codeLanguages: { [name: string]: StreamLanguage<unknown> } = {
     bash: StreamLanguage.define(shell),
     c: plain(c),
@@ -56,10 +47,7 @@ export const codeLanguages: { [name: string]: StreamLanguage<unknown> } = {
     xml: StreamLanguage.define(xml),
 };
 
-/**
- * Classes of the pieces of code, one for each kind of word of `reader/theme.ts`,
- * colored by `notes.css`, every other word in the color of text.
- */
+/** Classes of the pieces of code, one for each kind of word of my theme. */
 export const codeHighlighter: Highlighter = tagHighlighter([
     { tag: tags.self, class: "code-self" },
     { tag: tags.keyword, class: "code-keyword" },
@@ -80,17 +68,12 @@ export const codeHighlighter: Highlighter = tagHighlighter([
     { tag: tags.attributeName, class: "code-attributeName" },
 ]);
 
-/**
- * Finds the language of a code block by what follows its ```, `null` for none of my list.
- */
+/** The language of a code block by what follows its ```, `null` for none of my list. */
 export function codeLanguageOf(info: string): StreamLanguage<unknown> | null {
     return codeLanguages[info.trim().split(/\s/)[0].toLowerCase()] ?? null;
 }
 
-/**
- * Turns the code of a block into HTML with a class for each piece,
- * `null` for a block of no language of my list.
- */
+/** The code of a block as HTML with a class for each piece, `null` for no language of my list. */
 export function codeHtmlOf(code: string, info: string): string | null {
     const language: StreamLanguage<unknown> | null = codeLanguageOf(info);
     if (language === null) return null;
@@ -110,10 +93,7 @@ export function codeHtmlOf(code: string, info: string): string | null {
     return html;
 }
 
-/**
- * Gives every kind of code its color from my theme as `--code-…` on the page,
- * for `notes.css`.
- */
+/** Gives every kind of code its color from my theme as `--code-…` on the page. */
 export async function codeColorsSet(): Promise<void> {
     const colors: { [kind: string]: string } = await (await fetch("/api/theme")).json();
     for (const [kind, color] of Object.entries(colors))

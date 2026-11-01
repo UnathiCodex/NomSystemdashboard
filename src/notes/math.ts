@@ -1,17 +1,13 @@
 /**
  * ## Math
  *
- * Renders formulas the way Obsidian 1.14 does, so they look the same:
- * MathJax 4.1 with the MathJax TeX font, output as HTML and CSS (CHTML),
- * the same TeX packages and settings.
- * The TeX packages and the whole font come as files from `node_modules`,
- * which Vite serves while it runs, so nothing comes from a CDN.
+ * Formulas rendered as Obsidian 1.14 does, MathJax 4.1 with the MathJax TeX font as HTML and CSS.
+ * The TeX packages and the font come from `node_modules`, so nothing comes from a CDN.
  */
 
 /**
- * The calls of MathJax the scripts view uses, those Obsidian uses.
- * - `chtmlStylesheet`: Gives the stylesheet of MathJax, the same element each time,
- *   later with the rules of the new characters added into it.
+ * The calls of MathJax that Obsidian uses.
+ * - `chtmlStylesheet`: The same element each time, later with the rules of new characters added.
  */
 type MathJaxApi = {
     startup: { promise: Promise<void>; document: { options: object } };
@@ -20,9 +16,8 @@ type MathJaxApi = {
 };
 
 /**
- * TeX packages Obsidian 1.14 adds to those MathJax has anyway,
- * without `mhchem` for chemistry,
- * which needs a font extension of its own and is not used in my notes.
+ * TeX packages Obsidian 1.14 adds to those of MathJax.
+ * Without `mhchem`, which needs a font extension of its own and is not in my notes.
  */
 const packages: string[] = [
     "action",
@@ -56,13 +51,9 @@ const global: { MathJax: object } = window as unknown as { MathJax: object };
 /**
  * Settings of MathJax, those of Obsidian.
  * - `loader.paths`: Without `fonts` MathJax would load its fonts from the CDN jsDelivr.
- * - `output.font`: The MathJax TeX font, the font of MathJax 3,
- *   instead of the newer default.
- * - `output.linebreaks.inline`: Off, so a formula within a line never breaks inside,
- *   as in MathJax 3; it goes to the next line whole.
- * - `tex.inlineMath`, `tex.displayMath`:
- *   Empty, so MathJax searches the page for no formula itself;
- *   the Markdown reader finds them, see `markdown.ts`.
+ * - `output.font`: The font of MathJax 3 instead of the newer default.
+ * - `output.linebreaks.inline`: Off, so a formula within a line goes to the next line whole.
+ * - `tex.inlineMath`, `tex.displayMath`: Empty, so MathJax searches the page for no formula itself.
  */
 global.MathJax = {
     loader: {
@@ -86,17 +77,14 @@ global.MathJax = {
     options: { enableMenu: false, enableEnrichment: false, enableExplorer: false },
 };
 
-// @ts-expect-error: MathJax comes without types;
-// it puts itself onto window, typed by MathJaxApi
+// @ts-expect-error: MathJax comes without types, it puts itself onto window
 await import("@mathjax/mathjax-tex-font/tex-mml-chtml-mathjax-tex.js");
 const mathJax: MathJaxApi = global.MathJax as MathJaxApi;
 await mathJax.startup.promise;
 
 /**
- * The same options again:
- * the menu of MathJax puts its own defaults over them when it starts,
- * among them speech, which would start a worker for screen readers;
- * Obsidian sets them again the same way.
+ * The same options again, since the menu of MathJax puts its own defaults over them when it starts.
+ * Among them is speech, which would start a worker for screen readers.
  */
 Object.assign(mathJax.startup.document.options, {
     enableMenu: false,
@@ -105,12 +93,10 @@ Object.assign(mathJax.startup.document.options, {
 });
 
 /**
- * Renders the formulas in an element not yet rendered, then marks them `is-loaded`,
- * as Obsidian does. A formula MathJax cannot read keeps its TeX as text.
- * The stylesheet of MathJax goes into the page only once:
- * a stylesheet moved in the page is read again from its text
- * and loses the rules added later,
- * so the characters of every further note would lose their width and be cut away.
+ * Renders the formulas of an element not yet rendered and marks them `is-loaded`, as Obsidian does.
+ * A formula MathJax cannot read keeps its TeX as text.
+ * The stylesheet of MathJax goes into the page only once.
+ * Moved, it would lose the rules added later and the characters of further notes would be cut away.
  */
 export function mathRender(element: HTMLElement): void {
     element.querySelectorAll<HTMLElement>(".math:not(.is-loaded)").forEach((math: HTMLElement): void => {
