@@ -161,8 +161,10 @@ export type Group = {
 /** Category of skill entries in the entry by category. */
 export const skillName: string = "Skill";
 
-/** My skill of logging, planning and thinking about my day, alone in the group `Master` and first. */
-export const masterName: string = "NomMasterplannings";
+/** Whether a skill is one of my own system, named `Nom…`, which stand in the group `Master`. */
+export function masterIs(name: string): boolean {
+    return name.startsWith("Nom");
+}
 
 export async function skillingLoad(): Promise<Skilling> {
     return readerAsk<Skilling>("/api/skill/tasks");

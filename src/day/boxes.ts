@@ -28,7 +28,7 @@ import { linkNameOf } from "../skill/links.ts";
 import { boxMinutes, boxTimesOf, lengthOf, nearOf, rangeDash, timeOf } from "./times.ts";
 import { boxActionsOf } from "./actions.ts";
 import { roomOf, seriesNew } from "./series.ts";
-import { dayOf, dayTextOf, masterName, skillName } from "../skill/attempts.ts";
+import { dayOf, dayTextOf, masterIs, skillName } from "../skill/attempts.ts";
 import { skillGroups } from "./skill.ts";
 import { calendarTodayOf } from "../today.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
@@ -458,13 +458,13 @@ function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTML
 const sections: string[] = [...skillGroups, "Living", "Health"];
 
 /**
- * The section of a box by its plan, `Master` for my plan of planning.
- * `Projects` for any other in `Skilling`, else the name of its folder.
+ * The section of a box by its plan, in `Skilling` as the Skill list groups its skill.
+ * Else the name of its folder.
  */
 function sectionOf(box: Box): string {
     const [folder, file]: string[] = box.file.split("/").slice(-2);
     if (folder !== "Skilling") return folder;
-    return file === `${masterName}_Plan.ics` ? "Master" : "Projects";
+    return masterIs(file) ? "Master" : "Projects";
 }
 
 /** The boxes of the shown day, then those carried along. */

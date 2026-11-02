@@ -35,7 +35,7 @@ import { plainKeep } from "../skill/task.ts";
 import {
     dayTextOf,
     groupsOf,
-    masterName,
+    masterIs,
     moduleLoad,
     semesterOf,
     skillEntrySend,
@@ -246,9 +246,9 @@ function hintOf(text: string): HTMLParagraphElement {
     return hint;
 }
 
-/** Group of a skill in the Skill list, `Master` for my skill of planning alone. */
+/** Group of a skill in the Skill list. */
 function skillGroupOf(module: string): string {
-    if (module === masterName) return "Master";
+    if (masterIs(module)) return "Master";
     return moduleName.test(skillNameOf(module)) ? "Modules" : "Projects";
 }
 
