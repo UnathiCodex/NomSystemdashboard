@@ -1038,24 +1038,23 @@ function paramPickerOf(field: Field, at: number, value: string, aside: HTMLEleme
         plus: true,
         aside: aside,
         pick: (picked: string[]): void => {
-            paramPick(field, at, picked[0] ?? "");
+            paramPick(at, picked[0] ?? "");
         },
     });
 }
 
 /**
- * Writes the param of a value into the summary, its list offering it until the page loads anew.
+ * Writes the param of a value into the summary, its list offering it only once the entry is saved.
  *
  * @param at - Place of the value in the summary, -1 for a summary of one value
  */
-function paramPick(field: Field, at: number, param: string): void {
+function paramPick(at: number, param: string): void {
     const all: string[] = at === -1 ? [values.title] : values.title.split(", ");
     const base: string = baseOf(all[Math.max(at, 0)]);
     const written: string = paramPut(base, param);
     values.title = all
         .map((value: string, index: number): string => (index === Math.max(at, 0) ? written : value))
         .join(", ");
-    if (paramOf(written) !== "") field.params[base] = [...new Set([...(field.params[base] ?? []), paramOf(written)])];
     saveAllow();
     titleRowsShow();
 }
