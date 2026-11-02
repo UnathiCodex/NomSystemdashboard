@@ -80,6 +80,54 @@
     line-height: inherit;
 }
 
+/* My points about the day, the notes of the log entries.
+   Each stands under its what and time, nothing typed here. */
+.about-notes {
+    cursor: default;
+}
+
+.about-notes ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.about-head {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    min-width: 0;
+}
+
+/* What of the entry as a button that opens it, a grey line below it under the pointer */
+.about-name {
+    min-width: 0;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-decoration: underline transparent;
+    cursor: pointer;
+    transition: text-decoration-color var(--hover-out);
+}
+
+.about-name:hover {
+    text-decoration-color: var(--text-muted);
+    transition: text-decoration-color var(--hover-in);
+}
+
+/* The note as I wrote it, its line breaks kept */
+.about-note {
+    white-space: pre-line;
+}
+
 /* Quotes of the note as grey cards */
 .day-note blockquote {
     margin: var(--gap) 0;

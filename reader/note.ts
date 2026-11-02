@@ -2,10 +2,11 @@
  * ## Daily notes
  *
  * Reads and writes the daily notes in `NomFrequencediary`, one per day,
- * my gratitude under `## Gratitude` and my points about the day under `## About`, one `- ` line each.
+ * my gratitude under `## Gratitude`, one `- ` line each.
+ * My points about the day are the notes of my log entries, which stay in the log alone.
  * A section holds every line below its heading up to the next heading.
  * A further line of a point stands in by the tabs of its point and spaces, as Shift+Enter writes it.
- * Every day gets its note at its start with both headings empty.
+ * Every day gets its note at its start with its heading empty.
  * An emptied section keeps its heading, every other line of a note stays as it is.
  */
 
@@ -16,7 +17,7 @@ import { berlinDateOf, berlinInstantOf, dayAdd } from "./calendar.ts";
 import { markdownFormOf } from "./markdown.ts";
 
 /** The only sections the reader writes. */
-export type SectionTitle = "Gratitude" | "About";
+export type SectionTitle = "Gratitude";
 
 export type SectionNew = {
     date: string;
@@ -25,7 +26,7 @@ export type SectionNew = {
 };
 
 /** The sections of a daily note, in their order. */
-const titles: SectionTitle[] = ["Gratitude", "About"];
+const titles: SectionTitle[] = ["Gratitude"];
 
 const pointStart: string = "- ";
 
@@ -38,7 +39,7 @@ const emptyForm: RegExp = /^[ \t]*(?:(?:[-*+]|\d+[.)])[ \t]*)?$/;
 /** A heading of any level, which ends the section before it. */
 const headingForm: RegExp = /^#{1,6} /;
 
-/** A daily note as each day starts: both headings, empty. */
+/** A daily note as each day starts: its headings, empty. */
 const emptyNote: string = markdownFormOf(titles.map((title: SectionTitle): string => `## ${title}`).join("\n"));
 
 /** @throws {Error} - When the date is not written like `2026-10-12` */
@@ -78,10 +79,7 @@ function sectionTextRead(date: string, title: SectionTitle): string {
 }
 
 export function sectionsRead(date: string): { [title in SectionTitle]: string } {
-    return {
-        Gratitude: sectionTextRead(date, "Gratitude"),
-        About: sectionTextRead(date, "About"),
-    };
+    return { Gratitude: sectionTextRead(date, "Gratitude") };
 }
 
 /**
@@ -99,22 +97,17 @@ function pointLinesOf(text: string): string[] {
 
 /**
  * Puts the points of a section in place of its old lines, without empty lines, which the writing adds.
- * A missing section is added, my gratitude before my points about the day, else at the end.
+ * A missing section is added at the end.
  */
 function sectionPut(lines: string[], title: SectionTitle, points: string[]): void {
     const found: [number, number] | null = sectionFind(lines, title);
     const block: string[] = [`## ${title}`, ...points];
-    if (found !== null) {
-        lines.splice(found[0], found[1] - found[0], ...block);
-        return;
-    }
-
-    const next: [number, number] | null = title === "Gratitude" ? sectionFind(lines, "About") : null;
-    lines.splice(next?.[0] ?? lines.length, 0, ...block);
+    if (found === null) lines.push(...block);
+    else lines.splice(found[0], found[1] - found[0], ...block);
 }
 
 /**
- * Writes a section into the daily note of its date, a day without note gets one with both headings.
+ * Writes a section into the daily note of its date, a day without note gets one with its headings.
  *
  * @throws {Error} - On a wrong date or title, or a note outside the new system
  */

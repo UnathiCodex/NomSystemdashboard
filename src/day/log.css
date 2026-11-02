@@ -108,12 +108,12 @@
     white-space: nowrap;
 }
 
-/* Note of a taller entry below its line, its line clamp set by `day.ts` */
-.entry-note {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    white-space: normal;
+/* Sign of an entry with a note */
+svg.lucide.entry-mark {
+    width: 0.875em;
+    height: 0.875em;
+    margin-left: 0.25em;
+    vertical-align: -0.1em;
     color: var(--text-muted);
 }
 

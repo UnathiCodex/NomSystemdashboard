@@ -1,8 +1,8 @@
 /**
  * ## Daily note
  *
- * The daily note of a day, read only, without `## Gratitude` and `## About`, which the lists above show.
- * Loads and writes those two sections.
+ * The daily note of a day, read only, without `## Gratitude`, which its list above shows.
+ * Loads and writes that section.
  */
 
 import { Marked } from "marked";
@@ -12,9 +12,9 @@ import type { SectionTitle } from "../../reader/note.ts";
 
 const markdown: Marked = new Marked();
 
-/** Takes `## Gratitude` and `## About` out of a note, each up to the next heading. */
+/** Takes `## Gratitude` out of a note, up to the next heading. */
 function markdownOf(note: string): string {
-    return note.replace(/^## (?:Gratitude|About)[ \t]*(?=\n|$)(?:\n(?!#{1,6} ).*)*\n?/gm, "");
+    return note.replace(/^## Gratitude[ \t]*(?=\n|$)(?:\n(?!#{1,6} ).*)*\n?/gm, "");
 }
 
 /**
@@ -31,7 +31,7 @@ export async function noteShow(date: string): Promise<void> {
 }
 
 /**
- * Loads the Markdown of my two sections of a date, empty for none.
+ * Loads the Markdown of my sections of a date, empty for none.
  *
  * @throws {Error} - When the reader gives no valid answer
  */

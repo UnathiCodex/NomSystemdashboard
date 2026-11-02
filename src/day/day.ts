@@ -33,7 +33,7 @@ import { changesFollow } from "../changes.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
 import { timerSee, timerStart } from "../timer.ts";
 import { phone } from "../phone.ts";
-import { CalendarCheck, ChevronLeft, ChevronRight, Plus, Repeat } from "lucide";
+import { CalendarCheck, ChevronLeft, ChevronRight, Plus, Repeat, StickyNote } from "lucide";
 import "fullcalendar/skeleton.css";
 import "fullcalendar/themes/forma/theme.css";
 import "./day.css";
@@ -75,6 +75,9 @@ const edgeMinutes: number = (4 / 82) * 60;
 
 /** Shows the daily note of a day, nothing until {@link noteStart} has loaded it. */
 let dayNoteShow: (date: string) => void = (): void => {};
+
+/** Shows the notes of the log entries of the day under `About`, nothing until {@link noteStart} has loaded it. */
+let aboutSee: (events: EventApi[]) => void = (): void => {};
 
 /** Hours of the time grid, 00:00 to 24:00. */
 const gridHours: number = 24;
@@ -289,6 +292,13 @@ function selectionIs(info: EventDisplayInfo): boolean {
     return info.isMirror && info.event.title === "" && (info.event.extendedProps.category ?? "") === "";
 }
 
+/** The sign of an entry with a note. */
+function noteMarkOf(): SVGElement {
+    const mark: SVGElement = iconOf(StickyNote);
+    mark.classList.add("entry-mark");
+    return mark;
+}
+
 /**
  * Content of an entry as Google Calendar shows one, what in bold, its time grey, its place lighter.
  * A tutorial ends with the group I went to.
@@ -297,7 +307,9 @@ function selectionIs(info: EventDisplayInfo): boolean {
  * - One line: What, time and place parted by a middle dot, never commas, since names hold commas.
  *   Where what and time don't fit, as on a phone, the time wraps to a hidden next line.
  * - Two lines: What, then time and place, as a box of the plan writes them.
- * - Three or more: The place on a line of its own, then as much of the note as fits.
+ * - Three or more: The place on a line of its own.
+ * An entry with a note has a small sign after what.
+ * The note itself stands in its tooltip and under `About` alone.
  */
 function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const category: string = info.event.extendedProps.category ?? "";
@@ -335,11 +347,12 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const time: string = `${timeOf(start)}${rangeDash}${timeOf(end)}`;
     const lines: number = linesOf(info);
     const whole: (string | Node)[] = whatOf(category, what);
+    const mark: Node[] = note === "" ? [] : [noteMarkOf()];
     let shown: HTMLElement[];
     if (selectionIs(info)) shown = [entryPartOf("div", "entry-time", [time])];
     else if (lines < 2) {
         const line: HTMLElement = entryPartOf("div", "entry-line", [
-            entryPartOf("span", "entry-what", whatOf(category, what)),
+            entryPartOf("span", "entry-what", [...whatOf(category, what), ...mark]),
             entryPartOf("span", "entry-time entry-parted", [time]),
         ]);
         line.append(...tail);
@@ -351,7 +364,7 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
             ...(placeBelow ? [] : tail),
         ]);
         shown = [
-            entryPartOf("div", "entry-whole", whole),
+            entryPartOf("div", "entry-whole", [...whole, ...mark]),
             timeLine,
             ...(placeBelow
                 ? [
@@ -366,11 +379,6 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
                   ]
                 : []),
         ];
-        if (note !== "" && lines > shown.length) {
-            const below: HTMLElement = entryPartOf("div", "entry-note", [note]);
-            below.style.webkitLineClamp = String(lines - shown.length);
-            shown.push(below);
-        }
     }
     const content: HTMLElement = entryPartOf("div", "entry-lines", shown);
     content.title = [
@@ -497,6 +505,7 @@ function dayAgain(calendar: Calendar): void {
  */
 async function noteStart(calendar: Calendar): Promise<void> {
     const evening: {
+        aboutShow: (entries: EventApi[]) => void;
         eveningShow: (day: string) => Promise<void>;
         eveningStart: () => void;
     } = await import("./evening.ts");
@@ -506,7 +515,9 @@ async function noteStart(calendar: Calendar): Promise<void> {
         note.noteShow(date).catch((error: unknown): void => console.error(error));
         evening.eveningShow(date).catch((error: unknown): void => console.error(error));
     };
+    aboutSee = evening.aboutShow;
     dayNoteShow(dayOf(calendar.view.currentStart));
+    aboutSee(calendar.getEvents());
 }
 
 /**
@@ -570,7 +581,10 @@ export function dayStart(): void {
         eventResizeStop: (): void => edgeScrollEnd?.(),
         droppable: true,
         eventReceive: (info: EventReceiveInfo): void => boxReceive(calendar, info),
-        eventsSet: (events: EventApi[]): void => boxesSee(calendar, events),
+        eventsSet: (events: EventApi[]): void => {
+            boxesSee(calendar, events);
+            aboutSee(events);
+        },
         eventSourceSuccess: (): void => {
             trackersSee(calendar);
             timerSee();
