@@ -286,7 +286,14 @@ function titleUsesOf(logs: Entry[], name: string, many: boolean): string[] {
         .flatMap((log: Entry): string[] => (many ? log.title.split(", ") : [log.title]));
 }
 
-/** The params in round brackets each what had in log entries, the most used first. */
+const yearLength: number = 366 * 24 * 60 * 60 * 1000;
+
+/** Reads the boxes of the plan up to a year after an instant, so a param typed for a way ahead counts. */
+function plansRead(now: string): Entry[] {
+    return entriesRead(day.plan, "1970-01-01T00:00:00Z", new Date(Date.parse(now) + yearLength).toISOString());
+}
+
+/** The params in round brackets each what had in log entries and boxes, the most used first. */
 function paramsOf(logs: Entry[], name: string, many: boolean): { [value: string]: string[] } {
     const uses: string[] = titleUsesOf(logs, name, many).filter((use: string): boolean => summaryBaseOf(use) !== use);
     return Object.fromEntries(
@@ -360,6 +367,7 @@ function stepsWithNoteOf(
  */
 export function categoriesRead(now: string): CategoryShown[] {
     const logs: Entry[] = logsRead(now);
+    const written: Entry[] = [...logs, ...plansRead(now)];
     const mine: Place[] = placesRead();
     const names: string[] = mine.map((place: Place): string => place.name);
     const places: string[] = valuesOrder(
@@ -408,7 +416,7 @@ export function categoriesRead(now: string): CategoryShown[] {
                 rooms: ["location", "from"].includes(field.key) ? rooms.map(lineOf) : [],
                 places: ["location", "from"].includes(field.key) ? rows : {},
                 links: field.key === "with" ? addresses : {},
-                params: field.key === "title" ? paramsOf(logs, category.name, field.many === true) : {},
+                params: field.key === "title" ? paramsOf(written, category.name, field.many === true) : {},
                 platforms: field.key === "online" ? rowsOnline : {},
             })),
         }));
