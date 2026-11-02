@@ -4,7 +4,7 @@
  * The one dialog that writes an entry of the log or a box of the plan, by category.
  * One column of rows in the order of the file, the note at the bottom.
  * A click on a row opens its one list right under it.
- * An empty field stays empty, but a time says grey `hh:mm`.
+ * An empty field stays empty, but a time says grey what it takes.
  * Esc closes an open list, else the dialog, and a click beside it closes it without saving.
  * Enter confirms only its field, the entry saves only by its check, Ctrl+Enter or Ctrl+S.
  * A changed entry of the log saves only while its file still holds it as it opened, the first save winning.
@@ -58,9 +58,9 @@ import { boxGroupOf, pickable } from "./groups.ts";
 import {
     dateOf,
     dateParse,
+    lengthFieldRead,
+    lengthFieldShow,
     lengthSwapOf,
-    lengthTextOf,
-    minutesOf,
     timeFieldRead,
     timeFieldShow,
     timeOf,
@@ -1358,14 +1358,12 @@ function boxFieldsRead(): BoxFields {
     const day: string = dayTypedOf("entry-start-day") ?? dayOf(opened.start);
     const startTime: string = timeRead("entry-start");
     const endTime: string = timeRead("entry-end");
-    const length: string = timeRead("entry-length");
+    const length: number | null = lengthFieldRead(inputOf("entry-length"));
     const deadlineDay: string = dayTypedOf("entry-deadline-day") ?? "";
     const deadlineTime: string = timeRead("entry-deadline-time");
     const start: Date | null = startTime === "" || lengthOnly ? null : dateOf(new Date(`${day}T12:00:00`), startTime);
     let minutes: number | null = lengthOnly
-        ? length === "" || minutesOf(length) === 0
-            ? null
-            : minutesOf(length)
+        ? length
         : start === null || endTime === ""
           ? null
           : Math.round((endRead(start).getTime() - start.getTime()) / (60 * 1000));
@@ -1541,7 +1539,7 @@ function timesShow(opening: EntryOpening): void {
     startTime.required = required;
     endTime.required = required;
     lengthOnly = boxed && !required && start === null && opening.minutes !== null && deadline === "";
-    inputOf("entry-length").value = lengthOnly && opening.minutes !== null ? lengthTextOf(opening.minutes) : "";
+    lengthFieldShow(inputOf("entry-length"), lengthOnly ? opening.minutes : null);
     lengthShow();
     deadlineRow.hidden = required;
     deadlineRow.querySelectorAll("input").forEach((field: HTMLInputElement): void => {
@@ -1588,7 +1586,7 @@ function lengthShow(): void {
                           timeFieldRead(start) === "" || timeFieldRead(end) === ""
                               ? 0
                               : Math.round((endRead(startRead()).getTime() - startRead().getTime()) / (60 * 1000));
-                      length.value = !lengthOnly && minutes > 0 ? lengthTextOf(minutes) : "";
+                      lengthFieldShow(length, lengthOnly ? null : minutes);
                       if (!lengthOnly) {
                           timeFieldShow(start, null);
                           timeFieldShow(end, null);

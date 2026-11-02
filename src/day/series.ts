@@ -27,8 +27,10 @@ import {
     boxTimesOf,
     dateFieldStart,
     dateParse,
+    lengthFieldRead,
+    lengthFieldShow,
+    lengthFieldStart,
     lengthSwapOf,
-    lengthTextOf,
     minutesOf,
     timeFieldRead,
     timeFieldStart,
@@ -351,6 +353,28 @@ function fieldOf(
     else dateFieldStart(input);
     input.addEventListener("input", (): void => {
         take(kind === "time-field" ? timeFieldRead(input) : (dateParse(input.value) ?? ""));
+        changed();
+    });
+    return input;
+}
+
+/** A field of a length, what I type taken as I type it, `null` while it holds none. */
+function lengthFieldOf(
+    minutes: number | null,
+    name: string,
+    take: (minutes: number | null) => void,
+    changed: () => void,
+): HTMLInputElement {
+    const input: HTMLInputElement = document.createElement("input");
+    input.className = "length-field";
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.autocomplete = "off";
+    lengthFieldShow(input, minutes);
+    input.setAttribute("aria-label", name);
+    lengthFieldStart(input);
+    input.addEventListener("input", (): void => {
+        take(lengthFieldRead(input));
         changed();
     });
     return input;
@@ -2329,12 +2353,11 @@ function courseTimeRowsOf(form: Form): HTMLElement[] {
         formFill();
     });
     const lengthOf: (slot: Slot) => HTMLElement = (slot: Slot): HTMLElement =>
-        fieldOf(
-            "time-field",
-            (slot.minutes ?? 0) > 0 ? lengthTextOf(slot.minutes ?? 0) : "",
+        lengthFieldOf(
+            slot.minutes ?? null,
             `How long on ${weekdayNameOf(slot.weekday, false)}`,
-            (time: string): void => {
-                slot.minutes = time === "" ? 0 : minutesOf(time);
+            (minutes: number | null): void => {
+                slot.minutes = minutes ?? 0;
             },
             formChanged,
         );
@@ -2364,12 +2387,11 @@ function plainTimeRowsOf(form: Form): HTMLElement[] {
             [...plainLengths.values()].find((one: number | null): boolean => one !== null) ??
             null;
         plainLengths.set(slot.weekday, minutes);
-        return fieldOf(
-            "time-field",
-            minutes === null ? "" : lengthTextOf(minutes),
+        return lengthFieldOf(
+            minutes,
             `How long on ${dayNameOf(slot.weekday)}`,
-            (time: string): void => {
-                plainLengths.set(slot.weekday, time === "" ? null : minutesOf(time));
+            (typed: number | null): void => {
+                plainLengths.set(slot.weekday, typed);
             },
             formChanged,
         );

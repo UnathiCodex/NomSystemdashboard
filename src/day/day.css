@@ -591,8 +591,14 @@ fieldset.entry-times {
     width: 6ch;
 }
 
+/* Length field as wide as what it holds, while empty its grey `00h 00m` */
+.length-field {
+    width: 8ch;
+}
+
 @supports (field-sizing: content) {
-    .time-field {
+    .time-field,
+    .length-field {
         width: auto;
         field-sizing: content;
     }
@@ -613,6 +619,7 @@ fieldset.entry-times {
 
 /* An empty field says grey what it takes */
 .time-field::placeholder,
+.length-field::placeholder,
 .date-field::placeholder,
 .field-part input::placeholder {
     color: var(--text-muted);
@@ -621,6 +628,7 @@ fieldset.entry-times {
 
 /* Start and end of a box faded while they are off, because the box has a deadline */
 .time-field:disabled,
+.length-field:disabled,
 .date-field:disabled {
     opacity: 0.4;
 }

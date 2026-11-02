@@ -3,6 +3,7 @@
  *
  * Time and date fields, the times a box is logged at, how near a day is.
  * A time field is one text field in 24-hour form whatever the browser's language.
+ * A length field takes how long something lasts and shows it as `01h 30m`.
  * Any other text marks a field invalid, so the browser does not send the form.
  * An empty field is left to its `required`.
  * A date field takes a date in my standard way and shows its weekday after it.
@@ -31,12 +32,7 @@ export function lengthOf(minutes: number): string {
     return `${String(Math.floor(minutes / 60)).padStart(2, "0")}h\u00a0` + `${String(minutes % 60).padStart(2, "0")}m`;
 }
 
-/** Minutes as a length in its field, written as a time. */
-export function lengthTextOf(minutes: number): string {
-    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:` + String(minutes % 60).padStart(2, "0");
-}
-
-/** The minutes of a time or a length typed as `hh:mm`. */
+/** The minutes of a time `hh:mm` since 00:00. */
 export function minutesOf(time: string): number {
     const [hour, minute]: number[] = time.split(":").map(Number);
     return hour * 60 + minute;
@@ -74,6 +70,19 @@ function timeParse(text: string): string | null {
     return `${match[1].padStart(2, "0")}:${match[2] ?? "00"}`;
 }
 
+/**
+ * Reads a typed length in minutes, written like `1h 30m`.
+ * A length typed like a time counts too, so the keys of digits suffice.
+ * `null` for any other text.
+ */
+function lengthParse(text: string): number | null {
+    const time: string | null = timeParse(text);
+    if (time !== null) return minutesOf(time);
+    const match: RegExpMatchArray | null = text.replace(/\s/g, "").match(/^(?:(\d{1,2})h)?(?:(\d{1,3})m)?$/i);
+    if (match === null || match[0] === "" || (match[1] !== undefined && Number(match[2] ?? 0) > 59)) return null;
+    return Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0);
+}
+
 /** Shows the time of a date in a time field and marks the field valid. */
 export function timeFieldShow(field: HTMLInputElement, date: Date | null): void {
     field.value = date === null ? "" : timeOf(date);
@@ -83,6 +92,18 @@ export function timeFieldShow(field: HTMLInputElement, date: Date | null): void 
 /** The time of a time field, empty when the text is no time. */
 export function timeFieldRead(field: HTMLInputElement): string {
     return timeParse(field.value) ?? "";
+}
+
+/** Shows a length in a length field and marks the field valid, empty for none. */
+export function lengthFieldShow(field: HTMLInputElement, minutes: number | null): void {
+    field.value = minutes === null || minutes === 0 ? "" : lengthOf(minutes);
+    field.setCustomValidity("");
+}
+
+/** The minutes of a length field, `null` while it holds no length above zero. */
+export function lengthFieldRead(field: HTMLInputElement): number | null {
+    const minutes: number | null = lengthParse(field.value);
+    return minutes === 0 ? null : minutes;
 }
 
 /** A day in my standard way, `dd.mm.yyyy`. */
@@ -152,6 +173,23 @@ export function timeFieldStart(field: HTMLInputElement): void {
     });
 }
 
+/**
+ * Starts a length field, invalid while its text is neither empty nor a length, `01h 30m` when it loses focus.
+ * Its grey `00h 00m` tells it takes a length, not a time.
+ */
+export function lengthFieldStart(field: HTMLInputElement): void {
+    field.placeholder = lengthOf(0);
+    field.addEventListener("input", (): void =>
+        field.setCustomValidity(
+            field.value.trim() !== "" && lengthParse(field.value) === null ? "Length like 1h 30m, 90m or 130" : "",
+        ),
+    );
+    field.addEventListener("change", (): void => {
+        const minutes: number | null = lengthParse(field.value);
+        if (minutes !== null) lengthFieldShow(field, minutes);
+    });
+}
+
 /** Starts a date field, invalid while its text is neither empty nor a date, with its weekday when it loses focus. */
 export function dateFieldStart(field: HTMLInputElement): void {
     field.placeholder = "dd.mm.yyyy";
@@ -169,5 +207,6 @@ export function dateFieldStart(field: HTMLInputElement): void {
 /** Starts the time and date fields after the router has put its HTML into the page. */
 export function timesStart(): void {
     document.querySelectorAll<HTMLInputElement>(".time-field").forEach(timeFieldStart);
+    document.querySelectorAll<HTMLInputElement>(".length-field").forEach(lengthFieldStart);
     document.querySelectorAll<HTMLInputElement>(".date-field").forEach(dateFieldStart);
 }
