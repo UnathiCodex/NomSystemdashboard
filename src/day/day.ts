@@ -2,7 +2,8 @@
  * ## Day
  *
  * The log of a day as a time grid of one column, the plan beside it as a list of boxes.
- * Above both the date between its arrows, at the right the trackers and the daily note.
+ * Above both the date between its arrows, at the right the trackers.
+ * The daily note opens over the page from its notebook beside `Log +`.
  * A phone shows plan or log, one at a time.
  * Entries move and resize by dragging, and the reader writes only their new times.
  * The kcal of a meal stay hidden for a try.
@@ -33,7 +34,7 @@ import { changesFollow } from "../changes.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
 import { timerSee, timerStart } from "../timer.ts";
 import { phone } from "../phone.ts";
-import { CalendarCheck, ChevronLeft, ChevronRight, Plus, Repeat, StickyNote } from "lucide";
+import { CalendarCheck, ChevronLeft, ChevronRight, NotebookPen, Plus, Repeat, StickyNote } from "lucide";
 import "fullcalendar/skeleton.css";
 import "fullcalendar/themes/forma/theme.css";
 import "./day.css";
@@ -619,6 +620,7 @@ export function dayStart(): void {
     iconPut(document.getElementById("day-back") as HTMLElement, ChevronLeft, "Day before");
     iconPut(document.getElementById("day-next") as HTMLElement, ChevronRight, "Day after");
     plusPut(document.getElementById("log-new") as HTMLElement, "New entry");
+    iconPut(document.getElementById("log-note") as HTMLElement, NotebookPen, "Daily note");
     iconPut(document.getElementById("day-today") as HTMLElement, CalendarCheck, "Back to today");
     iconPut(document.getElementById("day-new") as HTMLElement, Plus, "New box or entry");
     iconPut(document.getElementById("day-series") as HTMLElement, Repeat, "New series");

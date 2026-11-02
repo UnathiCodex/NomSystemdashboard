@@ -1,9 +1,7 @@
 <!-- Day: the plan as a list of boxes beside the log, my one calendar, equally wide;
-     the date and the trackers in the bar above them,
-     my gratitude and my points about the day below them -->
+     the date and the trackers in the bar above them -->
 <div class="day">
-    <!-- The shown day above its plan and its log,
-         side by side, its daily note below them -->
+    <!-- The shown day above its plan and its log, side by side -->
     <div class="day-main" id="day-main" data-shown="plan">
         <!-- The date of the shown day at the left end of the bar,
              above the plan, always fully readable, the weekday above it,
@@ -51,40 +49,17 @@
 
         <!-- Log: the time grid of what happened, drawn by FullCalendar;
              its + beside its name opens the entry by category,
-             the search beside it the search of the whole log, see search.ts -->
+             the search beside it the search of the whole log, see search.ts,
+             the notebook beside that my daily note, see #note -->
         <section class="day-column" id="day-log">
             <div class="column-head">
                 <h2>Log</h2>
                 <button id="log-new" type="button"></button>
                 <button class="plus-quiet" id="log-search" type="button"></button>
+                <button class="plus-quiet" id="log-note" type="button"></button>
             </div>
             <div class="day-calendar" id="day-calendar"></div>
         </section>
-
-        <!-- My daily note below plan and log, looking like them:
-             my gratitude below the plan, written any time of the day and saved as I type,
-             a list of points in the editor of my files, see points.ts;
-             my points about the day below the log, the notes of its entries, see evening.ts;
-             below both the rest of the note, read only.
-             A click on either name hides both lists and the note,
-             so plan and log take the height, and shows them again;
-             folded at every start, since I write them in the evening. Not on a phone -->
-        <div class="note-boxes note-folded">
-            <section class="day-column">
-                <div class="column-head">
-                    <h2><button class="note-fold" type="button" aria-expanded="false">Gratitude</button></h2>
-                </div>
-                <div class="note-points editor-text markdown" id="gratitude" aria-label="Gratitude"></div>
-            </section>
-            <section class="day-column">
-                <div class="column-head">
-                    <h2><button class="note-fold" type="button" aria-expanded="false">About</button></h2>
-                </div>
-                <div class="note-points about-notes" id="about" aria-label="About"></div>
-            </section>
-            <p class="panel-error" id="note-boxes-error" hidden>Saving failed</p>
-            <div class="day-note" id="day-note-text"></div>
-        </div>
 
         <!-- Only on a phone, which shows plan or log, one at a time, filling the screen:
              at the bottom the buttons that switch between them,
@@ -302,4 +277,30 @@
             <button class="panel-main" id="gift-save" type="submit"></button>
         </div>
     </form>
+</dialog>
+
+<!-- My daily note of the shown day over the page, opened by its notebook beside Log +, see evening.ts:
+     my gratitude at the left, written any time of the day and saved as I type,
+     a list of points in the editor of my files, see points.ts;
+     my points about the day at the right, the notes of the log entries,
+     a click on one opens its entry, and closing that brings the note back;
+     below both the rest of the note, read only.
+     Esc or a click beside it closes it. Not on a phone -->
+<dialog class="panel note-panel" id="note" closedby="any">
+    <div class="note-boxes">
+        <section class="day-column">
+            <div class="column-head">
+                <h2>Gratitude</h2>
+            </div>
+            <div class="note-points editor-text markdown" id="gratitude" aria-label="Gratitude"></div>
+        </section>
+        <section class="day-column">
+            <div class="column-head">
+                <h2>About</h2>
+            </div>
+            <div class="note-points about-notes" id="about" aria-label="About"></div>
+        </section>
+        <p class="panel-error" id="note-error" hidden>Saving failed</p>
+        <div class="day-note" id="day-note-text"></div>
+    </div>
 </dialog>

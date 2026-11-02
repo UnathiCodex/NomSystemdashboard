@@ -2,10 +2,12 @@
  * ## Evening
  *
  * My gratitude and my points about the day, two lists at the top of the daily note.
+ * Its notebook beside `Log +` opens the note over the page, as the search beside it opens the search.
  * My gratitude I write into the daily note.
  * It saves a moment after I stop typing, by `Ctrl+S`, as I leave the list, as I leave the day.
  * My points about the day are the notes of the log entries of the day, by their start, nothing kept of them here.
  * A click on the name of an entry opens it, so I change its note there.
+ * Closing that entry brings the note back.
  */
 
 import { noteShow, sectionsLoad, sectionSend } from "./note.ts";
@@ -31,13 +33,20 @@ let saved: string = "";
 /** Timer of the save waiting for the pause, 0 for none. */
 let waiting: number = 0;
 
+/** Whether the note comes back once the dialog of an entry opened from it closes. */
+let returning: boolean = false;
+
+function noteOf(): HTMLDialogElement {
+    return document.getElementById("note") as HTMLDialogElement;
+}
+
 function listOf(): HTMLElement {
     return document.getElementById("gratitude") as HTMLElement;
 }
 
 function errorShow(error: unknown): void {
     console.error(error);
-    document.getElementById("note-boxes-error")?.removeAttribute("hidden");
+    document.getElementById("note-error")?.removeAttribute("hidden");
 }
 
 /**
@@ -52,7 +61,7 @@ async function gratitudeSave(): Promise<void> {
     if (day === "" || text === saved) return;
     await sectionSend(day, title, text);
     saved = text;
-    document.getElementById("note-boxes-error")?.setAttribute("hidden", "");
+    document.getElementById("note-error")?.setAttribute("hidden", "");
     if (day === shown) await noteShow(day);
 }
 
@@ -69,10 +78,10 @@ export async function eveningShow(day: string): Promise<void> {
     if (day !== shown) return;
     pointsShow(listOf(), sections[title]);
     saved = pointsRead(listOf());
-    document.getElementById("note-boxes-error")?.setAttribute("hidden", "");
+    document.getElementById("note-error")?.setAttribute("hidden", "");
 }
 
-/** A note of a log entry under its time and what, the name a button that opens the entry. */
+/** A note of a log entry under its time and what, the name a button that opens the entry in place of the note. */
 function aboutOf(entry: EventApi, note: string): HTMLElement {
     const point: HTMLElement = document.createElement("li");
     const start: Date = entry.start as Date;
@@ -82,6 +91,8 @@ function aboutOf(entry: EventApi, note: string): HTMLElement {
     name.title = "Open the entry";
     name.append(...whatOf(entry.extendedProps.category ?? "", entry.title));
     name.addEventListener("click", (): void => {
+        noteOf().close();
+        returning = true;
         entryOpenEdit(entry).catch((error: unknown): void => console.error(error));
     });
     point.append(
@@ -107,19 +118,17 @@ export function aboutShow(entries: EventApi[]): void {
     (document.getElementById("about") as HTMLElement).replaceChildren(...(list.childElementCount === 0 ? [] : [list]));
 }
 
-/** Folds the lists and the note, so plan and log take their height, folded at every start. */
-function foldToggle(): void {
-    const folded: boolean = (document.querySelector(".note-boxes") as HTMLElement).classList.toggle("note-folded");
-    document
-        .querySelectorAll(".note-fold")
-        .forEach((fold: Element): void => fold.setAttribute("aria-expanded", String(!folded)));
-}
-
-/** Starts the lists, my gratitude saved too when the page goes out of sight, so nothing typed gets lost. */
+/**
+ * Starts the lists and the notebook that opens them.
+ * My gratitude is saved too when the page goes out of sight, so nothing typed gets lost.
+ */
 export function eveningStart(): void {
-    document
-        .querySelectorAll(".note-fold")
-        .forEach((fold: Element): void => fold.addEventListener("click", foldToggle));
+    document.getElementById("log-note")?.addEventListener("click", (): void => noteOf().showModal());
+    document.getElementById("entry")?.addEventListener("close", (): void => {
+        if (!returning) return;
+        returning = false;
+        noteOf().showModal();
+    });
     document.addEventListener("visibilitychange", (): void => {
         if (document.visibilityState === "hidden") gratitudeSave().catch(errorShow);
     });

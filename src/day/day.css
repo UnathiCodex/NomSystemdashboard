@@ -12,7 +12,7 @@
 .day-main {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
     gap: var(--gap);
     min-height: 0;
 }
@@ -650,8 +650,10 @@ fieldset.entry-times {
         padding: var(--gap);
     }
 
+    /* The switch below plan or log */
     .day-main {
         grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
     }
 
     .day-main > .day-column > .column-head {

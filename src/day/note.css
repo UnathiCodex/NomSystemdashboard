@@ -1,4 +1,12 @@
-/* Daily note below plan and log, none on a phone */
+/* Daily note over the page, opened by its notebook beside Log +, none on a phone */
+/* At the top of the screen as the entry, so it grows downward as I write, at most as high as the screen */
+.note-panel {
+    --panel-top: max(var(--gap), 6dvh);
+    max-height: calc(100dvh - var(--panel-top) - var(--gap));
+    margin-top: var(--panel-top);
+    overflow-y: auto;
+}
+
 /* Rest of the daily note, scrolling alone when longer than a fifth of the screen */
 .day-note {
     grid-column: 1 / -1;
@@ -10,57 +18,15 @@
     display: none;
 }
 
-/* My gratitude below the plan and my points about the day below the log, only the names while folded */
+/* My gratitude at the left and my points about the day at the right, the rest of the note below both */
 .note-boxes {
     display: grid;
-    grid-column: 1 / -1;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--gap);
 }
 
 .note-boxes .panel-error {
     grid-column: 1 / -1;
-}
-
-/* Name of a list as a button with the grey fold arrow of a chapter before it.
-   The arrow turns light under the pointer, since the name is light already. */
-.note-fold {
-    display: inline-flex;
-    align-items: center;
-    padding: 0;
-    border: 0;
-    background: none;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-}
-
-.note-fold::before {
-    content: "";
-    width: 1em;
-    height: 1lh;
-    margin-right: 0.25rem;
-    background: var(--text-muted);
-    mask: var(--fold-icon) center / 0.875em no-repeat;
-    transition:
-        rotate 100ms ease-in-out,
-        background-color var(--hover-out);
-}
-
-.note-fold:hover::before {
-    background: var(--text-main);
-    transition:
-        rotate 100ms ease-in-out,
-        background-color var(--hover-in);
-}
-
-.note-folded .note-fold::before {
-    rotate: -90deg;
-}
-
-.note-folded .note-points,
-.note-folded .day-note {
-    display: none;
 }
 
 /* A list of points in the lines of the page, not the higher ones of a note.
@@ -179,11 +145,4 @@
     font-size: 0.75rem;
     font-weight: 400;
     color: var(--text-muted);
-}
-
-/* Phone: no note, since a phone shows only plan and log */
-@media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    .note-boxes {
-        display: none;
-    }
 }
