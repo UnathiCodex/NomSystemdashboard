@@ -87,7 +87,7 @@ export const numberedTypes: string[] = ["VO", "UE", "ZU", "TU", "HU"];
  * - `day`: For a box with a deadline the day of its deadline.
  * - `time`, `deadline`: Empty for none, a deadline without time as its day.
  * - `pushed`: Where it stood before each push, those it is carried along by last.
- * - `log`: Times of its log entry, of its last session for a deadline.
+ * - `log`: Its log entry, of its last session for a deadline.
  * - `editable`: A to-do or an event with times, also one occurrence of a series.
  * - `series`: One occurrence of a series.
  * - `todo`: Whether it is a to-do, since an event keeps its time and duration.
@@ -104,7 +104,7 @@ export type Box = EntryTexts & {
     deadline: string;
     state: BoxState;
     pushed: Push[];
-    log: { start: string; end: string } | null;
+    log: Logged | null;
     editable: boolean;
     series: boolean;
     todo: boolean;
@@ -115,6 +115,9 @@ export type Box = EntryTexts & {
     moved: Moved | null;
     file: string;
 };
+
+/** The log entry of a box, its times with its place. */
+export type Logged = Online & Pick<Entry, "start" | "end" | "location" | "locationLink" | "attendees">;
 
 /**
  * Where a box went that shows on a day it left.
@@ -309,7 +312,20 @@ function boxOf(entry: Entry, logs: Map<string, Entry>): Box {
             deadline: entry.deadline,
             state: state,
             pushed: entry.pushed,
-            log: log === undefined ? null : { start: log.start, end: log.end },
+            log:
+                log === undefined
+                    ? null
+                    : {
+                          start: log.start,
+                          end: log.end,
+                          location: log.location,
+                          locationLink: log.locationLink,
+                          online: log.online,
+                          onlineLink: log.onlineLink,
+                          onlineChannel: log.onlineChannel,
+                          onlineTitle: log.onlineTitle,
+                          attendees: log.attendees,
+                      },
             editable: entry.editable,
             series: entry.recurrence !== "",
             todo: entry.todo,

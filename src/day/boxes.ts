@@ -38,7 +38,7 @@ import { ArrowLeft, ArrowRight, CalendarOff, Check, Gift, Repeat, X } from "luci
 
 import type { Calendar, EventApi, EventReceiveInfo } from "fullcalendar";
 import type { IconNode } from "lucide";
-import type { BoxState, Moved, Occasion } from "../../reader/boxes.ts";
+import type { BoxState, Logged, Moved, Occasion } from "../../reader/boxes.ts";
 import type { Attendee, Link, Push } from "../../reader/calendar.ts";
 
 /**
@@ -82,7 +82,7 @@ export type Box = {
     deadline: string;
     state: BoxState;
     pushed: Push[];
-    log: { start: string; end: string } | null;
+    log: Logged | null;
     editable: boolean;
     series: boolean;
     todo: boolean;

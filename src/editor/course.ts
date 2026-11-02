@@ -7,6 +7,7 @@
  * Any other type has a card while it has boxes or groups or a material folder.
  *
  * A card is the list of its boxes by month, its rows those of the dialog of a series.
+ * A box done by a log entry shows as its log, so a row shows the plan only while I did not log it.
  * An open box whose day is over counts as skipped and is greyed, but an exam, since every exam matters.
  * One rule folds every card alike: of the days over only open exams show,
  * from today on the next open box and two more.
@@ -29,7 +30,7 @@ import { elementOf } from "../food/foods.ts";
 import { iconOf, iconPut } from "../icons.ts";
 import { folderAddressOf } from "../notes/tree.ts";
 import { modulesFolder } from "../skill/links.ts";
-import { skillName } from "../skill/attempts.ts";
+import { dayOf, skillName } from "../skill/attempts.ts";
 import { changesFollow } from "../changes.ts";
 import { readerAsk } from "../reader.ts";
 import { ArrowRight, Calendar, CalendarOff, Check, ChevronDown, ChevronUp, Pencil, X } from "lucide";
@@ -179,6 +180,24 @@ function stateOf(box: Box): HTMLElement {
     return button;
 }
 
+/** A box as its row shows it, one done by a log entry as its log. */
+function seenOf(box: Box): Box {
+    if (box.state !== "done" || box.log === null || box.deadline !== "") return box;
+    return {
+        ...box,
+        ...box.log,
+        day: dayOf(new Date(box.log.start)),
+        time: box.log.start,
+        minutes: Math.round((Date.parse(box.log.end) - Date.parse(box.log.start)) / (60 * 1000)),
+    };
+}
+
+/** When a box stands in its list, its time as its row shows it, else its day. */
+function momentOf(box: Box): string {
+    const seen: Box = seenOf(box);
+    return seen.time || seen.day;
+}
+
 /** An open box counts as skipped once its day is over, but an exam, nothing written. */
 function overIs(box: Box): boolean {
     return box.state === "open" && box.type !== "FA" && box.day < calendarTodayOf();
@@ -187,9 +206,6 @@ function overIs(box: Box): boolean {
 /** Shows a pick of a group at once, the reader confirming it as the course loads anew. */
 function groupPick(change: () => void, send: () => Promise<unknown>): void {
     change();
-    shown?.boxes.sort((first: Box, second: Box): number =>
-        (first.time || first.day).localeCompare(second.time || second.day),
-    );
     cardsShow();
     act(send);
 }
@@ -204,6 +220,7 @@ function boxRowOf(
     number: string = box.number.replace("NONE", "–") || (box.type === "FA" ? "–" : ""),
 ): HTMLElement {
     const over: boolean = overIs(box);
+    const seen: Box = seenOf(box);
     return listRowOf({
         number: numberOf(
             number,
@@ -212,15 +229,22 @@ function boxRowOf(
             },
             box.note || "Open",
         ),
-        day: box.day,
+        day: seen.day,
         open: null,
         group: boxGroupOf(shown, box, groupPick),
         meta: [
-            [rowTimesOf(box.time, box.minutes)],
-            whereLinkedOf(box.category, box.from, roomOf(box.location), box.locationLink, box.online, box.onlineLink),
+            [rowTimesOf(seen.time, seen.minutes)],
+            whereLinkedOf(
+                seen.category,
+                seen.from,
+                roomOf(seen.location),
+                seen.locationLink,
+                seen.online,
+                seen.onlineLink,
+            ),
             [box.chapters.join(", ")],
         ],
-        people: box.attendees,
+        people: seen.attendees,
         persons: persons,
         mark: "",
         end: box.state === "open" && !over ? actionsOf(box) : stateOf(box),
@@ -282,8 +306,8 @@ function countsOf(type: string, boxes: Box[], folds: boolean, learned: number = 
  */
 function listOf(type: string, boxes: Box[]): [HTMLElement, HTMLElement] {
     const today: string = calendarTodayOf();
-    const past: Box[] = boxes.filter((box: Box): boolean => box.day < today);
-    const coming: Box[] = boxes.filter((box: Box): boolean => box.day >= today);
+    const past: Box[] = boxes.filter((box: Box): boolean => seenOf(box).day < today);
+    const coming: Box[] = boxes.filter((box: Box): boolean => seenOf(box).day >= today);
     const next: Box | undefined = coming.find((box: Box): boolean => box.state === "open");
     const cut: number = next === undefined ? shownAhead : coming.indexOf(next) + shownAhead;
     const folded: Box[] = [
@@ -295,7 +319,7 @@ function listOf(type: string, boxes: Box[]): [HTMLElement, HTMLElement] {
     list.append(
         monthListOf(
             (opened.has(type) ? boxes : folded).map((box: Box): [string, HTMLElement] => [
-                box.time || box.day,
+                momentOf(box),
                 boxRowOf(box),
             ]),
         ),
@@ -358,7 +382,7 @@ function learningListOf(): [HTMLElement, HTMLElement] {
     const learned: Learned[] = shown?.learned ?? [];
     const items: [string, boolean, (number: number) => HTMLElement][] = [
         ...boxes.map((box: Box): [string, boolean, (number: number) => HTMLElement] => [
-            box.time || box.day,
+            momentOf(box),
             box.state === "open",
             (number: number): HTMLElement => boxRowOf(box, String(number)),
         ]),
@@ -453,7 +477,9 @@ function folderLinkOf(folder: MaterialFolder): HTMLElement {
 }
 
 function cardOf(type: string): HTMLElement {
-    const boxes: Box[] = (shown?.boxes ?? []).filter((box: Box): boolean => box.type === type);
+    const boxes: Box[] = (shown?.boxes ?? [])
+        .filter((box: Box): boolean => box.type === type)
+        .sort((first: Box, second: Box): number => momentOf(first).localeCompare(momentOf(second)));
     const series: Series | undefined = shown?.series.find((one: Series): boolean => one.rule.type === type);
     const card: HTMLElement = elementOf("section", "overview-group course-card", "");
     const folder: MaterialFolder | undefined = shown?.folders[type];
