@@ -50,13 +50,13 @@
         <!-- Log: the time grid of what happened, drawn by FullCalendar;
              its + beside its name opens the entry by category,
              the search beside it the search of the whole log, see search.ts,
-             the notebook beside that my daily note, see #note -->
+             the notebook beside that the day, see #story -->
         <section class="day-column" id="day-log">
             <div class="column-head">
                 <h2>Log</h2>
                 <button id="log-new" type="button"></button>
                 <button class="plus-quiet" id="log-search" type="button"></button>
-                <button class="plus-quiet" id="log-note" type="button"></button>
+                <button class="plus-quiet" id="log-story" type="button"></button>
             </div>
             <div class="day-calendar" id="day-calendar"></div>
         </section>
@@ -279,28 +279,16 @@
     </form>
 </dialog>
 
-<!-- My daily note of the shown day over the page, opened by its notebook beside Log +, see evening.ts:
-     my gratitude at the left, written any time of the day and saved as I type,
-     a list of points in the editor of my files, see points.ts;
-     my points about the day at the right, the notes of the log entries,
-     a click on one opens its entry, and closing that brings the note back;
-     below both the rest of the note, read only.
+<!-- The shown day over the page, opened by its notebook beside Log +, see story.ts:
+     its log entries by their start, read like a diary,
+     each what it was, below it its time, place, people, then its note;
+     a click on one opens its entry, and closing that brings the day back.
      Esc or a click beside it closes it. Not on a phone -->
-<dialog class="panel note-panel" id="note" closedby="any">
-    <div class="note-boxes">
-        <section class="day-column">
-            <div class="column-head">
-                <h2>Gratitude</h2>
-            </div>
-            <div class="note-points editor-text markdown" id="gratitude" aria-label="Gratitude"></div>
-        </section>
-        <section class="day-column">
-            <div class="column-head">
-                <h2>About</h2>
-            </div>
-            <div class="note-points about-notes" id="about" aria-label="About"></div>
-        </section>
-        <p class="panel-error" id="note-error" hidden>Saving failed</p>
-        <div class="day-note" id="day-note-text"></div>
-    </div>
+<dialog class="panel story-panel" id="story" closedby="any">
+    <section class="day-column">
+        <div class="column-head">
+            <h2>The day</h2>
+        </div>
+        <div class="story-entries" id="story-entries"></div>
+    </section>
 </dialog>

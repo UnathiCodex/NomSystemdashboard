@@ -54,7 +54,6 @@ import {
     weekPick,
 } from "./course.ts";
 import { giftWrite } from "./gifts.ts";
-import { noteRead, notesStart, sectionsRead, sectionWrite } from "./note.ts";
 import { categoriesRead, lastPlaceRead, semesterOf } from "./categories.ts";
 import { placeAdd, placeChange, placeRename, placeStandardSet, platformAdd, platformChange } from "./places.ts";
 import { plainApply, plainRead, plainRemove } from "./rules.ts";
@@ -115,7 +114,6 @@ import type {
 } from "./course.ts";
 import type { Gift } from "./gifts.ts";
 import type { PlainChange } from "./rules.ts";
-import type { SectionNew } from "./note.ts";
 import type { Place, PlaceChanged, PlaceRenamed, Platform, PlatformChanged } from "./places.ts";
 import type { DeviceReport } from "./devices.ts";
 import type { NotesFile, NotesStream } from "./notes.ts";
@@ -221,10 +219,6 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
     } else if (request.method === "GET" && url.pathname === "/api/day/carried") {
         suggestionsWrite();
         responseSend(response, 200, boxesCarried(date));
-    } else if (request.method === "GET" && url.pathname === "/api/day/note") {
-        responseSend(response, 200, noteRead(date));
-    } else if (request.method === "GET" && url.pathname === "/api/day/sections") {
-        responseSend(response, 200, sectionsRead(date));
     } else if (request.method === "GET" && url.pathname === "/api/day/categories") {
         responseSend(response, 200, categoriesRead(now));
     } else if (request.method === "GET" && url.pathname === "/api/day/last-place") {
@@ -316,9 +310,6 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
             submitted: boolean;
         };
         boxSubmit(ticked.box, ticked.submitted);
-        responseSend(response, 200, null);
-    } else if (request.method === "POST" && url.pathname === "/api/day/sections") {
-        sectionWrite((await json(request)) as SectionNew);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/gifts") {
         giftWrite((await json(request)) as Gift);
@@ -597,6 +588,5 @@ server.on("request", (request: IncomingMessage, response: ServerResponse): void 
 const port: number = Number(process.env.NOM_PORT ?? 3000);
 server.listen(port, "127.0.0.1", (): void => console.log(`http://127.0.0.1:${port}`));
 linksCheckStart();
-notesStart();
 changesWatch();
 sharedStart();

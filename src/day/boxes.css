@@ -1,6 +1,6 @@
 /* Boxes of the plan, each its lines and at their right its actions or its state on a soft grey card */
 /* Boxes one below the other, scrolling alone, the scrollbar in the middle of the gap to the log.
-   Its room is always kept, so the boxes keep the width of my gratitude below them.
+   Its room is always kept, so the boxes keep their width as the list grows.
    One space `--plan-space` everywhere between boxes, lines and sections, so those never differ */
 .plan-boxes {
     --plan-space: 0.5rem;

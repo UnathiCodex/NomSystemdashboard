@@ -3,7 +3,7 @@
  *
  * The log of a day as a time grid of one column, the plan beside it as a list of boxes.
  * Above both the date between its arrows, at the right the trackers.
- * The daily note opens over the page from its notebook beside `Log +`.
+ * The day, its log entries with their notes, opens over the page from its notebook beside `Log +`.
  * A phone shows plan or log, one at a time.
  * Entries move and resize by dragging, and the reader writes only their new times.
  * The kcal of a meal stay hidden for a try.
@@ -24,6 +24,7 @@ import { boxesAgain, boxesSee, boxesStart, boxReceive, entryPartOf, shownWhatOf,
 import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
 import { searchStart } from "./search.ts";
+import { storyShow, storyStart } from "./story.ts";
 import { swipeStart } from "./swipe.ts";
 import { labelOf, whereLinkedOf, whereOf } from "./places.ts";
 import { trackersSee } from "./trackers.ts";
@@ -34,7 +35,7 @@ import { changesFollow } from "../changes.ts";
 import { iconOf, iconPut, plusPut } from "../icons.ts";
 import { timerSee, timerStart } from "../timer.ts";
 import { phone } from "../phone.ts";
-import { CalendarCheck, ChevronLeft, ChevronRight, NotebookPen, Plus, Repeat, StickyNote } from "lucide";
+import { CalendarCheck, ChevronLeft, ChevronRight, Plus, Repeat, StickyNote } from "lucide";
 import "fullcalendar/skeleton.css";
 import "fullcalendar/themes/forma/theme.css";
 import "./day.css";
@@ -42,7 +43,6 @@ import "./search.css";
 import "./month.css";
 import "./trackers.css";
 import "./boxes.css";
-import "./note.css";
 import "./meal.css";
 import "./log.css";
 import "./choices.css";
@@ -73,12 +73,6 @@ const spaceMinutes: number = (0.84 / 2.05) * 30;
 
 /** Minutes an entry loses to its edge and the gap below it, about 4 px of the 82 px of an hour. */
 const edgeMinutes: number = (4 / 82) * 60;
-
-/** Shows the daily note of a day, nothing until {@link noteStart} has loaded it. */
-let dayNoteShow: (date: string) => void = (): void => {};
-
-/** Shows the notes of the log entries of the day under `About`, nothing until {@link noteStart} has loaded it. */
-let aboutSee: (events: EventApi[]) => void = (): void => {};
 
 /** Hours of the time grid, 00:00 to 24:00. */
 const gridHours: number = 24;
@@ -310,7 +304,7 @@ function noteMarkOf(): SVGElement {
  * - Two lines: What, then time and place, as a box of the plan writes them.
  * - Three or more: The place on a line of its own.
  * An entry with a note has a small sign after what.
- * The note itself stands in its tooltip and under `About` alone.
+ * The note itself stands in its tooltip and in the day alone, see `story.ts`.
  */
 function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const category: string = info.event.extendedProps.category ?? "";
@@ -445,12 +439,11 @@ function gridOf(element: HTMLElement): HTMLElement {
     return grid;
 }
 
-/** Shows the date of the shown day, the icon back to today and its daily note. */
+/** Shows the date of the shown day and the icon back to today. */
 function dayShow(info: DatesSetInfo): void {
     const date: string = info.startStr.slice(0, 10);
     (document.getElementById("day-date") as HTMLElement).textContent = dayTextOf(date, true);
     todayButtonShow(date);
-    dayNoteShow(date);
 }
 
 /** Turns the icon back to today on for another day, faded on today so the bar looks the same. */
@@ -487,42 +480,18 @@ function nowCenter(calendar: Calendar): void {
 }
 
 /**
- * Loads the shown day again from the files, its log, plan and note.
- * The note not while I type in a field, so nothing typed gets lost.
+ * Loads the log and plan of the shown day again from the files.
  * Nothing while a dialog is open, which keeps the entry as it opened, but once it closes.
  */
 function dayAgain(calendar: Calendar): void {
-    const typing: boolean = document.activeElement?.matches("input, textarea, [contenteditable='true']") ?? false;
     missed = document.querySelector("dialog[open]") !== null;
     if (missed) return;
     calendar.refetchEvents();
     boxesAgain(calendar);
-    if (!typing) dayNoteShow(dayOf(calendar.view.currentStart));
 }
 
 /**
- * Loads the daily note with `import()` and shows it for every day shown.
- * `evening.ts` comes first, since it loads `note.ts` too, which is then at hand at once.
- */
-async function noteStart(calendar: Calendar): Promise<void> {
-    const evening: {
-        aboutShow: (entries: EventApi[]) => void;
-        eveningShow: (day: string) => Promise<void>;
-        eveningStart: () => void;
-    } = await import("./evening.ts");
-    const note: { noteShow: (date: string) => Promise<void> } = await import("./note.ts");
-    evening.eveningStart();
-    dayNoteShow = (date: string): void => {
-        note.noteShow(date).catch((error: unknown): void => console.error(error));
-        evening.eveningShow(date).catch((error: unknown): void => console.error(error));
-    };
-    aboutSee = evening.aboutShow;
-    dayNoteShow(dayOf(calendar.view.currentStart));
-    aboutSee(calendar.getEvents());
-}
-
-/**
- * Starts the day on the day a link asks for or today, with its buttons, swipe, note and timer.
+ * Starts the day on the day a link asks for or today, with its buttons, swipe, timer.
  * The scroll is caught with `capture` on its way down to the grid, since it never rises.
  * Lines fit again when the grid resizes, since FullCalendar then moves entries without drawing them anew.
  * - `allDaySlot`: Off, since no entry of my log lasts a whole day.
@@ -584,7 +553,7 @@ export function dayStart(): void {
         eventReceive: (info: EventReceiveInfo): void => boxReceive(calendar, info),
         eventsSet: (events: EventApi[]): void => {
             boxesSee(calendar, events);
-            aboutSee(events);
+            storyShow(events);
         },
         eventSourceSuccess: (): void => {
             trackersSee(calendar);
@@ -620,7 +589,6 @@ export function dayStart(): void {
     iconPut(document.getElementById("day-back") as HTMLElement, ChevronLeft, "Day before");
     iconPut(document.getElementById("day-next") as HTMLElement, ChevronRight, "Day after");
     plusPut(document.getElementById("log-new") as HTMLElement, "New entry");
-    iconPut(document.getElementById("log-note") as HTMLElement, NotebookPen, "Daily note");
     iconPut(document.getElementById("day-today") as HTMLElement, CalendarCheck, "Back to today");
     iconPut(document.getElementById("day-new") as HTMLElement, Plus, "New box or entry");
     iconPut(document.getElementById("day-series") as HTMLElement, Repeat, "New series");
@@ -681,7 +649,7 @@ export function dayStart(): void {
     );
     giftsStart();
     searchStart(calendar);
+    storyStart();
     timesStart();
-    noteStart(calendar).catch((error: unknown): void => console.error(error));
     timerStart();
 }

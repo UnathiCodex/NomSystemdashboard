@@ -36,9 +36,6 @@ export const modulesRoot: string = join(calendarRoot, "Modules");
 /** Folder `Dates/`, birthdays, holidays, semester dates. */
 export const datesRoot: string = join(calendarRoot, "Dates");
 
-/** Folder `NomFrequencediary` of my daily notes. */
-export const diaryRoot: string = join(manageRoot, "NomFrequencediary");
-
 /** Folder `NomMetainformations` of my tables, in topic folders. */
 export const dataRoot: string = join(manageRoot, "NomMetainformations");
 
@@ -72,8 +69,8 @@ export const skillsFile: string = join(skillingData, "Skills.md");
 /** Folder `NomModulesuniversity`, one file per module of mine, named like its folder. */
 export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
 
-/** The four folders of my new system whose changes tell every open page. */
-export const systemRoots: string[] = [calendarRoot, diaryRoot, dataRoot, universityRoot];
+/** The three folders of my new system whose changes tell every open page. */
+export const systemRoots: string[] = [calendarRoot, dataRoot, universityRoot];
 
 /**
  * Folder `NomKommunikation`, the mailbox between Vu and me.
