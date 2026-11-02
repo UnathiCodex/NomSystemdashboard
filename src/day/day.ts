@@ -3,7 +3,7 @@
  *
  * The log of a day as a time grid of one column, the plan beside it as a list of boxes.
  * Above both the date between its arrows, at the right the trackers.
- * The day, its log entries with their notes, opens over the page from its notebook beside `Log +`.
+ * The day opens over the page from its notebook beside `Log +`, see `story.ts`.
  * A phone shows plan or log, one at a time.
  * Entries move and resize by dragging, and the reader writes only their new times.
  * The kcal of a meal stay hidden for a try.
@@ -24,7 +24,7 @@ import { boxesAgain, boxesSee, boxesStart, boxReceive, entryPartOf, shownWhatOf,
 import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
 import { searchStart } from "./search.ts";
-import { storyShow, storyStart } from "./story.ts";
+import { storyDaySet, storyShow, storyStart } from "./story.ts";
 import { swipeStart } from "./swipe.ts";
 import { labelOf, whereLinkedOf, whereOf } from "./places.ts";
 import { trackersSee } from "./trackers.ts";
@@ -444,6 +444,7 @@ function dayShow(info: DatesSetInfo): void {
     const date: string = info.startStr.slice(0, 10);
     (document.getElementById("day-date") as HTMLElement).textContent = dayTextOf(date, true);
     todayButtonShow(date);
+    storyDaySet(date);
 }
 
 /** Turns the icon back to today on for another day, faded on today so the bar looks the same. */

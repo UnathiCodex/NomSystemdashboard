@@ -1,13 +1,16 @@
 /**
- * ## The day
+ * ## NomFrequenceintelligence
  *
  * What happened on the shown day, read like a diary, over the page from its notebook beside `Log +`.
  * The log entries of the day by their start, each what it was, its time, place, people, below them its note.
  * A glass of water does not show, as in the log.
  * A click on an entry opens it, so I change its note there, one that cannot change opens nothing.
  * Closing that entry brings the day back.
+ * Below the entries our doc of the day from `NomFrequenceintelligence`, see `reader/intelligence.ts`.
  */
 
+import { readerAsk } from "../reader.ts";
+import { htmlOf } from "../notes/markdown.ts";
 import { entryOpenEdit } from "./categories.ts";
 import { entryPartOf, shownWhatOf, whatOf } from "./boxes.ts";
 import { whereLinkedOf } from "./places.ts";
@@ -23,6 +26,9 @@ import type { Attendee } from "../../reader/calendar.ts";
 
 /** Whether the day comes back once the dialog of an entry opened from it closes. */
 let returning: boolean = false;
+
+/** The shown day, like `2026-11-02`. */
+let shownDate: string = "";
 
 function storyOf(): HTMLDialogElement {
     return document.getElementById("story") as HTMLDialogElement;
@@ -71,8 +77,27 @@ function entryOf(entry: EventApi): HTMLElement {
     return item;
 }
 
-/** Shows the log entries shown by their start, a grey line for a day without any. */
+/** Keeps the shown day, whose doc {@link storyShow} loads. */
+export function storyDaySet(date: string): void {
+    shownDate = date;
+}
+
+/**
+ * Shows our doc of the shown day, nothing for a day without one.
+ *
+ * @throws {Error} - When the reader gives no valid answer
+ */
+async function docShow(): Promise<void> {
+    const doc: string | null = await readerAsk<string | null>(`/api/day/doc?date=${shownDate}`);
+    (document.getElementById("story-doc") as HTMLElement).innerHTML = doc === null ? "" : htmlOf(doc);
+}
+
+/**
+ * Shows the log entries shown by their start, a grey line for a day without any, then our doc of the day.
+ * The entries load anew after every change of my new system, so the doc follows them.
+ */
 export function storyShow(entries: EventApi[]): void {
+    docShow().catch((error: unknown): void => console.error(error));
     const shown: EventApi[] = entries
         .filter((entry: EventApi): boolean => entry.source?.id === "log" && entry.display !== "none")
         .sort((first: EventApi, second: EventApi): number => Number(first.start) - Number(second.start));
@@ -86,7 +111,7 @@ export function storyShow(entries: EventApi[]): void {
 /** Starts the notebook beside `Log +` that opens the day. */
 export function storyStart(): void {
     const button: HTMLElement = document.getElementById("log-story") as HTMLElement;
-    iconPut(button, NotebookText, "The day");
+    iconPut(button, NotebookText, "NomFrequenceintelligence");
     button.addEventListener("click", (): void => storyOf().showModal());
     document.getElementById("entry")?.addEventListener("close", (): void => {
         if (!returning) return;

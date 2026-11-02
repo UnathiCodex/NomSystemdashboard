@@ -69,8 +69,11 @@ export const skillsFile: string = join(skillingData, "Skills.md");
 /** Folder `NomModulesuniversity`, one file per module of mine, named like its folder. */
 export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
 
-/** The three folders of my new system whose changes tell every open page. */
-export const systemRoots: string[] = [calendarRoot, dataRoot, universityRoot];
+/** Folder `NomFrequenceintelligence` of our docs, one per day, `<YYYY>/<YYYY_MM>/<YYYY_MM_DD>.md`. */
+export const intelligenceRoot: string = join(manageRoot, "NomFrequenceintelligence");
+
+/** The four folders of my new system whose changes tell every open page. */
+export const systemRoots: string[] = [calendarRoot, dataRoot, universityRoot, intelligenceRoot];
 
 /**
  * Folder `NomKommunikation`, the mailbox between Vu and me.

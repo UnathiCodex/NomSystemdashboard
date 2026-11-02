@@ -89,6 +89,7 @@ import {
     workoutSave,
 } from "./sport.ts";
 import { trackersRead } from "./trackers.ts";
+import { docRead } from "./intelligence.ts";
 import { deviceReport } from "./devices.ts";
 import { changesSend, changesWatch } from "./changes.ts";
 import { attendeesRead, entryShare, listShare, sharedStart } from "./shared.ts";
@@ -227,6 +228,8 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         responseSend(response, 200, plainRead(url.searchParams.get("id") ?? ""));
     } else if (request.method === "GET" && url.pathname === "/api/day/trackers") {
         responseSend(response, 200, trackersRead(date));
+    } else if (request.method === "GET" && url.pathname === "/api/day/doc") {
+        responseSend(response, 200, docRead(date));
     } else if (request.method === "GET" && url.pathname === "/api/day/real") {
         responseSend(
             response,
