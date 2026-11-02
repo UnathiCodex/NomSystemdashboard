@@ -39,7 +39,7 @@ export const metaRoot: string = join(calendarRoot, "Meta");
 /** Folder `NomFrequencediary` of my daily notes. */
 export const diaryRoot: string = join(manageRoot, "NomFrequencediary");
 
-/** Folder `NomMetainformations` of my tables, in the topic folders of {@link calendarRoot}. */
+/** Folder `NomMetainformations` of my tables, in the topics of {@link calendarRoot}, `Technical/` for `Meta/`. */
 export const dataRoot: string = join(manageRoot, "NomMetainformations");
 
 /** Folder `Health/` of my tables, my workouts, exercises, weights. */
@@ -54,14 +54,14 @@ export const modulesData: string = join(dataRoot, "Modules");
 /** Folder `Skilling/` of my tables, my skills. */
 export const skillingData: string = join(dataRoot, "Skilling");
 
-/** Folder `Meta/` of my tables, my devices. */
-export const metaData: string = join(dataRoot, "Meta");
+/** Folder `Technical/` of my tables, my devices. */
+export const technicalData: string = join(dataRoot, "Technical");
 
 /** The topic folders of my tables, each holding its tables without subfolders. */
-export const dataFolders: string[] = [healthData, livingData, modulesData, skillingData, metaData];
+export const dataFolders: string[] = [healthData, livingData, modulesData, skillingData, technicalData];
 
 /** `Devices.md`, one row per device of my tailnet, what it shows of the page. */
-export const devicesFile: string = join(metaData, "Devices.md");
+export const devicesFile: string = join(technicalData, "Devices.md");
 
 /** `Persons.md`, the people I name. */
 export const personsFile: string = join(livingData, "Persons.md");
