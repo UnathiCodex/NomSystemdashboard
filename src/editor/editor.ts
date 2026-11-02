@@ -416,13 +416,14 @@ export async function editorStart(): Promise<void> {
     const file: string = address.get("file") ?? "";
     const folder: string = address.get("folder") ?? "";
     const save: HTMLElement = document.getElementById("editor-save") as HTMLElement;
-    const plannings: boolean = file !== "" || location.pathname === "/plannings";
+    const plannings: boolean = file !== "" || location.pathname.startsWith("/plannings");
+    const alone: string = decodeURIComponent(location.pathname).split("/")[2] ?? "";
     const tree: HTMLElement = document.getElementById("notes-tree") as HTMLElement;
     path = file !== "" ? file : (address.get("path") ?? "");
     saveAddress = file !== "" ? "/api/edit/file" : "/api/edit/note";
     const shown: Promise<void> = treeShow(
         tree,
-        plannings ? "NomManageplannings" : "NomSkillingmodules",
+        !plannings ? "NomSkillingmodules" : alone === "" ? "NomManageplannings" : `NomManageplannings/${alone}`,
         plannings && path === "" ? folder : path,
         address.get("module") ?? folder.split("/")[0],
     );

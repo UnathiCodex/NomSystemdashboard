@@ -7,6 +7,7 @@
  *   While no module is picked, its search and every module, grouped by semester.
  * - `NomManageplannings`, my new system, with a search that filters as I type.
  *   A Markdown or `.ics` file opens in the editor, any other file shows faint.
+ *   Also one folder of it alone, from the button of that folder at the left edge.
  * The name of the root stands on top as a heading that never folds, so nothing lies deeper than it needs.
  * Under the note shown stands its outline, under a section its blocks in the places of its round.
  * Each name stands on one line, its whole as its tooltip.
@@ -137,6 +138,7 @@ export function placeAddressOf(place: string, heading: string): string {
  * Makes a folder or file of `NomManageplannings`.
  * A folder keeps its path, so it opens again once the tree is loaded anew.
  * A file is cut in its middle where it is too long, so its ending stays.
+ * A file opens in the area of the tree, so the tree of a folder alone stays so.
  * A file that does not open shows faint, its tooltip saying why.
  */
 function fileNodeOf(node: FileNode): HTMLElement {
@@ -150,7 +152,8 @@ function fileNodeOf(node: FileNode): HTMLElement {
         const link: HTMLAnchorElement = document.createElement("a");
         link.className = "tree-file";
         link.dataset.path = node.path;
-        link.href = `/edit?file=${encodeURIComponent(node.path)}`;
+        const page: string = filesFolder === "" ? "/edit" : `/plannings/${filesFolder}`;
+        link.href = `${page}?file=${encodeURIComponent(node.path)}`;
         middleCutPut(link, node.name);
         return link;
     }
@@ -413,7 +416,7 @@ async function filesAgain(tree: HTMLElement, search: HTMLInputElement, shown: st
         (folder: HTMLDetailsElement): string => folder.dataset.path ?? "",
     );
     const top: number = tree.scrollTop;
-    const entries: HTMLElement[] = (await readerAsk<FileNode[]>("/api/edit/tree")).map(fileNodeOf);
+    const entries: HTMLElement[] = (await filesRead()).map(fileNodeOf);
     tree.querySelectorAll(":scope > .tree-folder, :scope > .tree-file").forEach((entry: Element): void =>
         entry.remove(),
     );
@@ -621,8 +624,19 @@ export function outlineShow(
     entry.after(outline);
 }
 
-/** A root of the tree, an area of its own in the rail. */
-export type TreeRoot = "NomSkillingmodules" | "NomManageplannings";
+/** A root of the tree, an area of its own in the rail, also a folder of `NomManageplannings` alone. */
+export type TreeRoot = "NomSkillingmodules" | "NomManageplannings" | `NomManageplannings/${string}`;
+
+/** The folder of `NomManageplannings` the tree shows alone, empty for all of it. */
+let filesFolder: string = "";
+
+/** The files of my new system, those of {@link filesFolder} alone when the tree shows one. */
+async function filesRead(): Promise<FileNode[]> {
+    const nodes: FileNode[] = await readerAsk<FileNode[]>("/api/edit/tree");
+    return filesFolder === ""
+        ? nodes
+        : (nodes.find((node: FileNode): boolean => node.name === filesFolder)?.children ?? []);
+}
 
 /**
  * Loads one root of the tree and shows it, my new system loaded anew after every change of its files.
@@ -634,12 +648,14 @@ export type TreeRoot = "NomSkillingmodules" | "NomManageplannings";
  */
 export async function treeShow(tree: HTMLElement, root: TreeRoot, shown: string, module: string): Promise<void> {
     const heading: HTMLHeadingElement = document.createElement("h2");
+    const files: boolean = root !== "NomSkillingmodules";
+    filesFolder = root.split("/")[1] ?? "";
     heading.className = "tree-root";
-    heading.textContent = root;
-    tree.classList.toggle("is-files", root === "NomManageplannings");
-    if (root === "NomManageplannings") {
+    heading.textContent = filesFolder === "" ? root : filesFolder;
+    tree.classList.toggle("is-files", files);
+    if (files) {
         const search: HTMLInputElement = document.createElement("input");
-        const entries: HTMLElement[] = (await readerAsk<FileNode[]>("/api/edit/tree")).map(fileNodeOf);
+        const entries: HTMLElement[] = (await filesRead()).map(fileNodeOf);
         tree.replaceChildren(heading, searchFieldOf(search, "Search files"), ...entries);
         searchStart(tree, search);
         treeMark(tree, shown);

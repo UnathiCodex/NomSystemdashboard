@@ -280,17 +280,15 @@
 </dialog>
 
 <!-- The shown day over the page, opened by its notebook beside Log +, see story.ts:
-     its log entries by their start, read like a diary,
+     its date as title, its log entries by their start,
      each what it was, below it its time, place, people, then its note;
-     a click on one opens its entry, and closing that brings the day back;
-     below them our doc of the day.
+     a click on one opens its entry, and closing that brings the day back.
      Esc or a click beside it closes it. Not on a phone -->
 <dialog class="panel story-panel" id="story" closedby="any">
     <section class="day-column">
         <div class="column-head">
-            <h2>NomFrequenceintelligence</h2>
+            <h2 id="story-date"></h2>
         </div>
         <div class="story-entries" id="story-entries"></div>
-        <div class="story-doc" id="story-doc"></div>
     </section>
 </dialog>

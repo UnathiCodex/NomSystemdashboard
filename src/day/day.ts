@@ -24,7 +24,7 @@ import { boxesAgain, boxesSee, boxesStart, boxReceive, entryPartOf, shownWhatOf,
 import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
 import { searchStart } from "./search.ts";
-import { storyDaySet, storyShow, storyStart } from "./story.ts";
+import { storyShow, storyStart } from "./story.ts";
 import { swipeStart } from "./swipe.ts";
 import { labelOf, whereLinkedOf, whereOf } from "./places.ts";
 import { trackersSee } from "./trackers.ts";
@@ -442,9 +442,9 @@ function gridOf(element: HTMLElement): HTMLElement {
 /** Shows the date of the shown day and the icon back to today. */
 function dayShow(info: DatesSetInfo): void {
     const date: string = info.startStr.slice(0, 10);
-    (document.getElementById("day-date") as HTMLElement).textContent = dayTextOf(date, true);
+    for (const id of ["day-date", "story-date"])
+        (document.getElementById(id) as HTMLElement).textContent = dayTextOf(date, true);
     todayButtonShow(date);
-    storyDaySet(date);
 }
 
 /** Turns the icon back to today on for another day, faded on today so the bar looks the same. */

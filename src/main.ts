@@ -2,6 +2,9 @@
  * ## Router
  *
  * Opens one area of the life system by the address, the day everywhere else.
+ * The areas are the buttons at the left edge in `index.html`.
+ * `/edit` opens a file of my new system.
+ * `/plannings/<folder>` opens the editor on that folder of `NomManageplannings` alone.
  * Older addresses of the scripts, `/notes` and `/edit?path=…`, become `/scripts`.
  * Loads the code of the shown area only, so the day loads no MathJax and the scripts no calendar.
  * Puts the area's HTML in only once its code and its look are loaded, so it never shows unstyled.
@@ -40,8 +43,12 @@ let deviceWait: number = 0;
 const address: URLSearchParams = new URLSearchParams(location.search);
 if (location.pathname === "/notes" || (location.pathname === "/edit" && address.has("path")))
     history.replaceState(null, "", `/scripts${location.search}${location.hash}`);
-const areas: string[] = phone ? [] : ["/scripts", "/plannings", "/food", "/sport", "/edit"];
-const area: string = areas.includes(location.pathname) ? location.pathname : "/";
+const areas: string[] = phone
+    ? []
+    : [...document.querySelectorAll<HTMLAnchorElement>(".areas a")].map((link: HTMLAnchorElement): string =>
+          decodeURIComponent(link.pathname),
+      );
+const area: string = [...areas, "/edit"].includes(location.pathname) ? location.pathname : "/";
 const marked: string = area === "/edit" ? "/plannings" : area;
 document.querySelector(`.areas a[href="${marked}"]`)?.setAttribute("aria-current", "page");
 deviceReport();
@@ -58,7 +65,7 @@ if (area === "/food") {
     const sport: { sportStart: () => void } = await import("./sport/sport.ts");
     document.body.insertAdjacentHTML("beforeend", sportHtml);
     sport.sportStart();
-} else if (area === "/scripts" || area === "/edit" || area === "/plannings") {
+} else if (area === "/scripts" || area === "/edit" || area.startsWith("/plannings")) {
     const editor: { editorStart: () => Promise<void> } = await import("./editor/editor.ts");
     document.body.insertAdjacentHTML("beforeend", editorHtml);
     await editor.editorStart();

@@ -47,13 +47,6 @@ button.story-entry:hover {
     white-space: pre-line;
 }
 
-/* Our doc of the day below the entries, apart by a line */
-.story-doc:not(:empty) {
-    margin-top: var(--gap);
-    padding: 0 var(--row-padding);
-    border-top: 1px solid var(--line);
-}
-
 /* Hint for a day without entries */
 .story-none {
     margin: 0;
