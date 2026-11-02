@@ -20,6 +20,7 @@ import {
     elementOf,
     foodNameOf,
     headingOf,
+    partLinkOf,
     plusOf,
     portionGramsOf,
     unitOf,
@@ -154,12 +155,9 @@ function partOf(
 ): HTMLElement {
     const part: HTMLElement = elementOf("div", "food-part", "");
     const [name, brand, store]: string[] = food.split(";");
-    const link: HTMLButtonElement = buttonOf("food-link", "", open);
     const amount: HTMLElement = elementOf("span", "food-value food-grams", "");
-    link.append(foodNameOf("food-name", name, brand ?? "", store ?? ""));
-    link.title = `Open ${name} among my foods`;
     amount.append(grams, unit);
-    part.append(link, amount);
+    part.append(partLinkOf(name, foodNameOf("food-name", name, brand ?? "", store ?? ""), open), amount);
     if (remove !== null) part.append(remove);
     return part;
 }

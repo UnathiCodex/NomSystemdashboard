@@ -31,9 +31,11 @@
     min-width: 0;
 }
 
-/* Name of a food in the panel of a meal, a link to the food among my foods.
-   As plain as every name, a grey line below it under the pointer, so it shows that it leads somewhere */
+/* Name of a part in the panel of a meal or a workout, a link to the part itself.
+   As plain as every name, a grey line below it under the pointer, so it shows that it leads somewhere.
+   As wide as its text alone, so a click beside it opens nothing */
 .food-link {
+    justify-self: start;
     min-width: 0;
     padding: 0;
     border: 0;

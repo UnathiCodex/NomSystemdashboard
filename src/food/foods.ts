@@ -283,6 +283,14 @@ export function buttonOf(className: string, text: string, click: () => void): HT
     return button;
 }
 
+/** The name of a part in a panel as a link that opens the part itself. */
+export function partLinkOf(name: string, shown: HTMLElement, open: () => void): HTMLButtonElement {
+    const link: HTMLButtonElement = buttonOf("food-link", "", open);
+    link.append(shown);
+    link.title = `Open ${name}`;
+    return link;
+}
+
 export function plusOf(words: string, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf("", "", click);
     plusPut(button, words);

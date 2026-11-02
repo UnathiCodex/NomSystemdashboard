@@ -7,6 +7,7 @@
  * Every change sends back all of mine, so an exercise added to a workout stands among my exercises.
  * - Workouts: Each with its short title grey in brackets, as a meal.
  *   Its panel holds its name, its short title, its parts with the search of my exercises below them.
+ *   The name of a part opens its exercise, as a food of a meal opens.
  *   A new workout is kept in `Workouts.md` with its first part.
  * - Exercises: Each with its rule, which an entry brings every time, as a food without the meals that hold it.
  *   One name may stand several times, each a variant with values of its own.
@@ -15,7 +16,7 @@
  */
 
 import { exerciseChangeSend, exerciseDelete, exerciseSend, mineLoad, workoutDelete, workoutSend } from "./mine.ts";
-import { bracketsWatch, buttonOf, elementOf, headingOf, plusOf } from "../food/foods.ts";
+import { bracketsWatch, buttonOf, elementOf, foodNameOf, headingOf, partLinkOf, plusOf } from "../food/foods.ts";
 import { inlineFieldOf, listLineOf } from "../food/search.ts";
 import { panelClose, panelOf, panelSearchOpen, panelShow } from "../food/panel.ts";
 import { matchesAll, wordsOf } from "../search.ts";
@@ -137,8 +138,10 @@ export function ruleTextOf(exercise: { sets: string; reps: string; kg: string })
  * - `fresh`: Name of a new workout not yet written, as it has no part yet, dropped when its panel closes.
  *   Empty while its name is not typed yet, `null` for none.
  * - `send`: Sends a workout, a workout renamed staying open under its name as the reader cleans it.
+ *
+ * @param exerciseOpen - Opens an exercise of the workout in its panel over that of the workout
  */
-function workoutsSectionOf(): HTMLElement {
+function workoutsSectionOf(exerciseOpen: (part: Part) => void): HTMLElement {
     const section: HTMLElement = elementOf("section", "food-dishes", "");
     const search: HTMLInputElement = document.createElement("input");
     const list: HTMLElement = elementOf("div", "dish-list", "");
@@ -238,7 +241,10 @@ function workoutsSectionOf(): HTMLElement {
         parts.append(
             ...workout.parts.map((part: Part, index: number): HTMLElement => {
                 const line: HTMLElement = elementOf("div", "food-part", "");
-                line.append(lineNameOf(part.name, ""), elementOf("span", "food-value sport-grey", ruleTextOf(part)));
+                line.append(
+                    partLinkOf(part.name, foodNameOf("food-name", part.name, "", ""), (): void => exerciseOpen(part)),
+                    elementOf("span", "food-value sport-grey", ruleTextOf(part)),
+                );
                 if (workout.parts.length > 1)
                     line.append(
                         removeOf(`Remove ${part.name}`, false, (): void =>
@@ -355,8 +361,9 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
  * - `fresh`: The new exercise in the panel, its values kept until its name is typed, `null` for none.
  * - `add`: Writes an exercise with the values it has, then shows it in the panel.
  * - `panelFill`: Shows the rule of the exercise in the panel, each value written at once as it changes.
+ * Gives also how to open an exercise, as a click on it in a workout asks, its name put into the search.
  */
-function exercisesSectionOf(): HTMLElement {
+function exercisesSectionOf(): [HTMLElement, (part: Part) => void] {
     const section: HTMLElement = elementOf("section", "food-dishes", "");
     const search: HTMLInputElement = document.createElement("input");
     const list: HTMLElement = elementOf("div", "dish-list sport-exercises", "");
@@ -511,7 +518,14 @@ function exercisesSectionOf(): HTMLElement {
     );
     bracketsWatch(list);
     shows.push(show);
-    return section;
+    return [
+        section,
+        (part: Part): void => {
+            search.value = part.name;
+            open = variantKeyOf(part);
+            show();
+        },
+    ];
 }
 
 /** Loads everything of mine anew and shows it, like after my weight changed. */
@@ -521,7 +535,8 @@ export function mineReload(): void {
 
 /** The two sections of the lists with everything of mine loaded into them. */
 export function listsOf(): HTMLElement[] {
-    const sections: HTMLElement[] = [workoutsSectionOf(), exercisesSectionOf()];
+    const [exercises, exerciseOpen]: [HTMLElement, (part: Part) => void] = exercisesSectionOf();
+    const sections: HTMLElement[] = [workoutsSectionOf(exerciseOpen), exercises];
     shows.forEach((show: () => void): void => show());
     mineLoad()
         .then(mineShow)
