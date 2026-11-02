@@ -33,13 +33,13 @@ export const skillingRoot: string = join(calendarRoot, "Skilling");
 /** Folder `Modules/`, per module a plan and a log named like its folder. */
 export const modulesRoot: string = join(calendarRoot, "Modules");
 
-/** Folder `Meta/`, birthdays, holidays and semester dates. */
-export const metaRoot: string = join(calendarRoot, "Meta");
+/** Folder `Dates/`, birthdays, holidays, semester dates. */
+export const datesRoot: string = join(calendarRoot, "Dates");
 
 /** Folder `NomFrequencediary` of my daily notes. */
 export const diaryRoot: string = join(manageRoot, "NomFrequencediary");
 
-/** Folder `NomMetainformations` of my tables, in the topics of {@link calendarRoot}, `Technical/` for `Meta/`. */
+/** Folder `NomMetainformations` of my tables, in topic folders. */
 export const dataRoot: string = join(manageRoot, "NomMetainformations");
 
 /** Folder `Health/` of my tables, my workouts, exercises, weights. */
@@ -197,9 +197,9 @@ export const day: DaySources = {
     plan: [{ folder: calendarRoot, ending: planEnding }],
     log: [{ folder: calendarRoot, ending: logEnding }],
     system: [
-        { folder: metaRoot, ending: "Birthdays.ics" },
-        { folder: metaRoot, ending: "Holidays.ics" },
-        { folder: metaRoot, ending: "University.ics" },
+        { folder: datesRoot, ending: "Birthdays.ics" },
+        { folder: datesRoot, ending: "Holidays.ics" },
+        { folder: datesRoot, ending: "University.ics" },
     ],
     places: join(livingData, "Places.md"),
     rooms: join(modulesData, "Rooms.md"),
@@ -208,8 +208,8 @@ export const day: DaySources = {
 
 /** Calendars of the days a series of my course skips, holidays and days the university does not teach. */
 export const holidays: CalendarSource[] = [
-    { folder: metaRoot, ending: "Holidays.ics" },
-    { folder: metaRoot, ending: "University.ics" },
+    { folder: datesRoot, ending: "Holidays.ics" },
+    { folder: datesRoot, ending: "University.ics" },
 ];
 
 /** Each block of learning an entry `Skill` in the log of its skill, holding its attempts. */
