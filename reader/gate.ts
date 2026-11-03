@@ -47,7 +47,7 @@ const usage: string = [
 /** The most bytes of a message, big enough for a PDF of solutions. */
 const messageMost: number = 50 * 1024 * 1024;
 
-/** The most bytes of a shared entry, food, meal or place. */
+/** The most bytes of a shared entry. */
 const shareMost: number = 1024 * 1024;
 
 const partsMost: number = 12;
@@ -60,7 +60,7 @@ const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
 
 /** The name of a shared file of a sender. */
 function sharedFormOf(sender: string): RegExp {
-    return new RegExp(`^\\d{8}T\\d{9}Z_${sender}_(?:entry|list)_[\\w.@-]{1,160}\\.(?:ics|json)$`);
+    return new RegExp(`^\\d{8}T\\d{9}Z_${sender}_entry_[\\w.@-]{1,160}\\.ics$`);
 }
 
 function refuse(reason: string, code: number = 1): never {

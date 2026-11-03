@@ -242,13 +242,14 @@ function rowsSort(lines: string[]): void {
 }
 
 /**
- * Adds a place as a row of `Rooms.md` when its name starts like the code of a room, else of `Places.md`.
+ * Adds a place as a row of `Rooms.md` when it is a room, else of `Places.md`.
  *
+ * @param room - Whether it is a room, by default when its name starts like the code of a room
  * @throws {Error} - When the place is not valid, or the file lies outside the new system or holds no table
  */
-export function placeAdd(sent: Place): Place {
+export function placeAdd(sent: Place, room?: boolean): Place {
     const added: Place = placeCleanOf(sent, [...placesRead(), ...roomsRead()]);
-    const file: string = roomForm.test(added.name) ? day.rooms : day.places;
+    const file: string = (room ?? roomForm.test(added.name)) ? day.rooms : day.places;
     const lines: string[] = placeLinesRead(file);
     const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
     lines.splice(last + 1, 0, rowOf(added));
@@ -292,13 +293,11 @@ export function placeChange(sent: PlaceChanged): Place {
  * While another row has it, ignoring case, the place moves to that row and takes its line and link.
  * Then the rows of the old name go, so no name has two rows, and a moved default place makes that row it.
  * Works out every file first and writes only then, so nothing is written while one file cannot be.
- * Gives the place with its old name to send to Vu,
- * `null` for a dry run, a move to another row and while no row changes.
  *
  * @throws {Error} - When a name is empty, the link is no web address,
  *   a line of a place cannot be read, or a file lies outside the new system
  */
-export function placeRename(sent: PlaceRenamed): PlaceChanged | null {
+export function placeRename(sent: PlaceRenamed): void {
     const old: string = String(sent.old ?? "").trim();
     const name: string = nameOf(String(sent.name ?? ""));
     if (old === "") throw new Error(`No place of the name: ${sent.old}`);
@@ -337,11 +336,10 @@ export function placeRename(sent: PlaceRenamed): PlaceChanged | null {
         })
         .filter(([file, text]: [string, string]): boolean => text !== readFileSync(file, "utf8"));
     placeLinesRename([{ folder: calendarRoot, ending: ".ics" }], old, lineOf(changed), changed.link, sent.dry === true);
-    if (sent.dry === true) return null;
+    if (sent.dry === true) return;
     tables.forEach(([file, text]: [string, string]): void => writeFileSync(file, text));
     if (target !== undefined && rows.some((place: Place): boolean => place.name === old && place.standard))
         placeStandardSet(target.name);
-    return target === undefined && tables.length > 0 ? { ...changed, old: old } : null;
 }
 
 /**

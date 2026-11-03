@@ -91,7 +91,7 @@ import {
 import { trackersRead } from "./trackers.ts";
 import { deviceReport } from "./devices.ts";
 import { changesSend, changesWatch } from "./changes.ts";
-import { attendeesRead, entryShare, listShare, sharedStart } from "./shared.ts";
+import { attendeesRead, entryShare, sharedStart } from "./shared.ts";
 import { pageCreate } from "./page.ts";
 import { codeColorsRead } from "./theme.ts";
 
@@ -119,7 +119,7 @@ import type { DeviceReport } from "./devices.ts";
 import type { NotesFile, NotesStream } from "./notes.ts";
 import type { NoteChange } from "./edit.ts";
 import type { AttemptNew, RoundNew, SkillEntryChange, SkillEntryNew } from "./skill.ts";
-import type { Dish, Food, FoodChanged } from "./food.ts";
+import type { Food, FoodChanged } from "./food.ts";
 
 /**
  * Sends an answer as JSON, packed as `gzip` when the browser takes it, the categories 31 KB instead of 506 KB.
@@ -315,17 +315,11 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         giftWrite((await json(request)) as Gift);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/places") {
-        const place: Place = placeAdd((await json(request)) as Place);
-        listShare({ call: "placeAdd", with: place });
-        responseSend(response, 200, place);
+        responseSend(response, 200, placeAdd((await json(request)) as Place));
     } else if (request.method === "PATCH" && url.pathname === "/api/day/places") {
-        const sent: PlaceChanged = (await json(request)) as PlaceChanged;
-        const place: Place = placeChange(sent);
-        listShare({ call: "placeChange", with: sent });
-        responseSend(response, 200, place);
+        responseSend(response, 200, placeChange((await json(request)) as PlaceChanged));
     } else if (request.method === "POST" && url.pathname === "/api/day/renamed") {
-        const changed: PlaceChanged | null = placeRename((await json(request)) as PlaceRenamed);
-        if (changed !== null) listShare({ call: "placeChange", with: changed });
+        placeRename((await json(request)) as PlaceRenamed);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/param-renamed") {
         paramRename((await json(request)) as ParamRenamed);
@@ -334,14 +328,9 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         placeStandardSet(String(((await json(request)) as { name?: string }).name ?? ""));
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/online") {
-        const platform: Platform = platformAdd((await json(request)) as Platform);
-        listShare({ call: "platformAdd", with: platform });
-        responseSend(response, 200, platform);
+        responseSend(response, 200, platformAdd((await json(request)) as Platform));
     } else if (request.method === "PATCH" && url.pathname === "/api/day/online") {
-        const sent: PlatformChanged = (await json(request)) as PlatformChanged;
-        const platform: Platform = platformChange(sent);
-        listShare({ call: "platformChange", with: sent });
-        responseSend(response, 200, platform);
+        responseSend(response, 200, platformChange((await json(request)) as PlatformChanged));
     } else if (request.method === "GET" && url.pathname === "/api/persons") {
         responseSend(response, 200, personsRead());
     } else if (request.method === "POST" && url.pathname === "/api/persons/renamed") {
@@ -463,55 +452,37 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
             ),
         );
     } else if (request.method === "POST" && url.pathname === "/api/food/foods") {
-        const added: Food = foodAdd((await json(request)) as Food);
-        listShare({ call: "foodAdd", with: added });
-        responseSend(response, 200, added);
+        responseSend(response, 200, foodAdd((await json(request)) as Food));
     } else if (request.method === "PATCH" && url.pathname === "/api/food/foods") {
-        const sent: FoodChanged = (await json(request)) as FoodChanged;
-        const changed: Food = foodChange(sent);
-        listShare({ call: "foodChange", with: sent });
-        responseSend(response, 200, changed);
+        responseSend(response, 200, foodChange((await json(request)) as FoodChanged));
     } else if (request.method === "DELETE" && url.pathname === "/api/food/foods") {
-        const removed: { name: string; brand: string; store: string } = {
+        foodRemove({
             name: url.searchParams.get("name") ?? "",
             brand: url.searchParams.get("brand") ?? "",
             store: url.searchParams.get("store") ?? "",
-        };
-        foodRemove(removed);
-        listShare({ call: "foodRemove", with: removed });
+        });
         responseSend(response, 200, null);
     } else if (request.method === "GET" && url.pathname === "/api/food/day") {
         responseSend(response, 200, foodDayRead(date));
     } else if (request.method === "GET" && url.pathname === "/api/food/meals") {
         responseSend(response, 200, dishesRead());
     } else if (request.method === "POST" && url.pathname === "/api/food/meals") {
-        const sent: {
-            name?: string;
-            foods?: string[];
-            short?: string;
-            grams?: (number | null)[];
-        } = (await json(request)) as {
-            name?: string;
-            foods?: string[];
-            short?: string;
-            grams?: (number | null)[];
-        };
-        const dishes: Dish[] = dishAdd(sent);
-        listShare({ call: "mealAdd", with: sent });
-        responseSend(response, 200, dishes);
+        responseSend(
+            response,
+            200,
+            dishAdd(
+                (await json(request)) as {
+                    name?: string;
+                    foods?: string[];
+                    short?: string;
+                    grams?: (number | null)[];
+                },
+            ),
+        );
     } else if (request.method === "PATCH" && url.pathname === "/api/food/meals") {
-        const sent: { old?: string; name?: string } = (await json(request)) as {
-            old?: string;
-            name?: string;
-        };
-        const dishes: Dish[] = dishRename(sent);
-        listShare({ call: "mealRename", with: sent });
-        responseSend(response, 200, dishes);
+        responseSend(response, 200, dishRename((await json(request)) as { old?: string; name?: string }));
     } else if (request.method === "DELETE" && url.pathname === "/api/food/meals") {
-        const meal: string = url.searchParams.get("meal") ?? "";
-        const dishes: Dish[] = dishRemove(meal);
-        listShare({ call: "mealRemove", with: meal });
-        responseSend(response, 200, dishes);
+        responseSend(response, 200, dishRemove(url.searchParams.get("meal") ?? ""));
     } else if (request.method === "GET" && url.pathname === "/api/sport/day") {
         responseSend(response, 200, sportDayRead(date));
     } else if (request.method === "POST" && url.pathname === "/api/sport/weight") {

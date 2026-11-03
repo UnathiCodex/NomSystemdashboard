@@ -1,8 +1,9 @@
 /**
  * ## Shared
  *
- * Shares with Vu, whose dashboard runs on skriptum, only what we agreed on,
- * an entry of my log with Vu in `With` and every food, meal and place either of us changes.
+ * Shares with Vu, whose dashboard runs on skriptum, an entry of my log with Vu in `With`.
+ * Every file we share Unison keeps the same,
+ * our foods, meals, places, platforms among them.
  * All we share lies only in `NomKommunikation` on my server `sophabohne`, never on Vu's.
  *
  * My reader never reaches Vu's server.
@@ -20,42 +21,20 @@
  * and a copy for an entry the other has already by its `UID` goes untaken to the trash,
  * so nothing remembers who had what.
  * An entry I took in goes to nobody while its `With` stays, since its sender sent it to all in it.
- * A food, meal or place goes as the call that changed it, made again on the other's lists.
- * One Vu has already stays as Vu has it.
- * As my reader makes the box of someone, it sends all my lists, so our lists come together.
- * What I change in the editor by hand goes to nobody.
+ * Its place goes as its line and link, a room of mine marked, since our rooms are each our own.
  *
- * What comes is taken the earliest first, so a meal finds its foods and its cooking.
+ * What comes is taken the earliest first, so a meal finds its cooking.
  * An entry keeps the `UID` it brought, so it comes in only once.
+ * A room of it I have no place or room of its name for comes into my `Rooms.md`.
  * An entry a log cannot take stays in its box, told once.
  */
 
 import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
 import { entryAdd } from "./day.ts";
-import {
-    compositionsRead,
-    dishAdd,
-    dishRemove,
-    dishRename,
-    foodAdd,
-    foodChange,
-    foodRemove,
-    foodsRead,
-} from "./food.ts";
-import {
-    linkForm,
-    placeAdd,
-    placeChange,
-    placesRead,
-    platformAdd,
-    platformChange,
-    platformsRead,
-    roomsRead,
-} from "./places.ts";
+import { labelOf, linkForm, placeAdd, placesRead, roomsRead } from "./places.ts";
 import { personNameOf } from "./persons.ts";
 import { dashboardBoxOf, day, holder, myName, partners, writeAllowed } from "./sources.ts";
 import { trashPut } from "./trash.ts";
@@ -63,29 +42,7 @@ import { trashPut } from "./trash.ts";
 import type { ChildProcess } from "node:child_process";
 import type { Attendee, Entry, EntryFields } from "./calendar.ts";
 import type { EntryNew } from "./day.ts";
-import type { Composition, Food, FoodChanged } from "./food.ts";
-import type { Place, PlaceChanged, Platform, PlatformChanged } from "./places.ts";
-
-/** A change of a list, as the call that changed it and what it was called with. */
-export type ListChange =
-    | { call: "foodAdd"; with: Food }
-    | { call: "foodChange"; with: FoodChanged }
-    | { call: "foodRemove"; with: { name: string; brand: string; store: string } }
-    | {
-          call: "mealAdd";
-          with: {
-              name?: string;
-              foods?: string[];
-              short?: string;
-              grams?: (number | null)[];
-          };
-      }
-    | { call: "mealRename"; with: { old?: string; name?: string } }
-    | { call: "mealRemove"; with: string }
-    | { call: "placeAdd"; with: Place }
-    | { call: "placeChange"; with: PlaceChanged }
-    | { call: "platformAdd"; with: Platform }
-    | { call: "platformChange"; with: PlatformChanged };
+import type { Place } from "./places.ts";
 
 /** A name of a person, as the boxes are named and the gate takes it. */
 const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
@@ -152,12 +109,22 @@ function sameName(first: string, second: string): boolean {
     return personNameOf(first).toLowerCase() === personNameOf(second).toLowerCase();
 }
 
-/** Lists the shared files of a box, without hidden and half written ones, sorted. */
+/**
+ * Lists the shared entries of a box, sorted,
+ * without hidden ones or half written ones.
+ */
 function boxFilesOf(box: string): string[] {
     if (!existsSync(box)) return [];
     return readdirSync(box)
-        .filter((name: string): boolean => !name.startsWith(".") && /\.(?:ics|json)$/.test(name))
+        .filter((name: string): boolean => !name.startsWith(".") && name.endsWith(".ics"))
         .sort();
+}
+
+/** Tells whether I have a place or room of a name, ignoring case. */
+function placeHas(name: string): boolean {
+    return [...placesRead(), ...roomsRead()].some(
+        (mine: Place): boolean => mine.name.toLowerCase() === name.toLowerCase(),
+    );
 }
 
 /** My address in an entry I send, the standard one of a name, `@invalid` the ending for addresses that never work. */
@@ -280,6 +247,8 @@ function copyWrite(entry: Entry, partner: string): void {
     };
     const own: [string, string][] = entry.foods.map((food: string): [string, string] => ["x-food", food]);
     if (entry.cooked !== "") own.push(["x-cooked", entry.cooked]);
+    const place: string = labelOf(entry.location).toLowerCase();
+    if (roomsRead().some((room: Place): boolean => room.name.toLowerCase() === place)) own.push(["x-room", "TRUE"]);
     outboxWrite(partner, `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`, entryIcsOf(fields, own, entry.id));
 }
 
@@ -314,58 +283,21 @@ export function entryShare(id: string, before: Attendee[] = []): void {
     }
 }
 
-/** Sends a change of a list to everyone I share with, or to one, a failure told, never failing what I saved. */
-export function listShare(change: ListChange, only?: string): void {
-    if (!sharingIs()) return;
-    try {
-        (only === undefined ? partnersOf() : [only]).forEach((partner: string): void => {
-            outboxWrite(partner, `${stampOf()}_${myName}_list_${randomUUID()}.json`, `${JSON.stringify(change)}\n`);
-        });
-    } catch (error: unknown) {
-        console.error(new Date().toISOString(), `No change shared: ${change.call}`, error);
-    }
-}
-
-/** Sends all my lists to a person, the foods before the meals, which name them. */
-function listsShareAll(partner: string): void {
-    foodsRead().forEach((food: Food): void => listShare({ call: "foodAdd", with: food }, partner));
-    compositionsRead().forEach((meal: Composition): void =>
-        listShare(
-            {
-                call: "mealAdd",
-                with: {
-                    name: meal.name,
-                    foods: meal.foods,
-                    short: meal.short,
-                    grams: meal.standard,
-                },
-            },
-            partner,
-        ),
-    );
-    [...placesRead(), ...roomsRead()].forEach((place: Place): void =>
-        listShare({ call: "placeAdd", with: place }, partner),
-    );
-    platformsRead().forEach((platform: Platform): void => listShare({ call: "platformAdd", with: platform }, partner));
-}
-
 /**
- * Makes a change of a list that came on my own lists, with the same call.
- *
- * @throws {Error} - When the call is unknown or refuses it, like a food I have already
+ * Adds the room of an entry that came into my `Rooms.md` while I have no place or room of its name.
+ * Name and link come from the entry,
+ * the address only when its line has every part.
+ * A room that cannot be added is told, never failing the entry.
  */
-function listApply(change: ListChange): void {
-    if (change.call === "foodAdd") foodAdd(change.with);
-    else if (change.call === "foodChange") foodChange(change.with);
-    else if (change.call === "foodRemove") foodRemove(change.with);
-    else if (change.call === "mealAdd") dishAdd(change.with);
-    else if (change.call === "mealRename") dishRename(change.with);
-    else if (change.call === "mealRemove") dishRemove(String(change.with));
-    else if (change.call === "placeAdd") placeAdd(change.with);
-    else if (change.call === "placeChange") placeChange(change.with);
-    else if (change.call === "platformAdd") platformAdd(change.with);
-    else if (change.call === "platformChange") platformChange(change.with);
-    else throw new Error(`No change of a list: ${JSON.stringify(change)}`);
+function roomTake(entry: Entry): void {
+    const parts: string[] = entry.location.split(",").map((part: string): string => part.trim());
+    if (!entry.room || parts[0] === "" || placeHas(parts[0])) return;
+    const [street, code, city, country]: string[] = parts.length === 5 ? parts.slice(1) : ["", "", "", ""];
+    try {
+        placeAdd({ name: parts[0], street, code, city, country, link: entry.locationLink, standard: false }, true);
+    } catch (error: unknown) {
+        console.error(new Date().toISOString(), `No room ${parts[0]}`, error);
+    }
 }
 
 /**
@@ -400,28 +332,19 @@ function entryNewOf(entry: Entry): EntryNew {
 }
 
 /**
- * Takes one shared thing that came, giving whether it is done with and goes into my trash.
- * An entry the log has by its `UID` goes untaken, a change the lists refuse is told and goes too.
+ * Takes one shared entry that came,
+ * giving whether it is done with, so it goes into my trash.
+ * An entry the log has by its `UID` goes untaken.
  * An entry the log cannot take stays, told once.
  */
 function thingTake(name: string, text: string): boolean {
     try {
-        if (name.endsWith(".ics"))
-            textEntriesRead(text, name)
-                .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
-                .forEach((entry: Entry): void => {
-                    entryAdd(entryNewOf(entry), entry.id);
-                });
-        else
-            try {
-                listApply(JSON.parse(text) as ListChange);
-            } catch (error: unknown) {
-                console.log(
-                    new Date().toISOString(),
-                    `Kept my lists as they are for ${name}:`,
-                    error instanceof Error ? error.message : error,
-                );
-            }
+        textEntriesRead(text, name)
+            .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
+            .forEach((entry: Entry): void => {
+                entryAdd(entryNewOf(entry), entry.id);
+                roomTake(entry);
+            });
         return true;
     } catch (error: unknown) {
         if (!failed.has(name)) console.error(new Date().toISOString(), `My log cannot take ${name}`, error);
@@ -467,7 +390,7 @@ export function inboxTake(): void {
 
 /**
  * Starts sharing as the reader starts.
- * On my server makes the boxes, sending all my lists into a new one, and watches my box.
+ * On my server makes the boxes and watches mine.
  * On Vu's server takes what waits on mine, again every {@link pollSeconds}.
  */
 export function sharedStart(): void {
@@ -489,10 +412,7 @@ export function sharedStart(): void {
     const box: string = dashboardBoxOf(myName);
     mkdirSync(box, { recursive: true });
     partnersOf().forEach((partner: string): void => {
-        if (!existsSync(dashboardBoxOf(partner))) {
-            mkdirSync(dashboardBoxOf(partner), { recursive: true });
-            listsShareAll(partner);
-        }
+        mkdirSync(dashboardBoxOf(partner), { recursive: true });
     });
     inboxTake();
     let waiting: NodeJS.Timeout | undefined = undefined;
