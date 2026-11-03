@@ -75,12 +75,6 @@ export const intelligenceRoot: string = join(manageRoot, "NomFrequenceintelligen
 /** The four folders of my new system whose changes tell every open page. */
 export const systemRoots: string[] = [calendarRoot, dataRoot, universityRoot, intelligenceRoot];
 
-/**
- * Folder `NomKommunikation`, the mailbox between Vu and me.
- * Unison keeps its boxes the same on both our servers.
- */
-export const kommunikationRoot: string = join(vault, "NomKommunikation");
-
 /** My name as written in `With`, `NOM_NAME`, empty when unset and then the reader shares nothing. */
 export const myName: string = process.env.NOM_NAME?.trim() ?? "";
 
@@ -89,11 +83,6 @@ export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
     .split(",")
     .map((name: string): string => name.trim())
     .filter((name: string): boolean => name !== "" && name.toLowerCase() !== myName.toLowerCase());
-
-/** Folder of what the dashboards share in the box of a person. */
-export function dashboardBoxOf(name: string): string {
-    return join(kommunikationRoot, `to_${name.toLowerCase()}`, "dashboard");
-}
 
 /** Folder of my old system, never read, not even listed. */
 export const previousName: string = "NomSystemprevious";
@@ -277,18 +266,13 @@ export function skillFileOf(name: string, ending: string): string {
 /**
  * Tells whether the reader may write a file.
  * Inside `NomManageplannings` but my old system and the hidden files and folders right in it.
- * Also inside `dashboard/` of a box, never beside our messages.
- * {@link resolve} takes out `..`, so no path leaves the folders.
+ * {@link resolve} takes out `..`, so no path leaves the folder.
  */
 export function writeAllowed(file: string): boolean {
     const path: string = resolve(file);
     const root: string = `${resolve(manageRoot)}${sep}`;
     const top: string = path.slice(root.length).split(sep)[0];
-    const box: string[] = relative(resolve(kommunikationRoot), path).split(sep);
-    return (
-        (path.startsWith(root) && top !== previousName && !top.startsWith(".")) ||
-        (/^to_\w+$/.test(box[0]) && box[1] === "dashboard" && box.length > 2)
-    );
+    return path.startsWith(root) && top !== previousName && !top.startsWith(".");
 }
 
 /** Path of a file from {@link vault} on, with `/` on every system. */

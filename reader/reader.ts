@@ -11,7 +11,7 @@
  */
 
 import { createServer } from "node:http";
-import { json } from "node:stream/consumers";
+import { json, text } from "node:stream/consumers";
 import { pipeline } from "node:stream/promises";
 import { gzipSync } from "node:zlib";
 import {
@@ -91,7 +91,7 @@ import {
 import { trackersRead } from "./trackers.ts";
 import { deviceReport } from "./devices.ts";
 import { changesSend, changesWatch } from "./changes.ts";
-import { attendeesRead, entryShare, sharedStart } from "./shared.ts";
+import { attendeesRead, entryShare, entryTake, sharedStart } from "./shared.ts";
 import { pageCreate } from "./page.ts";
 import { codeColorsRead } from "./theme.ts";
 
@@ -248,6 +248,8 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         const written: boolean = entryEdit(change);
         if (written) entryShare(change.id, before);
         responseSend(response, written ? 200 : 409, null);
+    } else if (request.method === "POST" && url.pathname === "/api/shared/entry") {
+        responseSend(response, entryTake(await text(request)) ? 200 : 422, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/moved") {
         entryMove((await json(request)) as EntryMoved);
         responseSend(response, 200, null);

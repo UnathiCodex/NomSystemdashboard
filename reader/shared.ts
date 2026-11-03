@@ -2,59 +2,66 @@
  * ## Shared
  *
  * Shares with Vu, whose dashboard runs on skriptum, an entry of my log with Vu in `With`.
- * Every file we share Unison keeps the same on both our servers,
- * our foods, meals, places, platforms among them.
- * Our boxes in `NomKommunikation` it keeps the same as well,
- * `to_vu/` for Vu and `to_sopha/` for me.
+ * Every other file we share Unison keeps the same on both our servers.
  *
- * What goes to Vu my reader writes as a file into `dashboard/` of Vu's box,
- * named by the moment, the sender, the kind.
- * Unison brings it to Vu's server.
- * There Vu's reader takes it in at once and puts it into the trash,
- * so Unison takes it away on my server as well.
- * What Vu shares comes the same way into my box.
- * No reader ever reaches the other's server.
- * There is no archive.
+ * My reader hands the entry by SSH to Vu's reader,
+ * by the SSH host `nom-` and the name in small letters.
+ * There my key runs nothing but `curl`,
+ * which gives the entry to `/api/shared/entry` of Vu's reader.
+ * Vu's reader hands its entries to mine the same way.
+ * No file holds an entry on the way.
+ * While the other cannot be reached, my reader tries again every {@link retrySeconds}.
+ * What waits lies only in its memory, so a restart loses it, told in the log.
+ * What the other's reader refuses goes nowhere, told.
  *
  * An entry goes as a copy to each of us in its `With` as I add it or log a box,
  * and to one who comes into its `With` as I change it, with me in place of the person.
  * Not my note, rounds, chapters, links to my files, pain, what a sport session did, nor its box.
  * After that each copy is its owner's, a change goes to nobody,
- * and a copy for an entry the other has already by its `UID` goes untaken to the trash,
+ * and a copy for an entry the other has already by its `UID` goes untaken,
  * so nothing remembers who had what.
  * An entry I took in goes to nobody while its `With` stays, since its sender sent it to all in it.
  * Its place goes as its line and link, a room of mine marked, since our rooms are each our own.
  *
- * What comes is taken the earliest first, so a meal finds its cooking.
+ * What comes is taken in the order it was sent, so a meal finds its cooking.
  * An entry keeps the `UID` it brought, so it comes in only once.
  * A room of it I have no place or room of its name for comes into my `Rooms.md`.
- * An entry a log cannot take stays in its box, told once.
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { spawn } from "node:child_process";
 import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
 import { entryAdd } from "./day.ts";
 import { labelOf, linkForm, placeAdd, placesRead, roomsRead } from "./places.ts";
 import { personNameOf } from "./persons.ts";
-import { dashboardBoxOf, day, myName, partners, writeAllowed } from "./sources.ts";
-import { trashPut } from "./trash.ts";
+import { day, myName, partners } from "./sources.ts";
 
+import type { ChildProcess } from "node:child_process";
 import type { Attendee, Entry, EntryFields } from "./calendar.ts";
 import type { EntryNew } from "./day.ts";
 import type { Place } from "./places.ts";
 
-/** A name of a person, as the boxes are named. */
+/** A name of a person, as the SSH hosts are named. */
 const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
 
-/** Milliseconds of a quiet box before the reader takes from it, so a file and its rename are one. */
-const quiet: number = 300;
+/** Seconds `ssh` tries to reach the other's server. */
+const reachSeconds: number = 10;
 
-/** Milliseconds of the last name, so each name comes later and the other takes them in order. */
-let lastStamp: number = 0;
+/** Seconds between two tries while the other cannot be reached. */
+const retrySeconds: number = 60;
 
-/** Names of shared files a log could not take, each told once. */
-const failed: Set<string> = new Set();
+/** Exit code of `curl -f` when the other's reader refused the entry. */
+const refusedCode: number = 22;
+
+/** Copies of entries for a person not handed over yet, the earliest first, only in memory. */
+const waiting: [string, string][] = [];
+
+let sending: boolean = false;
+
+/** Whether my reader sends again after it is through, since something came to wait. */
+let again: boolean = false;
+
+/** Whether the other's server could not be reached, told once until it can again. */
+let unreached: boolean = false;
 
 /** The people I share with, in {@link nameForm}. */
 function partnersOf(): string[] {
@@ -66,31 +73,9 @@ function sharingIs(): boolean {
     return nameForm.test(myName) && partnersOf().length > 0;
 }
 
-/** The moment a shared thing is named after, later than the one before. */
-function stampOf(): string {
-    lastStamp = Math.max(Date.now(), lastStamp + 1);
-    return new Date(lastStamp).toISOString().replace(/[-:.]/g, "");
-}
-
-/** Key of an entry in the name of a shared file, from its `UID`. */
-function keyOf(id: string): string {
-    return id.replace(/[^\w.@-]/g, "_");
-}
-
 /** Tells whether two names of `With` name the same person, each as `Persons.md` names it. */
 function sameName(first: string, second: string): boolean {
     return personNameOf(first).toLowerCase() === personNameOf(second).toLowerCase();
-}
-
-/**
- * Lists the shared entries of a box, sorted,
- * without hidden ones or half written ones.
- */
-function boxFilesOf(box: string): string[] {
-    if (!existsSync(box)) return [];
-    return readdirSync(box)
-        .filter((name: string): boolean => !name.startsWith(".") && name.endsWith(".ics"))
-        .sort();
 }
 
 /** Tells whether I have a place or room of a name, ignoring case. */
@@ -115,16 +100,69 @@ function addressOf(name: string): string {
     return `${local}@invalid`;
 }
 
-/** Shares a file with a person, writing it into their box, which Unison brings to their server. */
-function boxWrite(partner: string, name: string, content: string): void {
-    const file: string = join(dashboardBoxOf(partner), name);
-    if (!writeAllowed(file)) throw new Error(`No writing outside the boxes: ${file}`);
-    mkdirSync(dashboardBoxOf(partner), { recursive: true });
-    writeFileSync(file, content);
+/**
+ * Hands an entry by `ssh` to the reader of a person, never asking for a password.
+ * Gives the exit code, `0` when it took the entry, {@link refusedCode} when it refused it.
+ */
+function sshSend(partner: string, text: string): Promise<number | null> {
+    return new Promise((resolve: (code: number | null) => void): void => {
+        const child: ChildProcess = spawn(
+            "ssh",
+            ["-o", "BatchMode=yes", "-o", `ConnectTimeout=${reachSeconds}`, `nom-${partner.toLowerCase()}`],
+            { stdio: ["pipe", "ignore", "pipe"] },
+        );
+        let told: string = "";
+        child.stderr?.on("data", (chunk: Buffer): void => {
+            told += chunk.toString();
+        });
+        child.stdin?.on("error", (): void => undefined);
+        child.on("error", (error: Error): void => {
+            told += error.message;
+        });
+        child.on("close", (code: number | null): void => {
+            if (code !== 0 && code !== refusedCode && !unreached)
+                console.error(new Date().toISOString(), `${partner} not reached, entries wait:`, told.trim());
+            if (code === refusedCode) console.error(new Date().toISOString(), `${partner} refused an entry`);
+            if (code === 0 && unreached) console.log(new Date().toISOString(), `${partner} reached again`);
+            unreached = code !== 0 && code !== refusedCode;
+            resolve(code);
+        });
+        child.stdin?.end(text);
+    });
 }
 
-/** Shares the copy of an entry with one of us, with me in `With` in place of the person. */
-function copyWrite(entry: Entry, partner: string): void {
+/**
+ * Hands over what waits, the earliest first, stopping while the other cannot be reached.
+ * Runs once at a time, called while it runs it runs again after.
+ */
+function waitingSend(): void {
+    if (sending) {
+        again = true;
+        return;
+    }
+    sending = true;
+    const run: () => Promise<void> = async (): Promise<void> => {
+        do {
+            again = false;
+            while (waiting.length > 0) {
+                const [partner, text]: [string, string] = waiting[0];
+                const code: number | null = await sshSend(partner, text);
+                if (code !== 0 && code !== refusedCode) return;
+                waiting.shift();
+            }
+        } while (again);
+    };
+    run()
+        .catch((error: unknown): void => {
+            console.error(new Date().toISOString(), "Nothing handed over", error);
+        })
+        .finally((): void => {
+            sending = false;
+        });
+}
+
+/** Hands the copy of an entry to one of us, with me in `With` in place of the person. */
+function copySend(entry: Entry, partner: string): void {
     const fields: EntryFields = {
         category: entry.category,
         title: entry.title,
@@ -153,7 +191,8 @@ function copyWrite(entry: Entry, partner: string): void {
     if (entry.cooked !== "") own.push(["x-cooked", entry.cooked]);
     const place: string = labelOf(entry.location).toLowerCase();
     if (roomsRead().some((room: Place): boolean => room.name.toLowerCase() === place)) own.push(["x-room", "TRUE"]);
-    boxWrite(partner, `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`, entryIcsOf(fields, own, entry.id));
+    waiting.push([partner, entryIcsOf(fields, own, entry.id)]);
+    waitingSend();
 }
 
 /** Who an entry is with now, so a change can tell who comes into its `With`. */
@@ -181,7 +220,7 @@ export function entryShare(id: string, before: Attendee[] = []): void {
                 )
                 .filter((partner: string | undefined): partner is string => partner !== undefined),
         );
-        to.forEach((partner: string): void => copyWrite(found[1], partner));
+        to.forEach((partner: string): void => copySend(found[1], partner));
     } catch (error: unknown) {
         console.error(new Date().toISOString(), `No copy of ${id}`, error);
     }
@@ -236,14 +275,13 @@ function entryNewOf(entry: Entry): EntryNew {
 }
 
 /**
- * Takes one shared entry that came,
- * giving whether it is done with, so it goes into my trash.
+ * Takes in an entry the other's reader handed over, giving whether my log took it.
  * An entry the log has by its `UID` goes untaken.
- * An entry the log cannot take stays, told once.
+ * One the log cannot take is told.
  */
-function thingTake(name: string, text: string): boolean {
+export function entryTake(text: string): boolean {
     try {
-        textEntriesRead(text, name)
+        textEntriesRead(text, "shared")
             .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
             .forEach((entry: Entry): void => {
                 entryAdd(entryNewOf(entry), entry.id);
@@ -251,24 +289,14 @@ function thingTake(name: string, text: string): boolean {
             });
         return true;
     } catch (error: unknown) {
-        if (!failed.has(name)) console.error(new Date().toISOString(), `My log cannot take ${name}`, error);
-        failed.add(name);
+        console.error(new Date().toISOString(), "My log cannot take a shared entry", error);
         return false;
     }
 }
 
-/** Takes what waits in my box, the earliest first, each into my trash after. */
-function inboxTake(): void {
-    const box: string = dashboardBoxOf(myName);
-    boxFilesOf(box).forEach((name: string): void => {
-        const file: string = join(box, name);
-        if (thingTake(name, readFileSync(file, "utf8"))) trashPut(file);
-    });
-}
-
 /**
  * Starts sharing as the reader starts,
- * making the boxes and watching mine.
+ * trying again every {@link retrySeconds} while entries wait.
  */
 export function sharedStart(): void {
     if (!sharingIs()) {
@@ -281,15 +309,7 @@ export function sharedStart(): void {
             );
         return;
     }
-    const box: string = dashboardBoxOf(myName);
-    mkdirSync(box, { recursive: true });
-    partnersOf().forEach((partner: string): void => {
-        mkdirSync(dashboardBoxOf(partner), { recursive: true });
-    });
-    inboxTake();
-    let waiting: NodeJS.Timeout | undefined = undefined;
-    watch(box, (): void => {
-        clearTimeout(waiting);
-        waiting = setTimeout(inboxTake, quiet);
-    });
+    setInterval((): void => {
+        if (waiting.length > 0) waitingSend();
+    }, retrySeconds * 1000);
 }
