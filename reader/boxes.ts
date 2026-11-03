@@ -29,7 +29,7 @@
  *   since the `DURATION` of RFC 5545 is the window to do it in.
  * - its state in `STATUS`, `COMPLETED` without the moment, since its log entry holds it.
  * - each push in one `X-PUSHED` with its start and its length as they stood before.
- * - when it got its day in `DTSTAMP`, set anew only with a change of its day or a day over reopened.
+ * - when it got its day in `DTSTAMP`, set anew only with a change of its day.
  * - its other fields as an entry of the log, a skill box also `X-SEMESTER`, `X-CHAPTER`s, `ATTACH`es.
  * An occurrence of a series is a box with the `UID` and its start after `#`.
  * Changed alone, it becomes a component of its own in the file of its series and stays there.
@@ -57,7 +57,6 @@ import {
     pushAdd,
     pushesKeep,
     seriesDayRemove,
-    stampPut,
     statusPut,
     titlePut,
     todoAppend,
@@ -201,19 +200,6 @@ function boxOwn(file: string, entry: Entry): void {
 /** Gives one occurrence back to its series once it holds nothing of its own. */
 function boxTidy(file: string, entry: Entry): void {
     if (entry.recurrence !== "") occurrencesTidy(file, entry.id);
-}
-
-/**
- * Keeps a box of a day over on its day once I take its state back to open,
- * its `DTSTAMP` now, so it stays there missed and is never carried to today.
- *
- * @throws {Error} - When the plan holds no such box or its file lies outside the new system
- */
-export function overKeep(id: string): void {
-    const [file, entry]: [string, Entry] = planEntryFind(id);
-    if (!entry.editable || dayOf(entry) >= berlinDateOf(new Date())) return;
-    boxOwn(file, entry);
-    stampPut(file, id);
 }
 
 /** The day of an entry, of its start in Berlin time. */
@@ -703,7 +689,6 @@ export function boxUniversity(id: string, cancelled: boolean): void {
     const step: number = cancelled ? -1 : 1;
     boxOwn(file, entry);
     propertiesPut(file, id, [["x-number", [entry.group !== "" && !cancelled ? "1" : number]]]);
-    if (!cancelled) overKeep(id);
     if (entry.group !== "") return;
     after.forEach((other: Entry): void => {
         const [otherFile, otherEntry]: [string, Entry] = planEntryFind(entryIdOf(other));
@@ -885,29 +870,26 @@ export function boxBack(id: string, date: string): void {
     if (!found[1].editable || at === -1) throw new Error(`${found[1].title} did not leave ${date}`);
     const [file, entry]: [string, Entry, Box] = boxReturn(found, at);
     boxTidy(file, entry);
-    overKeep(id);
 }
 
 /**
  * Drops a box not done as `STATUS:CANCELLED`, or takes it back.
  * Taken back, a to-do is `NEEDS-ACTION` again, an event without status as it was imported.
- * A box that left a day is dropped on the first day it left, so no day shows it moved.
+ * A box with pushes in its file is dropped on the first day it left, so no day shows it moved.
+ * One only carried along stands there already, so it keeps when it got its day.
  *
  * @throws {Error} - When there is no such box in the new system, or it is done
  */
 export function boxDrop(id: string, dropped: boolean): void {
     const found: [string, Entry, Box] = boxFind(id);
     if (!found[1].editable || found[2].state === "done") throw new Error(`${found[1].title} cannot be dropped`);
-    const [file, entry]: [string, Entry, Box] = dropped && found[2].pushed.length > 0 ? boxReturn(found, 0) : found;
+    const [file, entry]: [string, Entry, Box] = dropped && found[1].pushed.length > 0 ? boxReturn(found, 0) : found;
     let status: string = "";
     if (dropped) status = "CANCELLED";
     else if (entry.todo) status = "NEEDS-ACTION";
     boxOwn(file, entry);
     statusPut(file, id, status);
-    if (!dropped) {
-        boxTidy(file, entry);
-        overKeep(id);
-    }
+    if (!dropped) boxTidy(file, entry);
 }
 
 /**
@@ -962,7 +944,6 @@ export function boxReopen(id: string): void {
     const found: [string, Entry] | undefined = boxLookup(id);
     if (found === undefined || found[1].deadline !== "") return;
     if (found[1].todo && found[1].editable && found[1].status === "COMPLETED") statusPut(found[0], id, "NEEDS-ACTION");
-    overKeep(id);
 }
 
 /**
