@@ -2,17 +2,19 @@
  * ## Shared
  *
  * Shares with Vu, whose dashboard runs on skriptum, an entry of my log with Vu in `With`.
- * Every file we share Unison keeps the same,
+ * Every file we share Unison keeps the same on both our servers,
  * our foods, meals, places, platforms among them.
- * All we share lies only in `NomKommunikation` on my server `sophabohne`, never on Vu's.
+ * Our boxes in `NomKommunikation` it keeps the same as well,
+ * `to_vu/` for Vu and `to_sopha/` for me.
  *
- * My reader never reaches Vu's server.
- * What goes to Vu waits as a file in `NomKommunikation/to_vu/dashboard/`, named by the moment, me and what it is.
- * Vu's reader reaches mine by SSH, its key running nothing but the gate,
- * and every {@link pollSeconds} takes what waits, the earliest first, each into my trash once taken.
+ * What goes to Vu my reader writes as a file into `dashboard/` of Vu's box,
+ * named by the moment, the sender, the kind.
+ * Unison brings it to Vu's server.
+ * There Vu's reader takes it in at once and puts it into the trash,
+ * so Unison takes it away on my server as well.
+ * What Vu shares comes the same way into my box.
+ * No reader ever reaches the other's server.
  * There is no archive.
- * What Vu's reader shares goes at once into my box, where my reader takes it in at once.
- * While my server cannot be reached it waits in the memory of Vu's reader, lost by a restart.
  *
  * An entry goes as a copy to each of us in its `With` as I add it or log a box,
  * and to one who comes into its `With` as I change it, with me in place of the person.
@@ -29,68 +31,39 @@
  * An entry a log cannot take stays in its box, told once.
  */
 
-import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
 import { entryAdd } from "./day.ts";
 import { labelOf, linkForm, placeAdd, placesRead, roomsRead } from "./places.ts";
 import { personNameOf } from "./persons.ts";
-import { dashboardBoxOf, day, holder, myName, partners, writeAllowed } from "./sources.ts";
+import { dashboardBoxOf, day, myName, partners, writeAllowed } from "./sources.ts";
 import { trashPut } from "./trash.ts";
 
-import type { ChildProcess } from "node:child_process";
 import type { Attendee, Entry, EntryFields } from "./calendar.ts";
 import type { EntryNew } from "./day.ts";
 import type { Place } from "./places.ts";
 
-/** A name of a person, as the boxes are named and the gate takes it. */
+/** A name of a person, as the boxes are named. */
 const nameForm: RegExp = /^[A-Za-z][A-Za-z0-9]*$/;
 
 /** Milliseconds of a quiet box before the reader takes from it, so a file and its rename are one. */
 const quiet: number = 300;
 
-/** Seconds `ssh` tries to reach my server, then the thing waits. */
-const reachSeconds: number = 10;
-
-/** Seconds between two takings of Vu's reader. */
-const pollSeconds: number = 60;
-
 /** Milliseconds of the last name, so each name comes later and the other takes them in order. */
 let lastStamp: number = 0;
-
-/** What Vu's reader shares and my server has not taken yet, only in memory, the earliest first. */
-const outbox: [string, string][] = [];
-
-let sending: boolean = false;
-
-/** Whether Vu's reader sends again after it is through, since something came. */
-let again: boolean = false;
-
-let taking: boolean = false;
-
-/** Whether Vu's reader could not reach my server, told once until it reaches it again. */
-let unreached: boolean = false;
 
 /** Names of shared files a log could not take, each told once. */
 const failed: Set<string> = new Set();
 
+/** The people I share with, in {@link nameForm}. */
+function partnersOf(): string[] {
+    return partners.filter((partner: string): boolean => nameForm.test(partner));
+}
+
 /** Tells whether I have a name and someone to share with. */
 function sharingIs(): boolean {
     return nameForm.test(myName) && partnersOf().length > 0;
-}
-
-/** Tells whether this reader runs on my server, which holds our boxes. */
-function holderIs(): boolean {
-    return myName.toLowerCase() === holder.toLowerCase();
-}
-
-/** The people I share with in {@link nameForm}, on Vu's server only me, since Vu's reader shares only with mine. */
-function partnersOf(): string[] {
-    return partners.filter(
-        (partner: string): boolean =>
-            nameForm.test(partner) && (holderIs() || partner.toLowerCase() === holder.toLowerCase()),
-    );
 }
 
 /** The moment a shared thing is named after, later than the one before. */
@@ -142,77 +115,8 @@ function addressOf(name: string): string {
     return `${local}@invalid`;
 }
 
-/**
- * Runs `ssh` from Vu's reader to my server, never asking for a password.
- * Tells once that my server cannot be reached, and once that it can again.
- * Gives what the gate gave, `undefined` when it did not do it.
- */
-function sshRun(words: string[], input: string = ""): Promise<string | undefined> {
-    return new Promise((resolve: (given: string | undefined) => void): void => {
-        const child: ChildProcess = spawn(
-            "ssh",
-            ["-o", "BatchMode=yes", "-o", `ConnectTimeout=${reachSeconds}`, `nom-${holder.toLowerCase()}`, ...words],
-            { stdio: ["pipe", "pipe", "pipe"] },
-        );
-        const given: Buffer[] = [];
-        let told: string = "";
-        child.stdout?.on("data", (chunk: Buffer): void => {
-            given.push(chunk);
-        });
-        child.stderr?.on("data", (chunk: Buffer): void => {
-            told += chunk.toString();
-        });
-        child.stdin?.on("error", (): void => undefined);
-        child.on("error", (error: Error): void => {
-            told += error.message;
-        });
-        child.on("close", (code: number | null): void => {
-            if (code !== 0 && !unreached)
-                console.error(new Date().toISOString(), `${holder} not reached: ${words[0]}`, told.trim());
-            if (code === 0 && unreached) console.log(new Date().toISOString(), `${holder} reached again`);
-            unreached = code !== 0;
-            resolve(code === 0 ? Buffer.concat(given).toString("utf8") : undefined);
-        });
-        child.stdin?.end(input);
-    });
-}
-
-/**
- * Sends {@link outbox} to my server, stopping at the first it does not take.
- * Runs once at a time, called while it runs it runs again after.
- */
-function outboxSend(): void {
-    if (sending) {
-        again = true;
-        return;
-    }
-    sending = true;
-    const run: () => Promise<void> = async (): Promise<void> => {
-        do {
-            again = false;
-            while (outbox.length > 0) {
-                const [name, content]: [string, string] = outbox[0];
-                if ((await sshRun(["share", name], content)) === undefined) return;
-                outbox.shift();
-            }
-        } while (again);
-    };
-    run()
-        .catch((error: unknown): void => {
-            console.error(new Date().toISOString(), `Nothing sent to ${holder}`, error);
-        })
-        .finally((): void => {
-            sending = false;
-        });
-}
-
-/** Shares a file with a person, on my server into their box, on Vu's into {@link outbox}. */
-function outboxWrite(partner: string, name: string, content: string): void {
-    if (!holderIs()) {
-        outbox.push([name, content]);
-        outboxSend();
-        return;
-    }
+/** Shares a file with a person, writing it into their box, which Unison brings to their server. */
+function boxWrite(partner: string, name: string, content: string): void {
     const file: string = join(dashboardBoxOf(partner), name);
     if (!writeAllowed(file)) throw new Error(`No writing outside the boxes: ${file}`);
     mkdirSync(dashboardBoxOf(partner), { recursive: true });
@@ -249,7 +153,7 @@ function copyWrite(entry: Entry, partner: string): void {
     if (entry.cooked !== "") own.push(["x-cooked", entry.cooked]);
     const place: string = labelOf(entry.location).toLowerCase();
     if (roomsRead().some((room: Place): boolean => room.name.toLowerCase() === place)) own.push(["x-room", "TRUE"]);
-    outboxWrite(partner, `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`, entryIcsOf(fields, own, entry.id));
+    boxWrite(partner, `${stampOf()}_${myName}_entry_${keyOf(entry.id)}.ics`, entryIcsOf(fields, own, entry.id));
 }
 
 /** Who an entry is with now, so a change can tell who comes into its `With`. */
@@ -353,45 +257,18 @@ function thingTake(name: string, text: string): boolean {
     }
 }
 
-/**
- * Takes what waits for this reader, the earliest first, each into my trash after.
- * On Vu's server by SSH once at a time, then sends {@link outbox}, since my server is there.
- */
-export function inboxTake(): void {
-    if (!sharingIs()) return;
-    if (holderIs()) {
-        const box: string = dashboardBoxOf(myName);
-        boxFilesOf(box).forEach((name: string): void => {
-            const file: string = join(box, name);
-            if (thingTake(name, readFileSync(file, "utf8"))) trashPut(file);
-        });
-        return;
-    }
-    if (taking) return;
-    taking = true;
-    const run: () => Promise<void> = async (): Promise<void> => {
-        const names: string | undefined = await sshRun(["inbox"]);
-        if (names === undefined) return;
-        for (const name of names.split("\n").filter((one: string): boolean => one !== "")) {
-            const text: string | undefined = await sshRun(["take", name]);
-            if (text === undefined) return;
-            if (thingTake(name, text)) await sshRun(["done", name]);
-        }
-        outboxSend();
-    };
-    run()
-        .catch((error: unknown): void => {
-            console.error(new Date().toISOString(), `Nothing taken from ${holder}`, error);
-        })
-        .finally((): void => {
-            taking = false;
-        });
+/** Takes what waits in my box, the earliest first, each into my trash after. */
+function inboxTake(): void {
+    const box: string = dashboardBoxOf(myName);
+    boxFilesOf(box).forEach((name: string): void => {
+        const file: string = join(box, name);
+        if (thingTake(name, readFileSync(file, "utf8"))) trashPut(file);
+    });
 }
 
 /**
- * Starts sharing as the reader starts.
- * On my server makes the boxes and watches mine.
- * On Vu's server takes what waits on mine, again every {@link pollSeconds}.
+ * Starts sharing as the reader starts,
+ * making the boxes and watching mine.
  */
 export function sharedStart(): void {
     if (!sharingIs()) {
@@ -402,11 +279,6 @@ export function sharedStart(): void {
                     nameForm
                 }: ${myName}, ${partners.join(", ")}`,
             );
-        return;
-    }
-    if (!holderIs()) {
-        inboxTake();
-        setInterval(inboxTake, pollSeconds * 1000);
         return;
     }
     const box: string = dashboardBoxOf(myName);

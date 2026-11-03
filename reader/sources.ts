@@ -77,20 +77,14 @@ export const systemRoots: string[] = [calendarRoot, dataRoot, universityRoot, in
 
 /**
  * Folder `NomKommunikation`, the mailbox between Vu and me.
- * Only the server of {@link holder} has it, no other server ever makes or writes it.
+ * Unison keeps its boxes the same on both our servers.
  */
 export const kommunikationRoot: string = join(vault, "NomKommunikation");
-
-/** The one of us whose server holds {@link kommunikationRoot}, as written in `With`. */
-export const holder: string = "Sopha";
 
 /** My name as written in `With`, `NOM_NAME`, empty when unset and then the reader shares nothing. */
 export const myName: string = process.env.NOM_NAME?.trim() ?? "";
 
-/**
- * The people I share with, `NOM_PARTNERS` parted by commas, never me.
- * One who is not {@link holder} reaches the holder by the SSH host `nom-` and the name in small letters.
- */
+/** The people I share with, `NOM_PARTNERS` parted by commas, never me. */
 export const partners: string[] = (process.env.NOM_PARTNERS ?? "")
     .split(",")
     .map((name: string): string => name.trim())
@@ -283,7 +277,7 @@ export function skillFileOf(name: string, ending: string): string {
 /**
  * Tells whether the reader may write a file.
  * Inside `NomManageplannings` but my old system and the hidden files and folders right in it.
- * On the server of {@link holder} also inside `dashboard/` of a box, never beside our messages.
+ * Also inside `dashboard/` of a box, never beside our messages.
  * {@link resolve} takes out `..`, so no path leaves the folders.
  */
 export function writeAllowed(file: string): boolean {
@@ -293,10 +287,7 @@ export function writeAllowed(file: string): boolean {
     const box: string[] = relative(resolve(kommunikationRoot), path).split(sep);
     return (
         (path.startsWith(root) && top !== previousName && !top.startsWith(".")) ||
-        (myName.toLowerCase() === holder.toLowerCase() &&
-            /^to_\w+$/.test(box[0]) &&
-            box[1] === "dashboard" &&
-            box.length > 2)
+        (/^to_\w+$/.test(box[0]) && box[1] === "dashboard" && box.length > 2)
     );
 }
 
