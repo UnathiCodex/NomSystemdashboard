@@ -361,8 +361,8 @@ export function menuRead(): MenuModule[] {
 
 /**
  * The folder of a semester in each folder of material of a module, by type, also while empty.
- * Of two of one type, like `LMU_2026W` beside `TUM_2026W`, the first by name.
- * Every other type of {@link materialFolders} gets the folder a click makes, `TUM_` and the semester.
+ * Of two of one type, like `2025W_Hausuebung` beside `2025W_Praesenzuebung`, the first by name.
+ * Every other type of {@link materialFolders} gets the folder a click makes, named by the semester.
  *
  * @returns Folders by type, each from the module folder, and whether it is there
  */
@@ -384,7 +384,7 @@ export function semesterFoldersRead(module: string, semester: string): { [type: 
             folders[type] = { path: `${material}/${inner}`, exists: true };
     });
     Object.entries(materialFoldersOf(module)).forEach(([type, material]: [string, string]): void => {
-        folders[type] ??= { path: `${material}/TUM_${semester}`, exists: false };
+        folders[type] ??= { path: `${material}/${semester}`, exists: false };
     });
     return folders;
 }
