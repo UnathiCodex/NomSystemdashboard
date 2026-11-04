@@ -6,7 +6,7 @@
  *
  * My reader hands the entry by SSH to Vu's reader,
  * by the SSH host `nom-` and the name in small letters.
- * There my key runs nothing but `curl`,
+ * There it starts `curl`,
  * which gives the entry to `/api/shared/entry` of Vu's reader.
  * Vu's reader hands its entries to mine the same way.
  * No file holds an entry on the way.
@@ -50,6 +50,9 @@ const reachSeconds: number = 10;
 
 /** Seconds between two tries while the other cannot be reached. */
 const retrySeconds: number = 60;
+
+/** What `ssh` starts on the other's server, `curl` giving the entry to the other's reader. */
+const handCommand: string = "curl -fsS --data-binary @- http://127.0.0.1:3000/api/shared/entry";
 
 /** Exit code of `curl -f` when the other's reader refused the entry. */
 const refusedCode: number = 22;
@@ -110,7 +113,14 @@ function sshSend(partner: string, text: string): Promise<number | null> {
     return new Promise((resolve: (code: number | null) => void): void => {
         const child: ChildProcess = spawn(
             "ssh",
-            ["-o", "BatchMode=yes", "-o", `ConnectTimeout=${reachSeconds}`, `nom-${partner.toLowerCase()}`],
+            [
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                `ConnectTimeout=${reachSeconds}`,
+                `nom-${partner.toLowerCase()}`,
+                handCommand,
+            ],
             { stdio: ["pipe", "ignore", "pipe"] },
         );
         let told: string = "";
