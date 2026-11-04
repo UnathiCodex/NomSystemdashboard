@@ -23,7 +23,7 @@ import { categoriesStart, entryOpen, entryOpenEdit, entryOpenNow } from "./categ
 import { boxesAgain, boxesSee, boxesStart, boxReceive, entryPartOf, shownWhatOf, whatOf } from "./boxes.ts";
 import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
-import { shareStart } from "./share.ts";
+import { changeAsk, shareStart } from "./share.ts";
 import { searchStart } from "./search.ts";
 import { storyShow, storyStart } from "./story.ts";
 import { swipeStart } from "./swipe.ts";
@@ -62,6 +62,7 @@ import type {
     EventResizeStartInfo,
     EventSourceInput,
 } from "fullcalendar";
+import type { Attendee } from "../../reader/calendar.ts";
 
 /**
  * Minutes one line of a taller entry fills, a line of 1.015625rem in half an hour of 2.05rem.
@@ -165,6 +166,12 @@ let turning: { id: string; days: number } | null = null;
 /** Whether the day was to load anew while a dialog was open, so it loads once it closes. */
 let missed: boolean = false;
 
+/** Asks after a moved entry whether its new times go to the people I share it with, see `share.ts`. */
+function moveShare(entry: EventApi): void {
+    const people: Attendee[] = entry.extendedProps.attendees ?? [];
+    changeAsk(entry.id, people, people).catch((error: unknown): void => console.error(error));
+}
+
 /**
  * Writes the new times of a dragged entry into its file, puts it back when the reader refuses.
  * A drop that turns it to another day is taken back, since the entry moves to that day instead.
@@ -176,10 +183,12 @@ function entryDrag(calendar: Calendar, info: EventChangeInfo): void {
         info.revert();
         return;
     }
-    entryMove(entry.id, entry.start as Date, entry.end as Date).catch((error: unknown): void => {
-        console.error(error);
-        info.revert();
-    });
+    entryMove(entry.id, entry.start as Date, entry.end as Date)
+        .then((): void => moveShare(entry))
+        .catch((error: unknown): void => {
+            console.error(error);
+            info.revert();
+        });
 }
 
 /** Whether a point of the screen lies in an element, never for one not shown. */
@@ -256,7 +265,10 @@ function entryTurn(calendar: Calendar, info: EventDragStopInfo): void {
     end.setDate(end.getDate() + days);
     turning = { id: entry.id, days: days };
     entryMove(entry.id, start, end)
-        .then((): void => calendar.incrementDate({ days: days }))
+        .then((): void => {
+            calendar.incrementDate({ days: days });
+            moveShare(entry);
+        })
         .catch((error: unknown): void => console.error(error));
 }
 
