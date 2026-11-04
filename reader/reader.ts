@@ -65,7 +65,7 @@ import { skillAdd } from "./skills.ts";
 import { noteWrite } from "./edit.ts";
 import { systemFileRead, systemFileWrite, treeRead } from "./files.ts";
 import { attemptAdd, roundAdd, moduleRead, sessionRead, skillEntryAdd, skillEntryEdit, skillingRead } from "./skill.ts";
-import { linksCheckStart } from "./documents.ts";
+import { linksCheckStart, skillFolderOf } from "./documents.ts";
 import { suggestionsWrite } from "./suggestions.ts";
 import {
     dishAdd,
@@ -185,7 +185,7 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `PATCH /api/day/log`, `PATCH /api/skill/entry`: Refused with 409 when its file changed since the dialog opened.
  * - `POST /api/day/moved`: Every other field as its file holds it.
  * - `DELETE /api/day/boxes`: Of one day of a series that day alone.
- * - `POST /api/day/boxes`: Numbers the boxes of its type anew, a tutorial by its week.
+ * - `POST /api/day/boxes`: Numbers the boxes of its type of a module anew, a tutorial by its week.
  * - `POST /api/day/repeat`: Refused with 409 for a type that has a box in its semester already.
  * - `dry: true` in a body: Only checks, writing nothing, for the preview of the dialog.
  * - `POST /api/day/undone`: Removes the log entry of the box unless it holds what I added since.
@@ -264,7 +264,7 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
     } else if (request.method === "POST" && url.pathname === "/api/day/boxes") {
         const id: string = boxAdd((await json(request)) as BoxNew);
         const box: Box = boxFind(id)[2];
-        if (box.module !== "" && box.type !== "")
+        if (box.type !== "" && skillFolderOf(box.module) !== undefined)
             numbersRenew(box.module, box.type, box.semester || semesterOf(box.day));
         responseSend(response, 200, id);
     } else if (request.method === "PATCH" && url.pathname === "/api/day/boxes") {

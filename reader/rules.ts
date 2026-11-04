@@ -42,7 +42,7 @@ import {
     weekdayOf,
 } from "./calendar.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
-import { titleOf } from "./documents.ts";
+import { skillTypeAllows, titleOf } from "./documents.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
 import { day, vaultPathOf } from "./sources.ts";
 import { trashPut } from "./trash.ts";
@@ -681,6 +681,8 @@ export function plainApply(change: PlainChange): Planned[] {
     if (change.gone === true) return plainGone(change.id, change.dry);
     plainCheck(change);
     const old: Plain | null = change.id === "" ? null : partRead(change.id, "");
+    if (change.category === skillName && !skillTypeAllows(change.module, change.type, old?.type ?? ""))
+        throw new Error(`${change.title}: no type ${change.type} of ${change.module}`);
     const today: string = berlinDateOf(new Date());
     if (old === null) {
         if (!change.dry) seriesKeyPut(plainAdd(change, change.sibling ?? ""), change.series);

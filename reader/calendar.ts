@@ -378,11 +378,12 @@ function linesOf(component: ICAL.Component): string[] {
 export const skillName: string = "Skill";
 
 /**
- * The skill and type of a skill entry from its `SUMMARY`,
+ * The skill and type of a skill entry from its `SUMMARY`, also of a row of `Skills.md` from its name,
  * a module by its code, the part before the first `_`, a project by its name.
+ * Its type is one word of letters and digits in round brackets at its end.
  */
-function skillPartsOf(summary: string): [string, string] {
-    const parts: RegExpExecArray | null = /^(.*?)\s*(?:\(([A-Z]{2})\))?$/.exec(summary.trim());
+export function skillPartsOf(summary: string): [string, string] {
+    const parts: RegExpExecArray | null = /^(.*?)\s*(?:\(([\p{L}\p{N}]+)\))?$/u.exec(summary.trim());
     const name: string = parts?.[1] ?? "";
     return [moduleName.test(name) ? name.split("_")[0] : name, parts?.[2] ?? ""];
 }
@@ -916,16 +917,16 @@ export function componentsSorted(lines: string[], module: boolean): string[] {
 
 /**
  * A summary of an entry of a file.
- * `index` is that of its line `SUMMARY`, `base` the summary without its round brackets.
+ * `index` is that of its line `SUMMARY`, `summary` the whole, its round brackets too, which a link is shared by.
  */
 type Summed = {
     index: number;
     category: string;
-    base: string;
+    summary: string;
     link: string;
 };
 
-/** A summary without what stands in round brackets at its end, which a link is shared by. */
+/** A summary without what stands in round brackets at its end. */
 export function summaryBaseOf(summary: string): string {
     return summary.replace(/\s*\([^()]*\)\s*$/, "").trim();
 }
@@ -946,13 +947,33 @@ function summariesOf(lines: string[]): Summed[] {
             found.push({
                 index: index,
                 category: category,
-                base: summaryBaseOf(String(property.getFirstValue() ?? "")),
+                summary: String(property.getFirstValue() ?? "").trim(),
                 link: String(property.getParameter("altrep") ?? ""),
             });
         }
         if (line.startsWith("END:")) depth--;
     });
     return found;
+}
+
+/** The summaries of a file as read, with its time of change then. */
+type SummariesRead = {
+    modified: number;
+    summaries: Summed[];
+};
+
+/** Read summaries by their file path, so a link is looked up again only in a file changed since. */
+const summariesKept: Map<string, SummariesRead> = new Map();
+
+/** The summaries of the entries of a file, read again only when the file changed on disk. */
+function summariesRead(file: string): Summed[] {
+    const modified: number = statSync(file).mtimeMs;
+    const known: SummariesRead | undefined = summariesKept.get(file);
+    if (known?.modified === modified) return known.summaries;
+
+    const summaries: Summed[] = summariesOf(linesRead(file).lines);
+    summariesKept.set(file, { modified: modified, summaries: summaries });
+    return summaries;
 }
 
 /** Every `.ics` file of plan and log. */
@@ -962,14 +983,17 @@ function calendarFilesOf(): string[] {
         .map((path: string): string => join(calendarRoot, path));
 }
 
-/** The link every entry of a category with the same summary shares, never that of a platform online. */
+/**
+ * The link every entry of a category with the same summary shares, its round brackets too,
+ * never that of a platform online.
+ */
 export function sharedLinkOf(category: string, summary: string): string | undefined {
-    const base: string = summaryBaseOf(summary);
+    const whole: string = summary.trim();
     for (const file of calendarFilesOf()) {
-        const found: Summed | undefined = summariesOf(linesRead(file).lines).find(
+        const found: Summed | undefined = summariesRead(file).find(
             (summed: Summed): boolean =>
                 summed.category === category &&
-                summed.base === base &&
+                summed.summary === whole &&
                 summed.link !== "" &&
                 !platformLinkIs(summed.link),
         );
@@ -980,8 +1004,8 @@ export function sharedLinkOf(category: string, summary: string): string | undefi
 
 /**
  * Writes lines into an `.ics` file, its entries in their order, every line folded.
- * A summary written anew with a link gives it to every entry of its category with the same base,
- * so one summary has one link everywhere, beyond the calendars too.
+ * A summary written anew with a link gives it to every entry of its category with the same summary,
+ * its round brackets too, so one summary has one link everywhere, beyond the calendars too.
  * The link of a platform online is never given.
  *
  * @param spread - Whether it spreads a link, not for the files a spread writes, so they spread it no further
@@ -1010,7 +1034,7 @@ function linesWrite(file: string, text: FileLines, spread: boolean = true): void
     if (changed.length === 0) return;
     changed.forEach((summed: Summed): void =>
         linkFollowers.forEach((follower: (category: string, summary: string, link: string) => void): void =>
-            follower(summed.category, summed.base, summed.link),
+            follower(summed.category, summed.summary, summed.link),
         ),
     );
     calendarFilesOf().forEach((path: string): void => linkSpread(path, changed));
@@ -1023,7 +1047,7 @@ function linkSpread(file: string, changed: Summed[]): void {
     let spread: boolean = false;
     summariesOf(text.lines).forEach((summed: Summed): void => {
         const rule: Summed | undefined = changed.find(
-            (one: Summed): boolean => one.category === summed.category && one.base === summed.base,
+            (one: Summed): boolean => one.category === summed.category && one.summary === summed.summary,
         );
         if (rule === undefined || rule.link === summed.link) return;
         const property: ICAL.Property = ICAL.Property.fromString(text.lines[summed.index]);
@@ -1043,7 +1067,7 @@ export function writtenFollow(follower: (module: string, kinds: [string, string]
 }
 
 /**
- * Takes what runs each time a summary is written anew with a link, given its base.
+ * Takes what runs each time a summary is written anew with a link, given the whole summary.
  * It registers itself, since its file reads this one and this one may not read it in turn.
  */
 export function linkFollow(follower: (category: string, summary: string, link: string) => void): void {

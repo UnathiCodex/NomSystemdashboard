@@ -63,7 +63,7 @@ import {
     todoChange,
 } from "./calendar.ts";
 import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./categories.ts";
-import { calendarFileOf, chaptersOf, linksOf, titleOf } from "./documents.ts";
+import { calendarFileOf, chaptersOf, linksOf, skillTypeAllows, titleOf } from "./documents.ts";
 import { moduleContentsRead, moduleFolderOf } from "./notes.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
 import { day, planEnding } from "./sources.ts";
@@ -507,6 +507,7 @@ export function boxOpenFind(id: string): Box {
 
 /**
  * Checks a box before it is written, its fields fit its category or keep what the box was.
+ * A skill box has a type its skill offers, else the one it had, else none.
  * The chapters of a skill box lie among those of its module or those it had.
  *
  * @param old - The box as it was, `null` for a new one
@@ -519,6 +520,8 @@ function boxCheck(box: BoxNew, old: Entry | null): void {
         attendeesAllow(box.attendees ?? []);
     dateCheck(box.day);
     if (!(kept || categoryAllows(box))) throw new Error(`No box ${box.category} ${box.title}`);
+    if (box.category === skillName && !skillTypeAllows(box.module, box.type, old?.type ?? ""))
+        throw new Error(`No type ${box.type} of ${box.module}`);
     if (box.time !== "" && berlinDateOf(new Date(box.time)) !== box.day)
         throw new Error(`${box.title}: its time lies on another day than ${box.day}`);
     if (box.minutes !== null && !(Number.isInteger(box.minutes) && box.minutes > 0 && box.minutes <= dayMinutes))

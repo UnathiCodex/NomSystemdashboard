@@ -2,7 +2,9 @@
  * ## Skill in the entry by category
  *
  * A skill entry in the dialog, for a box of the plan and the log alike.
- * Below the category skill and type side by side, no type for a skill without module folder.
+ * Below the category skill and type side by side, a module with its fixed types,
+ * any other skill with the types of its rows of `Skills.md`, a type typed there added as a row `Name (Type)`.
+ * Each skill and type has its own link, a type without one that of its skill.
  * Its semester says from which semester the lecture or the material is, not when I did it.
  * It follows the day of the dialog until I pick another, never typed.
  * The Skill list searches every module folder too, since I sometimes attend another module.
@@ -120,8 +122,8 @@ let skilling: Skilling = {
     otherModules: [],
     names: {},
     paths: {},
+    types: {},
     links: {},
-    types: [],
 };
 
 /**
@@ -211,12 +213,26 @@ function documentPathsOf(links: Link[]): string[] {
     });
 }
 
-/** Link of the skill picked, one for all its entries and boxes, whatever their type. */
-export function skillPathOf(): string {
-    return skilling.links[picks.module] ?? "";
+/** Link of a skill and type, of a type without one that of its skill. */
+function linkOf(module: string, type: string): string {
+    const links: { [type: string]: string } = skilling.links[module] ?? {};
+    return links[type] ?? links[""] ?? "";
 }
 
-/** Whether a skill has its folder in `NomSkillingmodules`, the only skills with types. */
+/** Link of the skill and type picked. */
+export function skillPathOf(): string {
+    return linkOf(picks.module, picks.type);
+}
+
+/** Types a skill offers, those of a skill not offered none. */
+function typesOf(module: string): string[] {
+    return skilling.types[module] ?? [];
+}
+
+/**
+ * Whether a skill has its folder in `NomSkillingmodules`.
+ * Only such a skill has fixed types, each with its material folder.
+ */
 function moduleIs(code: string): boolean {
     return (skilling.paths[code] ?? "").startsWith(`${modulesFolder}/`);
 }
@@ -281,7 +297,8 @@ function moduleSearchOf(current: string): (text: string) => Promise<Choice[]> {
  * umlauts written out, other accents gone, a word all in capitals as one.
  * Any other text stays as typed.
  *
- * @returns `null` for empty, `|`, `/` or `\`, a leading `.`, a code alone or a code the list has
+ * @returns `null` for empty, `|`, `/`, `\`, round brackets, which only a type takes,
+ *   a leading `.`, a code alone, a code the list has
  */
 function skillNewNameOf(text: string): string | null {
     const typed: string = text.trim().replace(/\s+/g, " ");
@@ -297,7 +314,7 @@ function skillNewNameOf(text: string): string | null {
             const letters: string = word === word.toUpperCase() ? word.toLowerCase() : word;
             return letters[0].toUpperCase() + letters.slice(1);
         });
-    if (typed === "" || /[|/\\]/.test(typed) || typed.startsWith(".") || moduleCode.test(typed.toUpperCase()))
+    if (typed === "" || /[|/\\()]/.test(typed) || typed.startsWith(".") || moduleCode.test(typed.toUpperCase()))
         return null;
     if (!moduleCode.test(code) || words.length === 0) return typed;
     return skilling.names[code] === undefined ? `${code}_${words.join("")}` : null;
@@ -321,9 +338,34 @@ async function skillAdd(text: string): Promise<string | null> {
         ...skilling,
         skills: [...skilling.skills, code],
         names: { ...skilling.names, [code]: name },
-        links: { ...skilling.links, [code]: "" },
+        types: { ...skilling.types, [code]: [] },
+        links: { ...skilling.links, [code]: { "": "" } },
     };
     return code;
+}
+
+/** A new type typed in the list of types, one word the skill has not yet, never `None`. */
+function typeNewOf(module: string, text: string): string | null {
+    const typed: string = text.trim();
+    return /^[\p{L}\p{N}]+$/u.test(typed) && typed !== noType && !typesOf(module).includes(typed) ? typed : null;
+}
+
+/**
+ * Adds a new type to a skill that is no module as a row `Name (Type)` of `Skills.md` without link,
+ * and to its list, so it is picked at once.
+ *
+ * @returns The new type, `null` for a text that makes none
+ * @throws {Error} - When the reader does not add it
+ */
+async function typeAdd(module: string, text: string): Promise<string | null> {
+    const type: string | null = typeNewOf(module, text);
+    if (type === null) return null;
+    await readerAsk<string>("/api/skill/skills", {
+        method: "POST",
+        body: JSON.stringify({ name: `${skillNameOf(module)} (${type})` }),
+    });
+    skilling = { ...skilling, types: { ...skilling.types, [module]: [...typesOf(module), type] } };
+    return type;
 }
 
 /** Semester of the entry, the one picked, else the semester of a day. */
@@ -376,10 +418,10 @@ function chapterOfDocument(path: string): string {
 
 /**
  * Documents a list `Attach` offers, for my own learning the notes of a chapter,
- * for a type the files of its material folder `<type>_` in the semester of the entry.
+ * for a type of a module the files of its material folder `<type>_` in the semester of the entry.
  */
 function documentsOfferedOf(chapter: string): string[] {
-    const folder: string = skilling.types.includes(picks.type) ? `${picks.type}_` : "";
+    const folder: string = moduleIs(picks.module) && picks.type !== "" ? `${picks.type}_` : "";
     const semester: string = skillSemesterOf(semesterDay);
     return contents.documents
         .filter((path: string): boolean =>
@@ -808,13 +850,26 @@ function skillPickerOf(
     });
 }
 
-/** List of the type beside the skill, a plus while none is picked. */
-function typePickerOf(type: string, aside: HTMLElement[] | undefined, pick: (type: string) => void): HTMLElement {
+/**
+ * List of the type beside the skill, a plus while none is picked.
+ * A module offers its fixed types, any other skill those of its rows, which a type typed adds to.
+ */
+function typePickerOf(
+    module: string,
+    type: string,
+    aside: HTMLElement[] | undefined,
+    pick: (type: string) => void,
+): HTMLElement {
     return choicesOf({
-        search: searchOf([noType, ...skilling.types].map(choiceOf)),
+        search: searchOf([noType, ...typesOf(module)].map(choiceOf)),
         picked: type === "" ? [] : [type],
         many: false,
-        adding: false,
+        adding: !moduleIs(module),
+        add: (text: string): Promise<string | null> => typeAdd(module, text),
+        newTextOf: (text: string): string | null => {
+            const typed: string | null = typeNewOf(module, text);
+            return typed === null ? null : `New type ${typed}`;
+        },
         noun: "type",
         empty: "Add a type",
         plus: true,
@@ -833,24 +888,26 @@ function picksShow(shown: SkillShown): void {
         shown.changed();
     };
 
-    if (!moduleIs(picks.module)) picks.type = "";
+    if (picks.module === "") picks.type = "";
     const skill: HTMLElement = skillPickerOf(
         picks.module,
         shown.summary.slice(1),
-        moduleIs(picks.module) ? [] : shown.summary.slice(0, 1),
+        picks.module === "" ? shown.summary.slice(0, 1) : [],
         (values: string[]): void => {
-            picks = picksOf({ ...picks, module: values[0] ?? "", chapters: [] });
+            const module: string = values[0] ?? "";
+            const type: string = typesOf(module).includes(picks.type) ? picks.type : "";
+            picks = picksOf({ ...picks, module: module, type: type, chapters: [] });
             contentsLoad().then(again).catch(console.error);
         },
     );
     shown.head.replaceChildren(
         rowOf(
             "Summary",
-            !moduleIs(picks.module)
+            picks.module === ""
                 ? skill
                 : pairOf(
                       skill,
-                      typePickerOf(picks.type, shown.summary.slice(0, 1), (type: string): void => {
+                      typePickerOf(picks.module, picks.type, shown.summary.slice(0, 1), (type: string): void => {
                           picks.type = type;
                           again();
                       }),
@@ -876,7 +933,7 @@ function picksShow(shown: SkillShown): void {
 }
 
 /**
- * Skill and type side by side for the dialog of a new series, the folder link below the skill.
+ * Skill and type side by side for the dialog of a new series, the link of both below the skill.
  * What is picked goes to that form, never to the dialog of an entry.
  *
  * @throws {Error} - When the reader cannot answer
@@ -896,19 +953,20 @@ export async function skillPairOf(picked: ModuleType, pick: (picked: ModuleType)
         picked.module,
         picked.module === "" ? [] : [link],
         undefined,
-        (values: string[]): void =>
-            again({
-                ...picked,
-                module: values[0] ?? "",
-                type: moduleIs(values[0] ?? "") ? picked.type : "",
-            }),
+        (values: string[]): void => {
+            const module: string = values[0] ?? "";
+            again({ ...picked, module: module, type: typesOf(module).includes(picked.type) ? picked.type : "" });
+        },
     );
-    const pair: HTMLElement = !moduleIs(picked.module)
-        ? skill
-        : pairOf(
-              skill,
-              typePickerOf(picked.type, undefined, (type: string): void => again({ ...picked, type: type })),
-          );
+    const pair: HTMLElement =
+        picked.module === ""
+            ? skill
+            : pairOf(
+                  skill,
+                  typePickerOf(picked.module, picked.type, undefined, (type: string): void =>
+                      again({ ...picked, type: type }),
+                  ),
+              );
     return pair;
 }
 
@@ -922,7 +980,7 @@ export function skillNamesOf(picked: ModuleType): {
     if (name === "") return { title: "", link: "", file: "" };
     return {
         title: picked.type === "" ? name : `${name} (${picked.type})`,
-        link: skilling.links[picked.module] ?? skilling.paths[picked.module] ?? "",
+        link: linkOf(picked.module, picked.type),
         file:
             "NomManageplannings/NomManagecalendar/" +
             `${moduleName.test(name) ? "Modules" : "Skilling"}/${name}_Plan.ics`,

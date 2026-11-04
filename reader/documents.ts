@@ -29,13 +29,16 @@ import {
     propertiesPut,
     sharedLinkOf,
     skillName,
+    summaryBaseOf,
 } from "./calendar.ts";
+import { skillTypes } from "./categories.ts";
 import { activeModulesRead, chapterNameOf, codeOf, moduleContentsRead, moduleFolderOf } from "./notes.ts";
-import { skillRowOf } from "./skills.ts";
+import { skillRowOf, skillRowsRead, skillTypesRead } from "./skills.ts";
 import { moduleIs, modulesFolder, skillFileOf, skillLog, vault, topicFileOf } from "./sources.ts";
 
 import type { Stats } from "node:fs";
 import type { Entry, EntryFields, Link } from "./calendar.ts";
+import type { SkillRow } from "./skills.ts";
 
 /** A fingerprint with the size and time of change of its file then. */
 type Fingerprint = {
@@ -101,17 +104,37 @@ export function skillTitleOf(code: string, type: string): string {
     return name === "" ? `(${type})` : `${name} (${type})`;
 }
 
-/** The link of a skill, of its row of `Skills.md`, else the one its entries share, else its folder. */
-export function skillLinkOf(code: string): string {
-    const entered: string = skillRowOf(code)?.link ?? "";
+/**
+ * The types a skill offers, of a module the fixed {@link skillTypes}, else those of its rows.
+ * Without skill the fixed ones too, since an older entry may have a type alone.
+ */
+export function skillTypesOf(code: string): string[] {
+    return code === "" || skillFolderOf(code) !== undefined ? skillTypes : skillTypesRead(code);
+}
+
+/** Whether a skill entry or box has a type its skill offers, else the one it had, else none. */
+export function skillTypeAllows(code: string, type: string, had: string): boolean {
+    return type === "" || type === had || skillTypesOf(code).includes(type);
+}
+
+/**
+ * The link of a skill and type, of its row of `Skills.md`, else the one its entries share,
+ * else for a type the link of its skill, else the folder of its skill.
+ */
+export function skillLinkOf(code: string, type: string): string {
+    const title: string = skillTitleOf(code, type);
+    const entered: string = skillRowsRead().find((row: SkillRow): boolean => row.name === title)?.link ?? "";
     if (entered !== "") return entered;
-    return sharedLinkOf(skillName, skillTitleOf(code, "")) ?? skillFolderOf(code) ?? "";
+    const shared: string | undefined = sharedLinkOf(skillName, title);
+    if (shared !== undefined) return shared;
+    return type === "" ? (skillFolderOf(code) ?? "") : skillLinkOf(code, "");
 }
 
 /**
  * The `SUMMARY` and `ALTREP` of an entry, a skill entry named by its skill and type.
  * The link as typed on one line, a sender that knows none keeping the one of the same what.
- * Without one, a skill entry links its skill.
+ * A skill entry without one takes the link of its skill and type.
+ * Any other the link its summary shares, with round brackets else that of the name before them.
  */
 export function titleOf(
     fields: {
@@ -129,8 +152,10 @@ export function titleOf(
         .replace(/[\r\n]+/g, " ")
         .trim();
     if (link !== "") return [title, link];
-    if (fields.category === skillName) return [title, skillLinkOf(fields.module)];
-    return [title, sharedLinkOf(fields.category, title) ?? ""];
+    if (fields.category === skillName) return [title, skillLinkOf(fields.module, fields.type)];
+    const base: string = summaryBaseOf(title);
+    const shared: string | undefined = sharedLinkOf(fields.category, title);
+    return [title, shared ?? (base === title ? "" : (sharedLinkOf(fields.category, base) ?? ""))];
 }
 
 /**
