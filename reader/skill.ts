@@ -51,7 +51,7 @@ import {
     propertiesPut,
     roundPropertyOf,
 } from "./calendar.ts";
-import { attendeesAllow, semesterFor, skillName, skillTypes } from "./categories.ts";
+import { attendeesAllow, semesterFor, skillName } from "./categories.ts";
 import { logFileOf } from "./day.ts";
 import {
     chaptersOf,
@@ -60,6 +60,8 @@ import {
     skillFolderOf,
     skillLinkOf,
     skillTitleOf,
+    skillTypeAllows,
+    skillTypesOf,
     titleOf,
 } from "./documents.ts";
 import { codeOf, fileRead, moduleContentsRead, moduleFoldersRead, modulesRead } from "./notes.ts";
@@ -209,7 +211,7 @@ export type SkillModule = {
 
 /**
  * All of my tasks and skills, `skills` those of the semester, `otherModules` every other module.
- * Of each its name, the folder of its module and its link.
+ * Of each its name, the folder of its module, the types it offers, its link by type, `""` the one of no type.
  */
 export type Skilling = {
     modules: SkillModule[];
@@ -217,8 +219,8 @@ export type Skilling = {
     otherModules: string[];
     names: { [name: string]: string };
     paths: { [name: string]: string };
-    links: { [name: string]: string };
-    types: string[];
+    types: { [name: string]: string[] };
+    links: { [name: string]: { [type: string]: string } };
 };
 
 /** A new attempt, an Example only ever `right`, a comment only with `wrong`. */
@@ -734,18 +736,22 @@ export function skillingRead(): Skilling {
     const others: string[] = moduleFoldersRead()
         .map(codeOf)
         .filter((code: string): boolean => !skills.includes(code));
-    const byName: (valueOf: (name: string) => string) => { [name: string]: string } = (
-        valueOf: (name: string) => string,
-    ): { [name: string]: string } =>
-        Object.fromEntries([...skills, ...others].map((name: string): [string, string] => [name, valueOf(name)]));
+    const byName: <Value>(valueOf: (name: string) => Value) => { [name: string]: Value } = <Value>(
+        valueOf: (name: string) => Value,
+    ): { [name: string]: Value } =>
+        Object.fromEntries([...skills, ...others].map((name: string): [string, Value] => [name, valueOf(name)]));
     return {
         modules: modules,
         skills: skills,
         otherModules: others,
         names: byName((name: string): string => skillTitleOf(name, "")),
         paths: byName((name: string): string => skillFolderOf(name) ?? ""),
-        links: byName(skillLinkOf),
-        types: skillTypes,
+        types: byName(skillTypesOf),
+        links: byName((name: string): { [type: string]: string } =>
+            Object.fromEntries(
+                ["", ...skillTypesOf(name)].map((type: string): [string, string] => [type, skillLinkOf(name, type)]),
+            ),
+        ),
     };
 }
 
@@ -1077,8 +1083,8 @@ function chaptersWith(chapters: string[], worked: string[], tasks: Task[]): stri
  * @throws {Error} - When it or its people or times are not right
  */
 function skillEntryCheck(entry: SkillEntryNew, kept: string[], keptType: string): void {
-    if (entry.type !== "" && entry.type !== keptType && !skillTypes.includes(entry.type))
-        throw new Error(`No type ${entry.type}`);
+    if (!skillTypeAllows(entry.module, entry.type, keptType))
+        throw new Error(`No type ${entry.type} of ${entry.module}`);
     const offered: string[] = entry.module === "" ? [] : moduleRead(entry.module).chapters;
     const unknown: string | undefined = entry.chapters.find(
         (chapter: string): boolean => !offered.includes(chapter) && !kept.includes(chapter),

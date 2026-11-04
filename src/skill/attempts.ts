@@ -95,7 +95,8 @@ export type SkillModule = {
  * - `otherModules`: The other module folders by their codes, for the search.
  * - `names`: The name of each, which names its entries, its plan and its log.
  * - `paths`: The folder of each from `NomWorkspace`, empty for a skill without one.
- * - `links`: The link of each, one for all its entries and boxes, empty while I entered none.
+ * - `types`: The types each offers, a module the fixed ones, any other skill those of its rows of `Skills.md`.
+ * - `links`: The link of each by type, `""` the one of no type, shared by all with its summary.
  */
 export type Skilling = {
     modules: SkillModule[];
@@ -103,8 +104,8 @@ export type Skilling = {
     otherModules: string[];
     names: { [name: string]: string };
     paths: { [name: string]: string };
-    links: { [name: string]: string };
-    types: string[];
+    types: { [name: string]: string[] };
+    links: { [name: string]: { [type: string]: string } };
 };
 
 /** A new attempt, the task judged as a whole. */

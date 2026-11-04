@@ -150,7 +150,7 @@ export type Group = {
  * The course of a module in the semester of today.
  *
  * - `folders`: The material folder of the semester of each type, also one not there yet.
- * - `links`: The folder a box of each type links in the semester, its `ALTREP`.
+ * - `links`: The link a box of each type has in the semester, its `ALTREP`.
  * - `learned`: My own learning of the module logged without a box.
  */
 export type Course = {
@@ -842,7 +842,7 @@ export function courseRead(module: string, named: string): Course {
         groups: groups,
         folders: semesterFoldersRead(folder, semester),
         links: Object.fromEntries(
-            skillTypes.map((type: string): [string, string] => [type, skillLinkOf(codeOf(folder))]),
+            skillTypes.map((type: string): [string, string] => [type, skillLinkOf(codeOf(folder), type)]),
         ),
         file: vaultPathOf(skillFileOf(folder, planEnding)),
     };

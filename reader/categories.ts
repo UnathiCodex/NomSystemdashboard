@@ -135,10 +135,10 @@ function categoryOf(name: string): Category {
 export { skillName };
 
 /**
- * Types of a skill entry, in round brackets after its skill in its `SUMMARY`.
+ * Types of a skill entry of a module, in round brackets after its skill in its `SUMMARY`.
  * Only fixed forms I take part in, `VO` lecture, `UE` exercise, `ZU` central exercise, `TU` tutorial,
  * `HU` homework sheet, `FA` exam and `PR` practical course.
- * My own learning has no type, as a project.
+ * My own learning has no type, a project the types of its rows of `Skills.md`.
  */
 export const skillTypes: string[] = ["VO", "UE", "ZU", "TU", "HU", "FA", "PR"];
 
@@ -450,7 +450,8 @@ export function attendeesAllow(attendees: Attendee[]): boolean {
  * Whether the fields of an entry fit its category, the people well formed.
  * The what is never empty, one of the values of a fixed field, without a field `title` the category.
  * `from` only where the category has it, module and type empty.
- * `Skill` has a skill and one of the {@link skillTypes} or none, its title free.
+ * `Skill` has a skill and a type of one word or none, its title free.
+ * Which types a skill offers its writers check, since only they read the rows of `Skills.md`.
  */
 export function categoryAllows(
     fields: Omit<EntryTexts, "locationLink" | "titleLink" | "attendees" | keyof Online> & {
@@ -462,11 +463,7 @@ export function categoryAllows(
     );
     if (category === undefined || !attendeesAllow(fields.attendees ?? [])) return false;
     if (category.name === skillName)
-        return (
-            /^\w+$/.test(fields.module) &&
-            (fields.type === "" || skillTypes.includes(fields.type)) &&
-            fields.from === ""
-        );
+        return /^\w+$/.test(fields.module) && /^[\p{L}\p{N}]*$/u.test(fields.type) && fields.from === "";
 
     const keys: FieldKey[] = category.fields.map((field: Field): FieldKey => field.key);
     const what: Field | undefined = category.fields.find((field: Field): boolean => field.key === "title");
