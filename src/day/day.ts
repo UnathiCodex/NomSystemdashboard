@@ -23,6 +23,7 @@ import { categoriesStart, entryOpen, entryOpenEdit, entryOpenNow } from "./categ
 import { boxesAgain, boxesSee, boxesStart, boxReceive, entryPartOf, shownWhatOf, whatOf } from "./boxes.ts";
 import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
+import { shareStart } from "./share.ts";
 import { searchStart } from "./search.ts";
 import { storyShow, storyStart } from "./story.ts";
 import { swipeStart } from "./swipe.ts";
@@ -649,6 +650,7 @@ export function dayStart(): void {
         { capture: true },
     );
     giftsStart();
+    shareStart();
     searchStart(calendar);
     storyStart();
     timesStart();

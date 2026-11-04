@@ -72,6 +72,7 @@ import { folderLinkShow } from "../skill/links.ts";
 import { iconPut, QuestionMark } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { changesKept } from "../changes.ts";
+import { changeAsk } from "./share.ts";
 import { Check, Copy, Pencil, Plus, Repeat, Trash, X } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
@@ -1449,6 +1450,7 @@ async function renamesSend(dry: boolean): Promise<void> {
  * Sends the new or changed entry or box to the reader, then closes the dialog.
  * A changed entry goes with its fingerprint as the dialog opened it, so the first save wins.
  * When its file changed it since, nothing is saved and the dialog stays open, saying so.
+ * A changed log entry asks whether the change goes to those I share it with, see `share.ts`.
  *
  * @throws {Error} - When the reader does not take the entry or a place or person I changed
  */
@@ -1464,6 +1466,8 @@ async function entrySave(calendar: Calendar): Promise<void> {
     else await entryAdd(calendar, fieldsRead());
     if (saved) {
         await renamesSend(false);
+        if (opened.target !== "box" && opened.entry !== null)
+            await changeAsk(opened.entry.id, opened.entry.extendedProps.attendees ?? [], peopleRead());
         entryClose();
     } else hintShow("entry-changed");
 }

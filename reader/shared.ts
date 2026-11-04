@@ -17,9 +17,11 @@
  * An entry goes as a copy to each of us in its `With` as I add it or log a box,
  * and to one who comes into its `With` as I change it, with me in place of the person.
  * Not my note, rounds, chapters, links to my files, pain, what a sport session did, nor its box.
- * After that each copy is its owner's, a change goes to nobody,
- * and a copy for an entry the other has already by its `UID` goes untaken,
+ * After that each copy is its owner's.
+ * A copy for an entry the other has already by its `UID` goes untaken,
  * so nothing remembers who had what.
+ * A change goes only when I say so as I save it, then to each of us in its `With`,
+ * and replaces what the other's entry of the same `UID` shares, its note staying.
  * An entry I took in goes to nobody while its `With` stays, since its sender sent it to all in it.
  * Its place goes as its line and link, a room of mine marked, since our rooms are each our own.
  *
@@ -30,7 +32,7 @@
 
 import { spawn } from "node:child_process";
 import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
-import { entryAdd } from "./day.ts";
+import { entryAdd, entryEdit } from "./day.ts";
 import { labelOf, linkForm, placeAdd, placesRead, roomsRead } from "./places.ts";
 import { personNameOf } from "./persons.ts";
 import { day, myName, partners } from "./sources.ts";
@@ -63,14 +65,14 @@ let again: boolean = false;
 /** Whether the other's server could not be reached, told once until it can again. */
 let unreached: boolean = false;
 
-/** The people I share with, in {@link nameForm}. */
-function partnersOf(): string[] {
+/** The people I share with, in {@link nameForm}, so the dialog knows whom it may ask about. */
+export function partnersRead(): string[] {
     return partners.filter((partner: string): boolean => nameForm.test(partner));
 }
 
 /** Tells whether I have a name and someone to share with. */
 function sharingIs(): boolean {
-    return nameForm.test(myName) && partnersOf().length > 0;
+    return nameForm.test(myName) && partnersRead().length > 0;
 }
 
 /** Tells whether two names of `With` name the same person, each as `Persons.md` names it. */
@@ -161,8 +163,12 @@ function waitingSend(): void {
         });
 }
 
-/** Hands the copy of an entry to one of us, with me in `With` in place of the person. */
-function copySend(entry: Entry, partner: string): void {
+/**
+ * Hands the copy of an entry to one of us, with me in `With` in place of the person.
+ *
+ * @param changed - Whether it is a change of an entry shared before
+ */
+function copySend(entry: Entry, partner: string, changed: boolean): void {
     const fields: EntryFields = {
         category: entry.category,
         title: entry.title,
@@ -191,6 +197,7 @@ function copySend(entry: Entry, partner: string): void {
     if (entry.cooked !== "") own.push(["x-cooked", entry.cooked]);
     const place: string = labelOf(entry.location).toLowerCase();
     if (roomsRead().some((room: Place): boolean => room.name.toLowerCase() === place)) own.push(["x-room", "TRUE"]);
+    if (changed) own.push(["x-changed", "TRUE"]);
     waiting.push([partner, entryIcsOf(fields, own, entry.id)]);
     waitingSend();
 }
@@ -216,13 +223,32 @@ export function entryShare(id: string, before: Attendee[] = []): void {
                         !before.some((old: Attendee): boolean => sameName(old.name, attendee.name)),
                 )
                 .map((attendee: Attendee): string | undefined =>
-                    partnersOf().find((partner: string): boolean => sameName(partner, attendee.name)),
+                    partnersRead().find((partner: string): boolean => sameName(partner, attendee.name)),
                 )
                 .filter((partner: string | undefined): partner is string => partner !== undefined),
         );
-        to.forEach((partner: string): void => copySend(found[1], partner));
+        to.forEach((partner: string): void => copySend(found[1], partner, false));
     } catch (error: unknown) {
         console.error(new Date().toISOString(), `No copy of ${id}`, error);
+    }
+}
+
+/**
+ * Sends a change of an entry to each of us in its `With`, as I said so while saving it.
+ * A copy that fails is told, never failing what I saved.
+ */
+export function changeShare(id: string): void {
+    if (!sharingIs()) return;
+    try {
+        const found: [string, Entry] | undefined = entryLookup(day.log, id);
+        if (found === undefined || found[1].allDay) return;
+        partnersRead()
+            .filter((partner: string): boolean =>
+                found[1].attendees.some((attendee: Attendee): boolean => sameName(partner, attendee.name)),
+            )
+            .forEach((partner: string): void => copySend(found[1], partner, true));
+    } catch (error: unknown) {
+        console.error(new Date().toISOString(), `No change of ${id}`, error);
     }
 }
 
@@ -276,17 +302,19 @@ function entryNewOf(entry: Entry): EntryNew {
 
 /**
  * Takes in an entry the other's reader handed over, giving whether my log took it.
- * An entry the log has by its `UID` goes untaken.
+ * An entry the log has by its `UID` goes untaken, but a change replaces what it shares, my note staying.
  * One the log cannot take is told.
  */
 export function entryTake(text: string): boolean {
     try {
-        textEntriesRead(text, "shared")
-            .filter((entry: Entry): boolean => entryLookup(day.log, entry.id) === undefined)
-            .forEach((entry: Entry): void => {
-                entryAdd(entryNewOf(entry), entry.id);
-                roomTake(entry);
-            });
+        textEntriesRead(text, "shared").forEach((entry: Entry): void => {
+            const mine: Entry | undefined = entryLookup(day.log, entry.id)?.[1];
+            if (mine === undefined) entryAdd(entryNewOf(entry), entry.id);
+            else if (entry.changed)
+                entryEdit({ ...entryNewOf(entry), note: mine.note, id: mine.id, version: mine.version });
+            else return;
+            roomTake(entry);
+        });
         return true;
     } catch (error: unknown) {
         console.error(new Date().toISOString(), "My log cannot take a shared entry", error);

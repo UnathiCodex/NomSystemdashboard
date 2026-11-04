@@ -255,6 +255,19 @@
 <!-- Gift idea for a birthday or holiday of the plan, opened by a click on it,
      see gifts.ts: its name small and grey, then one row for the idea;
      an empty field takes the idea out again -->
+<!-- The question after I saved a change of an entry with someone I share with in With, see share.ts:
+     the check hands the change to them, the cross keeps it mine,
+     so do Esc and a click beside it -->
+<dialog class="panel" id="share" closedby="any">
+    <form class="panel-form" method="dialog">
+        <p id="share-question"></p>
+        <div class="panel-buttons">
+            <button id="share-no" value="no"></button>
+            <button class="panel-main" id="share-yes" value="yes"></button>
+        </div>
+    </form>
+</dialog>
+
 <dialog class="panel" id="gift" closedby="any">
     <form class="panel-form" id="gift-form">
         <p class="entry-from-plan" id="gift-occasion"></p>

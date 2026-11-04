@@ -33,10 +33,10 @@ import {
     unitOf,
 } from "../food/foods.ts";
 import { dishesFound, dishNameOf, mealNameOf } from "../food/meals.ts";
-import { foodDetailOf, foodSearchClear, foodSearchOf, listLineOf } from "../food/search.ts";
-import { crossPut, iconOf, iconPut, plusPut } from "../icons.ts";
+import { foodSearchClear, foodSearchOf, listLineOf } from "../food/search.ts";
+import { crossPut, iconOf, plusPut } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
-import { Pencil, Plus } from "lucide";
+import { Plus } from "lucide";
 
 import type { Choice } from "./choices.ts";
 import type { Dish } from "../food/foods.ts";
@@ -123,9 +123,6 @@ let cookedRow: HTMLElement | null = null;
 
 /** My foods by key, and by name alone in small letters for old lines without brand and store. */
 let mine: Map<string, Food> = new Map();
-
-/** Key of the food opened below its row by its pencil, empty for none. */
-let foodOpen: string = "";
 
 /** My meals of `Meals.md`. */
 let dishes: Dish[] = [];
@@ -281,38 +278,11 @@ function gramsFieldOf(
 }
 
 /**
- * Takes a food of mine changed in the dialog, its picks renamed with it.
- * My meals load anew, since the reader renamed it in them.
- */
-function foodTake(old: Food, written: Food): void {
-    const renamed: FoodPick[] = [...picks, ...meals.flatMap((meal: MealPick): FoodPick[] => meal.foods)].filter(
-        (pick: FoodPick): boolean => foodOf(pick) === old,
-    );
-    [...mine.keys()]
-        .filter((key: string): boolean => mine.get(key) === old)
-        .forEach((key: string): void => {
-            mine.delete(key);
-        });
-    mineAdd(written);
-    renamed.forEach((pick: FoodPick): void => {
-        pick.name = written.name;
-        pick.brand = written.brand;
-        pick.store = written.store;
-    });
-    dishesLoad()
-        .then(dishesTake)
-        .catch((error: unknown): void => console.error(error));
-}
-
-/**
  * The row of a food, its name without brand and store, its grams, kcal and `×`.
  * A name not in `Foods.md` is marked.
- * The pencil of a food of mine opens it below its row, as the food view does.
- * A change shows the rows anew, the food staying open and the cursor where I went on.
- *
- * @returns Row, and the food opened below it
+ * Only how much I ate changes here, the food itself only in the food view.
  */
-function foodRowOf(pick: FoodPick, typed: () => void, removed: () => void, renewed: () => void): HTMLElement[] {
+function foodRowOf(pick: FoodPick, typed: () => void, removed: () => void): HTMLElement {
     const row: HTMLElement = elementOf("div", "meal-row", "");
     const food: Food | undefined = foodOf(pick);
     const name: HTMLElement = elementOf("span", "meal-name", pick.name);
@@ -331,41 +301,13 @@ function foodRowOf(pick: FoodPick, typed: () => void, removed: () => void, renew
         },
     );
     const remove: HTMLButtonElement = buttonOf("", "", removed);
-    const detailFor: (mineFood: Food) => HTMLElement = (mineFood: Food): HTMLElement =>
-        foodDetailOf(mineFood, (written: Food): void => {
-            const typing: string | null =
-                document.activeElement?.closest(".food-detail") === null
-                    ? null
-                    : (document.activeElement?.getAttribute("aria-label") ?? null);
-            foodTake(mineFood, written);
-            foodOpen = keyOf(written);
-            renewed();
-            if (typing !== null)
-                foodsRows.querySelector<HTMLInputElement>(`.food-detail input[aria-label="${typing}"]`)?.focus();
-        });
-    let detail: HTMLElement | null = food !== undefined && foodOpen === keyOf(food) ? detailFor(food) : null;
 
     if (food === undefined) name.append(elementOf("span", "meal-unknown", " · not in my foods"));
     name.title = name.textContent ?? "";
-    if (food !== undefined) {
-        const pencil: HTMLButtonElement = buttonOf("entry-pencil", "", (): void => {
-            if (detail !== null) {
-                detail.remove();
-                detail = null;
-                foodOpen = "";
-                return;
-            }
-            foodOpen = keyOf(food);
-            detail = detailFor(food);
-            row.after(detail);
-        });
-        iconPut(pencil, Pencil, `Change ${pick.name}`);
-        name.append(pencil);
-    }
     gramsFields.set(pick, input);
     crossPut(remove, `Remove ${pick.name}`);
     row.append(name, grams, kcal, remove);
-    return detail === null ? [row] : [row, detail];
+    return row;
 }
 
 /** Cursor into the first empty grams of foods just picked, since those I type first, else the first. */
@@ -427,7 +369,7 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
     name.append(plus);
     row.append(name, elementOf("span", "", ""), kcal, remove);
     parts.append(
-        ...meal.foods.flatMap((pick: FoodPick): HTMLElement[] =>
+        ...meal.foods.map((pick: FoodPick): HTMLElement =>
             foodRowOf(
                 pick,
                 (): void => {
@@ -441,7 +383,6 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
                     meals = meals.filter((other: MealPick): boolean => other.foods.length > 0);
                     rowsChanged(changed);
                 },
-                (): void => rowsChanged(changed),
             ),
         ),
         box,
@@ -472,7 +413,7 @@ function rowsChanged(changed: () => void): void {
 function rowsShow(changed: () => void): void {
     foodsRows.replaceChildren(
         ...meals.flatMap((meal: MealPick): HTMLElement[] => mealRowsOf(meal, changed)),
-        ...picks.flatMap((pick: FoodPick): HTMLElement[] =>
+        ...picks.map((pick: FoodPick): HTMLElement =>
             foodRowOf(
                 pick,
                 (): void => {
@@ -483,7 +424,6 @@ function rowsShow(changed: () => void): void {
                     picks = picks.filter((other: FoodPick): boolean => other !== pick);
                     rowsChanged(changed);
                 },
-                (): void => rowsChanged(changed),
             ),
         ),
     );
@@ -737,7 +677,6 @@ export async function mealOf(
     cooked = drawing?.cooked ?? "";
     mine = new Map();
     found.foods.forEach(mineAdd);
-    foodOpen = "";
     meals = [];
     picks = [];
     lines.map(lineOf).forEach((read: Line): void => {

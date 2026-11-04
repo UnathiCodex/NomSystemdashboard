@@ -43,6 +43,8 @@ import type { CalendarSource } from "./sources.ts";
  * - `cooked`: For a meal drawn from a cooking the identifier of that entry, its `X-COOKED`.
  * - `room`: Whether its `LOCATION` is a room of `Rooms.md` of the one who shared it, its `X-ROOM`,
  *   only in a shared copy.
+ * - `changed`: Whether a shared copy is a change of an entry shared before, its `X-CHANGED`,
+ *   only in a shared copy.
  * - `pain`: My neck pain from 0 to 10 after a long neck session, its `X-PAIN`.
  * - `exercises`: Its `X-EXERCISE`s.
  * - `planned`: Identifier of the box a log entry was logged from.
@@ -88,6 +90,7 @@ export type Entry = {
     foods: string[];
     cooked: string;
     room: boolean;
+    changed: boolean;
     pain: string;
     exercises: string[];
     planned: string;
@@ -557,6 +560,7 @@ function entryOf(event: ICAL.Event, start: ICAL.Time, end: ICAL.Time, file: stri
         foods: valuesOf("x-food"),
         cooked: valueOf("x-cooked"),
         room: valueOf("x-room").toUpperCase() === "TRUE",
+        changed: valueOf("x-changed").toUpperCase() === "TRUE",
         pain: valueOf("x-pain"),
         exercises: valuesOf("x-exercise").map(sportLineOf),
         planned: plannedOf(event.component),

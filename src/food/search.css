@@ -74,17 +74,6 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* A food opened below its row in the entry of the day, in line with its name */
-.food-detail {
-    display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
-    margin: 0.5rem 0 1rem 1.125rem;
-    padding-left: 1.375rem;
-    border-left: 2px solid var(--guide);
-    font-size: 0.875rem;
-}
-
 /* A food in the panel of a meal: its name, its grams, the room of its `×` */
 .food-part {
     display: grid;
@@ -103,19 +92,6 @@ button.food-row {
 .food-part > .cross-quiet svg.lucide {
     display: inline-block;
     vertical-align: middle;
-}
-
-/* The values of a food opened, a fixed value as high as a field, so every row stands as far from the next */
-.food-facts {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 24rem);
-    gap: 0.625rem var(--gap);
-    align-items: baseline;
-}
-
-.food-facts > span:not(.food-fact) {
-    padding-bottom: 0.125rem;
-    border-bottom: 1px solid transparent;
 }
 
 /* A value that changes in place, a thin line below it under the pointer, so I see that a click changes it */
@@ -227,7 +203,6 @@ button.food-row:hover {
 }
 
 /* A click on the unit of a number puts the cursor into it too, so an empty one takes a click */
-.food-facts > .food-grams > .food-inline-grams,
 .panel-field > .food-grams > .food-inline-grams {
     width: auto;
     min-width: 1ch;
@@ -235,7 +210,6 @@ button.food-row:hover {
     text-align: left;
 }
 
-.food-facts > .food-grams,
 .panel-field > .food-grams {
     cursor: text;
 }
@@ -247,24 +221,9 @@ button.food-row:hover {
         border-radius: var(--chip-radius);
     }
 
-    .food-facts {
-        grid-template-columns: minmax(0, 1fr);
-        row-gap: 0.25rem;
-    }
-
-    .food-facts > .food-fact:not(:first-child) {
-        margin-top: 0.5rem;
-    }
-
     /* A number only as wide as itself, so the name keeps the rest of the line */
     .food-row {
         grid-template-columns: minmax(0, 1fr) auto;
-    }
-
-    /* A value a finger high to hit, its tap room above its text taking no room, so nothing moves */
-    .food-facts .food-inline {
-        padding-top: 0.75rem;
-        margin-top: -0.75rem;
     }
 
     /* More as it looks, but taking a tap a little around it */

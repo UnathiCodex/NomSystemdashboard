@@ -254,18 +254,6 @@ function foodFieldsOf(
     return { rows: rows, error: error };
 }
 
-/** A food of mine opened below its row in the entry of the day, in two columns as the parts of a dialog. */
-export function foodDetailOf(food: Food, saved: (written: Food) => void): HTMLElement {
-    const detail: HTMLElement = elementOf("div", "food-detail", "");
-    const facts: HTMLElement = elementOf("div", "food-facts", "");
-    const { rows, error }: { rows: [string, HTMLElement][]; error: HTMLElement } = foodFieldsOf(food, detail, saved);
-    rows.forEach(([name, field]: [string, HTMLElement]): void =>
-        facts.append(elementOf("span", "food-fact", name), field),
-    );
-    detail.append(facts, error);
-    return detail;
-}
-
 /**
  * The panel of a search, made the first time.
  * It stands in the page, not in the search, which may stand in a list that hides it.
