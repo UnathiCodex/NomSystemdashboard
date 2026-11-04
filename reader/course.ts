@@ -31,7 +31,6 @@ import {
     boxUniversity,
     groupIs,
     numberedTypes,
-    overKeep,
     skillBoxesRead,
 } from "./boxes.ts";
 import {
@@ -40,6 +39,7 @@ import {
     berlinInstantOf,
     berlinTimeOf,
     dayAdd,
+    dayOfStart,
     entriesRead,
     entryIdOf,
     entryRemove,
@@ -871,11 +871,6 @@ function slotLengthOf(times: Pick<Slot, "start" | "end" | "minutes">): number | 
     return times.start === "" ? (times.minutes ?? null) : minutesOf(times.end) - minutesOf(times.start);
 }
 
-/** The day of a start, an ISO instant in Berlin time or a day itself. */
-function dayOfStart(start: string): string {
-    return /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : berlinDateOf(new Date(start));
-}
-
 /** The days of the sessions of groups. */
 function sessionDaysOf(groups: Group[]): string[] {
     return groups.flatMap((group: Group): string[] =>
@@ -1211,7 +1206,6 @@ function draftsWrite(module: string, type: string, semester: string, drafts: Dra
         if ((box.state === "dropped") !== (stands.state === "dropped")) boxDrop(box.id, box.state === "dropped");
         if (draftMoved(draft, box)) todoChange(boxFile, entry, { ...entry, ...times }, boxFile);
         if (draft.number !== stands.number || draft.group !== stands.group) propertiesPut(boxFile, box.id, numbered);
-        if (stands.number === "NONE" && draft.number !== "NONE") overKeep(box.id);
     });
 }
 

@@ -57,7 +57,7 @@ import type { CalendarSource } from "./sources.ts";
  * - `group`: Its `X-GROUP` as TUMonline names it.
  * - `pinned`: Whether a group of the course is the one I pinned.
  * - `written`: When the entry got its day, its `DTSTAMP`,
- *   set anew with its `DTSTART` or `DUE` or as a box of a day over is taken back to open.
+ *   set anew with the day of its `DTSTART` or `DUE`.
  * - `version`: SHA-256 of its lines as read, for an occurrence that of its series.
  *   The dialog sends it back, so the reader writes nothing older than the file.
  * - `editable`: Whether it lies in the new system and has times or is a to-do, also one occurrence.
@@ -1149,6 +1149,12 @@ function timeOf(component: string[], name: string): string {
     return line === "" ? "" : textOf(ICAL.Property.fromString(line).getFirstValue() as ICAL.Time);
 }
 
+/** The day of a time property of an entry, empty for none. */
+function dayIn(component: string[], name: string): string {
+    const time: string = timeOf(component, name);
+    return time === "" ? "" : dayOfStart(time);
+}
+
 /** Reads the `UID` of an event or a to-do. */
 function uidOf(component: string[]): string {
     return unfoldedOf(component, "UID").replace(/^UID:/i, "");
@@ -1312,6 +1318,11 @@ function writtenOf(instant: Date): ICAL.Time {
 /** Writes the date of an instant in Berlin time. */
 export function berlinDateOf(instant: Date): string {
     return berlinOf(instant).toString().slice(0, 10);
+}
+
+/** The day of a start or a deadline, an ISO instant in Berlin time or a day itself. */
+export function dayOfStart(start: string): string {
+    return /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : berlinDateOf(new Date(start));
 }
 
 /** Writes the time of day of an instant in Berlin time. */
@@ -1602,7 +1613,7 @@ function textPut(component: string[], name: string, value: string, fields: Entry
 /**
  * Changes the entry with an identifier where it stood, or moves it into another file.
  * A move writes it there first, so a failure in between leaves it twice instead of losing it.
- * Its `DTSTAMP` turns now once its `DTSTART` or `DUE` changed, so it tells when it got its day.
+ * Its `DTSTAMP` turns now once the day of its `DTSTART` or `DUE` changed, so it tells when it got its day.
  *
  * @param edit - Changes the lines of the entry in place
  * @param target - Path of the `.ics` file it belongs into, `file` when it stays
@@ -1624,7 +1635,7 @@ function componentEdit(
         const old: string[] = text.lines.slice(begin, end);
         const component: string[] = [...old];
         edit(component);
-        if (["DTSTART", "DUE"].some((name: string): boolean => unfoldedOf(old, name) !== unfoldedOf(component, name)))
+        if (["DTSTART", "DUE"].some((name: string): boolean => dayIn(old, name) !== dayIn(component, name)))
             propertyPut(component, "dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]);
         if (target !== file) componentInsert(target, component);
         text.lines.splice(begin, end - begin, ...(target === file ? linesOrdered(component) : []));
@@ -1719,15 +1730,6 @@ export function propertiesPut(file: string, id: string, properties: [string, (Va
             propertyPut(event, name, values),
         ),
     );
-}
-
-/**
- * Sets the `DTSTAMP` of an entry to now, as if it got its day now, so a box of a day over stays there.
- *
- * @throws {Error} - When the file lies outside the new system or does not hold the entry once
- */
-export function stampPut(file: string, id: string): void {
-    propertiesPut(file, id, [["dtstamp", [ICAL.Time.fromJSDate(new Date(), true)]]]);
 }
 
 /**

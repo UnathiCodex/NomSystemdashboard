@@ -9,8 +9,9 @@
  * A box with a deadline has no `Move`, since it stays on the day of its deadline.
  * Its sessions are dragged into the log and leave it open, only `Submit` makes it done.
  * An open box is dragged into the log at the real time, as long as its expected duration.
- * A box no longer open shows one grey icon for its state, a click on it takes that back.
- * A pushed box stays greyed on each day it left, once per push.
+ * A box no longer open is faded with one grey icon for its state, a click on it takes that back.
+ * An open box is never faded, also on a day that is over.
+ * A pushed box stays faded on each day it left, once per push.
  * A box neither done nor cancelled is carried along once its day is over.
  * On its own day it stays open, so I can still log it there later, never counted as pushed.
  * A box without category opens the entry by category, since the log needs a category.
@@ -56,7 +57,7 @@ import type { Attendee, Link, Push } from "../../reader/calendar.ts";
  * - `todo`: Whether it is a to-do, an event keeps its time and duration.
  * - `number`: Its number in its series, `NONE` for one the university cancelled.
  * - `group`: The group of a tutorial whose session it goes to.
- * - `moved`: Where it went, for a box greyed on a day it left or open on its own day.
+ * - `moved`: Where it went, for a box faded on a day it left or open on its own day.
  * - `file`: Its `.ics` file from `NomWorkspace` on.
  */
 export type Box = {
@@ -428,17 +429,12 @@ function tutorialIs(box: Box): boolean {
 
 /**
  * A box of the list, its actions at its right while open, else its state.
- * An open box whose day is over and that is not carried along is greyed, yet keeps its actions.
  * Its data are for the drag into the log.
  * `--box-lines` sets its actions or state in the middle of all its lines.
  */
 function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTMLElement {
     const element: HTMLElement = entryPartOf("div", `box box-${box.state}`, []);
     const body: HTMLElement = entryPartOf("div", "box-body", boxContentOf(box, shown.day, !carriedShown));
-    element.classList.toggle(
-        "box-over",
-        box.state === "open" && box.deadline === "" && box.day < calendarTodayOf() && box.moved === null,
-    );
     element.classList.toggle("box-draggable", box.state === "open");
     element.dataset.id = box.id;
     element.dataset.category = box.category;

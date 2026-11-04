@@ -155,13 +155,9 @@
     height: 1.0625rem;
 }
 
-/* Done box and an open one whose day is over, its what grey too */
-.box-done .box-what,
-.box-over .box-what {
-    color: var(--text-muted);
-}
-
-/* Cancelled box and a box on a day it was pushed from, only faded, its icon says which */
+/* A box no longer open only faded, its icon says which state.
+   An open box never, also on a day that is over */
+.box-done,
 .box-dropped,
 .box-university,
 .box-pushed {
