@@ -2112,7 +2112,7 @@ export function seriesTitlePut(file: string, uid: string, fields: EntryTexts): v
  * The name in small letters, umlauts written out, every other character but a–z and 0–9 a dot,
  * `Vorname` first, then `@invalid`.
  */
-function invalidAddressOf(name: string): string {
+export function invalidAddressOf(name: string): string {
     const parts: string[] = name.split(", ");
     const local: string = (parts.length === 2 ? `${parts[1]} ${parts[0]}` : name)
         .toLowerCase()

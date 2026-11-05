@@ -22,17 +22,21 @@
  * so nothing remembers who had what.
  * A change goes only when I say so as I save it, then to each of us in its `With`,
  * and replaces what the other's entry of the same `UID` shares, its note staying.
+ * A removal goes the same way as I remove an entry, its `UID` alone to `/api/shared/removal`,
+ * which removes the other's entry of that `UID` while one of us stands in its `With`.
+ * A reader without that path refuses it, so it never takes the removal for a new entry.
  * An entry I took in goes to nobody while its `With` stays, since its sender sent it to all in it.
  * Its place goes as its line and link, a room of mine marked, since our rooms are each our own.
  *
  * What comes is taken in the order it was sent, so a meal finds its cooking.
  * An entry keeps the `UID` it brought, so it comes in only once.
+ * Each of us in its `With` comes in as my `Persons.md` names them.
  * A room of it I have no place or room of its name for comes into my `Rooms.md`.
  */
 
 import { spawn } from "node:child_process";
-import { entryIcsOf, entryLookup, skillName, textEntriesRead } from "./calendar.ts";
-import { entryAdd, entryEdit } from "./day.ts";
+import { entryIcsOf, entryLookup, invalidAddressOf, skillName, textEntriesRead } from "./calendar.ts";
+import { entryAdd, entryDelete, entryEdit } from "./day.ts";
 import { labelOf, linkForm, placeAdd, placesRead, roomsRead } from "./places.ts";
 import { personNameOf } from "./persons.ts";
 import { day, myName, partners } from "./sources.ts";
@@ -51,14 +55,19 @@ const reachSeconds: number = 10;
 /** Seconds between two tries while the other cannot be reached. */
 const retrySeconds: number = 60;
 
-/** What `ssh` starts on the other's server, `curl` giving the entry to the other's reader. */
-const handCommand: string = "curl -fsS --data-binary @- http://127.0.0.1:3000/api/shared/entry";
+/** What I hand to the other's reader, named as the path under `/api/shared/` that takes it. */
+type Handed = "entry" | "removal";
 
-/** Exit code of `curl -f` when the other's reader refused the entry. */
+/** What `ssh` starts on the other's server, `curl` giving what I hand to the other's reader. */
+function handCommandOf(handed: Handed): string {
+    return `curl -fsS --data-binary @- http://127.0.0.1:3000/api/shared/${handed}`;
+}
+
+/** Exit code of `curl -f` when the other's reader refused what I handed. */
 const refusedCode: number = 22;
 
-/** Copies of entries for a person not handed over yet, the earliest first, only in memory. */
-const waiting: [string, string][] = [];
+/** Copies and removals of entries for a person not handed over yet, the earliest first, only in memory. */
+const waiting: [string, Handed, string][] = [];
 
 let sending: boolean = false;
 
@@ -90,26 +99,11 @@ function placeHas(name: string): boolean {
     );
 }
 
-/** My address in an entry I send, the standard one of a name, `@invalid` the ending for addresses that never work. */
-function addressOf(name: string): string {
-    const local: string = name
-        .toLowerCase()
-        .replace(/ä/g, "ae")
-        .replace(/ö/g, "oe")
-        .replace(/ü/g, "ue")
-        .replace(/ß/g, "ss")
-        .normalize("NFD")
-        .replace(/\p{Diacritic}/gu, "")
-        .replace(/[^a-z0-9]+/g, ".")
-        .replace(/^\.|\.$/g, "");
-    return `${local}@invalid`;
-}
-
 /**
- * Hands an entry by `ssh` to the reader of a person, never asking for a password.
- * Gives the exit code, `0` when it took the entry, {@link refusedCode} when it refused it.
+ * Hands an entry or its removal by `ssh` to the reader of a person, never asking for a password.
+ * Gives the exit code, `0` when it took it, {@link refusedCode} when it refused it.
  */
-function sshSend(partner: string, text: string): Promise<number | null> {
+function sshSend(partner: string, handed: Handed, text: string): Promise<number | null> {
     return new Promise((resolve: (code: number | null) => void): void => {
         const child: ChildProcess = spawn(
             "ssh",
@@ -119,7 +113,7 @@ function sshSend(partner: string, text: string): Promise<number | null> {
                 "-o",
                 `ConnectTimeout=${reachSeconds}`,
                 `nom-${partner.toLowerCase()}`,
-                handCommand,
+                handCommandOf(handed),
             ],
             { stdio: ["pipe", "ignore", "pipe"] },
         );
@@ -134,7 +128,7 @@ function sshSend(partner: string, text: string): Promise<number | null> {
         child.on("close", (code: number | null): void => {
             if (code !== 0 && code !== refusedCode && !unreached)
                 console.error(new Date().toISOString(), `${partner} not reached, entries wait:`, told.trim());
-            if (code === refusedCode) console.error(new Date().toISOString(), `${partner} refused an entry`);
+            if (code === refusedCode) console.error(new Date().toISOString(), `${partner} refused a shared ${handed}`);
             if (code === 0 && unreached) console.log(new Date().toISOString(), `${partner} reached again`);
             unreached = code !== 0 && code !== refusedCode;
             resolve(code);
@@ -157,8 +151,8 @@ function waitingSend(): void {
         do {
             again = false;
             while (waiting.length > 0) {
-                const [partner, text]: [string, string] = waiting[0];
-                const code: number | null = await sshSend(partner, text);
+                const [partner, handed, text]: [string, Handed, string] = waiting[0];
+                const code: number | null = await sshSend(partner, handed, text);
                 if (code !== 0 && code !== refusedCode) return;
                 waiting.shift();
             }
@@ -191,7 +185,7 @@ function copySend(entry: Entry, partner: string, changed: boolean): void {
         onlineTitle: entry.onlineTitle,
         from: entry.from,
         attendees: [
-            { name: myName, address: addressOf(myName) },
+            { name: myName, address: invalidAddressOf(myName) },
             ...entry.attendees.filter(
                 (attendee: Attendee): boolean => !sameName(attendee.name, partner) && !sameName(attendee.name, myName),
             ),
@@ -208,7 +202,7 @@ function copySend(entry: Entry, partner: string, changed: boolean): void {
     const place: string = labelOf(entry.location).toLowerCase();
     if (roomsRead().some((room: Place): boolean => room.name.toLowerCase() === place)) own.push(["x-room", "TRUE"]);
     if (changed) own.push(["x-changed", "TRUE"]);
-    waiting.push([partner, entryIcsOf(fields, own, entry.id)]);
+    waiting.push([partner, "entry", entryIcsOf(fields, own, entry.id)]);
     waitingSend();
 }
 
@@ -243,6 +237,13 @@ export function entryShare(id: string, before: Attendee[] = []): void {
     }
 }
 
+/** The people I share with in the `With` of an entry. */
+function partnersIn(entry: Entry): string[] {
+    return partnersRead().filter((partner: string): boolean =>
+        entry.attendees.some((attendee: Attendee): boolean => sameName(partner, attendee.name)),
+    );
+}
+
 /**
  * Sends a change of an entry to each of us in its `With`, as I said so while saving it.
  * A copy that fails is told, never failing what I saved.
@@ -252,13 +253,28 @@ export function changeShare(id: string): void {
     try {
         const found: [string, Entry] | undefined = entryLookup(day.log, id);
         if (found === undefined || found[1].allDay) return;
-        partnersRead()
-            .filter((partner: string): boolean =>
-                found[1].attendees.some((attendee: Attendee): boolean => sameName(partner, attendee.name)),
-            )
-            .forEach((partner: string): void => copySend(found[1], partner, true));
+        partnersIn(found[1]).forEach((partner: string): void => copySend(found[1], partner, true));
     } catch (error: unknown) {
         console.error(new Date().toISOString(), `No change of ${id}`, error);
+    }
+}
+
+/**
+ * Sends the removal of an entry to each of us in its `With`, as I said so while removing it.
+ * Called before my reader removes it, since only then it knows its `With`.
+ * A removal that fails is told, never failing mine.
+ */
+export function removeShare(id: string): void {
+    if (!sharingIs()) return;
+    try {
+        const found: [string, Entry] | undefined = entryLookup(day.log, id);
+        if (found === undefined || found[1].allDay) return;
+        partnersIn(found[1]).forEach((partner: string): void => {
+            waiting.push([partner, "removal", found[1].id]);
+        });
+        waitingSend();
+    } catch (error: unknown) {
+        console.error(new Date().toISOString(), `No removal of ${id}`, error);
     }
 }
 
@@ -281,6 +297,7 @@ function roomTake(entry: Entry): void {
 
 /**
  * Turns an entry that came into a new entry of my log, a skill entry linking anew to its folder.
+ * Each of us in its `With` is named as my `Persons.md` names them, with the address of that name.
  * It keeps the cooking a meal draws from only when that is an entry `Cook` of my log before the meal.
  */
 function entryNewOf(entry: Entry): EntryNew {
@@ -294,7 +311,12 @@ function entryNewOf(entry: Entry): EntryNew {
         onlineChannel: entry.onlineChannel,
         onlineTitle: entry.onlineTitle,
         from: entry.from,
-        attendees: entry.attendees,
+        attendees: entry.attendees.map((attendee: Attendee): Attendee => {
+            const name: string = personNameOf(attendee.name);
+            return partnersRead().some((partner: string): boolean => sameName(partner, name))
+                ? { name: name, address: invalidAddressOf(name) }
+                : attendee;
+        }),
         module: entry.module,
         type: entry.type,
         semester: entry.semester,
@@ -333,8 +355,24 @@ export function entryTake(text: string): boolean {
 }
 
 /**
+ * Removes the entry of my log whose `UID` the other's reader handed over, giving whether my log took it.
+ * Only one with one of us in its `With`, so no other entry of mine can go.
+ * One the log has no more goes untaken, one it cannot remove is told.
+ */
+export function removalTake(text: string): boolean {
+    try {
+        const mine: Entry | undefined = entryLookup(day.log, text.trim())?.[1];
+        if (mine !== undefined && partnersIn(mine).length > 0) entryDelete(mine.id);
+        return true;
+    } catch (error: unknown) {
+        console.error(new Date().toISOString(), "My log cannot remove a shared entry", error);
+        return false;
+    }
+}
+
+/**
  * Starts sharing as the reader starts,
- * trying again every {@link retrySeconds} while entries wait.
+ * trying again every {@link retrySeconds} while copies or removals wait.
  */
 export function sharedStart(): void {
     if (!sharingIs()) {

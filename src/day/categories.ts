@@ -72,7 +72,7 @@ import { folderLinkShow } from "../skill/links.ts";
 import { iconPut, QuestionMark } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { changesKept } from "../changes.ts";
-import { changeAsk } from "./share.ts";
+import { changeAsk, removeAsk } from "./share.ts";
 import { Check, Copy, Pencil, Plus, Repeat, Trash, X } from "lucide";
 
 import type { Calendar, EventApi } from "fullcalendar";
@@ -720,7 +720,7 @@ function summaryPartsOf(
     link.rel = "noopener";
     parts.className = "field-parts";
     if (typed) parts.append(partOf("Text", text));
-    if (param !== null && paramOf(summaryPickedOf()) !== "") parts.append(partOf("Param", param));
+    if (param !== null) parts.append(partOf("Param", param));
     if (summary !== undefined || chosen?.name === skillName) parts.append(partOf("Link", address));
     parts.hidden = !summaryOpen;
     for (const input of param === null ? [text] : [text, param]) {
@@ -1397,6 +1397,7 @@ function errorShow(error: unknown): void {
 /**
  * Writes each param I changed in every entry and box of the category that gives it to its value.
  * A param emptied leaves only this entry or box, one the summary no longer holds nothing.
+ * A param of a value that had none comes only into this entry or box.
  *
  * @throws {Error} - When the reader does not take a param
  */
@@ -1404,6 +1405,7 @@ async function paramsRename(dry: boolean): Promise<void> {
     for (const [value, edit] of Object.entries(paramEdits)) {
         const written: string = paramPut(value, edit.name);
         if (
+            edit.old !== "" &&
             edit.name !== "" &&
             edit.name !== edit.old &&
             (values.title === written || values.title.split(", ").includes(written))
@@ -1476,6 +1478,7 @@ async function entrySave(calendar: Calendar): Promise<void> {
  * Removes the entry or the box on the second click, the first only asks.
  * A box of a series goes that day alone.
  * A box I decided against is dropped by its cross instead, so it can be counted.
+ * An entry asks whether it goes for those I share it with too, see `share.ts`.
  *
  * @throws {Error} - When the reader does not remove the entry or the box
  */
@@ -1488,7 +1491,10 @@ async function entryRemove(calendar: Calendar): Promise<void> {
     }
 
     if (opened.target === "box") await boxDelete(opened.box?.id ?? "");
-    else await entryDelete(calendar, opened.entry?.id ?? "");
+    else {
+        await removeAsk(opened.entry?.id ?? "", opened.entry?.extendedProps.attendees ?? []);
+        await entryDelete(calendar, opened.entry?.id ?? "");
+    }
     entryClose();
 }
 

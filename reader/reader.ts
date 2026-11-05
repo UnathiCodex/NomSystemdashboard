@@ -57,7 +57,7 @@ import { giftWrite } from "./gifts.ts";
 import { categoriesRead, lastPlaceRead, semesterOf } from "./categories.ts";
 import { placeAdd, placeChange, placeRename, placeStandardSet, platformAdd, platformChange } from "./places.ts";
 import { plainApply, plainRead, plainRemove } from "./rules.ts";
-import { personRename, personsRead } from "./persons.ts";
+import { personNameOf, personRename, personsRead } from "./persons.ts";
 import { attendeesRename, paramRename } from "./calendar.ts";
 import { calendarRoot } from "./sources.ts";
 import { fileOpen, fileRead, folderMake, folderRead, linkedNoteRead, menuRead } from "./notes.ts";
@@ -91,7 +91,16 @@ import {
 import { trackersRead } from "./trackers.ts";
 import { deviceReport } from "./devices.ts";
 import { changesSend, changesWatch } from "./changes.ts";
-import { attendeesRead, changeShare, entryShare, entryTake, partnersRead, sharedStart } from "./shared.ts";
+import {
+    attendeesRead,
+    changeShare,
+    entryShare,
+    entryTake,
+    partnersRead,
+    removalTake,
+    removeShare,
+    sharedStart,
+} from "./shared.ts";
 import { pageCreate } from "./page.ts";
 import { codeColorsRead } from "./theme.ts";
 
@@ -251,9 +260,14 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
     } else if (request.method === "POST" && url.pathname === "/api/shared/entry") {
         responseSend(response, entryTake(await text(request)) ? 200 : 422, null);
     } else if (request.method === "GET" && url.pathname === "/api/shared/partners") {
-        responseSend(response, 200, partnersRead());
+        responseSend(response, 200, partnersRead().map(personNameOf));
     } else if (request.method === "POST" && url.pathname === "/api/shared/change") {
         changeShare(String(((await json(request)) as { id?: string }).id ?? ""));
+        responseSend(response, 200, null);
+    } else if (request.method === "POST" && url.pathname === "/api/shared/removal") {
+        responseSend(response, removalTake(await text(request)) ? 200 : 422, null);
+    } else if (request.method === "POST" && url.pathname === "/api/shared/remove") {
+        removeShare(String(((await json(request)) as { id?: string }).id ?? ""));
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/moved") {
         entryMove((await json(request)) as EntryMoved);
