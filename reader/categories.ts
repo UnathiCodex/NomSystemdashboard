@@ -118,12 +118,15 @@ const onlineField: Field = {
     fixed: false,
 };
 
-/** A category with `Summary`, `Place`, `Online` and `With`, its summary offering only what the log holds. */
-function categoryOf(name: string): Category {
+/**
+ * A category with `Summary`, `Place`, `Online`, `With`.
+ * Its summary offers only what the log holds, with `many` several values, parted by `, `.
+ */
+function categoryOf(name: string, many: boolean = false): Category {
     return {
         name: name,
         fields: [
-            { name: "Summary", key: "title", values: [], steps: {}, fixed: false },
+            { name: "Summary", key: "title", values: [], steps: {}, fixed: false, many: many },
             { name: "Place", key: "location", values: [], steps: {}, fixed: false },
             onlineField,
             withField,
@@ -180,8 +183,8 @@ const categories: Category[] = [
             withField,
         ],
     },
-    categoryOf("Food"),
-    categoryOf("Cook"),
+    categoryOf("Food", true),
+    categoryOf("Cook", true),
     categoryOf("Shopping"),
     {
         name: "Body",

@@ -1,7 +1,7 @@
 /**
  * ## Shared
  *
- * Shares with Vu, whose dashboard runs on skriptum, an entry of my log with Vu in `With`.
+ * Shares what I log or plan with Vu in `With` with Vu, whose dashboard runs on skriptum.
  * Every other file we share Unison keeps the same on both our servers.
  *
  * My reader hands the entry by SSH to Vu's reader,
@@ -14,9 +14,12 @@
  * What waits lies only in its memory, so a restart loses it, told in the log.
  * What the other's reader refuses goes nowhere, told.
  *
- * An entry goes as a copy to each of us in its `With` as I add it or log a box,
+ * An entry goes as a copy to each of us in its `With` as I add it or say so as I log a box,
  * and to one who comes into its `With` as I change it, with me in place of the person.
- * Not my note, rounds, chapters, links to my files, pain, what a sport session did, nor its box.
+ * A box that happens once goes the same way into the other's plan, a day of a series not.
+ * It goes to `/api/shared/box`, which a reader without that path refuses, so it never logs a box.
+ * Not my note, rounds, chapters, links to my files, pain, what a sport session did, my pushes.
+ * An entry names the box it was logged from, so the other's copy of that box is done with it.
  * After that each copy is its owner's.
  * A copy for an entry the other has already by its `UID` goes untaken,
  * so nothing remembers who had what.
@@ -35,14 +38,16 @@
  */
 
 import { spawn } from "node:child_process";
-import { entryIcsOf, entryLookup, invalidAddressOf, skillName, textEntriesRead } from "./calendar.ts";
+import { boxAdd, boxDelete, boxEdit, boxFind, groupIs, todoTimesOf } from "./boxes.ts";
+import { entryIcsOf, entryLookup, invalidAddressOf, skillName, textEntriesRead, todoIcsOf } from "./calendar.ts";
 import { entryAdd, entryDelete, entryEdit } from "./day.ts";
 import { labelOf, linkForm, placeAdd, placesRead, roomsRead } from "./places.ts";
 import { personNameOf } from "./persons.ts";
 import { day, myName, partners } from "./sources.ts";
 
 import type { ChildProcess } from "node:child_process";
-import type { Attendee, Entry, EntryFields } from "./calendar.ts";
+import type { BoxNew } from "./boxes.ts";
+import type { Attendee, Entry, EntryTexts, TodoFields } from "./calendar.ts";
 import type { EntryNew } from "./day.ts";
 import type { Place } from "./places.ts";
 
@@ -55,8 +60,11 @@ const reachSeconds: number = 10;
 /** Seconds between two tries while the other cannot be reached. */
 const retrySeconds: number = 60;
 
+/** A copy I hand to the other's reader, named as the path under `/api/shared/` that takes it. */
+type Copied = "entry" | "box";
+
 /** What I hand to the other's reader, named as the path under `/api/shared/` that takes it. */
-type Handed = "entry" | "removal";
+type Handed = Copied | "removal";
 
 /** What `ssh` starts on the other's server, `curl` giving what I hand to the other's reader. */
 function handCommandOf(handed: Handed): string {
@@ -168,12 +176,12 @@ function waitingSend(): void {
 }
 
 /**
- * Hands the copy of an entry to one of us, with me in `With` in place of the person.
+ * Hands the copy of an entry or a box to one of us, with me in `With` in place of the person.
  *
- * @param changed - Whether it is a change of an entry shared before
+ * @param changed - Whether it is a change of one shared before
  */
 function copySend(entry: Entry, partner: string, changed: boolean): void {
-    const fields: EntryFields = {
+    const texts: EntryTexts = {
         category: entry.category,
         title: entry.title,
         titleLink: entry.category === skillName || linkForm.test(entry.titleLink) ? entry.titleLink : "",
@@ -194,34 +202,47 @@ function copySend(entry: Entry, partner: string, changed: boolean): void {
         type: entry.type,
         semester: entry.semester,
         note: "",
-        start: new Date(entry.start),
-        end: new Date(entry.end),
     };
     const own: [string, string][] = entry.foods.map((food: string): [string, string] => ["x-food", food]);
     if (entry.cooked !== "") own.push(["x-cooked", entry.cooked]);
+    if (entry.planned !== "") own.push(["related-to", entry.planned]);
     const place: string = labelOf(entry.location).toLowerCase();
     if (roomsRead().some((room: Place): boolean => room.name.toLowerCase() === place)) own.push(["x-room", "TRUE"]);
     if (changed) own.push(["x-changed", "TRUE"]);
-    waiting.push([partner, "entry", entryIcsOf(fields, own, entry.id)]);
+    const text: string = entry.todo
+        ? todoIcsOf({ ...texts, ...todoTimesOf(entry) }, own, entry.id)
+        : entryIcsOf({ ...texts, start: new Date(entry.start), end: new Date(entry.end) }, own, entry.id);
+    waiting.push([partner, entry.todo ? "box" : "entry", text]);
     waitingSend();
 }
 
-/** Who an entry is with now, so a change can tell who comes into its `With`. */
+/**
+ * An entry of my log with times or a box of my plan that happens once, by its `UID`.
+ * Only those I share.
+ */
+function sharedFind(id: string): Entry | undefined {
+    const logged: Entry | undefined = entryLookup(day.log, id)?.[1];
+    if (logged !== undefined) return logged.allDay ? undefined : logged;
+    const planned: Entry | undefined = entryLookup(day.plan, id)?.[1];
+    return planned?.todo === true && !groupIs(planned) ? planned : undefined;
+}
+
+/** Who an entry or a box is with now, so a change can tell who comes into its `With`. */
 export function attendeesRead(id: string): Attendee[] {
-    return entryLookup(day.log, id)?.[1].attendees ?? [];
+    return sharedFind(id)?.attendees ?? [];
 }
 
 /**
- * Sends an entry to each of us in its `With` who was not in it before, never for a whole day.
+ * Sends an entry or a box to each of us in its `With` who was not in it before.
  * A copy that fails is told, never failing what I saved.
  */
 export function entryShare(id: string, before: Attendee[] = []): void {
     if (!sharingIs()) return;
     try {
-        const found: [string, Entry] | undefined = entryLookup(day.log, id);
-        if (found === undefined || found[1].allDay) return;
+        const found: Entry | undefined = sharedFind(id);
+        if (found === undefined) return;
         const to: Set<string> = new Set(
-            found[1].attendees
+            found.attendees
                 .filter(
                     (attendee: Attendee): boolean =>
                         !before.some((old: Attendee): boolean => sameName(old.name, attendee.name)),
@@ -231,7 +252,7 @@ export function entryShare(id: string, before: Attendee[] = []): void {
                 )
                 .filter((partner: string | undefined): partner is string => partner !== undefined),
         );
-        to.forEach((partner: string): void => copySend(found[1], partner, false));
+        to.forEach((partner: string): void => copySend(found, partner, false));
     } catch (error: unknown) {
         console.error(new Date().toISOString(), `No copy of ${id}`, error);
     }
@@ -245,32 +266,32 @@ function partnersIn(entry: Entry): string[] {
 }
 
 /**
- * Sends a change of an entry to each of us in its `With`, as I said so while saving it.
+ * Sends a change of an entry or a box to each of us in its `With`, as I said so while saving it.
  * A copy that fails is told, never failing what I saved.
  */
 export function changeShare(id: string): void {
     if (!sharingIs()) return;
     try {
-        const found: [string, Entry] | undefined = entryLookup(day.log, id);
-        if (found === undefined || found[1].allDay) return;
-        partnersIn(found[1]).forEach((partner: string): void => copySend(found[1], partner, true));
+        const found: Entry | undefined = sharedFind(id);
+        if (found === undefined) return;
+        partnersIn(found).forEach((partner: string): void => copySend(found, partner, true));
     } catch (error: unknown) {
         console.error(new Date().toISOString(), `No change of ${id}`, error);
     }
 }
 
 /**
- * Sends the removal of an entry to each of us in its `With`, as I said so while removing it.
+ * Sends the removal of an entry or a box to each of us in its `With`, as I said so while removing it.
  * Called before my reader removes it, since only then it knows its `With`.
  * A removal that fails is told, never failing mine.
  */
 export function removeShare(id: string): void {
     if (!sharingIs()) return;
     try {
-        const found: [string, Entry] | undefined = entryLookup(day.log, id);
-        if (found === undefined || found[1].allDay) return;
-        partnersIn(found[1]).forEach((partner: string): void => {
-            waiting.push([partner, "removal", found[1].id]);
+        const found: Entry | undefined = sharedFind(id);
+        if (found === undefined) return;
+        partnersIn(found).forEach((partner: string): void => {
+            waiting.push([partner, "removal", found.id]);
         });
         waitingSend();
     } catch (error: unknown) {
@@ -295,9 +316,24 @@ function roomTake(entry: Entry): void {
     }
 }
 
+/** Each of us in the `With` of what came, named as my `Persons.md` names them, with the address of that name. */
+function attendeesNamedOf(entry: Entry): Attendee[] {
+    return entry.attendees.map((attendee: Attendee): Attendee => {
+        const name: string = personNameOf(attendee.name);
+        return partnersRead().some((partner: string): boolean => sameName(partner, name))
+            ? { name: name, address: invalidAddressOf(name) }
+            : attendee;
+    });
+}
+
+/** The box an entry that came was logged from, while mine of it is open, so it is done with the entry. */
+function plannedOf(entry: Entry): string {
+    if (entry.planned === "" || entryLookup(day.plan, entry.planned) === undefined) return "";
+    return boxFind(entry.planned)[2].state === "open" ? entry.planned : "";
+}
+
 /**
  * Turns an entry that came into a new entry of my log, a skill entry linking anew to its folder.
- * Each of us in its `With` is named as my `Persons.md` names them, with the address of that name.
  * It keeps the cooking a meal draws from only when that is an entry `Cook` of my log before the meal.
  */
 function entryNewOf(entry: Entry): EntryNew {
@@ -311,18 +347,13 @@ function entryNewOf(entry: Entry): EntryNew {
         onlineChannel: entry.onlineChannel,
         onlineTitle: entry.onlineTitle,
         from: entry.from,
-        attendees: entry.attendees.map((attendee: Attendee): Attendee => {
-            const name: string = personNameOf(attendee.name);
-            return partnersRead().some((partner: string): boolean => sameName(partner, name))
-                ? { name: name, address: invalidAddressOf(name) }
-                : attendee;
-        }),
+        attendees: attendeesNamedOf(entry),
         module: entry.module,
         type: entry.type,
         semester: entry.semester,
         note: "",
         foods: entry.foods,
-        planned: "",
+        planned: plannedOf(entry),
         cooked:
             cooking !== undefined && cooking.category === "Cook" && Date.parse(cooking.start) < Date.parse(entry.start)
                 ? entry.cooked
@@ -332,40 +363,72 @@ function entryNewOf(entry: Entry): EntryNew {
     };
 }
 
+/** Turns a to-do that came into a new box of my plan, without the files of a skill box. */
+function boxNewOf(entry: Entry): BoxNew {
+    const times: Omit<TodoFields, keyof EntryTexts> = todoTimesOf(entry);
+    return {
+        category: entry.category,
+        title: entry.title,
+        location: entry.location,
+        online: entry.online,
+        onlineLink: entry.onlineLink,
+        onlineChannel: entry.onlineChannel,
+        onlineTitle: entry.onlineTitle,
+        from: entry.from,
+        attendees: attendeesNamedOf(entry),
+        module: entry.module,
+        type: entry.type,
+        semester: entry.semester,
+        note: "",
+        day: times.day,
+        time: times.time?.toISOString() ?? "",
+        minutes: times.minutes,
+        deadline: times.deadline,
+        chapters: [],
+        documents: [],
+    };
+}
+
 /**
- * Takes in an entry the other's reader handed over, giving whether my log took it.
- * An entry the log has by its `UID` goes untaken, but a change replaces what it shares, my note staying.
- * One the log cannot take is told.
+ * Takes in the copy of an entry into my log or of a box into my plan, as the path it came by says.
+ * Gives whether my log or plan took it.
+ * One they have by its `UID` goes untaken, but a change replaces what it shares, my note staying.
+ * One they cannot take is told.
  */
-export function entryTake(text: string): boolean {
+export function copyTake(text: string, copied: Copied): boolean {
     try {
         textEntriesRead(text, "shared").forEach((entry: Entry): void => {
-            const mine: Entry | undefined = entryLookup(day.log, entry.id)?.[1];
-            if (mine === undefined) entryAdd(entryNewOf(entry), entry.id);
-            else if (entry.changed)
-                entryEdit({ ...entryNewOf(entry), note: mine.note, id: mine.id, version: mine.version });
-            else return;
+            const box: boolean = copied === "box";
+            const mine: Entry | undefined = entryLookup(box ? day.plan : day.log, entry.id)?.[1];
+            if (mine === undefined && box) boxAdd(boxNewOf(entry), entry.id);
+            else if (mine === undefined) entryAdd(entryNewOf(entry), entry.id);
+            else if (!entry.changed) return;
+            else if (box) boxEdit({ ...boxNewOf(entry), note: mine.note, id: mine.id });
+            else entryEdit({ ...entryNewOf(entry), note: mine.note, id: mine.id, version: mine.version });
             roomTake(entry);
         });
         return true;
     } catch (error: unknown) {
-        console.error(new Date().toISOString(), "My log cannot take a shared entry", error);
+        console.error(new Date().toISOString(), `My log or plan cannot take a shared ${copied}`, error);
         return false;
     }
 }
 
 /**
- * Removes the entry of my log whose `UID` the other's reader handed over, giving whether my log took it.
- * Only one with one of us in its `With`, so no other entry of mine can go.
- * One the log has no more goes untaken, one it cannot remove is told.
+ * Removes the entry or the box whose `UID` the other's reader handed over.
+ * Gives whether my log or plan took it.
+ * Only one with one of us in its `With`, so nothing else of mine can go.
+ * One they have no more goes untaken, one they cannot remove is told, like a box done already.
  */
 export function removalTake(text: string): boolean {
     try {
-        const mine: Entry | undefined = entryLookup(day.log, text.trim())?.[1];
-        if (mine !== undefined && partnersIn(mine).length > 0) entryDelete(mine.id);
+        const mine: Entry | undefined = sharedFind(text.trim());
+        if (mine === undefined || partnersIn(mine).length === 0) return true;
+        if (mine.todo) boxDelete(mine.id);
+        else entryDelete(mine.id);
         return true;
     } catch (error: unknown) {
-        console.error(new Date().toISOString(), "My log cannot remove a shared entry", error);
+        console.error(new Date().toISOString(), "My log or plan cannot remove a shared entry", error);
         return false;
     }
 }

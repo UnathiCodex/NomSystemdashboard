@@ -1516,11 +1516,21 @@ export function entryAppend(
     return id;
 }
 
+/** The text of a new `.ics` file holding the lines of one entry or to-do, like a copy I share. */
+function icsOf(component: string[]): string {
+    const lines: string[] = newLinesOf();
+    lines.splice(lines.lastIndexOf("END:VCALENDAR"), 0, ...linesOrdered(component));
+    return componentsSorted(lines, false).flatMap(foldedOf).join("\r\n");
+}
+
 /** The text of a new `.ics` file holding one entry, like the copy of an entry I share. */
 export function entryIcsOf(fields: EntryFields, own: OwnProperty[], id: string): string {
-    const lines: string[] = newLinesOf();
-    lines.splice(lines.lastIndexOf("END:VCALENDAR"), 0, ...linesOrdered(eventLinesOf(fields, own, id)));
-    return componentsSorted(lines, false).flatMap(foldedOf).join("\r\n");
+    return icsOf(eventLinesOf(fields, own, id));
+}
+
+/** The text of a new `.ics` file holding one open to-do, like the copy of a box I share. */
+export function todoIcsOf(fields: TodoFields, own: OwnProperty[], id: string): string {
+    return icsOf(todoLinesOf(fields, own, id, true));
 }
 
 /** The lines of the event of an entry. */
@@ -1584,6 +1594,7 @@ function durationOf(minutes: number): string {
  * A to-do with a deadline has no `DTSTART`, since RFC 5545 wants `DUE` of the same kind and later.
  *
  * @param open - Whether it is a box, `STATUS:NEEDS-ACTION`, false for a group of a tutorial
+ * @param id - Its new `UID` or the one a box brought from Vu's plan
  * @throws {Error} - When the file lies outside the new system or has no line `END:VCALENDAR`
  */
 export function todoAppend(
@@ -1591,9 +1602,15 @@ export function todoAppend(
     fields: TodoFields,
     own: [string, string | Link | Date][] = [],
     open: boolean = true,
+    id: string = `${randomUUID()}@nomsystem`,
 ): string {
     writeCheck(file);
-    const id: string = `${randomUUID()}@nomsystem`;
+    componentInsert(file, todoLinesOf(fields, own, id, open));
+    return id;
+}
+
+/** The lines of a to-do, open when it is a box. */
+function todoLinesOf(fields: TodoFields, own: OwnProperty[], id: string, open: boolean): string[] {
     const first: ICAL.Property[] = [
         fields.deadline === ""
             ? propertyOf("dtstart", todoStartOf(fields))
@@ -1601,8 +1618,7 @@ export function todoAppend(
         ...(fields.minutes === null ? [] : [propertyOf("estimated-duration", durationOf(fields.minutes))]),
         ...(open ? [propertyOf("status", "NEEDS-ACTION")] : []),
     ];
-    componentInsert(file, newComponentLinesOf("vtodo", id, first, fields, own));
-    return id;
+    return newComponentLinesOf("vtodo", id, first, fields, own);
 }
 
 /**

@@ -94,8 +94,8 @@ import { changesSend, changesWatch } from "./changes.ts";
 import {
     attendeesRead,
     changeShare,
+    copyTake,
     entryShare,
-    entryTake,
     partnersRead,
     removalTake,
     removeShare,
@@ -189,7 +189,8 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  * - `GET /api/day/plain?id=…`: The plain series of the `UID` of one of its parts.
  * - `GET /api/day/real`: The minutes the last entries like a box really lasted.
  * - `POST /api/day/log`: Sends the entry to Vu when Vu is in its `With`, as every route that adds one does.
- *   A route that changes an entry sends it once Vu comes into its `With`.
+ *   `POST /api/day/boxes` sends a box the same way.
+ *   A route that changes an entry or a box sends it once Vu comes into its `With`.
  *   The routes that change my foods, meals, places and platforms send each change to Vu.
  * - `PATCH /api/day/log`, `PATCH /api/skill/entry`: Refused with 409 when its file changed since the dialog opened.
  * - `POST /api/day/moved`: Every other field as its file holds it.
@@ -258,7 +259,9 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         if (written) entryShare(change.id, before);
         responseSend(response, written ? 200 : 409, null);
     } else if (request.method === "POST" && url.pathname === "/api/shared/entry") {
-        responseSend(response, entryTake(await text(request)) ? 200 : 422, null);
+        responseSend(response, copyTake(await text(request), "entry") ? 200 : 422, null);
+    } else if (request.method === "POST" && url.pathname === "/api/shared/box") {
+        responseSend(response, copyTake(await text(request), "box") ? 200 : 422, null);
     } else if (request.method === "GET" && url.pathname === "/api/shared/partners") {
         responseSend(response, 200, partnersRead().map(personNameOf));
     } else if (request.method === "POST" && url.pathname === "/api/shared/change") {
@@ -280,9 +283,13 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         const box: Box = boxFind(id)[2];
         if (box.type !== "" && skillFolderOf(box.module) !== undefined)
             numbersRenew(box.module, box.type, box.semester || semesterOf(box.day));
+        entryShare(id);
         responseSend(response, 200, id);
     } else if (request.method === "PATCH" && url.pathname === "/api/day/boxes") {
-        boxEdit((await json(request)) as BoxChange);
+        const change: BoxChange = (await json(request)) as BoxChange;
+        const before: Attendee[] = attendeesRead(change.id);
+        boxEdit(change);
+        entryShare(change.id, before);
         responseSend(response, 200, null);
     } else if (request.method === "DELETE" && url.pathname === "/api/day/boxes") {
         boxDelete(url.searchParams.get("id") ?? "");
@@ -296,8 +303,9 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         plainRemove(url.searchParams.get("id") ?? "");
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/logged") {
-        const id: string = boxLog((await json(request)) as BoxLogged);
-        entryShare(id);
+        const logged: BoxLogged = (await json(request)) as BoxLogged;
+        const id: string = boxLog(logged);
+        if (logged.shared) entryShare(id);
         responseSend(response, 200, id);
     } else if (request.method === "POST" && url.pathname === "/api/day/undone") {
         boxUndo(((await json(request)) as { box: string }).box);

@@ -26,7 +26,7 @@ the five areas stand written into `index.html`, so they show at once.
 | [book-open-text.svg](icons/book-open-text.svg) | Area Scripts, NomSkillingmodules |
 | [folder-open.svg](icons/folder-open.svg) | Area NomManageplannings |
 | [graduation-cap.svg](icons/graduation-cap.svg) | Area Skill |
-| [utensils.svg](icons/utensils.svg) | Area NomMetafoods |
+| [utensils.svg](icons/utensils.svg) | Area NomLivingfoods |
 | [chevron-left.svg](icons/chevron-left.svg) | Day, month and food before and after |
 | [chevron-right.svg](icons/chevron-right.svg) | Day, month and food before and after |
 | [chevrons-left.svg](icons/chevrons-left.svg) | Year before and after in the month |

@@ -75,6 +75,7 @@ export function middleCutPut(line: HTMLElement, name: string): void {
  * A value to pick.
  *
  * - `group`: Name above its first value, empty for none.
+ * - `brackets`: Grey in brackets right after the text in the list, as large as it, empty for none.
  * - `detail`: Grey beside the text in the list.
  * - `starred`: Whether a small filled star follows its text, like my default place.
  */
@@ -82,6 +83,7 @@ export type Choice = {
     value: string;
     text: string;
     group: string;
+    brackets?: string;
     detail?: string;
     starred?: boolean;
 };
@@ -203,10 +205,16 @@ function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonE
     return button;
 }
 
-/** Button of a value in a list, its text, its star and its grey detail. */
+/** Button of a value in a list, its text, its brackets, its star, its grey detail. */
 function valueButtonOf(choice: Choice, chosen: boolean, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf(choice.text, chosen, click);
     button.dataset.value = choice.value;
+    if ((choice.brackets ?? "") !== "") {
+        const brackets: HTMLSpanElement = document.createElement("span");
+        brackets.className = "picker-brackets";
+        brackets.textContent = ` (${choice.brackets})`;
+        button.append(brackets);
+    }
     if (choice.starred === true) {
         const star: HTMLSpanElement = document.createElement("span");
         star.className = "picker-star";

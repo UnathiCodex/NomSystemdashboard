@@ -11,7 +11,7 @@
  * The categories come by their importance for my life, without `Drink`, since water has its own tracker.
  * `Sport` has no note, since what I did stands in its rows.
  * The summary of `Sport` and `Way` takes no new values, but its pencil still changes it.
- * A pencil of a summary changes only this box or entry, a box and the entry logged from it together.
+ * A pencil of a summary changes only this box or entry, never a box with the entry logged from it.
  * The pencil of a param changes it for every entry and box of its category.
  * A box of a series and an entry logged from it open no list, the whole series changes only in its own dialog.
  * A link opens on a click only while it is valid.
@@ -26,7 +26,7 @@
 
 import { choiceOf, choicesOf, fileShow, listsStart, partFieldOf, pairOf, partOf, rowOf, searchOf } from "./choices.ts";
 import { boxAdd, boxChange, boxDelete, entryAdd, entryChange, entryDelete, standardAddressOf } from "./entries.ts";
-import { cookName, foodName, mealCooked, mealFoods, mealOf, mealTitle } from "./meal.ts";
+import { cookName, foodName, mealCooked, mealFoods, mealOf, mealTitle, summarySearchOf } from "./meal.ts";
 import { sportName, sportOpen, sportRead, sportRowsOf, sportTitle } from "./sport.ts";
 import {
     addressOf,
@@ -945,7 +945,7 @@ function manyRowOf(field: Field): HTMLElement {
     return rowOf(
         field.name,
         choicesOf({
-            search: searchOf(field.values.map(choiceOf)),
+            search: summarySearchOf(chosen?.name ?? "", field.values),
             picked: picked,
             many: true,
             adding: !field.fixed,
@@ -1452,13 +1452,14 @@ async function renamesSend(dry: boolean): Promise<void> {
  * Sends the new or changed entry or box to the reader, then closes the dialog.
  * A changed entry goes with its fingerprint as the dialog opened it, so the first save wins.
  * When its file changed it since, nothing is saved and the dialog stays open, saying so.
- * A changed log entry asks whether the change goes to those I share it with, see `share.ts`.
+ * A change asks whether it goes to those I share it with, see `share.ts`.
  *
  * @throws {Error} - When the reader does not take the entry or a place or person I changed
  */
 async function entrySave(calendar: Calendar): Promise<void> {
     await renamesSend(true);
     const version: string = opened.entry?.extendedProps.version ?? "";
+    const shared: [string, Attendee[]] | null = sharedOf();
     let saved: boolean = true;
     if (opened.target === "box" && opened.box !== null) await boxChange(opened.box.id, boxFieldsRead());
     else if (opened.target === "box") await boxAdd(boxFieldsRead());
@@ -1468,17 +1469,26 @@ async function entrySave(calendar: Calendar): Promise<void> {
     else await entryAdd(calendar, fieldsRead());
     if (saved) {
         await renamesSend(false);
-        if (opened.target !== "box" && opened.entry !== null)
-            await changeAsk(opened.entry.id, opened.entry.extendedProps.attendees ?? [], peopleRead());
+        if (shared !== null) await changeAsk(shared[0], shared[1], peopleRead());
         entryClose();
     } else hintShow("entry-changed");
+}
+
+/**
+ * `UID` and `With` of the entry or the box the dialog shows, which I may share.
+ * `null` for a new one and for a day of a series.
+ */
+function sharedOf(): [string, Attendee[]] | null {
+    if (opened.target === "box")
+        return opened.box === null || opened.box.series ? null : [opened.box.id, opened.box.attendees];
+    return opened.entry === null ? null : [opened.entry.id, opened.entry.extendedProps.attendees ?? []];
 }
 
 /**
  * Removes the entry or the box on the second click, the first only asks.
  * A box of a series goes that day alone.
  * A box I decided against is dropped by its cross instead, so it can be counted.
- * An entry asks whether it goes for those I share it with too, see `share.ts`.
+ * It asks whether it goes for those I share it with too, see `share.ts`.
  *
  * @throws {Error} - When the reader does not remove the entry or the box
  */
@@ -1490,11 +1500,10 @@ async function entryRemove(calendar: Calendar): Promise<void> {
         return;
     }
 
+    const shared: [string, Attendee[]] | null = sharedOf();
+    if (shared !== null) await removeAsk(shared[0], shared[1]);
     if (opened.target === "box") await boxDelete(opened.box?.id ?? "");
-    else {
-        await removeAsk(opened.entry?.id ?? "", opened.entry?.extendedProps.attendees ?? []);
-        await entryDelete(calendar, opened.entry?.id ?? "");
-    }
+    else await entryDelete(calendar, opened.entry?.id ?? "");
     entryClose();
 }
 

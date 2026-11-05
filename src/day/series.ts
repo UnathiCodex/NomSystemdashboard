@@ -50,6 +50,7 @@ import {
 } from "./places.ts";
 import { boxAdd, boxDrop, boxLog, boxRepeat, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
 import { boxOpenEdit, dayCalendarOf, entryBoxOf, entryOpenFromBox, topicFileOf } from "./categories.ts";
+import { summarySearchOf } from "./meal.ts";
 import { onlineRowOf, withRowOf } from "./attendance.ts";
 import { boxActionsOf } from "./actions.ts";
 import { boxesFetch } from "./boxes.ts";
@@ -688,7 +689,7 @@ function knownEndOf(box: Box): HTMLElement {
             (): void =>
                 seriesAct(async (): Promise<void> => {
                     const [start, end]: [Date, Date] = boxTimesOf(box, new Date(`${box.day}T12:00:00`));
-                    await boxLog(box.id, start, end);
+                    await boxLog(box, start, end);
                 }),
             seriesAct,
             true,
@@ -2434,7 +2435,7 @@ function plainSummaryOf(series: Plain): HTMLElement {
     const pencil: HTMLButtonElement = iconButtonOf("entry-pencil", Pencil, "Change the summary", (): void => {});
     pencil.hidden = series.title === "";
     const picker: HTMLElement = choicesOf({
-        search: searchOf(field.values.map(choiceOf)),
+        search: summarySearchOf(series.category, field.values),
         picked: series.title === "" ? [] : field.many === true ? series.title.split(", ") : [series.title],
         many: field.many === true,
         adding: !field.fixed,

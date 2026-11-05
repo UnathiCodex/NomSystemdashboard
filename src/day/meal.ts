@@ -14,9 +14,11 @@
  * A cooking, `Cook`, lists what went into the pot in the same rows and counts no kcal.
  * A meal may draw from a cooking of the days before, written as `X-COOKED`,
  * its foods as its own lines, so meal and cooking each keep their foods.
+ * A box of a meal or a cooking finds its summary in my meals and foods, only once I type.
+ * Each is its own value, so foods never show as one meal.
  */
 
-import { choicesOf, listOf, rowOf, searchOf } from "./choices.ts";
+import { choiceOf, choicesOf, listOf, rowOf, searchOf } from "./choices.ts";
 import { timeOf } from "./times.ts";
 import { dayOf, dayTextOf } from "../skill/attempts.ts";
 import {
@@ -36,6 +38,7 @@ import { dishesFound, dishNameOf, mealNameOf } from "../food/meals.ts";
 import { foodSearchClear, foodSearchOf, listLineOf } from "../food/search.ts";
 import { crossPut, iconOf, plusPut } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
+import { matchesAll, wordsOf } from "../search.ts";
 import { Plus } from "lucide";
 
 import type { Choice } from "./choices.ts";
@@ -534,6 +537,31 @@ function dishLinesOf(query: string, changed: () => void): HTMLElement[] {
     plus.replaceChildren(iconOf(Plus), `New meal “${name}”`);
     plus.title = "New meal, its foods picked next";
     return [...lines, plus];
+}
+
+/**
+ * The search of the summary of a box.
+ * For `Food` and `Cook` it finds my meals, then my foods by their names, each its own value.
+ * A meal shows its short title in brackets, as in the food view.
+ * It finds them only once I type, since I search what I eat, not what I ate before.
+ */
+export function summarySearchOf(category: string, values: string[]): (text: string) => Promise<Choice[]> {
+    if (![foodName, cookName].includes(category)) return searchOf(values.map(choiceOf));
+    return async (text: string): Promise<Choice[]> => {
+        if (text.trim() === "") return [];
+        const [mealsMine, found]: [Dish[], FoodsFound] = await Promise.all([dishesLoad(), foodsFind("", 1, false)]);
+        const names: string[] = found.foods
+            .map((food: Food): string => food.name)
+            .filter((name: string): boolean => matchesAll(name, wordsOf(text)));
+        return [
+            ...dishesFound(mealsMine, text).map((dish: Dish): Choice => ({
+                ...choiceOf(dish.name),
+                group: "Meals",
+                brackets: dish.short,
+            })),
+            ...[...new Set(names)].map((name: string): Choice => ({ ...choiceOf(name), group: "Foods" })),
+        ];
+    };
 }
 
 /**

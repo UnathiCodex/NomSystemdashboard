@@ -154,6 +154,11 @@
     color: var(--text-muted);
 }
 
+/* The brackets after a value, as large as it, as the short title of a meal in the food view */
+.picker-brackets {
+    color: var(--text-muted);
+}
+
 /* Rows inside the value above them, indented with the grey guide line, so both read as one.
    The line reaches over the 2 px between two rows, so it runs through */
 .panel-nested {

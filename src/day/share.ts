@@ -1,11 +1,12 @@
 /**
- * ## Sharing a change or a removal
+ * ## Sharing a log, a change, a removal
  *
- * Asks after I saved a change of an entry whether it goes to the people I share with in its `With`,
- * since after its first copy each of us owns their own entry.
- * It asks only about those in `With` before and after the change, since only they have the entry.
- * As I remove an entry it asks whether theirs goes too, before mine goes, so the reader still knows its `With`.
- * Yes hands the change or the removal to them at once, by `reader/shared.ts`.
+ * Asks as I log a box whether its entry goes to the people I share with in its `With`.
+ * Asks after I saved a change of an entry or a box whether it goes to the people I share with in its `With`,
+ * since after its first copy each of us owns their own.
+ * It asks only about those in `With` before and after the change, since only they have it.
+ * As I remove one it asks whether theirs goes too, before mine goes, so the reader still knows its `With`.
+ * Yes hands the entry, the change, the removal to them at once, by `reader/shared.ts`.
  * No, Esc, a click beside the question each keep it mine.
  */
 
@@ -63,6 +64,16 @@ async function shareSend(path: string, id: string): Promise<void> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: id }),
     });
+}
+
+/**
+ * Asks as I log a box whether its entry goes to the people I share with in its `With`, giving the answer.
+ *
+ * @throws {Error} - When the reader does not answer
+ */
+export async function logAsk(people: Attendee[]): Promise<boolean> {
+    const all: string[] = await partnersIn(people);
+    return all.length > 0 && (await shareAsk(`Share this entry with ${all.join(" and ")}?`, "Keep it mine", "Share"));
 }
 
 /**

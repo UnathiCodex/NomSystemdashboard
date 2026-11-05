@@ -9,7 +9,9 @@
 
 import { searchTextOf } from "../search.ts";
 import { spokenOf } from "../persons.ts";
+import { logAsk } from "./share.ts";
 
+import type { Box } from "./boxes.ts";
 import type { Days, States } from "./series.ts";
 import type { Calendar } from "fullcalendar";
 import type { Attendee, Online } from "../../reader/calendar.ts";
@@ -185,14 +187,16 @@ export async function entryDelete(calendar: Calendar, id: string): Promise<void>
 }
 
 /**
- * Logs a box at its real time in a log entry pointing to it.
+ * Logs a box at its real time in a log entry pointing to it,
+ * first asking whether its entry goes to the people I share with in its `With`.
  * Only the change of its file loads the log again, so the entry never shows twice for a moment.
  *
  * @throws {Error} - When the reader does not log it, like for a box done already
  */
-export async function boxLog(box: string, start: Date, end: Date): Promise<void> {
+export async function boxLog(box: Box, start: Date, end: Date): Promise<void> {
     await requestSend("POST", "/api/day/logged", {
-        box: box,
+        box: box.id,
+        shared: await logAsk(box.attendees),
         start: start.toISOString(),
         end: end.toISOString(),
     });

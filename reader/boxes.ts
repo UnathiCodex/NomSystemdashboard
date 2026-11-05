@@ -4,6 +4,7 @@
  * The plan of a day is a list of boxes, not a calendar, the log is my one calendar.
  * A box is what I intend to do on a day, by category, with an expected time and duration or without.
  * When I do it, it goes into the log at its real time, so expected and real time can be compared.
+ * A box and its log entry never rename each other, so the plan keeps what I planned.
  * A box I decide against stays as `STATUS:CANCELLED`, so it can be counted.
  * `STATUS:CANCELLED` is always my own decision, lectures included.
  * Any change of its day is a push, counted until I take it back.
@@ -58,7 +59,6 @@ import {
     pushesKeep,
     seriesDayRemove,
     statusPut,
-    titlePut,
     todoAppend,
     todoChange,
 } from "./calendar.ts";
@@ -205,6 +205,16 @@ function boxTidy(file: string, entry: Entry): void {
 /** The day of an entry, of its start in Berlin time. */
 function dayOf(entry: Entry): string {
     return entry.allDay ? entry.start : berlinDateOf(new Date(entry.start));
+}
+
+/** The times of a to-do as its file holds them, so a copy of it keeps them. */
+export function todoTimesOf(entry: Entry): Omit<TodoFields, keyof EntryTexts> {
+    return {
+        day: dayOf(entry),
+        time: entry.allDay ? null : new Date(entry.start),
+        minutes: entry.minutes,
+        deadline: entry.deadline,
+    };
 }
 
 /** Stops a day not written like `2026-10-13`. */
@@ -637,15 +647,16 @@ function numberNextOf(module: string, type: string, date: string): string {
 /**
  * Adds a box to the plan it belongs into, nothing written while it is not right.
  *
+ * @param given - The `UID` a box brought from Vu's plan, left out for a new one
  * @returns Identifier of the new box
  * @throws {Error} - When the box is not right
  */
-export function boxAdd(box: BoxNew): string {
+export function boxAdd(box: BoxNew, given?: string): string {
     boxCheck(box, null);
     const file: string = calendarFileOf(box, box.day, planEnding);
     const fields: TodoFields = todoFieldsOf(box, null);
     const links: [string, (string | Link)[]][] = boxLinksOf(box, null);
-    const id: string = todoAppend(file, fields);
+    const id: string = todoAppend(file, fields, [], true, given);
     if (links.length > 0) propertiesPut(file, id, links);
     if (box.category === skillName && numberedTypes.includes(box.type))
         propertiesPut(file, id, [["x-number", [numberNextOf(box.module, box.type, box.day)]]]);
@@ -725,20 +736,6 @@ export function boxEdit(change: BoxChange): void {
     else if (event !== null) entryChange(file, entry, event, target);
     if (links.length > 0) propertiesPut(target, change.id, links);
     boxTidy(file, entry);
-    if (change.title !== old.title && box.category !== skillName) logRename(change.id, box, change.title);
-}
-
-/** Renames the log entry of a box with it, but a meal, whose foods write its summary. */
-function logRename(id: string, box: Box, title: string): void {
-    if (box.log === null) return;
-    const logged: Entry | undefined = entriesRead(
-        day.log,
-        box.log.start,
-        new Date(Date.parse(box.log.end) + 1).toISOString(),
-    ).find((entry: Entry): boolean => entry.planned === id);
-    if (logged === undefined || logged.foods.length > 0 || !logged.editable) return;
-    const found: [string, Entry] | undefined = entryLookup(day.log, logged.id);
-    if (found !== undefined) titlePut(found[0], logged.id, { ...logged, title: title });
 }
 
 /**
@@ -927,16 +924,6 @@ function boxLookup(id: string): [string, Entry] | undefined {
         entryLookup(day.plan, id) ??
         (at === -1 ? undefined : occurrenceLookup(day.plan, id.slice(0, at), id.slice(at + 1)))
     );
-}
-
-/** Renames a box with its log entry, so both keep one summary. */
-export function boxRename(id: string, title: string): void {
-    const found: [string, Entry] | undefined = boxLookup(id);
-    if (found === undefined || !found[1].editable) return;
-    const [file, entry]: [string, Entry] = found;
-    boxOwn(file, entry);
-    titlePut(file, id, { ...entry, title: title });
-    boxTidy(file, entry);
 }
 
 /**

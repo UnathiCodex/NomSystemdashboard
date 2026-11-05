@@ -13,7 +13,7 @@
  * A meal drawn from a cooking holds `X-COOKED:<UID of the Cook entry>`.
  */
 
-import { boxDone, boxFind, boxOpenFind, boxRename, boxReopen } from "./boxes.ts";
+import { boxDone, boxFind, boxOpenFind, boxReopen } from "./boxes.ts";
 import {
     berlinDateOf,
     entriesOnceRead,
@@ -79,9 +79,14 @@ export type EntryMoved = {
     end: string;
 };
 
-/** A box logged at its real time. */
+/**
+ * A box logged at its real time.
+ *
+ * - `shared`: Whether its entry goes to the people I share with in its `With`.
+ */
 export type BoxLogged = {
     box: string;
+    shared: boolean;
     start: string;
     end: string;
 };
@@ -421,7 +426,7 @@ export function boxUndo(id: string): void {
 
 /**
  * Writes a changed entry, all checked first, so a change refused leaves it as it was.
- * Its box takes the new summary, but for a meal, whose summary is what I really ate.
+ * Its box keeps its summary, so the plan still shows what I planned.
  *
  * @throws {Error} - When it may not be changed or the change is not allowed
  */
@@ -443,8 +448,6 @@ function entryWrite(file: string, entry: Entry, change: EntryNew): void {
     if (exercises.join("\n") !== (entry.exercises ?? []).join("\n"))
         propertiesPut(file, entry.id, [["x-exercise", exercises.map(sportIcsOf)]]);
     entryChange(file, entry, fields, logFileOf(fields));
-    if (entry.planned !== "" && foods.length === 0 && fields.title !== entry.title)
-        boxRename(entry.planned, fields.title);
     cookedShare(entry.cooked);
     if (change.cooked !== undefined && change.cooked !== entry.cooked) cookedShare(change.cooked);
     if (fields.category === cookName) cookedShare(entry.id, entry.foods);
