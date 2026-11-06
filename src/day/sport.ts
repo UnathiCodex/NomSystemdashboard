@@ -15,8 +15,8 @@
 
 import { listOf, rowOf } from "./choices.ts";
 import { exerciseSend, mineLoad, workoutDelete, workoutSend } from "../sport/mine.ts";
-import { lineNameOf, newOf, ruleTextOf, typedNameOf } from "../sport/lists.ts";
-import { buttonOf, elementOf } from "../food/foods.ts";
+import { newOf, ruleTextOf, typedNameOf } from "../sport/lists.ts";
+import { buttonOf, elementOf, lineNameOf } from "../food/foods.ts";
 import { listHeadOf, listLineOf } from "../food/search.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { crossPut, plusPut, searchFieldOf } from "../icons.ts";

@@ -231,46 +231,21 @@ export function totalOf(name: string, value: string | HTMLElement): HTMLElement 
     return tile;
 }
 
-/** The name of a food, its brand and store grey in brackets, since they only tell which one it is. */
-export function foodNameOf(className: string, name: string, brand: string, store: string): HTMLElement {
-    const shown: HTMLElement = elementOf("span", className, name);
-    const place: string[] = [brand, store].filter((part: string): boolean => part !== "");
-    if (place.length > 0) shown.append(elementOf("span", "food-brand", ` (${place.join(", ")})`));
-    return shown;
+/** Name of a line in a list on one line, grey brackets after it, both whole as its tooltip. */
+export function lineNameOf(text: string, brackets: string): HTMLElement {
+    const name: HTMLElement = elementOf("span", "food-name", "");
+    name.title = brackets === "" ? text : `${text} (${brackets})`;
+    name.append(elementOf("span", "", text));
+    if (brackets !== "") name.append(elementOf("span", "food-brand", ` (${brackets})`));
+    return name;
 }
 
 /**
- * Keeps the brackets of a list alike, all on the line of their name while every one fits, else all below.
- * A bracket hidden counts as fitting, a list watched inside another keeps its own brackets.
- * - `width`: Width when last looked at, so a change of its height alone looks at nothing.
+ * The name of a food with its brand and store grey in brackets.
+ * They only tell which one it is.
  */
-export function bracketsWatch(list: HTMLElement): void {
-    let width: number = -1;
-    list.dataset.brackets = "";
-    const fits: (bracket: HTMLElement) => boolean = (bracket: HTMLElement): boolean => {
-        const parts: DOMRectList = bracket.getClientRects();
-        const name: Node | null = bracket.parentElement?.firstChild ?? null;
-        if (parts.length === 0 || name === null || name.nodeType !== Node.TEXT_NODE) return true;
-        const range: Range = document.createRange();
-        range.selectNodeContents(name);
-        const first: DOMRect | undefined = range.getClientRects()[0];
-        return first === undefined || parts[parts.length - 1].bottom <= first.bottom + 1;
-    };
-    const look: () => void = (): void => {
-        const brackets: HTMLElement[] = [...list.querySelectorAll<HTMLElement>(".food-brand")].filter(
-            (bracket: HTMLElement): boolean => bracket.parentElement?.closest("[data-brackets]") === list,
-        );
-        for (const bracket of brackets) bracket.classList.remove("bracket-below");
-        const below: boolean = !brackets.every(fits);
-        for (const bracket of brackets) bracket.classList.toggle("bracket-below", below);
-    };
-    new ResizeObserver((entries: ResizeObserverEntry[]): void => {
-        const now: number = entries[0]?.contentRect.width ?? width;
-        if (now === width) return;
-        width = now;
-        look();
-    }).observe(list);
-    new MutationObserver(look).observe(list, { childList: true, subtree: true });
+export function foodNameOf(name: string, brand: string, store: string): HTMLElement {
+    return lineNameOf(name, [brand, store].filter((part: string): boolean => part !== "").join(", "));
 }
 
 /** A button that does not send a form, also inside one. */

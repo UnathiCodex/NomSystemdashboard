@@ -44,19 +44,30 @@ button.food-row {
     color: var(--text-muted);
 }
 
-/* Name of a meal or a food, going on below where the row has no room, never cut */
+/* Name of a line in a list, always one line, too long ending in `…`, its grey brackets cut first */
 .food-name {
-    overflow-wrap: break-word;
+    display: flex;
+    min-width: 0;
+}
+
+.food-name > :first-child {
+    flex: none;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.food-name > .food-brand {
+    min-width: 0;
+    overflow: hidden;
+    white-space: pre;
+    text-overflow: ellipsis;
 }
 
 /* The brackets after the name of a food grey, since they only tell which one it is */
 .food-brand {
     color: var(--text-muted);
-}
-
-/* The brackets of a list all below their names while one of them has no room */
-.bracket-below {
-    display: block;
 }
 
 /* Numbers at the right, every digit equally wide, so the columns align */

@@ -16,7 +16,7 @@
  */
 
 import { exerciseChangeSend, exerciseDelete, exerciseSend, mineLoad, workoutDelete, workoutSend } from "./mine.ts";
-import { bracketsWatch, buttonOf, elementOf, foodNameOf, headingOf, partLinkOf, plusOf } from "../food/foods.ts";
+import { buttonOf, elementOf, headingOf, lineNameOf, partLinkOf, plusOf } from "../food/foods.ts";
 import { inlineFieldOf, listLineOf } from "../food/search.ts";
 import { panelClose, panelOf, panelSearchOpen, panelShow } from "../food/panel.ts";
 import { matchesAll, wordsOf } from "../search.ts";
@@ -59,15 +59,6 @@ function removeOf(words: string, asking: boolean, click: () => void): HTMLButton
 /** Cleans a name typed for a workout or an exercise as the reader cleans it, a link no name. */
 export function typedNameOf(typed: string): string {
     return /^\s*https?:\/\//i.test(typed) ? "" : typed.replace(/[|;,]/g, " ").replace(/\s+/g, " ").trim();
-}
-
-/** Name of a line with grey brackets after it, both whole as its tooltip. */
-export function lineNameOf(text: string, brackets: string): HTMLElement {
-    const name: HTMLElement = elementOf("span", "sport-name", "");
-    name.title = brackets === "" ? text : `${text} (${brackets})`;
-    name.append(elementOf("span", "", text));
-    if (brackets !== "") name.append(elementOf("span", "food-brand", ` (${brackets})`));
-    return name;
 }
 
 /**
@@ -242,7 +233,7 @@ function workoutsSectionOf(exerciseOpen: (part: Part) => void): HTMLElement {
             ...workout.parts.map((part: Part, index: number): HTMLElement => {
                 const line: HTMLElement = elementOf("div", "food-part", "");
                 line.append(
-                    partLinkOf(part.name, foodNameOf("food-name", part.name, "", ""), (): void => exerciseOpen(part)),
+                    partLinkOf(part.name, lineNameOf(part.name, ""), (): void => exerciseOpen(part)),
                     elementOf("span", "food-value sport-grey", ruleTextOf(part)),
                 );
                 if (workout.parts.length > 1)
@@ -291,7 +282,6 @@ function workoutsSectionOf(exerciseOpen: (part: Part) => void): HTMLElement {
         searchFieldOf(search, "Search workouts"),
         list,
     );
-    bracketsWatch(list);
     shows.push(show);
     return section;
 }
@@ -516,7 +506,6 @@ function exercisesSectionOf(): [HTMLElement, (part: Part) => void] {
         searchFieldOf(search, "Search exercises"),
         list,
     );
-    bracketsWatch(list);
     shows.push(show);
     return [
         section,

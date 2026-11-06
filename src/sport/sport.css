@@ -1,26 +1,5 @@
 /* Sport: what the sport view adds to the look of the food view */
 
-/* Name in a list, one line, the grey brackets cut first */
-.sport-name {
-    display: flex;
-    min-width: 0;
-}
-
-.sport-name > :first-child {
-    flex: none;
-    max-width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.sport-name > .food-brand {
-    min-width: 0;
-    overflow: hidden;
-    white-space: pre;
-    text-overflow: ellipsis;
-}
-
 /* The rule of a part grey beside the white facts */
 .sport-grey {
     color: var(--text-muted);

@@ -42,9 +42,11 @@
     vertical-align: middle;
 }
 
-/* Name of a meal or a food, going on below where the row has no room, never cut */
+/* Name of a meal or a food, always one line, too long ending in `…` */
 .meal-name {
-    overflow-wrap: break-word;
+    overflow-x: clip;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* Mark of a food `Foods.md` does not hold, grey, a hint, not a name */

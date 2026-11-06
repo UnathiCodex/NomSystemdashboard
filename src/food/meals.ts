@@ -11,7 +11,6 @@
  */
 
 import {
-    bracketsWatch,
     buttonOf,
     dishDelete,
     dishesLoad,
@@ -108,7 +107,7 @@ function dishFit(name: HTMLElement, brackets: HTMLElement, dish: Dish): void {
  * - `width`: Width when last fitted, so a change of its height alone fits nothing.
  */
 export function dishNameOf(dish: Dish): HTMLElement {
-    const line: HTMLElement = elementOf("span", "food-name dish-name", "");
+    const line: HTMLElement = elementOf("span", "dish-name", "");
     const name: HTMLElement = elementOf("span", "", dish.name);
     const brackets: HTMLElement = elementOf("span", "food-brand", "");
     brackets.hidden = dish.short === "";
@@ -157,7 +156,7 @@ function partOf(
     const [name, brand, store]: string[] = food.split(";");
     const amount: HTMLElement = elementOf("span", "food-value food-grams", "");
     amount.append(grams, unit);
-    part.append(partLinkOf(name, foodNameOf("food-name", name, brand ?? "", store ?? ""), open), amount);
+    part.append(partLinkOf(name, foodNameOf(name, brand ?? "", store ?? ""), open), amount);
     if (remove !== null) part.append(remove);
     return part;
 }
@@ -201,7 +200,6 @@ export function mealsSectionOf(foodOpen: (food: { name: string; brand: string; s
     const section: HTMLElement = elementOf("section", "food-dishes", "");
     const search: HTMLInputElement = document.createElement("input");
     const list: HTMLElement = elementOf("div", "dish-list", "");
-    bracketsWatch(list);
     let dishes: Dish[] = [];
     let open: string = "";
     let asked: string = "";

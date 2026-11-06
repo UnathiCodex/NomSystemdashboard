@@ -12,7 +12,6 @@
 
 import {
     amountOf,
-    bracketsWatch,
     buttonOf,
     elementOf,
     foodChange,
@@ -318,7 +317,7 @@ function mineLineOf(search: Search, food: Food): HTMLElement {
     if (remove !== null) crossPut(remove, `Remove ${food.name}`);
     if (remove !== null && search.asking === key) iconPut(remove, QuestionMark, "Really remove?");
     return listLineOf(
-        foodNameOf("food-name", food.name, food.brand, food.store),
+        foodNameOf(food.name, food.brand, food.store),
         food.kcal,
         (): void => {
             if (search.setup.pick !== null) {
@@ -335,7 +334,7 @@ function mineLineOf(search: Search, food: Food): HTMLElement {
 /** The name of a product with its pack below it, which tells products apart. */
 function productNameOf(product: Product): HTMLElement {
     const title: HTMLElement = elementOf("span", "food-title", "");
-    title.append(foodNameOf("food-name", product.name, product.brand, product.store));
+    title.append(foodNameOf(product.name, product.brand, product.store));
     if (product.pack !== null)
         title.append(elementOf("span", "food-pack", `Pack ${product.pack} ${unitOf(product.kind)}`));
     return title;
@@ -758,7 +757,6 @@ export function foodSearchOf(setup: SearchSetup): HTMLElement {
         search.enter = true;
         resultsLoad(search, 0);
     });
-    bracketsWatch(search.results);
     element.append(
         searchFieldOf(
             search.input,

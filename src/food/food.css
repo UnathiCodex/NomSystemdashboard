@@ -236,9 +236,13 @@ body:has(> .food) {
     }
 }
 
-/* What of a meal and the name of a food going on below, never cut */
-.food-what {
-    overflow-wrap: break-word;
+/* Every line of an entry always one line, too long ending in `…`.
+   Cut only at the right, so the guide line of a meal still runs through */
+.food-what,
+.food-entry > :first-child {
+    overflow-x: clip;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* Place and unknown foods grey */
