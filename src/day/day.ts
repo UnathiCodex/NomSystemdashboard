@@ -197,29 +197,70 @@ function pointIn(element: HTMLElement | null, x: number, y: number): boolean {
     );
 }
 
-/** Day a point turns a dragged entry to by a strip or an arrow of the date, -1, 1, or 0 for none. */
-function turnOf(x: number, y: number): number {
-    if (pointIn(document.querySelector(".day-turn-back"), x, y) || pointIn(document.getElementById("day-back"), x, y))
-        return -1;
-    if (pointIn(document.querySelector(".day-turn-next"), x, y) || pointIn(document.getElementById("day-next"), x, y))
-        return 1;
+/** Milliseconds the pointer rests on a strip before it turns a dragged entry there, so passing it turns nothing. */
+const turnWait: number = 600;
+
+/**
+ * The strip the pointer stands on, -1 back, 1 ahead, 0 for none.
+ * - `ready`: Whether it rested there {@link turnWait} long.
+ */
+let turnStrip: { days: number; ready: boolean; timer: number } = { days: 0, ready: false, timer: 0 };
+
+/** Day the strip at a point stands for, -1 back, 1 ahead, 0 for none. */
+function stripOf(x: number, y: number): number {
+    if (pointIn(document.querySelector(".day-turn-back"), x, y)) return -1;
+    if (pointIn(document.querySelector(".day-turn-next"), x, y)) return 1;
     return 0;
 }
 
+/**
+ * Day a point turns a dragged entry to, -1 back, 1 ahead, 0 for none.
+ * An arrow of the date at once, a strip only once the pointer rested on it.
+ */
+function turnOf(x: number, y: number): number {
+    if (pointIn(document.getElementById("day-back"), x, y)) return -1;
+    if (pointIn(document.getElementById("day-next"), x, y)) return 1;
+    const strip: number = stripOf(x, y);
+    return strip === turnStrip.days && turnStrip.ready ? strip : 0;
+}
+
 /** Lights the strip the pointer would turn a dragged entry to. */
-function turnNear(event: PointerEvent): void {
-    const days: number = turnOf(event.clientX, event.clientY);
+function turnLight(x: number, y: number): void {
+    const days: number = turnOf(x, y);
     document.querySelector(".day-turn-back")?.classList.toggle("day-turn-near", days === -1);
     document.querySelector(".day-turn-next")?.classList.toggle("day-turn-near", days === 1);
+}
+
+/** Waits for the pointer to rest on a strip it came onto, then lights it. */
+function turnNear(event: PointerEvent): void {
+    const strip: number = stripOf(event.clientX, event.clientY);
+    if (strip !== turnStrip.days) {
+        window.clearTimeout(turnStrip.timer);
+        turnStrip = {
+            days: strip,
+            ready: false,
+            timer:
+                strip === 0
+                    ? 0
+                    : window.setTimeout((): void => {
+                          turnStrip.ready = true;
+                          turnLight(event.clientX, event.clientY);
+                      }, turnWait),
+        };
+    }
+    turnLight(event.clientX, event.clientY);
 }
 
 /**
  * Shows the strips of the days before and after while an entry is dragged, as Google Calendar does.
  * One lies over the times at the left of the grid, one at its right edge, each with its weekday.
+ * Each starts waiting anew, so a strip the drag starts on turns nothing at once.
  */
 function turnShow(calendar: Calendar, shown: boolean): void {
     const day: HTMLElement | null = document.querySelector(".day");
     day?.classList.toggle("day-turning", shown);
+    window.clearTimeout(turnStrip.timer);
+    turnStrip = { days: 0, ready: false, timer: 0 };
     if (!shown) {
         document.removeEventListener("pointermove", turnNear);
         return;
