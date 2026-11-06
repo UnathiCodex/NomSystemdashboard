@@ -196,9 +196,6 @@ let loggedRounds: RoundMark[] = [];
 /** Whether the dialog writes a box of the plan, which has no tasks and attempts. */
 let inPlan: boolean = false;
 
-/** First choice of the list of types, which takes the type back. */
-const noType: string = "None";
-
 /**
  * Paths of the documents from the module folder, as the list `Attach` offers them.
  * A file with its fingerprint or one in a folder of material, never a chapter folder.
@@ -344,10 +341,10 @@ async function skillAdd(text: string): Promise<string | null> {
     return code;
 }
 
-/** A new type typed in the list of types, one word the skill has not yet, never `None`. */
+/** A new type typed in the list of types, one word the skill has not yet. */
 function typeNewOf(module: string, text: string): string | null {
     const typed: string = text.trim();
-    return /^[\p{L}\p{N}]+$/u.test(typed) && typed !== noType && !typesOf(module).includes(typed) ? typed : null;
+    return /^[\p{L}\p{N}]+$/u.test(typed) && !typesOf(module).includes(typed) ? typed : null;
 }
 
 /**
@@ -861,7 +858,7 @@ function typePickerOf(
     pick: (type: string) => void,
 ): HTMLElement {
     return choicesOf({
-        search: searchOf([noType, ...typesOf(module)].map(choiceOf)),
+        search: searchOf(typesOf(module).map(choiceOf)),
         picked: type === "" ? [] : [type],
         many: false,
         adding: !moduleIs(module),
@@ -874,7 +871,7 @@ function typePickerOf(
         empty: "Add a type",
         plus: true,
         aside: aside,
-        pick: (values: string[]): void => pick(values[0] === noType ? "" : (values[0] ?? "")),
+        pick: (values: string[]): void => pick(values[0] ?? ""),
     });
 }
 
