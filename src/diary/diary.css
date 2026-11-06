@@ -1,38 +1,31 @@
-/* Diary: the bar, then the entries of the day, one column as wide as a page to read.
-   The page itself scrolls, so the wheel, a swipe, the keys, the scrollbar all scroll it */
-.diary {
-    display: flex;
-    flex-direction: column;
-    gap: calc(1.5 * var(--gap));
-    flex: none;
-    max-width: 48rem;
-    padding: var(--top-room) var(--side-room) calc(4 * var(--gap));
-}
-
-/* The page grows with its content */
-body:has(> .diary) {
-    height: auto;
-    min-height: 100dvh;
-}
+/* Diary: what it adds to the look of the food view.
+   Each entry as a meal there, its note beside it where the food view has my lists */
 
 .diary-entries {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
 }
 
-/* What an entry was, flat as a result of the search, a grey under the pointer when a click opens it */
+.diary-entry {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+}
+
+/* What an entry was, then grey its time, place, people, a line above it as above a meal in the food view */
 .diary-head {
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
-    width: 100%;
-    padding: 0.25rem var(--row-padding);
+    margin-top: 0.75rem;
+    padding: 0.625rem 0 0.25rem;
     border: 0;
-    border-radius: var(--radius);
+    border-top: 1px solid var(--line);
     background: none;
     color: var(--text-main);
     font: inherit;
+    font-size: var(--control-text);
     text-align: left;
 }
 
@@ -40,28 +33,36 @@ button.diary-head {
     cursor: pointer;
 }
 
-button.diary-head:hover {
-    background: var(--fill);
-}
-
 .diary-meta {
-    font-size: 0.8125rem;
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
 }
 
-/* The note right below its entry, plain text until I write, growing with its text, its line breaks kept */
+/* Under the pointer the grey of an entry lights up, as the start of a meal in the food view */
+@media (hover: hover) {
+    .diary-meta {
+        transition: color var(--hover-out);
+    }
+
+    button.diary-head:hover .diary-meta {
+        color: var(--text-main);
+        transition: color var(--hover-in);
+    }
+}
+
+/* The note as plain text, never wider than a page to read, growing with its text, its line breaks kept */
 .diary-note,
 .diary-text {
     display: block;
     width: 100%;
+    max-width: var(--reading-width);
     margin: 0;
-    padding: 0.25rem var(--row-padding);
+    padding: 0;
     border: 0;
-    border-radius: var(--radius);
     background: none;
     color: var(--text-main);
     font: inherit;
+    font-size: var(--control-text);
     white-space: pre-line;
 }
 
@@ -70,27 +71,39 @@ button.diary-head:hover {
     field-sizing: content;
     contain: inline-size;
     resize: none;
-}
-
-.diary-note:focus {
     outline: none;
-    background: var(--fill);
 }
 
+/* The grey word Note only under the pointer or while writing, so an empty note takes no eye */
 .diary-note::placeholder {
     color: var(--text-muted);
     opacity: 0;
 }
 
-/* The grey word Note only under the pointer or while writing, so an empty note takes no eye */
 .diary-entry:hover .diary-note::placeholder,
 .diary-note:focus::placeholder {
     opacity: 1;
 }
 
-/* Hint for a day without entries */
-.diary-none {
-    margin: 0;
-    padding: 0 var(--row-padding);
-    color: var(--text-muted);
+.diary-side {
+    padding-bottom: 0.25rem;
+}
+
+.diary-side > .panel-error {
+    padding: 0;
+}
+
+/* Where the day and the notes fit side by side, as in the food view, a thin grey line between them.
+   Each note starts on the line of what its entry was, the line between them running through */
+@media (min-width: 1200px) {
+    .diary-entries {
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
+        overflow-y: auto;
+    }
+
+    .diary-side {
+        padding: calc(0.75rem + 1px + 0.625rem) 0 0.25rem calc(1.5 * var(--gap));
+        border-left: 1px solid var(--line);
+    }
 }

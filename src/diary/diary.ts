@@ -1,7 +1,9 @@
 /**
  * ## Diary
  *
- * My diary, the log entries of a day by their start, below each its note, which I write right there.
+ * My diary in the look of the food view, the log entries of a day by their start.
+ * Beside each stands its note where the food view has my lists.
+ * I write the note right there.
  * Each entry shows what it was, then grey its time, place, people.
  * An entry past midnight shows on the day it starts, so each note stands once.
  * A glass of water does not show, as in the log.
@@ -24,6 +26,7 @@ import { iconPut } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
 import "../day/day.css";
+import "../food/food.css";
 import "./diary.css";
 
 import type { Attendee } from "../../reader/calendar.ts";
@@ -67,7 +70,7 @@ async function noteSave(id: string, note: HTMLTextAreaElement, hint: HTMLElement
 }
 
 /** The note of an entry, a field growing with its text, saved once I leave it changed, its hint below. */
-function noteOf(entry: DayEntry): HTMLElement[] {
+function noteOf(entry: DayEntry): HTMLElement {
     const note: HTMLTextAreaElement = document.createElement("textarea");
     const hint: HTMLElement = entryPartOf("p", "panel-error", []);
     note.className = "diary-note";
@@ -89,11 +92,11 @@ function noteOf(entry: DayEntry): HTMLElement[] {
             if (waiting) dayAgain();
         });
     });
-    return [note, hint];
+    return entryPartOf("div", "diary-side", [note, hint]);
 }
 
 /**
- * An entry, what it was, below it in small grey its time, place, people, then its note.
+ * An entry, what it was, below it in grey its time, place, people, its note beside it.
  * Its place online never as a link, since what it was is a button.
  */
 function entryOf(entry: DayEntry): HTMLElement {
@@ -120,13 +123,13 @@ function entryOf(entry: DayEntry): HTMLElement {
     if (!entry.editable)
         return entryPartOf("article", "diary-entry", [
             head,
-            ...(entry.note.trim() === "" ? [] : [entryPartOf("p", "diary-text", [entry.note])]),
+            entryPartOf("div", "diary-side", [entryPartOf("p", "diary-text", [entry.note])]),
         ]);
     (head as HTMLButtonElement).type = "button";
     head.addEventListener("click", (): void => {
         logEntryOpen(entry.id, entry.start).catch((error: unknown): void => console.error(error));
     });
-    return entryPartOf("article", "diary-entry", [head, ...noteOf(entry)]);
+    return entryPartOf("article", "diary-entry", [head, noteOf(entry)]);
 }
 
 /**
@@ -151,7 +154,7 @@ async function dayShow(day: string): Promise<void> {
         ?.replaceChildren(
             ...(entries.length > 0
                 ? entries.map(entryOf)
-                : [entryPartOf("p", "diary-none", ["Nothing logged on this day"])]),
+                : [entryPartOf("p", "food-none", ["Nothing logged on this day"])]),
         );
 }
 
@@ -161,7 +164,7 @@ function dayOpen(day: string): void {
         console.error(error);
         document
             .getElementById("diary-entries")
-            ?.replaceChildren(entryPartOf("p", "diary-none", ["The log cannot be read"]));
+            ?.replaceChildren(entryPartOf("p", "food-none", ["The log cannot be read"]));
     });
 }
 

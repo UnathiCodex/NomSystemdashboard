@@ -1,15 +1,16 @@
-<!-- Diary: the bar of the shown day, below it its log entries by their start,
-     each with its note, see diary.ts -->
-<div class="diary">
+<!-- Diary: in the look of the food view, the bar of the shown day,
+     below it its log entries by their start, each with its note beside it, see diary.ts -->
+<div class="food diary">
     <!-- The date of the shown day between its arrows,
          the icon back to today beside it -->
-    <div class="day-bar">
+    <div class="day-bar food-bar">
         <button class="day-arrow" id="diary-before" type="button"></button>
-        <h2 class="day-title"><span class="day-date" id="diary-date"></span></h2>
+        <h2 class="day-title food-day-title"><span class="day-date" id="diary-date"></span></h2>
         <button class="day-today" id="diary-today" type="button" disabled></button>
         <button class="day-arrow" id="diary-after" type="button"></button>
     </div>
 
-    <!-- The entries of the day, each what it was, below it its time, place, people, then its note -->
+    <!-- The entries of the day, each what it was, below it its time, place, people,
+         its note beside it where the food view has my lists -->
     <section class="diary-entries" id="diary-entries"></section>
 </div>
