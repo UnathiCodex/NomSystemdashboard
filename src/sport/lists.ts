@@ -134,6 +134,14 @@ export function ruleTextOf(exercise: { sets: string; reps: string; kg: string })
         .join(": ");
 }
 
+/** The line of an exercise in a list, its rule at the right where a food has its kcal, as wide as the rule. */
+export function exerciseLineOf(exercise: Part, click: () => void, end: HTMLElement | null): HTMLElement {
+    const [line, row]: [HTMLElement, HTMLElement] = listLineOf(lineNameOf(exercise.name, ""), null, click, end);
+    row.classList.add("sport-rule");
+    row.querySelector(".food-value")?.replaceChildren(ruleTextOf(exercise));
+    return line;
+}
+
 /**
  * Section of my workouts.
  * The plus of the heading opens the panel of a new workout, its name typed first, then its parts.
@@ -319,12 +327,11 @@ function partSearchOf(workout: Workout, pick: (part: Part) => void): HTMLElement
     const held: (part: Part) => boolean = (part: Part): boolean =>
         workout.parts.some((other: Part): boolean => variantKeyOf(other) === variantKeyOf(part));
     const lineOf: (exercise: Exercise) => HTMLElement = (exercise: Exercise): HTMLElement =>
-        listLineOf(
-            lineNameOf(exercise.name, ruleTextOf(exercise)),
-            null,
+        exerciseLineOf(
+            exercise,
             (): void => pick({ name: exercise.name, sets: exercise.sets, reps: exercise.reps, kg: exercise.kg }),
             null,
-        )[0];
+        );
     const show: () => void = (): void => {
         const typed: string = typedNameOf(input.value);
         const lines: HTMLElement[] = mine.exercises
@@ -418,9 +425,8 @@ function exercisesSectionOf(): [HTMLElement, (part: Part) => void] {
                   ];
         const rows: HTMLElement[] = shown.map((exercise: Exercise): HTMLElement => {
             const key: string = variantKeyOf(exercise);
-            const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
-                lineNameOf(exercise.name, ""),
-                null,
+            return exerciseLineOf(
+                exercise,
                 (): void => {
                     open = key;
                     show();
@@ -435,8 +441,6 @@ function exercisesSectionOf(): [HTMLElement, (part: Part) => void] {
                     exerciseDelete(exercise).then(mineShow).catch(failed);
                 }),
             );
-            row.querySelector(".food-value")?.replaceChildren(ruleTextOf(exercise));
-            return line;
         });
         list.replaceChildren(...rows, ...plus);
         const opened: Exercise | undefined =

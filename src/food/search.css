@@ -31,6 +31,11 @@ button.food-row {
     cursor: pointer;
 }
 
+/* Row of an exercise, its rule where a food has its kcal, as wide as the rule */
+.food-row.sport-rule {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
 /* Name of a product above its pack, small and grey */
 .food-title {
     display: flex;

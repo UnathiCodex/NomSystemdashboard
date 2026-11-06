@@ -72,8 +72,3 @@ button.sport-weight-amount:hover svg.lucide {
 .sport-sessions .food-entry {
     grid-template-columns: minmax(0, 1fr) 8.5rem;
 }
-
-/* My exercises with their rule at the right */
-.sport-exercises .food-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-}

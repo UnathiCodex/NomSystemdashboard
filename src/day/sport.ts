@@ -19,9 +19,9 @@
 
 import { choiceOf, choicesOf, listOf, rowOf, searchOf } from "./choices.ts";
 import { exerciseSend, mineLoad, workoutDelete, workoutSend } from "../sport/mine.ts";
-import { newOf, ruleTextOf, typedNameOf } from "../sport/lists.ts";
-import { buttonOf, elementOf, lineNameOf } from "../food/foods.ts";
-import { listHeadOf, listLineOf } from "../food/search.ts";
+import { exerciseLineOf, newOf, ruleTextOf, typedNameOf } from "../sport/lists.ts";
+import { buttonOf, elementOf } from "../food/foods.ts";
+import { listHeadOf } from "../food/search.ts";
 import { matchesAll, wordsOf } from "../search.ts";
 import { crossPut, iconPut, plusPut, searchFieldOf } from "../icons.ts";
 import { Pencil } from "lucide";
@@ -304,16 +304,13 @@ function exercisePlusOf(parts: HTMLElement, workout: string): HTMLButtonElement 
             (one: Exercise): boolean => one.name.toLowerCase() === typed.toLowerCase(),
         );
         const lines: HTMLElement[] = [
-            ...own.map((one: Exercise): HTMLElement => {
-                const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
-                    lineNameOf(one.name, ""),
-                    null,
+            ...own.map((one: Exercise): HTMLElement =>
+                exerciseLineOf(
+                    one,
                     taken((): void => exerciseAdd(one.name, workout, one)),
                     null,
-                );
-                row.querySelector(".food-value")?.replaceChildren(ruleTextOf(one));
-                return line;
-            }),
+                ),
+            ),
             ...(typed === "" || known
                 ? []
                 : [

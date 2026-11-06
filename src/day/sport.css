@@ -25,11 +25,6 @@
     }
 }
 
-/* My exercises in the list of the plus of a workout with their rule at the right, as in the sport view */
-.sport-parts .food-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-}
-
 /* Sets and repetitions of an exercise.
    The unit a plain switch, a thin line under the pointer shows a click changes it */
 .sport-sets {
