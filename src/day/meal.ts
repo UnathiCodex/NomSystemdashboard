@@ -14,7 +14,7 @@
  * whatever I change in `Meals.md` later.
  * A meal whose summary names more than its foods opens as that one meal, so its name stays.
  * A cooking, `Cook`, lists what went into the pot in the same rows and counts no kcal.
- * A meal may draw from a cooking of the days before, written as `X-COOKED`,
+ * A meal may draw from a cooking before it on its day or the day before, written as `X-COOKED`,
  * its foods as its own lines, so meal and cooking each keep their foods.
  * A box of a meal or a cooking finds its summary in my meals and foods, only once I type, as the log does.
  * Each is its own value, so foods never show as one meal.
@@ -22,7 +22,7 @@
 
 import { choiceOf, choicesOf, listOf, rowOf, searchOf } from "./choices.ts";
 import { timeOf } from "./times.ts";
-import { dayOf, dayTextOf } from "../skill/attempts.ts";
+import { dayAdd, dayOf, dayTextOf } from "../skill/attempts.ts";
 import {
     buttonOf,
     dishDelete,
@@ -112,12 +112,9 @@ export const foodName: string = "Food";
 /** Category of cookings, whose foods count nothing. */
 export const cookName: string = "Cook";
 
-/** Days back a meal may draw a cooking from, since I eat nothing cooked longer ago. */
-const cookingDays: number = 3;
-
 const nothingFound: string = "Nothing found";
 
-/** My cookings of the days before the meal that list foods, the nearest first. */
+/** My cookings before the meal on its day or the day before that list foods, the nearest first. */
 let cookings: Cooking[] = [];
 
 /** The cooking the meal draws from, empty for none. */
@@ -559,7 +556,7 @@ function foodPick(food: Food, changed: () => void): void {
 
 /**
  * Picks one of my meals at its standard grams unless picked already.
- * A meal cooked in the days before comes from the nearest cooking instead,
+ * A meal cooked today or the day before comes from the nearest cooking instead,
  * since a cooked meal is eaten only from what I cooked.
  */
 function dishPick(dish: Dish, changed: () => void): void {
@@ -650,15 +647,16 @@ export function summarySearchOf(category: string, values: string[]): (text: stri
 }
 
 /**
- * My cookings with foods of the days before a meal, the nearest first,
+ * My cookings with foods before a meal on its day or the day before, the nearest first,
  * each with how many other meals draw from it.
+ * The log is read until the end of the day after the meal, the last day a meal may draw from them.
  *
  * @throws {Error} - When the reader cannot answer
  */
 async function cookingsLoad(start: Date, id: string): Promise<Cooking[]> {
-    const days: number = cookingDays * 24 * 60 * 60 * 1000;
-    const from: Date = new Date(start.getTime() - days);
-    const until: Date = new Date(start.getTime() + days);
+    const day: string = dayOf(start);
+    const from: Date = new Date(`${dayAdd(day, -1)}T00:00`);
+    const until: Date = new Date(`${dayAdd(day, 2)}T00:00`);
     const entries: (Cooking & { cooked?: string })[] = await readerAsk<(Cooking & { cooked?: string })[]>(
         `/api/day/log?start=${from.toISOString()}&end=${until.toISOString()}`,
     );
