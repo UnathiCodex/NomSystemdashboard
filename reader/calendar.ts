@@ -993,23 +993,36 @@ function calendarFilesOf(): string[] {
         .map((path: string): string => join(calendarRoot, path));
 }
 
+/** Every summary of plan and log, kept until the answer the reader works on is done, `null` before. */
+let summariesAll: Summed[] | null = null;
+
+/**
+ * Every summary of plan and log, read once per answer, since one answer may ask for many links.
+ * The reader answers in one go, so the files stay as they are meanwhile.
+ */
+function summariesAllRead(): Summed[] {
+    if (summariesAll === null) {
+        summariesAll = calendarFilesOf().flatMap(summariesRead);
+        queueMicrotask((): void => {
+            summariesAll = null;
+        });
+    }
+    return summariesAll;
+}
+
 /**
  * The link every entry of a category with the same summary shares, its round brackets too,
  * never that of a platform online.
  */
 export function sharedLinkOf(category: string, summary: string): string | undefined {
     const whole: string = summary.trim();
-    for (const file of calendarFilesOf()) {
-        const found: Summed | undefined = summariesRead(file).find(
-            (summed: Summed): boolean =>
-                summed.category === category &&
-                summed.summary === whole &&
-                summed.link !== "" &&
-                !platformLinkIs(summed.link),
-        );
-        if (found !== undefined) return found.link;
-    }
-    return undefined;
+    return summariesAllRead().find(
+        (summed: Summed): boolean =>
+            summed.category === category &&
+            summed.summary === whole &&
+            summed.link !== "" &&
+            !platformLinkIs(summed.link),
+    )?.link;
 }
 
 /**

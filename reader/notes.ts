@@ -285,12 +285,25 @@ export function modulesRead(): NotesModule[] {
     }));
 }
 
-/** Every module folder, named as a module is, so `_Inbox` is none, sorted as Obsidian. */
+/** The module folders as last read, with the time `NomSkillingmodules` changed then. */
+let moduleFolders: { modified: number; folders: string[] } | null = null;
+
+/**
+ * Every module folder, named as a module is, so `_Inbox` is none, sorted as Obsidian.
+ * Read again only once `NomSkillingmodules` changed.
+ * It changes as a folder in it comes, goes, is renamed.
+ */
 export function moduleFoldersRead(): string[] {
-    return entriesRead("")
-        .filter((entry: Dirent): boolean => entry.isDirectory() && moduleName.test(entry.name))
-        .map((entry: Dirent): string => entry.name)
-        .sort(collator.compare);
+    const modified: number = existsSync(notes.modules) ? statSync(notes.modules).mtimeMs : 0;
+    if (moduleFolders?.modified !== modified)
+        moduleFolders = {
+            modified: modified,
+            folders: entriesRead("")
+                .filter((entry: Dirent): boolean => entry.isDirectory() && moduleName.test(entry.name))
+                .map((entry: Dirent): string => entry.name)
+                .sort(collator.compare),
+        };
+    return moduleFolders.folders;
 }
 
 /**
