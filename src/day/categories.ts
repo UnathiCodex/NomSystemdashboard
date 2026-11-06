@@ -934,12 +934,14 @@ function fieldRowsOf(field: Field): HTMLElement[] {
 
 /**
  * The row of a summary of several values, each value with its own pencil.
+ * A meal or a cooking only picks and adds its values, without param, pencil, link.
  * A way keeps the order picked, the order I rode in, any other summary the order of its list.
  * While none is picked, the row is empty without a plus, since a click into it opens its list.
  */
 function manyRowOf(field: Field): HTMLElement {
     const picked: string[] = values[field.key] === "" ? [] : values[field.key].split(", ").map(baseOf);
-    const [, link, linkParts]: [HTMLButtonElement, HTMLAnchorElement, HTMLElement] = summaryPartsOf(field);
+    const dish: boolean = [foodName, cookName].includes(chosen?.name ?? "");
+    const [link, linkParts]: (HTMLElement | undefined)[] = dish ? [] : summaryPartsOf(field).slice(1);
     const param: HTMLElement = document.createElement("div");
     param.className = "picker-quiet";
     return rowOf(
@@ -951,8 +953,8 @@ function manyRowOf(field: Field): HTMLElement {
             adding: !field.fixed,
             noun: "summary",
             linkOf: (): string => "",
-            afterOf: (value: string): HTMLElement => valueAfterOf(field, param, value),
-            below: [link, linkParts, param],
+            afterOf: dish ? undefined : (value: string): HTMLElement => valueAfterOf(field, param, value),
+            below: link === undefined || linkParts === undefined ? [] : [link, linkParts, param],
             order: field.fixed
                 ? undefined
                 : (chosen: string[]): string[] =>
@@ -969,7 +971,7 @@ function manyRowOf(field: Field): HTMLElement {
                     .join(", ");
                 summaryOpen = false;
                 summaryValue = -1;
-                linkParts.hidden = true;
+                if (linkParts !== undefined) linkParts.hidden = true;
                 saveAllow();
             },
         }),
