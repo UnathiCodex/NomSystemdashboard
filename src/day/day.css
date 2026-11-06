@@ -575,13 +575,7 @@ fieldset.entry-times {
     margin-inline: 0.5em;
 }
 
-/* Middle dot between two people, after a pencil half an en space further on each side.
-   The room the pencil keeps right of its line taken back, so the dot stands in the middle. */
-:has(> .entry-pencil:last-child) + .value-dot {
-    margin-inline: -0.12em 0.25em;
-}
-
-/* Comma between two values of a summary after their pencil, the pencil's room taken back */
+/* Comma between two values of the line of a dialog after their pencil, the pencil's room taken back */
 .value-comma {
     margin-inline: -0.12em 0.5em;
 }

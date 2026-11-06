@@ -34,15 +34,15 @@ export const personsKept: () => Promise<Person[]> = changesKept((): Promise<Pers
     readerAsk<Person[]>("/api/persons"),
 );
 
-/** The middle dot that parts people on one line, never a comma, since a name holds a comma. */
-export const valueDot: string = "\u2002·\u2002";
+/** The middle dot that parts people in plain text, never a comma, since a name holds a comma. */
+const valueDot: string = "\u2002·\u2002";
 
-/** Puts people on one line apart by {@link valueDot}, or the values of a summary apart by `parting`. */
+/** Puts people in plain text apart by {@link valueDot} or the values in a dialog apart by `parting`. */
 export function dottedOf(names: (string | Node)[], parting: string = valueDot): (string | Node)[] {
     return names.flatMap((name: string | Node, index: number): (string | Node)[] => {
         if (index === 0) return [name];
         const dot: HTMLSpanElement = document.createElement("span");
-        dot.className = parting === valueDot ? "value-dot" : "value-comma";
+        if (parting !== valueDot) dot.className = "value-comma";
         dot.textContent = parting;
         return [dot, name];
     });

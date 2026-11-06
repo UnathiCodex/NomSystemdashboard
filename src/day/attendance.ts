@@ -104,9 +104,9 @@ export function withChoicesOf(field: Field, persons: Person[]): Omit<ChoicesSetu
 
 /**
  * The row of `With`, who I was with, one or more people or groups.
- * The names stand apart by a middle dot, since a person of `Persons.md` holds a comma in its name.
- * A name of a person there is a link to its row, any other name plain text.
+ * A name of a person of `Persons.md` is a link to its row, any other name plain text.
  * After each name its pencil shows or hides the parts of that person.
+ * The names stand apart by a comma, the pencil telling it from the comma inside a name.
  * A name picked anew takes the address of its last entry, else its standard one.
  */
 export function withRowOf(setup: WithSetup): HTMLElement {

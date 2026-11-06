@@ -15,7 +15,10 @@
 import { Star } from "lucide";
 import { crossPut, iconOf, plusPut, plusTake, plusTypedPut, searchFieldOf } from "../icons.ts";
 import { matchesAll, searchTextOf, wordsOf } from "../search.ts";
-import { dottedOf, valueDot } from "../persons.ts";
+import { dottedOf } from "../persons.ts";
+
+/** What parts the values in the line, a comma as a summary writes it, between people too. */
+const valueComma: string = ", ";
 
 /**
  * Marks where a long name may break, after each `_` and between a small and a capital letter.
@@ -107,7 +110,6 @@ export type Choice = {
  * - `textOf`: Text of a value picked before its list ever opened.
  * - `linkOf`: Address a value picked opens from the line.
  * - `afterOf`: An element after a value in the line, whose click opens no list.
- * - `parting`: What parts the values in the line, a middle dot when left out.
  */
 export type ChoicesSetup = {
     search: (text: string) => Promise<Choice[]>;
@@ -128,7 +130,6 @@ export type ChoicesSetup = {
     textOf?: (value: string) => string;
     linkOf?: (value: string) => string;
     afterOf?: (value: string) => HTMLElement;
-    parting?: string;
 };
 
 /**
@@ -343,7 +344,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
         const shown: string[] = chosen.map(
             (value: string): string => texts.get(value) ?? setup.textOf?.(value) ?? value,
         );
-        const text: string = shown.join(setup.parting ?? valueDot);
+        const text: string = shown.join(valueComma);
         if (text === "" && setup.plus === true) {
             plusPut(line, setup.empty ?? "");
             line.classList.add("picker-empty");
@@ -360,7 +361,7 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
             both.append(shownValue, setup.afterOf(value));
             return both;
         });
-        if (text !== "" && setup.linkOf !== undefined) line.replaceChildren(...dottedOf(values, setup.parting));
+        if (text !== "" && setup.linkOf !== undefined) line.replaceChildren(...dottedOf(values, valueComma));
         line.title = setup.locked ? "As planned" : text;
         line.classList.toggle("picker-empty", text === "");
     };

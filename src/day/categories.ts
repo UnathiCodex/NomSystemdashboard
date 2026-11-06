@@ -952,7 +952,6 @@ function manyRowOf(field: Field): HTMLElement {
             noun: "summary",
             linkOf: (): string => "",
             afterOf: (value: string): HTMLElement => valueAfterOf(field, param, value),
-            parting: ", ",
             below: [link, linkParts, param],
             order: field.fixed
                 ? undefined
