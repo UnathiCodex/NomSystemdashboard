@@ -27,7 +27,7 @@
 import { choiceOf, choicesOf, fileShow, listsStart, partFieldOf, pairOf, partOf, rowOf, searchOf } from "./choices.ts";
 import { boxAdd, boxChange, boxDelete, entryAdd, entryChange, entryDelete, standardAddressOf } from "./entries.ts";
 import { cookName, foodName, mealCooked, mealFoods, mealOf, mealTitle, summarySearchOf } from "./meal.ts";
-import { sportName, sportOpen, sportRead, sportRowsOf, sportTitle } from "./sport.ts";
+import { sportName, sportOf, sportRead, sportTitle } from "./sport.ts";
 import {
     addressOf,
     labelOf,
@@ -281,8 +281,11 @@ let summaryShown: SummaryParts | null = null;
 /** Category picked, `null` before picking. */
 let chosen: Category | null = null;
 
-/** The rows of a meal or a cooking of the log in place of its summary, `null` for every other category. */
-let meal: HTMLElement[] | null = null;
+/**
+ * The rows of a meal, a cooking, a session of the log in place of its summary.
+ * `null` for every other category.
+ */
+let summaryRows: HTMLElement[] | null = null;
 
 /** Whether the remove button was clicked once and waits for the second click. */
 let removeAsked: boolean = false;
@@ -875,7 +878,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
                 },
             }),
         ];
-    if (field.key === "title" && meal !== null) return meal;
+    if (field.key === "title" && summaryRows !== null) return summaryRows;
     if (field.key === "title" && field.many === true && !ofSeries()) return [manyRowOf(field)];
     const place: [HTMLButtonElement, HTMLAnchorElement] | null = field.key === "title" ? null : placePartsOf(field);
     const summary: HTMLElement[] = field.key === "title" ? summaryPartsOf(field) : [];
@@ -1115,14 +1118,11 @@ function ofSeries(): boolean {
     );
 }
 
-/**
- * Shows the rows of the summary anew, of sport what I did below it, the rows below staying as they are.
- * A session of sport writes its summary itself, as a meal, so its typed one stays hidden, only kept for an old entry.
- */
+/** Shows the rows of the summary anew, the rows below staying as they are. */
 function titleRowsShow(): void {
-    const rows: HTMLElement[] = rowsOf((field: Field): boolean => field.key === "title");
-    for (const row of rows) row.hidden = sportShown();
-    document.getElementById("entry-fields")?.replaceChildren(...rows, ...(sportShown() ? sportRowsOf(saveAllow) : []));
+    document
+        .getElementById("entry-fields")
+        ?.replaceChildren(...rowsOf((field: Field): boolean => field.key === "title"));
 }
 
 /** Shows the fields of the category picked in the order of the file, the same for every category. */
@@ -1188,7 +1188,7 @@ async function categoryPick(category: Category | null): Promise<void> {
     (category?.fields ?? []).forEach((field: Field): void => {
         values[field.key] = fixedTextOf(field, values[field.key]);
     });
-    meal = null;
+    summaryRows = null;
     document.getElementById("entry-place")?.replaceChildren();
     document.getElementById("entry-more")?.replaceChildren();
     if (category !== null) await lastPlaceFill(category);
@@ -1226,11 +1226,15 @@ async function categoryPick(category: Category | null): Promise<void> {
                   },
         );
         if (chosen !== category) return;
-        meal = built;
+        summaryRows = built;
     }
     if (category?.name === sportName && opened.target === "log") {
-        await sportOpen(opened.category === sportName ? (opened.entry?.extendedProps ?? null) : null);
+        const built: HTMLElement[] = await sportOf(
+            opened.category === sportName ? (opened.entry?.extendedProps ?? null) : null,
+            saveAllow,
+        );
         if (chosen !== category) return;
+        summaryRows = built;
     }
     fieldsShow();
 }

@@ -1,27 +1,33 @@
 /**
  * ## Session of sport in the entry by category
  *
- * A session of the log, `Sport`, built and working as a meal with its foods.
- * - Summary: Written by itself from its workouts and exercises, never typed, see {@link sportTitle}.
- * - Exercises: The one plus opens a list of my workouts, then my exercises.
- *   `+ New workout` puts an empty block into the entry, which goes into `Workouts.md` with its first exercise.
- *   A variant of mine brings its values, one without values what I did of it the last time.
- *   A workout picked brings its block with its parts, an exercise alone stands below the blocks.
- * - Row: An exercise with its sets, repetitions or seconds, kilograms and `×`.
+ * A session of the log picks my workouts and my exercises by name in its summary.
+ * It picks them as a meal picks my meals and my foods.
+ * Its pencil shows below the summary what I did of each, as a meal shows its grams.
+ * A value picked shows its rows at once, a new name being a new workout with its search open.
+ * A name left out takes its workout or its exercise away.
+ * - Workout: Its name with its plus, its exercises indented below it.
+ *   A workout picked brings its parts, each with the values of its variant.
+ *   A new workout goes into `Workouts.md` with its first exercise.
+ * - Exercise: Its row holds its sets, repetitions, kilograms, `×`.
+ *   Its repetitions become seconds by the switch after them.
+ *   An exercise picked brings the values of its first variant, one without values what I did of it the last time.
  *   The `×` between the fields and the units always show, so an empty row says what to type.
  * Each exercise is written as `X-EXERCISE` with its workout,
  * so the log keeps what I did that day, whatever I change in my workouts later.
  */
 
-import { listOf, rowOf } from "./choices.ts";
+import { choiceOf, choicesOf, listOf, rowOf, searchOf } from "./choices.ts";
 import { exerciseSend, mineLoad, workoutDelete, workoutSend } from "../sport/mine.ts";
 import { newOf, ruleTextOf, typedNameOf } from "../sport/lists.ts";
 import { buttonOf, elementOf, lineNameOf } from "../food/foods.ts";
 import { listHeadOf, listLineOf } from "../food/search.ts";
 import { matchesAll, wordsOf } from "../search.ts";
-import { crossPut, plusPut, searchFieldOf } from "../icons.ts";
+import { crossPut, iconPut, plusPut, searchFieldOf } from "../icons.ts";
+import { Pencil } from "lucide";
 import "./sport.css";
 
+import type { Choice } from "./choices.ts";
 import type { Exercise, Mine, Part, Workout } from "../sport/mine.ts";
 
 /**
@@ -50,9 +56,6 @@ let blocks: string[] = [];
 /** Exercises of the session in their order, those of its blocks and those alone. */
 let exercises: ExerciseDone[] = [];
 
-/** Place of the rows in the dialog, filled anew on every change. */
-const place: HTMLElement = elementOf("div", "sport-rows", "");
-
 /**
  * Lets the dialog know of a change.
  * So it allows saving and shows what is picked.
@@ -64,6 +67,18 @@ let fresh: Set<string> = new Set();
 
 /** The plus of each block, so a new workout opens its list at once. */
 let blockPluses: Map<string, HTMLButtonElement> = new Map();
+
+/** The picker of the summary. */
+let summaryPicker: HTMLElement = document.createElement("div");
+
+/** The names the picker of the summary shows, so it shows anew only when the exercises change them. */
+let summaryNames: string[] = [];
+
+/** The names whose rows show, opened by their pencil. */
+let opened: string[] = [];
+
+/** The rows of the names opened, each workout with its exercises, each exercise alone. */
+let partsRows: HTMLElement = document.createElement("div");
 
 /** Reads a line `X-EXERCISE` into its row. */
 function exerciseOf(line: string): ExerciseDone {
@@ -98,6 +113,16 @@ function exerciseLastOf(
         : { ...exerciseOf(last), name: name, workout: workout };
 }
 
+/** The exercises picked alone, also those of a workout the session no longer holds. */
+function aloneOf(): ExerciseDone[] {
+    return exercises.filter((exercise: ExerciseDone): boolean => !blocks.includes(exercise.workout));
+}
+
+/** The names of the workouts and of the exercises alone, each once, as the summary picks them. */
+function namesOf(): string[] {
+    return [...new Set([...blocks, ...aloneOf().map((exercise: ExerciseDone): string => exercise.name)])];
+}
+
 /** Picks a workout, its block with its parts last, one the session holds already stays as it is. */
 function workoutPick(name: string): void {
     const picked: Workout | undefined = mine?.workouts.find((other: Workout): boolean => other.name === name);
@@ -107,14 +132,14 @@ function workoutPick(name: string): void {
         ...exercises,
         ...picked.parts.map((part: Part): ExerciseDone => exerciseLastOf(part.name, name, part)),
     ];
-    rowsShow();
+    rowsChanged();
 }
 
 /** Puts an empty block of a new workout into the session and opens its list at once. */
 function workoutNew(name: string): void {
     blocks = [...blocks, name];
     fresh.add(name);
-    rowsShow();
+    rowsChanged();
     blockPluses.get(name)?.click();
 }
 
@@ -147,10 +172,10 @@ function exerciseAdd(name: string, workout: string, variant?: Exercise): void {
     if (added === undefined) {
         added = exerciseLastOf(name, workout, variant);
         exercises = [...exercises, added];
-        rowsShow();
+        rowsChanged();
         freshSend(workout);
     }
-    place.querySelector<HTMLInputElement>(`[data-part="${exercises.indexOf(added)}"] .sport-sets input`)?.focus();
+    partsRows.querySelector<HTMLInputElement>(`[data-part="${exercises.indexOf(added)}"] .sport-sets input`)?.focus();
 }
 
 /** Adds an exercise typed new into `Exercises.md`, then into the session. */
@@ -252,14 +277,13 @@ function removeOf(words: string, click: () => void): HTMLButtonElement {
 }
 
 /**
- * List of a plus as a menu, a search field, my workouts only in the row `Exercises`, then my exercises.
- * Each section ends in `+ New workout` or `+ New exercise` for a name none has.
- * Enter takes the first workout or exercise found, never a new one.
- * @param picker - Element the list stands in, below the rows it adds to
- * @param workout - The block it adds to, empty for the row `Exercises`, which offers my workouts too
+ * List of the plus of a workout as a menu, a search field, then my exercises with their rule.
+ * It ends in `+ New exercise` for a name none has.
+ * Enter takes the first exercise found, never a new one.
+ * @param parts - Element the list stands in, below the exercises it adds to
  * @returns The plus, which opens it
  */
-function plusOfList(picker: HTMLElement, words: string, workout: string): HTMLButtonElement {
+function exercisePlusOf(parts: HTMLElement, workout: string): HTMLButtonElement {
     const plus: HTMLButtonElement = document.createElement("button");
     const box: HTMLElement = elementOf("div", "picker-box meal-box", "");
     const search: HTMLElement = elementOf("div", "food-search", "");
@@ -273,67 +297,41 @@ function plusOfList(picker: HTMLElement, words: string, workout: string): HTMLBu
         };
     const show: () => void = (): void => {
         const typed: string = typedNameOf(input.value);
-        const found: (name: string) => boolean = (name: string): boolean => matchesAll(name, wordsOf(input.value));
-        const known: (name: string) => boolean = (name: string): boolean => name.toLowerCase() === typed.toLowerCase();
-        const sectionOf: (name: string, lines: HTMLElement[], names: string[], add: HTMLElement) => HTMLElement[] = (
-            name: string,
-            lines: HTMLElement[],
-            names: string[],
-            add: HTMLElement,
-        ): HTMLElement[] => {
-            const all: HTMLElement[] = [...lines, ...(typed === "" || names.some(known) ? [] : [add])];
-            return all.length === 0 ? [] : [listHeadOf(name, ""), ...all];
-        };
-        const workouts: Workout[] =
-            workout !== "" ? [] : (mine?.workouts ?? []).filter((one: Workout) => found(one.name));
-        const own: Exercise[] = (mine?.exercises ?? []).filter((one: Exercise): boolean => found(one.name));
+        const own: Exercise[] = (mine?.exercises ?? []).filter((one: Exercise): boolean =>
+            matchesAll(one.name, wordsOf(input.value)),
+        );
+        const known: boolean = (mine?.exercises ?? []).some(
+            (one: Exercise): boolean => one.name.toLowerCase() === typed.toLowerCase(),
+        );
         const lines: HTMLElement[] = [
-            ...(workout !== ""
+            ...own.map((one: Exercise): HTMLElement => {
+                const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
+                    lineNameOf(one.name, ""),
+                    null,
+                    taken((): void => exerciseAdd(one.name, workout, one)),
+                    null,
+                );
+                row.querySelector(".food-value")?.replaceChildren(ruleTextOf(one));
+                return line;
+            }),
+            ...(typed === "" || known
                 ? []
-                : sectionOf(
-                      "Workouts",
-                      workouts.map(
-                          (one: Workout): HTMLElement =>
-                              listLineOf(
-                                  lineNameOf(one.name, one.short),
-                                  null,
-                                  taken((): void => workoutPick(one.name)),
-                                  null,
-                              )[0],
-                      ),
-                      [...(mine?.workouts ?? []).map((one: Workout): string => one.name), ...blocks],
+                : [
                       newOf(
-                          `New workout “${typed}”`,
-                          "New workout, its exercises picked next",
-                          taken((): void => workoutNew(typed)),
+                          `New exercise “${typed}”`,
+                          "New exercise, mine from now on",
+                          taken((): void => exerciseNew(typed, workout)),
                       ),
-                  )),
-            ...sectionOf(
-                "Exercises",
-                own.map((one: Exercise): HTMLElement => {
-                    const [line, row]: [HTMLElement, HTMLElement] = listLineOf(
-                        lineNameOf(one.name, ""),
-                        null,
-                        taken((): void => exerciseAdd(one.name, workout, one)),
-                        null,
-                    );
-                    row.querySelector(".food-value")?.replaceChildren(ruleTextOf(one));
-                    return line;
-                }),
-                (mine?.exercises ?? []).map((one: Exercise): string => one.name),
-                newOf(
-                    `New exercise “${typed}”`,
-                    "New exercise, mine from now on",
-                    taken((): void => exerciseNew(typed, workout)),
-                ),
-            ),
+                  ]),
         ];
         results.replaceChildren(
-            ...(lines.length > 0 ? lines : [elementOf("p", "food-none", "Type a workout or an exercise")]),
+            ...(lines.length > 0
+                ? [listHeadOf("Exercises", ""), ...lines]
+                : [elementOf("p", "food-none", "Type an exercise")]),
         );
     };
     const close: () => void = listOf(
-        picker,
+        parts,
         plus,
         box,
         (): void => {
@@ -349,17 +347,16 @@ function plusOfList(picker: HTMLElement, words: string, workout: string): HTMLBu
         event.preventDefault();
         results.querySelector<HTMLButtonElement>(".food-item > button.food-row")?.click();
     });
-    plusPut(plus, words);
-    search.append(searchFieldOf(input, workout === "" ? "Search workouts or exercises" : "Search exercises"), results);
+    plusPut(plus, `Add an exercise to ${workout}`);
+    search.append(searchFieldOf(input, "Search exercises"), results);
     box.append(search);
-    picker.append(box);
+    parts.append(box);
     return plus;
 }
 
 function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
     const row: HTMLElement = elementOf("div", "meal-row", "");
-    const index: number = exercises.indexOf(exercise);
-    row.dataset.part = String(index);
+    row.dataset.part = String(exercises.indexOf(exercise));
     row.append(
         elementOf("span", "meal-name", exercise.name),
         setsOf(exercise),
@@ -371,7 +368,7 @@ function exerciseRowOf(exercise: ExerciseDone): HTMLElement {
         }),
         removeOf(`Remove ${exercise.name}`, (): void => {
             exercises = exercises.filter((other: ExerciseDone): boolean => other !== exercise);
-            rowsShow();
+            rowsChanged();
             freshSend(exercise.workout);
         }),
     );
@@ -387,7 +384,7 @@ function blockOf(workout: string): HTMLElement[] {
     const row: HTMLElement = elementOf("div", "meal-row", "");
     const name: HTMLElement = elementOf("span", "meal-name", workout);
     const parts: HTMLElement = elementOf("div", "meal-parts", "");
-    const plus: HTMLButtonElement = plusOfList(parts, `Add an exercise to ${workout}`, workout);
+    const plus: HTMLButtonElement = exercisePlusOf(parts, workout);
     blockPluses.set(workout, plus);
     name.append(plus);
     row.append(
@@ -397,7 +394,7 @@ function blockOf(workout: string): HTMLElement[] {
         removeOf(`Remove ${workout}`, (): void => {
             blocks = blocks.filter((other: string): boolean => other !== workout);
             exercises = exercises.filter((exercise: ExerciseDone): boolean => exercise.workout !== workout);
-            rowsShow();
+            rowsChanged();
         }),
     );
     parts.prepend(
@@ -407,27 +404,123 @@ function blockOf(workout: string): HTMLElement[] {
 }
 
 /**
- * Shows the rows anew, the plus, then the blocks,
- * then the exercises alone and those of a workout the session no longer holds.
+ * The pencil after a name of the summary.
+ * It shows or hides its rows below the summary, taking no focus, as the pencil of a meal.
  */
-function rowsShow(): void {
-    const rows: HTMLElement = elementOf("div", "meal-rows", "");
-    const alone: ExerciseDone[] = exercises.filter(
-        (exercise: ExerciseDone): boolean => !blocks.includes(exercise.workout),
+function pencilOf(name: string): HTMLElement {
+    const pencil: HTMLButtonElement = document.createElement("button");
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    iconPut(pencil, Pencil, `Change ${name}`);
+    pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    pencil.addEventListener("click", (event: MouseEvent): void => {
+        event.stopPropagation();
+        opened = opened.includes(name) ? opened.filter((other: string): boolean => other !== name) : [...opened, name];
+        rowsShow();
+    });
+    return pencil;
+}
+
+/**
+ * The search of the summary, my workouts with their short title in brackets, then my exercises with their rule.
+ * An exercise of several variants stands once.
+ */
+function summarySearchOf(): (text: string) => Promise<Choice[]> {
+    const own: Exercise[] = (mine?.exercises ?? []).filter(
+        (one: Exercise, index: number, all: Exercise[]): boolean =>
+            all.findIndex((other: Exercise): boolean => other.name.toLowerCase() === one.name.toLowerCase()) === index,
     );
-    blockPluses = new Map();
-    rows.append(...blocks.flatMap(blockOf), ...alone.map(exerciseRowOf));
-    const picker: HTMLElement = elementOf("div", "meal picker", "");
-    picker.append(rows);
-    const plus: HTMLButtonElement = plusOfList(picker, "Add a workout or an exercise", "");
-    plus.classList.add("picker-line");
-    const row: HTMLElement = rowOf("Exercises", picker);
-    row.querySelector(".entry-name")?.append(plus);
-    const title: string = sportTitle();
-    const summary: HTMLElement = rowOf("Summary", elementOf("span", "", title));
-    summary.classList.add("panel-fixed");
-    place.replaceChildren(summary, row);
+    return searchOf([
+        ...(mine?.workouts ?? []).map((one: Workout): Choice => ({
+            ...choiceOf(one.name),
+            group: "Workouts",
+            brackets: one.short,
+        })),
+        ...own.map((one: Exercise): Choice => ({ ...choiceOf(one.name), group: "Exercises", detail: ruleTextOf(one) })),
+    ]);
+}
+
+/**
+ * The picker of the summary.
+ * It picks my workouts and my exercises by name.
+ * A new name is a new workout.
+ */
+function summaryPickerOf(): HTMLElement {
+    return choicesOf({
+        search: summarySearchOf(),
+        picked: summaryNames,
+        many: true,
+        adding: true,
+        add: async (text: string): Promise<string | null> => typedNameOf(text) || null,
+        newTextOf: (text: string): string | null =>
+            typedNameOf(text) === "" ? null : `New workout “${typedNameOf(text)}”`,
+        noun: "summary",
+        linkOf: (): string => "",
+        afterOf: pencilOf,
+        below: [partsRows],
+        pick: summaryPick,
+    });
+}
+
+/**
+ * Takes the names picked in the summary.
+ * A name left out takes its workout with its exercises or its exercise away.
+ * A name come is my workout, else my exercise, else a new workout, its rows shown at once.
+ */
+function summaryPick(names: string[]): void {
+    const gone: string[] = summaryNames.filter((name: string): boolean => !names.includes(name));
+    const come: string[] = names.filter((name: string): boolean => !summaryNames.includes(name));
+    summaryNames = names;
+    exercises = exercises.filter(
+        (exercise: ExerciseDone): boolean =>
+            !gone.includes(blocks.includes(exercise.workout) ? exercise.workout : exercise.name),
+    );
+    blocks = blocks.filter((workout: string): boolean => !gone.includes(workout));
+    opened = [...opened.filter((name: string): boolean => names.includes(name)), ...come];
+    if (come.length === 0) rowsChanged();
+    come.forEach((name: string): void => {
+        const workout: Workout | undefined = mine?.workouts.find(
+            (one: Workout): boolean => one.name.toLowerCase() === name.toLowerCase(),
+        );
+        const exercise: Exercise | undefined = mine?.exercises.find(
+            (one: Exercise): boolean => one.name.toLowerCase() === name.toLowerCase(),
+        );
+        if (workout !== undefined) workoutPick(workout.name);
+        else if (exercise !== undefined) exerciseAdd(exercise.name, "", exercise);
+        else workoutNew(name);
+    });
+}
+
+/** Shows the picker of the summary anew only when the exercises changed the names it shows, so a list stays open. */
+function summaryShow(): void {
+    if (namesOf().join("\n") === summaryNames.join("\n")) return;
+    summaryNames = namesOf();
+    opened = opened.filter((name: string): boolean => summaryNames.includes(name));
+    const picker: HTMLElement = summaryPickerOf();
+    summaryPicker.replaceWith(picker);
+    summaryPicker = picker;
+}
+
+function rowsChanged(): void {
+    rowsShow();
     changed();
+}
+
+/** Shows the rows of the names opened, in the order of the summary. */
+function rowsShow(): void {
+    blockPluses = new Map();
+    partsRows.replaceChildren(
+        ...namesOf()
+            .filter((name: string): boolean => opened.includes(name))
+            .flatMap((name: string): HTMLElement[] =>
+                blocks.includes(name)
+                    ? blockOf(name)
+                    : aloneOf()
+                          .filter((exercise: ExerciseDone): boolean => exercise.name === name)
+                          .map(exerciseRowOf),
+            ),
+    );
+    summaryShow();
 }
 
 /**
@@ -440,19 +533,19 @@ export function sportTitle(): string {
         ...blocks.filter((workout: string): boolean =>
             exercises.some((exercise: ExerciseDone): boolean => exercise.workout === workout),
         ),
-        ...exercises
-            .filter((exercise: ExerciseDone): boolean => !blocks.includes(exercise.workout))
-            .map((exercise: ExerciseDone): string => exercise.name),
+        ...aloneOf().map((exercise: ExerciseDone): string => exercise.name),
     ].join(", ");
 }
 
 /**
- * Opens a session in the dialog with everything of mine, a block for each workout in the order the parts name them.
+ * The rows of a session with everything of mine, its summary, a block for each workout in the order its parts name it.
  * @param lines - What the entry holds, `null` for a new one or one of another category
+ * @param change - Lets the dialog know of a change
  * @throws {Error} - When the reader cannot answer
  */
-export async function sportOpen(lines: SessionLines | null): Promise<void> {
+export async function sportOf(lines: SessionLines | null, change: () => void): Promise<HTMLElement[]> {
     mine = await mineLoad();
+    changed = change;
     fresh = new Set();
     exercises = (lines?.exercises ?? []).map(exerciseOf);
     blocks = [
@@ -462,16 +555,12 @@ export async function sportOpen(lines: SessionLines | null): Promise<void> {
                 .filter((workout: string): boolean => workout !== ""),
         ),
     ];
-}
-
-/**
- * Rows of the session for the dialog.
- * @returns One element whose rows count as rows of the dialog, see `sport.css`
- */
-export function sportRowsOf(change: () => void): HTMLElement[] {
-    changed = change;
+    opened = [];
+    partsRows = elementOf("div", "meal-rows sport-parts", "");
+    summaryNames = namesOf();
+    summaryPicker = summaryPickerOf();
     rowsShow();
-    return [place];
+    return [rowOf("Summary", summaryPicker)];
 }
 
 /** What the session holds, each exercise with its workout. */

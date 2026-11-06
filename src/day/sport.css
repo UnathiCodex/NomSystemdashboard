@@ -1,8 +1,3 @@
-/* Session of sport in the entry, its rows stand as every row of the dialog */
-.sport-rows {
-    display: contents;
-}
-
 /* Kilograms of an exercise where a food has its kcal, after the name on a phone too */
 .sport-kg {
     display: flex;
@@ -30,9 +25,9 @@
     }
 }
 
-/* The list of the plus of a workout only its menu, its plus sits after the name */
-.sport-rows .meal-parts > .picker {
-    display: contents;
+/* My exercises in the list of the plus of a workout with their rule at the right, as in the sport view */
+.sport-parts .food-row {
+    grid-template-columns: minmax(0, 1fr) auto;
 }
 
 /* Sets and repetitions of an exercise.
@@ -64,12 +59,12 @@
 }
 
 /* The rows of a session in the columns of a meal */
-.sport-rows .meal-row {
+.sport-parts .meal-row {
     grid-template-columns: minmax(0, 1fr) 10rem 6rem auto;
 }
 
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
-    .sport-rows .meal-row {
+    .sport-parts .meal-row {
         grid-template-columns: auto minmax(0, 1fr) auto auto;
     }
 
