@@ -711,6 +711,16 @@ export function entriesOnceRead(sources: CalendarSource[]): Entry[] {
     return filesOf(sources).flatMap((file: string): Entry[] => calendarOf(file).entries);
 }
 
+/** The entries of calendar sources as written, whenever they lie, a series once by its first occurrence. */
+export function entriesWrittenRead(sources: CalendarSource[]): Entry[] {
+    return filesOf(sources).flatMap((file: string): Entry[] => [
+        ...calendarOf(file).entries,
+        ...calendarOf(file).series.map((series: ICAL.Event): Entry =>
+            entryOf(series, series.startDate, series.endDate, file),
+        ),
+    ]);
+}
+
 /** The entries of one `.ics` file that happen once. */
 export function fileEntriesRead(file: string): Entry[] {
     return calendarOf(file).entries;

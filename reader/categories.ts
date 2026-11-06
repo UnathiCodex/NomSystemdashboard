@@ -18,7 +18,7 @@
  * `Drink` is no category I pick, the counter of water writes each glass, taking no time of mine.
  */
 
-import { entriesRead, skillName, summaryBaseOf } from "./calendar.ts";
+import { entriesRead, entriesWrittenRead, skillName, summaryBaseOf } from "./calendar.ts";
 import { personNameOf } from "./persons.ts";
 import { labelOf, lineOf, placesRead, platformsRead, roomsRead } from "./places.ts";
 import { sportName } from "./sport.ts";
@@ -289,11 +289,9 @@ function titleUsesOf(logs: Entry[], name: string, many: boolean): string[] {
         .flatMap((log: Entry): string[] => (many ? log.title.split(", ") : [log.title]));
 }
 
-const yearLength: number = 366 * 24 * 60 * 60 * 1000;
-
-/** Reads the boxes of the plan up to a year after an instant, so a param typed for a way ahead counts. */
-function plansRead(now: string): Entry[] {
-    return entriesRead(day.plan, "1970-01-01T00:00:00Z", new Date(Date.parse(now) + yearLength).toISOString());
+/** Reads the boxes of the plan, each series once, so a param typed for a way ahead counts. */
+function plansRead(): Entry[] {
+    return entriesWrittenRead(day.plan);
 }
 
 /** The params in round brackets each what had in log entries and boxes, the most used first. */
@@ -370,7 +368,7 @@ function stepsWithNoteOf(
  */
 export function categoriesRead(now: string): CategoryShown[] {
     const logs: Entry[] = logsRead(now);
-    const written: Entry[] = [...logs, ...plansRead(now)];
+    const written: Entry[] = [...logs, ...plansRead()];
     const mine: Place[] = placesRead();
     const names: string[] = mine.map((place: Place): string => place.name);
     const places: string[] = valuesOrder(
