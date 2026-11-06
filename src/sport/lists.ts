@@ -111,14 +111,27 @@ function variantKeyOf(exercise: Part): string {
     return [exercise.name.toLowerCase(), exercise.sets, exercise.reps, exercise.kg].join(";");
 }
 
-/** The rule of an exercise as its line shows it, empty while nothing is set. */
+/** A count with its word, plural but for 1. */
+function countOf(count: string, word: string): string {
+    return `${count} ${word}${count === "1" ? "" : "s"}`;
+}
+
+/**
+ * The rule of an exercise as its line shows it, like `3 Sets (10 Reps): 20 kg`, empty while nothing is set.
+ * Seconds like `60 s` in place of the repetitions, without sets the repetitions alone.
+ */
 export function ruleTextOf(exercise: { sets: string; reps: string; kg: string }): string {
-    const reps: string = exercise.reps.replace(/^(\d+)s$/, "$1 s");
-    const sets: string =
-        exercise.sets === "" ? reps : reps === "" ? `${exercise.sets} ×` : `${exercise.sets} × ${reps}`;
-    return [sets, exercise.kg === "" ? "" : `${exercise.kg} kg`]
+    const reps: string =
+        exercise.reps === ""
+            ? ""
+            : exercise.reps.endsWith("s")
+              ? `${exercise.reps.slice(0, -1)} s`
+              : countOf(exercise.reps, "Rep");
+    const sets: string = exercise.sets === "" ? "" : countOf(exercise.sets, "Set");
+    const both: string = sets === "" ? reps : reps === "" ? sets : `${sets} (${reps})`;
+    return [both, exercise.kg === "" ? "" : `${exercise.kg} kg`]
         .filter((part: string): boolean => part !== "")
-        .join(" · ");
+        .join(": ");
 }
 
 /**
