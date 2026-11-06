@@ -240,7 +240,6 @@ const categories: Category[] = [
     categoryOf("Event"),
     categoryOf("Drink"),
     categoryOf("Internet"),
-    categoryOf("Game"),
 ];
 
 /** The semester of a day, January to March in the winter that began the year before. */
