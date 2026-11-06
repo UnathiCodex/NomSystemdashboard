@@ -152,8 +152,10 @@
     color: var(--text-muted);
 }
 
-/* The brackets after a value, as large as it, as the short title of a meal in the food view */
+/* The brackets after a value as the short title of a meal in the food view.
+   As large as the value, a little apart from it */
 .picker-brackets {
+    margin-inline-start: 0.3em;
     color: var(--text-muted);
 }
 

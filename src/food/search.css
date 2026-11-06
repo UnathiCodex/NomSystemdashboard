@@ -65,8 +65,10 @@ button.food-row {
     text-overflow: ellipsis;
 }
 
-/* The brackets after the name of a food grey, since they only tell which one it is */
+/* The brackets after the name of a food grey, since they only tell which one it is.
+   A little apart from the white name, so the two read as two */
 .food-brand {
+    margin-inline-start: 0.3em;
     color: var(--text-muted);
 }
 
