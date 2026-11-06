@@ -185,7 +185,6 @@ const categories: Category[] = [
     },
     categoryOf("Food", true),
     categoryOf("Cook", true),
-    categoryOf("Shopping"),
     {
         name: "Body",
         fields: [
