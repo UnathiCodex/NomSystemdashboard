@@ -2,34 +2,35 @@
  * ## Diary
  *
  * My diary in the look of the food view, the log entries of a day by their start.
- * Beside each stands its note where the food view has my lists.
+ * Each entry is a box as in the plan.
+ * It shows what it was and below it grey its time and place.
+ * Beside each stands its note in the size of the box, where the food view has my lists.
  * I write the note right there.
- * Each entry shows what it was, then grey its time, place, people.
  * An entry past midnight shows on the day it starts, so each note stands once.
  * A glass of water does not show, as in the log.
  * A note saves once I leave it, only while its file holds the note as the diary read it.
- * A click on what an entry was opens its dialog, one that cannot change shows its note only to read.
+ * A click on an entry opens its dialog, one that cannot change shows its note only to read.
  * It loads anew the moment a file of my new system changes, but never over a note I write.
  * Not on a phone, which opens the day everywhere.
  */
 
 import { entryPartOf, shownWhatOf, whatOf } from "../day/boxes.ts";
-import { whereLinkedOf } from "../day/places.ts";
+import { whereLinkedOf, whereOf } from "../day/places.ts";
 import { roomOf } from "../day/series.ts";
 import { rangeDash, timeOf } from "../day/times.ts";
 import { dayAdd, dayOf, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { logEntryOpen } from "../editor/dialog.ts";
-import { dottedOf } from "../persons.ts";
 import { iconPut } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
 import "../day/day.css";
+import "../day/log.css";
+import "../day/boxes.css";
 import "../food/food.css";
 import "./diary.css";
 
-import type { Attendee } from "../../reader/calendar.ts";
 import type { DayEntry } from "../../reader/day.ts";
 
 let shown: string = "";
@@ -96,40 +97,45 @@ function noteOf(entry: DayEntry): HTMLElement {
 }
 
 /**
- * An entry, what it was, below it in grey its time, place, people, its note beside it.
- * Its place online never as a link, since what it was is a button.
+ * An entry as a box of the plan with its note beside it.
+ * A line too long ends in `…`, its whole text in its tooltip.
+ * A click on it opens its dialog, a click on its place the link of the place.
  */
 function entryOf(entry: DayEntry): HTMLElement {
-    const start: Date = new Date(entry.start);
     const shownWhat: string = shownWhatOf(entry.category, entry.title, entry.module, entry.type);
+    const time: string = `${timeOf(new Date(entry.start))}${rangeDash}${timeOf(new Date(entry.end))}`;
     const place: (string | Node)[] = whereLinkedOf(
         entry.category,
         entry.from,
         roomOf(entry.location),
-        "",
+        entry.locationLink,
         entry.online,
-        "",
+        entry.onlineLink,
     );
-    const people: (string | Node)[] = dottedOf(entry.attendees.map((person: Attendee): string => person.name));
-    const head: HTMLElement = entryPartOf(entry.editable ? "button" : "div", "diary-head", [
-        entryPartOf("span", "diary-what", whatOf(entry.category, shownWhat === entry.category ? "" : shownWhat)),
-        entryPartOf("span", "diary-meta", [
-            `${timeOf(start)}${rangeDash}${timeOf(new Date(entry.end))}`,
-            ...[place, people]
-                .filter((part: (string | Node)[]): boolean => part.length > 0)
-                .map((part: (string | Node)[]): HTMLElement => entryPartOf("span", "entry-parted", part)),
-        ]),
+    const what: HTMLElement = entryPartOf(
+        "div",
+        "box-what",
+        whatOf(entry.category, shownWhat === entry.category ? "" : shownWhat),
+    );
+    const meta: HTMLElement = entryPartOf("div", "box-meta", [
+        entryPartOf("span", "box-part box-time", [time]),
+        ...(place.length === 0 ? [] : [entryPartOf("span", "box-part entry-parted", place)]),
     ]);
+    const box: HTMLElement = entryPartOf("div", "box diary-box", [what, meta]);
+    what.title = what.textContent ?? "";
+    meta.title = [time, whereOf(entry.category, entry.from, entry.location, entry.online).replace("->", "→")]
+        .filter((part: string): boolean => part !== "")
+        .join(" · ");
     if (!entry.editable)
         return entryPartOf("article", "diary-entry", [
-            head,
+            box,
             entryPartOf("div", "diary-side", [entryPartOf("p", "diary-text", [entry.note])]),
         ]);
-    (head as HTMLButtonElement).type = "button";
-    head.addEventListener("click", (): void => {
+    box.addEventListener("click", (event: MouseEvent): void => {
+        if ((event.target as HTMLElement).closest("a") !== null) return;
         logEntryOpen(entry.id, entry.start).catch((error: unknown): void => console.error(error));
     });
-    return entryPartOf("article", "diary-entry", [head, noteOf(entry)]);
+    return entryPartOf("article", "diary-entry", [box, noteOf(entry)]);
 }
 
 /**
