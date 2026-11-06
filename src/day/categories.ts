@@ -32,6 +32,7 @@ import {
     addressOf,
     labelOf,
     lineOf,
+    mineLineOf,
     placeAddressOf,
     placeChoiceOf,
     placeEditOf,
@@ -559,7 +560,10 @@ function fixedTextOf(field: Field, text: string): string {
 
 /** The choice of a place of a field, the place picked by the name I gave it by its parts. */
 function fieldChoiceOf(field: Field, value: string): Choice {
-    const name: string = labelOf(value) === labelOf(values[field.key]) ? (edits[field.key]?.name ?? "") : "";
+    const name: string =
+        mineLineOf(value, field.places) === mineLineOf(values[field.key], field.places)
+            ? (edits[field.key]?.name ?? "")
+            : "";
     return placeChoiceOf(value, name !== "" ? name : labelOf(value), field.places);
 }
 
@@ -568,13 +572,14 @@ function mineOf(field: Field): string | undefined {
     const line: string = values[field.key];
     return line === ""
         ? undefined
-        : [...field.values, ...field.rooms].find((value: string): boolean => labelOf(value) === labelOf(line));
+        : [...field.values, ...field.rooms].find((value: string): boolean => value === mineLineOf(line, field.places));
 }
 
 /** The place picked in a field before I change it by its parts, with the link the entry kept. */
 function placeOriginOf(field: Field): Place {
     const line: string = values[field.key];
-    const kept: string = labelOf(line) === labelOf(opened.values.location) ? opened.locationLink : "";
+    const kept: string =
+        mineLineOf(line, field.places) === mineLineOf(opened.values.location, field.places) ? opened.locationLink : "";
     return placeOf(line, kept, field.places);
 }
 
@@ -905,11 +910,10 @@ function fieldRowsOf(field: Field): HTMLElement[] {
         below: place === null ? [...summary.slice(1), steps] : [place[1], ...(shown ? [partsOf(field)] : [])],
         pick: (picked: string[]): void => {
             const line: string = picked[0] ?? "";
-            const before: string = labelOf(values[field.key]);
-            values[field.key] =
-                field.key !== "title" && line !== "" && labelOf(line) === before ? values[field.key] : line;
+            const same: boolean = mineLineOf(line, field.places) === mineLineOf(values[field.key], field.places);
+            values[field.key] = field.key !== "title" && line !== "" && same ? values[field.key] : line;
             if (line !== "") valueAdd(field, line);
-            if (place !== null && labelOf(line) !== before) {
+            if (place !== null && !same) {
                 edits[field.key] = null;
                 if (line === addedLine) partsOpen = field.key;
                 else if (partsOpen === field.key) partsOpen = null;
@@ -921,7 +925,7 @@ function fieldRowsOf(field: Field): HTMLElement[] {
             stepsShow(steps, field);
             hiddenSet("entry-pain", !neckLongPicked());
             saveAllow();
-            if (partsShown(field) !== shown || (shown && labelOf(line) !== before)) partsShow(field);
+            if (partsShown(field) !== shown || (shown && !same)) partsShow(field);
             if (field.key === "title") titleRowsShow();
         },
     });
@@ -1169,8 +1173,7 @@ async function lastPlaceFill(category: Category): Promise<void> {
     if (chosen !== category) return;
     const standard: Place | undefined = Object.values(field.places).find((place: Place): boolean => place.standard);
     const line: string = last !== "" ? last : standard === undefined ? "" : lineOf(standard);
-    values[field.key] =
-        field.values.find((value: string): boolean => line !== "" && labelOf(value) === labelOf(line)) ?? line;
+    values[field.key] = mineLineOf(line, field.places);
     if (!way) placeFilled = values.location;
 }
 
@@ -1435,7 +1438,7 @@ async function renamesSend(dry: boolean): Promise<void> {
     for (const field of (chosen?.fields ?? []).filter(placeIs)) {
         const edit: Place | null = edits[field.key];
         if (values[field.key] !== "" && edit !== null && JSON.stringify(edit) !== JSON.stringify(placeOriginOf(field)))
-            await renameSend(labelOf(values[field.key]), edit, dry);
+            await renameSend(values[field.key], edit, dry);
     }
     await personsRename(
         personEdits,

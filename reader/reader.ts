@@ -358,7 +358,7 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         paramRename((await json(request)) as ParamRenamed);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/standard") {
-        placeStandardSet(String(((await json(request)) as { name?: string }).name ?? ""));
+        placeStandardSet(String(((await json(request)) as { line?: string }).line ?? ""));
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/online") {
         responseSend(response, 200, platformAdd((await json(request)) as Platform));

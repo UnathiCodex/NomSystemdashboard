@@ -20,7 +20,7 @@
 
 import { entriesRead, entriesWrittenRead, skillName, summaryBaseOf } from "./calendar.ts";
 import { personNameOf } from "./persons.ts";
-import { labelOf, lineOf, placesRead, platformsRead, roomsRead } from "./places.ts";
+import { labelOf, lineOf, placesRead, platformsRead, roomsRead, rowOfLine } from "./places.ts";
 import { sportName } from "./sport.ts";
 import { day, partners } from "./sources.ts";
 
@@ -268,11 +268,16 @@ function logsRead(now: string): Entry[] {
 }
 
 /**
- * Lists the places and starts of ways of log entries by their names, as often as used.
- * By name, so a line with its address and an older one of the name alone count alike.
+ * Lists the places and starts of ways of log entries as often as used, each by the line of my place it names.
+ * So a line with its address and an older one count alike, while two places of one name count apart.
  */
-function placeUsesOf(logs: Entry[]): string[] {
-    return logs.flatMap((log: Entry): string[] => [labelOf(log.location), labelOf(log.from)]);
+function placeUsesOf(logs: Entry[], mine: Place[]): string[] {
+    return logs
+        .flatMap((log: Entry): string[] => [log.location, log.from])
+        .flatMap((line: string): string[] => {
+            const row: Place | undefined = rowOfLine(line, mine);
+            return row === undefined ? [] : [lineOf(row)];
+        });
 }
 
 /** Lists the platforms of log entries, as often as used. */
@@ -369,10 +374,7 @@ export function categoriesRead(now: string): CategoryShown[] {
     const written: Entry[] = [...logs, ...plansRead()];
     const mine: Place[] = placesRead();
     const names: string[] = mine.map((place: Place): string => place.name);
-    const places: string[] = valuesOrder(
-        placeUsesOf(logs).filter((use: string): boolean => names.includes(use)),
-        names,
-    ).map((name: string): string => lineOf(mine[names.indexOf(name)]));
+    const places: string[] = valuesOrder(placeUsesOf(logs, mine), mine.map(lineOf));
     const platformNames: string[] = platformsRead().map((platform: Platform): string => platform.name);
     const platforms: string[] = valuesOrder(
         onlineUsesOf(logs).filter((use: string): boolean => platformNames.includes(use)),

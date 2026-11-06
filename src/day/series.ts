@@ -1996,7 +1996,7 @@ function formFill(): void {
  */
 async function placeRename(form: Form, dry: boolean): Promise<void> {
     if (form.location !== "" && placeEdit !== null && JSON.stringify(placeEdit) !== JSON.stringify(placeOriginOf(form)))
-        await renameSend(labelOf(form.location), placeEdit, dry);
+        await renameSend(form.location, placeEdit, dry);
 }
 
 /**

@@ -18,7 +18,7 @@ import { basename, dirname, join } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import ICAL from "ical.js";
 import { mailOf } from "./persons.ts";
-import { labelOf, linkForm, platformOfLink } from "./places.ts";
+import { linkForm, platformOfLink } from "./places.ts";
 import { calendarRoot, moduleName, modulesRoot, vaultPathOf, writeAllowed } from "./sources.ts";
 
 import type { CalendarSource } from "./sources.ts";
@@ -2271,6 +2271,7 @@ export function paramRename(sent: ParamRenamed): number {
 /**
  * Renames a place in each `LOCATION` and `X-FROM` that names it, a `LOCATION` with its link as `ALTREP`.
  *
+ * @param names - Whether the line of a `LOCATION` or `X-FROM` names the place
  * @param place - The line it takes
  * @param link - The link a `LOCATION` takes, empty for none, an `X-FROM` has none
  * @param dry - Whether only to count the lines, writing nothing
@@ -2279,7 +2280,7 @@ export function paramRename(sent: ParamRenamed): number {
  */
 export function placeLinesRename(
     sources: CalendarSource[],
-    old: string,
+    names: (line: string) => boolean,
     place: string,
     link: string,
     dry: boolean,
@@ -2289,8 +2290,7 @@ export function placeLinesRename(
         ["location", "x-from"].forEach((name: string): void => {
             const line: string = unfoldedOf(component, name);
             if (line === "") return;
-            const value: string = String(ICAL.Property.fromString(line).getFirstValue() ?? "");
-            if (labelOf(value) !== old) return;
+            if (!names(String(ICAL.Property.fromString(line).getFirstValue() ?? ""))) return;
             const written: ICAL.Property = propertyOf(name, place);
             if (name === "location" && link !== "") written.setParameter("altrep", [link]);
             if (written.toICALString() === line) return;

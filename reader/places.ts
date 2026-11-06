@@ -11,7 +11,8 @@
  * An older entry keeps the name alone, or its code and town in one part.
  * `Rooms.md` holds the rooms of the university in a table of the same form.
  * A new place whose name starts like the code of a room goes there, otherwise into `Places.md`.
- * A name is unique over both files, both stay sorted by name.
+ * A place is its name with its address, unique over both files, both sorted by name, then by address.
+ * So two places may share a name, like two McDonalds, their address telling them apart.
  * A place is only where I physically am, what I do online is apart, a row of `Online.md`.
  */
 
@@ -25,7 +26,7 @@ import type { Online } from "./calendar.ts";
 
 /**
  * A place, one row of `Places.md`, or a room, one row of `Rooms.md`.
- * Its name is unique, ignoring case.
+ * Its line is unique, ignoring case.
  * The name and the address hold no `|` and no comma, which part them in a line.
  * - `street`: With the number of the house, which may stay out.
  * - `standard`: Whether it is my default place.
@@ -50,14 +51,13 @@ export type Platform = {
     link: string;
 };
 
-/** A changed place with its old name. */
+/** A changed place with its old line. */
 export type PlaceChanged = Place & {
     old: string;
 };
 
 /**
- * A place changed everywhere from its pencil in a dialog,
- * its old name the part of its line before the first comma.
+ * A place changed everywhere from its pencil in a dialog, with its old line.
  * - `dry`: Only check the change, writing nothing.
  */
 export type PlaceRenamed = PlaceChanged & {
@@ -115,6 +115,11 @@ export function lineOf(place: Place): string {
         .join(", ");
 }
 
+/** Whether a line is the one of a place, ignoring case, as two rows may not share it. */
+function lineSameIs(place: Place, line: string): boolean {
+    return lineOf(place).toLowerCase() === line.toLowerCase();
+}
+
 /** Whether a line is the one of a place, also as an older entry wrote it, its code and town in one part. */
 function lineIs(place: Place, line: string): boolean {
     return (
@@ -129,6 +134,19 @@ function lineIs(place: Place, line: string): boolean {
 /** The name of the place of a line, the part before its first comma. */
 export function labelOf(line: string): string {
     return line.split(",")[0].trim();
+}
+
+/**
+ * The row of my places and rooms a line names, `undefined` for none.
+ * An older line names it with its code and town in one part.
+ * A line of the name alone names it while one row has that name.
+ */
+export function rowOfLine(line: string, rows: Place[]): Place | undefined {
+    const named: Place[] = rows.filter((place: Place): boolean => place.name === labelOf(line));
+    return (
+        named.find((place: Place): boolean => lineIs(place, line)) ??
+        (line === labelOf(line) && named.length === 1 ? named[0] : undefined)
+    );
 }
 
 /**
@@ -177,14 +195,9 @@ export function roomsRead(): Place[] {
     return tableRead(day.rooms);
 }
 
-/**
- * Cleans a place as sent and checks it against my other places and rooms.
- * Only the name is needed. Never my default place, which only {@link placeStandardSet} sets.
- *
- * @throws {Error} - When the name is empty or taken, ignoring case, or the link is no web address
- */
-function placeCleanOf(sent: Place, others: Place[]): Place {
-    const clean: Place = {
+/** Cleans a place as sent, never my default place, which only {@link placeStandardSet} sets. */
+function placeTypedOf(sent: Place): Place {
+    return {
         name: nameOf(String(sent.name ?? "")),
         street: nameOf(String(sent.street ?? "")),
         code: nameOf(String(sent.code ?? "")),
@@ -193,11 +206,18 @@ function placeCleanOf(sent: Place, others: Place[]): Place {
         link: cellOf(String(sent.link ?? "")),
         standard: false,
     };
-    if (
-        clean.name === "" ||
-        others.some((mine: Place): boolean => mine.name.toLowerCase() === clean.name.toLowerCase())
-    )
-        throw new Error(`No new name of a place: ${clean.name}`);
+}
+
+/**
+ * Cleans a place as sent and checks it against my other places and rooms.
+ * Only the name is needed.
+ *
+ * @throws {Error} - When its name is empty, its line taken ignoring case, its link no web address
+ */
+function placeCleanOf(sent: Place, others: Place[]): Place {
+    const clean: Place = placeTypedOf(sent);
+    if (clean.name === "" || others.some((mine: Place): boolean => lineSameIs(mine, lineOf(clean))))
+        throw new Error(`No new place: ${lineOf(clean)}`);
     if (clean.link !== "" && !linkForm.test(clean.link)) throw new Error(`No link of ${clean.name}: ${clean.link}`);
     return clean;
 }
@@ -226,7 +246,7 @@ function rowOf(place: Place): string {
     );
 }
 
-/** Sorts the rows of a table by name, every other line staying where it is. */
+/** Sorts the rows of a table by name, then by address, every other line staying where it is. */
 function rowsSort(lines: string[]): void {
     const first: number = lines.findIndex((line: string): boolean => line.startsWith("|")) + tableHead;
     const last: number = lines.findLastIndex((line: string): boolean => line.startsWith("|"));
@@ -235,10 +255,26 @@ function rowsSort(lines: string[]): void {
         last + 1 - first,
         ...lines
             .slice(first, last + 1)
-            .sort((one: string, other: string): number =>
-                nameOrder.compare(nameOf(cellsOf(one)[0] ?? ""), nameOf(cellsOf(other)[0] ?? "")),
+            .sort(
+                (one: string, other: string): number =>
+                    nameOrder.compare(rowPlaceOf(one).name, rowPlaceOf(other).name) ||
+                    nameOrder.compare(lineOf(rowPlaceOf(one)), lineOf(rowPlaceOf(other))),
             ),
     );
+}
+
+/** The index of the row of a place in the lines of its table, -1 for none. */
+function rowIndexOf(lines: string[], place: Place): number {
+    const first: number = lines.findIndex((line: string): boolean => line.startsWith("|")) + tableHead;
+    return lines.findIndex(
+        (line: string, index: number): boolean =>
+            index >= first && line.startsWith("|") && lineOf(rowPlaceOf(line)) === lineOf(place),
+    );
+}
+
+/** The table a place stands in, `Rooms.md` for a room, else `Places.md`. */
+function fileOf(place: Place): string {
+    return roomsRead().some((room: Place): boolean => lineOf(room) === lineOf(place)) ? day.rooms : day.places;
 }
 
 /**
@@ -260,108 +296,91 @@ export function placeAdd(sent: Place, room?: boolean): Place {
 }
 
 /**
- * Changes the row of a place or room of a name, its star kept, and nothing else.
+ * Changes the row an old line names, its star kept, nothing else.
  * Every entry written before keeps the line and the link it had.
  *
- * @throws {Error} - When no place has the old name, the place is not valid, or the file lies outside the new system
+ * @throws {Error} - When no place has the old line, the place is not valid, the file lies outside the new system
  */
 export function placeChange(sent: PlaceChanged): Place {
-    const old: string = nameOf(String(sent.old ?? "")).toLowerCase();
-    const file: string = roomsRead().some((room: Place): boolean => room.name.toLowerCase() === old)
-        ? day.rooms
-        : day.places;
+    const rows: Place[] = [...placesRead(), ...roomsRead()];
+    const before: Place | undefined = rowOfLine(String(sent.old ?? "").trim(), rows);
+    if (before === undefined) throw new Error(`No place of the line: ${sent.old}`);
     const changed: Place = placeCleanOf(
         sent,
-        [...placesRead(), ...roomsRead()].filter((mine: Place): boolean => mine.name.toLowerCase() !== old),
+        rows.filter((mine: Place): boolean => mine !== before),
     );
+    const file: string = fileOf(before);
     const lines: string[] = placeLinesRead(file);
-    const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
-    const row: number = lines.findIndex(
-        (line: string, index: number): boolean =>
-            index >= first + tableHead && line.startsWith("|") && nameOf(cellsOf(line)[0] ?? "").toLowerCase() === old,
-    );
-    if (old === "" || row === -1) throw new Error(`No place of the name: ${sent.old}`);
-    lines[row] = rowOf({ ...changed, standard: rowPlaceOf(lines[row]).standard });
+    lines[rowIndexOf(lines, before)] = rowOf({ ...changed, standard: before.standard });
     rowsSort(lines);
     writeFileSync(file, lines.join("\n"));
     return changed;
 }
 
 /**
- * Changes a place everywhere, its rows and each `LOCATION` and `X-FROM` in every `.ics` file.
- * While no other row has the new name, each row and line takes the place as sent, its star kept.
+ * Changes a place in its row and in every `.ics` file.
+ * There each `LOCATION` and `X-FROM` naming it changes.
+ * While no other row has the new line, its row takes the place as sent, its star kept, its lines too.
  * While another row has it, ignoring case, the place moves to that row and takes its line and link.
- * Then the rows of the old name go, so no name has two rows, and a moved default place makes that row it.
+ * Then the old row goes, so no line has two rows.
+ * A moved default place makes that row the default.
+ * An old line of none of my places changes only where an entry has that very line.
  * Works out every file first and writes only then, so nothing is written while one file cannot be.
  *
- * @throws {Error} - When a name is empty, the link is no web address,
- *   a line of a place cannot be read, or a file lies outside the new system
+ * @throws {Error} - When the old line is empty, the place not valid, a file outside the new system
  */
 export function placeRename(sent: PlaceRenamed): void {
     const old: string = String(sent.old ?? "").trim();
-    const name: string = nameOf(String(sent.name ?? ""));
-    if (old === "") throw new Error(`No place of the name: ${sent.old}`);
+    if (old === "") throw new Error(`No place of the line: ${sent.old}`);
     const rows: Place[] = [...placesRead(), ...roomsRead()];
-    const target: Place | undefined = rows.find(
-        (place: Place): boolean => place.name !== old && place.name.toLowerCase() === name.toLowerCase(),
+    const before: Place | undefined = rowOfLine(old, rows);
+    const others: Place[] = rows.filter((place: Place): boolean => place !== before);
+    const target: Place | undefined = others.find((place: Place): boolean =>
+        lineSameIs(place, lineOf(placeTypedOf(sent))),
     );
-    const changed: Place =
-        target ??
-        placeCleanOf(
-            sent,
-            rows.filter((place: Place): boolean => place.name !== old),
-        );
-    const tables: [string, string][] = [day.places, day.rooms]
-        .filter((file: string): boolean => tableRead(file).some((place: Place): boolean => place.name === old))
-        .map((file: string): [string, string] => {
-            const lines: string[] = placeLinesRead(file);
-            const first: number = lines.findIndex((line: string): boolean => line.startsWith("|"));
-            const named: number[] = lines
-                .flatMap((line: string, index: number): number[] =>
-                    index >= first + tableHead && line.startsWith("|") && nameOf(cellsOf(line)[0] ?? "") === old
-                        ? [index]
-                        : [],
-                )
-                .reverse();
-            named.forEach((row: number): void => {
-                if (target === undefined)
-                    lines[row] = rowOf({
-                        ...changed,
-                        standard: rowPlaceOf(lines[row]).standard,
-                    });
-                else lines.splice(row, 1);
-            });
-            if (target === undefined) rowsSort(lines);
-            return [file, lines.join("\n")];
-        })
-        .filter(([file, text]: [string, string]): boolean => text !== readFileSync(file, "utf8"));
-    placeLinesRename([{ folder: calendarRoot, ending: ".ics" }], old, lineOf(changed), changed.link, sent.dry === true);
+    const changed: Place = target ?? placeCleanOf(sent, others);
+    const tables: [string, string][] = [];
+    if (before !== undefined) {
+        const file: string = fileOf(before);
+        const lines: string[] = placeLinesRead(file);
+        const row: number = rowIndexOf(lines, before);
+        if (target === undefined) lines[row] = rowOf({ ...changed, standard: before.standard });
+        else lines.splice(row, 1);
+        rowsSort(lines);
+        if (lines.join("\n") !== readFileSync(file, "utf8")) tables.push([file, lines.join("\n")]);
+    }
+    placeLinesRename(
+        [{ folder: calendarRoot, ending: ".ics" }],
+        (line: string): boolean => (before === undefined ? line === old : rowOfLine(line, rows) === before),
+        lineOf(changed),
+        changed.link,
+        sent.dry === true,
+    );
     if (sent.dry === true) return;
     tables.forEach(([file, text]: [string, string]): void => writeFileSync(file, text));
-    if (target !== undefined && rows.some((place: Place): boolean => place.name === old && place.standard))
-        placeStandardSet(target.name);
+    if (target !== undefined && before?.standard === true) placeStandardSet(lineOf(target));
 }
 
 /**
- * Makes a place my only default place, an empty name leaves none.
+ * Makes the place of a line my only default place, an empty line leaves none.
  * Writes only a file that changes. Mine alone, never sent to Vu.
  *
- * @throws {Error} - When no place or room has the name, or a file lies outside the new system
+ * @throws {Error} - When no row has the line, when a file lies outside the new system
  */
-export function placeStandardSet(name: string): void {
-    if (name !== "" && ![...placesRead(), ...roomsRead()].some((place: Place): boolean => place.name === name))
-        throw new Error(`No place of the name: ${name}`);
+export function placeStandardSet(line: string): void {
+    if (line !== "" && ![...placesRead(), ...roomsRead()].some((place: Place): boolean => lineOf(place) === line))
+        throw new Error(`No place of the line: ${line}`);
     [day.places, day.rooms].filter(existsSync).forEach((file: string): void => {
         const lines: string[] = placeLinesRead(file);
         const first: number = lines.findIndex((line: string): boolean => line.startsWith("|")) + tableHead;
         const text: string = lines.join("\n");
         const marked: string = lines
-            .map((line: string, index: number): string =>
-                index < first || !line.startsWith("|")
-                    ? line
+            .map((row: string, index: number): string =>
+                index < first || !row.startsWith("|")
+                    ? row
                     : rowOf({
-                          ...rowPlaceOf(line),
-                          standard: rowPlaceOf(line).name === name,
+                          ...rowPlaceOf(row),
+                          standard: lineOf(rowPlaceOf(row)) === line,
                       }),
             )
             .join("\n");

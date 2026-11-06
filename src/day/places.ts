@@ -45,13 +45,32 @@ export function addressOf(line: string): string {
 }
 
 /**
- * A place as its row holds it, my place or the room of its name.
+ * The line of my place or room a line names, the line itself for none.
+ * So two places of one name stay apart by their address.
+ * An older line names it with its code and town in one part.
+ * A line of the name alone names it while one place has that name.
+ */
+export function mineLineOf(line: string, rows: { [line: string]: Place }): string {
+    if (rows[line] !== undefined) return line;
+    const named: Place[] = Object.values(rows).filter((place: Place): boolean => place.name === labelOf(line));
+    const older: (place: Place) => string = (place: Place): string =>
+        [place.name, place.street, `${place.code} ${place.city}`.trim(), place.country]
+            .filter((part: string): boolean => part !== "")
+            .join(", ");
+    const row: Place | undefined =
+        named.find((place: Place): boolean => older(place) === line) ??
+        (line === labelOf(line) && named.length === 1 ? named[0] : undefined);
+    return row === undefined ? line : lineOf(row);
+}
+
+/**
+ * A place as the row the line names holds it.
  * One without row is read from its line.
  * An older line holds code and town in one part, parted at its first space.
  */
 export function placeOf(line: string, link: string, rows: { [line: string]: Place }): Place {
     const name: string = labelOf(line);
-    const row: Place | undefined = Object.values(rows).find((place: Place): boolean => place.name === name);
+    const row: Place | undefined = rows[mineLineOf(line, rows)];
     if (row !== undefined) return row;
     const parts: string[] = addressOf(line)
         .split(",")
@@ -162,7 +181,7 @@ function standardStarOf(place: Place): HTMLButtonElement {
     star.setAttribute("aria-pressed", String(place.standard));
     star.addEventListener("click", (): void => {
         const standard: boolean = star.getAttribute("aria-pressed") !== "true";
-        standardSend(standard ? place.name : "")
+        standardSend(standard ? lineOf(place) : "")
             .then((): void => star.setAttribute("aria-pressed", String(standard)))
             .catch((error: unknown): void => console.error(error));
     });
@@ -177,15 +196,18 @@ export function placeChoiceOf(line: string, name: string, places: { [line: strin
         text: name,
         group: "",
         detail: addressOf(line),
-        starred: standard !== undefined && labelOf(line) === standard.name,
+        starred: standard !== undefined && mineLineOf(line, places) === lineOf(standard),
     };
 }
 
-/** Puts my default place first among the places of a list, an older line of the same name left out. */
+/** Puts my default place first among the places of a list, an older line of it left out. */
 export function standardFirst(lines: string[], places: { [line: string]: Place }): string[] {
     const standard: Place | undefined = Object.values(places).find((place: Place): boolean => place.standard);
     if (standard === undefined) return lines;
-    return [lineOf(standard), ...lines.filter((line: string): boolean => labelOf(line) !== standard.name)];
+    return [
+        lineOf(standard),
+        ...lines.filter((line: string): boolean => mineLineOf(line, places) !== lineOf(standard)),
+    ];
 }
 
 /** Category of ways, whose place shows as the route. */
@@ -263,9 +285,10 @@ export function mapsLinkIs(link: string, address: string): boolean {
 }
 
 /**
- * Sends a new place, or my place with its old name, whose row it changes.
+ * Sends a new place.
+ * My place changed goes with its old line, whose row it changes.
  *
- * @throws {Error} - When the reader does not take it, like for a name another place has
+ * @throws {Error} - When the reader does not take it, like for a line another place has
  */
 export async function placeSend(place: Place, old: string): Promise<Place> {
     return readerAsk<Place>("/api/day/places", {
@@ -276,7 +299,7 @@ export async function placeSend(place: Place, old: string): Promise<Place> {
 }
 
 /**
- * Sends a place changed by its parts, which the reader changes everywhere.
+ * Sends a place changed by its parts with its old line, which the reader changes everywhere.
  * With `dry` it only checks, so a dialog saves nothing it refuses.
  *
  * @throws {Error} - When the reader does not take it, like for an empty name
@@ -290,15 +313,16 @@ export async function renameSend(old: string, place: Place, dry: boolean): Promi
 }
 
 /**
- * Sends my default place, which the reader marks by `★` and no other.
+ * Sends the line of my default place.
+ * The reader marks it by `★` and no other.
  *
- * @throws {Error} - When the reader does not take it, like for a name no place has
+ * @throws {Error} - When the reader does not take it, like for a line no place has
  */
-async function standardSend(name: string): Promise<void> {
+async function standardSend(line: string): Promise<void> {
     await readerAsk<null>("/api/day/standard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name }),
+        body: JSON.stringify({ line: line }),
     });
 }
 
