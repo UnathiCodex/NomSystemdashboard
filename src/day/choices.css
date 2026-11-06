@@ -44,8 +44,7 @@
 
 /* A row without a value holds a space of no width,
    so it is as high as a row with a value and all rows stand equally apart, not on a phone */
-.picker-head:empty::before,
-.meal:has(> .meal-rows:empty)::before {
+.picker-head:empty::before {
     content: "\200b";
 }
 
@@ -366,8 +365,7 @@
 /* Phone */
 @media (max-width: 900px), (pointer: coarse) and (max-width: 1366px) {
     /* A row without a value holds no empty line, since an empty line below its name only takes room */
-    .picker-head:empty::before,
-    .meal:has(> .meal-rows:empty)::before {
+    .picker-head:empty::before {
         content: none;
     }
 

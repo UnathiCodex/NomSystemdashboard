@@ -1,14 +1,15 @@
 /**
  * ## Meal in the entry by category
  *
- * A meal of the log, `Food`, in rows of the dialog, nothing nested:
- * - Summary: my meals and foods picked by name as in the plan, beside it in brackets the kcal, drinks too.
- *   A meal picked brings its block with its foods indented, a food picked its row.
- *   A new name is a new meal, its search of foods open at once.
- *   A name left out takes its meal or its foods away.
- * - Foods: how much of each, grams starting at one portion, an empty field counting nothing.
- *   Amounts are estimates anyway, so none is marked as one.
- * A meal block has its own plus, which adds a food from my foods, then Open Food Facts.
+ * A meal of the log picks my meals and my foods by name in its summary as the plan does.
+ * Each value has its kcal in brackets as its param, none while it has no grams.
+ * Its pencil shows below the summary how much of each food, as `With` shows its people.
+ * A meal shows its foods indented below its name.
+ * Its plus adds a food from my foods, then from Open Food Facts.
+ * Grams start at one portion, an empty field counting nothing.
+ * Amounts are estimates anyway, so none is marked as one.
+ * A value picked shows its grams at once, a new name being a new meal with its search open.
+ * A name left out takes its meal or its foods away.
  * Each food is a line `X-FOOD`, so the log keeps what the meal held that day,
  * whatever I change in `Meals.md` later.
  * A meal whose summary names more than its foods opens as that one meal, so its name stays.
@@ -37,9 +38,10 @@ import {
 } from "../food/foods.ts";
 import { dishesFound, mealNameOf } from "../food/meals.ts";
 import { foodSearchClear, foodSearchOf } from "../food/search.ts";
-import { crossPut, plusPut } from "../icons.ts";
+import { crossPut, iconPut, plusPut } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { matchesAll, wordsOf } from "../search.ts";
+import { Pencil } from "lucide";
 
 import type { Choice } from "./choices.ts";
 import type { Dish } from "../food/foods.ts";
@@ -141,11 +143,14 @@ let summaryPicker: HTMLElement = document.createElement("div");
 /** The names the picker of the summary shows, so it shows anew only when the foods change them. */
 let summaryNames: string[] = [];
 
-/** The kcal of the whole meal beside the summary. */
-let totalLine: HTMLElement = document.createElement("span");
+/** The kcal shown after each name of the summary, so typing grams changes them in place. */
+let kcalShown: Map<string, HTMLElement> = new Map();
 
-/** The meal blocks, then the foods beside them. */
-let foodsRows: HTMLElement = document.createElement("div");
+/** The names whose grams show, opened by their pencil. */
+let opened: string[] = [];
+
+/** The grams of the names opened, each meal with its foods, each food alone. */
+let partsRows: HTMLElement = document.createElement("div");
 
 /** The grams field of each food, so the cursor finds the food just picked. */
 let gramsFields: WeakMap<FoodPick, HTMLInputElement> = new WeakMap();
@@ -323,7 +328,8 @@ function gramsFocus(picked: FoodPick[]): void {
 }
 
 /**
- * A meal block, its name with a plus, its kcal and `×`, its foods indented below.
+ * A meal opened by its pencil, its foods indented below its name.
+ * Its name has its plus, after it stand its kcal with its `×`.
  * A food added goes into this entry only, never into `Meals.md`.
  * The meal goes with its last food.
  */
@@ -406,6 +412,43 @@ function namesOf(): string[] {
     ];
 }
 
+/** The foods a name of the summary stands for. */
+function foodsNamed(name: string): FoodPick[] {
+    return [
+        ...meals.filter((meal: MealPick): boolean => meal.name === name).flatMap((meal: MealPick) => meal.foods),
+        ...picks.filter((pick: FoodPick): boolean => pick.name === name),
+    ];
+}
+
+/** The kcal of a name of the summary in brackets, none while none of its foods has grams. */
+function kcalTextFor(name: string): string {
+    const foods: FoodPick[] = foodsNamed(name);
+    if (!foods.some((pick: FoodPick): boolean => numberOf(pick.grams) !== null)) return "";
+    return `(${kcalTextOf(foods.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0))})`;
+}
+
+/**
+ * What stands after a name of the summary, its kcal as its param, then its pencil.
+ * The pencil shows or hides its grams below the summary, taking no focus, as the pencil of a person.
+ */
+function valueAfterOf(name: string, changed: () => void): HTMLElement {
+    const all: HTMLSpanElement = document.createElement("span");
+    const kcal: HTMLElement = elementOf("span", "value-param", kcalTextFor(name));
+    const pencil: HTMLButtonElement = document.createElement("button");
+    pencil.type = "button";
+    pencil.className = "entry-pencil";
+    iconPut(pencil, Pencil, `Change ${name}`);
+    pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
+    pencil.addEventListener("click", (event: MouseEvent): void => {
+        event.stopPropagation();
+        opened = opened.includes(name) ? opened.filter((other: string): boolean => other !== name) : [...opened, name];
+        rowsShow(changed);
+    });
+    kcalShown.set(name, kcal);
+    all.append(kcal, pencil);
+    return all;
+}
+
 /**
  * The picker of the summary as in a box of the plan.
  * It picks my meals and my foods by name.
@@ -421,7 +464,8 @@ function summaryPickerOf(changed: () => void): HTMLElement {
         newTextOf: (text: string): string => `New meal “${mealNameOf(text)}”`,
         noun: "summary",
         linkOf: (): string => "",
-        aside: [totalLine],
+        afterOf: (name: string): HTMLElement => valueAfterOf(name, changed),
+        below: [partsRows],
         pick: (names: string[]): void => summaryPick(names, changed),
     });
 }
@@ -429,7 +473,7 @@ function summaryPickerOf(changed: () => void): HTMLElement {
 /**
  * Takes the names picked in the summary.
  * A name left out takes its meal or its foods away.
- * A name come is my meal, else my food, else a new meal.
+ * A name come is my meal, else my food, else a new meal, its grams shown at once.
  */
 function summaryPick(names: string[], changed: () => void): void {
     const gone: string[] = summaryNames.filter((name: string): boolean => !names.includes(name));
@@ -437,6 +481,7 @@ function summaryPick(names: string[], changed: () => void): void {
     summaryNames = names;
     meals = meals.filter((meal: MealPick): boolean => !gone.includes(meal.name));
     picks = picks.filter((pick: FoodPick): boolean => !gone.includes(pick.name));
+    opened = [...opened.filter((name: string): boolean => names.includes(name)), ...come];
     if (come.length === 0) rowsChanged(changed);
     come.forEach((name: string): void => {
         const dish: Dish | undefined = dishes.find(
@@ -450,20 +495,17 @@ function summaryPick(names: string[], changed: () => void): void {
 }
 
 /**
- * Shows in brackets the kcal of the meal beside the summary, none while no food has grams.
+ * Shows the kcal of each name of the summary anew.
  * The picker shows anew only when the foods changed the names it shows, so a list I pick in stays open.
  */
 function summaryShow(changed: () => void): void {
-    const total: number =
-        meals.reduce((sum: number, meal: MealPick): number => sum + mealKcalOf(meal), 0) +
-        picks.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0);
-    totalLine.textContent = [...meals.flatMap((meal: MealPick): FoodPick[] => meal.foods), ...picks].some(
-        (pick: FoodPick): boolean => numberOf(pick.grams) !== null,
-    )
-        ? `(${kcalTextOf(total)})`
-        : "";
+    kcalShown.forEach((kcal: HTMLElement, name: string): void => {
+        kcal.textContent = kcalTextFor(name);
+    });
     if (namesOf().join("\n") === summaryNames.join("\n")) return;
     summaryNames = namesOf();
+    opened = opened.filter((name: string): boolean => summaryNames.includes(name));
+    kcalShown = new Map();
     const picker: HTMLElement = summaryPickerOf(changed);
     summaryPicker.replaceWith(picker);
     summaryPicker = picker;
@@ -474,22 +516,31 @@ function rowsChanged(changed: () => void): void {
     changed();
 }
 
+/** Shows the grams of the names opened, in the order of the summary. */
 function rowsShow(changed: () => void): void {
-    foodsRows.replaceChildren(
-        ...meals.flatMap((meal: MealPick): HTMLElement[] => mealRowsOf(meal, changed)),
-        ...picks.map((pick: FoodPick): HTMLElement =>
-            foodRowOf(
-                pick,
-                (): void => {
-                    summaryShow(changed);
-                    changed();
-                },
-                (): void => {
-                    picks = picks.filter((other: FoodPick): boolean => other !== pick);
-                    rowsChanged(changed);
-                },
-            ),
-        ),
+    partsRows.replaceChildren(
+        ...namesOf()
+            .filter((name: string): boolean => opened.includes(name))
+            .flatMap((name: string): HTMLElement[] => [
+                ...meals
+                    .filter((meal: MealPick): boolean => meal.name === name)
+                    .flatMap((meal: MealPick): HTMLElement[] => mealRowsOf(meal, changed)),
+                ...picks
+                    .filter((pick: FoodPick): boolean => pick.name === name)
+                    .map((pick: FoodPick): HTMLElement =>
+                        foodRowOf(
+                            pick,
+                            (): void => {
+                                summaryShow(changed);
+                                changed();
+                            },
+                            (): void => {
+                                picks = picks.filter((other: FoodPick): boolean => other !== pick);
+                                rowsChanged(changed);
+                            },
+                        ),
+                    ),
+            ]),
     );
     summaryShow(changed);
 }
@@ -775,18 +826,15 @@ export async function mealOf(
 
     gramsFields = new WeakMap();
     blockPluses = new WeakMap();
-    totalLine = elementOf("span", "meal-total", "");
+    kcalShown = new Map();
+    opened = [];
+    partsRows = elementOf("div", "meal-rows", "");
     summaryNames = namesOf();
     summaryPicker = summaryPickerOf(changed);
-    foodsRows = elementOf("div", "meal-rows", "");
-    const foods: HTMLElement = elementOf("div", "meal", "");
-    foods.append(foodsRows);
-    const foodsRow: HTMLElement = rowOf("Foods", foods);
     rowsShow(changed);
     const summaryRow: HTMLDivElement = rowOf("Summary", summaryPicker);
     cookedRow = drawing === null ? null : cookedRowOf(changed);
-    if (cookedRow === null) return [summaryRow, foodsRow];
-    return [summaryRow, cookedRow, foodsRow];
+    return cookedRow === null ? [summaryRow] : [summaryRow, cookedRow];
 }
 
 /** A food picked as a line `X-FOOD` without a meal. */

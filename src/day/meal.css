@@ -1,15 +1,4 @@
-/* A meal of the entry, below its summary its meals with their foods */
-/* kcal of the whole meal in brackets after its summary, as a type after its skill */
-.meal-total {
-    margin-left: 0.3em;
-    font-variant-numeric: tabular-nums;
-}
-
-.meal {
-    display: flex;
-    flex-direction: column;
-}
-
+/* A meal of the entry, below its summary the grams of each name its pencil opened */
 .meal-rows {
     display: flex;
     flex-direction: column;
