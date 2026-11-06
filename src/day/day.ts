@@ -3,7 +3,6 @@
  *
  * The log of a day as a time grid of one column, the plan beside it as a list of boxes.
  * Above both the date between its arrows, at the right the trackers.
- * The day opens over the page from its notebook beside `Log +`, see `story.ts`.
  * A phone shows plan or log, one at a time.
  * Entries move and resize by dragging, and the reader writes only their new times.
  * The kcal of a meal stay hidden for a try.
@@ -25,7 +24,6 @@ import { monthStart } from "./month.ts";
 import { giftsStart } from "./gifts.ts";
 import { changeAsk, shareStart } from "./share.ts";
 import { searchStart } from "./search.ts";
-import { storyShow, storyStart } from "./story.ts";
 import { swipeStart } from "./swipe.ts";
 import { labelOf, whereLinkedOf, whereOf } from "./places.ts";
 import { trackersSee } from "./trackers.ts";
@@ -317,7 +315,7 @@ function noteMarkOf(): SVGElement {
  * - Two lines: What, then time and place, as a box of the plan writes them.
  * - Three or more: The place on a line of its own.
  * An entry with a note has a small sign after what.
- * The note itself stands in its tooltip and in the day alone, see `story.ts`.
+ * The note itself stands in its tooltip and in the diary alone, see `diary.ts`.
  */
 function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
     const category: string = info.event.extendedProps.category ?? "";
@@ -455,8 +453,7 @@ function gridOf(element: HTMLElement): HTMLElement {
 /** Shows the date of the shown day and the icon back to today. */
 function dayShow(info: DatesSetInfo): void {
     const date: string = info.startStr.slice(0, 10);
-    for (const id of ["day-date", "story-date"])
-        (document.getElementById(id) as HTMLElement).textContent = dayTextOf(date, true);
+    (document.getElementById("day-date") as HTMLElement).textContent = dayTextOf(date, true);
     todayButtonShow(date);
 }
 
@@ -565,10 +562,7 @@ export function dayStart(): void {
         eventResizeStop: (): void => edgeScrollEnd?.(),
         droppable: true,
         eventReceive: (info: EventReceiveInfo): void => boxReceive(calendar, info),
-        eventsSet: (events: EventApi[]): void => {
-            boxesSee(calendar, events);
-            storyShow(events);
-        },
+        eventsSet: (events: EventApi[]): void => boxesSee(calendar, events),
         eventSourceSuccess: (): void => {
             trackersSee(calendar);
             timerSee();
@@ -664,7 +658,6 @@ export function dayStart(): void {
     giftsStart();
     shareStart();
     searchStart(calendar);
-    storyStart();
     timesStart();
     timerStart();
 }

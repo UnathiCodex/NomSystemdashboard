@@ -79,6 +79,13 @@ export type EntryMoved = {
     end: string;
 };
 
+/** The note of an entry written in the diary, `before` as the diary read it. */
+export type EntryNoted = {
+    id: string;
+    before: string;
+    note: string;
+};
+
 /**
  * A box logged at its real time.
  *
@@ -467,15 +474,9 @@ export function entryEdit(change: EntryChange): boolean {
     return true;
 }
 
-/**
- * Moves an entry to a new start and end, written as any change.
- *
- * @throws {Error} - When it may not be changed, the end is not after the start,
- *   or a meal would start before its cooking
- */
-export function entryMove(moved: EntryMoved): void {
-    const [file, entry]: [string, Entry] = entryFind(day.log, moved.id);
-    entryWrite(file, entry, {
+/** An entry as its file holds it, so a change of one field writes every other as it was. */
+function entryAsIsOf(entry: Entry): EntryNew {
+    return {
         category: entry.category,
         title: entry.title,
         location: entry.location,
@@ -486,9 +487,34 @@ export function entryMove(moved: EntryMoved): void {
         note: entry.note,
         foods: entry.foods,
         planned: "",
-        start: moved.start,
-        end: moved.end,
-    });
+        start: entry.start,
+        end: entry.end,
+    };
+}
+
+/**
+ * Moves an entry to a new start and end, written as any change.
+ *
+ * @throws {Error} - When it may not be changed, the end is not after the start,
+ *   or a meal would start before its cooking
+ */
+export function entryMove(moved: EntryMoved): void {
+    const [file, entry]: [string, Entry] = entryFind(day.log, moved.id);
+    entryWrite(file, entry, { ...entryAsIsOf(entry), start: moved.start, end: moved.end });
+}
+
+/**
+ * Writes the note of an entry only while its file holds the note as the diary read it, written as any change.
+ * A change of another field meanwhile stays, since only the note is written.
+ *
+ * @returns Whether it is written, `false` when its note changed since
+ * @throws {Error} - When there is no such entry or it may not be changed
+ */
+export function entryNote(noted: EntryNoted): boolean {
+    const [file, entry]: [string, Entry] = entryFind(day.log, noted.id);
+    if (entry.note !== noted.before) return false;
+    entryWrite(file, entry, { ...entryAsIsOf(entry), note: noted.note });
+    return true;
 }
 
 /**

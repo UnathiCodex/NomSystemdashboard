@@ -13,6 +13,7 @@
 
 /// <reference types="vite/client" />
 import dayHtml from "./day/day.html?raw";
+import diaryHtml from "./diary/diary.html?raw";
 import foodHtml from "./food/food.html?raw";
 import sportHtml from "./sport/sport.html?raw";
 import editorHtml from "./editor/editor.html?raw";
@@ -57,7 +58,11 @@ addEventListener("resize", (): void => {
     deviceWait = window.setTimeout(deviceReport, 1000);
 });
 
-if (area === "/food") {
+if (area === "/diary") {
+    const diary: { diaryStart: () => void } = await import("./diary/diary.ts");
+    document.body.insertAdjacentHTML("beforeend", diaryHtml);
+    diary.diaryStart();
+} else if (area === "/food") {
     const food: { foodStart: () => void } = await import("./food/food.ts");
     document.body.insertAdjacentHTML("beforeend", foodHtml);
     food.foodStart();

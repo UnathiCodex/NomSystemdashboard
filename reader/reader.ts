@@ -22,6 +22,7 @@ import {
     entryDelete,
     entryEdit,
     entryMove,
+    entryNote,
     entryNowRead,
     logAllRead,
     realMinutesRead,
@@ -106,7 +107,7 @@ import { codeColorsRead } from "./theme.ts";
 
 import type { IncomingMessage, ServerResponse, Server } from "node:http";
 import type { ViteDevServer } from "vite";
-import type { BoxLogged, EntryChange, EntryMoved, EntryNew } from "./day.ts";
+import type { BoxLogged, EntryChange, EntryMoved, EntryNew, EntryNoted } from "./day.ts";
 import type { Box, BoxChange, BoxNew } from "./boxes.ts";
 import type { Attendee, ParamRenamed } from "./calendar.ts";
 import type { PersonRenamed } from "./persons.ts";
@@ -193,7 +194,8 @@ const openedBlocks: Map<string, string> = new Map<string, string>();
  *   A route that changes an entry or a box sends it once Vu comes into its `With`.
  *   The routes that change my foods, meals, places and platforms send each change to Vu.
  * - `PATCH /api/day/log`, `PATCH /api/skill/entry`: Refused with 409 when its file changed since the dialog opened.
- * - `POST /api/day/moved`: Every other field as its file holds it.
+ * - `POST /api/day/moved`, `POST /api/day/noted`: Every other field as its file holds it.
+ *   `POST /api/day/noted`: Refused with 409 when its note changed since the diary read it.
  * - `DELETE /api/day/boxes`: Of one day of a series that day alone.
  * - `POST /api/day/boxes`: Numbers the boxes of its type of a module anew, a tutorial by its week.
  * - `POST /api/day/repeat`: Refused with 409 for a type that has a box in its semester already.
@@ -275,6 +277,8 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
     } else if (request.method === "POST" && url.pathname === "/api/day/moved") {
         entryMove((await json(request)) as EntryMoved);
         responseSend(response, 200, null);
+    } else if (request.method === "POST" && url.pathname === "/api/day/noted") {
+        responseSend(response, entryNote((await json(request)) as EntryNoted) ? 200 : 409, null);
     } else if (request.method === "DELETE" && url.pathname === "/api/day/log") {
         entryDelete(url.searchParams.get("id") ?? "");
         responseSend(response, 200, null);

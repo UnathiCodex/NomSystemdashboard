@@ -1,0 +1,96 @@
+/* Diary: the bar, then the entries of the day, one column as wide as a page to read.
+   The page itself scrolls, so the wheel, a swipe, the keys, the scrollbar all scroll it */
+.diary {
+    display: flex;
+    flex-direction: column;
+    gap: calc(1.5 * var(--gap));
+    flex: none;
+    max-width: 48rem;
+    padding: var(--top-room) var(--side-room) calc(4 * var(--gap));
+}
+
+/* The page grows with its content */
+body:has(> .diary) {
+    height: auto;
+    min-height: 100dvh;
+}
+
+.diary-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* What an entry was, flat as a result of the search, a grey under the pointer when a click opens it */
+.diary-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    width: 100%;
+    padding: 0.25rem var(--row-padding);
+    border: 0;
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+}
+
+button.diary-head {
+    cursor: pointer;
+}
+
+button.diary-head:hover {
+    background: var(--fill);
+}
+
+.diary-meta {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* The note right below its entry, plain text until I write, growing with its text, its line breaks kept */
+.diary-note,
+.diary-text {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0.25rem var(--row-padding);
+    border: 0;
+    border-radius: var(--radius);
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    white-space: pre-line;
+}
+
+.diary-note {
+    min-height: 1lh;
+    field-sizing: content;
+    contain: inline-size;
+    resize: none;
+}
+
+.diary-note:focus {
+    outline: none;
+    background: var(--fill);
+}
+
+.diary-note::placeholder {
+    color: var(--text-muted);
+    opacity: 0;
+}
+
+/* The grey word Note only under the pointer or while writing, so an empty note takes no eye */
+.diary-entry:hover .diary-note::placeholder,
+.diary-note:focus::placeholder {
+    opacity: 1;
+}
+
+/* Hint for a day without entries */
+.diary-none {
+    margin: 0;
+    padding: 0 var(--row-padding);
+    color: var(--text-muted);
+}
