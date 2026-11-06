@@ -2,10 +2,10 @@
  * ## Diary
  *
  * My diary in the look of the food view, the log entries of a day by their start.
- * Each entry is a box as in the plan.
- * It shows what it was and below it grey its time and place.
- * Beside each stands its note in the size of the box, where the food view has my lists.
- * I write the note right there.
+ * Each entry is one row across the page, at its left the lines of a box of the plan.
+ * They say what it was and below it grey its time and place.
+ * At its right stands its note in their size, which I write right there.
+ * Only an entry with a note is a box, so the notes stand out among the entries without one.
  * An entry past midnight shows on the day it starts, so each note stands once.
  * A glass of water does not show, as in the log.
  * A note saves once I leave it, only while its file holds the note as the diary read it.
@@ -70,7 +70,10 @@ async function noteSave(id: string, note: HTMLTextAreaElement, hint: HTMLElement
     if (waiting) dayAgain();
 }
 
-/** The note of an entry, a field growing with its text, saved once I leave it changed, its hint below. */
+/**
+ * The note of an entry, a field growing with its text, saved once I leave it changed, its hint below.
+ * A click anywhere beside it goes into it.
+ */
 function noteOf(entry: DayEntry): HTMLElement {
     const note: HTMLTextAreaElement = document.createElement("textarea");
     const hint: HTMLElement = entryPartOf("p", "panel-error", []);
@@ -93,13 +96,17 @@ function noteOf(entry: DayEntry): HTMLElement {
             if (waiting) dayAgain();
         });
     });
-    return entryPartOf("div", "diary-side", [note, hint]);
+    const side: HTMLElement = entryPartOf("div", "diary-side", [note, hint]);
+    side.addEventListener("click", (event: MouseEvent): void => {
+        if (event.target === side) note.focus();
+    });
+    return side;
 }
 
 /**
- * An entry as a box of the plan with its note beside it.
+ * An entry as the lines of a box of the plan with its note beside it.
  * A line too long ends in `…`, its whole text in its tooltip.
- * A click on it opens its dialog, a click on its place the link of the place.
+ * A click on the lines opens its dialog, a click on its place the link of the place.
  */
 function entryOf(entry: DayEntry): HTMLElement {
     const shownWhat: string = shownWhatOf(entry.category, entry.title, entry.module, entry.type);
@@ -121,7 +128,7 @@ function entryOf(entry: DayEntry): HTMLElement {
         entryPartOf("span", "box-part box-time", [time]),
         ...(place.length === 0 ? [] : [entryPartOf("span", "box-part entry-parted", place)]),
     ]);
-    const box: HTMLElement = entryPartOf("div", "box diary-box", [what, meta]);
+    const box: HTMLElement = entryPartOf("div", "diary-box", [what, meta]);
     what.title = what.textContent ?? "";
     meta.title = [time, whereOf(entry.category, entry.from, entry.location, entry.online).replace("->", "→")]
         .filter((part: string): boolean => part !== "")
@@ -129,7 +136,7 @@ function entryOf(entry: DayEntry): HTMLElement {
     if (!entry.editable)
         return entryPartOf("article", "diary-entry", [
             box,
-            entryPartOf("div", "diary-side", [entryPartOf("p", "diary-text", [entry.note])]),
+            ...(entry.note.trim() === "" ? [] : [entryPartOf("p", "diary-text", [entry.note])]),
         ]);
     box.addEventListener("click", (event: MouseEvent): void => {
         if ((event.target as HTMLElement).closest("a") !== null) return;

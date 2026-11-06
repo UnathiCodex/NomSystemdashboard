@@ -1,30 +1,55 @@
 /* Diary: what it adds to the look of the food view.
-   Each entry a box as in the plan, its note beside it where the food view has my lists */
+   Each entry one row across the page, at its left the lines of a box of the plan, at its right its note.
+   Only an entry with a note is a box, so the notes stand out among the entries without one */
 
 /* The entries one below the other, as far apart as the boxes of the plan */
 .diary-entries {
     --plan-space: 0.5rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: var(--plan-space);
-    align-content: start;
+    display: flex;
+    flex-direction: column;
+    gap: var(--plan-space);
 }
 
-/* An entry and its note, the note on the line of what the entry was */
+/* An entry in the size and air of a box */
 .diary-entry {
     display: grid;
-    grid-template-columns: subgrid;
-    grid-column: 1 / -1;
-    align-items: first baseline;
-}
-
-/* A box without actions, its lines across its whole width */
-.diary-box {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--plan-space) calc(3 * var(--gap));
+    align-items: start;
+    padding: 0.9375rem;
+    border-radius: var(--radius);
+    font-size: 0.8125rem;
+    line-height: 1.45;
 }
 
-/* The note as plain text in the size of the box, never wider than a page to read,
-   growing with its text, its line breaks kept */
+/* An entry with a note on the soft grey of a box, the moment I write its first letter */
+.diary-entry:has(.diary-text, .diary-note:not(:placeholder-shown)) {
+    background: var(--fill);
+}
+
+/* Under the pointer an entry turns one grey lighter, as a box of the plan */
+@media (hover: hover) {
+    .diary-entry {
+        transition: background-color var(--hover-out);
+    }
+
+    .diary-entry:hover {
+        background: var(--fill-over);
+        transition: background-color var(--hover-in);
+    }
+}
+
+/* The lines of what it was as far apart as in a box */
+.diary-box {
+    display: grid;
+    gap: var(--plan-space);
+}
+
+.diary-entry:has(.diary-note) .diary-box {
+    cursor: pointer;
+}
+
+/* The note as plain text, never wider than a page to read, growing with its text, its line breaks kept */
 .diary-note,
 .diary-text {
     display: block;
@@ -36,8 +61,6 @@
     background: none;
     color: var(--text-main);
     font: inherit;
-    font-size: 0.8125rem;
-    line-height: 1.45;
     white-space: pre-line;
 }
 
@@ -49,7 +72,7 @@
     outline: none;
 }
 
-/* The grey word Note only under the pointer or while writing, so an empty note takes no eye */
+/* The grey word Note only under the pointer or while writing, so an entry without one takes no eye */
 .diary-note::placeholder {
     color: var(--text-muted);
     opacity: 0;
@@ -60,24 +83,30 @@
     opacity: 1;
 }
 
-/* Below its box where the day and the notes do not fit side by side */
+/* The whole room beside the lines writes the note */
 .diary-side {
-    padding: 0.5rem 0.9375rem 0.25rem;
+    align-self: stretch;
+    cursor: text;
 }
 
 .diary-side > .panel-error {
     padding: 0;
 }
 
-/* Where the day and the notes fit side by side, the boxes as wide as the meals of the food view */
+/* Where the lines and the note fit side by side, the lines as wide as the meals of the food view */
 @media (min-width: 1200px) {
     .diary-entries {
         grid-column: 1 / -1;
-        grid-template-columns: subgrid;
         overflow-y: auto;
     }
 
+    .diary-entry {
+        grid-template-columns: minmax(0, 29rem) minmax(0, 1fr);
+    }
+
+    /* The first line of the note as high as what the entry was,
+       the capitals of Noto Sans lying 0.4em below the top of a line */
     .diary-side {
-        padding: 0;
+        margin-top: -0.4em;
     }
 }
