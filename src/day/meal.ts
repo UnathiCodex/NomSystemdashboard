@@ -2,19 +2,20 @@
  * ## Meal in the entry by category
  *
  * A meal of the log, `Food`, in rows of the dialog, nothing nested:
- * - Summary: what I ate, written by itself, and in brackets its kcal, drinks too.
- * - Foods: one plus opens one search of my meals, my foods, then Open Food Facts.
- *   A meal brings its block with its foods indented, a food its row.
- *   Grams start at one portion, an empty field counts nothing.
+ * - Summary: my meals and foods picked by name as in the plan, beside it in brackets the kcal, drinks too.
+ *   A meal picked brings its block with its foods indented, a food picked its row.
+ *   A new name is a new meal, its search of foods open at once.
+ *   A name left out takes its meal or its foods away.
+ * - Foods: how much of each, grams starting at one portion, an empty field counting nothing.
  *   Amounts are estimates anyway, so none is marked as one.
- * A meal block has its own plus, which adds a food from the same search without my meals.
+ * A meal block has its own plus, which adds a food from my foods, then Open Food Facts.
  * Each food is a line `X-FOOD`, so the log keeps what the meal held that day,
  * whatever I change in `Meals.md` later.
  * A meal whose summary names more than its foods opens as that one meal, so its name stays.
  * A cooking, `Cook`, lists what went into the pot in the same rows and counts no kcal.
  * A meal may draw from a cooking of the days before, written as `X-COOKED`,
  * its foods as its own lines, so meal and cooking each keep their foods.
- * A box of a meal or a cooking finds its summary in my meals and foods, only once I type.
+ * A box of a meal or a cooking finds its summary in my meals and foods, only once I type, as the log does.
  * Each is its own value, so foods never show as one meal.
  */
 
@@ -34,12 +35,11 @@ import {
     summaryOf,
     unitOf,
 } from "../food/foods.ts";
-import { dishesFound, dishNameOf, mealNameOf } from "../food/meals.ts";
-import { foodSearchClear, foodSearchOf, listLineOf } from "../food/search.ts";
-import { crossPut, iconOf, plusPut } from "../icons.ts";
+import { dishesFound, mealNameOf } from "../food/meals.ts";
+import { foodSearchClear, foodSearchOf } from "../food/search.ts";
+import { crossPut, plusPut } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { matchesAll, wordsOf } from "../search.ts";
-import { Plus } from "lucide";
 
 import type { Choice } from "./choices.ts";
 import type { Dish } from "../food/foods.ts";
@@ -135,14 +135,17 @@ let meals: MealPick[] = [];
 /** Foods picked beside the meals. */
 let picks: FoodPick[] = [];
 
-/** The summary, then the kcal of the whole meal. */
-let summaryLine: HTMLElement = document.createElement("span");
+/** The picker of the summary. */
+let summaryPicker: HTMLElement = document.createElement("div");
+
+/** The names the picker of the summary shows, so it shows anew only when the foods change them. */
+let summaryNames: string[] = [];
+
+/** The kcal of the whole meal beside the summary. */
+let totalLine: HTMLElement = document.createElement("span");
 
 /** The meal blocks, then the foods beside them. */
 let foodsRows: HTMLElement = document.createElement("div");
-
-/** Closes the list of the row `Foods`. */
-let foodsClose: () => void = (): void => {};
 
 /** The grams field of each food, so the cursor finds the food just picked. */
 let gramsFields: WeakMap<FoodPick, HTMLInputElement> = new WeakMap();
@@ -377,7 +380,7 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
                 pick,
                 (): void => {
                     kcal.textContent = kcalTextOf(mealKcalOf(meal));
-                    summaryShow();
+                    summaryShow(changed);
                     changed();
                 },
                 (): void => {
@@ -393,19 +396,77 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
     return [row, parts];
 }
 
-/** The summary and in brackets the kcal of the meal, none while no food has grams. */
-function summaryShow(): void {
+/** The names of the meals and of the foods beside them, each once, as the summary picks them. */
+function namesOf(): string[] {
+    return [
+        ...new Set([
+            ...meals.map((meal: MealPick): string => meal.name),
+            ...picks.map((pick: FoodPick): string => pick.name),
+        ]),
+    ];
+}
+
+/**
+ * The picker of the summary as in a box of the plan.
+ * It picks my meals and my foods by name.
+ * A new name is a new meal, written as the reader writes the name of a meal.
+ */
+function summaryPickerOf(changed: () => void): HTMLElement {
+    return choicesOf({
+        search: summarySearchOf(foodName, []),
+        picked: summaryNames,
+        many: true,
+        adding: true,
+        add: async (text: string): Promise<string | null> => mealNameOf(text) || null,
+        newTextOf: (text: string): string => `New meal “${mealNameOf(text)}”`,
+        noun: "summary",
+        linkOf: (): string => "",
+        aside: [totalLine],
+        pick: (names: string[]): void => summaryPick(names, changed),
+    });
+}
+
+/**
+ * Takes the names picked in the summary.
+ * A name left out takes its meal or its foods away.
+ * A name come is my meal, else my food, else a new meal.
+ */
+function summaryPick(names: string[], changed: () => void): void {
+    const gone: string[] = summaryNames.filter((name: string): boolean => !names.includes(name));
+    const come: string[] = names.filter((name: string): boolean => !summaryNames.includes(name));
+    summaryNames = names;
+    meals = meals.filter((meal: MealPick): boolean => !gone.includes(meal.name));
+    picks = picks.filter((pick: FoodPick): boolean => !gone.includes(pick.name));
+    if (come.length === 0) rowsChanged(changed);
+    come.forEach((name: string): void => {
+        const dish: Dish | undefined = dishes.find(
+            (one: Dish): boolean => one.name.toLowerCase() === name.toLowerCase(),
+        );
+        const food: Food | undefined = mine.get(name.toLowerCase());
+        if (dish !== undefined) dishPick(dish, changed);
+        else if (food !== undefined) foodPick(food, changed);
+        else mealNew(name, changed);
+    });
+}
+
+/**
+ * Shows in brackets the kcal of the meal beside the summary, none while no food has grams.
+ * The picker shows anew only when the foods changed the names it shows, so a list I pick in stays open.
+ */
+function summaryShow(changed: () => void): void {
     const total: number =
         meals.reduce((sum: number, meal: MealPick): number => sum + mealKcalOf(meal), 0) +
         picks.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0);
-    const text: HTMLElement = elementOf("span", "meal-summary", mealTitle());
-    if (
-        [...meals.flatMap((meal: MealPick): FoodPick[] => meal.foods), ...picks].some(
-            (pick: FoodPick): boolean => numberOf(pick.grams) !== null,
-        )
+    totalLine.textContent = [...meals.flatMap((meal: MealPick): FoodPick[] => meal.foods), ...picks].some(
+        (pick: FoodPick): boolean => numberOf(pick.grams) !== null,
     )
-        text.append(elementOf("span", "meal-total", ` (${kcalTextOf(total)})`));
-    summaryLine.replaceChildren(text);
+        ? `(${kcalTextOf(total)})`
+        : "";
+    if (namesOf().join("\n") === summaryNames.join("\n")) return;
+    summaryNames = namesOf();
+    const picker: HTMLElement = summaryPickerOf(changed);
+    summaryPicker.replaceWith(picker);
+    summaryPicker = picker;
 }
 
 function rowsChanged(changed: () => void): void {
@@ -420,7 +481,7 @@ function rowsShow(changed: () => void): void {
             foodRowOf(
                 pick,
                 (): void => {
-                    summaryShow();
+                    summaryShow(changed);
                     changed();
                 },
                 (): void => {
@@ -430,7 +491,7 @@ function rowsShow(changed: () => void): void {
             ),
         ),
     );
-    summaryShow();
+    summaryShow(changed);
 }
 
 /** Picks a food beside the meals unless picked already, the cursor into its grams. */
@@ -442,7 +503,6 @@ function foodPick(food: Food, changed: () => void): void {
         picks.push(pick);
     }
     rowsChanged(changed);
-    foodsClose();
     gramsFocus([pick]);
 }
 
@@ -468,7 +528,6 @@ function dishPick(dish: Dish, changed: () => void): void {
             cookedRow.replaceWith(row);
             cookedRow = row;
         }
-        foodsClose();
         return;
     }
     let meal: MealPick | undefined = meals.find(
@@ -485,7 +544,6 @@ function dishPick(dish: Dish, changed: () => void): void {
         meals.push(meal);
         rowsChanged(changed);
     }
-    foodsClose();
     gramsFocus(meal.foods);
 }
 
@@ -493,7 +551,6 @@ function dishPick(dish: Dish, changed: () => void): void {
 function mealNew(name: string, changed: () => void): void {
     const meal: MealPick = { name: name, foods: [], fresh: true };
     meals.push(meal);
-    foodsClose();
     rowsChanged(changed);
     blockPluses.get(meal)?.click();
 }
@@ -514,29 +571,6 @@ function freshSend(meal: MealPick): void {
     )
         .then(dishesTake)
         .catch((error: unknown): void => console.error(error));
-}
-
-/**
- * My meals found in the search of `Foods`.
- * Last the plus of a new meal, while the text is no meal yet nor a barcode.
- * It comes last so Enter takes a meal or food found first.
- */
-function dishLinesOf(query: string, changed: () => void): HTMLElement[] {
-    const name: string = mealNameOf(query);
-    const lines: HTMLElement[] = dishesFound(dishes, query).map(
-        (dish: Dish): HTMLElement =>
-            listLineOf(dishNameOf(dish), dish.kcal, (): void => dishPick(dish, changed), null)[0],
-    );
-    if (
-        name === "" ||
-        /^\d{8,14}$/.test(name) ||
-        [...dishes, ...meals].some((meal: Dish | MealPick): boolean => meal.name.toLowerCase() === name.toLowerCase())
-    )
-        return lines;
-    const plus: HTMLButtonElement = buttonOf("picker-new", "", (): void => mealNew(name, changed));
-    plus.replaceChildren(iconOf(Plus), `New meal “${name}”`);
-    plus.title = "New meal, its foods picked next";
-    return [...lines, plus];
 }
 
 /**
@@ -739,38 +773,17 @@ export async function mealOf(
         meal.fromCooking = broughtMeals.has(meal.name);
     });
 
-    summaryLine = elementOf("span", "", "");
     gramsFields = new WeakMap();
     blockPluses = new WeakMap();
-    const foodsLine: HTMLButtonElement = document.createElement("button");
-    plusPut(foodsLine, "Add a meal or a food");
+    totalLine = elementOf("span", "meal-total", "");
+    summaryNames = namesOf();
+    summaryPicker = summaryPickerOf(changed);
     foodsRows = elementOf("div", "meal-rows", "");
-    const foodsSearch: HTMLElement = foodSearchOf({
-        pick: (food: Food): void => foodPick(food, changed),
-        meals: (query: string): HTMLElement[] => dishLinesOf(query, changed),
-        products: true,
-        nothing: nothingFound,
-    });
-    const foodsBox: HTMLElement = elementOf("div", "picker-box meal-box", "");
-    foodsBox.append(foodsSearch);
-    const picker: HTMLElement = elementOf("div", "meal picker", "");
-    foodsLine.classList.add("picker-line");
-    foodsClose = listOf(
-        picker,
-        foodsLine,
-        foodsBox,
-        (): void => {
-            foodSearchClear(foodsSearch);
-            foodsSearch.querySelector("input")?.focus();
-        },
-        (): void => {},
-    );
-    picker.append(foodsRows, foodsBox);
-    const foodsRow: HTMLElement = rowOf("Foods", picker);
-    foodsRow.querySelector(".entry-name")?.append(foodsLine);
+    const foods: HTMLElement = elementOf("div", "meal", "");
+    foods.append(foodsRows);
+    const foodsRow: HTMLElement = rowOf("Foods", foods);
     rowsShow(changed);
-    const summaryRow: HTMLDivElement = rowOf("Summary", summaryLine);
-    summaryRow.classList.add("panel-fixed");
+    const summaryRow: HTMLDivElement = rowOf("Summary", summaryPicker);
     cookedRow = drawing === null ? null : cookedRowOf(changed);
     if (cookedRow === null) return [summaryRow, foodsRow];
     return [summaryRow, cookedRow, foodsRow];

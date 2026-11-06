@@ -700,7 +700,6 @@ function summaryPartsShow(): void {
  * The pencil, link and parts `Text`, `Param` and `Link` of what the entry or the box was.
  * The entry takes the text as I type, its line shows it once I leave the part.
  * That happens at `focusout`, whose `relatedTarget` names the field I went on to, which keeps the cursor.
- * A meal, whose summary its foods write, has no text to type.
  *
  * @param typed - Whether it has its text to change, by default whether it has a field
  */
@@ -775,16 +774,13 @@ function summaryTypedOf(typed: string): string {
 
 /**
  * Changes the summary of this entry alone, never opening a series.
- * A meal opens the list of its foods, any other summary shows or hides its text.
+ * Its text shows or hides.
  */
 function summaryChange(parts: HTMLElement): void {
-    if (meal !== null) meal.at(-1)?.querySelector<HTMLButtonElement>(".picker-line")?.click();
-    else {
-        summaryValue = -1;
-        summaryOpen = !summaryOpen;
-        parts.hidden = !summaryOpen;
-        if (summaryOpen) parts.querySelector("input")?.focus();
-    }
+    summaryValue = -1;
+    summaryOpen = !summaryOpen;
+    parts.hidden = !summaryOpen;
+    if (summaryOpen) parts.querySelector("input")?.focus();
 }
 
 /** Takes a change of a skill entry, its title and link following its skill and type. */
@@ -1230,10 +1226,7 @@ async function categoryPick(category: Category | null): Promise<void> {
                   },
         );
         if (chosen !== category) return;
-        const value: HTMLDivElement = document.createElement("div");
         meal = built;
-        value.append(built[0].lastElementChild as HTMLElement, ...summaryPartsOf());
-        built[0].append(value);
     }
     if (category?.name === sportName && opened.target === "log") {
         await sportOpen(opened.category === sportName ? (opened.entry?.extendedProps ?? null) : null);

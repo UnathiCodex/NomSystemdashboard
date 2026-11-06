@@ -1,11 +1,7 @@
-/* A meal of the entry, its summary with its kcal, its meals and foods below it */
-/* No room taken while nothing is picked */
-.meal-summary {
-    overflow-wrap: anywhere;
-}
-
+/* A meal of the entry, below its summary its meals with their foods */
 /* kcal of the whole meal in brackets after its summary, as a type after its skill */
 .meal-total {
+    margin-left: 0.3em;
     font-variant-numeric: tabular-nums;
 }
 
