@@ -1,8 +1,10 @@
-/* A meal of the entry, below its summary the grams of each name its pencil opened */
+/* A meal of the entry, below its summary the grams of each name its pencil opened,
+   as far below its line as the parts of a place */
 .meal-rows {
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
+    margin-top: 0.5rem;
 }
 
 .meal-rows:empty {
