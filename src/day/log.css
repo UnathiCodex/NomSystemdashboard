@@ -13,9 +13,10 @@
     background-color: var(--fill-over);
 }
 
-/* A short entry keeps the theme's 1px below it, since 4px would cut its one line */
+/* A short entry 3px apart without the theme's 1px above and below, since 4px would cut its one line */
 .entry:has(.entry-inner-short) {
-    margin-bottom: 1px;
+    margin-bottom: 3px;
+    padding-block: 0;
 }
 
 /* An entry only a little lighter under the pointer, so passing over entries stays calm.
@@ -63,7 +64,7 @@
 /* Inside of an entry, all its lines in one size.
    Cut at the edge by `clip`, which scrolls nothing, so its lines can stay in sight.
    0.42rem above and below, so half an hour's one line sits in its middle and 45 minutes hold two.
-   A short one keeps no space, so a quarter hour, 1.025rem less the 1px below it, holds its line. */
+   A short one keeps no space, so a quarter hour, 1.025rem less the 3px below it, holds its line. */
 .entry-inner {
     overflow: clip;
     padding-block: 0.42rem;
