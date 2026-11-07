@@ -1,7 +1,8 @@
 /**
  * ## Diary
  *
- * My diary, the log entries of a day by their start at the left, our doc of the day at the right.
+ * My diary, the log entries of a day at the left, our doc of the day at the right.
+ * The entries with a note come first, then those without, each by their start.
  * Each entry shows the lines of a box of the plan.
  * They say what it was and below it grey its time and place.
  * Its note stands below them, only where it has one.
@@ -110,7 +111,11 @@ async function dayShow(day: string): Promise<void> {
     if (day !== shown) return;
     const entries: DayEntry[] = logged
         .filter((entry: DayEntry): boolean => !entry.glass && dayOf(new Date(entry.start)) === day)
-        .sort((first: DayEntry, second: DayEntry): number => Date.parse(first.start) - Date.parse(second.start));
+        .sort(
+            (first: DayEntry, second: DayEntry): number =>
+                Number(first.note.trim() === "") - Number(second.note.trim() === "") ||
+                Date.parse(first.start) - Date.parse(second.start),
+        );
     document
         .getElementById("diary-entries")
         ?.replaceChildren(
