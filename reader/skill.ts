@@ -698,7 +698,7 @@ function examOf(module: string, boxes: Box[]): ExamDate {
  *
  * @throws {Error} - When a folder or note cannot be read
  */
-export function skillingRead(): Skilling {
+export function skillModulesRead(): SkillModule[] {
     const lines: RoundLine[] = roundsRead();
     const bySection: Map<string, RoundLine[]> = Map.groupBy(lines, (line: RoundLine): string => line.section);
     const byTask: Map<string, LoggedAttempt[]> = Map.groupBy(
@@ -707,7 +707,7 @@ export function skillingRead(): Skilling {
     );
     const boxes: Box[] = skillBoxesRead(dayAdd(berlinDateOf(new Date()), planDays));
     const today: string = berlinDateOf(new Date());
-    const modules: SkillModule[] = moduleTasksRead().map((module: ModuleTasks): SkillModule => {
+    return moduleTasksRead().map((module: ModuleTasks): SkillModule => {
         const unique: Task[] = module.tasks.filter(
             (task: Task, index: number): boolean =>
                 module.tasks.findIndex((known: Task): boolean => known.id === task.id) === index,
@@ -731,7 +731,15 @@ export function skillingRead(): Skilling {
             ),
         };
     });
+}
 
+/**
+ * Reads the modules of the semester with their tasks.
+ * Then every skill with its name, folder, types, links.
+ *
+ * @throws {Error} - When a folder or note cannot be read
+ */
+export function skillingRead(): Skilling {
     const skills: string[] = activeSkillsRead();
     const others: string[] = moduleFoldersRead()
         .map(codeOf)
@@ -741,7 +749,7 @@ export function skillingRead(): Skilling {
     ): { [name: string]: Value } =>
         Object.fromEntries([...skills, ...others].map((name: string): [string, Value] => [name, valueOf(name)]));
     return {
-        modules: modules,
+        modules: skillModulesRead(),
         skills: skills,
         otherModules: others,
         names: byName((name: string): string => skillTitleOf(name, "")),

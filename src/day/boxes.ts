@@ -606,7 +606,7 @@ function boxDragFollow(calendar: Calendar, down: PointerEvent): void {
 
 /**
  * Starts the list, its open boxes draggable into the log.
- * It loads again whenever the entry, gift or series dialog closes.
+ * It loads again on each change of the files, a dialog saved once its file changed, see `day.ts`.
  */
 export function boxesStart(calendar: Calendar): void {
     new Draggable(document.getElementById("plan-boxes") as HTMLElement, {
@@ -632,9 +632,4 @@ export function boxesStart(calendar: Calendar): void {
             console.error(error),
         );
     });
-    ["entry", "gift", "series"].forEach((id: string): void =>
-        document.getElementById(id)?.addEventListener("close", (): void => {
-            boxesLoad(calendar).catch((error: unknown): void => console.error(error));
-        }),
-    );
 }

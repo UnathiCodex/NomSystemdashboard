@@ -14,7 +14,7 @@ import { boxAdd, boxesRead } from "./boxes.ts";
 import { berlinDateOf, dayAdd } from "./calendar.ts";
 import { changesVersion } from "./changes.ts";
 import { skillName } from "./categories.ts";
-import { skillingRead } from "./skill.ts";
+import { skillModulesRead } from "./skill.ts";
 import { settings } from "./trackers.ts";
 
 import type { Box } from "./boxes.ts";
@@ -38,7 +38,7 @@ export function suggestionsWrite(): void {
     const boxes: Box[] = boxesRead(today, dayAdd(today, 1))[0].boxes.filter(
         (box: Box): boolean => box.category === skillName && box.time === "" && box.deadline === "",
     );
-    skillingRead().modules.forEach((module: SkillModule): void => {
+    skillModulesRead().forEach((module: SkillModule): void => {
         const due: SkillSection[] = module.sections.filter((section: SkillSection): boolean => section.today !== "");
         const chapters: string[] = [...new Set(due.map((section: SkillSection): string => section.chapter))];
         chapters
