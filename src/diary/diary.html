@@ -1,6 +1,5 @@
 <!-- Diary: in the look of the food view, the bar of the shown day,
-     below it at the left its log entries by their start, each with its note below it,
-     at the right our doc of the day, see diary.ts -->
+     below it at the left our doc of the day, at the right the log entries with a note, see diary.ts -->
 <div class="food diary">
     <!-- The date of the shown day between its arrows,
          the icon back to today beside it -->
@@ -10,9 +9,6 @@
         <button class="day-today" id="diary-today" type="button" disabled></button>
         <button class="day-arrow" id="diary-after" type="button"></button>
     </div>
-
-    <!-- The entries of the day, each what it was, below it its time and place, then its note -->
-    <section class="diary-entries" id="diary-entries"></section>
 
     <!-- Our doc of the day, written as in the editor, see editor/editor.ts:
          its status line the name of its folder, as the tree names a folder of NomManageplannings,
@@ -27,4 +23,7 @@
         </div>
         <div class="editor-text markdown" id="editor-text"></div>
     </section>
+
+    <!-- The entries of the day with a note, each what it was, below it its time and place, then its note -->
+    <section class="diary-entries" id="diary-entries"></section>
 </div>

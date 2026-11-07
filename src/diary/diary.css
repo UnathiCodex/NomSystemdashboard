@@ -1,7 +1,20 @@
 /* Diary: what it adds to the look of the food view.
-   At the left the entries of the day, each the lines of a box of the plan with its note below them.
-   Only an entry with a note is a box, so the notes stand out among the entries without one.
-   At the right our doc of the day as in the editor */
+   At the left our doc of the day as in the editor.
+   At the right the entries of the day with a note, each a box with the lines of a box of the plan */
+
+/* Our doc in the size and grey of the editor */
+.diary-doc {
+    font-size: var(--text-size);
+    color: var(--reading-text);
+}
+
+/* The name of its folder where its text starts, one line of the status line, white as in the tree */
+.diary-doc .tree-root {
+    margin: 0;
+    padding: 0;
+    color: var(--text-main);
+    line-height: inherit;
+}
 
 /* The entries one below the other, as far apart as the boxes of the plan */
 .diary-entries {
@@ -11,20 +24,16 @@
     gap: var(--plan-space);
 }
 
-/* An entry in the size and air of a box, its lines as far apart as in a box */
+/* An entry as a box of the plan, its size, its air, its soft grey, its lines as far apart */
 .diary-entry {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--plan-space);
     padding: 0.9375rem;
     border-radius: var(--radius);
+    background: var(--fill);
     font-size: 0.8125rem;
     line-height: 1.45;
-}
-
-/* An entry with a note on the soft grey of a box */
-.diary-entry:has(.diary-note) {
-    background: var(--fill);
 }
 
 .diary-opens {
@@ -50,40 +59,29 @@
     white-space: pre-line;
 }
 
-/* Our doc in the size and grey of the editor */
-.diary-doc {
-    font-size: var(--text-size);
-    color: var(--reading-text);
-}
-
-/* The name of its folder where its text starts, one line of the status line, white as in the tree */
-.diary-doc .tree-root {
-    margin: 0;
-    padding: 0;
-    color: var(--text-main);
-    line-height: inherit;
-}
-
 /* Where both fit side by side, the doc as wide as the page of the editor, so its lines break at the same words.
-   Each side scrolls alone, the doc behind a thin grey line as my lists in the food view,
-   without a scrollbar and with room below its last line, so it can scroll up to the middle */
+   Each side scrolls alone, the entries behind a thin grey line as my lists in the food view.
+   The doc without a scrollbar and with room below its last line, so it can scroll up to the middle */
 @media (min-width: 1200px) {
     .diary {
-        grid-template-columns: minmax(20rem, 1fr) minmax(0, calc(var(--reading-width) + 1.5 * var(--gap) + 1px));
+        grid-template-columns: minmax(0, var(--reading-width)) minmax(20rem, 1fr);
     }
 
-    .diary-entries,
-    .diary-doc {
+    .diary-doc,
+    .diary-entries {
         overflow-y: auto;
     }
 
     .diary-doc {
-        padding-left: calc(1.5 * var(--gap));
-        border-left: 1px solid var(--line);
         scrollbar-width: none;
     }
 
     .diary-doc > .editor-text {
         padding-bottom: 50dvh;
+    }
+
+    .diary-entries {
+        padding-left: calc(1.5 * var(--gap));
+        border-left: 1px solid var(--line);
     }
 }

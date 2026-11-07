@@ -1,16 +1,13 @@
 /**
  * ## Diary
  *
- * My diary, the log entries of a day at the left, our doc of the day at the right.
- * The entries with a note come first, then those without, each by their start.
- * Each entry shows the lines of a box of the plan.
- * They say what it was and below it grey its time and place.
- * Its note stands below them, only where it has one.
- * Only an entry with a note is a box, so the notes stand out among the entries without one.
- * An entry past midnight shows on the day it starts, so each note stands once.
- * A glass of water does not show, as in the log.
- * A click on an entry opens its dialog, where I write its note.
+ * My diary, our doc of the day at the left, the log entries of the day with a note at the right.
  * Our doc of the day from `NomMentalintelligence` I write as in the editor, see `reader/intelligence.ts`.
+ * The entries without a note stay out, since the log shows them.
+ * Each entry is a box with the lines of a box of the plan, by its start.
+ * They say what it was and below it grey its time and place, then its note.
+ * An entry past midnight shows on the day it starts, so each note stands once.
+ * A click on an entry opens its dialog, where I write its note.
  * Another day shows only once the doc is saved.
  * It loads anew the moment a file of my new system changes, but never over the doc while I write in it.
  * Not on a phone, which opens the day everywhere.
@@ -76,7 +73,7 @@ function entryOf(entry: DayEntry): HTMLElement {
     const article: HTMLElement = entryPartOf("article", "diary-entry", [
         what,
         meta,
-        ...(entry.note.trim() === "" ? [] : [entryPartOf("p", "diary-note", [entry.note])]),
+        entryPartOf("p", "diary-note", [entry.note]),
     ]);
     what.title = what.textContent ?? "";
     meta.title = [time, whereOf(entry.category, entry.from, entry.location, entry.online).replace("->", "→")]
@@ -110,19 +107,9 @@ async function dayShow(day: string): Promise<void> {
     ]);
     if (day !== shown) return;
     const entries: DayEntry[] = logged
-        .filter((entry: DayEntry): boolean => !entry.glass && dayOf(new Date(entry.start)) === day)
-        .sort(
-            (first: DayEntry, second: DayEntry): number =>
-                Number(first.note.trim() === "") - Number(second.note.trim() === "") ||
-                Date.parse(first.start) - Date.parse(second.start),
-        );
-    document
-        .getElementById("diary-entries")
-        ?.replaceChildren(
-            ...(entries.length > 0
-                ? entries.map(entryOf)
-                : [entryPartOf("p", "food-none", ["Nothing logged on this day"])]),
-        );
+        .filter((entry: DayEntry): boolean => entry.note.trim() !== "" && dayOf(new Date(entry.start)) === day)
+        .sort((first: DayEntry, second: DayEntry): number => Date.parse(first.start) - Date.parse(second.start));
+    document.getElementById("diary-entries")?.replaceChildren(...entries.map(entryOf));
     systemFileShow(doc, "/api/day/doc");
 }
 
