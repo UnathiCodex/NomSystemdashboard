@@ -447,6 +447,7 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
  * Fits the lines of an entry to the part of it in sight.
  * Scrolled partly out at the top, its lines stick below the top of the grid,
  * and those with no more room hide whole from the bottom, so no line is cut at the top.
+ * A pixel of room more counts, as the theme leaves 1px above an entry, so one of half an hour at the top keeps its line.
  * A line an entry on top covers ends before that entry.
  * Where a route starts, `.route-start`, stands whole where it has room, else `…` alone.
  * Lines no longer on the page, like of the copy dragged, stay as they are.
@@ -459,7 +460,7 @@ function linesFit(lines: HTMLElement, grid: HTMLElement): void {
     if (inside === null || harness === null) return;
     const top: number = grid.getBoundingClientRect().top + parseFloat(getComputedStyle(lines).top);
     const bottom: number = inside.getBoundingClientRect().bottom - parseFloat(getComputedStyle(inside).paddingBottom);
-    const room: number = Math.floor((bottom - top) / parseFloat(getComputedStyle(lines).lineHeight));
+    const room: number = Math.floor((bottom - top + 1) / parseFloat(getComputedStyle(lines).lineHeight));
     const shownLines: number = Math.max(0, Math.min(Number(lines.dataset.lines), room));
     lines.style.maxHeight = `${shownLines}lh`;
     const depth: number = Number(getComputedStyle(harness).zIndex);
