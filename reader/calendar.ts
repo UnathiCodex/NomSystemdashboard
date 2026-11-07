@@ -2247,31 +2247,27 @@ export type ParamRenamed = {
     dry: boolean;
 };
 
+/** A value of the summaries of a category renamed, its params kept. */
+export type TextRenamed = {
+    category: string;
+    old: string;
+    name: string;
+    dry: boolean;
+};
+
 /**
- * Renames a param of a value in every summary of its category, alone or among its values.
- * The same param of another value stays, since each value has its own list of params.
- *
- * @returns How many lines change
- * @throws {Error} - When the new param is none or would part the value, or a file lies outside the new system
+ * Renames each value of every summary of a category.
+ * Gives how many lines change.
  */
-export function paramRename(sent: ParamRenamed): number {
-    if (!/^[^,()]+$/.test(sent.name)) throw new Error(`No param: ${sent.name}`);
-    const from: string = `${sent.value} (${sent.old})`;
-    const to: string = `${sent.value} (${sent.name})`;
-    return filesRewrite(calendarFilesOf(), sent.dry, (text: FileLines): number => {
+function summaryValuesRename(category: string, dry: boolean, renamed: (value: string) => string): number {
+    return filesRewrite(calendarFilesOf(), dry, (text: FileLines): number => {
         let count: number = 0;
         summariesOf(text.lines)
-            .filter((summed: Summed): boolean => summed.category === sent.category)
+            .filter((summed: Summed): boolean => summed.category === category)
             .forEach((summed: Summed): void => {
                 const property: ICAL.Property = ICAL.Property.fromString(text.lines[summed.index]);
                 const summary: string = String(property.getFirstValue() ?? "");
-                const written: string =
-                    summary === from
-                        ? to
-                        : summary
-                              .split(", ")
-                              .map((value: string): string => (value === from ? to : value))
-                              .join(", ");
+                const written: string = summary.split(", ").map(renamed).join(", ");
                 if (written === summary) return;
                 property.setValue(written);
                 text.lines[summed.index] = property.toICALString();
@@ -2279,6 +2275,34 @@ export function paramRename(sent: ParamRenamed): number {
             });
         return count;
     });
+}
+
+/**
+ * Renames a param of a value in every summary of its category.
+ * The same param of another value stays, since each value has its own list of params.
+ *
+ * @returns How many lines change
+ * @throws {Error} - When the new param is none, would part the value, a file lies outside the new system
+ */
+export function paramRename(sent: ParamRenamed): number {
+    if (!/^[^,()]+$/.test(sent.name)) throw new Error(`No param: ${sent.name}`);
+    const from: string = `${sent.value} (${sent.old})`;
+    const to: string = `${sent.value} (${sent.name})`;
+    return summaryValuesRename(sent.category, sent.dry, (value: string): string => (value === from ? to : value));
+}
+
+/**
+ * Renames a value in every summary of its category, each keeping its param.
+ *
+ * @returns How many lines change
+ * @throws {Error} - When the new name is none, would part the value, a file lies outside the new system
+ */
+export function textRename(sent: TextRenamed): number {
+    const name: string = sent.name.trim();
+    if (!/^[^,()]+$/.test(name)) throw new Error(`No value: ${sent.name}`);
+    return summaryValuesRename(sent.category, sent.dry, (value: string): string =>
+        summaryBaseOf(value) === sent.old ? `${name}${value.slice(summaryBaseOf(value).length)}` : value,
+    );
 }
 
 /**

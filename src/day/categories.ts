@@ -315,6 +315,9 @@ let personEdits: { [old: string]: PersonEdit & { address: string } } = {};
 /** Each param I changed by its pencil, by its value without param, written everywhere once it saves. */
 let paramEdits: { [value: string]: { old: string; name: string } } = {};
 
+/** Each value I renamed by its text, its new name by its old one without param, written everywhere once it saves. */
+let textEdits: { [old: string]: string } = {};
+
 /** The people of `Persons.md` as kept when the dialog opened. */
 let persons: Person[] = [];
 
@@ -707,6 +710,7 @@ function summaryPartsShow(): void {
 /**
  * The pencil, link and parts `Text`, `Param` and `Link` of what the entry or the box was.
  * The entry takes the text as I type, its line shows it once I leave the part.
+ * A value renamed by its text goes into every entry and box of its category once the dialog saves, as a param does.
  * That happens at `focusout`, whose `relatedTarget` names the field I went on to, which keeps the cursor.
  *
  * @param typed - Whether it has its text to change, by default whether it has a field
@@ -756,6 +760,12 @@ function summaryPartsOf(
             name: paramOf(summaryPickedOf()),
         };
     });
+    text.addEventListener("input", (): void => {
+        const before: string = baseOf(summaryValue === -1 ? shown : summaryValues[summaryValue]);
+        if (summary === undefined || summary.fixed || before.includes(", ")) return;
+        const old: string = Object.keys(textEdits).find((key: string): boolean => textEdits[key] === before) ?? before;
+        textEdits[old] = text.value.trim();
+    });
     address.addEventListener("input", (): void => {
         summaryLink = address.value.trim();
         summaryPartsShow();
@@ -781,7 +791,7 @@ function summaryTypedOf(typed: string): string {
 }
 
 /**
- * Changes the summary of this entry alone, never opening a series.
+ * Opens the parts of the whole summary, never a series.
  * Its text shows or hides.
  */
 function summaryChange(parts: HTMLElement): void {
@@ -1426,7 +1436,24 @@ async function paramsRename(dry: boolean): Promise<void> {
 }
 
 /**
- * Writes the places, people and params I changed everywhere.
+ * Writes each value I renamed by its text in every entry and box of the category, each keeping its param.
+ * Only a value the summary holds by its new name, so one I took back renames nothing.
+ *
+ * @throws {Error} - When the reader does not take a name
+ */
+async function textsRename(dry: boolean): Promise<void> {
+    for (const [old, name] of Object.entries(textEdits)) {
+        if (name === "" || name === old || !values.title.split(", ").map(baseOf).includes(name)) continue;
+        await readerAsk<null>("/api/day/text-renamed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category: chosen?.name ?? "", old: old, name: name, dry: dry }),
+        });
+    }
+}
+
+/**
+ * Writes the places, people, values, params I changed everywhere.
  * Checked before the entry is saved, so the dialog saves nothing the reader would refuse.
  * Written after it, so the entry, saved as it was, takes it with every other.
  * A person `Persons.md` does not hold yet gets its row there.
@@ -1446,6 +1473,7 @@ async function renamesSend(dry: boolean): Promise<void> {
         dry,
         peopleRead().map((person: Attendee): string => person.name),
     );
+    await textsRename(dry);
     await paramsRename(dry);
 }
 
@@ -1695,6 +1723,7 @@ async function entryShow(opening: EntryOpening): Promise<void> {
     withOpen = [];
     personEdits = {};
     paramEdits = {};
+    textEdits = {};
     addedLine = "";
     placeFilled = "";
     chosen = null;

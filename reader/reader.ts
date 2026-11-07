@@ -59,7 +59,7 @@ import { categoriesRead, lastPlaceRead, semesterOf } from "./categories.ts";
 import { placeAdd, placeChange, placeRename, placeStandardSet, platformAdd, platformChange } from "./places.ts";
 import { plainApply, plainRead, plainRemove } from "./rules.ts";
 import { personNameOf, personRename, personsRead } from "./persons.ts";
-import { attendeesRename, paramRename } from "./calendar.ts";
+import { attendeesRename, paramRename, textRename } from "./calendar.ts";
 import { calendarRoot } from "./sources.ts";
 import { fileOpen, fileRead, folderMake, folderRead, linkedNoteRead, menuRead } from "./notes.ts";
 import { skillAdd } from "./skills.ts";
@@ -109,7 +109,7 @@ import type { IncomingMessage, ServerResponse, Server } from "node:http";
 import type { ViteDevServer } from "vite";
 import type { BoxLogged, EntryChange, EntryMoved, EntryNew, EntryNoted } from "./day.ts";
 import type { Box, BoxChange, BoxNew } from "./boxes.ts";
-import type { Attendee, ParamRenamed } from "./calendar.ts";
+import type { Attendee, ParamRenamed, TextRenamed } from "./calendar.ts";
 import type { PersonRenamed } from "./persons.ts";
 import type {
     ExamChange,
@@ -356,6 +356,9 @@ async function requestHandle(page: ViteDevServer, request: IncomingMessage, resp
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/param-renamed") {
         paramRename((await json(request)) as ParamRenamed);
+        responseSend(response, 200, null);
+    } else if (request.method === "POST" && url.pathname === "/api/day/text-renamed") {
+        textRename((await json(request)) as TextRenamed);
         responseSend(response, 200, null);
     } else if (request.method === "POST" && url.pathname === "/api/day/standard") {
         placeStandardSet(String(((await json(request)) as { line?: string }).line ?? ""));
