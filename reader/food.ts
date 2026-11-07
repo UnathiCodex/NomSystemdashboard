@@ -21,6 +21,7 @@ import { dirname } from "node:path";
 import { berlinDateOf, entriesRead, entryLookup, propertiesPut } from "./calendar.ts";
 import { cellsOf, markdownFormOf, nameOf } from "./markdown.ts";
 import { food, writeAllowed } from "./sources.ts";
+import { matchesAll, wordsOf } from "../src/search.ts";
 
 import type { Entry } from "./calendar.ts";
 
@@ -594,6 +595,7 @@ async function productsAsk(query: string, page: number): Promise<ProductsPage> {
 
 /**
  * Finds foods by a name or a barcode, mine first, then a page of Open Food Facts.
+ * Mine by each word typed in any order, without accents, as every search of the page.
  *
  * @param page - 1 for the first, anything no whole number above 0 counting as 1
  * @param products - Whether Open Food Facts is asked too, not for a meal of mine
@@ -604,8 +606,7 @@ export async function foodsFind(text: string, page: number, products: boolean): 
     const uses: Map<string, number> = usesRead();
     const foods: Food[] = mine
         .filter(
-            (candidate: Food): boolean =>
-                labelOf(candidate).toLowerCase().includes(query) || candidate.barcode === query,
+            (candidate: Food): boolean => matchesAll(labelOf(candidate), wordsOf(text)) || candidate.barcode === query,
         )
         .sort(
             (first: Food, second: Food): number =>
