@@ -416,6 +416,27 @@ function valuesOf(): string[] {
     return order;
 }
 
+/**
+ * A value of the summary as its list shows it while nothing is typed, as the search shows it.
+ * A meal shows its short title in brackets.
+ * A food shows its brand and store there.
+ */
+function pickedChoiceOf(value: string): Choice {
+    const pick: FoodPick | undefined = picks.find((one: FoodPick): boolean => keyOf(one) === value);
+    if (pick === undefined)
+        return {
+            ...choiceOf(value),
+            group: "Meals",
+            brackets: dishes.find((dish: Dish): boolean => dish.name === value)?.short ?? "",
+        };
+    return {
+        value: value,
+        text: pick.name,
+        group: "Foods",
+        brackets: [pick.brand, pick.store].filter((part: string): boolean => part !== "").join(", "),
+    };
+}
+
 /** The name a value of the summary shows, a meal its own, a food that of the food. */
 function valueTextOf(value: string): string {
     return picks.find((pick: FoodPick): boolean => keyOf(pick) === value)?.name ?? mine.get(value)?.name ?? value;
@@ -466,8 +487,10 @@ function valueAfterOf(value: string, changed: () => void): HTMLElement {
  * A new name is a new meal, written as the reader writes the name of a meal.
  */
 function summaryPickerOf(changed: () => void): HTMLElement {
+    const search: (text: string) => Promise<Choice[]> = summarySearchOf(foodName, [], keyOf);
     return choicesOf({
-        search: summarySearchOf(foodName, [], keyOf),
+        search: async (text: string): Promise<Choice[]> =>
+            text.trim() === "" ? valuesOf().map(pickedChoiceOf) : await search(text),
         picked: summaryValues,
         many: true,
         adding: true,

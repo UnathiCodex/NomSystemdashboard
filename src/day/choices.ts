@@ -107,7 +107,8 @@ export type Choice = {
  * - `plus`: Whether the line shows the plus while nothing is picked, `empty` its tooltip.
  * - `besideName`: Whether the line with the plus stands beside the name of its row.
  *   So the value keeps the whole width.
- * - `textOf`: Text of a value picked before its list ever opened.
+ * - `textOf`: Text of a value picked that the list has not found.
+ *   It stands in the line and on top of the list.
  * - `linkOf`: Address a value picked opens from the line.
  * - `afterOf`: An element after a value in the line, whose click opens no list.
  */
@@ -394,7 +395,10 @@ export function choicesOf(setup: ChoicesSetup): HTMLDivElement {
                           (value: string): boolean =>
                               !choices.some((choice: Choice): boolean => choice.value === value),
                       )
-                      .map(choiceOf);
+                      .map((value: string): Choice => ({
+                          ...choiceOf(value),
+                          text: texts.get(value) ?? setup.textOf?.(value) ?? value,
+                      }));
         found = [...missing, ...choices];
         list.replaceChildren(
             ...found.flatMap((choice: Choice, index: number): HTMLElement[] => {
