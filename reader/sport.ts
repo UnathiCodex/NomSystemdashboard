@@ -6,6 +6,7 @@
  * A session is a log entry of `Sport`, holding what I did as a meal holds its foods.
  * Each exercise is a line `X-EXERCISE` with its workout.
  * So the log keeps what I did that day, whatever I change in my workouts later.
+ * My workouts and exercises take what my latest session did, so an entry brings it next time.
  * A session burns (MET − 1) × kg × hours of its minutes,
  * the MET of exercises from the 2024 Adult Compendium of Physical Activities.
  * Less the 1 MET I burn at rest anyway, so it counts only what the sport added.
@@ -109,9 +110,8 @@ const exercisesKind: SportKind = { name: "Exercises", met: 3.5, code: "02054" };
 const workoutsHead: string[] = [
     "# Workouts",
     "",
-    "My workouts, each a name of mine and its parts in their order, " +
-        "each an exercise with the sets, repetitions and",
-    "kilograms it brings.",
+    "My workouts, each a name of mine and its parts in their order.",
+    "Each part an exercise with the sets, repetitions, kilograms it brings, those of my latest session.",
     "Its short title stands in its first row, its brackets show it.",
     "",
     "| Workout | Short | Part | Sets | Reps | Kg |",
@@ -133,10 +133,9 @@ const weightsHead: string[] = [
 const exercisesHead: string[] = [
     "# Exercises",
     "",
-    "My exercises, each by its name, those I add by themselves " +
-        "and those of my workouts, with the sets, repetitions",
-    "and kilograms I do as a rule, which an entry brings every time; " +
-        "repetitions with `s` are seconds, like `60s`.",
+    "My exercises, each by its name, those I add by themselves and those of my workouts.",
+    "Each with the sets, repetitions, kilograms an entry brings, those of my latest session.",
+    "Repetitions with `s` are seconds.",
     "",
     "| Exercise | Sets | Reps | Kg |",
     "| --- | ---: | ---: | ---: |",
@@ -280,33 +279,39 @@ function partsChange(held: (part: Part) => boolean, changed: (part: Part) => Par
     workoutsWrite(
         workouts.map((workout: Workout): Workout => ({
             ...workout,
-            parts: workout.parts.flatMap((part: Part): Part[] => (held(part) ? changed(part) : [part])),
+            parts: variantsOnce(workout.parts.flatMap((part: Part): Part[] => (held(part) ? changed(part) : [part]))),
         })),
+    );
+}
+
+/** Keeps each variant once, the first. */
+function variantsOnce(parts: Part[]): Part[] {
+    return parts.filter(
+        (part: Part, index: number): boolean =>
+            parts.findIndex((other: Part): boolean => sameExercise(other, part)) === index,
     );
 }
 
 /** Reads my exercises, each variant once. */
 function exercisesRead(): Part[] {
-    return rowsRead(sport.exercises)
-        .map((cells: Row): Part => ({
-            name: cells.Exercise ?? "",
-            sets: cells.Sets ?? "",
-            reps: cells.Reps ?? "",
-            kg: cells.Kg ?? "",
-        }))
-        .filter(
-            (exercise: Part, index: number, all: Part[]): boolean =>
-                exercise.name !== "" &&
-                all.findIndex((other: Part): boolean => sameExercise(other, exercise)) === index,
-        );
+    return variantsOnce(
+        rowsRead(sport.exercises)
+            .map((cells: Row): Part => ({
+                name: cells.Exercise ?? "",
+                sets: cells.Sets ?? "",
+                reps: cells.Reps ?? "",
+                kg: cells.Kg ?? "",
+            }))
+            .filter((exercise: Part): boolean => exercise.name !== ""),
+    );
 }
 
-/** Writes `Exercises.md` anew, alphabetical. */
+/** Writes `Exercises.md` anew, each variant once, alphabetical. */
 function exercisesWrite(exercises: Part[]): void {
     tableWrite(
         sport.exercises,
         exercisesHead,
-        [...exercises]
+        variantsOnce(exercises)
             .sort((first: Part, second: Part): number => first.name.localeCompare(second.name))
             .map((exercise: Part): string[] => [exercise.name, exercise.sets, exercise.reps, exercise.kg]),
     );
@@ -314,12 +319,9 @@ function exercisesWrite(exercises: Part[]): void {
 
 /** Lists my exercises with those only in my workouts, each variant once, alphabetical. */
 function exercisesOf(workouts: Workout[], own: Part[]): Exercise[] {
-    return [...own, ...workouts.flatMap((workout: Workout): Part[] => workout.parts)]
-        .filter(
-            (exercise: Part, index: number, all: Part[]): boolean =>
-                all.findIndex((other: Part): boolean => sameExercise(other, exercise)) === index,
-        )
-        .sort((first: Exercise, second: Exercise): number => first.name.localeCompare(second.name));
+    return variantsOnce([...own, ...workouts.flatMap((workout: Workout): Part[] => workout.parts)]).sort(
+        (first: Exercise, second: Exercise): number => first.name.localeCompare(second.name),
+    );
 }
 
 /** Reads a line `X-EXERCISE`. */
@@ -358,18 +360,70 @@ export function sportPartsAllow(category: string, exercises: string[]): boolean 
     );
 }
 
+/** Reads my sessions of the whole log, the earliest first. */
+function sessionsRead(): Entry[] {
+    return entriesRead(sport.log, "1970-01-01T00:00:00Z", "9999-12-31T00:00:00Z")
+        .filter((entry: Entry): boolean => entry.category === sportName)
+        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start));
+}
+
 /** Reads the latest line `X-EXERCISE` of each exercise in the whole log. */
 function lastRead(): { [name: string]: string } {
     const last: { [name: string]: string } = {};
-    entriesRead(sport.log, "1970-01-01T00:00:00Z", "9999-12-31T00:00:00Z")
-        .filter((entry: Entry): boolean => entry.category === sportName)
-        .sort((first: Entry, second: Entry): number => first.start.localeCompare(second.start))
-        .forEach((entry: Entry): void =>
-            (entry.exercises ?? []).forEach((line: string): void => {
-                last[sessionExerciseOf(line).name.toLowerCase()] = line;
-            }),
-        );
+    sessionsRead().forEach((entry: Entry): void =>
+        (entry.exercises ?? []).forEach((line: string): void => {
+            last[sessionExerciseOf(line).name.toLowerCase()] = line;
+        }),
+    );
     return last;
+}
+
+/** Tells whether no session after a start holds an exercise. */
+function latestIs(sessions: Entry[], name: string, start: Date): boolean {
+    return !sessions.some(
+        (entry: Entry): boolean =>
+            Date.parse(entry.start) > start.getTime() &&
+            (entry.exercises ?? []).some(
+                (line: string): boolean => sessionExerciseOf(line).name.toLowerCase() === name.toLowerCase(),
+            ),
+    );
+}
+
+/**
+ * The variant of mine a line of a session changes, none when it is one of mine already.
+ * A line of a workout changes the part of its name there, a line alone the first variant of its name.
+ */
+function variantOf(done: SessionExercise): Part | undefined {
+    const named: (part: Part) => boolean = (part: Part): boolean => part.name.toLowerCase() === done.name.toLowerCase();
+    const variants: Part[] =
+        done.workout === ""
+            ? exercisesOf(workoutsRead(), exercisesRead()).filter(named)
+            : (workoutsRead()
+                  .find((workout: Workout): boolean => workout.name.toLowerCase() === done.workout.toLowerCase())
+                  ?.parts.filter(named) ?? []);
+    return variants.some((variant: Part): boolean => sameExercise(variant, done)) ? undefined : variants[0];
+}
+
+/**
+ * My workouts and exercises take the values a session changed, so an entry brings what I did the last time.
+ * A line without values or of a session older than the latest of its exercise changes nothing.
+ *
+ * @param before - The lines the session held before, which change nothing
+ */
+export function sessionFollow(lines: string[], before: string[], start: Date): void {
+    const sessions: Entry[] = sessionsRead();
+    lines
+        .filter((line: string): boolean => !before.includes(line))
+        .map(sessionExerciseOf)
+        .filter(
+            (done: SessionExercise): boolean =>
+                done.sets + done.reps + done.kg !== "" && latestIs(sessions, done.name, start),
+        )
+        .forEach((done: SessionExercise): void => {
+            const old: Part | undefined = variantOf(done);
+            const changed: Part | null = old === undefined ? null : valuesOf(old.name, done);
+            if (old !== undefined && changed !== null) variantChange(old, changed);
+        });
 }
 
 export function mineRead(): Mine {
@@ -492,13 +546,9 @@ export function workoutSave(sent: { old?: string; name?: string; short?: string;
     const old: string = (renamed ? ownNameOf(String(sent.old)) : typed).toLowerCase();
     const at: number = workouts.findIndex((workout: Workout): boolean => workout.name.toLowerCase() === old);
     const name: string = renamed ? typed : (workouts[at]?.name ?? typed);
-    const parts: Part[] = (sent.parts ?? [])
-        .map(partOf)
-        .filter((part: Part | null): part is Part => part !== null)
-        .filter(
-            (part: Part, index: number, all: Part[]): boolean =>
-                all.findIndex((other: Part): boolean => sameExercise(other, part)) === index,
-        );
+    const parts: Part[] = variantsOnce(
+        (sent.parts ?? []).map(partOf).filter((part: Part | null): part is Part => part !== null),
+    );
     if (name === "") throw new Error("No name of a workout");
     if (
         workouts.some(
@@ -545,6 +595,24 @@ export function exerciseAdd(sent: { name?: string; sets?: string; reps?: string;
 /**
  * Changes the values of a variant in `Exercises.md`, adding it when only a workout had it.
  * Every workout part of that variant takes the new values too, so a workout brings them.
+ */
+function variantChange(old: Part, changed: Part): void {
+    const own: Part[] = exercisesRead();
+    const at: number = own.findIndex((other: Part): boolean => sameExercise(other, old));
+    const exercise: Part = { ...changed, name: at === -1 ? changed.name : own[at].name };
+    exercisesWrite(
+        at === -1
+            ? [...own, exercise]
+            : own.map((other: Part, index: number): Part => (index === at ? exercise : other)),
+    );
+    partsChange(
+        (part: Part): boolean => sameExercise(part, old),
+        (part: Part): Part[] => [{ ...part, sets: exercise.sets, reps: exercise.reps, kg: exercise.kg }],
+    );
+}
+
+/**
+ * Changes the values of a variant as I type them in the sport area.
  *
  * @throws {Error} - When the name is empty or a value is none
  */
@@ -560,18 +628,7 @@ export function exerciseChange(sent: {
     if (name === "" || old === null || changed === null)
         throw new Error(`No sets, repetitions or kilograms: ${JSON.stringify(sent)}`);
 
-    const own: Part[] = exercisesRead();
-    const at: number = own.findIndex((other: Part): boolean => sameExercise(other, old));
-    const exercise: Part = { ...changed, name: at === -1 ? name : own[at].name };
-    exercisesWrite(
-        at === -1
-            ? [...own, exercise]
-            : own.map((other: Part, index: number): Part => (index === at ? exercise : other)),
-    );
-    partsChange(
-        (part: Part): boolean => sameExercise(part, old),
-        (part: Part): Part[] => [{ ...part, sets: exercise.sets, reps: exercise.reps, kg: exercise.kg }],
-    );
+    variantChange(old, changed);
     return mineRead();
 }
 

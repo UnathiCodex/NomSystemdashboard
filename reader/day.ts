@@ -30,7 +30,7 @@ import { attendeesAllow, categoryAllows, semesterFor, skillName } from "./catego
 import { calendarFileOf, chaptersOf, documentLinksOf, titleOf } from "./documents.ts";
 import { foodLineAllows, foodName, foodsRanked, mealsOf, mealTitleOf } from "./food.ts";
 import { onlineFor, placeLinkOf } from "./places.ts";
-import { sportPartsAllow } from "./sport.ts";
+import { sessionFollow, sportPartsAllow } from "./sport.ts";
 import { day, logEnding } from "./sources.ts";
 import { glassIs } from "./trackers.ts";
 
@@ -349,6 +349,7 @@ export function entryAdd(entry: EntryNew, id?: string): string {
     const added: string = entryAppend(logFileOf(fields), fields, own, id);
     if (entry.planned !== "") boxDone(entry.planned);
     cookedShare(cooked);
+    sessionFollow(exercises, [], fields.start);
     return added;
 }
 
@@ -451,6 +452,7 @@ function entryWrite(file: string, entry: Entry, change: EntryNew): void {
     cookedShare(entry.cooked);
     if (change.cooked !== undefined && change.cooked !== entry.cooked) cookedShare(change.cooked);
     if (fields.category === cookName) cookedShare(entry.id, entry.foods);
+    sessionFollow(exercises, entry.exercises ?? [], fields.start);
 }
 
 /**

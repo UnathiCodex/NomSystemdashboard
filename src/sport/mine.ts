@@ -22,7 +22,7 @@ export type Session = {
 
 /**
  * An exercise with the values of its variant.
- * What I do of it as a rule or in a workout.
+ * What my latest session did of it alone or in a workout.
  * - `reps`: Its repetitions per set or its seconds like `60s`.
  */
 export type Part = {
