@@ -31,10 +31,8 @@
     color: var(--text-muted);
 }
 
-/* Search of the tree below its root */
+/* Search of the tree below its root, sized as every search field */
 .notes-tree .search-field {
-    height: calc(var(--tree-row-height) + 0.5rem);
-    margin: 0.1875rem 0 0.75rem;
     padding: 0 var(--tree-row-padding);
 }
 
