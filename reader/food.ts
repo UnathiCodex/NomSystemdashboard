@@ -927,39 +927,45 @@ export function mealsOf(entries: Entry[]): Map<string, Meal> {
     );
 }
 
-/** The summary of a meal, its meals of mine, then the foods beside them, drinks out unless only drinks. */
+/**
+ * The summary of a meal in the order of its lines, each meal of mine once, each food beside them.
+ * Drinks are left out unless there are only drinks.
+ */
 export function mealTitleOf(lines: string[]): string {
     type Named = { name: string; kind: Kind };
     const mine: Map<string, Food> = foodsByKeyRead();
     const read: Line[] = lines.map(lineOf);
-    const named: Named[] = [
-        ...[
-            ...new Set(read.filter((line: Line): boolean => line.meal !== "").map((line: Line): string => line.meal)),
-        ].map((meal: string): Named => ({ name: meal, kind: "Eat" })),
-        ...read
-            .filter((line: Line): boolean => line.meal === "")
-            .map((line: Line): Named => ({
-                name: line.name,
-                kind: foodOfLine(line, mine)?.kind ?? "Eat",
-            })),
-    ];
+    const named: Named[] = read
+        .filter(
+            (line: Line, index: number): boolean =>
+                line.meal === "" || read.findIndex((other: Line): boolean => other.meal === line.meal) === index,
+        )
+        .map((line: Line): Named =>
+            line.meal === ""
+                ? { name: line.name, kind: foodOfLine(line, mine)?.kind ?? "Eat" }
+                : { name: line.meal, kind: "Eat" },
+        );
     const eaten: Named[] = named.filter((part: Named): boolean => part.kind !== "Drink");
     return (eaten.length > 0 ? eaten : named).map((part: Named): string => part.name).join(", ");
 }
 
 /**
- * The foods of each meal together, then those beside them, each group by its grams,
- * so the foods that matter most stand first, whatever grams I change.
+ * The foods in the order sent, which is the order of the summary, so it stays as I picked it.
+ * The foods of a meal stand together where the meal first stands, by their grams.
+ * So the foods that matter most in a meal stand first, whatever grams I change.
  */
 export function foodsRanked(lines: string[]): string[] {
     const mealOf: (line: string) => string = (line: string): string => lineOf(line).meal;
-    const ranked: (meal: string) => string[] = (meal: string): string[] =>
-        lines
-            .filter((line: string): boolean => mealOf(line) === meal)
+    return lines.flatMap((line: string, index: number): string[] => {
+        const meal: string = mealOf(line);
+        if (meal === "") return [line];
+        if (lines.findIndex((other: string): boolean => mealOf(other) === meal) !== index) return [];
+        return lines
+            .filter((other: string): boolean => mealOf(other) === meal)
             .sort(
                 (first: string, second: string): number => rankOf(lineOf(second).grams) - rankOf(lineOf(first).grams),
             );
-    return [...new Set([...lines.map(mealOf).filter((meal: string): boolean => meal !== ""), ""])].flatMap(ranked);
+    });
 }
 
 /**

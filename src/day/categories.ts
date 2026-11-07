@@ -948,7 +948,9 @@ function fieldRowsOf(field: Field): HTMLElement[] {
 /**
  * The row of a summary of several values, each value with its own pencil.
  * A meal or a cooking only picks and adds its values, without param, pencil, link.
- * A way keeps the order picked, the order I rode in, any other summary the order of its list.
+ * A way keeps the order picked, the order I rode in.
+ * A meal and a cooking keep it too, as their entry does.
+ * Any other summary keeps the order of its list.
  * While none is picked, the row is empty without a plus, since a click into it opens its list.
  */
 function manyRowOf(field: Field): HTMLElement {
@@ -968,12 +970,13 @@ function manyRowOf(field: Field): HTMLElement {
             linkOf: (): string => "",
             afterOf: dish ? undefined : (value: string): HTMLElement => valueAfterOf(field, param, value),
             below: link === undefined || linkParts === undefined ? [] : [link, linkParts, param],
-            order: field.fixed
-                ? undefined
-                : (chosen: string[]): string[] =>
-                      [...chosen].sort(
-                          (first: string, second: string): number => rankOf(field, first) - rankOf(field, second),
-                      ),
+            order:
+                field.fixed || dish
+                    ? undefined
+                    : (chosen: string[]): string[] =>
+                          [...chosen].sort(
+                              (first: string, second: string): number => rankOf(field, first) - rankOf(field, second),
+                          ),
             pick: (chosen: string[]): void => {
                 const before: string[] = values[field.key].split(", ");
                 values[field.key] = chosen

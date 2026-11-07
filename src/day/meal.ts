@@ -137,16 +137,19 @@ let picks: FoodPick[] = [];
 /** The picker of the summary. */
 let summaryPicker: HTMLElement = document.createElement("div");
 
-/** The names the picker of the summary shows, so it shows anew only when the foods change them. */
-let summaryNames: string[] = [];
+/** The values the picker of the summary shows, so it shows anew only when the foods change them. */
+let summaryValues: string[] = [];
 
-/** The kcal shown after each name of the summary, so typing grams changes them in place. */
+/** The values of the summary in the order I picked them, as its lines `X-FOOD` hold them. */
+let order: string[] = [];
+
+/** The kcal shown after each value of the summary, so typing grams changes them in place. */
 let kcalShown: Map<string, HTMLElement> = new Map();
 
-/** The names whose grams show, opened by their pencil. */
+/** The values whose grams show, opened by their pencil. */
 let opened: string[] = [];
 
-/** The grams of the names opened, each meal with its foods, each food alone. */
+/** The grams of the values opened, each meal with its foods, each food alone. */
 let partsRows: HTMLElement = document.createElement("div");
 
 /** The grams field of each food, so the cursor finds the food just picked. */
@@ -399,109 +402,122 @@ function mealRowsOf(meal: MealPick, changed: () => void): HTMLElement[] {
     return [row, parts];
 }
 
-/** The names of the meals and of the foods beside them, each once, as the summary picks them. */
-function namesOf(): string[] {
+/**
+ * The values of the summary in the order I picked them, each once.
+ * Each meal by its name, each food beside them by its key, so two foods of one name stay apart.
+ * One that came is added last, one that went is left out, so the summary never moves.
+ */
+function valuesOf(): string[] {
+    const present: Set<string> = new Set([
+        ...meals.map((meal: MealPick): string => meal.name),
+        ...picks.map((pick: FoodPick): string => keyOf(pick)),
+    ]);
+    order = [...new Set([...order, ...present])].filter((value: string): boolean => present.has(value));
+    return order;
+}
+
+/** The name a value of the summary shows, a meal its own, a food that of the food. */
+function valueTextOf(value: string): string {
+    return picks.find((pick: FoodPick): boolean => keyOf(pick) === value)?.name ?? mine.get(value)?.name ?? value;
+}
+
+/** The foods a value of the summary stands for. */
+function foodsOfValue(value: string): FoodPick[] {
     return [
-        ...new Set([
-            ...meals.map((meal: MealPick): string => meal.name),
-            ...picks.map((pick: FoodPick): string => pick.name),
-        ]),
+        ...meals.filter((meal: MealPick): boolean => meal.name === value).flatMap((meal: MealPick) => meal.foods),
+        ...picks.filter((pick: FoodPick): boolean => keyOf(pick) === value),
     ];
 }
 
-/** The foods a name of the summary stands for. */
-function foodsNamed(name: string): FoodPick[] {
-    return [
-        ...meals.filter((meal: MealPick): boolean => meal.name === name).flatMap((meal: MealPick) => meal.foods),
-        ...picks.filter((pick: FoodPick): boolean => pick.name === name),
-    ];
-}
-
-/** The kcal of a name of the summary in brackets, none while none of its foods has grams. */
-function kcalTextFor(name: string): string {
-    const foods: FoodPick[] = foodsNamed(name);
+/** The kcal of a value of the summary in brackets, none while none of its foods has grams. */
+function kcalTextFor(value: string): string {
+    const foods: FoodPick[] = foodsOfValue(value);
     if (!foods.some((pick: FoodPick): boolean => numberOf(pick.grams) !== null)) return "";
     return `(${kcalTextOf(foods.reduce((sum: number, pick: FoodPick): number => sum + kcalOf(pick), 0))})`;
 }
 
 /**
- * What stands after a name of the summary, its kcal as its param, then its pencil.
+ * What stands after a value of the summary, its kcal as its param, then its pencil.
  * The pencil shows or hides its grams below the summary, taking no focus, as the pencil of a person.
  */
-function valueAfterOf(name: string, changed: () => void): HTMLElement {
+function valueAfterOf(value: string, changed: () => void): HTMLElement {
     const all: HTMLSpanElement = document.createElement("span");
-    const kcal: HTMLElement = elementOf("span", "value-param", kcalTextFor(name));
+    const kcal: HTMLElement = elementOf("span", "value-param", kcalTextFor(value));
     const pencil: HTMLButtonElement = document.createElement("button");
     pencil.type = "button";
     pencil.className = "entry-pencil";
-    iconPut(pencil, Pencil, `Change ${name}`);
+    iconPut(pencil, Pencil, `Change ${valueTextOf(value)}`);
     pencil.addEventListener("mousedown", (event: MouseEvent): void => event.preventDefault());
     pencil.addEventListener("click", (event: MouseEvent): void => {
         event.stopPropagation();
-        opened = opened.includes(name) ? opened.filter((other: string): boolean => other !== name) : [...opened, name];
+        opened = opened.includes(value)
+            ? opened.filter((other: string): boolean => other !== value)
+            : [...opened, value];
         rowsShow(changed);
     });
-    kcalShown.set(name, kcal);
+    kcalShown.set(value, kcal);
     all.append(kcal, pencil);
     return all;
 }
 
 /**
  * The picker of the summary as in a box of the plan.
- * It picks my meals and my foods by name.
+ * It picks my meals by name, my foods by key.
  * A new name is a new meal, written as the reader writes the name of a meal.
  */
 function summaryPickerOf(changed: () => void): HTMLElement {
     return choicesOf({
-        search: summarySearchOf(foodName, []),
-        picked: summaryNames,
+        search: summarySearchOf(foodName, [], keyOf),
+        picked: summaryValues,
         many: true,
         adding: true,
         add: async (text: string): Promise<string | null> => mealNameOf(text) || null,
         newTextOf: (text: string): string => `New meal “${mealNameOf(text)}”`,
         noun: "summary",
+        textOf: valueTextOf,
         linkOf: (): string => "",
-        afterOf: (name: string): HTMLElement => valueAfterOf(name, changed),
+        afterOf: (value: string): HTMLElement => valueAfterOf(value, changed),
         below: [partsRows],
-        pick: (names: string[]): void => summaryPick(names, changed),
+        pick: (values: string[]): void => summaryPick(values, changed),
     });
 }
 
 /**
- * Takes the names picked in the summary.
- * A name left out takes its meal or its foods away.
- * A name come is my meal, else my food, else a new meal, its grams shown at once.
+ * Takes the values picked in the summary.
+ * A value left out takes its meal or its food away.
+ * A value come is my meal, else my food by its key, else my food by the name typed.
+ * Any other is a new meal, its grams shown at once.
  */
-function summaryPick(names: string[], changed: () => void): void {
-    const gone: string[] = summaryNames.filter((name: string): boolean => !names.includes(name));
-    const come: string[] = names.filter((name: string): boolean => !summaryNames.includes(name));
-    summaryNames = names;
+function summaryPick(values: string[], changed: () => void): void {
+    const gone: string[] = summaryValues.filter((value: string): boolean => !values.includes(value));
+    const come: string[] = values.filter((value: string): boolean => !summaryValues.includes(value));
+    summaryValues = values;
     meals = meals.filter((meal: MealPick): boolean => !gone.includes(meal.name));
-    picks = picks.filter((pick: FoodPick): boolean => !gone.includes(pick.name));
-    opened = [...opened.filter((name: string): boolean => names.includes(name)), ...come];
+    picks = picks.filter((pick: FoodPick): boolean => !gone.includes(keyOf(pick)));
+    opened = [...opened.filter((value: string): boolean => values.includes(value)), ...come];
     if (come.length === 0) rowsChanged(changed);
-    come.forEach((name: string): void => {
+    come.forEach((value: string): void => {
         const dish: Dish | undefined = dishes.find(
-            (one: Dish): boolean => one.name.toLowerCase() === name.toLowerCase(),
+            (one: Dish): boolean => one.name.toLowerCase() === value.toLowerCase(),
         );
-        const food: Food | undefined = mine.get(name.toLowerCase());
+        const food: Food | undefined = mine.get(value.toLowerCase());
         if (dish !== undefined) dishPick(dish, changed);
         else if (food !== undefined) foodPick(food, changed);
-        else mealNew(name, changed);
+        else mealNew(value, changed);
     });
 }
 
 /**
- * Shows the kcal of each name of the summary anew.
- * The picker shows anew only when the foods changed the names it shows, so a list I pick in stays open.
+ * Shows the kcal of each value of the summary anew.
+ * The picker shows anew only when the foods changed the values it shows, so a list I pick in stays open.
  */
 function summaryShow(changed: () => void): void {
-    kcalShown.forEach((kcal: HTMLElement, name: string): void => {
-        kcal.textContent = kcalTextFor(name);
+    kcalShown.forEach((kcal: HTMLElement, value: string): void => {
+        kcal.textContent = kcalTextFor(value);
     });
-    if (namesOf().join("\n") === summaryNames.join("\n")) return;
-    summaryNames = namesOf();
-    opened = opened.filter((name: string): boolean => summaryNames.includes(name));
+    if (valuesOf().join("\n") === summaryValues.join("\n")) return;
+    summaryValues = valuesOf();
+    opened = opened.filter((value: string): boolean => summaryValues.includes(value));
     kcalShown = new Map();
     const picker: HTMLElement = summaryPickerOf(changed);
     summaryPicker.replaceWith(picker);
@@ -513,17 +529,17 @@ function rowsChanged(changed: () => void): void {
     changed();
 }
 
-/** Shows the grams of the names opened, in the order of the summary. */
+/** Shows the grams of the values opened, in the order of the summary. */
 function rowsShow(changed: () => void): void {
     partsRows.replaceChildren(
-        ...namesOf()
-            .filter((name: string): boolean => opened.includes(name))
-            .flatMap((name: string): HTMLElement[] => [
+        ...valuesOf()
+            .filter((value: string): boolean => opened.includes(value))
+            .flatMap((value: string): HTMLElement[] => [
                 ...meals
-                    .filter((meal: MealPick): boolean => meal.name === name)
+                    .filter((meal: MealPick): boolean => meal.name === value)
                     .flatMap((meal: MealPick): HTMLElement[] => mealRowsOf(meal, changed)),
                 ...picks
-                    .filter((pick: FoodPick): boolean => pick.name === name)
+                    .filter((pick: FoodPick): boolean => keyOf(pick) === value)
                     .map((pick: FoodPick): HTMLElement =>
                         foodRowOf(
                             pick,
@@ -622,26 +638,40 @@ function freshSend(meal: MealPick): void {
 }
 
 /**
- * The search of the summary of a box.
+ * The search of the summary of a box or a meal.
  * For `Food` and `Cook` it finds my meals, then my foods by their names, each its own value.
- * A meal shows its short title in brackets, as in the food view.
+ * A meal shows its short title in brackets as in the food view.
+ * A food shows its brand and store there.
  * It finds them only once I type, since I search what I eat, not what I ate before.
+ *
+ * @param valueOf - The value of a food, its name in a box, whose summary only names it
  */
-export function summarySearchOf(category: string, values: string[]): (text: string) => Promise<Choice[]> {
+export function summarySearchOf(
+    category: string,
+    values: string[],
+    valueOf: (food: Food) => string = (food: Food): string => food.name,
+): (text: string) => Promise<Choice[]> {
     if (![foodName, cookName].includes(category)) return searchOf(values.map(choiceOf));
     return async (text: string): Promise<Choice[]> => {
         if (text.trim() === "") return [];
         const [mealsMine, found]: [Dish[], FoodsFound] = await Promise.all([dishesLoad(), foodsFind("", 1, false)]);
-        const names: string[] = found.foods
-            .map((food: Food): string => food.name)
-            .filter((name: string): boolean => matchesAll(name, wordsOf(text)));
+        const foods: Food[] = found.foods.filter(
+            (food: Food, index: number, all: Food[]): boolean =>
+                matchesAll(food.name, wordsOf(text)) &&
+                all.findIndex((other: Food): boolean => valueOf(other) === valueOf(food)) === index,
+        );
         return [
             ...dishesFound(mealsMine, text).map((dish: Dish): Choice => ({
                 ...choiceOf(dish.name),
                 group: "Meals",
                 brackets: dish.short,
             })),
-            ...[...new Set(names)].map((name: string): Choice => ({ ...choiceOf(name), group: "Foods" })),
+            ...foods.map((food: Food): Choice => ({
+                value: valueOf(food),
+                text: food.name,
+                group: "Foods",
+                brackets: [food.brand, food.store].filter((part: string): boolean => part !== "").join(", "),
+            })),
         ];
     };
 }
@@ -722,6 +752,7 @@ function drawnShow(changed: () => void): void {
                 pick.fromCooking !== true && !drawn.some((other: FoodPick): boolean => keyOf(other) === keyOf(pick)),
         ),
     ];
+    order = [...drawnMeals.map((meal: MealPick): string => meal.name), ...drawn.map(keyOf), ...order];
     rowsChanged(changed);
 }
 
@@ -767,6 +798,7 @@ export function mealCooked(): string {
 
 /**
  * The rows of a meal, its summary and its foods, its lines grouped by the meal they carry.
+ * Its values stand in the order its summary names them, so it opens as it was saved.
  * A meal whose summary names more than its foods takes them all as that one meal.
  *
  * @param drawing - `null` for a cooking, which draws from none
@@ -802,6 +834,14 @@ export async function mealOf(
         }
         last.foods.push(pickOf(read, read.grams));
     });
+    const titled: string[] = title.split(", ").map((part: string): string => part.trim());
+    const placeOf: (value: string) => number = (value: string): number => {
+        const at: number = titled.indexOf(valueTextOf(value));
+        return at === -1 ? titled.length : at;
+    };
+    order = [
+        ...new Set(lines.map(lineOf).map((read: Line): string => (read.meal === "" ? keyOf(read) : read.meal))),
+    ].sort((first: string, second: string): number => placeOf(first) - placeOf(second));
     if (
         drawing !== null &&
         meals.length === 0 &&
@@ -827,7 +867,7 @@ export async function mealOf(
     kcalShown = new Map();
     opened = [];
     partsRows = elementOf("div", "meal-rows", "");
-    summaryNames = namesOf();
+    summaryValues = valuesOf();
     summaryPicker = summaryPickerOf(changed);
     rowsShow(changed);
     const summaryRow: HTMLDivElement = rowOf("Summary", summaryPicker);
@@ -840,29 +880,35 @@ function lineTextOf(pick: FoodPick): string {
     return `${pick.name};${pick.brand};${pick.store};${pick.grams.replace(",", ".")}`;
 }
 
-/** The meal as lines `X-FOOD`, a food at 0 g left out since I did not eat it. */
+/** The meal as lines `X-FOOD` in the order of its summary, a food at 0 g left out since I did not eat it. */
 export function mealFoods(): string[] {
     const eaten: (pick: FoodPick) => boolean = (pick: FoodPick): boolean => numberOf(pick.grams) !== 0;
-    return [
-        ...meals.flatMap((meal: MealPick): string[] =>
-            meal.foods.filter(eaten).map((pick: FoodPick): string => `${lineTextOf(pick)};${meal.name}`),
-        ),
-        ...picks.filter(eaten).map(lineTextOf),
-    ];
+    return valuesOf().flatMap((value: string): string[] => [
+        ...meals
+            .filter((meal: MealPick): boolean => meal.name === value)
+            .flatMap((meal: MealPick): string[] =>
+                meal.foods.filter(eaten).map((pick: FoodPick): string => `${lineTextOf(pick)};${meal.name}`),
+            ),
+        ...picks.filter((pick: FoodPick): boolean => keyOf(pick) === value && eaten(pick)).map(lineTextOf),
+    ]);
 }
 
-/** The summary, the names of the meals with food and of the foods beside them, drinks left out. */
+/**
+ * The summary in the order I picked, drinks left out.
+ * It names each meal with food and each food beside them.
+ */
 export function mealTitle(): string {
-    return summaryOf([
-        ...meals
-            .filter((meal: MealPick): boolean => meal.foods.length > 0)
-            .map((meal: MealPick): { name: string; kind: Kind } => ({
-                name: meal.name,
-                kind: "Eat",
-            })),
-        ...picks.map((pick: FoodPick): { name: string; kind: Kind } => ({
-            name: pick.name,
-            kind: foodOf(pick)?.kind ?? "Eat",
-        })),
-    ]);
+    return summaryOf(
+        valuesOf().flatMap((value: string): { name: string; kind: Kind }[] => [
+            ...meals
+                .filter((meal: MealPick): boolean => meal.name === value && meal.foods.length > 0)
+                .map((meal: MealPick): { name: string; kind: Kind } => ({ name: meal.name, kind: "Eat" })),
+            ...picks
+                .filter((pick: FoodPick): boolean => keyOf(pick) === value)
+                .map((pick: FoodPick): { name: string; kind: Kind } => ({
+                    name: pick.name,
+                    kind: foodOf(pick)?.kind ?? "Eat",
+                })),
+        ]),
+    );
 }
