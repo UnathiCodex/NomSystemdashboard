@@ -12,7 +12,7 @@
  * A value wider than its row goes on below, never cut.
  */
 
-import { Star } from "lucide";
+import { Check, Star } from "lucide";
 import { crossPut, iconOf, plusPut, plusTake, plusTypedPut, searchFieldOf } from "../icons.ts";
 import { matchesAll, searchTextOf, wordsOf } from "../search.ts";
 import { dottedOf } from "../persons.ts";
@@ -207,9 +207,13 @@ function buttonOf(text: string, chosen: boolean, click: () => void): HTMLButtonE
     return button;
 }
 
-/** Button of a value in a list, its text, its brackets, its star, its grey detail. */
+/** Button of a value in a list, its check while picked, its text, its brackets, its star, its grey detail. */
 function valueButtonOf(choice: Choice, chosen: boolean, click: () => void): HTMLButtonElement {
     const button: HTMLButtonElement = buttonOf(choice.text, chosen, click);
+    const check: HTMLSpanElement = document.createElement("span");
+    check.className = "picker-check";
+    check.append(iconOf(Check));
+    button.prepend(check);
     button.dataset.value = choice.value;
     if ((choice.brackets ?? "") !== "") {
         const brackets: HTMLSpanElement = document.createElement("span");
