@@ -10,7 +10,7 @@
  * An entry past midnight shows on the day it starts, so each note stands once.
  * A glass of water does not show, as in the log.
  * A click on an entry opens its dialog, where I write its note.
- * Our doc of the day from `NomFrequenceintelligence` I write as in the editor, see `reader/intelligence.ts`.
+ * Our doc of the day from `NomMentalintelligence` I write as in the editor, see `reader/intelligence.ts`.
  * Another day shows only once the doc is saved.
  * It loads anew the moment a file of my new system changes, but never over the doc while I write in it.
  * Not on a phone, which opens the day everywhere.

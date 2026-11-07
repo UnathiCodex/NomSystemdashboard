@@ -69,8 +69,8 @@ export const skillsFile: string = join(skillingData, "Skills.md");
 /** Folder `NomModulesuniversity`, one file per module of mine, named like its folder. */
 export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
 
-/** Folder `NomFrequenceintelligence` of our docs, one per day, `<YYYY>/<YYYY_MM>/<YYYY_MM_DD>.md`. */
-export const intelligenceRoot: string = join(manageRoot, "NomFrequenceintelligence");
+/** Folder `NomMentalintelligence` of our docs, one per day, `<YYYY>/<YYYY_MM>/<YYYY_MM_DD>.md`. */
+export const intelligenceRoot: string = join(manageRoot, "NomMentalintelligence");
 
 /** `day.md` of my manage skill, the blueprint of a new doc of a day. */
 export const dayBlueprint: string = join(vault, ".claude", "skills", "manage", "day.md");
