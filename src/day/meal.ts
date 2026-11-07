@@ -420,6 +420,7 @@ function valuesOf(): string[] {
  * A value of the summary as its list shows it while nothing is typed, as the search shows it.
  * A meal shows its short title in brackets.
  * A food shows its brand and store there.
+ * The list holds the meals first, then the foods, so each group has one head.
  */
 function pickedChoiceOf(value: string): Choice {
     const pick: FoodPick | undefined = picks.find((one: FoodPick): boolean => keyOf(one) === value);
@@ -490,7 +491,14 @@ function summaryPickerOf(changed: () => void): HTMLElement {
     const search: (text: string) => Promise<Choice[]> = summarySearchOf(foodName, [], keyOf);
     return choicesOf({
         search: async (text: string): Promise<Choice[]> =>
-            text.trim() === "" ? valuesOf().map(pickedChoiceOf) : await search(text),
+            text.trim() === ""
+                ? valuesOf()
+                      .map(pickedChoiceOf)
+                      .sort(
+                          (first: Choice, second: Choice): number =>
+                              Number(first.group !== "Meals") - Number(second.group !== "Meals"),
+                      )
+                : await search(text),
         picked: summaryValues,
         many: true,
         adding: true,
