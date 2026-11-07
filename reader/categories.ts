@@ -151,6 +151,9 @@ const semesterForm: RegExp = /^\d{4}[WS]$/;
 /** The whats `Sleep` offers first, `Day` a nap, which never counts as a night. */
 const sleepWhats: string[] = ["Night", "Day"];
 
+/** The whats `Body` offers first, meditation among them, since it burns no kcal a session of sport would count. */
+const bodyWhats: string[] = ["Caring", "Meditation"];
+
 /** The only whats of `Way`, my means of transport, several since I change on a way. */
 const transports: string[] = ["Walk", "Bike", "Bus", "Tram", "U-Bahn", "S-Bahn", "Train", "Car"];
 
@@ -191,7 +194,7 @@ const categories: Category[] = [
             {
                 name: "Summary",
                 key: "title",
-                values: ["Caring"],
+                values: bodyWhats,
                 steps: {},
                 fixed: false,
                 many: true,
@@ -202,7 +205,6 @@ const categories: Category[] = [
         ],
     },
     categoryOf(sportName),
-    categoryOf("Meditate"),
     {
         name: "Manage",
         fields: [
