@@ -2257,6 +2257,7 @@ export type TextRenamed = {
 
 /**
  * Renames each value of every summary of a category.
+ * The whole summary counts as one value first, since a value of a summary of one value may hold `, `.
  * Gives how many lines change.
  */
 function summaryValuesRename(category: string, dry: boolean, renamed: (value: string) => string): number {
@@ -2267,7 +2268,8 @@ function summaryValuesRename(category: string, dry: boolean, renamed: (value: st
             .forEach((summed: Summed): void => {
                 const property: ICAL.Property = ICAL.Property.fromString(text.lines[summed.index]);
                 const summary: string = String(property.getFirstValue() ?? "");
-                const written: string = summary.split(", ").map(renamed).join(", ");
+                const whole: string = renamed(summary);
+                const written: string = whole !== summary ? whole : summary.split(", ").map(renamed).join(", ");
                 if (written === summary) return;
                 property.setValue(written);
                 text.lines[summed.index] = property.toICALString();
