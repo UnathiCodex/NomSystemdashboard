@@ -120,7 +120,7 @@ function partLineOf(name: string, value: string): HTMLElement {
 
 /**
  * Lines of a session, its start linking to its day and its kcal,
- * then its summary and workout with its time, then each exercise.
+ * then its summary with its time, then each exercise.
  */
 function sessionLinesOf(session: Session): HTMLElement[] {
     const entry: HTMLElement = elementOf("div", "food-entry", "");
@@ -134,11 +134,7 @@ function sessionLinesOf(session: Session): HTMLElement[] {
     entry.append(start, elementOf("span", "food-value", kcalTextOf(session.kcal)));
     const summary: HTMLElement = elementOf("div", "food-line food-meal", "");
     summary.append(
-        elementOf(
-            "span",
-            "food-what",
-            session.workout === "" ? session.summary : `${session.summary} · ${session.workout}`,
-        ),
+        elementOf("span", "food-what", session.summary),
         elementOf("span", "food-value", lengthOf(session.minutes)),
     );
     return [

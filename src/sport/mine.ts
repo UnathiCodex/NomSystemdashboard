@@ -9,7 +9,6 @@ import type { SportDay } from "../../reader/sport.ts";
 /**
  * A session of a day, as the reader sends it.
  * - `kcal`: kcal it burned above rest.
- * - `workout`: The workouts it did, parted by `, `, empty for none.
  */
 export type Session = {
     id: string;
@@ -18,7 +17,6 @@ export type Session = {
     summary: string;
     minutes: number;
     kcal: number;
-    workout: string;
     exercises: (Part & { workout: string })[];
 };
 

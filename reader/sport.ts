@@ -35,7 +35,6 @@ type SportKind = {
  * A session of a day.
  *
  * - `kcal`: Burned above rest.
- * - `workout`: Its workouts parted by `, `, empty for none.
  */
 export type Session = {
     id: string;
@@ -44,7 +43,6 @@ export type Session = {
     summary: string;
     minutes: number;
     kcal: number;
-    workout: string;
     exercises: SessionExercise[];
 };
 
@@ -408,13 +406,6 @@ export function sportDayRead(date: string): SportDay {
             const minutes: number =
                 Math.max(0, Math.round((Date.parse(entry.end) - Date.parse(entry.start)) / 60000)) || 0;
             const exercises: SessionExercise[] = (entry.exercises ?? []).map(sessionExerciseOf);
-            const workouts: string[] = [
-                ...new Set(
-                    exercises
-                        .map((exercise: SessionExercise): string => exercise.workout)
-                        .filter((workout: string): boolean => workout !== ""),
-                ),
-            ];
             return {
                 id: entry.id,
                 start: entry.start,
@@ -422,7 +413,6 @@ export function sportDayRead(date: string): SportDay {
                 summary: summaryBaseOf(entry.title),
                 minutes: minutes,
                 kcal: kcalOf(exercisesKind.met, minutes, kg),
-                workout: workouts.join(", "),
                 exercises: exercises,
             };
         });
