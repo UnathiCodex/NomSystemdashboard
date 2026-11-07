@@ -312,7 +312,10 @@ let withOpen: string[] = [];
 /** Each person of `With` I changed by its parts, by its name as picked, written everywhere once it saves. */
 let personEdits: { [old: string]: PersonEdit & { address: string } } = {};
 
-/** Each param I changed by its pencil, by its value without param, written everywhere once it saves. */
+/**
+ * Each param I changed by its pencil, by its value without param before I renamed it,
+ * written everywhere once it saves.
+ */
 let paramEdits: { [value: string]: { old: string; name: string } } = {};
 
 /** Each value I renamed by its text, its new name by its old one without param, written everywhere once it saves. */
@@ -755,8 +758,10 @@ function summaryPartsOf(
     }
     param?.addEventListener("input", (): void => {
         const before: string = summaryValue === -1 ? shown : summaryValues[summaryValue];
-        paramEdits[baseOf(before)] = {
-            old: paramEdits[baseOf(before)]?.old ?? paramOf(before),
+        const value: string =
+            Object.keys(textEdits).find((key: string): boolean => textEdits[key] === baseOf(before)) ?? baseOf(before);
+        paramEdits[value] = {
+            old: paramEdits[value]?.old ?? paramOf(before),
             name: paramOf(summaryPickedOf()),
         };
     });
@@ -1412,11 +1417,13 @@ function errorShow(error: unknown): void {
  * Writes each param I changed in every entry and box of the category that gives it to its value.
  * A param emptied leaves only this entry or box, one the summary no longer holds nothing.
  * A param of a value that had none comes only into this entry or box.
+ * A value I also renamed by its text has its param written by its new name, since its text is written first.
  *
  * @throws {Error} - When the reader does not take a param
  */
 async function paramsRename(dry: boolean): Promise<void> {
-    for (const [value, edit] of Object.entries(paramEdits)) {
+    for (const [old, edit] of Object.entries(paramEdits)) {
+        const value: string = textEdits[old] ?? old;
         const written: string = paramPut(value, edit.name);
         if (
             edit.old !== "" &&
