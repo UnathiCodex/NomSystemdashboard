@@ -4,9 +4,8 @@
 # Node and npm
 node_modules
 
-# Claude Meta
-.claude
-
 # Mine only, never to my friend
 screens
 commands.md
+CLAUDE.md
+decisions.md
