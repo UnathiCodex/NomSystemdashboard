@@ -470,15 +470,21 @@ function exercisesSectionOf(): [HTMLElement, (part: Part) => void] {
         };
         let seconds: boolean = exercise.reps.endsWith("s");
         const reps: HTMLElement = elementOf("span", "food-grams", "");
-        const unit: HTMLButtonElement = buttonOf("sport-kind", seconds ? "s" : "reps", (): void => {
+        const unitShow: () => void = (): void => {
+            unit.textContent = seconds ? "s" : "reps";
+            unit.title = seconds
+                ? "Seconds per set; a click makes them repetitions"
+                : "Repetitions per set; a click makes them seconds";
+        };
+        // Without a number yet the switch only shows, so the panel drawn anew does not take it back.
+        const unit: HTMLButtonElement = buttonOf("sport-kind", "", (): void => {
             seconds = !seconds;
+            unitShow();
             const number: string = exercise.reps.replace(/s$/, "");
-            send({ reps: number === "" ? "" : `${number}${seconds ? "s" : ""}` });
+            if (number !== "") send({ reps: `${number}${seconds ? "s" : ""}` });
         });
         unit.setAttribute("aria-pressed", "true");
-        unit.title = seconds
-            ? "Seconds per set; a click makes them repetitions"
-            : "Repetitions per set; a click makes them seconds";
+        unitShow();
         reps.append(
             wholeFieldOf(exercise.reps.replace(/s$/, ""), "Repetitions", (typed: string): void =>
                 send({ reps: typed === "" ? "" : `${typed}${seconds ? "s" : ""}` }),
