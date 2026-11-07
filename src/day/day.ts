@@ -447,7 +447,8 @@ function entryContentOf(info: EventDisplayInfo): { domNodes: HTMLElement[] } {
  * Fits the lines of an entry to the part of it in sight.
  * Scrolled partly out at the top, its lines stick below the top of the grid,
  * and those with no more room hide whole from the bottom, so no line is cut at the top.
- * A pixel of room more counts, as the theme leaves 1px above an entry, so one of half an hour at the top keeps its line.
+ * A pixel of room more counts, as the theme leaves 1px above an entry.
+ * So one of half an hour at the top keeps its line.
  * A line an entry on top covers ends before that entry.
  * Where a route starts, `.route-start`, stands whole where it has room, else `…` alone.
  * Lines no longer on the page, like of the copy dragged, stay as they are.
