@@ -2,18 +2,20 @@
    At the left our doc of the day as in the editor.
    At the right the entries of the day with a note, each a box with the lines of a box of the plan */
 
-/* Our doc in the size and grey of the editor */
-.diary-doc {
-    font-size: var(--text-size);
-    color: var(--reading-text);
+/* After the date the name of the folder of our doc, then its save button.
+   Whether it is saved stands grey after the button, so the button never moves when the word comes */
+.diary-head {
+    display: flex;
+    align-items: center;
+    gap: var(--control-gap);
+    margin-left: var(--gap);
+    color: var(--text-muted);
 }
 
-/* The name of its folder where its text starts, one line of the status line, white as in the tree */
-.diary-doc .tree-root {
+/* The name of the folder in its look in the tree */
+.diary-head .tree-root {
     margin: 0;
-    padding: 0;
     color: var(--text-main);
-    line-height: inherit;
 }
 
 /* The entries one below the other, as far apart as the boxes of the plan */
@@ -60,8 +62,8 @@
 }
 
 /* Where both fit side by side, the doc as wide as the page of the editor, so its lines break at the same words.
-   Each side scrolls alone, the entries behind a thin grey line as my lists in the food view.
-   The doc without a scrollbar and with room below its last line, so it can scroll up to the middle */
+   Each side scrolls alone, the doc without a scrollbar as in the editor,
+   the entries behind a thin grey line as my lists in the food view */
 @media (min-width: 1200px) {
     .diary {
         grid-template-columns: minmax(0, var(--reading-width)) minmax(20rem, 1fr);
@@ -74,10 +76,6 @@
 
     .diary-doc {
         scrollbar-width: none;
-    }
-
-    .diary-doc > .editor-text {
-        padding-bottom: 50dvh;
     }
 
     .diary-entries {

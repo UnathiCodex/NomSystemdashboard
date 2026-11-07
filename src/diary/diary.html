@@ -1,27 +1,26 @@
 <!-- Diary: in the look of the food view, the bar of the shown day,
      below it at the left our doc of the day, at the right the log entries with a note, see diary.ts -->
 <div class="food diary">
-    <!-- The date of the shown day between its arrows,
-         the icon back to today beside it -->
+    <!-- The date of the shown day between its arrows, the icon back to today beside it;
+         after them the name of the folder of our doc, as the tree names a folder of NomManageplannings,
+         its save button and whether it is saved, see editor/editor.ts -->
     <div class="day-bar food-bar">
         <button class="day-arrow" id="diary-before" type="button"></button>
         <h2 class="day-title food-day-title"><span class="day-date" id="diary-date"></span></h2>
         <button class="day-today" id="diary-today" type="button" disabled></button>
         <button class="day-arrow" id="diary-after" type="button"></button>
+        <div class="diary-head" id="editor-status">
+            <h2 class="tree-root">NomMentalintelligence</h2>
+            <button type="button" class="editor-save" id="editor-save"></button>
+            <span id="editor-state"></span>
+        </div>
     </div>
 
-    <!-- Our doc of the day, written as in the editor, see editor/editor.ts:
-         its status line the name of its folder, as the tree names a folder of NomManageplannings,
-         at the right whether it is saved, then the save button; below it its text, scrolling alone -->
+    <!-- Our doc of the day on the page of the editor, scrolling alone -->
     <section class="diary-doc">
-        <div class="editor-status" id="editor-status">
-            <h2 class="tree-root editor-title">NomMentalintelligence</h2>
-            <span class="editor-state" id="editor-state"></span>
-            <div class="editor-head">
-                <button type="button" class="editor-save" id="editor-save"></button>
-            </div>
+        <div class="editor-page">
+            <div class="editor-text markdown" id="editor-text"></div>
         </div>
-        <div class="editor-text markdown" id="editor-text"></div>
     </section>
 
     <!-- The entries of the day with a note, each what it was, below it its time and place, then its note -->
