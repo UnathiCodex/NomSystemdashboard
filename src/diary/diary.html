@@ -1,5 +1,6 @@
 <!-- Diary: in the look of the food view, the bar of the shown day,
-     below it its log entries by their start, each with its note beside it, see diary.ts -->
+     below it at the left its log entries by their start, each with its note below it,
+     at the right our doc of the day, see diary.ts -->
 <div class="food diary">
     <!-- The date of the shown day between its arrows,
          the icon back to today beside it -->
@@ -10,7 +11,20 @@
         <button class="day-arrow" id="diary-after" type="button"></button>
     </div>
 
-    <!-- The entries of the day, each what it was, below it its time, place, people,
-         its note beside it where the food view has my lists -->
+    <!-- The entries of the day, each what it was, below it its time and place, then its note -->
     <section class="diary-entries" id="diary-entries"></section>
+
+    <!-- Our doc of the day, written as in the editor, see editor/editor.ts:
+         its status line the name of its folder, as the tree names a folder of NomManageplannings,
+         at the right whether it is saved, then the save button; below it its text, scrolling alone -->
+    <section class="diary-doc">
+        <div class="editor-status" id="editor-status">
+            <h2 class="tree-root editor-title">NomFrequenceintelligence</h2>
+            <span class="editor-state" id="editor-state"></span>
+            <div class="editor-head">
+                <button type="button" class="editor-save" id="editor-save"></button>
+            </div>
+        </div>
+        <div class="editor-text markdown" id="editor-text"></div>
+    </section>
 </div>

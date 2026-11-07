@@ -95,6 +95,9 @@ let saving: boolean = false;
 
 let view: EditorView;
 
+/** Whether the editor shows a file, its save started with the first. */
+let started: boolean = false;
+
 /** The tree of my modules for the outline of a note, `null` for my new system. */
 let outlineTree: HTMLElement | null = null;
 
@@ -353,19 +356,23 @@ function extensionsOf(opened: Opened): Extension[] {
     ];
 }
 
+/** A file of my new system as the editor shows it. */
+function systemOpenedOf(sent: SystemFile): Opened {
+    return {
+        text: sent.text,
+        links: {},
+        markdown: /\.md$/i.test(sent.path),
+        editable: sent.editable,
+        place: `NomManageplannings/${sent.path}`,
+    };
+}
+
 /** Reads the file the address names, `null` when the reader cannot read it. */
 async function openedRead(file: string): Promise<Opened | null> {
     if (file !== "") {
         const response: Response = await fetch(`/api/edit/file?path=${encodeURIComponent(file)}`);
         if (!response.ok) return null;
-        const sent: SystemFile = (await response.json()) as SystemFile;
-        return {
-            text: sent.text,
-            links: {},
-            markdown: /\.md$/i.test(sent.path),
-            editable: sent.editable,
-            place: `NomManageplannings/${sent.path}`,
-        };
+        return systemOpenedOf((await response.json()) as SystemFile);
     }
 
     const response: Response = await fetch(`/api/notes/note?path=${encodeURIComponent(path)}`);
@@ -402,6 +409,57 @@ function treeClick(event: MouseEvent): void {
     if (roundHeadingShow(view, decodeURIComponent(address.hash.slice(1)))) return;
     window.history.pushState(null, "", address);
     addressHeadingShow();
+}
+
+/**
+ * Shows a file in the place of the one before.
+ * The first one starts its save by the button or Ctrl+S.
+ * It also asks before I leave a change unsaved.
+ */
+function fileShow(opened: Opened): void {
+    const text: HTMLElement = document.getElementById("editor-text") as HTMLElement;
+    const save: HTMLButtonElement = document.getElementById("editor-save") as HTMLButtonElement;
+    const state: EditorState = EditorState.create({ doc: opened.text, extensions: extensionsOf(opened) });
+    text.classList.toggle("markdown", opened.markdown);
+    text.classList.toggle("editor-plain", !opened.markdown);
+    saved = opened.text;
+    if (started) view.setState(state);
+    else {
+        view = new EditorView({ parent: text, state: state });
+        save.addEventListener("click", noteSave);
+        window.addEventListener("keydown", keyDown);
+        window.addEventListener("beforeunload", (event: BeforeUnloadEvent): void => {
+            if (view.state.sliceDoc() !== saved) event.preventDefault();
+        });
+        started = true;
+    }
+    if (opened.markdown) solutionsFold(view);
+    iconPut(save, view.state.readOnly ? SaveOff : Save, view.state.readOnly ? "Read only" : "Save");
+    save.disabled = view.state.readOnly;
+    stateShow("");
+}
+
+/**
+ * Shows a file of my new system read by a route of its own, saved by `address`.
+ * The file shown already with the same text stays as it is, so nothing jumps.
+ */
+export function systemFileShow(sent: SystemFile, address: string): void {
+    if (started && sent.path === path && sent.text === saved) return;
+    path = sent.path;
+    saveAddress = address;
+    fileShow(systemOpenedOf(sent));
+}
+
+/** Saves the file shown, telling whether nothing of it stays unsaved. */
+export async function fileSaved(): Promise<boolean> {
+    if (!started) return true;
+    await noteSave();
+    return view.state.sliceDoc() === saved;
+}
+
+/** Whether I write in the file shown: the cursor in it or a change unsaved. */
+export function fileWriting(): boolean {
+    return started && (view.hasFocus || view.state.sliceDoc() !== saved);
 }
 
 /**
@@ -459,26 +517,11 @@ export async function editorStart(): Promise<void> {
         return;
     }
 
-    const text: HTMLElement = document.getElementById("editor-text") as HTMLElement;
-    text.classList.toggle("markdown", opened.markdown);
-    text.classList.toggle("editor-plain", !opened.markdown);
-    saved = opened.text;
-    view = new EditorView({
-        parent: text,
-        state: EditorState.create({ doc: opened.text, extensions: extensionsOf(opened) }),
-    });
-    if (opened.markdown) solutionsFold(view);
-    iconPut(save, view.state.readOnly ? SaveOff : Save, view.state.readOnly ? "Read only" : "Save");
-    save.addEventListener("click", noteSave);
-    (save as HTMLButtonElement).disabled = view.state.readOnly;
-    stateShow("");
-    window.addEventListener("keydown", keyDown);
-    window.addEventListener("beforeunload", (event: BeforeUnloadEvent): void => {
-        if (view.state.sliceDoc() !== saved) event.preventDefault();
-    });
+    fileShow(opened);
     if (opened.markdown && address.has("row")) rowShow(view, address.get("row") ?? "");
     if (plannings || !opened.markdown) return;
 
+    const text: HTMLElement = document.getElementById("editor-text") as HTMLElement;
     text.style.visibility = "hidden";
     const kept: Promise<string> = roundOpenedOf(path).catch((): string => "");
     tasksLoad(view, path)

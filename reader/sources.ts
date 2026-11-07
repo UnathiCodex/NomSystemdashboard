@@ -72,6 +72,9 @@ export const universityRoot: string = join(manageRoot, "NomModulesuniversity");
 /** Folder `NomFrequenceintelligence` of our docs, one per day, `<YYYY>/<YYYY_MM>/<YYYY_MM_DD>.md`. */
 export const intelligenceRoot: string = join(manageRoot, "NomFrequenceintelligence");
 
+/** `day.md` of my manage skill, the blueprint of a new doc of a day. */
+export const dayBlueprint: string = join(vault, ".claude", "skills", "manage", "day.md");
+
 /** The four folders of my new system whose changes tell every open page. */
 export const systemRoots: string[] = [calendarRoot, dataRoot, universityRoot, intelligenceRoot];
 

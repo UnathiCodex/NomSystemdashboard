@@ -1,6 +1,7 @@
 /* Diary: what it adds to the look of the food view.
-   Each entry one row across the page, at its left the lines of a box of the plan, at its right its note.
-   Only an entry with a note is a box, so the notes stand out among the entries without one */
+   At the left the entries of the day, each the lines of a box of the plan with its note below them.
+   Only an entry with a note is a box, so the notes stand out among the entries without one.
+   At the right our doc of the day as in the editor */
 
 /* The entries one below the other, as far apart as the boxes of the plan */
 .diary-entries {
@@ -10,21 +11,24 @@
     gap: var(--plan-space);
 }
 
-/* An entry in the size and air of a box */
+/* An entry in the size and air of a box, its lines as far apart as in a box */
 .diary-entry {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--plan-space) calc(3 * var(--gap));
-    align-items: start;
+    gap: var(--plan-space);
     padding: 0.9375rem;
     border-radius: var(--radius);
     font-size: 0.8125rem;
     line-height: 1.45;
 }
 
-/* An entry with a note on the soft grey of a box, the moment I write its first letter */
-.diary-entry:has(.diary-text, .diary-note:not(:placeholder-shown)) {
+/* An entry with a note on the soft grey of a box */
+.diary-entry:has(.diary-note) {
     background: var(--fill);
+}
+
+.diary-opens {
+    cursor: pointer;
 }
 
 /* Under the pointer an entry turns one grey lighter, as a box of the plan */
@@ -39,74 +43,47 @@
     }
 }
 
-/* The lines of what it was as far apart as in a box */
-.diary-box {
-    display: grid;
-    gap: var(--plan-space);
-}
-
-.diary-entry:has(.diary-note) .diary-box {
-    cursor: pointer;
-}
-
-/* The note as plain text, never wider than a page to read, growing with its text, its line breaks kept */
-.diary-note,
-.diary-text {
-    display: block;
-    width: 100%;
-    max-width: var(--reading-width);
+/* The note as I wrote it, its line breaks kept */
+.diary-note {
     margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
     color: var(--text-main);
-    font: inherit;
     white-space: pre-line;
 }
 
-.diary-note {
-    min-height: 1lh;
-    field-sizing: content;
-    contain: inline-size;
-    resize: none;
-    outline: none;
+/* Our doc in the size and grey of the editor */
+.diary-doc {
+    font-size: var(--text-size);
+    color: var(--reading-text);
 }
 
-/* The grey word Note only under the pointer or while writing, so an entry without one takes no eye */
-.diary-note::placeholder {
-    color: var(--text-muted);
-    opacity: 0;
-}
-
-.diary-entry:hover .diary-note::placeholder,
-.diary-note:focus::placeholder {
-    opacity: 1;
-}
-
-/* The whole room beside the lines writes the note */
-.diary-side {
-    align-self: stretch;
-    cursor: text;
-}
-
-.diary-side > .panel-error {
+/* The name of its folder where its text starts, one line of the status line, white as in the tree */
+.diary-doc .tree-root {
+    margin: 0;
     padding: 0;
+    color: var(--text-main);
+    line-height: inherit;
 }
 
-/* Where the lines and the note fit side by side, the lines as wide as the meals of the food view */
+/* Where both fit side by side, the doc as wide as the page of the editor, so its lines break at the same words.
+   Each side scrolls alone, the doc behind a thin grey line as my lists in the food view,
+   without a scrollbar and with room below its last line, so it can scroll up to the middle */
 @media (min-width: 1200px) {
-    .diary-entries {
-        grid-column: 1 / -1;
+    .diary {
+        grid-template-columns: minmax(20rem, 1fr) minmax(0, calc(var(--reading-width) + 1.5 * var(--gap) + 1px));
+    }
+
+    .diary-entries,
+    .diary-doc {
         overflow-y: auto;
     }
 
-    .diary-entry {
-        grid-template-columns: minmax(0, 29rem) minmax(0, 1fr);
+    .diary-doc {
+        padding-left: calc(1.5 * var(--gap));
+        border-left: 1px solid var(--line);
+        scrollbar-width: none;
     }
 
-    /* The first line of the note as high as what the entry was,
-       the capitals of Noto Sans lying 0.4em below the top of a line */
-    .diary-side {
-        margin-top: -0.4em;
+    .diary-doc > .editor-text {
+        padding-bottom: 50dvh;
     }
 }

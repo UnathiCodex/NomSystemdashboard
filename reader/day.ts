@@ -79,13 +79,6 @@ export type EntryMoved = {
     end: string;
 };
 
-/** The note of an entry written in the diary, `before` as the diary read it. */
-export type EntryNoted = {
-    id: string;
-    before: string;
-    note: string;
-};
-
 /**
  * A box logged at its real time.
  *
@@ -501,20 +494,6 @@ function entryAsIsOf(entry: Entry): EntryNew {
 export function entryMove(moved: EntryMoved): void {
     const [file, entry]: [string, Entry] = entryFind(day.log, moved.id);
     entryWrite(file, entry, { ...entryAsIsOf(entry), start: moved.start, end: moved.end });
-}
-
-/**
- * Writes the note of an entry only while its file holds the note as the diary read it, written as any change.
- * A change of another field meanwhile stays, since only the note is written.
- *
- * @returns Whether it is written, `false` when its note changed since
- * @throws {Error} - When there is no such entry or it may not be changed
- */
-export function entryNote(noted: EntryNoted): boolean {
-    const [file, entry]: [string, Entry] = entryFind(day.log, noted.id);
-    if (entry.note !== noted.before) return false;
-    entryWrite(file, entry, { ...entryAsIsOf(entry), note: noted.note });
-    return true;
 }
 
 /**

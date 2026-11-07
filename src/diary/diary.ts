@@ -1,16 +1,17 @@
 /**
  * ## Diary
  *
- * My diary in the look of the food view, the log entries of a day by their start.
- * Each entry is one row across the page, at its left the lines of a box of the plan.
+ * My diary, the log entries of a day by their start at the left, our doc of the day at the right.
+ * Each entry shows the lines of a box of the plan.
  * They say what it was and below it grey its time and place.
- * At its right stands its note in their size, which I write right there.
+ * Its note stands below them, only where it has one.
  * Only an entry with a note is a box, so the notes stand out among the entries without one.
  * An entry past midnight shows on the day it starts, so each note stands once.
  * A glass of water does not show, as in the log.
- * A note saves once I leave it, only while its file holds the note as the diary read it.
- * A click on an entry opens its dialog, one that cannot change shows its note only to read.
- * It loads anew the moment a file of my new system changes, but never over a note I write.
+ * A click on an entry opens its dialog, where I write its note.
+ * Our doc of the day from `NomFrequenceintelligence` I write as in the editor, see `reader/intelligence.ts`.
+ * Another day shows only once the doc is saved.
+ * It loads anew the moment a file of my new system changes, but never over the doc while I write in it.
  * Not on a phone, which opens the day everywhere.
  */
 
@@ -22,6 +23,7 @@ import { dayAdd, dayOf, dayTextOf } from "../skill/attempts.ts";
 import { askedDayOf, calendarTodayOf, todayFollow } from "../today.ts";
 import { changesFollow } from "../changes.ts";
 import { logEntryOpen } from "../editor/dialog.ts";
+import { fileSaved, fileWriting, systemFileShow } from "../editor/editor.ts";
 import { iconPut } from "../icons.ts";
 import { readerAsk } from "../reader.ts";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide";
@@ -32,81 +34,23 @@ import "../food/food.css";
 import "./diary.css";
 
 import type { DayEntry } from "../../reader/day.ts";
+import type { SystemFile } from "../../reader/files.ts";
 
 let shown: string = "";
 
-/** Whether a change came while I wrote a note, so the day loads anew once I leave it. */
+/** Whether a change came while I wrote in the doc, so the day loads anew once I leave it. */
 let waiting: boolean = false;
 
-/** Whether I write a note or one holds what the reader did not take, its `before` the note in its file. */
-function writing(): boolean {
-    return [...document.querySelectorAll<HTMLTextAreaElement>(".diary-note")].some(
-        (note: HTMLTextAreaElement): boolean =>
-            note === document.activeElement || note.value.trim() !== (note.dataset.before ?? "").trim(),
-    );
-}
-
-/** Loads the shown day anew after a change, once no note holds what I wrote. */
+/** Loads the shown day anew after a change, once I no longer write in the doc. */
 function dayAgain(): void {
-    waiting = writing();
+    waiting = fileWriting();
     if (!waiting) dayOpen(shown);
 }
 
 /**
- * Saves a note, only while its file holds the note as the diary read it.
- * A refused note keeps what I wrote and its hint says why.
- *
- * @throws {Error} - When the reader cannot answer
- */
-async function noteSave(id: string, note: HTMLTextAreaElement, hint: HTMLElement): Promise<void> {
-    const written: string = note.value.trim();
-    const response: Response = await fetch("/api/day/noted", {
-        method: "POST",
-        body: JSON.stringify({ id: id, before: note.dataset.before ?? "", note: written }),
-    });
-    if (response.ok) note.dataset.before = written;
-    hint.textContent = response.status === 409 ? "Not saved: its note changed on the disk" : "Saving failed";
-    hint.hidden = response.ok;
-    if (waiting) dayAgain();
-}
-
-/**
- * The note of an entry, a field growing with its text, saved once I leave it changed, its hint below.
- * A click anywhere beside it goes into it.
- */
-function noteOf(entry: DayEntry): HTMLElement {
-    const note: HTMLTextAreaElement = document.createElement("textarea");
-    const hint: HTMLElement = entryPartOf("p", "panel-error", []);
-    note.className = "diary-note";
-    note.rows = 1;
-    note.placeholder = "Note";
-    note.value = entry.note;
-    note.dataset.before = entry.note;
-    note.setAttribute("aria-label", `Note of ${entry.title}`);
-    hint.hidden = true;
-    note.addEventListener("change", (): void => {
-        noteSave(entry.id, note, hint).catch((error: unknown): void => {
-            console.error(error);
-            hint.textContent = "Saving failed";
-            hint.hidden = false;
-        });
-    });
-    note.addEventListener("blur", (): void => {
-        window.setTimeout((): void => {
-            if (waiting) dayAgain();
-        });
-    });
-    const side: HTMLElement = entryPartOf("div", "diary-side", [note, hint]);
-    side.addEventListener("click", (event: MouseEvent): void => {
-        if (event.target === side) note.focus();
-    });
-    return side;
-}
-
-/**
- * An entry as the lines of a box of the plan with its note beside it.
+ * An entry as the lines of a box of the plan, its note below them.
  * A line too long ends in `…`, its whole text in its tooltip.
- * A click on the lines opens its dialog, a click on its place the link of the place.
+ * A click on it opens its dialog, a click on its place the link of the place.
  */
 function entryOf(entry: DayEntry): HTMLElement {
     const shownWhat: string = shownWhatOf(entry.category, entry.title, entry.module, entry.type);
@@ -128,25 +72,26 @@ function entryOf(entry: DayEntry): HTMLElement {
         entryPartOf("span", "box-part box-time", [time]),
         ...(place.length === 0 ? [] : [entryPartOf("span", "box-part entry-parted", place)]),
     ]);
-    const box: HTMLElement = entryPartOf("div", "diary-box", [what, meta]);
+    const article: HTMLElement = entryPartOf("article", "diary-entry", [
+        what,
+        meta,
+        ...(entry.note.trim() === "" ? [] : [entryPartOf("p", "diary-note", [entry.note])]),
+    ]);
     what.title = what.textContent ?? "";
     meta.title = [time, whereOf(entry.category, entry.from, entry.location, entry.online).replace("->", "→")]
         .filter((part: string): boolean => part !== "")
         .join(" · ");
-    if (!entry.editable)
-        return entryPartOf("article", "diary-entry", [
-            box,
-            ...(entry.note.trim() === "" ? [] : [entryPartOf("p", "diary-text", [entry.note])]),
-        ]);
-    box.addEventListener("click", (event: MouseEvent): void => {
+    if (!entry.editable) return article;
+    article.classList.add("diary-opens");
+    article.addEventListener("click", (event: MouseEvent): void => {
         if ((event.target as HTMLElement).closest("a") !== null) return;
         logEntryOpen(entry.id, entry.start).catch((error: unknown): void => console.error(error));
     });
-    return entryPartOf("article", "diary-entry", [box, noteOf(entry)]);
+    return article;
 }
 
 /**
- * Shows a day with its entries, unless another day was asked for meanwhile.
+ * Shows a day with its entries and its doc, unless another day was asked for meanwhile.
  *
  * @throws {Error} - When the reader cannot answer
  */
@@ -158,10 +103,14 @@ async function dayShow(day: string): Promise<void> {
 
     const start: string = new Date(`${day}T00:00`).toISOString();
     const end: string = new Date(`${dayAdd(day, 1)}T00:00`).toISOString();
-    const entries: DayEntry[] = (await readerAsk<DayEntry[]>(`/api/day/log?start=${start}&end=${end}`))
+    const [logged, doc]: [DayEntry[], SystemFile] = await Promise.all([
+        readerAsk<DayEntry[]>(`/api/day/log?start=${start}&end=${end}`),
+        readerAsk<SystemFile>(`/api/day/doc?date=${day}`),
+    ]);
+    if (day !== shown) return;
+    const entries: DayEntry[] = logged
         .filter((entry: DayEntry): boolean => !entry.glass && dayOf(new Date(entry.start)) === day)
         .sort((first: DayEntry, second: DayEntry): number => Date.parse(first.start) - Date.parse(second.start));
-    if (day !== shown) return;
     document
         .getElementById("diary-entries")
         ?.replaceChildren(
@@ -169,9 +118,10 @@ async function dayShow(day: string): Promise<void> {
                 ? entries.map(entryOf)
                 : [entryPartOf("p", "food-none", ["Nothing logged on this day"])]),
         );
+    systemFileShow(doc, "/api/day/doc");
 }
 
-/** Shows a day or a hint when the reader cannot read its entries. */
+/** Shows a day or a hint when the reader cannot read it. */
 function dayOpen(day: string): void {
     dayShow(day).catch((error: unknown): void => {
         console.error(error);
@@ -179,6 +129,15 @@ function dayOpen(day: string): void {
             .getElementById("diary-entries")
             ?.replaceChildren(entryPartOf("p", "food-none", ["The log cannot be read"]));
     });
+}
+
+/** Shows another day once the doc is saved, else stays on the day, the failure in the status line of the doc. */
+function dayGo(day: string): void {
+    fileSaved()
+        .then((saved: boolean): void => {
+            if (saved) dayOpen(day);
+        })
+        .catch((error: unknown): void => console.error(error));
 }
 
 /** Starts the diary after the router has put its HTML into the page. */
@@ -189,10 +148,15 @@ export function diaryStart(): void {
     iconPut(before, ChevronLeft, "Day before");
     iconPut(after, ChevronRight, "Day after");
     iconPut(today, CalendarCheck, "Back to today");
-    before.addEventListener("click", (): void => dayOpen(dayAdd(shown, -1)));
-    after.addEventListener("click", (): void => dayOpen(dayAdd(shown, 1)));
-    today.addEventListener("click", (): void => dayOpen(calendarTodayOf()));
+    before.addEventListener("click", (): void => dayGo(dayAdd(shown, -1)));
+    after.addEventListener("click", (): void => dayGo(dayAdd(shown, 1)));
+    today.addEventListener("click", (): void => dayGo(calendarTodayOf()));
+    document.getElementById("editor-text")?.addEventListener("focusout", (): void => {
+        window.setTimeout((): void => {
+            if (waiting) dayAgain();
+        });
+    });
     dayOpen(askedDayOf() ?? calendarTodayOf());
-    todayFollow((): string => shown, dayOpen);
+    todayFollow((): string => shown, dayGo);
     changesFollow(dayAgain);
 }
