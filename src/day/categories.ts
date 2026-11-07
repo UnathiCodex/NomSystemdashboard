@@ -95,14 +95,6 @@ const placeKeys: FieldKey[] = ["from", "location"];
 /** What parts the names of `With`, since a person of `Persons.md` holds a comma in its name. */
 const withParting: string = "; ";
 
-/** Folders and topics of the files of plan and log, by category, as `reader/sources.ts` names them. */
-const topics: { [category: string]: string } = {
-    Sleep: "Health/Sleep",
-    Food: "Living/Food",
-    Cook: "Living/Food",
-    Way: "Living/Way",
-};
-
 /**
  * A field of a category, as the reader gives it.
  *
@@ -408,7 +400,7 @@ function saveAllow(): void {
 
 /**
  * The file the entry or the box lies in, or for a new one the file the reader will write it into.
- * For `Skill` that of its skill, else that of its topic in the year of its day.
+ * For `Skill` that of its skill, else that of its category in the year of its day.
  */
 function entryFileOf(): string {
     const folder: string = "NomManageplannings/NomManagecalendar";
@@ -418,15 +410,13 @@ function entryFileOf(): string {
     const fresh: boolean = opened.entry === null && opened.box === null;
     let file: string = opened.entry?.extendedProps.file ?? opened.box?.file ?? "";
     if (fresh && chosen?.name === skillName) file = name === "" ? "" : `${folder}/${skills}/${name}${ending}`;
-    else if (fresh && chosen !== null) file = topicFileOf(chosen.name, dayRead(), ending);
+    else if (fresh && chosen !== null) file = categoryFileOf(chosen.name, dayRead(), ending);
     return file;
 }
 
 /** The file of plan or log of a category other than `Skill`, as the reader names it. */
-export function topicFileOf(category: string, day: string, ending: string): string {
-    return (
-        `NomManageplannings/NomManagecalendar/${topics[category] ?? "Living/Living"}` + `_${day.slice(0, 4)}${ending}`
-    );
+export function categoryFileOf(category: string, day: string, ending: string): string {
+    return `NomManageplannings/NomManagecalendar/${category}/${category}_${day.slice(0, 4)}${ending}`;
 }
 
 /** Shows the file of the entry or box left of the buttons. */

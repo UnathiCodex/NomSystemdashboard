@@ -21,7 +21,7 @@
  * A series is one to-do by its `RRULE`, each day changed alone with its `RECURRENCE-ID`,
  * but a numbered series is one box per date.
  *
- * A box is a `VTODO` in the plan of its topic and year, or of its skill:
+ * A box is a `VTODO` in the plan of its skill or in that of its category in its year:
  * - its day and its expected time in `DTSTART`,
  * - or instead its deadline in `DUE`.
  *   iCalendar wants `DUE` of the same kind as `DTSTART`, so a box with a deadline has no `DTSTART`.

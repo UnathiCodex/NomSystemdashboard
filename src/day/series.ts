@@ -49,7 +49,7 @@ import {
     standardFirst,
 } from "./places.ts";
 import { boxAdd, boxDrop, boxLog, boxRepeat, boxSubmit, boxUndo, boxUniversity } from "./entries.ts";
-import { boxOpenEdit, dayCalendarOf, entryBoxOf, entryOpenFromBox, topicFileOf } from "./categories.ts";
+import { boxOpenEdit, categoryFileOf, dayCalendarOf, entryBoxOf, entryOpenFromBox } from "./categories.ts";
 import { summarySearchOf } from "./meal.ts";
 import { onlineRowOf, withRowOf } from "./attendance.ts";
 import { boxActionsOf } from "./actions.ts";
@@ -1255,12 +1255,12 @@ function standardLineOf(): string {
 
 /**
  * The plan a plain series lies in or goes into, from `NomWorkspace` on, empty while not known.
- * A new one goes into the plan of its skill, or of its topic in the year of its first day.
+ * A new one goes into the plan of its skill or into that of its category in the year of its first day.
  */
 function plainFileOf(series: Plain, form: Form): string {
     if (series.file !== "") return series.file;
     if (series.category === skillName) return skillNamesOf({ module: series.module, type: series.type }).file;
-    return series.category === "" || form.first === "" ? "" : topicFileOf(series.category, form.first, "_Plan.ics");
+    return series.category === "" || form.first === "" ? "" : categoryFileOf(series.category, form.first, "_Plan.ics");
 }
 
 /** Whether the form asks who I am with, for my course and a category with `With`, so not for `Sport`. */

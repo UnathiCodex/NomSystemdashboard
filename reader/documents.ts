@@ -34,7 +34,7 @@ import {
 import { skillTypes } from "./categories.ts";
 import { activeModulesRead, chapterNameOf, codeOf, moduleContentsRead, moduleFolderOf } from "./notes.ts";
 import { skillRowOf, skillRowsRead, skillTypesRead } from "./skills.ts";
-import { moduleIs, modulesFolder, skillFileOf, skillLog, vault, topicFileOf } from "./sources.ts";
+import { categoryFileOf, moduleIs, modulesFolder, skillFileOf, skillLog, vault } from "./sources.ts";
 
 import type { Stats } from "node:fs";
 import type { Entry, EntryFields, Link } from "./calendar.ts";
@@ -159,12 +159,12 @@ export function titleOf(
 }
 
 /**
- * The calendar file an entry belongs into, of its skill, else of its topic in the year of its day.
+ * The calendar file an entry belongs into, of its skill, else of its category in the year of its day.
  *
  * @throws {Error} - For a skill entry without skill
  */
 export function calendarFileOf(fields: { category: string; module: string }, date: string, ending: string): string {
-    if (fields.category !== skillName) return topicFileOf(fields.category, date, ending);
+    if (fields.category !== skillName) return categoryFileOf(fields.category, date, ending);
     const name: string = skillNameOf(fields.module);
     if (name === "") throw new Error("A skill entry needs its skill");
     return skillFileOf(name, ending);

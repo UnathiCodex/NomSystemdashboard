@@ -3,7 +3,7 @@
  *
  * The log of a day, my one calendar, its entries added, changed and removed by category.
  * A skill entry goes into the log of its skill,
- * any other into the log of its topic in the year of its start in Berlin time.
+ * any other into the log of its category in the year of its start in Berlin time.
  * An entry that changes its year, category or skill moves into the log it belongs into then.
  * A change is written only while the file holds the entry as the page opened it,
  * so no page writes back what the file held before.

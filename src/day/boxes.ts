@@ -450,9 +450,6 @@ function boxElementOf(calendar: Calendar, box: Box, carriedShown: boolean): HTML
     return element;
 }
 
-/** Sections of the plan, in order, the first named as the Skill list names its groups. */
-const sections: string[] = [...skillGroups, "Living", "Health"];
-
 /**
  * The section of a box by its plan, in `Skilling` as the Skill list groups its skill.
  * Else the name of its folder.
@@ -461,6 +458,15 @@ function sectionOf(box: Box): string {
     const [folder, file]: string[] = box.file.split("/").slice(-2);
     if (folder !== "Skilling") return folder;
     return masterIs(file) ? "Master" : "Projects";
+}
+
+/**
+ * Sections of the plan of some boxes, first the groups of my skills as the Skill list names them.
+ * Then the folder of each other category by its name.
+ */
+function sectionsOf(boxes: Box[]): string[] {
+    const folders: string[] = boxes.map(sectionOf).filter((section: string): boolean => !skillGroups.includes(section));
+    return [...skillGroups, ...new Set(folders.sort())];
 }
 
 /** The boxes of the shown day, then those carried along. */
@@ -489,7 +495,7 @@ function boxesShow(calendar: Calendar): void {
             .map(([, element]: [Box, HTMLElement]): HTMLElement => element);
     const elements: HTMLElement[] = [
         ...occasionsOf(shown.occasions, giftOpen),
-        ...sections.flatMap((section: string): HTMLElement[] => {
+        ...sectionsOf(listedOf()).flatMap((section: string): HTMLElement[] => {
             const boxes: HTMLElement[] = [...inSection(section, false), ...inSection(section, true)];
             return boxes.length === 0 ? [] : [entryPartOf("h3", "plan-section", [section]), ...boxes];
         }),

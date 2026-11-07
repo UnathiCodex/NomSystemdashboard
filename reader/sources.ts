@@ -245,20 +245,12 @@ export const sport: SportSources = {
     log: [{ folder: calendarRoot, ending: logEnding }],
 };
 
-/** Topic folder of each category but `Skill`, any other in `Living/`. */
-export const topics: { [category: string]: string } = {
-    Sleep: "Health/Sleep",
-    Food: "Living/Food",
-    Cook: "Living/Food",
-    Way: "Living/Way",
-};
-
 /**
- * Path of the log or plan of the topic of a category in a year,
+ * Path of the log or plan of a category but `Skill` in a year, in the folder of its category,
  * an entry by the year of its start in Berlin time, a box by the year of its day.
  */
-export function topicFileOf(category: string, date: string, ending: string): string {
-    return join(calendarRoot, `${topics[category] ?? "Living/Living"}_${date.slice(0, 4)}${ending}`);
+export function categoryFileOf(category: string, date: string, ending: string): string {
+    return join(calendarRoot, category, `${category}_${date.slice(0, 4)}${ending}`);
 }
 
 /** Path of the log or plan of a skill, a module's in {@link modulesRoot}, any other in {@link skillingRoot}. */
