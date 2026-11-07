@@ -152,9 +152,9 @@ export function tableOpen(
         oninsertrow: (): void => sync(),
         ondeleterow: (): void => sync(),
         onmoverow: (): void => sync(),
-        onchangeheader: (): void => sync(),
-        onundo: (): void => sync(),
-        onredo: (): void => sync(),
+        onchangeheader: (): void => headsSync(),
+        onundo: (): void => headsSync(),
+        onredo: (): void => headsSync(),
         onselection: (): void => inView(),
         oncopy: (): string => clipboardOf(sheet.getData(true)),
         worksheets: [
@@ -196,13 +196,27 @@ export function tableOpen(
         return Math.ceil(Math.max(widest, 48));
     }
 
+    /** The head of a column as I type it, which Jspreadsheet keeps as its title. */
+    function titleOf(column: number): string {
+        return String(sheet.options.columns?.[column]?.title ?? heads[column]);
+    }
+
+    /** Shows every head rendered as in the note, as wide as its column was measured. */
+    function headsShow(): void {
+        sheet.headers.forEach((head: HTMLTableCellElement, column: number): void => cellShow(head, titleOf(column)));
+    }
+
+    /** Shows the heads rendered again, since Jspreadsheet writes a head it changes as text, then writes the editor. */
+    function headsSync(): void {
+        headsShow();
+        sync();
+    }
+
     /** Writes the spreadsheet into the editor, only the lines changed, one step of its history. */
     function sync(): void {
         const table: Line[] = linesOf(view, from);
         const old: string[] = table.map((line: Line): string => line.text);
-        const titles: string[] = heads.map((head: string, column: number): string =>
-            String(sheet.options.columns?.[column]?.title ?? head),
-        );
+        const titles: string[] = heads.map((_: string, column: number): string => titleOf(column));
         const data: string[][] = sheet.getData().map((row: CellValue[]): string[] =>
             paddedOf(
                 row.map((value: CellValue): string => String(value ?? "").trim()),
@@ -347,12 +361,13 @@ export function tableOpen(
      * Jspreadsheet reads the head from its text, so it shows its title again before it changes.
      */
     const headEdit = (head: HTMLElement, column: number): void => {
-        const title: string = sheet.getHeader(column);
+        const title: string = titleOf(column);
         const input: HTMLInputElement = document.createElement("input");
         const end = (keep: boolean): void => {
             input.onblur = null;
             head.textContent = title;
             if (keep && input.value.trim() !== title) sheet.setHeader(column, input.value.trim());
+            else headsShow();
         };
         input.className = "table-cell-input";
         input.value = title;
@@ -465,6 +480,7 @@ export function tableOpen(
     watch.observe(editorState, { childList: true, characterData: true, subtree: true });
     window.addEventListener("keydown", keyDown, true);
 
+    headsShow();
     sheet.updateSelectionFromCoords(0, 0, 0, 0);
 }
 
