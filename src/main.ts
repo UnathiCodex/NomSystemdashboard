@@ -3,6 +3,7 @@
  *
  * Opens one area of the life system by the address, the day everywhere else.
  * The areas are the buttons at the left edge in `index.html`.
+ * `/plannings` opens the editor on all of `NomManageplannings`, an area without a button.
  * `/edit` opens a file of my new system.
  * `/plannings/<folder>` opens the editor on that folder of `NomManageplannings` alone.
  * Older addresses of the scripts, `/notes` and `/edit?path=…`, become `/scripts`.
@@ -46,12 +47,14 @@ if (location.pathname === "/notes" || (location.pathname === "/edit" && address.
     history.replaceState(null, "", `/scripts${location.search}${location.hash}`);
 const areas: string[] = phone
     ? []
-    : [...document.querySelectorAll<HTMLAnchorElement>(".areas a")].map((link: HTMLAnchorElement): string =>
-          decodeURIComponent(link.pathname),
-      );
+    : [
+          ...[...document.querySelectorAll<HTMLAnchorElement>(".areas a")].map((link: HTMLAnchorElement): string =>
+              decodeURIComponent(link.pathname),
+          ),
+          "/plannings",
+      ];
 const area: string = [...areas, "/edit"].includes(location.pathname) ? location.pathname : "/";
-const marked: string = area === "/edit" ? "/plannings" : area;
-document.querySelector(`.areas a[href="${marked}"]`)?.setAttribute("aria-current", "page");
+document.querySelector(`.areas a[href="${area}"]`)?.setAttribute("aria-current", "page");
 deviceReport();
 addEventListener("resize", (): void => {
     clearTimeout(deviceWait);
